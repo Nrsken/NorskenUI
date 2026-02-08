@@ -1,0 +1,15 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
+
+    <Script file="Widgets.lua" />
+    <Script file="Curves.lua" />
+    <Script file="AddonTheme.lua" />
+    <Script file="Defaults.lua"/>
+    <Script file="Globals.lua" />
+    <Script file="CustomOutline.lua" />
+    <Script file="PixelPerfect.lua" />
+    <Script file="EditMode.lua" />
+    <Script file="Main.lua" />
+    <Script file="NUI-Dialog.lua" />
+    <Script file="Colors.lua" />
+</Ui>

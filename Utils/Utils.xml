@@ -1,0 +1,5 @@
+<Ui>
+	<Script file='Utils/FrameHider.lua'/>
+	<Script file='Utils/TableLib.lua'/>
+	<Script file='Utils/NUI-BackdropTemplate.lua'/>
+</Ui>
