@@ -224,6 +224,26 @@ GUIFrame:RegisterContent("XPBar", function(scrollChild, yOffset)
     table_insert(allWidgets, chatHeight)
     card4:AddRow(row4, 40)
 
+    -- Statusbar Texture Dropdown
+    local rowTexture = GUIFrame:CreateRow(card4.content, 40)
+    local statusbarList = {}
+    if LSM then
+        for name in pairs(LSM:HashTable("statusbar")) do
+            statusbarList[name] = name
+        end
+    else
+        statusbarList["Blizzard"] = "Blizzard"
+    end
+    local statusbarDropdown = GUIFrame:CreateDropdown(rowTexture, "Bar Texture", statusbarList,
+        db.StatusBarTexture or "Blizzard", 70,
+        function(key)
+            db.StatusBarTexture = key
+            ApplySettings()
+        end)
+    rowTexture:AddWidget(statusbarDropdown, 1)
+    table_insert(allWidgets, statusbarDropdown)
+    card4:AddRow(rowTexture, 40)
+
     -- Separator
     local row4sep = GUIFrame:CreateRow(card4.content, 8)
     local seprow4Card = GUIFrame:CreateSeparator(row4sep)

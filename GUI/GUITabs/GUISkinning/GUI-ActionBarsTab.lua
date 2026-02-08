@@ -1079,7 +1079,7 @@ end
 local function CreateActionBarsPanel(container)
     local db = GetActionBarsDB()
 
-    -- Check for pending context from EditMode navigation (e.g., specific bar to select)
+    -- Check for pending context from EditMode navigation
     if GUIFrame.pendingContext and db then
         local contextBar = GUIFrame.pendingContext
         -- Validate that the context is a valid bar key

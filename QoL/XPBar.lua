@@ -115,7 +115,7 @@ function XPBar:CreateBar()
     if self.bar then return end
     local posDB = self.db.Position
     local r, g, b, a = self:GetColor()
-    local statusbar = NRSKNUI:GetStatusbarPath("NorskenUI")
+    local statusbar = NRSKNUI:GetStatusbarPath(self.db.StatusBarTexture or "Blizzard")
 
     local bar = CreateFrame("StatusBar", "NorskenUI_XPBar", UIParent)
     bar:SetSize(self.db.width, self.db.height)
@@ -304,6 +304,11 @@ function XPBar:ApplyStyling()
             HideBlizzardBarInit = true
         end)
     end
+
+    -- Update statusbar texture
+    local statusbar = NRSKNUI:GetStatusbarPath(self.db.StatusBarTexture or "Blizzard")
+    self.bar:SetStatusBarTexture(statusbar)
+    self.bar.rested:SetStatusBarTexture(statusbar)
 
     -- Set statusbar coloring
     self.bar:SetStatusBarColor(r, g, b, a)

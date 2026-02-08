@@ -7,4 +7,5 @@
     <Script file="CopyAnything.lua"/>
     <Script file="XPBar.lua"/>
     <Script file="DurabilityUtil.lua"/>
+    <Script file="CooldownStrings.lua"/>
 </Ui>

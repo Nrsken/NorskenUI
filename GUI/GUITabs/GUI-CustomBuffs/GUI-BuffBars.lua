@@ -2,6 +2,7 @@
 local _, NRSKNUI = ...
 local GUIFrame = NRSKNUI.GUIFrame
 local Theme = NRSKNUI.Theme
+local LSM = NRSKNUI.LSM
 
 -- Localization
 local table_insert = table.insert
@@ -471,6 +472,26 @@ GUIFrame:RegisterContent("BuffBars", function(scrollChild, yOffset)
     row4a:AddWidget(heightSlider, 0.5)
     table_insert(allWidgets, heightSlider)
     card4:AddRow(row4a, 36)
+
+    -- Statusbar Texture Dropdown
+    local row4texture = GUIFrame:CreateRow(card4.content, 40)
+    local statusbarList = {}
+    if LSM then
+        for name in pairs(LSM:HashTable("statusbar")) do
+            statusbarList[name] = name
+        end
+    else
+        statusbarList["Blizzard"] = "Blizzard"
+    end
+    local statusbarDropdown = GUIFrame:CreateDropdown(row4texture, "Bar Texture", statusbarList,
+        defaults.StatusBarTexture or "Blizzard", 70,
+        function(key)
+            db.Defaults.StatusBarTexture = key
+            ApplySettings()
+        end)
+    row4texture:AddWidget(statusbarDropdown, 1)
+    table_insert(allWidgets, statusbarDropdown)
+    card4:AddRow(row4texture, 40)
 
     local row4b = GUIFrame:CreateRow(card4.content, 36)
     local defaultBarColorPicker = GUIFrame:CreateColorPicker(row4b, "Bar Color",

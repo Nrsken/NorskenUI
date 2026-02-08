@@ -39,6 +39,7 @@ local issecretvalue = issecretvalue
 local tonumber = tonumber
 local GetShapeshiftForm = GetShapeshiftForm
 local GetShapeshiftFormInfo = GetShapeshiftFormInfo
+local tostring = tostring
 local C_Spell = C_Spell
 local C_SpellBook = C_SpellBook
 local C_PetBattles = C_PetBattles
@@ -50,7 +51,7 @@ local C_Timer = C_Timer
 
 -- Constants
 local CHECK_THROTTLE = 0.25
-local MISSING_TEXT = ""
+local MISSING_TEXT = "MISSING"
 local REAPPLY_TEXT = ""
 
 -- Map CUSTOM_BUFFS categories to db.Consumables keys
@@ -145,6 +146,7 @@ local CUSTOM_BUFFS = {
     { category = "FOOD",       spellId = 462181,    enabled = true }, -- Beledar's Bounty
     { category = "FOOD",       spellId = 457284,    enabled = true },
     { category = "FOOD",       spellId = 1232585,   enabled = true },
+    { category = "FOOD",       spellId = 461959,    enabled = true },
 
     -- Weapon enchants
     { category = "MH_ENCHANT", weaponSlot = "main", text = "MH",   enabled = true },
@@ -644,9 +646,9 @@ local function CreateStanceFrame()
     -- Text
     stanceFrame.text = stanceFrame:CreateFontString(nil, "OVERLAY")
     NRSKNUI:ApplyFont(stanceFrame.text, db.Font, db.FontSize or 12, db.FontOutline)
-    stanceFrame.text:SetPoint("CENTER", stanceFrame, "CENTER", 1, 0)
+    stanceFrame.text:SetPoint("BOTTOM", stanceFrame, "TOP", 1, 4)
     stanceFrame.text:SetTextColor(1, 1, 1, 1)
-
+    stanceFrame.text:SetShadowColor(0, 0, 0, 0)
     stanceFrame:Hide()
 end
 
@@ -1526,7 +1528,7 @@ local function ShowPreviewIcons()
     if texture and stanceFrame then
         local iconSize = stanceDb.IconSize or db.IconSize or 48
         stanceFrame.icon:SetTexture(texture)
-        stanceFrame.text:SetText("")
+        stanceFrame.text:SetText("MISSING")
         stanceFrame:SetSize(iconSize, iconSize)
         NRSKNUI:ApplyFont(stanceFrame.text, db.Font, db.FontSize or 12, db.FontOutline)
 

@@ -118,7 +118,7 @@ function GUIFrame:CreateEditBox(parent, labelText, value, callback)
         container:SetBackdropBorderColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
     end)
 
-    -- Add tooltip support for the editBox itself (not just container border)
+    -- Add tooltip support for the editBox itself
     editBox:SetScript("OnEnter", function()
         if not editBox:HasFocus() then
             AnimateEditBoxBorder(true)
@@ -136,7 +136,7 @@ function GUIFrame:CreateEditBox(parent, labelText, value, callback)
         GameTooltip:Hide()
     end)
 
-    -- Add tooltip support for the container (catches edges/border)
+    -- Add tooltip support for the container
     container:EnableMouse(true)
     container:SetScript("OnEnter", function(self)
         if tooltip then

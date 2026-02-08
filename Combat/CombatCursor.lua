@@ -33,7 +33,7 @@ CC.Textures = {
 -- Texture display order for GUI
 CC.TextureOrder = { "Circle 1", "Circle 2", "Circle 3", "Circle 4", "Circle 5", "Circle 6" }
 
--- GCD Ring textures (same as main circle textures)
+-- GCD Ring textures
 CC.GCDRingTextures = CC.Textures
 CC.GCDRingTextureOrder = CC.TextureOrder
 
@@ -54,7 +54,7 @@ function CC:OnInitialize()
     self:SetEnabledState(false)
 end
 
--- Read GCD cooldown info (spell 61304 is always safe to query)
+-- Read GCD cooldown info
 local function GetGCDCooldown()
     local info = C_Spell.GetSpellCooldown(GCD_SPELL_ID)
     if info then

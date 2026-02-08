@@ -61,13 +61,14 @@ GUIFrame.SidebarConfig = {
             text = "• Quality of Life",
             defaultExpanded = true,
             items = {
-                { id = "Automation",    text = "Automation" },
-                { id = "CopyAnything",  text = "Copy Anything" },
-                { id = "whisperSounds", text = "Whisper Sounds" },
-                { id = "DragonRiding",  text = "Dragon Riding UI" },
-                { id = "missingBuffs",  text = "Missing Buffs" },
-                { id = "XPBar",         text = "XP Bar" },
-                { id = "Durability",    text = "Durability Util" },
+                { id = "Automation",      text = "Automation" },
+                { id = "CopyAnything",    text = "Copy Anything" },
+                { id = "CooldownStrings", text = "CDM Profile Strings" },
+                { id = "whisperSounds",   text = "Whisper Sounds" },
+                { id = "DragonRiding",    text = "Dragon Riding UI" },
+                { id = "missingBuffs",    text = "Missing Buffs" },
+                { id = "XPBar",           text = "XP Bar" },
+                { id = "Durability",      text = "Durability Util" },
             }
         },
         {
@@ -1427,7 +1428,7 @@ end
 function GUIFrame:RefreshContent()
     if not self.contentArea then return end
 
-    -- Fire any registered content cleanup callbacks (e.g., hide previews)
+    -- Fire any registered content cleanup callbacks
     if self.contentCleanupCallbacks then
         for key, callback in pairs(self.contentCleanupCallbacks) do
             local ok, err = pcall(callback)
@@ -1437,7 +1438,7 @@ function GUIFrame:RefreshContent()
         end
     end
 
-    -- Clean up custom panel if exists (from switching away from panel-based content)
+    -- Clean up custom panel if exists
     if self.contentArea._customPanel then
         self.contentArea._customPanel:Hide()
         self.contentArea._customPanel:SetParent(nil)
@@ -1450,7 +1451,7 @@ function GUIFrame:RefreshContent()
         itemId = "HomePage"
     end
 
-    -- Check for panel builders (full custom layout)
+    -- Check for panel builders
     if itemId and self.PanelBuilders and self.PanelBuilders[itemId] then
         if self.contentArea.scrollFrame then
             self.contentArea.scrollFrame:Hide()

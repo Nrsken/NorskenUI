@@ -225,7 +225,7 @@ function PET:OnEnable()
     self:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED", "UpdatePetText")
     self:RegisterEvent("UNIT_DIED", "UpdatePetText")
 
-    -- Register for pet bar updates (passive/aggressive stance changes)
+    -- Register for pet bar updates
     self:RegisterEvent("PET_BAR_UPDATE", function()
         C_Timer.After(0.1, function() self:UpdatePetText() end)
     end)

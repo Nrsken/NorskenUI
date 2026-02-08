@@ -26,6 +26,7 @@ local _G = _G
 -- Module state
 BI.trackerFrames = {}
 BI.containerFrame = nil
+BI.activeTimers = {} -- Track active C_Timer handles by trackerIndex
 
 -- Module init
 function BI:OnInitialize()
@@ -203,13 +204,22 @@ function BI:ShowTracker(trackerIndex)
     if not frame.config.Enabled then return end
 
     local config = frame.config
+
+    -- Cancel any existing timer for this tracker (prevents duplicate timers)
+    if self.activeTimers[trackerIndex] then
+        self.activeTimers[trackerIndex]:Cancel()
+        self.activeTimers[trackerIndex] = nil
+    end
+
+    -- Reset the cooldown animation fresh
     frame.cooldown:SetCooldown(GetTime(), config.Duration)
     frame:Show()
 
     self:LayoutIcons()
 
-    -- Hide after duration
-    C_Timer.After(config.Duration, function()
+    -- Hide after duration (store handle so we can cancel if spell is recast)
+    self.activeTimers[trackerIndex] = C_Timer.NewTimer(config.Duration, function()
+        self.activeTimers[trackerIndex] = nil
         if frame then
             frame:Hide()
             self:LayoutIcons()
@@ -223,13 +233,22 @@ function BI:ShowTrackerPreview(trackerIndex)
     if not frame then return end
 
     local config = frame.config
+
+    -- Cancel any existing timer for this tracker (prevents duplicate timers)
+    if self.activeTimers[trackerIndex] then
+        self.activeTimers[trackerIndex]:Cancel()
+        self.activeTimers[trackerIndex] = nil
+    end
+
+    -- Reset the cooldown animation fresh
     frame.cooldown:SetCooldown(GetTime(), config.Duration)
     frame:Show()
 
     self:LayoutIcons()
 
-    -- Hide after duration
-    C_Timer.After(config.Duration, function()
+    -- Hide after duration (store handle so we can cancel if previewed again)
+    self.activeTimers[trackerIndex] = C_Timer.NewTimer(config.Duration, function()
+        self.activeTimers[trackerIndex] = nil
         if frame then
             frame:Hide()
             self:LayoutIcons()
@@ -266,6 +285,12 @@ end
 
 -- Create all tracker frames from database
 function BI:CreateAllTrackers()
+    -- Cancel all active timers before recreating frames
+    for trackerIndex, timer in pairs(self.activeTimers) do
+        timer:Cancel()
+    end
+    self.activeTimers = {}
+
     -- Clean up existing frames
     for _, frame in pairs(self.trackerFrames) do
         frame:Hide()
@@ -327,6 +352,12 @@ end
 
 -- Module OnDisable
 function BI:OnDisable()
+    -- Cancel all active timers
+    for trackerIndex, timer in pairs(self.activeTimers) do
+        timer:Cancel()
+    end
+    self.activeTimers = {}
+
     for _, frame in pairs(self.trackerFrames) do
         frame:Hide()
     end
@@ -365,6 +396,12 @@ function BI:PreviewAll()
 end
 
 function BI:HideAll()
+    -- Cancel all active timers
+    for trackerIndex, timer in pairs(self.activeTimers) do
+        timer:Cancel()
+    end
+    self.activeTimers = {}
+
     for _, frame in pairs(self.trackerFrames) do
         frame:Hide()
     end

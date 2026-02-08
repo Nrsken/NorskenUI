@@ -27,7 +27,7 @@ local Defaults = {
         -- GUI State (only frame position/size persists across logins)
         GUIState = {
             frame = {
-                point = nil,         -- Anchor point (e.g., "CENTER")
+                point = nil,         -- Anchor point
                 relativePoint = nil, -- Relative anchor point
                 xOffset = nil,       -- Frame X offset
                 yOffset = nil,       -- Frame Y offset
@@ -81,44 +81,44 @@ local Defaults = {
 
         -- Combat Message Settings
         CombatMessage = {
-            Enabled = true,                      -- Enable/disable combat messages
-            Strata = "HIGH",                     -- Frame strata
-            anchorFrameType = "UIPARENT",        -- Anchor frame type (SCREEN, UIPARENT, SELECTFRAME)
-            ParentFrame = "UIParent",            -- Parent frame name (when SELECTFRAME)
-            FontFace = "Friz Quadrata TT",       -- Font face
-            FontSize = 15,                       -- Font size
-            FontOutline = "OUTLINE",             -- Font outline
-            FontShadow = {                       -- Font shadow settings
-                Enabled = false,                 -- Enable font shadow
-                Color = { 0, 0, 0, 1 },          -- Shadow color
-                OffsetX = 1,                     -- Shadow X offset
-                OffsetY = -1,                    -- Shadow Y offset
+            Enabled = true,                -- Enable/disable combat messages
+            Strata = "HIGH",               -- Frame strata
+            anchorFrameType = "UIPARENT",  -- Anchor frame type (SCREEN, UIPARENT, SELECTFRAME)
+            ParentFrame = "UIParent",      -- Parent frame name (when SELECTFRAME)
+            FontFace = "Friz Quadrata TT", -- Font face
+            FontSize = 15,                 -- Font size
+            FontOutline = "OUTLINE",       -- Font outline
+            FontShadow = {                 -- Font shadow settings
+                Enabled = false,           -- Enable font shadow
+                Color = { 0, 0, 0, 1 },    -- Shadow color
+                OffsetX = 1,               -- Shadow X offset
+                OffsetY = -1,              -- Shadow Y offset
             },
-            Position = {                         -- Position settings
-                AnchorFrom = "CENTER",           -- Anchor point from
-                AnchorTo = "CENTER",             -- Anchor point to
-                XOffset = 0,                     -- X offset
-                YOffset = 50,                   -- Y offset
+            Position = {                   -- Position settings
+                AnchorFrom = "CENTER",     -- Anchor point from
+                AnchorTo = "CENTER",       -- Anchor point to
+                XOffset = 0,               -- X offset
+                YOffset = 50,              -- Y offset
             },
-            Duration = 2.5,                      -- Message display duration
-            Spacing = 4,                         -- Vertical spacing between messages
+            Duration = 2.5,                -- Message display duration
+            Spacing = 4,                   -- Vertical spacing between messages
             -- Enter Combat Message
             EnterCombat = {
-                Enabled = true,                      -- Enable enter combat message
-                Text = "+ COMBAT +",                 -- Text on entering combat
-                Color = { 0.929, 0.259, 0, 1 },      -- Color on entering combat
+                Enabled = true,                 -- Enable enter combat message
+                Text = "+ COMBAT +",            -- Text on entering combat
+                Color = { 0.929, 0.259, 0, 1 }, -- Color on entering combat
             },
             -- Exit Combat Message
             ExitCombat = {
-                Enabled = true,                      -- Enable exit combat message
-                Text = "- COMBAT -",                 -- Text on exiting combat
-                Color = { 0.788, 1, 0.627, 1 },      -- Color on exiting combat
+                Enabled = true,                 -- Enable exit combat message
+                Text = "- COMBAT -",            -- Text on exiting combat
+                Color = { 0.788, 1, 0.627, 1 }, -- Color on exiting combat
             },
             -- No Target Warning (persistent while in combat with no target)
             NoTarget = {
-                Enabled = true,                     -- Enable no target warning
-                Text = "NO TARGET",                  -- Warning text
-                Color = { 1, 0.8, 0, 1 },            -- Warning color (yellow/orange)
+                Enabled = true,           -- Enable no target warning
+                Text = "NO TARGET",       -- Warning text
+                Color = { 1, 0.8, 0, 1 }, -- Warning color (yellow/orange)
             },
         },
 
@@ -152,7 +152,7 @@ local Defaults = {
                 AnchorFrom = "CENTER",    -- Anchor point from
                 AnchorTo = "CENTER",      -- Anchor point to
                 XOffset = 0,              -- X offset
-                YOffset = -50,              -- Y offset
+                YOffset = -50,            -- Y offset
             },
 
             -- Text Mode Settings
@@ -303,6 +303,7 @@ local Defaults = {
                 -- Statusbar coloring
                 ColorMode = "theme",
                 StatusColor = { 1, 1, 1, 1 },
+                StatusBarTexture = "Blizzard", -- LSM statusbar texture name
 
                 -- Reste Coloring
                 RestedColor = { 0.4, 0.2, 1, 0.6 },
@@ -360,7 +361,7 @@ local Defaults = {
             DragonRiding = {
                 Enabled = true,
                 Width = 252,               -- Total width of the UI
-                BarHeight = 6,            -- Height of each row
+                BarHeight = 6,             -- Height of each row
                 Spacing = 3,               -- Spacing between rows
                 SpeedFontSize = 14,        -- Speed text font size
                 Position = {               -- Position settings
@@ -370,11 +371,17 @@ local Defaults = {
                     YOffset = 220,         -- Y offset
                 },
                 Colors = {
-                    Vigor = { 0.898, 0.063, 0.224, 1 },       -- Normal vigor color (NorskenUI red)
-                    VigorThrill = { 0.2, 0.8, 0.2, 1 },       -- Thrill of the Skies active (green)
-                    WhirlingSurge = { 0.6, 0.4, 0.9, 1 },     -- Whirling Surge (purple)
-                    SecondWind = { 0.3, 0.7, 1, 1 },          -- Second Wind (light blue)
+                    Vigor = { 0.898, 0.063, 0.224, 1 },   -- Normal vigor color
+                    VigorThrill = { 0.2, 0.8, 0.2, 1 },   -- Thrill of the Skies active (green)
+                    WhirlingSurge = { 0.6, 0.4, 0.9, 1 }, -- Whirling Surge (purple)
+                    SecondWind = { 0.3, 0.7, 1, 1 },      -- Second Wind (light blue)
                 },
+            },
+            CooldownStrings = {
+                Enabled = true,    -- Enable/disable CDM profile strings
+                FrameWidth = 350,  -- Width of the attached frame
+                FrameHeight = 400, -- Height of the attached frame
+                Profiles = {},     -- Saved profile strings { [name] = { String = "", Created = timestamp } }
             },
         },
         -- Skinning Settings (CDM, Buffs, Action Bars, etc.)
@@ -969,7 +976,7 @@ local Defaults = {
                 },
 
                 -- MiniMap Elements
-                ExpansionButton = {        -- Expansion button (e.g., Delves button)
+                ExpansionButton = {        -- Expansion button
                     Hide = false,          -- Hide expansion button
                     Scale = 0.6,           -- Scale of button
                     Anchor = "TOPRIGHT",   -- Anchor point
@@ -1195,6 +1202,7 @@ local Defaults = {
                     BackgroundColor = { 0, 0, 0, 0.8 },
                     BorderColor = { 0, 0, 0, 1 },
                     Reverse = false,
+                    StatusBarTexture = "Blizzard", -- LSM statusbar texture name
                 },
             },
 

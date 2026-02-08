@@ -42,6 +42,12 @@ function BB:GetDefaults()
     return self.db and self.db.Defaults or {}
 end
 
+-- Get statusbar texture name from defaults
+function BB:GetStatusBarTexture()
+    local defaults = self:GetDefaults()
+    return defaults.StatusBarTexture or "Blizzard"
+end
+
 -- Get tracker config with defaults merged
 function BB:GetTrackerConfig(tracker)
     local defaults = self:GetDefaults()
@@ -116,11 +122,14 @@ function BB:CreateTrackerFrame(trackerIndex, config)
     frame.barContainer:SetBackdropColor(unpack(config.BackgroundColor))
     frame.barContainer:SetBackdropBorderColor(unpack(config.BorderColor))
 
+    -- Get statusbar texture from LSM
+    local statusbarTexture = NRSKNUI:GetStatusbarPath(self:GetStatusBarTexture())
+
     -- StatusBar
     frame.bar = CreateFrame("StatusBar", nil, frame.barContainer)
     frame.bar:SetPoint("TOPLEFT", 1, -1)
     frame.bar:SetPoint("BOTTOMRIGHT", -1, 1)
-    frame.bar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
+    frame.bar:SetStatusBarTexture(statusbarTexture)
     frame.bar:SetStatusBarColor(unpack(config.BarColor))
     frame.bar:SetMinMaxValues(0, config.Duration)
     frame.bar:SetValue(config.Duration)

@@ -1024,7 +1024,7 @@ local function RegisterBarWithEditMode(barName, barDB, barContainer, relativeTo)
         end,
 
         guiPath = "ActionBars",
-        guiContext = barName, -- Pass the bar key (e.g., "Bar1", "Bar2") for granular navigation
+        guiContext = barName, -- Pass the bar key
     }
     NRSKNUI.EditMode:RegisterElement(config)
 end

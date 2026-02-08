@@ -574,7 +574,7 @@ function GUIFrame:OpenPage(itemId, sectionId, context)
         self:RefreshSidebar()
     end
 
-    -- Store context for granular navigation (e.g., specific bar or backdrop to select)
+    -- Store context for granular navigation
     -- Content builders can check this and apply it, then clear it
     self.pendingContext = context
 

@@ -40,6 +40,7 @@
     <Script file="GUITabs\GUI-QoL\GUI-CopyAnything.lua" />
     <Script file="GUITabs\GUI-QoL\GUI-XPBar.lua" />
     <Script file="GUITabs\GUI-QoL\GUI-Durability.lua" />
+    <Script file="GUITabs\GUI-QoL\GUI-CooldownStrings.lua" />
 
     <!-- GUI Skinning Tabs -->
     <Script file="GUITabs\GUISkinning\GUI-TooltipsTab.lua" />

@@ -23,7 +23,7 @@ GUIFrame:RegisterContent("DetailsBackdrop", function(scrollChild, yOffset)
         return yOffset + errorCard:GetContentHeight() + Theme.paddingMedium
     end
 
-    -- Check for pending context from EditMode navigation (e.g., specific backdrop to select)
+    -- Check for pending context from EditMode navigation
     if GUIFrame.pendingContext then
         local contextBackdrop = GUIFrame.pendingContext
         -- Validate that the context is a valid backdrop key

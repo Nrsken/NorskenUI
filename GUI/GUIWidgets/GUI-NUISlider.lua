@@ -411,7 +411,7 @@ function GUIFrame:CreateSlider(parent, labelText, min, max, step, value, labelWi
         if not isUpdating then
             isUpdating = true
             if isPercent then
-                -- Display as percentage (e.g., 0.3 -> "30%")
+                -- Display as percentage
                 valueEdit:SetText(math_floor(val * 1000 + 0.5) / 10 .. "%")
             else
                 valueEdit:SetText(tostring(math_floor(val * 100 + 0.5) / 100))

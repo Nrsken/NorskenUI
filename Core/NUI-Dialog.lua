@@ -123,15 +123,15 @@ end
 --[[ Usage:
 NRSKNUI:CreatePrompt(
     "Title text, shown on header",
-    "Text shown in the dialog frame itself, if showEditBox is set to true, this is the text that gets placed in the editbox",
+    "Text shown in the dialog frame itself (shown as label above editbox when showEditBox is true)",
     showEditBox (true/false, this controls if it's a Editbox dialogframe or normal 2 button + text frame),
-    "Editbox label text",
+    "Editbox label text (optional, shown below the editbox)",
     useTexture (true/false, sets use of texture in the topleft),
     "Interface\\AddOns\\NorskenUI\\Media\\SupportLogos\\Twitchv2W.png" (texture path),
     textureSizeX (texture width),
     textureSizeY (texture height),
     textureColor (texture color),
-    onAccept (callback when you click accept button),
+    onAccept (callback when you click accept button - receives editbox text as argument when showEditBox is true),
     onCancel (callback when you click cancel button),
     acceptText (text on the accept button),
     cancelText (text on the cancel button),
@@ -167,7 +167,9 @@ function NRSKNUI:CreatePrompt(title, text, showEditBox, editBoxLabelText, useTex
     local textSecondary = ValidateThemeColor(Theme.textSecondary, { 0.7, 0.7, 0.7, 1 })
 
     local dialog = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
-    dialog:SetSize(POPUP_WIDTH, POPUP_HEIGHT)
+    -- Use taller height for editbox dialogs to fit label + editbox + buttons
+    local dialogHeight = showEditBox and 140 or POPUP_HEIGHT
+    dialog:SetSize(POPUP_WIDTH, dialogHeight)
     dialog:SetPoint("CENTER", UIParent, "CENTER", 0, 100)
     dialog:SetFrameStrata("TOOLTIP")
     dialog:SetFrameLevel(100)
@@ -259,9 +261,25 @@ function NRSKNUI:CreatePrompt(title, text, showEditBox, editBoxLabelText, useTex
     end
 
     if showEditBox and not dialog.editBox then
+        -- Label above the editbox showing the prompt text
+        local promptLabel = dialog:CreateFontString(nil, "OVERLAY")
+        promptLabel:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 12, -12)
+        promptLabel:SetPoint("TOPRIGHT", header, "BOTTOMRIGHT", -12, -12)
+        promptLabel:SetJustifyH("CENTER")
+        promptLabel:SetJustifyV("TOP")
+        if NRSKNUI.ApplyThemeFont then
+            NRSKNUI:ApplyThemeFont(promptLabel, "normal")
+        else
+            promptLabel:SetFontObject("GameFontNormal")
+        end
+        promptLabel:SetText(text or "")
+        promptLabel:SetTextColor(textPrimary[1], textPrimary[2], textPrimary[3], 1)
+        promptLabel:SetShadowColor(0, 0, 0, 0)
+
         local editBox = CreateFrame("EditBox", nil, dialog, "BackdropTemplate")
         editBox:SetSize(dialog:GetWidth() - 24, 24)
-        editBox:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 12, -12)
+        editBox:SetPoint("TOPLEFT", promptLabel, "BOTTOMLEFT", 0, -8)
+        editBox:SetPoint("TOPRIGHT", promptLabel, "BOTTOMRIGHT", 0, -8)
         editBox:SetAutoFocus(true)
         editBox:SetText("")
         editBox:SetJustifyH("CENTER")
@@ -290,6 +308,22 @@ function NRSKNUI:CreatePrompt(title, text, showEditBox, editBoxLabelText, useTex
             end
         end)
 
+        editBox:SetScript("OnEnterPressed", function(self)
+            if onAccept then
+                local inputText = self:GetText()
+                inputText = inputText and inputText:match("^%s*(.-)%s*$") or "" -- trim whitespace
+                onAccept(inputText)
+            end
+            dialog:Hide()
+            NRSKNUI.activePrompt = nil
+        end)
+
+        editBox:SetScript("OnEscapePressed", function(self)
+            if onCancel then onCancel() end
+            dialog:Hide()
+            NRSKNUI.activePrompt = nil
+        end)
+
         editBox:SetScript("OnEnter", function(self)
             self:SetBackdropBorderColor(accent[1], accent[2], accent[3], 1)
         end)
@@ -297,30 +331,32 @@ function NRSKNUI:CreatePrompt(title, text, showEditBox, editBoxLabelText, useTex
             self:SetBackdropBorderColor(border[1], border[2], border[3], 1)
         end)
 
-        local editBoxLabel = dialog:CreateFontString(nil, "OVERLAY")
-        editBoxLabel:SetPoint("TOPLEFT", editBox, "BOTTOMLEFT", 12, -12)
-        editBoxLabel:SetPoint("TOPRIGHT", editBox, "BOTTOMRIGHT", -12, -12)
-        editBoxLabel:SetJustifyH("CENTER")
-        editBoxLabel:SetJustifyV("TOP")
-        if NRSKNUI.ApplyThemeFont then
-            NRSKNUI:ApplyThemeFont(editBoxLabel, "normal")
-        else
-            editBoxLabel:SetFontObject("GameFontNormal")
+        if editBoxLabelText then
+            local editBoxLabel = dialog:CreateFontString(nil, "OVERLAY")
+            editBoxLabel:SetPoint("TOPLEFT", editBox, "BOTTOMLEFT", 0, -4)
+            editBoxLabel:SetPoint("TOPRIGHT", editBox, "BOTTOMRIGHT", 0, -4)
+            editBoxLabel:SetJustifyH("CENTER")
+            editBoxLabel:SetJustifyV("TOP")
+            if NRSKNUI.ApplyThemeFont then
+                NRSKNUI:ApplyThemeFont(editBoxLabel, "normal")
+            else
+                editBoxLabel:SetFontObject("GameFontNormal")
+            end
+            editBoxLabel:SetText(editBoxLabelText)
+            editBoxLabel:SetTextColor(textSecondary[1], textSecondary[2], textSecondary[3], 1)
+            editBoxLabel:SetShadowColor(0, 0, 0, 0)
         end
-        editBoxLabel:SetText(editBoxLabelText or "")
-        editBoxLabel:SetTextColor(textSecondary[1], textSecondary[2], textSecondary[3], 1)
-        editBoxLabel:SetShadowColor(0, 0, 0, 0)
 
         dialog.editBox = editBox
     end
 
     if dialog.editBox then
-        dialog.editBox:SetText(text or "")
         dialog.editBox:HighlightText()
         dialog.editBox:SetAutoFocus(true)
     end
 
-    if not showEditBox then
+    -- Always create buttons (for both editbox and non-editbox modes)
+    if true then
         local buttonContainer = CreateFrame("Frame", nil, dialog)
         buttonContainer:SetHeight(30)
         buttonContainer:SetPoint("BOTTOMLEFT", dialog, "BOTTOMLEFT", 12, 12)
@@ -329,7 +365,16 @@ function NRSKNUI:CreatePrompt(title, text, showEditBox, editBoxLabelText, useTex
         local acceptBtn = CreateThemedButton(buttonContainer, Theme, acceptText or "Accept", true)
         acceptBtn:SetPoint("RIGHT", buttonContainer, "CENTER", -4, 0)
         acceptBtn:SetScript("OnClick", function()
-            if onAccept then onAccept() end
+            if onAccept then
+                -- If there's an editbox, pass its text to the callback
+                if dialog.editBox then
+                    local inputText = dialog.editBox:GetText()
+                    inputText = inputText and inputText:match("^%s*(.-)%s*$") or "" -- trim whitespace
+                    onAccept(inputText)
+                else
+                    onAccept()
+                end
+            end
             dialog:Hide()
             NRSKNUI.activePrompt = nil
         end)
