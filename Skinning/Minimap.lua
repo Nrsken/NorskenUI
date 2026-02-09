@@ -129,7 +129,7 @@ function MAP:StripBlizzMap()
         element:SetAlpha(0)
     end
 
-    -- Doing anything with this one seems buggy, makes game not clickable if you exit tradingpost for example
+    -- Addon compartment skinning
     if AddonCompartmentFrame then
         if self.db.HideAddOnComp then
             AddonCompartmentFrame:ClearAllPoints()

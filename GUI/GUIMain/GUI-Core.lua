@@ -1,5 +1,8 @@
 -- NorskenUI namespace
 local _, NRSKNUI = ...
+NRSKNUI.GUIFrame = NRSKNUI.GUIFrame or {}
+local GUIFrame = NRSKNUI.GUIFrame
+local Theme = NRSKNUI.Theme
 
 -- Localization Setup
 local type = type
@@ -13,17 +16,10 @@ local pairs = pairs
 local print = print
 local ipairs = ipairs
 
--- GUI Frame namespace
-NRSKNUI.GUIFrame = NRSKNUI.GUIFrame or {}
-
--- Locals
-local GUIFrame = NRSKNUI.GUIFrame
-local Theme = NRSKNUI.Theme
-
 -- Content Registry System
-GUIFrame.ContentBuilders = {}         -- For standard content builders
-GUIFrame.PanelBuilders = {}           -- For content that needs full control (fixed headers, own scroll)
-GUIFrame.contentCleanupCallbacks = {} -- Callbacks to run when content is about to change
+GUIFrame.ContentBuilders = {}
+GUIFrame.PanelBuilders = {}
+GUIFrame.contentCleanupCallbacks = {}
 
 -- RegisterContent: Registers a content builder function for a given sidebar item ID
 function GUIFrame:RegisterContent(itemId, builderFunc)
@@ -90,7 +86,7 @@ function GUIFrame:UnregisterOnCloseCallback(key)
     end
 end
 
--- Fire all on-close callbacks (called from GUIFrame:Hide)
+-- Fire all on-close callbacks, called from GUIFrame:Hide
 function GUIFrame:FireOnCloseCallbacks()
     for key, callback in pairs(self.onCloseCallbacks) do
         local ok, err = pcall(callback)
@@ -162,10 +158,7 @@ function GUIFrame:CreateCard(parent, title, yOffset, width)
     card.content = content
     card.currentY = 0
 
-    ----------------------------------------------------------------
     -- Card Methods
-    ----------------------------------------------------------------
-
     function card:AddRow(widget, height, spacing)
         height = height or widget:GetHeight() or 24
         spacing = spacing or Theme.paddingSmall

@@ -121,7 +121,7 @@ function CS:CreateFrame()
     self:BuildUI()
 end
 
--- Create a NorskenUI-styled dropdown for the panel
+-- Create a dropdown for the panel
 function CS:CreatePanelDropdown(parent, labelText, options, selected, callback)
     local rowHeight = 34
     local row = CreateFrame("Frame", nil, parent)
@@ -178,7 +178,8 @@ function CS:CreatePanelDropdown(parent, labelText, options, selected, callback)
     dropdownList:SetBackdrop(CARD_BACKDROP)
     dropdownList:SetBackdropColor(Theme.bgMedium[1], Theme.bgMedium[2], Theme.bgMedium[3], 1)
     dropdownList:SetBackdropBorderColor(Theme.border[1], Theme.border[2], Theme.border[3], 1)
-    dropdownList:SetFrameStrata("TOOLTIP")
+    dropdownList:SetFrameStrata("FULLSCREEN_DIALOG")
+    dropdownList:SetFrameLevel(100)
     dropdownList:SetClipsChildren(true)
     dropdownList:Hide()
 

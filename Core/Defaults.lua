@@ -48,8 +48,8 @@ local Defaults = {
         CombatTimer = {
             Enabled = true,                      -- Enable/disable combat timer
             Format = "MM:SS",                    -- Time format
-            FontSize = 18,                       -- Font size
-            FontFace = "Friz Quadrata TT",       -- Font face
+            FontSize = 22,                       -- Font size
+            FontFace = "Expressway",             -- Font face
             FontOutline = "OUTLINE",             -- Font outline
             Strata = "HIGH",                     -- Frame strata
             anchorFrameType = "SELECTFRAME",     -- Anchor type: SCREEN, UIPARENT, SELECTFRAME
@@ -69,7 +69,7 @@ local Defaults = {
                 YOffset = -100,                  -- Y offset
             },
             Backdrop = {                         -- Backdrop settings
-                Enabled = true,                  -- Enable/disable backdrop
+                Enabled = false,                 -- Enable/disable backdrop
                 Color = { 0, 0, 0, 0.6 },        -- Backdrop color
                 BorderColor = { 0, 0, 0, 1 },    -- Border color
                 BorderSize = 1,
@@ -81,27 +81,27 @@ local Defaults = {
 
         -- Combat Message Settings
         CombatMessage = {
-            Enabled = true,                -- Enable/disable combat messages
-            Strata = "HIGH",               -- Frame strata
-            anchorFrameType = "UIPARENT",  -- Anchor frame type (SCREEN, UIPARENT, SELECTFRAME)
-            ParentFrame = "UIParent",      -- Parent frame name (when SELECTFRAME)
-            FontFace = "Friz Quadrata TT", -- Font face
-            FontSize = 15,                 -- Font size
-            FontOutline = "OUTLINE",       -- Font outline
-            FontShadow = {                 -- Font shadow settings
-                Enabled = false,           -- Enable font shadow
-                Color = { 0, 0, 0, 1 },    -- Shadow color
-                OffsetX = 1,               -- Shadow X offset
-                OffsetY = -1,              -- Shadow Y offset
+            Enabled = true,               -- Enable/disable combat messages
+            Strata = "HIGH",              -- Frame strata
+            anchorFrameType = "UIPARENT", -- Anchor frame type (SCREEN, UIPARENT, SELECTFRAME)
+            ParentFrame = "UIParent",     -- Parent frame name (when SELECTFRAME)
+            FontFace = "Expressway",      -- Font face
+            FontSize = 15,                -- Font size
+            FontOutline = "OUTLINE",      -- Font outline
+            FontShadow = {                -- Font shadow settings
+                Enabled = false,          -- Enable font shadow
+                Color = { 0, 0, 0, 0 },   -- Shadow color
+                OffsetX = 0,              -- Shadow X offset
+                OffsetY = 0,              -- Shadow Y offset
             },
-            Position = {                   -- Position settings
-                AnchorFrom = "CENTER",     -- Anchor point from
-                AnchorTo = "CENTER",       -- Anchor point to
-                XOffset = 0,               -- X offset
-                YOffset = 50,              -- Y offset
+            Position = {                  -- Position settings
+                AnchorFrom = "CENTER",    -- Anchor point from
+                AnchorTo = "CENTER",      -- Anchor point to
+                XOffset = 0,              -- X offset
+                YOffset = 142,            -- Y offset
             },
-            Duration = 2.5,                -- Message display duration
-            Spacing = 4,                   -- Vertical spacing between messages
+            Duration = 2.5,               -- Message display duration
+            Spacing = 4,                  -- Vertical spacing between messages
             -- Enter Combat Message
             EnterCombat = {
                 Enabled = true,                 -- Enable enter combat message
@@ -118,7 +118,7 @@ local Defaults = {
             NoTarget = {
                 Enabled = true,           -- Enable no target warning
                 Text = "NO TARGET",       -- Warning text
-                Color = { 1, 0.8, 0, 1 }, -- Warning color (yellow/orange)
+                Color = { 1, 0.4, 0, 1 }, -- Warning color (yellow/orange)
             },
         },
 
@@ -151,17 +151,17 @@ local Defaults = {
             Position = {                  -- Position settings
                 AnchorFrom = "CENTER",    -- Anchor point from
                 AnchorTo = "CENTER",      -- Anchor point to
-                XOffset = 0,              -- X offset
-                YOffset = -50,            -- Y offset
+                XOffset = 0.1,            -- X offset
+                YOffset = -430,           -- Y offset
             },
 
             -- Text Mode Settings
             TextMode = {
                 -- General text settings
-                FontFace = "Friz Quadrata TT", -- Font face
-                FontSize = 18,                 -- Font size
-                FontOutline = "OUTLINE",       -- Font outline
-                TextSpacing = 4,               -- Spacing between timer and charges
+                FontFace = "Expressway", -- Font face
+                FontSize = 18,           -- Font size
+                FontOutline = "OUTLINE", -- Font outline
+                TextSpacing = 4,         -- Spacing between timer and charges
 
                 -- Separator Settings
                 Separator = "|",                 -- Separator between timer and charges
@@ -221,7 +221,7 @@ local Defaults = {
             PassiveColor = { 0.3, 0.7, 1, 1 }, -- Light blue for passive
             DeadColor = { 1, 0.2, 0.2, 1 },    -- Red for dead
             -- Font settings
-            FontFace = "Friz Quadrata TT",     -- Font face
+            FontFace = "Expressway",           -- Font face
             FontSize = 24,                     -- Font size
             FontOutline = "OUTLINE",           -- Font outline (NONE, OUTLINE, THICKOUTLINE)
             FontSoftOutline = true,
@@ -233,7 +233,7 @@ local Defaults = {
                 AnchorFrom = "CENTER",    -- Anchor point from
                 AnchorTo = "CENTER",      -- Anchor point to
                 XOffset = 0,              -- X offset
-                YOffset = 150,            -- Y offset
+                YOffset = 181,            -- Y offset
             },
         },
 
@@ -241,7 +241,7 @@ local Defaults = {
         Miscellaneous = {
             Durability = {
                 Enabled = true,
-                FontFace = "Friz Quadrata TT",
+                FontFace = "Expressway",
                 FontOutline = "OUTLINE",
 
                 WarningText = {
@@ -258,7 +258,7 @@ local Defaults = {
                         AnchorFrom = "CENTER",    -- Anchor point from
                         AnchorTo = "CENTER",      -- Anchor point to
                         XOffset = 0,              -- X offset
-                        YOffset = 100,            -- Y offset
+                        YOffset = 104,            -- Y offset
                     },
                 },
 
@@ -285,11 +285,11 @@ local Defaults = {
             XPBar = {
                 Enabled = true,
                 HideBlizzardBar = true,
-                hideWhenMax = false,
+                hideWhenMax = true,
                 width = 400,
                 height = 24,
-                FontFace = "Friz Quadrata TT", -- Font face
-                FontOutline = "OUTLINE",       -- Font outline
+                FontFace = "Expressway", -- Font face
+                FontOutline = "OUTLINE", -- Font outline
                 FontSize = 14,
                 Strata = "HIGH",
                 anchorFrameType = "UIPARENT", -- Anchor frame type
@@ -303,10 +303,10 @@ local Defaults = {
                 -- Statusbar coloring
                 ColorMode = "theme",
                 StatusColor = { 1, 1, 1, 1 },
-                StatusBarTexture = "Blizzard", -- LSM statusbar texture name
+                StatusBarTexture = "NorskenUI", -- LSM statusbar texture name
 
-                -- Reste Coloring
-                RestedColor = { 0.4, 0.2, 1, 0.6 },
+                -- Rested Coloring
+                RestedColor = { 0.7803, 0.0000, 0.0000, 0.25 },
 
                 -- Backdrop
                 BackdropColor = { 0, 0, 0, 0.8 },
@@ -329,7 +329,7 @@ local Defaults = {
             },
             CursorCircle = {
                 Enabled = true,            -- Enable cursor circle
-                Size = 50,                 -- Circle size
+                Size = 40,                 -- Circle size
                 Texture = "Circle 3",      -- Selected texture
                 Color = { 1, 1, 1, 1 },    -- Circle color (RGBA) - used when ColorMode = "custom"
                 ColorMode = "theme",       -- Color mode: "class" | "custom" | "theme"
@@ -363,6 +363,7 @@ local Defaults = {
                 Width = 252,               -- Total width of the UI
                 BarHeight = 6,             -- Height of each row
                 Spacing = 3,               -- Spacing between rows
+                FontFace = "Expressway",
                 SpeedFontSize = 14,        -- Speed text font size
                 Position = {               -- Position settings
                     AnchorFrom = "CENTER", -- Anchor point from
@@ -371,10 +372,10 @@ local Defaults = {
                     YOffset = 220,         -- Y offset
                 },
                 Colors = {
-                    Vigor = { 0.898, 0.063, 0.224, 1 },   -- Normal vigor color
-                    VigorThrill = { 0.2, 0.8, 0.2, 1 },   -- Thrill of the Skies active (green)
-                    WhirlingSurge = { 0.6, 0.4, 0.9, 1 }, -- Whirling Surge (purple)
-                    SecondWind = { 0.3, 0.7, 1, 1 },      -- Second Wind (light blue)
+                    Vigor = { 0.898, 0.063, 0.224, 1 },       -- Normal vigor color
+                    VigorThrill = { 0, 1, 0.137, 1 },         -- Thrill of the Skies active
+                    WhirlingSurge = { 0.411, 0.8, 0.941, 1 }, -- Whirling Surge
+                    SecondWind = { 0.917, 0.168, 0.901, 1 },  -- Second Wind
                 },
             },
             CooldownStrings = {
@@ -382,6 +383,112 @@ local Defaults = {
                 FrameWidth = 350,  -- Width of the attached frame
                 FrameHeight = 400, -- Height of the attached frame
                 Profiles = {},     -- Saved profile strings { [name] = { String = "", Created = timestamp } }
+            },
+            FocusCastbar = {
+                Enabled = true,
+
+                Width = 300,
+                Height = 29,
+
+                FontFace = "Expressway",
+                FontSize = 14,
+                FontOutline = "OUTLINE",
+
+                Strata = "HIGH",
+                anchorFrameType = "UIPARENT",
+                ParentFrame = "UIParent",
+                Position = {
+                    AnchorFrom = "CENTER",
+                    AnchorTo = "CENTER",
+                    XOffset = 0.1,
+                    YOffset = 220.1,
+                },
+
+                -- Colors
+                CastingColor = { 0.623, 0.749, 1, 1 },
+                ChannelingColor = { 0.623, 0.749, 1, 1 },
+                EmpoweringColor = { 0.8, 0.4, 1, 1 },
+                NotInterruptibleColor = { 0.780, 0.250, 0.250, 1 },
+                TextColor = { 1, 1, 1, 1 },
+
+                -- Backdrop
+                BackdropColor = { 0, 0, 0, 0.8 },
+                BorderColor = { 0, 0, 0, 1 },
+
+                -- Statusbar
+                StatusBarTexture = "NorskenUI",
+
+                -- Hold Timer
+                HoldTimer = {
+                    Enabled = true,
+                    Duration = 0.5,
+                    InterruptedColor = { 0.1, 0.8, 0.1, 1 },
+                    SuccessColor = { 0.780, 0.250, 0.250, 1 },
+                },
+                timeToHold = 0.5,
+
+                -- Kick Indicator
+                KickIndicator = {
+                    Enabled = true,
+                    ReadyColor = { 0.623, 0.749, 1, 1 },
+                    NotReadyColor = { 0.5, 0.5, 0.5, 1 },
+                    TickColor = { 0.1, 0.8, 0.1, 1 },
+                },
+            },
+
+            RaidAlerts = {
+                Enabled = true,
+
+                IconSize = 20,
+
+                FontSize = 20,
+                FontFace = "Expressway", -- Module font face
+                FontOutline = "OUTLINE",
+
+                Strata = "HIGH",
+                Position = {
+                    AnchorFrom = "CENTER",
+                    AnchorTo = "CENTER",
+                    XOffset = 0,
+                    YOffset = 150,
+                },
+                Alerts = {
+                    Feast = {
+                        Enabled = true,
+                        DisplayText = "Feast",
+                        Color = { 0.96, 0.76, 0.26, 1 },
+                    },
+                    HeartyFeast = {
+                        Enabled = true,
+                        DisplayText = "Hearty Feast",
+                        Color = { 1, 0.5, 0, 1 },
+                    },
+                    PotCauldron = {
+                        Enabled = true,
+                        DisplayText = "Pot Cauldron",
+                        Color = { 0.627, 1, 0.854, 1 },
+                    },
+                    FlaskCauldron = {
+                        Enabled = true,
+                        DisplayText = "Flask Cauldron",
+                        Color = { 1, 0.760, 0.525, 1 },
+                    },
+                    RepairBot = {
+                        Enabled = true,
+                        DisplayText = "Auto-Hammer",
+                        Color = { 1, 0.6, 0.227, 1 },
+                    },
+                    Soulwell = {
+                        Enabled = true,
+                        DisplayText = "Grab Healthstones",
+                        Color = { 0.741, 1, 0, 1 },
+                    },
+                    SummonStone = {
+                        Enabled = true,
+                        DisplayText = "Help Summon",
+                        Color = { 0.780, 0, 1, 1 },
+                    },
+                },
             },
         },
         -- Skinning Settings (CDM, Buffs, Action Bars, etc.)
@@ -407,11 +514,11 @@ local Defaults = {
                 Enabled = true,
                 Width = 448,
                 Height = 245,
-                FontFace = "Friz Quadrata TT", -- Module font face
-                FontOutline = "OUTLINE",       -- Module font outline
-                EditBoxFontSize = 14,          -- EditBox Font size
-                ChatFontSize = 12,             -- Chat Font size
-                TabFontSize = 12,              -- Chat Tab Font size
+                FontFace = "Expressway", -- Module font face
+                FontOutline = "OUTLINE", -- Module font outline
+                EditBoxFontSize = 14,    -- EditBox Font size
+                ChatFontSize = 12,       -- Chat Font size
+                TabFontSize = 12,        -- Chat Tab Font size
                 TabSpacing = 20,
                 -- Tab Color Settings
                 TabColors = {
@@ -446,7 +553,7 @@ local Defaults = {
             -- Smoll CDM skin on aura overlay
             CDM = {
                 Enabled = true,
-                FontFace = "Friz Quadrata TT",
+                FontFace = "Expressway",
                 FontOutline = "OUTLINE",
                 AlphaoutMountPet = true,
                 AlphaMountPet = 0.5,
@@ -476,7 +583,7 @@ local Defaults = {
                     FadeOutDuration = 1,
                     Alpha = 0,
                 },
-                FontFace = "Friz Quadrata TT",
+                FontFace = "Expressway",
                 FontOutline = "OUTLINE",
 
                 -- Global Font Sizes (used when bar's FontSizes.GlobalOverride is true)
@@ -498,7 +605,7 @@ local Defaults = {
 
                 MacroAnchor = "BOTTOM",
                 MacroXOffset = 0,
-                MacroYOffset = -2,
+                MacroYOffset = 2,
 
                 CooldownAnchor = "CENTER",
                 CooldownXOffset = 0,
@@ -901,7 +1008,7 @@ local Defaults = {
                         GrowthDirection = "RIGHT",
                         ButtonsPerLine = 10,
                         ParentFrame = "UIParent",
-                        HideEmptyBackdrops = false,
+                        HideEmptyBackdrops = true,
                         BackdropColor = { 0, 0, 0, 0.8 },
                         BorderColor = { 0, 0, 0, 1 },
                         Position = {
@@ -940,10 +1047,10 @@ local Defaults = {
 
             -- Standard Buff/Debuff Frame Skinning
             BuffDebuffFrames = {
-                Enabled = true,                -- Master toggle for buff/debuff frame skinning
-                disableFlashing = true,        -- Disable flashing on low duration icons
-                FontFace = "Friz Quadrata TT", -- Font face
-                FontOutline = "OUTLINE",       -- Font outline
+                Enabled = true,          -- Master toggle for buff/debuff frame skinning
+                disableFlashing = true,  -- Disable flashing on low duration icons
+                FontFace = "Expressway", -- Font face
+                FontOutline = "OUTLINE", -- Font outline
                 FontColor = { 1, 1, 1, 1 },
 
                 -- Buffs
@@ -1050,10 +1157,10 @@ local Defaults = {
 
             -- Blizzard Messages Skinning
             BlizzardMessages = {
-                Enabled = true,            -- Master toggle for Blizzard messages skinning
+                Enabled = true,          -- Master toggle for Blizzard messages skinning
                 -- Global font settings
-                Font = "Friz Quadrata TT", -- Font face
-                FontOutline = "OUTLINE",   -- Font outline
+                Font = "Expressway",     -- Font face
+                FontOutline = "OUTLINE", -- Font outline
                 -- UIErrorsFrame (red error messages at top of screen)
                 UIErrorsFrame = {
                     Hide = false, -- Show/hide error messages
@@ -1108,7 +1215,7 @@ local Defaults = {
                 BorderColor = { 0, 0, 0, 1 },       -- Black border
                 BorderSize = 1,                     -- Border thickness
                 HideHealthBar = true,               -- Hide health bar on unit tooltips
-                Font = "Friz Quadrata TT",          -- Font face
+                Font = "Expressway",                -- Font face
                 FontOutline = "OUTLINE",            -- Font outline
                 NameFontSize = 17,                  -- Name Font size
                 GuildFontSize = 14,                 -- Guild Font size
@@ -1178,7 +1285,7 @@ local Defaults = {
             Bars = {
                 Enabled = true,
                 GrowthDirection = "DOWN", -- DOWN, UP, LEFT, RIGHT
-                Spacing = 2,
+                Spacing = 1,
                 -- Position settings
                 anchorFrameType = "SCREEN",
                 Position = {
@@ -1202,7 +1309,7 @@ local Defaults = {
                     BackgroundColor = { 0, 0, 0, 0.8 },
                     BorderColor = { 0, 0, 0, 1 },
                     Reverse = false,
-                    StatusBarTexture = "Blizzard", -- LSM statusbar texture name
+                    StatusBarTexture = "NorskenUI", -- LSM statusbar texture name
                 },
             },
 
@@ -1210,7 +1317,7 @@ local Defaults = {
             Icons = {
                 Enabled = true,
                 GrowthDirection = "RIGHT", -- LEFT, RIGHT, UP, DOWN
-                Spacing = 2,
+                Spacing = 1,
                 -- Position settings
                 anchorFrameType = "SCREEN",
                 Position = {
@@ -1233,14 +1340,14 @@ local Defaults = {
         -- Missing Buffs Tracker
         MissingBuffs = {
             -- General Settings
-            Enabled = true,            -- Enable/disable module
-            IconSize = 48,             -- Icon size
-            IconSpacing = 1,           -- Spacing between icons
-            Strata = "HIGH",           -- Frame strata
-            Font = "Friz Quadrata TT", -- Font face
-            FontSize = 12,             -- Font size
-            FontOutline = "OUTLINE",   -- Font outline
-            HideWhileMounted = true,   -- Hide when mounted
+            Enabled = true,          -- Enable/disable module
+            IconSize = 48,           -- Icon size
+            IconSpacing = 1,         -- Spacing between icons
+            Strata = "HIGH",         -- Frame strata
+            Font = "Expressway",     -- Font face
+            FontSize = 12,           -- Font size
+            FontOutline = "OUTLINE", -- Font outline
+            HideWhileMounted = true, -- Hide when mounted
 
             -- Raid & General Buffs Settings
             NotifyLowDuration = false, -- Notify when buff is about to expire
@@ -1248,10 +1355,10 @@ local Defaults = {
 
             -- Consumable Tracking
             Consumables = {
-                Flask = { Enabled = true, LoadCondition = "ALWAYS" },
-                Food = { Enabled = true, LoadCondition = "ALWAYS" },
-                MHEnchant = { Enabled = true, LoadCondition = "ALWAYS" },
-                OHEnchant = { Enabled = true, LoadCondition = "ALWAYS" },
+                Flask = { Enabled = true, LoadCondition = "ANYGROUP" },
+                Food = { Enabled = true, LoadCondition = "ANYGROUP" },
+                MHEnchant = { Enabled = true, LoadCondition = "ANYGROUP" },
+                OHEnchant = { Enabled = true, LoadCondition = "ANYGROUP" },
                 Rune = { Enabled = true, LoadCondition = "RAID" },
                 RaidBuffs = { Enabled = true, LoadCondition = "ANYGROUP" },
             },
@@ -1259,7 +1366,7 @@ local Defaults = {
             -- Raid Buff Display Settings (separate position from main)
             RaidBuffDisplay = {
                 IconSize = 48,
-                IconSpacing = 8,
+                IconSpacing = 1,
                 Strata = "HIGH",
                 anchorFrameType = "UIPARENT",
                 ParentFrame = "UIParent",
@@ -1300,17 +1407,17 @@ local Defaults = {
                 -- Druid Forms
                 DRUID = {
                     Enabled = true,
-                    BalanceEnabled = false,
+                    BalanceEnabled = true,
                     Balance = "24858", -- Moonkin Form
-                    FeralEnabled = false,
+                    FeralEnabled = true,
                     Feral = "768",     -- Cat Form
-                    GuardianEnabled = false,
+                    GuardianEnabled = true,
                     Guardian = "5487", -- Bear Form
                 },
 
                 -- Priest Shadowform
                 PRIEST = {
-                    ShadowEnabled = false, -- Require Shadowform for Shadow spec
+                    ShadowEnabled = true, -- Require Shadowform for Shadow spec
                 },
 
                 -- Evoker Attunements
@@ -1323,7 +1430,7 @@ local Defaults = {
 
             -- Stance Display Settings (separate position)
             StanceDisplay = {
-                IconSize = 48,
+                IconSize = 38,
                 Strata = "HIGH",
                 anchorFrameType = "UIPARENT",
                 ParentFrame = "UIParent",
@@ -1338,7 +1445,7 @@ local Defaults = {
             -- Stance Text Display Settings
             StanceText = {
                 Enabled = false, -- Enable stance text display
-                Font = "Friz Quadrata TT",
+                Font = "Expressway",
                 FontOutline = "OUTLINE",
                 FontSize = 14,
                 Strata = "HIGH",
@@ -1347,8 +1454,8 @@ local Defaults = {
                 Position = {
                     AnchorFrom = "CENTER",
                     AnchorTo = "CENTER",
-                    XOffset = 0,
-                    YOffset = -200,
+                    XOffset = -250,
+                    YOffset = -130,
                 },
 
                 -- Warrior Stance Texts

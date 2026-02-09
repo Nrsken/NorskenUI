@@ -247,8 +247,19 @@ function CM:CheckNoTarget()
 
     local noTargetEnabled = self.db.NoTarget and self.db.NoTarget.Enabled
 
+    -- Don't show NO TARGET if player is dead or ghost
+    if UnitIsDeadOrGhost("player") then
+        self:HidePersistentMessage("noTarget")
+        return
+    end
+
     if self.inCombat and noTargetEnabled then
         C_Timer.After(0.1, function()
+            -- Re-check death state after timer
+            if UnitIsDeadOrGhost("player") then
+                self:HidePersistentMessage("noTarget")
+                return
+            end
             if not UnitExists("target") then
                 self:ShowPersistentMessage("noTarget")
             else
@@ -275,6 +286,10 @@ end
 
 function CM:OnTargetChanged()
     self:CheckNoTarget()
+end
+
+function CM:OnPlayerDead()
+    self:HidePersistentMessage("noTarget")
 end
 
 -- Settings Application
@@ -374,6 +389,7 @@ function CM:OnEnable()
     self:RegisterEvent("PLAYER_REGEN_ENABLED", "OnExitCombat")
     self:RegisterEvent("PLAYER_REGEN_DISABLED", "OnEnterCombat")
     self:RegisterEvent("PLAYER_TARGET_CHANGED", "OnTargetChanged")
+    self:RegisterEvent("PLAYER_DEAD", "OnPlayerDead")
 
     -- Check initial combat state
     self.inCombat = InCombatLockdown()

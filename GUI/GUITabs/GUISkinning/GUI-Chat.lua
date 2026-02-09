@@ -5,6 +5,7 @@ local LSM = NRSKNUI.LSM
 
 -- Localization Setup
 local table_insert = table.insert
+local pairs, ipairs = pairs, ipairs
 
 -- Helper to get Chat module
 local function GetChatModule()

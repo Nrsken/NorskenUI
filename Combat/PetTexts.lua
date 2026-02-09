@@ -138,8 +138,6 @@ function PET:CreatePetTexts()
     NRSKNUI:SnapFrameToPixels(frame)
 
     local text = frame:CreateFontString(nil, "OVERLAY")
-
-    -- Get font settings from db
     local fontPath = NRSKNUI:GetFontPath(self.db.FontFace)
     local fontSize = self.db.FontSize or 24
     local fontOutline = self.db.FontOutline or "OUTLINE"

@@ -1,6 +1,5 @@
 -- NorskenUI namespace
 local _, NRSKNUI = ...
-local LSM = NRSKNUI.LSM
 
 -- Check for addon object
 if not NRSKNUI.Addon then
@@ -126,7 +125,6 @@ end
 -- Apply all settings from DB
 function CT:ApplySettings()
     if not self.text then return end
-
     local db = self.db
 
     -- Apply font

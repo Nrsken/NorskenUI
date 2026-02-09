@@ -3,21 +3,22 @@ local addonName, NRSKNUI = ...
 _G.NRSKNUI = NRSKNUI
 
 -- Localization
-local ReloadUI = ReloadUI
+local ipairs = ipairs
 local print = print
 local pcall = pcall
 local LibStub = LibStub
 local string_gsub = string.gsub
+local ReloadUI = ReloadUI
 local C_AddOns = C_AddOns
 local EditModeManagerFrame = EditModeManagerFrame
+local _G = _G
 
--- Libraries (with error handling)
+-- Libraries
 local function SafeLibStub(name)
     local success, lib = pcall(LibStub, name)
     return success and lib or nil
 end
 NRSKNUI.LSM = SafeLibStub("LibSharedMedia-3.0")
-NRSKNUI.AG = SafeLibStub("AceGUI-3.0")
 NRSKNUI.LDB = SafeLibStub("LibDataBroker-1.1")
 NRSKNUI.LDBIcon = SafeLibStub("LibDBIcon-1.0")
 NRSKNUI.LDS = SafeLibStub("LibDualSpec-1.0")
@@ -137,7 +138,6 @@ function NRSKNUI:ApplyFont(fontString, fontName, fontSize, fontOutline)
     local outline = self:GetFontOutline(fontOutline)
     local success = fontString:SetFont(fontPath, fontSize or 12, outline)
     if not success then
-        -- Fallback to default font
         fontString:SetFont("Fonts\\FRIZQT__.TTF", fontSize or 12, outline)
     end
     return success
@@ -146,15 +146,11 @@ end
 -- Get text justification based on anchor point
 function NRSKNUI:GetTextJustifyFromAnchor(anchorPoint)
     if not anchorPoint then return "CENTER" end
-
-    -- Right-side anchors → right-align text
     if anchorPoint == "RIGHT" or anchorPoint == "TOPRIGHT" or anchorPoint == "BOTTOMRIGHT" then
         return "RIGHT"
-    -- Left-side anchors → left-align text
     elseif anchorPoint == "LEFT" or anchorPoint == "TOPLEFT" or anchorPoint == "BOTTOMLEFT" then
         return "LEFT"
     end
-    -- CENTER, TOP, BOTTOM → center text
     return "CENTER"
 end
 
@@ -173,6 +169,13 @@ end
 local PreviewManager = {}
 NRSKNUI.PreviewManager = PreviewManager
 
+-- Modules that support preview (has ShowPreview/HidePreview functions)
+local PREVIEW_MODULES = {
+    "MissingBuffs", "CombatCross", "CombatMessage", "CombatRes",
+    "CombatTimer", "PetTexts", "XPBar", "Durability", "DragonRiding", "RaidAlerts",
+    "FocusCastbar"
+}
+
 -- State tracking
 PreviewManager.guiOpen = false
 PreviewManager.editModeActive = false
@@ -183,11 +186,9 @@ function PreviewManager:UpdatePreviewState()
     local shouldShowPreviews = self.guiOpen or self.editModeActive
 
     if shouldShowPreviews and not self.previewsActive then
-        -- Start previews
         self:StartAllPreviews()
         self.previewsActive = true
     elseif not shouldShowPreviews and self.previewsActive then
-        -- Stop previews (only when BOTH are inactive)
         self:StopAllPreviews()
         self.previewsActive = false
     end
@@ -210,64 +211,17 @@ function PreviewManager:StartAllPreviews()
     local Addon = NRSKNUI.Addon
     if not Addon then return end
 
-    -- Missing Buffs
-    local MissingBuffs = Addon:GetModule("MissingBuffs", true)
-    if MissingBuffs and MissingBuffs.ShowPreview then
-        MissingBuffs:ShowPreview()
+    for _, moduleName in ipairs(PREVIEW_MODULES) do
+        local module = Addon:GetModule(moduleName, true)
+        if module and module.ShowPreview then
+            module:ShowPreview()
+        end
     end
 
-    -- Combat Cross
-    local CombatCross = Addon:GetModule("CombatCross", true)
-    if CombatCross and CombatCross.ShowPreview then
-        CombatCross:ShowPreview()
-    end
-
-    -- Combat Message
-    local CombatMessage = Addon:GetModule("CombatMessage", true)
-    if CombatMessage and CombatMessage.ShowPreview then
-        CombatMessage:ShowPreview()
-    end
-
-    -- Combat Res
-    local CombatRes = Addon:GetModule("CombatRes", true)
-    if CombatRes and CombatRes.ShowPreview then
-        CombatRes:ShowPreview()
-    end
-
-    -- Combat Timer
-    local CombatTimer = Addon:GetModule("CombatTimer", true)
-    if CombatTimer and CombatTimer.ShowPreview then
-        CombatTimer:ShowPreview()
-    end
-
-    -- Cursor Circle
+    -- CursorCircle uses ApplySettings instead of ShowPreview
     local CursorCircle = Addon:GetModule("CursorCircle", true)
     if CursorCircle and CursorCircle.ApplySettings then
         CursorCircle:ApplySettings()
-    end
-
-    -- Pet Texts
-    local PetTexts = Addon:GetModule("PetTexts", true)
-    if PetTexts and PetTexts.ShowPreview then
-        PetTexts:ShowPreview()
-    end
-
-    -- XP Bar
-    local XPBar = Addon:GetModule("XPBar", true)
-    if XPBar and XPBar.ShowPreview then
-        XPBar:ShowPreview()
-    end
-
-    -- Durability
-    local Durability = Addon:GetModule("Durability", true)
-    if Durability and Durability.ShowPreview then
-        Durability:ShowPreview()
-    end
-
-    -- Dragon Riding
-    local DragonRiding = Addon:GetModule("DragonRiding", true)
-    if DragonRiding and DragonRiding.ShowPreview then
-        DragonRiding:ShowPreview()
     end
 end
 
@@ -276,58 +230,11 @@ function PreviewManager:StopAllPreviews()
     local Addon = NRSKNUI.Addon
     if not Addon then return end
 
-    -- Missing Buffs
-    local MissingBuffs = Addon:GetModule("MissingBuffs", true)
-    if MissingBuffs and MissingBuffs.HidePreview then
-        MissingBuffs:HidePreview()
-    end
-
-    -- Combat Cross
-    local CombatCross = Addon:GetModule("CombatCross", true)
-    if CombatCross and CombatCross.HidePreview then
-        CombatCross:HidePreview()
-    end
-
-    -- Combat Message
-    local CombatMessage = Addon:GetModule("CombatMessage", true)
-    if CombatMessage and CombatMessage.HidePreview then
-        CombatMessage:HidePreview()
-    end
-
-    -- Combat Res
-    local CombatRes = Addon:GetModule("CombatRes", true)
-    if CombatRes and CombatRes.HidePreview then
-        CombatRes:HidePreview()
-    end
-
-    -- Combat Timer
-    local CombatTimer = Addon:GetModule("CombatTimer", true)
-    if CombatTimer and CombatTimer.HidePreview then
-        CombatTimer:HidePreview()
-    end
-
-    -- Pet Texts
-    local PetTexts = Addon:GetModule("PetTexts", true)
-    if PetTexts and PetTexts.HidePreview then
-        PetTexts:HidePreview()
-    end
-
-    -- XP Bar
-    local XPBar = Addon:GetModule("XPBar", true)
-    if XPBar and XPBar.HidePreview then
-        XPBar:HidePreview()
-    end
-
-    -- Durability
-    local Durability = Addon:GetModule("Durability", true)
-    if Durability and Durability.HidePreview then
-        Durability:HidePreview()
-    end
-
-    -- Dragon Riding
-    local DragonRiding = Addon:GetModule("DragonRiding", true)
-    if DragonRiding and DragonRiding.HidePreview then
-        DragonRiding:HidePreview()
+    for _, moduleName in ipairs(PREVIEW_MODULES) do
+        local module = Addon:GetModule(moduleName, true)
+        if module and module.HidePreview then
+            module:HidePreview()
+        end
     end
 end
 
@@ -335,4 +242,3 @@ end
 function PreviewManager:IsPreviewActive()
     return self.previewsActive
 end
-

@@ -7,6 +7,7 @@ local Theme = NRSKNUI.Theme
 local table_insert = table.insert
 local pairs, ipairs = pairs, ipairs
 local CreateFrame = CreateFrame
+local time = time
 
 -- Get module reference
 local function GetModule()
@@ -189,14 +190,6 @@ GUIFrame:RegisterContent("CooldownStrings", function(scrollChild, yOffset)
             end)
         row2a:AddWidget(profileDropdown, 0.6)
         table_insert(allWidgets, profileDropdown)
-    else
-        -- No profiles - show placeholder
-        local noProfileLabel = row2a:CreateFontString(nil, "OVERLAY")
-        noProfileLabel:SetPoint("LEFT", row2a, "LEFT", 130, 0)
-        noProfileLabel:SetFont(STANDARD_TEXT_FONT, Theme.fontSizeNormal or 12, "OUTLINE")
-        noProfileLabel:SetText("No profiles yet, create one to get started")
-        noProfileLabel:SetTextColor(Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3], 0.7)
-        noProfileLabel:SetShadowOffset(0, 0)
     end
 
     card2:AddRow(row2a, 36)

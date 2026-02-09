@@ -297,10 +297,9 @@ function DUR:ShowPreview()
     self.isPreview = true
     if self.Text then
         self.Text:Show()
-        -- Show sample text for preview
         local durText = NRSKNUI:ColorText(self.db.Text.DurText, self.db.Text.DurColor)
-        self.Text:SetText((durText .. "75%%"))
-        self.Text:SetTextColor(1, 0.82, 0, 1) -- Yellow for 75%
+        self.Text:SetText((durText .. "75%"))
+        self.Text:SetTextColor(1, 0.82, 0, 1)
     end
     if self.WarningText then
         self.WarningText:Show()
@@ -310,14 +309,12 @@ end
 -- Hide preview
 function DUR:HidePreview()
     self.isPreview = false
-    -- Restore normal state based on db settings
     if self.Text then
         if not self.db.Text.Enabled then
             self.Text:Hide()
         end
     end
     if self.WarningText then
-        -- Warning text is controlled by durability percentage, trigger update
         self:OnEvent()
     end
 end

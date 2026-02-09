@@ -33,7 +33,8 @@ NRSKNUI.ClassColorHex = {
     WARRIOR = "C69B6D",
 }
 
--- GetPlayerClassColor: Get player's class color as RGBA table
+-- GetPlayerClassColor
+-- Get player's class color as RGBA table
 function NRSKNUI:GetPlayerClassColor()
     local _, class = UnitClass("player")
     if class and RAID_CLASS_COLORS[class] then
@@ -43,7 +44,8 @@ function NRSKNUI:GetPlayerClassColor()
     return { 1, 1, 1, 1 }
 end
 
--- GetClassColor: Get class color as RGBA table for any class token
+-- GetClassColor
+-- Get class color as RGBA table for any class token
 function NRSKNUI:GetClassColor(classToken)
     if not classToken then
         return self:GetPlayerClassColor()
@@ -55,7 +57,8 @@ function NRSKNUI:GetClassColor(classToken)
     return { 1, 1, 1, 1 }
 end
 
--- GetClassColorHex: Get class color hex code for text coloring
+-- GetClassColorHex
+-- Get class color hex code for text coloring
 function NRSKNUI:GetClassColorHex(classToken)
     if not classToken then
         local _, class = UnitClass("player")
@@ -64,7 +67,8 @@ function NRSKNUI:GetClassColorHex(classToken)
     return self.ClassColorHex[classToken] or "FFFFFF"
 end
 
--- GetClassColorRaw: Get RAID_CLASS_COLORS entry for a class token
+-- GetClassColorRaw
+-- Get RAID_CLASS_COLORS entry for a class token
 function NRSKNUI:GetClassColorRaw(classToken)
     if not classToken then
         local _, class = UnitClass("player")
@@ -73,13 +77,15 @@ function NRSKNUI:GetClassColorRaw(classToken)
     return RAID_CLASS_COLORS[classToken]
 end
 
--- ColorTextByClass: Wrap text in class color
+-- ColorTextByClass
+-- Wrap text in class color
 function NRSKNUI:ColorTextByClass(text, classToken)
     local hex = self:GetClassColorHex(classToken)
     return "|cFF" .. hex .. text .. "|r"
 end
 
--- RGBAToHex: Convert RGBA (0-1) to hex string "RRGGBB"
+-- RGBAToHex
+-- Convert RGBA (0-1) to hex string "RRGGBB"
 function NRSKNUI:RGBAToHex(r, g, b)
     r = math_floor((r or 1) * 255 + 0.5)
     g = math_floor((g or 1) * 255 + 0.5)
@@ -87,7 +93,8 @@ function NRSKNUI:RGBAToHex(r, g, b)
     return string_format("%02X%02X%02X", r, g, b)
 end
 
--- GetThemeColorHex: Get theme accent color as hex string
+-- GetThemeColorHex
+-- Get theme accent color as hex string
 function NRSKNUI:GetThemeColorHex()
     if Theme and Theme.accent then
         return self:RGBAToHex(Theme.accent[1], Theme.accent[2], Theme.accent[3])
@@ -95,13 +102,15 @@ function NRSKNUI:GetThemeColorHex()
     return "e51039"
 end
 
--- ColorTextByTheme: Wrap text in theme accent color
+-- ColorTextByTheme
+-- Wrap text in theme accent color
 function NRSKNUI:ColorTextByTheme(text)
     local hex = self:GetThemeColorHex()
     return "|cFF" .. hex .. text .. "|r"
 end
 
--- GetAccentColor: Get accent color RGBA based on mode (class/theme/custom)
+-- GetAccentColor
+-- Get accent color RGBA based on mode (class/theme/custom)
 function NRSKNUI:GetAccentColor(colorMode, customColor)
     colorMode = colorMode or "custom"
 

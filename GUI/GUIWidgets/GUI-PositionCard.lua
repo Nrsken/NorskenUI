@@ -290,9 +290,7 @@ function GUIFrame:CreatePositionCard(scrollChild, yOffset, config)
                     if NRSKNUI.FrameChooser then
                         NRSKNUI.FrameChooser:Start(function(frameName, isPreview)
                             if frameName then
-                                -- Update input field for preview/final
                                 frameInput:SetValue(frameName)
-                                -- Only save to DB on final selection (not preview)
                                 if not isPreview then
                                     setValue(keys.anchorFrameFrame, frameName)
                                 end
@@ -307,7 +305,7 @@ function GUIFrame:CreatePositionCard(scrollChild, yOffset, config)
         end
     end
 
-    -- Row 3: Anchor point selectors (side by side)
+    -- Row 3: Anchor point selectors
     local row3 = GUIFrame:CreateRow(card.content, 80)
 
     local selfPointValue = getValue(keys.selfPoint, defaults.selfPoint or "CENTER")
@@ -378,7 +376,7 @@ function GUIFrame:CreatePositionCard(scrollChild, yOffset, config)
     card.positionWidgets = widgets
     card.AnchorButtonWidgets = AnchorButtonwidgets
 
-    -- SetEnabled method for the card (standard interface)
+    -- SetEnabled method for the card
     function card:SetEnabled(enabled)
         -- Apply visual disabled state to the card itself
         if enabled then
@@ -400,13 +398,9 @@ function GUIFrame:CreatePositionCard(scrollChild, yOffset, config)
             end
         end
     end
-
-    -- Alias for backwards compatibility
     function card:SetPositionWidgetsEnabled(enabled)
         self:SetEnabled(enabled)
     end
-
-    -- In your reusable card file, add this to the card object
     function card:SetAnchorsOnlyEnabled(enabled)
         for _, widget in ipairs(self.AnchorButtonWidgets) do
             if widget.SetEnabled then

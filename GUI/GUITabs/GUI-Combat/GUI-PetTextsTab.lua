@@ -6,7 +6,7 @@ local LSM = NRSKNUI.LSM
 
 -- Localization
 local table_insert = table.insert
-local pairs = pairs
+local pairs, ipairs = pairs, ipairs
 
 -- Get module reference
 local function GetModule()

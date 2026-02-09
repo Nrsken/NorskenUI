@@ -53,6 +53,10 @@ local C_Timer = C_Timer
 local CHECK_THROTTLE = 0.25
 local MISSING_TEXT = "MISSING"
 local REAPPLY_TEXT = ""
+local GENERALBUFF_TEXT = ""
+
+-- Default icon for weapon enchants
+local WEAPON_ENCHANT_ICON = 136244
 
 -- Map CUSTOM_BUFFS categories to db.Consumables keys
 local CATEGORY_TO_DB_KEY = {
@@ -66,28 +70,28 @@ local CATEGORY_TO_DB_KEY = {
 -- Class buff definitions
 local CLASS_BUFFS = {
     ["DRUID"] = {
-        { spellId = 1126, text = MISSING_TEXT }, -- Mark of the Wild
+        { spellId = 1126, text = GENERALBUFF_TEXT }, -- Mark of the Wild
     },
     ["EVOKER"] = {
         {
             spellId = 381748,
             spellbookId = 364342,
-            text = MISSING_TEXT,
+            text = GENERALBUFF_TEXT,
             ignoreRangeCheck = true,
             extraBuffSpellIds = { 381732, 381741, 381746, 381749, 381750, 381751, 381752, 381753, 381754, 381756, 381757, 381758, 442744, 432658, 432652, 432655 }
         }, -- Blessing of the Bronze
     },
     ["MAGE"] = {
-        { spellId = 1459, text = MISSING_TEXT }, -- Arcane Intellect
+        { spellId = 1459, text = GENERALBUFF_TEXT }, -- Arcane Intellect
     },
     ["PRIEST"] = {
-        { spellId = 21562, text = MISSING_TEXT }, -- Power Word: Fortitude
+        { spellId = 21562, text = GENERALBUFF_TEXT }, -- Power Word: Fortitude
     },
     ["SHAMAN"] = {
-        { spellId = 462854, text = MISSING_TEXT }, -- Skyfury
+        { spellId = 462854, text = GENERALBUFF_TEXT }, -- Skyfury
     },
     ["WARRIOR"] = {
-        { spellId = 6673, text = MISSING_TEXT, ignoreRangeCheck = true }, -- Battle Shout
+        { spellId = 6673, text = GENERALBUFF_TEXT, ignoreRangeCheck = true }, -- Battle Shout
     },
 }
 
@@ -147,6 +151,7 @@ local CUSTOM_BUFFS = {
     { category = "FOOD",       spellId = 457284,    enabled = true },
     { category = "FOOD",       spellId = 1232585,   enabled = true },
     { category = "FOOD",       spellId = 461959,    enabled = true },
+    { category = "FOOD",       spellId = 462210,    enabled = true }, -- Hearty feast
 
     -- Weapon enchants
     { category = "MH_ENCHANT", weaponSlot = "main", text = "MH",   enabled = true },
@@ -194,9 +199,9 @@ local isThrottled = false
 local lastCheckTime = 0
 
 -- Frame state
-local containerFrame = nil  -- Raid buff icons container
-local stanceFrame = nil     -- Stance/form icon frame
-local stanceTextFrame = nil -- Stance text display frame
+local containerFrame = nil
+local stanceFrame = nil
+local stanceTextFrame = nil
 local iconPool = {}
 local activeIcons = {}
 local currentMissingBuffs = {}
@@ -206,10 +211,7 @@ local isPreviewActive = false
 
 -- Load condition checker
 local function IsLoadConditionMet(loadCondition)
-    if not loadCondition or loadCondition == "ALWAYS" then
-        return true
-    end
-
+    if not loadCondition or loadCondition == "ALWAYS" then return true end
     local groupSize = GetNumGroupMembers()
     local inRaid = IsInRaid()
     local inGroup = groupSize > 0
@@ -231,21 +233,15 @@ end
 local function IsSpellKnown(spellId)
     return spellId and C_SpellBook.IsSpellKnown(spellId)
 end
-
 local function GetSpellTexture(spellId)
     if spellId and spellId > 0 then
         return C_Spell.GetSpellTexture(spellId)
     end
     return nil
 end
-
--- Default icon for weapon enchants
-local WEAPON_ENCHANT_ICON = 136244
-
 local function IsPlayerMounted()
     return IsMounted() or UnitOnTaxi("player") or UnitInVehicle("player") or UnitHasVehicleUI("player")
 end
-
 local function IsValidTarget(unit)
     return UnitExists(unit)
         and not UnitIsDeadOrGhost(unit)
@@ -395,7 +391,6 @@ end
 local function CheckCustomBuffs()
     local db = MBUFFS.db
     if not db then return {} end
-
     local consumablesDb = db.Consumables or {}
     local missing = {}
     local categorySeen = {}
@@ -526,7 +521,7 @@ local function CreateIcon()
 
     -- Text
     iconFrame.text = iconFrame:CreateFontString(nil, "OVERLAY")
-    NRSKNUI:ApplyFont(iconFrame.text, db.Font, db.FontSize or 12, db.FontOutline)
+    NRSKNUI:ApplyFont(iconFrame.text, db.Font, 14, db.FontOutline)
     iconFrame.text:SetPoint("CENTER", iconFrame, "CENTER", 1, 0)
     iconFrame.text:SetTextColor(1, 1, 1, 1)
     iconFrame.text:SetShadowOffset(0, 0)
@@ -838,13 +833,13 @@ local function UpdateIconAppearance(iconFrame, buff, text)
         texture = buff.iconTexture or WEAPON_ENCHANT_ICON
     end
     iconFrame.icon:SetTexture(texture)
-    iconFrame.text:SetText(text or buff.text or MISSING_TEXT)
+    iconFrame.text:SetText(text or buff.text or GENERALBUFF_TEXT)
 
     iconFrame:SetSize(iconSize, iconSize)
     iconFrame.icon:SetSize(iconSize, iconSize)
     iconFrame.iconBorder:SetAllPoints(iconFrame)
 
-    NRSKNUI:ApplyFont(iconFrame.text, db.Font, db.FontSize or 12, db.FontOutline)
+    NRSKNUI:ApplyFont(iconFrame.text, db.Font, 14, db.FontOutline)
 end
 
 -- Icon arranger, uses center horizontal layout
@@ -1038,7 +1033,7 @@ local function CheckWeaponEnchants()
                 if hasItem and not hasEnchant then
                     local iconFrame = AcquireIcon()
                     local displayIcon = icon or WEAPON_ENCHANT_ICON
-                    local text = buff.text or MISSING_TEXT
+                    local text = buff.text or GENERALBUFF_TEXT
                     local iconSize = raidDb.IconSize or db.IconSize or 48
 
                     -- Set texture directly
@@ -1046,7 +1041,7 @@ local function CheckWeaponEnchants()
                     iconFrame.text:SetText(text)
                     iconFrame:SetSize(iconSize, iconSize)
                     iconFrame.icon:SetSize(iconSize, iconSize)
-                    NRSKNUI:ApplyFont(iconFrame.text, db.Font, db.FontSize or 12, db.FontOutline)
+                    NRSKNUI:ApplyFont(iconFrame.text, db.Font, 14, db.FontOutline)
                     activeIcons[#activeIcons + 1] = iconFrame
                     currentMissingBuffs[#currentMissingBuffs + 1] = { buff = buff, text = text }
                 end
@@ -1068,9 +1063,9 @@ local function CheckGlowBasedRaidBuffs()
             if IsSpellKnown(spellToCheck) then
                 if C_SpellActivationOverlay.IsSpellOverlayed(buff.spellId) then
                     local iconFrame = AcquireIcon()
-                    UpdateIconAppearance(iconFrame, buff, MISSING_TEXT)
+                    UpdateIconAppearance(iconFrame, buff, GENERALBUFF_TEXT)
                     activeIcons[#activeIcons + 1] = iconFrame
-                    currentMissingBuffs[#currentMissingBuffs + 1] = { buff = buff, text = MISSING_TEXT }
+                    currentMissingBuffs[#currentMissingBuffs + 1] = { buff = buff, text = GENERALBUFF_TEXT }
                 end
             end
         end
@@ -1084,7 +1079,7 @@ local function CheckCombatSafeElements()
     if UnitIsDeadOrGhost("player") or C_PetBattles.IsInBattle() then return end
     ReleaseAllIcons()
     wipe(currentMissingBuffs)
-    -- Check glow-based raid buffs if in M+
+    -- Check glow-based raid buffs if in M+ key
     if C_ChallengeMode.IsChallengeModeActive() then
         CheckGlowBasedRaidBuffs()
     end
@@ -1182,7 +1177,7 @@ local function CheckForMissingBuffs()
                 if specOk then
                     local isMissing, needsReapply = CheckBuffStatus(buff)
                     if isMissing then
-                        currentMissingBuffs[#currentMissingBuffs + 1] = { buff = buff, text = MISSING_TEXT }
+                        currentMissingBuffs[#currentMissingBuffs + 1] = { buff = buff, text = GENERALBUFF_TEXT }
                     elseif needsReapply then
                         currentMissingBuffs[#currentMissingBuffs + 1] = { buff = buff, text = REAPPLY_TEXT }
                     end

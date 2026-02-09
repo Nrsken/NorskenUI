@@ -45,7 +45,7 @@ end
 -- Get statusbar texture name from defaults
 function BB:GetStatusBarTexture()
     local defaults = self:GetDefaults()
-    return defaults.StatusBarTexture or "Blizzard"
+    return defaults.StatusBarTexture or "NorskenUI"
 end
 
 -- Get tracker config with defaults merged
@@ -71,13 +71,26 @@ function BB:GetTrackerConfig(tracker)
     }
 end
 
+-- Helper to resolve anchor frame
+function BB:GetAnchorFrame()
+    local db = self.db
+    if not db then return UIParent end
+    if db.anchorFrameType == "SELECTFRAME" and db.anchorFrameFrame and db.anchorFrameFrame ~= "" then
+        local frame = _G[db.anchorFrameFrame]
+        if frame then
+            return frame
+        else
+            return UIParent
+        end
+    end
+    return UIParent
+end
+
 -- Create container frame for all bars
 function BB:CreateContainerFrame()
     if self.containerFrame then return self.containerFrame end
-
     local db = self.db
     if not db then return nil end
-
     self.containerFrame = CreateFrame("Frame", "NorskenUI_BuffBars_Container", UIParent)
     self.containerFrame:SetSize(1, 1)
     self.containerFrame:SetFrameStrata("MEDIUM")
@@ -87,12 +100,7 @@ function BB:CreateContainerFrame()
     local anchorTo = db.Position and db.Position.AnchorTo or "CENTER"
     local xOffset = db.Position and db.Position.XOffset or 0.1
     local yOffset = db.Position and db.Position.YOffset or 100.1
-
-    local parentFrame = UIParent
-    if db.anchorFrameType == "SELECTFRAME" and db.anchorFrameFrame then
-        parentFrame = _G[db.anchorFrameFrame] or UIParent
-    end
-
+    local parentFrame = self:GetAnchorFrame()
     self.containerFrame:ClearAllPoints()
     self.containerFrame:SetPoint(anchorFrom, parentFrame, anchorTo, xOffset, yOffset)
 
@@ -102,7 +110,6 @@ end
 -- Create a buff statusbar frame for a tracker
 function BB:CreateTrackerFrame(trackerIndex, config)
     local iconSize = config.ShowIcon and config.BarHeight or 0
-
     local frame = CreateFrame("Frame", "NorskenUI_BuffBar_" .. trackerIndex, self.containerFrame or UIParent,
         "BackdropTemplate")
     frame:SetSize(config.BarWidth, config.BarHeight)
@@ -221,11 +228,12 @@ end
 -- Layout visible bars based on growth direction
 function BB:LayoutBars()
     local db = self.db
-    if not db then return end
+    if not db or not self.containerFrame then return end
 
     local direction = db.GrowthDirection or "DOWN"
     local spacing = db.Spacing or 2
 
+    -- Collect visible frames
     local visibleFrames = {}
     for index, frame in pairs(self.trackerFrames) do
         if frame:IsShown() then
@@ -236,14 +244,54 @@ function BB:LayoutBars()
 
     local totalCount = #visibleFrames
 
+    -- If no visible frames, set minimal container size
+    if totalCount == 0 then
+        self.containerFrame:SetSize(1, 1)
+        return
+    end
+
+    -- Get bar dimensions from defaults
+    local defaults = self:GetDefaults()
+    local barWidth = defaults.BarWidth or 200
+    local barHeight = defaults.BarHeight or 20
+
+    -- Calculate container dimensions based on growth direction
+    local containerWidth, containerHeight
+    if direction == "LEFT" or direction == "RIGHT" or direction == "CENTER" then
+        -- Horizontal growth
+        containerWidth = (totalCount * barWidth) + ((totalCount - 1) * spacing)
+        containerHeight = barHeight
+    else
+        -- Vertical growth
+        containerWidth = barWidth
+        containerHeight = (totalCount * barHeight) + ((totalCount - 1) * spacing)
+    end
+
+    -- Update container size
+    self.containerFrame:SetSize(containerWidth, containerHeight)
+
+    -- Position bars within the container
     for i, entry in ipairs(visibleFrames) do
         local frame = entry.frame
-        local size = (direction == "LEFT" or direction == "RIGHT" or direction == "CENTER")
-            and frame.totalWidth or frame.config.BarHeight
-        local xOff, yOff = self:GetGrowthOffset(direction, i, totalCount, size, spacing)
+        local offset
 
         frame:ClearAllPoints()
-        frame:SetPoint("CENTER", self.containerFrame, "CENTER", xOff, yOff)
+        if direction == "RIGHT" then
+            offset = (i - 1) * (barWidth + spacing)
+            frame:SetPoint("LEFT", self.containerFrame, "LEFT", offset, 0)
+        elseif direction == "LEFT" then
+            offset = (i - 1) * (barWidth + spacing)
+            frame:SetPoint("RIGHT", self.containerFrame, "RIGHT", -offset, 0)
+        elseif direction == "DOWN" then
+            offset = (i - 1) * (barHeight + spacing)
+            frame:SetPoint("TOP", self.containerFrame, "TOP", 0, -offset)
+        elseif direction == "UP" then
+            offset = (i - 1) * (barHeight + spacing)
+            frame:SetPoint("BOTTOM", self.containerFrame, "BOTTOM", 0, offset)
+        elseif direction == "CENTER" then
+            offset = (i - 1) * (barWidth + spacing)
+            frame:SetPoint("LEFT", self.containerFrame, "LEFT", offset, 0)
+        end
     end
 end
 
@@ -252,7 +300,6 @@ function BB:OnUpdate(elapsed)
     local now = GetTime()
     local anyActive = false
     local needsLayout = false
-
     for _, frame in pairs(self.trackerFrames) do
         if frame:IsShown() then
             local remaining = frame.endTime - now
@@ -279,11 +326,9 @@ function BB:OnUpdate(elapsed)
             end
         end
     end
-
     if needsLayout then
         self:LayoutBars()
     end
-
     if not anyActive and self.updateFrame then
         self.updateFrame:SetScript("OnUpdate", nil)
     end
@@ -411,10 +456,7 @@ function BB:ApplyPosition()
     local anchorTo = db.Position and db.Position.AnchorTo or "CENTER"
     local xOffset = db.Position and db.Position.XOffset or 0.1
     local yOffset = db.Position and db.Position.YOffset or 100.1
-    local parentFrame = UIParent
-    if db.anchorFrameType == "SELECTFRAME" and db.anchorFrameFrame then
-        parentFrame = _G[db.anchorFrameFrame] or UIParent
-    end
+    local parentFrame = self:GetAnchorFrame()
     self.containerFrame:ClearAllPoints()
     self.containerFrame:SetPoint(anchorFrom, parentFrame, anchorTo, xOffset, yOffset)
 end

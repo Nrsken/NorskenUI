@@ -66,6 +66,7 @@ GUIFrame.SidebarConfig = {
                 { id = "CooldownStrings", text = "CDM Profile Strings" },
                 { id = "whisperSounds",   text = "Whisper Sounds" },
                 { id = "DragonRiding",    text = "Dragon Riding UI" },
+                { id = "FocusCastbar",    text = "Focus Castbar" },
                 { id = "missingBuffs",    text = "Missing Buffs" },
                 { id = "XPBar",           text = "XP Bar" },
                 { id = "Durability",      text = "Durability Util" },
@@ -911,7 +912,7 @@ function GUIFrame:CreateHeader(parent)
     header:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, 0)
     header:SetPoint("TOPRIGHT", parent, "TOPRIGHT", 0, 0)
 
-    -- Header background (medium)
+    -- Header background
     header:SetBackdrop({
         bgFile = "Interface\\Buttons\\WHITE8X8",
     })
@@ -924,12 +925,12 @@ function GUIFrame:CreateHeader(parent)
     bottomBorder:SetPoint("BOTTOMRIGHT", header, "BOTTOMRIGHT", 0, 0)
     bottomBorder:SetColorTexture(Theme.border[1], Theme.border[2], Theme.border[3], Theme.border[4])
 
-    -- Logo (two-part texture)
+    -- Logo
     local logoContainer = CreateFrame("Frame", nil, header)
     logoContainer:SetSize(180, 32)
     logoContainer:SetPoint("LEFT", header, "LEFT", Theme.paddingLarge, -1)
 
-    -- "N" logo part (uses accent color)
+    -- "N" logo part
     local logoN = logoContainer:CreateTexture(nil, "ARTWORK")
     logoN:SetSize(64, 64)
     logoN:SetPoint("LEFT", logoContainer, "LEFT", -10, 1)
@@ -938,7 +939,7 @@ function GUIFrame:CreateHeader(parent)
     logoN:SetTexelSnappingBias(0)
     logoN:SetSnapToPixelGrid(false)
 
-    -- "UI" logo part (uses primary text color)
+    -- "UI" logo part
     local logoAuras = logoContainer:CreateTexture(nil, "ARTWORK")
     logoAuras:SetSize(128, 128)
     logoAuras:SetPoint("LEFT", logoN, "RIGHT", -62, -4)
@@ -1005,7 +1006,7 @@ function GUIFrame:CreateHeader(parent)
     themeBtn:SetSize(18, 18)
     themeBtn:SetPoint("RIGHT", header, "RIGHT", -81, 0)
 
-    -- Theme button texture (using same texture as home button for now)
+    -- Theme button texture
     local themeTex = themeBtn:CreateTexture(nil, "ARTWORK")
     themeTex:SetAllPoints()
     themeTex:SetTexture("Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\fill.png")
@@ -1076,7 +1077,7 @@ function GUIFrame:CreateContentArea(parent)
     content:SetPoint("TOPRIGHT", parent, "TOPRIGHT", 0, -Theme.headerHeight)
     content:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", 0, Theme.footerHeight)
 
-    -- Content background (main dark)
+    -- Content background
     content:SetBackdrop({
         bgFile = "Interface\\Buttons\\WHITE8X8",
     })
@@ -1109,7 +1110,7 @@ function GUIFrame:CreateContentArea(parent)
         sb:SetAlpha(0)
     end
 
-    -- Scroll child (dynamic width based on scrollbar visibility)
+    -- Scroll child
     local scrollChild = CreateFrame("Frame", nil, scrollFrame)
     scrollChild:SetHeight(1)
     scrollFrame:SetScrollChild(scrollChild)
@@ -1134,7 +1135,7 @@ function GUIFrame:CreateContentArea(parent)
             local frameHeight = scrollFrame:GetHeight()
             local needsScrollbar = contentHeight > frameHeight
 
-            -- Always update visibility, don't track state (fixes edge cases)
+            -- Always update visibility, don't track state
             scrollbarVisible = needsScrollbar
             scrollFrame.ScrollBar:SetAlpha(needsScrollbar and 1 or 0)
 
@@ -1154,7 +1155,7 @@ function GUIFrame:CreateContentArea(parent)
     scrollChild:HookScript("OnSizeChanged", UpdateScrollBarVisibility)
     scrollFrame:HookScript("OnSizeChanged", UpdateScrollBarVisibility)
 
-    -- Also update on show (in case content changed while hidden)
+    -- Also update on show
     scrollFrame:HookScript("OnShow", function()
         C_Timer.After(0, UpdateScrollBarVisibility)
     end)
@@ -1283,7 +1284,7 @@ function GUIFrame:CreateFooter(parent)
     footer.logoTwitchTexture = logoTwitchTexture
     footer.logoTwitchText = logoTwitchText
 
-    -- Twitch Mouseover stuff (read from Theme directly for live updates)
+    -- Twitch Mouseover stuff
     logoTwitch:SetScript("OnEnter", function()
         logoTwitchTexture:SetVertexColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
         logoTwitchText:SetTextColor(Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3], 1)
@@ -1348,7 +1349,7 @@ function GUIFrame:CreateFooter(parent)
     footer.logoDiscordTexture = logoDiscordTexture
     footer.logoDiscordText = logoDiscordText
 
-    -- Discord Mouseover stuff (read from Theme directly for live updates)
+    -- Discord Mouseover stuff
     logoDiscord:SetScript("OnEnter", function()
         logoDiscordTexture:SetVertexColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
         logoDiscordText:SetTextColor(Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3], 1)
@@ -1358,7 +1359,7 @@ function GUIFrame:CreateFooter(parent)
         logoDiscordText:SetTextColor(Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3], 0.7)
     end)
 
-    -- Resize handle (in footer, right side)
+    -- Resize handle
     local handle = CreateFrame("Button", nil, footer)
     handle:SetSize(23, 23)
     handle:SetPoint("BOTTOMRIGHT", footer, "BOTTOMRIGHT", -2, 2)
@@ -1473,7 +1474,7 @@ function GUIFrame:RefreshContent()
         return
     end
 
-    -- Show the outer scroll frame (displays/panels tab hides it)
+    -- Show the outer scroll frame
     if self.contentArea.scrollFrame then
         self.contentArea.scrollFrame:Show()
     end
@@ -1481,14 +1482,14 @@ function GUIFrame:RefreshContent()
     -- Clear existing content
     local scrollChild = self.contentArea.scrollChild
 
-    -- Clear existing content (font strings, textures)
+    -- Clear existing content
     for _, region in ipairs({ scrollChild:GetRegions() }) do
         if region:GetObjectType() == "FontString" or region:GetObjectType() == "Texture" then
             region:Hide()
         end
     end
 
-    -- Clear existing content (frames) and release AceGUI widgets
+    -- Clear existing content
     for _, child in ipairs({ scrollChild:GetChildren() }) do
         child:Hide()
         child:SetParent(nil)
@@ -1591,12 +1592,12 @@ function GUIFrame:Hide()
     if self.mainFrame then
         self:SaveFramePosition()
 
-        -- Save GUI state to session memory (not saved variables)
+        -- Save GUI state to session memory
         if self.SaveSessionState then
             self:SaveSessionState()
         end
 
-        -- Fire content cleanup callbacks (hide previews, etc.)
+        -- Fire content cleanup callbacks
         if self.contentCleanupCallbacks then
             for key, callback in pairs(self.contentCleanupCallbacks) do
                 local ok, err = pcall(callback)
@@ -1647,9 +1648,9 @@ function GUIFrame:IsShown()
     return self.mainFrame and self.mainFrame:IsShown()
 end
 
--- Session state (not saved between reloads)
+-- Session state
 GUIFrame.sessionState = GUIFrame.sessionState or {
-    scrollPositions = {}, -- { [tabId] = scrollValue }
+    scrollPositions = {},
     selectedTab = "systems",
     selectedSidebarItem = nil,
 }
@@ -1688,7 +1689,7 @@ function GUIFrame:RestoreSessionState()
         self.selectedSidebarItem = self.sessionState.selectedSidebarItem
     end
 
-    -- Restore scroll position (deferred until after sidebar rebuilds)
+    -- Restore scroll position
     C_Timer.After(0.01, function()
         if self.sidebar and self.sidebar.scrollFrame and self.selectedTab then
             local scrollValue = self.sessionState.scrollPositions[self.selectedTab]
@@ -1706,7 +1707,7 @@ function GUIFrame:SaveFramePosition()
 
     local point, _, relPoint, x, y = self.mainFrame:GetPoint()
 
-    -- Save to SavedVariables (db.global.GUIState)
+    -- Save to SavedVariables
     NRSKNUI.db.global.GUIState = NRSKNUI.db.global.GUIState or {}
     NRSKNUI.db.global.GUIState.frame = {
         point = point,

@@ -4,24 +4,39 @@ local _, NRSKNUI = ...
 -- Module for pixelperfect utility
 
 -- Localization Setup
-local min, max, string_format = min, max, string.format
+local string_format = string.format
 local math_floor = math.floor
 local GetPhysicalScreenSize = GetPhysicalScreenSize
 local type = type
 local CreateFrame = CreateFrame
 local UIParent = UIParent
 
--- UIMult: Update UI multiplier from perfect scale
+-- UIMult
+-- Update UI multiplier from perfect scale
 function NRSKNUI:UIMult()
     self.mult = self.perfect or 1
 end
 
--- PixelBestSize: Get best pixel perfect size (clamped between 0.4 and 1.15)
+-- PixelBestSize
+-- Get best pixel perfect size (clamped between 0.4 and 1.15)
 function NRSKNUI:PixelBestSize()
-    return max(0.4, min(1.15, self.perfect or 1))
+    local perfectScale = self.perfect or 1
+
+    -- Clamp to minimum
+    if perfectScale < 0.4 then
+        return 0.4
+    end
+
+    -- Clamp to maximum
+    if perfectScale > 1.15 then
+        return 1.15
+    end
+
+    return perfectScale
 end
 
--- PixelScaleChanged: Handle pixel scale change events
+-- PixelScaleChanged
+-- Handle pixel scale change events
 function NRSKNUI:PixelScaleChanged(event)
     -- Update physical size and perfect scale
     if event == "UI_SCALE_CHANGED" then
@@ -39,30 +54,42 @@ function NRSKNUI:PixelScaleChanged(event)
     end
 end
 
--- Scale: Apply pixel-perfect scaling to a value
+-- Scale
+-- Apply pixel-perfect scaling to a value
 function NRSKNUI:Scale(x)
     -- Validate input
     if not x then return 0 end
     if type(x) ~= "number" then return 0 end
 
     -- Apply scaling
-    local m = self.mult or 1
-    if m == 1 or x == 0 then
+    local multiplier = self.mult or 1
+    if multiplier == 1 or x == 0 then
         return x
-    else
-        local y = m > 1 and m or -m
-        return x - x % (x < 0 and y or -y)
     end
+
+    -- Round to nearest multiple of multiplier
+    local scaled = x * multiplier
+    local rounded
+
+    if scaled >= 0 then
+        rounded = math_floor(scaled + 0.5)
+    else
+        rounded = -math_floor(-scaled + 0.5)
+    end
+
+    return rounded / multiplier
 end
 
--- SnapToPixel: Snap a value to pixel boundaries
+-- SnapToPixel
+-- Snap a value to pixel boundaries
 function NRSKNUI:SnapToPixel(value)
     if not value or type(value) ~= "number" then return 0 end
     local scale = UIParent:GetEffectiveScale()
     return math_floor(value * scale + 0.5) / scale
 end
 
--- SnapFrameToPixels: Snap a frame position to pixel boundaries
+-- SnapFrameToPixels
+-- Snap a frame position to pixel boundaries
 function NRSKNUI:SnapFrameToPixels(frame)
     if not frame then return end
 

@@ -1,6 +1,5 @@
 -- NorskenUI namespace
 local _, NRSKNUI = ...
-local Theme = NRSKNUI.Theme
 
 -- Check for addon object
 if not NRSKNUI.Addon then
@@ -115,7 +114,7 @@ function XPBar:CreateBar()
     if self.bar then return end
     local posDB = self.db.Position
     local r, g, b, a = self:GetColor()
-    local statusbar = NRSKNUI:GetStatusbarPath(self.db.StatusBarTexture or "Blizzard")
+    local statusbar = NRSKNUI:GetStatusbarPath(self.db.StatusBarTexture or "NorskenUI")
 
     local bar = CreateFrame("StatusBar", "NorskenUI_XPBar", UIParent)
     bar:SetSize(self.db.width, self.db.height)
@@ -306,7 +305,7 @@ function XPBar:ApplyStyling()
     end
 
     -- Update statusbar texture
-    local statusbar = NRSKNUI:GetStatusbarPath(self.db.StatusBarTexture or "Blizzard")
+    local statusbar = NRSKNUI:GetStatusbarPath(self.db.StatusBarTexture or "NorskenUI")
     self.bar:SetStatusBarTexture(statusbar)
     self.bar.rested:SetStatusBarTexture(statusbar)
 
@@ -360,7 +359,6 @@ end
 -- Hide preview
 function XPBar:HidePreview()
     self.isPreview = false
-    -- Check if we should actually hide (respect db settings)
     if not self.db.Enabled then
         if self.bar then
             self.bar:Hide()

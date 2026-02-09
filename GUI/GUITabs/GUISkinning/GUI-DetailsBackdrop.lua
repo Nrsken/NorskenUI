@@ -5,8 +5,9 @@ local Theme = NRSKNUI.Theme
 
 -- Localization Setup
 local table_insert = table.insert
+local ipairs = ipairs
 
--- Helper to get Blizzard Mouseover module
+-- Helper to get details backdrop module
 local function GetDetailsBackdropModule()
     if NRSKNUI.Addon then
         return NRSKNUI.Addon:GetModule("DetailsBackdrop", true)
@@ -290,10 +291,10 @@ GUIFrame:RegisterContent("DetailsBackdrop", function(scrollChild, yOffset)
         onChangeCallback = ApplySettings,
     })
     -- Add position card widgets to allWidgets for enable/disable
-    -- When autoSize is ON, anchor widgets should be disabled (always uses BOTTOMRIGHT)
+    -- When autoSize is ON, anchor widgets should be disabled, always uses BOTTOMRIGHT
     if card3.positionWidgets then
         for _, widget in ipairs(card3.positionWidgets) do
-            table_insert(allWidgets, widget) -- Respects master toggle
+            table_insert(allWidgets, widget)
 
             local isAnchorBtn = false
             for _, abWidget in ipairs(card3.AnchorButtonWidgets) do
@@ -303,7 +304,6 @@ GUIFrame:RegisterContent("DetailsBackdrop", function(scrollChild, yOffset)
                 end
             end
             if not isAnchorBtn then
-                -- table_insert(manualSizeWidgets, widget) -- Uncomment this if you want X/Y to disable too
             end
         end
     end

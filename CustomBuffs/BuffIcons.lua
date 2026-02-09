@@ -26,7 +26,7 @@ local _G = _G
 -- Module state
 BI.trackerFrames = {}
 BI.containerFrame = nil
-BI.activeTimers = {} -- Track active C_Timer handles by trackerIndex
+BI.activeTimers = {}
 
 -- Module init
 function BI:OnInitialize()
@@ -57,6 +57,23 @@ function BI:GetTrackerConfig(tracker)
     }
 end
 
+-- Helper to resolve anchor frame
+function BI:GetAnchorFrame()
+    local db = self.db
+    if not db then return UIParent end
+
+    if db.anchorFrameType == "SELECTFRAME" and db.anchorFrameFrame and db.anchorFrameFrame ~= "" then
+        local frame = _G[db.anchorFrameFrame]
+        if frame then
+            return frame
+        else
+            return UIParent
+        end
+    end
+
+    return UIParent
+end
+
 -- Create container frame for all icons
 function BI:CreateContainerFrame()
     if self.containerFrame then return self.containerFrame end
@@ -74,10 +91,7 @@ function BI:CreateContainerFrame()
     local xOffset = db.Position and db.Position.XOffset or 0.1
     local yOffset = db.Position and db.Position.YOffset or 150.1
 
-    local parentFrame = UIParent
-    if db.anchorFrameType == "SELECTFRAME" and db.anchorFrameFrame then
-        parentFrame = _G[db.anchorFrameFrame] or UIParent
-    end
+    local parentFrame = self:GetAnchorFrame()
 
     self.containerFrame:ClearAllPoints()
     self.containerFrame:SetPoint(anchorFrom, parentFrame, anchorTo, xOffset, yOffset)
@@ -172,11 +186,12 @@ end
 -- Layout visible icons based on growth direction
 function BI:LayoutIcons()
     local db = self.db
-    if not db then return end
+    if not db or not self.containerFrame then return end
 
     local direction = db.GrowthDirection or "RIGHT"
     local spacing = db.Spacing or 2
 
+    -- Collect visible frames
     local visibleFrames = {}
     for index, frame in pairs(self.trackerFrames) do
         if frame:IsShown() then
@@ -187,13 +202,48 @@ function BI:LayoutIcons()
 
     local totalCount = #visibleFrames
 
+    -- If no visible frames, set minimal container size
+    if totalCount == 0 then
+        self.containerFrame:SetSize(1, 1)
+        return
+    end
+
+    -- Get icon size from defaults
+    local defaults = self:GetDefaults()
+    local iconSize = defaults.IconSize or 40
+
+    -- Calculate container dimensions based on growth direction
+    local containerWidth, containerHeight
+    if direction == "LEFT" or direction == "RIGHT" or direction == "CENTER" then
+        -- Horizontal growth
+        containerWidth = (totalCount * iconSize) + ((totalCount - 1) * spacing)
+        containerHeight = iconSize
+    else
+        -- Vertical growth
+        containerWidth = iconSize
+        containerHeight = (totalCount * iconSize) + ((totalCount - 1) * spacing)
+    end
+
+    -- Update container size
+    self.containerFrame:SetSize(containerWidth, containerHeight)
+
+    -- Position icons within the container
     for i, entry in ipairs(visibleFrames) do
         local frame = entry.frame
-        local iconSize = frame.config.IconSize
-        local xOff, yOff = self:GetGrowthOffset(direction, i, totalCount, iconSize, spacing)
+        local offset = (i - 1) * (iconSize + spacing)
 
         frame:ClearAllPoints()
-        frame:SetPoint("CENTER", self.containerFrame, "CENTER", xOff, yOff)
+        if direction == "RIGHT" then
+            frame:SetPoint("LEFT", self.containerFrame, "LEFT", offset, 0)
+        elseif direction == "LEFT" then
+            frame:SetPoint("RIGHT", self.containerFrame, "RIGHT", -offset, 0)
+        elseif direction == "DOWN" then
+            frame:SetPoint("TOP", self.containerFrame, "TOP", 0, -offset)
+        elseif direction == "UP" then
+            frame:SetPoint("BOTTOM", self.containerFrame, "BOTTOM", 0, offset)
+        elseif direction == "CENTER" then
+            frame:SetPoint("LEFT", self.containerFrame, "LEFT", offset, 0)
+        end
     end
 end
 
@@ -205,7 +255,7 @@ function BI:ShowTracker(trackerIndex)
 
     local config = frame.config
 
-    -- Cancel any existing timer for this tracker (prevents duplicate timers)
+    -- Cancel any existing timer for this tracker, prevents duplicate timers
     if self.activeTimers[trackerIndex] then
         self.activeTimers[trackerIndex]:Cancel()
         self.activeTimers[trackerIndex] = nil
@@ -217,7 +267,7 @@ function BI:ShowTracker(trackerIndex)
 
     self:LayoutIcons()
 
-    -- Hide after duration (store handle so we can cancel if spell is recast)
+    -- Hide after duration, store handle so we can cancel if spell is recast
     self.activeTimers[trackerIndex] = C_Timer.NewTimer(config.Duration, function()
         self.activeTimers[trackerIndex] = nil
         if frame then
@@ -234,7 +284,7 @@ function BI:ShowTrackerPreview(trackerIndex)
 
     local config = frame.config
 
-    -- Cancel any existing timer for this tracker (prevents duplicate timers)
+    -- Cancel any existing timer for this tracker
     if self.activeTimers[trackerIndex] then
         self.activeTimers[trackerIndex]:Cancel()
         self.activeTimers[trackerIndex] = nil
@@ -246,7 +296,7 @@ function BI:ShowTrackerPreview(trackerIndex)
 
     self:LayoutIcons()
 
-    -- Hide after duration (store handle so we can cancel if previewed again)
+    -- Hide after duration
     self.activeTimers[trackerIndex] = C_Timer.NewTimer(config.Duration, function()
         self.activeTimers[trackerIndex] = nil
         if frame then
@@ -322,20 +372,13 @@ end
 -- Apply position
 function BI:ApplyPosition()
     if not self.containerFrame then return end
-
     local db = self.db
     if not db then return end
-
     local anchorFrom = db.Position and db.Position.AnchorFrom or "CENTER"
     local anchorTo = db.Position and db.Position.AnchorTo or "CENTER"
     local xOffset = db.Position and db.Position.XOffset or 0.1
     local yOffset = db.Position and db.Position.YOffset or 150.1
-
-    local parentFrame = UIParent
-    if db.anchorFrameType == "SELECTFRAME" and db.anchorFrameFrame then
-        parentFrame = _G[db.anchorFrameFrame] or UIParent
-    end
-
+    local parentFrame = self:GetAnchorFrame()
     self.containerFrame:ClearAllPoints()
     self.containerFrame:SetPoint(anchorFrom, parentFrame, anchorTo, xOffset, yOffset)
 end

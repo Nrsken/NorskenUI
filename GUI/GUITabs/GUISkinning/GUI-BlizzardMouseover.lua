@@ -5,6 +5,7 @@ local Theme = NRSKNUI.Theme
 
 -- Localization Setup
 local table_insert = table.insert
+local ipairs = ipairs
 
 -- Helper to get Blizzard Mouseover module
 local function GetBlizzardMouseoverModule()

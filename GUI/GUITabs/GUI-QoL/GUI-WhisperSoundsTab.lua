@@ -1,13 +1,13 @@
 -- NorskenUI namespace
 local _, NRSKNUI = ...
 local GUIFrame = NRSKNUI.GUIFrame
+local LSM = NRSKNUI.LSM
 local Theme = NRSKNUI.Theme
 
-
 -- Localization Setup
-local LSM = NRSKNUI.LSM or LibStub("LibSharedMedia-3.0", true)
 local table_insert = table.insert
 local PlaySoundFile = PlaySoundFile
+local pairs, ipairs = pairs, ipairs
 
 -- Database access
 local function GetWhisperSoundsDB()

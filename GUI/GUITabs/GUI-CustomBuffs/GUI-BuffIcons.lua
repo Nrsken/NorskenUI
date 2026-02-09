@@ -372,6 +372,7 @@ GUIFrame:RegisterContent("BuffIcons", function(scrollChild, yOffset)
                 if newID and newID > 0 then
                     selectedTracker.SpellID = newID
                     ApplySettings()
+                    RefreshContent()
                 end
             end)
         spellIDInput.editBox:SetNumeric(true)

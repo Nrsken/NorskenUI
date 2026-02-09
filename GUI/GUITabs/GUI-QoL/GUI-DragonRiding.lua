@@ -129,7 +129,7 @@ GUIFrame:RegisterContent("DragonRiding", function(scrollChild, yOffset)
 
     -- Bar Height Slider
     local row3 = GUIFrame:CreateRow(card2.content, 40)
-    local heightSlider = GUIFrame:CreateSlider(row3, "Bar Height", 6, 24, 1,
+    local heightSlider = GUIFrame:CreateSlider(row3, "Bar Height", 1, 24, 1,
         db.BarHeight or 12, nil,
         function(val)
             db.BarHeight = val
@@ -228,12 +228,12 @@ GUIFrame:RegisterContent("DragonRiding", function(scrollChild, yOffset)
     -- Card 4: Mount/Pet Alpha Settings
     ----------------------------------------------------------------
     if cdmDB then
-        local card4 = GUIFrame:CreateCard(scrollChild, "Mount & Pet Battle Alpha", yOffset)
+        local card4 = GUIFrame:CreateCard(scrollChild, "Mount & Pet Battle CDM Alpha", yOffset)
         table_insert(allWidgets, card4)
 
         -- Enable Alpha Out Toggle
         local row9 = GUIFrame:CreateRow(card4.content, 36)
-        local alphaOutCheck = GUIFrame:CreateCheckbox(row9, "Reduce Alpha While Mounted/Pet Battle",
+        local alphaOutCheck = GUIFrame:CreateCheckbox(row9, "Reduce CDM Alpha While Mounted/Pet Battle",
             cdmDB.AlphaoutMountPet ~= false,
             function(checked)
                 cdmDB.AlphaoutMountPet = checked

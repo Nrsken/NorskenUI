@@ -2,8 +2,11 @@
 
 ## About
 - Personal collection of Skinning, QoL and Features that i personally want, shared for others to use.
+- Still very much learning so the addon is not perfect :)
 
 ## Feature List
+- Focus Castbar:
+    - Focus Castbar that has coloring based on your current kick state with a tick indicator that tells you if kick will be ready for the current cast, newly added so still kinda WIP.
 - Combat Features:
     - Combat Timer
     - Combat Cross
@@ -38,3 +41,8 @@
 - CDM Enhancements:
     - Aura Overlay & Fonts (Removes yellow aura overlay swipe)
     - Hide Proc Animation (Removes proc animation and plays normal glow instead)
+- Custom Edit Mode:
+    - /nui edit, Homepage Button or minimap button opens a custom Edit Mode with nudge tool, drag to position and quick open settings for each element.
+    - Edit mode still very much a WIP, not 100% happy with it but it does the basic job for now.
+- Customizeable Ingame Settings:
+    - Press the paint bucket in the header section to modify the addon theme look, this theme coloring can then be used on some features in the addon.

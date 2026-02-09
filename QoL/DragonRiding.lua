@@ -12,7 +12,6 @@ local DR = NRSKNUI.Addon:NewModule("DragonRiding", "AceEvent-3.0")
 
 -- Localization
 local CreateFrame = CreateFrame
-local next = next
 local VIGOR_SPELL = 372610
 local THRILL_SPELL = 377234
 local SECOND_WIND_SPELL = 425782
@@ -23,11 +22,11 @@ local numVigor = 0
 local BORDER_WIDTH = 1
 
 -- Module frames
-DR.container = nil       -- Main container for EditMode (encompasses all rows)
-DR.parent = nil          -- Secure state handler parent
-DR.vigorFrame = nil      -- Vigor row (top)
-DR.surgeFrame = nil      -- Whirling Surge row (middle)
-DR.secondWindFrame = nil -- Second Wind row (bottom)
+DR.container = nil
+DR.parent = nil
+DR.vigorFrame = nil
+DR.surgeFrame = nil
+DR.secondWindFrame = nil
 DR.speedText = nil
 DR.isPreview = false
 
@@ -37,7 +36,7 @@ function DR:OnInitialize()
     self:SetEnabledState(false)
 end
 
--- Create a pill (status bar with backdrop)
+-- Create a pill
 local function CreatePill(parent, height)
     local pill = CreateFrame("StatusBar", nil, parent, BackdropTemplateMixin and "BackdropTemplate")
     pill:SetBackdrop({
@@ -74,7 +73,7 @@ local function ResizePillsToFit(container, pills, numPills, spacing)
     end
 end
 
--- Update Whirling Surge (full width single pill)
+-- Update Whirling Surge
 local function UpdateWhirlingSurge(self)
     local pill = self.surgeFrame[1]
     if not pill then return end
@@ -99,7 +98,7 @@ local function UpdateWhirlingSurge(self)
     end
 end
 
--- Update Second Wind (3 pills for 3 charges)
+-- Update Second Wind
 local function UpdateSecondWind(self)
     local charges = C_Spell.GetSpellCharges(SECOND_WIND_SPELL)
     if not charges then return end
@@ -126,7 +125,7 @@ local function UpdateSecondWind(self)
     end
 end
 
--- Update Vigor (dynamic pills based on maxCharges)
+-- Update Vigor
 local function UpdateVigor(self)
     local charges = C_Spell.GetSpellCharges(VIGOR_SPELL)
     if not charges then return end
@@ -190,18 +189,31 @@ end
 
 -- Update Speed text
 local function UpdateSpeed(self)
+    local speed = self.speedText
+    if not speed then return end
+
+    -- Ensure font is set before attempting to update text
+    local fontFile = speed:GetFont()
+    if not fontFile then
+        local font = NRSKNUI.FONT or "Fonts\\FRIZQT__.TTF"
+        local db = self.db
+        speed:SetFont(font, db and db.SpeedFontSize or 14, 'OUTLINE')
+        -- Re-check if font was set successfully
+        fontFile = speed:GetFont()
+        if not fontFile then return end
+    end
+
     local isGliding, _, forwardSpeed = C_PlayerInfo.GetGlidingInfo()
     if isGliding then
-        self.speedText:SetFormattedText('%d%%', forwardSpeed / BASE_MOVEMENT_SPEED * 100 + 0.5)
+        pcall(speed.SetFormattedText, speed, '%d%%', forwardSpeed / BASE_MOVEMENT_SPEED * 100 + 0.5)
     else
-        self.speedText:SetText('')
+        pcall(speed.SetText, speed, '')
     end
 end
 
 -- Create all frames
 function DR:CreateFrames()
     if self.container then return end
-
     local db = self.db
     local barWidth = db.Width or 252
     local barHeight = db.BarHeight or 12
@@ -211,9 +223,8 @@ function DR:CreateFrames()
     self.parent = CreateFrame('Frame', nil, UIParent, 'SecureHandlerStateTemplate')
     self.parent:Hide()
 
-    -- Create container frame for EditMode (encompasses all rows)
+    -- Create container frame for EditMode
     self.container = CreateFrame('Frame', 'NRSKNUI_DragonRidingContainer', self.parent)
-    -- Total height: 3 rows + 2 spacing gaps + speed text area
     local totalHeight = (barHeight * 3) + (spacing * 2) + 20
     self.container:SetSize(barWidth, totalHeight)
     self.container:SetPoint(
@@ -225,7 +236,7 @@ function DR:CreateFrames()
     )
     NRSKNUI:SnapFrameToPixels(self.container)
 
-    -- Row 3 (bottom): Second Wind - 3 pills
+    -- Row 3 Second Wind
     self.secondWindFrame = CreateFrame('Frame', nil, self.container)
     self.secondWindFrame:SetPoint('BOTTOMLEFT', self.container, 'BOTTOMLEFT', 0, 0)
     self.secondWindFrame:SetPoint('BOTTOMRIGHT', self.container, 'BOTTOMRIGHT', 0, 0)
@@ -246,7 +257,7 @@ function DR:CreateFrames()
     end
     ResizePillsToFit(self.secondWindFrame, self.secondWindFrame, 3, spacing)
 
-    -- Row 2 (middle): Whirling Surge - full width single pill
+    -- Row 2 Whirling Surge
     self.surgeFrame = CreateFrame('Frame', nil, self.container)
     self.surgeFrame:SetPoint('BOTTOMLEFT', self.secondWindFrame, 'TOPLEFT', 0, spacing)
     self.surgeFrame:SetPoint('BOTTOMRIGHT', self.secondWindFrame, 'TOPRIGHT', 0, spacing)
@@ -259,7 +270,7 @@ function DR:CreateFrames()
     surgePill:SetPoint('RIGHT')
     self.surgeFrame[1] = surgePill
 
-    -- Row 1 (top): Vigor - dynamic pills
+    -- Row 1 Vigor
     self.vigorFrame = CreateFrame('Frame', nil, self.container)
     self.vigorFrame:SetPoint('BOTTOMLEFT', self.surgeFrame, 'TOPLEFT', 0, spacing)
     self.vigorFrame:SetPoint('BOTTOMRIGHT', self.surgeFrame, 'TOPRIGHT', 0, spacing)
@@ -267,16 +278,18 @@ function DR:CreateFrames()
 
     -- Speed text above vigor
     self.speedText = self.vigorFrame:CreateFontString(nil, 'OVERLAY')
-    self.speedText:SetFont(NRSKNUI.FONT, db.SpeedFontSize or 14, 'OUTLINE')
+    local fontFile = NRSKNUI:GetFontPath(self.db.FontFace) or NRSKNUI.FONT or "Fonts\\FRIZQT__.TTF"
+    local fontSize = self.db.SpeedFontSize or 14
+    self.speedText:SetFont(fontFile, fontSize, "OUTLINE")
     self.speedText:SetWordWrap(false)
     self.speedText:SetPoint('BOTTOM', self.vigorFrame, 'TOP', 0, 2)
     self.speedText:SetShadowOffset(0, 0)
+    self.speedText:SetText("")
 end
 
--- Apply settings from database
+-- Apply settings
 function DR:ApplySettings()
     if not self.container then return end
-
     local db = self.db
     local barWidth = db.Width or 252
     local barHeight = db.BarHeight or 12
@@ -322,7 +335,7 @@ function DR:ApplySettings()
         self.surgeFrame[1]:SetStatusBarColor(surgeColor[1], surgeColor[2], surgeColor[3])
     end
 
-    -- Update Vigor pills (use preview count if in preview mode)
+    -- Update Vigor pills
     local vigorCount = self.isPreview and 6 or numVigor
     for i = 1, vigorCount do
         if self.vigorFrame[i] then
@@ -340,7 +353,9 @@ function DR:ApplySettings()
     UpdateVigorColor(self)
 
     -- Update speed font and keep preview text if in preview mode
-    self.speedText:SetFont(NRSKNUI.FONT, db.SpeedFontSize or 14, 'OUTLINE')
+    local fontFile = NRSKNUI:GetFontPath(self.db.FontFace) or NRSKNUI.FONT or "Fonts\\FRIZQT__.TTF"
+    local fontSize = self.db.SpeedFontSize or 14
+    self.speedText:SetFont(fontFile, fontSize, "OUTLINE")
     if self.isPreview then
         self.speedText:SetText('420%')
     end
@@ -362,7 +377,7 @@ function DR:ApplyPosition()
     NRSKNUI:SnapFrameToPixels(self.container)
 end
 
--- Refresh all (called from GUI)
+-- Refresh all
 function DR:Refresh()
     self:ApplySettings()
     self:ApplyPosition()
@@ -407,7 +422,7 @@ function DR:ShowPreview()
         self.parent:Show()
     end
 
-    -- Create preview vigor pills if needed (6 pills for preview)
+    -- Create preview vigor pills if needed
     local spacing = self.db.Spacing or 1
     for i = 1, 6 do
         if not self.vigorFrame[i] then
@@ -421,10 +436,10 @@ function DR:ShowPreview()
         end
     end
 
-    -- Apply settings (handles sizing, colors, and speed text)
+    -- Apply settings
     self:ApplySettings()
 
-    -- Set preview values (4 full, 1 partial, 1 empty)
+    -- Set preview values
     for i = 1, 6 do
         self.vigorFrame[i]:SetMinMaxValues(0, 1)
         if i <= 4 then
@@ -436,7 +451,7 @@ function DR:ShowPreview()
         end
     end
 
-    -- Preview Second Wind (2 full, 1 charging)
+    -- Preview Second Wind
     for i = 1, 3 do
         self.secondWindFrame[i]:SetMinMaxValues(0, 1)
         if i <= 2 then
@@ -446,7 +461,7 @@ function DR:ShowPreview()
         end
     end
 
-    -- Preview Whirling Surge (full)
+    -- Preview Whirling Surge
     self.surgeFrame[1]:SetMinMaxValues(0, 1)
     self.surgeFrame[1]:SetValue(1)
 end
@@ -454,9 +469,7 @@ end
 function DR:HidePreview()
     self.isPreview = false
     if self.parent then
-        -- Re-register state driver for normal operation
         RegisterStateDriver(self.parent, 'visibility', '[bonusbar:5] show; hide')
-        -- If now visible (actually skyriding), re-register event handlers
         if self.parent:IsShown() then
             self:OnShowHandler()
         end
@@ -465,8 +478,17 @@ end
 
 -- Event handlers
 function DR:OnShowHandler()
-    -- Don't register live updates during preview mode
     if self.isPreview then return end
+
+    -- Ensure speed text font is set before starting ticker
+    if self.speedText then
+        local fontFile = self.speedText:GetFont()
+        if not fontFile then
+            local font = NRSKNUI:GetFontPath(self.db.FontFace) or NRSKNUI.FONT or "Fonts\\FRIZQT__.TTF"
+            local fontSize = self.db.SpeedFontSize or 14
+            self.speedText:SetFont(font, fontSize, 'OUTLINE')
+        end
+    end
 
     self.vigorFrame:RegisterEvent('SPELL_UPDATE_CHARGES')
     self.vigorFrame:SetScript('OnEvent', function() UpdateVigor(self) end)
@@ -490,7 +512,6 @@ function DR:OnShowHandler()
 end
 
 function DR:OnHideHandler()
-    -- Don't unregister during preview mode
     if self.isPreview then return end
 
     self.vigorFrame:UnregisterEvent('SPELL_UPDATE_CHARGES')

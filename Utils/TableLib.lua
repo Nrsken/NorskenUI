@@ -29,7 +29,6 @@ function NRSKNUI:ArgCheck(arg, argIndex, ...)
 end
 
 function NRSKNUI:tsize(tbl)
-    -- would really like Lua 5.2 for this
     local size = 0
     if tbl then
         for _ in next, tbl do

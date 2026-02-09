@@ -23,13 +23,13 @@ EditMode.registeredElements = {}
 EditMode.overlayFrames = {}
 EditMode.selectedElementKey = nil
 EditMode.nudgeFrame = nil
-EditMode.isShiftFaded = false -- Track if overlay is currently faded due to Shift key
+EditMode.isShiftFaded = false
 
 -- Constants
 local BORDER_SIZE = 2
 local FILL_ALPHA = 0.25
 local TEXT_FONT_SIZE = 14
-local SHIFT_FADE_ALPHA = 0.1 -- Alpha when Shift is held to see through overlay
+local SHIFT_FADE_ALPHA = 0.1
 
 -- Register a moveable UI element
 -- Define the registration config
@@ -67,14 +67,8 @@ NRSKNUI.EditMode:RegisterElement(config)
 --]]
 function EditMode:RegisterElement(config)
     if not config or not config.key then return end
-
-    -- Validate required fields
-    if not config.frame and not config.frameName then
-        return
-    end
-    if not config.getPosition or not config.setPosition then
-        return
-    end
+    if not config.frame and not config.frameName then return end
+    if not config.getPosition or not config.setPosition then return end
 
     self.registeredElements[config.key] = {
         key = config.key,
@@ -89,9 +83,7 @@ function EditMode:RegisterElement(config)
     }
 
     -- If edit mode is already active, create overlay for this element
-    if self.isActive then
-        self:CreateOverlayForElement(config.key)
-    end
+    if self.isActive then self:CreateOverlayForElement(config.key) end
 end
 
 -- Remove an element from edit mode
@@ -103,7 +95,6 @@ function EditMode:UnregisterElement(key)
         self.overlayFrames[key]:Hide()
         self.overlayFrames[key] = nil
     end
-
     self.registeredElements[key] = nil
 end
 
@@ -244,7 +235,7 @@ function EditMode:SetupDragHandlers(overlay, element)
         local anchorFrom = currentPos.AnchorFrom or "CENTER"
         local anchorTo = currentPos.AnchorTo or "CENTER"
 
-        -- Get the parent frame (what this element is anchored to)
+        -- Get the parent frame
         local parentFrame = UIParent
         if element.getParentFrame then
             parentFrame = element.getParentFrame() or UIParent
@@ -271,31 +262,26 @@ function EditMode:SetupDragHandlers(overlay, element)
 
         local finalX, finalY
 
-        -- Horizontal Calculation (relative to parent frame)
+        -- Horizontal Calculation
         if anchorTo:find("LEFT") then
-            -- Offset from parent's left edge
             finalX = newCenterX - (targetFrame:GetWidth() / 2) - parentLeft
         elseif anchorTo:find("RIGHT") then
-            -- Offset from parent's right edge (negative = left of right edge)
             finalX = newCenterX + (targetFrame:GetWidth() / 2) - (parentLeft + parentWidth)
         else -- CENTER
-            -- Offset from parent's center
             finalX = newCenterX - (parentLeft + parentWidth / 2)
         end
 
-        -- Vertical Calculation (relative to parent frame)
+        -- Vertical Calculation
         if anchorTo:find("TOP") then
-            -- Offset from parent's top edge (negative = below top)
             finalY = newCenterY + (targetFrame:GetHeight() / 2) - (parentBottom + parentHeight)
         elseif anchorTo:find("BOTTOM") then
-            -- Offset from parent's bottom edge
             finalY = newCenterY - (targetFrame:GetHeight() / 2) - parentBottom
         else -- CENTER
-            -- Offset from parent's center
             finalY = newCenterY - (parentBottom + parentHeight / 2)
         end
 
-        -- Save using the ORIGINAL anchors, edit mode does not change anchor points, this is all the GUI
+        -- Save using the ORIGINAL anchors, edit mode does not change anchor points
+        -- That is all the GUI and is why we have a open settings button on the nudge tool
         local newPos = {
             AnchorFrom = anchorFrom,
             AnchorTo = anchorTo,
@@ -304,7 +290,6 @@ function EditMode:SetupDragHandlers(overlay, element)
         }
 
         element.setPosition(newPos)
-
         C_Timer.After(0, function()
             EditMode:UpdateOverlayPosition(self)
 
@@ -328,7 +313,6 @@ function EditMode:SetupDragHandlers(overlay, element)
         local scale = UIParent:GetEffectiveScale()
         local curX, curY = GetCursorPosition()
         curX, curY = curX / scale, curY / scale
-
         local deltaX = curX - startX
         local deltaY = curY - startY
 
@@ -341,13 +325,8 @@ function EditMode:SetupDragHandlers(overlay, element)
     end)
 
     -- Cursor changes
-    overlay:SetScript("OnEnter", function(self)
-        SetCursor("Interface\\CURSOR\\UI-Cursor-Move")
-    end)
-
-    overlay:SetScript("OnLeave", function(self)
-        SetCursor(nil)
-    end)
+    overlay:SetScript("OnEnter", function(self) SetCursor("Interface\\CURSOR\\UI-Cursor-Move") end)
+    overlay:SetScript("OnLeave", function(self) SetCursor(nil) end)
 
     -- Reset drag flag on mouse down
     overlay:SetScript("OnMouseDown", function(self, button)
@@ -379,20 +358,13 @@ function EditMode:Enter()
         self:CreateOverlayForElement(key)
     end
 
-    -- Show nudge frame
     self:ShowNudgeFrame()
-    -- Notify PreviewManager that edit mode is active
-    if NRSKNUI.PreviewManager then
-        NRSKNUI.PreviewManager:SetEditModeActive(true)
-    end
-    -- Setup ESC key handler
+    if NRSKNUI.PreviewManager then NRSKNUI.PreviewManager:SetEditModeActive(true) end
     self:SetupEscapeHandler()
-    -- Setup Shift key handler for fading overlay
     self:SetupShiftHandler()
-    -- Setup combat handler to auto-exit when entering combat
     self:SetupCombatHandler()
-
-    NRSKNUI:Print("Edit Mode |cff00ff00enabled|r. Drag elements to reposition. Hold Shift to see through overlay. Press ESC or type /nui lock to exit.")
+    NRSKNUI:Print(
+        "Edit Mode |cff00ff00enabled|r. Drag elements to reposition. Hold Shift to see through overlay. Press ESC or type /nui lock to exit.")
 end
 
 -- Deactivate edit mode
@@ -412,11 +384,8 @@ function EditMode:Exit()
         end
     end
     self.overlayFrames = {}
-    -- Remove ESC handler
     self:RemoveEscapeHandler()
-    -- Remove Shift handler
     self:RemoveShiftHandler()
-    -- Remove combat handler
     self:RemoveCombatHandler()
     NRSKNUI:Print("Edit Mode |cffff0000disabled|r.")
 end
@@ -464,23 +433,16 @@ end
 -- Setup Shift key handler for fading selected overlay
 function EditMode:SetupShiftHandler()
     if self.shiftFrame then return end
-
     self.shiftFrame = CreateFrame("Frame", "NRSKNUI_EditModeShift", UIParent)
-
-    -- Use OnUpdate to poll Shift key state (more reliable than key events for modifiers)
     local wasShiftDown = false
-
     self.shiftFrame:SetScript("OnUpdate", function()
         if not EditMode.isActive then return end
-
         local isShiftDown = IsShiftKeyDown()
 
         -- Detect state change
         if isShiftDown and not wasShiftDown then
-            -- Shift pressed
             EditMode:ApplyShiftFade(true)
         elseif not isShiftDown and wasShiftDown then
-            -- Shift released
             EditMode:ApplyShiftFade(false)
         end
 
@@ -495,7 +457,6 @@ function EditMode:RemoveShiftHandler()
         self.shiftFrame:Hide()
         self.shiftFrame = nil
     end
-
     -- Ensure we restore alpha if edit mode is closed while Shift is held
     if self.isShiftFaded then
         self:ApplyShiftFade(false)
@@ -511,7 +472,6 @@ function EditMode:ApplyShiftFade(fade)
 
     local overlay = self.overlayFrames[self.selectedElementKey]
     if not overlay then return end
-
     local Theme = NRSKNUI.Theme
     local accent = Theme.accent or { 0.898, 0.063, 0.224, 1 }
 
@@ -1066,7 +1026,6 @@ end
 -- Update nudge frame theme colors
 function EditMode:UpdateNudgeFrameTheme()
     if not self.nudgeFrame then return end
-
     local Theme = NRSKNUI.Theme
 
     -- Update main frame backdrop
@@ -1086,7 +1045,6 @@ function EditMode:NudgeSelectedElement(deltaX, deltaY)
 
     local element = self.registeredElements[self.selectedElementKey]
     if not element then return end
-
     local currentPos = element.getPosition()
     if not currentPos then return end
 

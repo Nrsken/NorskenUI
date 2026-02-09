@@ -582,7 +582,7 @@ GUIFrame:RegisterContent("messages", function(scrollChild, yOffset)
     table_insert(allWidgets, zoneYSlider)
     table_insert(zoneWidgets, zoneYSlider)
     card7:AddRow(row10, 36)
-    
+
     yOffset = yOffset + card7:GetContentHeight() + Theme.paddingSmall
 
     UpdateAllWidgetStates()

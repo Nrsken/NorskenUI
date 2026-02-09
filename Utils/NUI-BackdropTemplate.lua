@@ -2,6 +2,7 @@
 local _, NRSKNUI = ...
 
 -- Module used to create backdrops
+-- TODO: Intergrate this one better
 
 local CreateFrame = CreateFrame
 local unpack = unpack

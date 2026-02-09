@@ -9,15 +9,16 @@ local table_insert = table.insert
 local ipairs = ipairs
 local pairs = pairs
 local wipe = wipe
+local CreateFrame = CreateFrame
 
 -- Store current sub-tab
 local currentSubTab = "global"
 
--- Cached tab bar reference (persists across content rebuilds)
+-- Cached tab bar reference
 local cachedTabBar = nil
 local cachedTabButtons = nil
 
--- Widget tracking tables (reset on each render)
+-- Widget tracking tables
 local allWidgets = {}
 local barWidgets = {}
 
