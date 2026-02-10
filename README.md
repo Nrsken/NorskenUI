@@ -1,8 +1,8 @@
 # NorskenUI
-
+# [Preview Pictures](https://imgur.com/a/DBZzUXN)
 ## About
 - Personal collection of Skinning, QoL and Features that i personally want, shared for others to use.
-- Still very much learning so the addon is not perfect :)
+- Still very much learning, so finding flaws will most likely not be impossible:), always open for suggestions and critique.
 
 ## Feature List
 - Focus Castbar:
@@ -24,7 +24,7 @@
     - CDM Profile Strings (Backup CDM strings in savedVariables, useful if you have more than 1 of X class)
     - Whisper Sounds
     - Dragon Riding UI
-    - Missing Buffs (Tracks missing buffs fully in secure enviorments, uses raid buff glow for non scure enviorments)
+    - Missing Buffs (Tracks missing buffs fully in non secret enviorments, uses raid buff glow in secret enviorments)
     - XP Bar
     - Durability Util (Repair now warning and current durability data text)
 - Skinning:
