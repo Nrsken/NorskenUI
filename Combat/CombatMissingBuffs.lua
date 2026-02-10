@@ -150,6 +150,7 @@ local CUSTOM_BUFFS = {
     { category = "FOOD",       spellId = 457284,    enabled = true }, -- Well Fed (Mainstat)
     { category = "FOOD",       spellId = 1232585,   enabled = true }, -- Well Fed (Stamina + Mainstat)
     { category = "FOOD",       spellId = 461959,    enabled = true }, -- Well Fed (Crit)
+    { category = "FOOD",       spellId = 461960,    enabled = true }, -- Well Fed (Haste)
     { category = "FOOD",       spellId = 462210,    enabled = true }, -- Hearty Well Fed (Mainstat)
     { category = "FOOD",       spellId = 462181,    enabled = true }, -- Hearty Well Fed (Crit)
     { category = "FOOD",       spellId = 462183,    enabled = true }, -- Hearty Well Fed (Mastery)
@@ -1143,10 +1144,10 @@ local function CheckForMissingBuffs()
         HideAllNotifications()
         return
     end
-    if MBUFFS.db.HideWhileMounted and IsPlayerMounted() then
-        HideAllNotifications()
-        return
-    end
+    --if MBUFFS.db.HideWhileMounted and IsPlayerMounted() then
+    --    HideAllNotifications()
+    --    return
+    --end
     wipe(currentMissingBuffs)
     -- Check custom buffs like flasks, food, weapon enchants, runes
     local customMissing = CheckCustomBuffs()
