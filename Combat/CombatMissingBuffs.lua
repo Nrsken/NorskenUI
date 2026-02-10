@@ -147,11 +147,13 @@ local CUSTOM_BUFFS = {
     { category = "FLASK",      spellId = 431973,    enabled = true }, -- Flask of Tempered Versatility
 
     -- Food
-    { category = "FOOD",       spellId = 462181,    enabled = true }, -- Beledar's Bounty
-    { category = "FOOD",       spellId = 457284,    enabled = true },
-    { category = "FOOD",       spellId = 1232585,   enabled = true },
-    { category = "FOOD",       spellId = 461959,    enabled = true },
-    { category = "FOOD",       spellId = 462210,    enabled = true }, -- Hearty feast
+    { category = "FOOD",       spellId = 457284,    enabled = true }, -- Well Fed (Mainstat)
+    { category = "FOOD",       spellId = 1232585,   enabled = true }, -- Well Fed (Stamina + Mainstat)
+    { category = "FOOD",       spellId = 461959,    enabled = true }, -- Well Fed (Crit)
+    { category = "FOOD",       spellId = 462210,    enabled = true }, -- Hearty Well Fed (Mainstat)
+    { category = "FOOD",       spellId = 462181,    enabled = true }, -- Hearty Well Fed (Crit)
+    { category = "FOOD",       spellId = 462183,    enabled = true }, -- Hearty Well Fed (Mastery)
+    { category = "FOOD",       spellId = 462180,    enabled = true }, -- Hearty Well Fed (Haste)
 
     -- Weapon enchants
     { category = "MH_ENCHANT", weaponSlot = "main", text = "MH",   enabled = true },

@@ -247,6 +247,7 @@ local Defaults = {
                 WarningText = {
                     Enabled = true,
                     ShowPercent = 30,
+                    CombatShowPercent = 0,
                     WarningColor = { 1, 0.537, 0.2, 1 },
                     FontSize = 18,
                     WarningText = "REPAIR NOW",

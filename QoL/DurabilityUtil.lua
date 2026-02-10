@@ -16,6 +16,7 @@ local wipe = wipe
 local floor = math.floor
 local unpack = unpack
 local GetInventoryItemDurability = GetInventoryItemDurability
+local InCombatLockdown = InCombatLockdown
 local ipairs = ipairs
 local _G = _G
 
@@ -68,10 +69,18 @@ function DUR:OnEvent()
 
     -- Dont show warning text unless specific min durability is met
     if self.WarningText and self.db.WarningText.Enabled then
-        if TotalDurability > self.db.WarningText.ShowPercent then
-            self.WarningText:Hide()
+        if self.inCombat then
+            if TotalDurability > self.db.WarningText.CombatShowPercent then
+                self.WarningText:Hide()
+            else
+                self.WarningText:Show()
+            end
         else
-            self.WarningText:Show()
+            if TotalDurability > self.db.WarningText.ShowPercent then
+                self.WarningText:Hide()
+            else
+                self.WarningText:Show()
+            end
         end
     end
 
@@ -207,11 +216,21 @@ function DUR:EventReg()
     local events = {
         "UPDATE_INVENTORY_DURABILITY",
         "MERCHANT_SHOW",
-        "PLAYER_ENTERING_WORLD"
+        "PLAYER_ENTERING_WORLD",
     }
     for _, event in ipairs(events) do
         self:RegisterEvent(event, function() DUR:OnEvent() end)
     end
+
+    -- Special handling for combat stuff
+    self:RegisterEvent("PLAYER_REGEN_DISABLED", function()
+        DUR.inCombat = true
+        DUR:OnEvent()
+    end)
+    self:RegisterEvent("PLAYER_REGEN_ENABLED", function()
+        DUR.inCombat = false
+        DUR:OnEvent()
+    end)
 end
 
 -- Module OnEnable

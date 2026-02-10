@@ -325,6 +325,14 @@ local function RenderWarningTextTab(scrollChild, yOffset, activeCards)
 
     -- Use status coloring
     local row1 = GUIFrame:CreateRow(card1.content, 40)
+    local WarningText = GUIFrame:CreateEditBox(row1, "Low Durability Text", WT.WarningText, function(val)
+        WT.WarningText = val
+        ApplySettings()
+    end)
+    row1:AddWidget(WarningText, 0.5)
+    table_insert(allWidgets, WarningText)
+    table_insert(warningWidgets, WarningText)
+
     local WTcolor = GUIFrame:CreateColorPicker(row1, "Color", WT.WarningColor or { 0, 0, 0, 0.6 },
         function(r, g, b, a)
             WT.WarningColor = { r, g, b, a }
@@ -333,25 +341,26 @@ local function RenderWarningTextTab(scrollChild, yOffset, activeCards)
     row1:AddWidget(WTcolor, 0.5)
     table_insert(allWidgets, WTcolor)
     table_insert(warningWidgets, WTcolor)
+    card1:AddRow(row1, 40)
 
-    local ShowPercent = GUIFrame:CreateSlider(row1, "Choose Durability % Trigger", 1, 100, 1, WT.ShowPercent, 60,
+    local row1a = GUIFrame:CreateRow(card1.content, 40)
+    local ShowPercent = GUIFrame:CreateSlider(row1a, "|cff4dff00Out of Combat|r Durability % Trigger", 1, 100, 1, WT.ShowPercent, 60,
         function(val)
             WT.ShowPercent = val
             ApplyFonts()
         end)
-    row1:AddWidget(ShowPercent, 0.5)
+    row1a:AddWidget(ShowPercent, 0.5)
     table_insert(allWidgets, ShowPercent)
     table_insert(warningWidgets, ShowPercent)
-    card1:AddRow(row1, 40)
 
-    local row1a = GUIFrame:CreateRow(card1.content, 40)
-    local WarningText = GUIFrame:CreateEditBox(row1a, "Low Durability Text", WT.WarningText, function(val)
-        WT.WarningText = val
-        ApplySettings()
-    end)
-    row1a:AddWidget(WarningText, 1)
-    table_insert(allWidgets, WarningText)
-    table_insert(warningWidgets, WarningText)
+    local CombatShowPercent = GUIFrame:CreateSlider(row1a, "|cffff0000In Combat|r Durability % Trigger", 0, 100, 1, WT.CombatShowPercent, 60,
+        function(val)
+            WT.CombatShowPercent = val
+            ApplyFonts()
+        end)
+    row1a:AddWidget(CombatShowPercent, 0.5)
+    table_insert(allWidgets, CombatShowPercent)
+    table_insert(warningWidgets, CombatShowPercent)
     card1:AddRow(row1a, 40)
 
     -- Separator

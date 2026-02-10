@@ -269,7 +269,7 @@ function GUIFrame:CreateCheckbox(parent, labelText, initialState, onValueChanged
             else
                 toggleOnOrOff = "|cffE64D4D" .. msgOff .. "|r"
             end
-            NRSKNUI:CreateMessagePopup(2, (msgText .. ": " .. toggleOnOrOff), 15, UIParent, 0, 250)
+            NRSKNUI:CreateMessagePopup(2, (msgText .. ": " .. toggleOnOrOff), 15, UIParent, 0, 50)
         end
     end)
 
