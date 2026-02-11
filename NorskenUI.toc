@@ -1,7 +1,7 @@
 ## Interface: 120000, 120001
 ## Title: |cffe51039Norsken|r|cffffffffUI|r
 ## Category: |cffe51039Norsken|r |cffffffffAddons|r
-## Version: v0.0.3
+## Version: @project-version@
 ## Author: Norsken
 ## SavedVariables: NorskenUIDB
 ## OptionalDeps: Ace3, LibSharedMedia-3.0
