@@ -1,1 +1,9 @@
 package-as: NorskenUI
+
+ignore:
+    - README.md
+    - .git/
+    - .github/
+    - .vscode/
+    - .pkgmeta
+    - release.sh
