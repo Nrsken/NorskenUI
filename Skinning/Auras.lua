@@ -8,7 +8,7 @@ if not NRSKNUI.Addon then
 end
 
 -- Create module
-local AURAS = NRSKNUI.Addon:NewModule("Auras", "AceEvent-3.0", "AceHook-3.0")
+local AURAS = NRSKNUI.Addon:NewModule("Auras", "AceEvent-3.0")
 
 -- Localization
 local CreateFrame = CreateFrame

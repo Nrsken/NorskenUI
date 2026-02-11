@@ -11,7 +11,7 @@ local Theme = NRSKNUI.Theme
 local DEFAULT_PROFILE = "Default"
 
 -- Create the main addon object
-local NorskenUI = LibStub("AceAddon-3.0"):NewAddon("NorskenUI", "AceConsole-3.0", "AceEvent-3.0")
+local NorskenUI = LibStub("AceAddon-3.0"):NewAddon("NorskenUI", "AceEvent-3.0", "AceHook-3.0")
 NRSKNUI.Addon = NorskenUI
 
 -- Register media with LibSharedMedia
