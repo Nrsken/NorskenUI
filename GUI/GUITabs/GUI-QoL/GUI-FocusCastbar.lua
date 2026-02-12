@@ -256,6 +256,19 @@ GUIFrame:RegisterContent("FocusCastbar", function(scrollChild, yOffset)
     table_insert(allWidgets, notInterruptPicker)
     card5:AddRow(row5b, 40)
 
+    -- Row 3: Hide Not Interruptible Toggle
+    local row5c_toggle = GUIFrame:CreateRow(card5.content, 36)
+    local hideNotInterruptCheck = GUIFrame:CreateCheckbox(row5c_toggle, "Hide Non-Interruptible Casts",
+        db.HideNotInterruptible == true,
+        function(checked)
+            db.HideNotInterruptible = checked
+        end,
+        true, "Hide", "On", "Off"
+    )
+    row5c_toggle:AddWidget(hideNotInterruptCheck, 1)
+    table_insert(allWidgets, hideNotInterruptCheck)
+    card5:AddRow(row5c_toggle, 36)
+
     -- Separator
     local rowSep1 = GUIFrame:CreateRow(card5.content, 8)
     local sep1 = GUIFrame:CreateSeparator(rowSep1)

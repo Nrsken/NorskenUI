@@ -25,6 +25,7 @@ CM.container = nil
 CM.messageFrames = {}
 CM.activeMessages = {}
 CM.messageGeneration = 0
+CM.noTargetCheckGeneration = 0
 CM.isPreview = false
 CM.inCombat = false
 
@@ -254,7 +255,15 @@ function CM:CheckNoTarget()
     end
 
     if self.inCombat and noTargetEnabled then
+        -- Increment generation to invalidate any pending checks
+        self.noTargetCheckGeneration = self.noTargetCheckGeneration + 1
+        local myGeneration = self.noTargetCheckGeneration
+
         C_Timer.After(0.1, function()
+            -- Verify this check is still current
+            if self.noTargetCheckGeneration ~= myGeneration then return end
+            -- Re-check combat state
+            if not self.inCombat then return end
             -- Re-check death state after timer
             if UnitIsDeadOrGhost("player") then
                 self:HidePersistentMessage("noTarget")
@@ -280,6 +289,7 @@ end
 
 function CM:OnExitCombat()
     self.inCombat = false
+    self.noTargetCheckGeneration = self.noTargetCheckGeneration + 1
     self:HidePersistentMessage("noTarget")
     self:ShowFlashMessage("exitCombat")
 end
@@ -289,6 +299,7 @@ function CM:OnTargetChanged()
 end
 
 function CM:OnPlayerDead()
+    self.noTargetCheckGeneration = self.noTargetCheckGeneration + 1
     self:HidePersistentMessage("noTarget")
 end
 
@@ -433,6 +444,7 @@ function CM:OnDisable()
     self.activeMessages = {}
     self.isPreview = false
     self.inCombat = false
+    self.noTargetCheckGeneration = self.noTargetCheckGeneration + 1
 
     -- Unregister events
     self:UnregisterAllEvents()

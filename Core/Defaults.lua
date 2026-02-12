@@ -410,6 +410,7 @@ local Defaults = {
                 ChannelingColor = { 0.623, 0.749, 1, 1 },
                 EmpoweringColor = { 0.8, 0.4, 1, 1 },
                 NotInterruptibleColor = { 0.780, 0.250, 0.250, 1 },
+                HideNotInterruptible = false,
                 TextColor = { 1, 1, 1, 1 },
 
                 -- Backdrop
@@ -1386,23 +1387,29 @@ local Defaults = {
                 -- Warrior Stances
                 WARRIOR = {
                     Enabled = true,            -- Warn if no stance active
-                    ArmsEnabled = false,       -- Require specific stance for Arms
+                    ArmsEnabled = true,        -- Require specific stance for Arms
                     Arms = "386164",           -- Battle Stance
-                    FuryEnabled = false,       -- Require specific stance for Fury
+                    ArmsReverseIcon = true,    -- Show current stance icon instead of required
+                    FuryEnabled = true,        -- Require specific stance for Fury
                     Fury = "386196",           -- Berserker Stance
+                    FuryReverseIcon = true,
                     ProtectionEnabled = false, -- Require specific stance for Protection
                     Protection = "386208",     -- Defensive Stance
+                    ProtectionReverseIcon = false,
                 },
 
                 -- Paladin Auras
                 PALADIN = {
                     Enabled = true,
                     HolyEnabled = false,
-                    Holy = "465",          -- Devotion Aura
+                    Holy = "465", -- Devotion Aura
+                    HolyReverseIcon = false,
                     ProtectionEnabled = false,
-                    Protection = "465",    -- Devotion Aura
+                    Protection = "465", -- Devotion Aura
+                    ProtectionReverseIcon = false,
                     RetributionEnabled = false,
                     Retribution = "32223", -- Crusader Aura
+                    RetributionReverseIcon = false,
                 },
 
                 -- Druid Forms
@@ -1410,15 +1417,19 @@ local Defaults = {
                     Enabled = true,
                     BalanceEnabled = true,
                     Balance = "24858", -- Moonkin Form
+                    BalanceReverseIcon = false,
                     FeralEnabled = true,
-                    Feral = "768",     -- Cat Form
+                    Feral = "768", -- Cat Form
+                    FeralReverseIcon = false,
                     GuardianEnabled = true,
                     Guardian = "5487", -- Bear Form
+                    GuardianReverseIcon = false,
                 },
 
                 -- Priest Shadowform
                 PRIEST = {
                     ShadowEnabled = true, -- Require Shadowform for Shadow spec
+                    ShadowReverseIcon = false,
                 },
 
                 -- Evoker Attunements
@@ -1426,6 +1437,7 @@ local Defaults = {
                     Enabled = true,
                     AugmentationEnabled = false,
                     Augmentation = "403264", -- Black Attunement
+                    AugmentationReverseIcon = false,
                 },
             },
 

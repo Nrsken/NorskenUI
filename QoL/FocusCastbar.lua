@@ -392,6 +392,13 @@ function FCB:StartCast()
     self.holdTime = 0
     self.notInterruptible = notInterruptible
 
+    -- Hide non-interruptible casts if enabled
+    if self.db.HideNotInterruptible then
+        self.frame:SetAlphaFromBoolean(notInterruptible, 0, 1)
+    else
+        self.frame:SetAlpha(1)
+    end
+
     self.castBar:SetTimerDuration(duration, Enum.StatusBarInterpolation.Immediate, direction)
     self.icon:SetTexture(texture or FALLBACK_ICON)
     self.spark:Show()
@@ -445,6 +452,12 @@ function FCB:UpdateInterruptible()
     if not self.frame or not self.frame:IsShown() then return end
     local notInterruptible = select(8, UnitCastingInfo("focus")) or select(7, UnitChannelInfo("focus"))
     self.notInterruptible = notInterruptible
+
+    -- Hide non-interruptible casts if enabled
+    if self.db.HideNotInterruptible then
+        self.frame:SetAlphaFromBoolean(notInterruptible, 0, 1)
+    end
+
     self:UpdateBarColor()
 end
 

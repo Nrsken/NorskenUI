@@ -684,14 +684,15 @@ local function CreateStanceTextFrame()
     stanceTextFrame:Hide()
 end
 
-local function ShowStanceIcon(spellId)
+local function ShowStanceIcon(spellId, reverseIcon, currentSpellId)
     if not stanceFrame then CreateStanceFrame() end
     local db = MBUFFS.db
     local stanceDb = db.StanceDisplay or {}
     if stanceFrame then
-        local texture = GetSpellTexture(spellId)
+        local displaySpellId = (reverseIcon and currentSpellId) and currentSpellId or spellId
+        local texture = GetSpellTexture(displaySpellId)
         stanceFrame.icon:SetTexture(texture)
-        stanceFrame.text:SetText(MISSING_TEXT)
+        stanceFrame.text:SetText(reverseIcon and "" or MISSING_TEXT)
 
         local iconSize = stanceDb.IconSize or db.IconSize or 48
         stanceFrame:SetSize(iconSize, iconSize)
@@ -929,6 +930,8 @@ local function CheckStances()
     local specEnabledKey = specName and (specName .. "Enabled")
     local specEnabled = specEnabledKey and classSettings[specEnabledKey] and true or false
     local requiredStanceId = specName and classSettings[specName] and tonumber(classSettings[specName])
+    local reverseIconKey = specName and (specName .. "ReverseIcon")
+    local reverseIcon = reverseIconKey and classSettings[reverseIconKey] and true or false
     -- If neither class nor spec tracking is enabled, skip
     if not classEnabled and not specEnabled then return end
     -- Get current form/stance
@@ -954,7 +957,7 @@ local function CheckStances()
     if specEnabled and requiredStanceId then
         if currentSpellId ~= requiredStanceId then
             if IsSpellKnown(requiredStanceId) then
-                ShowStanceIcon(requiredStanceId)
+                ShowStanceIcon(requiredStanceId, reverseIcon, currentSpellId)
             end
         end
     elseif classEnabled then

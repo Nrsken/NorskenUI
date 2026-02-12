@@ -516,6 +516,11 @@ local function CreateClassStanceCard(scrollChild, yOffset, classKey, title, icon
             if widgets.dropdown and widgets.dropdown.SetEnabled then
                 widgets.dropdown:SetEnabled(classEnabled and specEnabled)
             end
+
+            -- Reverse icon toggle is disabled if class is disabled OR spec toggle is off
+            if widgets.reverseIcon and widgets.reverseIcon.SetEnabled then
+                widgets.reverseIcon:SetEnabled(classEnabled and specEnabled)
+            end
         end
     end
 
@@ -560,8 +565,19 @@ local function CreateClassStanceCard(scrollChild, yOffset, classKey, title, icon
                     UpdateSpecWidgetStates()
                     Refresh()
                 end)
-            specRow:AddWidget(specToggle, 0.5)
+            specRow:AddWidget(specToggle, 0.35)
             table_insert(allWidgets, specToggle)
+
+            -- Reverse icon toggle: show current stance icon and hide missing text
+            local reverseIconKey = specName .. "ReverseIcon"
+            local reverseToggle = GUIFrame:CreateCheckbox(specRow, "Reverse Icon",
+                db[classKey][reverseIconKey] == true,
+                function(checked)
+                    db[classKey][reverseIconKey] = checked
+                    Refresh()
+                end)
+            specRow:AddWidget(reverseToggle, 0.25)
+            table_insert(allWidgets, reverseToggle)
 
             -- Preferred stance dropdown
             local specDropdown = GUIFrame:CreateDropdown(specRow, "Required", options,
@@ -570,11 +586,11 @@ local function CreateClassStanceCard(scrollChild, yOffset, classKey, title, icon
                     db[classKey][specName] = key
                     Refresh()
                 end)
-            specRow:AddWidget(specDropdown, 0.4)
+            specRow:AddWidget(specDropdown, 0.3)
             table_insert(allWidgets, specDropdown)
 
             -- Store widgets for enable/disable management
-            specWidgets[specName] = { toggle = specToggle, dropdown = specDropdown }
+            specWidgets[specName] = { toggle = specToggle, dropdown = specDropdown, reverseIcon = reverseToggle }
 
             card:AddRow(specRow, 40)
         end
@@ -601,12 +617,13 @@ local function RenderStancesTab(scrollChild, yOffset, activeCards)
     table_insert(activeCards, infoCard)
     table_insert(allWidgets, infoCard)
 
-    local infoTextHeight = 50
+    local infoTextHeight = 90
     local infoRow = GUIFrame:CreateRow(infoCard.content, infoTextHeight)
     local infoText = GUIFrame:CreateText(infoRow,
         NRSKNUI:ColorTextByTheme("How it works"),
         (NRSKNUI:ColorTextByTheme("• ") .. "Main toggle: Warns if you have no stance/form active at all\n" ..
-            NRSKNUI:ColorTextByTheme("• ") .. "Per-spec toggles: When enabled, requires a specific stance for that spec"),
+            NRSKNUI:ColorTextByTheme("• ") .. "Per-spec toggles: When enabled, requires a specific stance for that spec\n" ..
+            NRSKNUI:ColorTextByTheme("• ") .. "Reverse Icon Toggle: When enabled, the current stance icon is shown instead of the required stance icon and the missing text is hidden."),
         infoTextHeight, "hide")
     infoRow:AddWidget(infoText, 1)
     table_insert(allWidgets, infoText)
