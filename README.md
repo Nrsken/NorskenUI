@@ -27,6 +27,7 @@
     - Buff Icons
     - Buff Bars
 - Quality of Life:
+    - Gateway Usable text
     - Automation (Skip cinematics, auto sell, auto-fill delete texts and more)
     - Copy Anything (Copy ID's on mouseover)
     - CDM Profile Strings (Backup CDM strings in savedVariables, useful if you have more than 1 of X class)
