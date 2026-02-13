@@ -14,7 +14,7 @@ local CM = NRSKNUI.Addon:NewModule("CombatMessage", "AceEvent-3.0")
 local CreateFrame = CreateFrame
 local UIFrameFadeRemoveFrame = UIFrameFadeRemoveFrame
 local UIFrameFadeOut = UIFrameFadeOut
-local UnitExists = UnitExists
+local UnitExists, UnitIsDeadOrGhost = UnitExists, UnitIsDeadOrGhost
 local InCombatLockdown = InCombatLockdown
 local ipairs, pairs = ipairs, pairs
 local UIParent = UIParent
@@ -67,19 +67,9 @@ end
 function CM:CreateContainer()
     if self.container then return end
 
-    local db = self.db
-    local parent = NRSKNUI:ResolveAnchorFrame(db.anchorFrameType, db.ParentFrame)
-
     local container = CreateFrame("Frame", "NRSKNUI_CombatMessageContainer", UIParent)
     container:SetSize(200, 100)
-    container:SetPoint(
-        db.Position.AnchorFrom or "CENTER",
-        parent,
-        db.Position.AnchorTo or "CENTER",
-        db.Position.XOffset or 0,
-        db.Position.YOffset or 180
-    )
-    container:SetFrameStrata(db.Strata or "HIGH")
+    NRSKNUI:ApplyFramePosition(container, self.db.Position, self.db)
     container:SetFrameLevel(100)
 
     self.container = container
@@ -95,9 +85,11 @@ function CM:GetMessageFrame(msgType)
     frame:Hide()
 
     local text = frame:CreateFontString(nil, "OVERLAY")
+    local fontPath = NRSKNUI:GetFontPath(self.db.FontFace)
     text:SetAllPoints(frame)
     text:SetJustifyH("CENTER")
     text:SetJustifyV("MIDDLE")
+    text:SetFont(fontPath, self.db.FontSize, "")
 
     -- Setting some min sizes for cleaner edit mode
     local width, height = math.max(text:GetWidth(), 150), math.max(text:GetHeight(), 14)
@@ -108,31 +100,9 @@ function CM:GetMessageFrame(msgType)
     frame.generation = 0
 
     self.messageFrames[msgType] = frame
-    self:ApplyFontSettings(frame)
+    NRSKNUI:ApplyFontSettings(frame, self.db, nil)
 
     return frame
-end
-
--- Apply font settings to a message frame
-function CM:ApplyFontSettings(frame)
-    if not frame or not frame.text then return end
-    local db = self.db
-    local text = frame.text
-    local fontPath = NRSKNUI:GetFontPath(db.FontFace)
-    local outline = db.FontOutline == "NONE" and "" or (db.FontOutline or "OUTLINE")
-    -- Font
-    text:SetFont(fontPath, db.FontSize or 28, outline)
-
-    -- Font Shadow
-    local shadow = db.FontShadow or {}
-    if shadow.Enabled then
-        local shadowColor = shadow.Color or { 0, 0, 0, 1 }
-        text:SetShadowColor(shadowColor[1] or 0, shadowColor[2] or 0, shadowColor[3] or 0, shadowColor[4] or 1)
-        text:SetShadowOffset(shadow.OffsetX or 1, shadow.OffsetY or -1)
-    else
-        text:SetShadowOffset(0, 0)
-        text:SetShadowColor(0, 0, 0, 0)
-    end
 end
 
 -- Arrange visible messages vertically
@@ -260,11 +230,8 @@ function CM:CheckNoTarget()
         local myGeneration = self.noTargetCheckGeneration
 
         C_Timer.After(0.1, function()
-            -- Verify this check is still current
             if self.noTargetCheckGeneration ~= myGeneration then return end
-            -- Re-check combat state
             if not self.inCombat then return end
-            -- Re-check death state after timer
             if UnitIsDeadOrGhost("player") then
                 self:HidePersistentMessage("noTarget")
                 return
@@ -306,24 +273,11 @@ end
 -- Settings Application
 function CM:ApplySettings()
     if not self.container then return end
-
-    local db = self.db
-    local parent = NRSKNUI:ResolveAnchorFrame(db.anchorFrameType, db.ParentFrame)
-
-    -- Update container position
-    self.container:ClearAllPoints()
-    self.container:SetPoint(
-        db.Position.AnchorFrom or "CENTER",
-        parent,
-        db.Position.AnchorTo or "CENTER",
-        db.Position.XOffset or 0,
-        db.Position.YOffset or 180
-    )
-    self.container:SetFrameStrata(db.Strata or "HIGH")
+    NRSKNUI:ApplyFramePosition(self.container, self.db.Position, self.db)
 
     -- Update font settings for all message frames
     for _, frame in pairs(self.messageFrames) do
-        self:ApplyFontSettings(frame)
+        NRSKNUI:ApplyFontSettings(frame, self.db, nil)
     end
 
     -- Update preview content if in preview mode
@@ -331,7 +285,7 @@ function CM:ApplySettings()
         for _, msgType in ipairs(MESSAGE_TYPES) do
             local frame = self.messageFrames[msgType]
             if frame then
-                local _, msgText, msgColor = GetMessageConfig(db, msgType)
+                local _, msgText, msgColor = GetMessageConfig(self.db, msgType)
                 frame.text:SetText(msgText)
                 frame.text:SetTextColor(msgColor[1] or 1, msgColor[2] or 1, msgColor[3] or 1, msgColor[4] or 1)
             end
@@ -395,6 +349,10 @@ function CM:OnEnable()
     for _, msgType in ipairs(MESSAGE_TYPES) do
         self:GetMessageFrame(msgType)
     end
+
+    C_Timer.After(0.5, function()
+        self:ApplySettings()
+    end)
 
     -- Register events
     self:RegisterEvent("PLAYER_REGEN_ENABLED", "OnExitCombat")

@@ -16,9 +16,7 @@ local wipe = wipe
 local floor = math.floor
 local unpack = unpack
 local GetInventoryItemDurability = GetInventoryItemDurability
-local InCombatLockdown = InCombatLockdown
 local ipairs = ipairs
-local _G = _G
 
 -- Module init bruv
 function DUR:OnInitialize()
@@ -37,15 +35,6 @@ local InvDurability = {}
 local Slots = { 1, 3, 5, 6, 7, 8, 9, 10, 16, 17, 18 }
 local offset = 10
 
--- Helper: Get parent frame based on anchor type
-local function GetParentFrame()
-    if DUR.db.Text.anchorFrameType == "SCREEN" or DUR.db.Text.anchorFrameType == "UIPARENT" then
-        return UIParent
-    else
-        local parentName = DUR.db.Text.ParentFrame or "UIParent"
-        return _G[parentName] or UIParent
-    end
-end
 
 -- Durability status update
 function DUR:OnEvent()
@@ -68,18 +57,18 @@ function DUR:OnEvent()
     end
 
     -- Dont show warning text unless specific min durability is met
-    if self.WarningText and self.db.WarningText.Enabled then
+    if self.WarningFrame and self.db.WarningText.Enabled then
         if self.inCombat then
             if TotalDurability > self.db.WarningText.CombatShowPercent then
-                self.WarningText:Hide()
+                self.WarningFrame:Hide()
             else
-                self.WarningText:Show()
+                self.WarningFrame:Show()
             end
         else
             if TotalDurability > self.db.WarningText.ShowPercent then
-                self.WarningText:Hide()
+                self.WarningFrame:Hide()
             else
-                self.WarningText:Show()
+                self.WarningFrame:Show()
             end
         end
     end
@@ -101,45 +90,45 @@ end
 -- Create minimap durability text
 function DUR:Create()
     if self.Frame then return end
-    local posDB = self.db.Text.Position
-    local anchorFrame = GetParentFrame()
-    local fontOutline = self.db.FontOutline or "OUTLINE"
-    if fontOutline == "NONE" then fontOutline = "" end
-    local font = NRSKNUI:GetFontPath(self.db.FontFace)
 
     local Frame = CreateFrame("Frame", nil, UIParent)
     Frame:SetSize(160, 14)
-    Frame:SetPoint(posDB.AnchorFrom, anchorFrame, posDB.AnchorTo, posDB.XOffset, posDB.YOffset)
 
     local Text = Frame:CreateFontString(nil, "OVERLAY")
     Text:SetPoint("LEFT")
-    Text:SetFont(font, self.db.Text.FontSize, fontOutline)
-    Text:SetShadowOffset(0, 0)
-    Text:SetShadowColor(0, 0, 0, 0)
     Text:SetJustifyH("LEFT")
     Text:SetWordWrap(false)
     Text:SetIndentedWordWrap(false)
 
     self.Frame = Frame
+    self.Frame.text = Text
     self.Text = Text
+
+    -- Apply position and font settings
+    NRSKNUI:ApplyFramePosition(self.Frame, self.db.Text.Position, self.db.Text)
+    NRSKNUI:ApplyFontToText(self.Text, self.db.FontFace, self.db.Text.FontSize, self.db.FontOutline)
 end
 
 -- Update text, called from GUI
 function DUR:UpdateText()
-    if not self.db.Text.Enabled and self.Text then
-        self.Text:Hide()
+    if not self.Frame then return end
+    if not self.db.Text.Enabled and not self.isPreview then
+        self.Frame:Hide()
         return
     else
-        self.Text:Show()
+        self.Frame:Show()
     end
-    if not self.Frame then return end
-    local posDB = self.db.Text.Position
-    local anchorFrame = GetParentFrame()
-    self.Frame:ClearAllPoints()
-    self.Frame:SetPoint(posDB.AnchorFrom, anchorFrame, posDB.AnchorTo, posDB.XOffset, posDB.YOffset)
 
-    -- Only update text color if status color is disabled
-    if not self.db.Text.UseStatusColor then
+    -- Apply position settings
+    NRSKNUI:ApplyFramePosition(self.Frame, self.db.Text.Position, self.db.Text)
+
+    -- Update preview text with current settings
+    if self.isPreview then
+        local durText = NRSKNUI:ColorText(self.db.Text.DurText, self.db.Text.DurColor)
+        self.Text:SetText((durText .. "75%"))
+        self.Text:SetTextColor(1, 0.82, 0, 1)
+    elseif not self.db.Text.UseStatusColor then
+        -- Only update text color if status color is disabled
         local r, g, b = unpack(self.db.Text.Color)
         self.Text:SetTextColor(r, g, b, 1)
     end
@@ -148,57 +137,54 @@ end
 -- Create low durability warning text
 function DUR:CreateWarning()
     if self.WarningFrame then return end
-    local posDB = self.db.WarningText.Position
     local color = self.db.WarningText.WarningColor
-    local fontOutline = self.db.FontOutline or "OUTLINE"
-    if fontOutline == "NONE" then fontOutline = "" end
-    local font = NRSKNUI:GetFontPath(self.db.FontFace)
 
     local WarningFrame = CreateFrame("Frame", nil, UIParent)
-    WarningFrame:SetPoint(posDB.AnchorFrom, UIParent, posDB.AnchorTo, posDB.XOffset, posDB.YOffset)
-
     local WarningText = WarningFrame:CreateFontString(nil, "OVERLAY")
     WarningText:SetPoint("CENTER")
-    WarningText:SetFont(font, self.db.WarningText.FontSize, fontOutline)
+
+    self.WarningFrame = WarningFrame
+    self.WarningText = WarningText
+
+    -- Apply position settings
+    NRSKNUI:ApplyFramePosition(self.WarningFrame, self.db.WarningText.Position, { anchorFrameType = "UIPARENT" })
+
+    -- Apply font settings
+    NRSKNUI:ApplyFontToText(WarningText, self.db.FontFace, self.db.WarningText.FontSize, self.db.FontOutline)
+
+    -- Set text and color
     WarningText:SetTextColor(unpack(color))
     WarningText:SetText(self.db.WarningText.WarningText)
-    WarningText:SetShadowOffset(0, 0)
-    WarningText:SetShadowColor(0, 0, 0, 0)
-    WarningText:Hide()
 
     local width, height = math.max(WarningText:GetWidth(), 170), math.max(WarningText:GetHeight(), 18)
     WarningFrame:SetSize(width + offset, height + offset)
 
-    self.WarningFrame = WarningFrame
-    self.WarningText = WarningText
+    -- Hide after soft outline is created so it hides too
+    WarningFrame:Hide()
 end
 
 -- Update warning text, called from GUI
 function DUR:UpdateWarning()
-    if not self.db.WarningText.Enabled and self.WarningText then
-        self.WarningText:Hide()
-        return
-    else
-        DUR:OnEvent()
-    end
     if not self.WarningFrame then return end
-    local posDB = self.db.WarningText.Position
+    if not self.db.WarningText.Enabled then
+        self.WarningFrame:Hide()
+        return
+    end
+
     local color = self.db.WarningText.WarningColor
-    self.WarningFrame:ClearAllPoints()
-    self.WarningFrame:SetPoint(posDB.AnchorFrom, UIParent, posDB.AnchorTo, posDB.XOffset, posDB.YOffset)
+
+    -- Apply position settings
+    NRSKNUI:ApplyFramePosition(self.WarningFrame, self.db.WarningText.Position, { anchorFrameType = "UIPARENT" })
+
     self.WarningText:SetText(self.db.WarningText.WarningText)
     self.WarningText:SetTextColor(unpack(color))
     DUR:OnEvent()
 end
 
--- Update font stuf, called from GUI
+-- Update font settings, called from GUI
 function DUR:UpdateFonts()
-    local fontOutline = self.db.FontOutline or "OUTLINE"
-    if fontOutline == "NONE" then fontOutline = "" end
-    local font = NRSKNUI:GetFontPath(self.db.FontFace)
-
-    self.WarningText:SetFont(font, self.db.WarningText.FontSize, fontOutline)
-    self.Text:SetFont(font, self.db.Text.FontSize, fontOutline)
+    NRSKNUI:ApplyFontToText(self.WarningText, self.db.FontFace, self.db.WarningText.FontSize, self.db.FontOutline)
+    NRSKNUI:ApplyFontToText(self.Text, self.db.FontFace, self.db.Text.FontSize, self.db.FontOutline)
 
     local WTwidth, WTheight = self.WarningText:GetWidth(), self.WarningText:GetHeight()
     self.WarningFrame:SetSize(WTwidth + offset, WTheight + offset)
@@ -276,19 +262,19 @@ function DUR:OnEnable()
             self.db.Text.Position.XOffset = pos.XOffset
             self.db.Text.Position.YOffset = pos.YOffset
             if self.Frame then
-                local parent = GetParentFrame()
+                local parent = NRSKNUI:ResolveAnchorFrame(self.db.Text.anchorFrameType, self.db.Text.ParentFrame)
                 self.Frame:ClearAllPoints()
                 self.Frame:SetPoint(pos.AnchorFrom, parent, pos.AnchorTo, pos.XOffset, pos.YOffset)
             end
         end,
         getParentFrame = function()
-            return GetParentFrame()
+            return NRSKNUI:ResolveAnchorFrame(self.db.Text.anchorFrameType, self.db.Text.ParentFrame)
         end,
         guiPath = "Durability",
     }
     NRSKNUI.EditMode:RegisterElement(configText)
 
-    C_Timer.After(0.1, function()
+    C_Timer.After(0.5, function()
         DUR:UpdateWarning()
         DUR:UpdateText()
     end)
@@ -296,11 +282,11 @@ end
 
 -- Module OnDisable
 function DUR:OnDisable()
-    if self.WarningText then
-        self.WarningText:Hide()
+    if self.WarningFrame then
+        self.WarningFrame:Hide()
     end
-    if self.Text then
-        self.Text:Hide()
+    if self.Frame then
+        self.Frame:Hide()
     end
     self:UnregisterAllEvents()
 end
@@ -314,26 +300,26 @@ function DUR:ShowPreview()
         self:CreateWarning()
     end
     self.isPreview = true
-    if self.Text then
-        self.Text:Show()
+    if self.Frame and self.Text then
+        self.Frame:Show()
         local durText = NRSKNUI:ColorText(self.db.Text.DurText, self.db.Text.DurColor)
         self.Text:SetText((durText .. "75%"))
         self.Text:SetTextColor(1, 0.82, 0, 1)
     end
-    if self.WarningText then
-        self.WarningText:Show()
+    if self.WarningFrame then
+        self.WarningFrame:Show()
     end
 end
 
 -- Hide preview
 function DUR:HidePreview()
     self.isPreview = false
-    if self.Text then
+    if self.Frame then
         if not self.db.Text.Enabled then
-            self.Text:Hide()
+            self.Frame:Hide()
         end
     end
-    if self.WarningText then
+    if self.WarningFrame then
         self:OnEvent()
     end
 end

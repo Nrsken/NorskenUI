@@ -50,9 +50,7 @@ local Defaults = {
             Format = "MM:SS",                    -- Time format
             FontSize = 22,                       -- Font size
             FontFace = "Expressway",             -- Font face
-            FontOutline = "OUTLINE",             -- Font outline
-            Strata = "HIGH",                     -- Frame strata
-            anchorFrameType = "SELECTFRAME",     -- Anchor type: SCREEN, UIPARENT, SELECTFRAME
+            FontOutline = "SOFTOUTLINE",         -- Font outline
             FontShadow = {                       -- Font shadow settings
                 Enabled = false,                 -- Enable font shadow
                 OffsetX = 0,                     -- X offset
@@ -61,7 +59,9 @@ local Defaults = {
             },
             ColorInCombat = { 1, 1, 1, 1 },      -- Color when in combat
             ColorOutOfCombat = { 1, 1, 1, 0.7 }, -- Color when out of combat
+            anchorFrameType = "SELECTFRAME",     -- Anchor type: SCREEN, UIPARENT, SELECTFRAME
             ParentFrame = "UIParent",            -- Parent frame
+            Strata = "HIGH",                     -- Frame strata
             Position = {                         -- Position settings
                 AnchorFrom = "CENTER",           -- Anchor point from
                 AnchorTo = "CENTER",             -- Anchor point to
@@ -87,8 +87,8 @@ local Defaults = {
             ParentFrame = "UIParent",     -- Parent frame name (when SELECTFRAME)
             FontFace = "Expressway",      -- Font face
             FontSize = 15,                -- Font size
-            FontOutline = "OUTLINE",      -- Font outline
-            FontShadow = {                -- Font shadow settings
+            FontOutline = "SOFTOUTLINE",  -- Font outline: NONE, OUTLINE, THICKOUTLINE, SOFTOUTLINE
+            FontShadow = {                -- Font shadow settings (disabled when SOFTOUTLINE)
                 Enabled = false,          -- Enable font shadow
                 Color = { 0, 0, 0, 0 },   -- Shadow color
                 OffsetX = 0,              -- Shadow X offset
@@ -158,10 +158,10 @@ local Defaults = {
             -- Text Mode Settings
             TextMode = {
                 -- General text settings
-                FontFace = "Expressway", -- Font face
-                FontSize = 18,           -- Font size
-                FontOutline = "OUTLINE", -- Font outline
-                TextSpacing = 4,         -- Spacing between timer and charges
+                FontFace = "Expressway",     -- Font face
+                FontSize = 18,               -- Font size
+                FontOutline = "SOFTOUTLINE", -- Font outline
+                TextSpacing = 4,             -- Spacing between timer and charges
 
                 -- Separator Settings
                 Separator = "|",                 -- Separator between timer and charges
@@ -169,7 +169,6 @@ local Defaults = {
                 SeparatorColor = { 1, 1, 1, 1 }, -- Separator color
                 SeparatorShadow = {
                     Enabled = false,             -- Enable shadow
-                    UseSoftOutline = true,       -- Use stacked shadows (soft outline) vs regular shadow
                     Color = { 0, 0, 0, 0 },      -- Shadow color
                     OffsetX = 0,                 -- Shadow X offset (regular shadow only)
                     OffsetY = 0,                 -- Shadow Y offset (regular shadow only)
@@ -179,7 +178,6 @@ local Defaults = {
                 TimerColor = { 1, 1, 1, 1 }, -- Timer text color
                 TimerShadow = {
                     Enabled = false,         -- Enable shadow
-                    UseSoftOutline = true,
                     Color = { 0, 0, 0, 0 },  -- Shadow color
                     OffsetX = 0,             -- Shadow X offset
                     OffsetY = 0,             -- Shadow Y offset
@@ -190,7 +188,6 @@ local Defaults = {
                 ChargeUnavailableColor = { 1, 0.3, 0.3, 1 }, -- Charge color when 0 available
                 ChargeShadow = {
                     Enabled = false,                         -- Enable shadow
-                    UseSoftOutline = true,                   -- Use stacked shadows (soft outline) vs regular shadow
                     Color = { 0, 0, 0, 0 },                  -- Shadow color
                     OffsetX = 0,                             -- Shadow X offset (regular shadow only)
                     OffsetY = 0,                             -- Shadow Y offset (regular shadow only)
@@ -223,26 +220,44 @@ local Defaults = {
             -- Font settings
             FontFace = "Expressway",           -- Font face
             FontSize = 24,                     -- Font size
-            FontOutline = "OUTLINE",           -- Font outline (NONE, OUTLINE, THICKOUTLINE)
-            FontSoftOutline = true,
+            FontOutline = "SOFTOUTLINE",       -- Font outline (NONE, OUTLINE, THICKOUTLINE, SOFTOUTLINE)
             -- Position settings
-            Strata = "HIGH",              -- Frame strata
-            anchorFrameType = "UIPARENT", -- Anchor frame type
-            ParentFrame = "UIParent",     -- Parent frame name
-            Position = {                  -- Position settings
-                AnchorFrom = "CENTER",    -- Anchor point from
-                AnchorTo = "CENTER",      -- Anchor point to
-                XOffset = 0,              -- X offset
-                YOffset = 181,            -- Y offset
+            Strata = "HIGH",                   -- Frame strata
+            anchorFrameType = "UIPARENT",      -- Anchor frame type
+            ParentFrame = "UIParent",          -- Parent frame name
+            Position = {                       -- Position settings
+                AnchorFrom = "CENTER",         -- Anchor point from
+                AnchorTo = "CENTER",           -- Anchor point to
+                XOffset = 0,                   -- X offset
+                YOffset = 181,                 -- Y offset
             },
         },
 
         -- Miscellaneous Settings
         Miscellaneous = {
+            Gateway = {
+                Enabled = true,
+                Color = { 0, 1, 0 },
+                -- Font settings
+                FontFace = "Expressway",      -- Font face
+                FontSize = 24,                -- Font size
+                FontOutline = "SOFTOUTLINE",  -- Font outline (NONE, OUTLINE, THICKOUTLINE)
+                -- Position settings
+                Strata = "HIGH",              -- Frame strata
+                anchorFrameType = "UIPARENT", -- Anchor frame type
+                ParentFrame = "UIParent",     -- Parent frame name
+                Position = {                  -- Position settings
+                    AnchorFrom = "CENTER",    -- Anchor point from
+                    AnchorTo = "CENTER",      -- Anchor point to
+                    XOffset = 0,              -- X offset
+                    YOffset = 300,            -- Y offset
+                },
+            },
+
             Durability = {
                 Enabled = true,
                 FontFace = "Expressway",
-                FontOutline = "OUTLINE",
+                FontOutline = "SOFTOUTLINE",
 
                 WarningText = {
                     Enabled = true,
@@ -1342,19 +1357,7 @@ local Defaults = {
         -- Missing Buffs Tracker
         MissingBuffs = {
             -- General Settings
-            Enabled = true,          -- Enable/disable module
-            IconSize = 48,           -- Icon size
-            IconSpacing = 1,         -- Spacing between icons
-            Strata = "HIGH",         -- Frame strata
-            Font = "Expressway",     -- Font face
-            FontSize = 12,           -- Font size
-            FontOutline = "OUTLINE", -- Font outline
-            HideWhileMounted = true, -- Hide when mounted
-
-            -- Raid & General Buffs Settings
-            NotifyLowDuration = false, -- Notify when buff is about to expire
-            LowDurationThreshold = 5,  -- Minutes remaining to trigger reapply notification
-
+            Enabled = true,              -- Enable/disable module
             -- Consumable Tracking
             Consumables = {
                 Flask = { Enabled = true, LoadCondition = "ANYGROUP" },
@@ -1364,11 +1367,13 @@ local Defaults = {
                 Rune = { Enabled = true, LoadCondition = "RAID" },
                 RaidBuffs = { Enabled = true, LoadCondition = "ANYGROUP" },
             },
-
             -- Raid Buff Display Settings (separate position from main)
             RaidBuffDisplay = {
                 IconSize = 48,
                 IconSpacing = 1,
+                FontFace = "Expressway",                 -- Font face
+                FontSize = 12,                           -- Font size
+                FontOutline = "SOFTOUTLINE",             -- Font outline
                 Strata = "HIGH",
                 anchorFrameType = "UIPARENT",
                 ParentFrame = "UIParent",
@@ -1379,11 +1384,9 @@ local Defaults = {
                     YOffset = -375.1,
                 },
             },
-
             -- Stance & Spec Buff Settings
             Stances = {
                 Enabled = true, -- Master toggle for stance tracking
-
                 -- Warrior Stances
                 WARRIOR = {
                     Enabled = true,            -- Warn if no stance active
@@ -1443,7 +1446,11 @@ local Defaults = {
 
             -- Stance Display Settings (separate position)
             StanceDisplay = {
+                Enabled = true,              -- Enable stance text display
                 IconSize = 38,
+                FontFace = "Expressway",     -- Font face
+                FontSize = 12,               -- Font size
+                FontOutline = "SOFTOUTLINE", -- Font outline
                 Strata = "HIGH",
                 anchorFrameType = "UIPARENT",
                 ParentFrame = "UIParent",
@@ -1458,9 +1465,9 @@ local Defaults = {
             -- Stance Text Display Settings
             StanceText = {
                 Enabled = false, -- Enable stance text display
-                Font = "Expressway",
-                FontOutline = "OUTLINE",
+                FontFace = "Expressway",
                 FontSize = 14,
+                FontOutline = "SOFTOUTLINE",
                 Strata = "HIGH",
                 anchorFrameType = "UIPARENT",
                 ParentFrame = "UIParent",

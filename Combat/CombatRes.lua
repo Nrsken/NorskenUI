@@ -17,23 +17,10 @@ local pcall = pcall
 local C_Spell = C_Spell
 local tostring = tostring
 local GetTime = GetTime
-local ipairs = ipairs
 
 -- Module constants
 local SPELL_ID = 20484 -- Rebirth
 local UPDATE_INTERVAL = 0.1
-
--- Shadow offsets for soft outline
-local SHADOW_OFFSETS = {
-    { 0,  1 },  -- N
-    { 1,  1 },  -- NE
-    { 1,  0 },  -- E
-    { 1,  -1 }, -- SE
-    { 0,  -1 }, -- S
-    { -1, -1 }, -- SW
-    { -1, 0 },  -- W
-    { -1, 1 },  -- NW
-}
 
 -- Module state
 CR.frame = nil
@@ -50,47 +37,6 @@ CR.cachedSettings = {}
 function CR:OnInitialize()
     self.db = NRSKNUI.db.profile.BattleRes
     self:SetEnabledState(false)
-end
-
--- Update shadow text content
-local function UpdateShadowTextContent(shadows, text)
-    if not shadows then return end
-    for _, shadow in ipairs(shadows) do
-        shadow:SetText(text)
-    end
-end
-
--- Re-anchor shadow layers to their parent text
-function CR:UpdateShadowAnchors()
-    if not self.frame then return end
-
-    local function reanchorShadows(shadows, parentText)
-        if not shadows then return end
-        for i, shadow in ipairs(shadows) do
-            if shadow then
-                shadow:ClearAllPoints()
-                local offset = SHADOW_OFFSETS[i]
-                shadow:SetPoint("CENTER", parentText, "CENTER", offset[1], offset[2])
-                shadow:SetJustifyH(parentText:GetJustifyH())
-            end
-        end
-    end
-
-    local textMode = self.db.TextMode or {}
-    local sepShadow = textMode.SeparatorShadow or {}
-    local chargeShadow = textMode.ChargeShadow or {}
-    local timerShadow = textMode.TimerShadow or {}
-
-    if sepShadow.UseSoftOutline then
-        reanchorShadows(self.frame.separatorShadows, self.frame.separator)
-        reanchorShadows(self.frame.CRTextShadows, self.frame.CRText)
-    end
-    if chargeShadow.UseSoftOutline then
-        reanchorShadows(self.frame.chargeShadows, self.frame.charge)
-    end
-    if timerShadow.UseSoftOutline then
-        reanchorShadows(self.frame.timerShadows, self.frame.timerText)
-    end
 end
 
 -- Update anchors based on growth direction
@@ -137,8 +83,6 @@ function CR:UpdateAnchors()
 
         self.frame.timerText:SetJustifyH("RIGHT")
     end
-
-    self:UpdateShadowAnchors()
 end
 
 -- Create the main frame
@@ -171,31 +115,23 @@ function CR:CreateFrame()
     frame.timerText = frame.content:CreateFontString(nil, "OVERLAY")
     frame.timerText:SetFont(fontPath, fontSize, "")
     frame.timerText:SetTextColor(1, 1, 1, 1)
-    frame.timerShadows = NRSKNUI:CreateStackedShadowText(frame.content, frame.timerText, fontPath, fontSize, { 0, 0, 0 },
-        0.9)
 
     -- Separator text
     frame.separator = frame.content:CreateFontString(nil, "OVERLAY")
     frame.separator:SetFont(fontPath, fontSize, "")
     frame.separator:SetText(textMode.Separator or "|")
     frame.separator:SetTextColor(1, 1, 1, 1)
-    frame.separatorShadows = NRSKNUI:CreateStackedShadowText(frame.content, frame.separator, fontPath, fontSize,
-        { 0, 0, 0 }, 0.9)
 
     -- Charge text
     frame.charge = frame.content:CreateFontString(nil, "OVERLAY")
     frame.charge:SetFont(fontPath, fontSize, "")
     frame.charge:SetTextColor(1, 1, 1, 1)
-    frame.chargeShadows = NRSKNUI:CreateStackedShadowText(frame.content, frame.charge, fontPath, fontSize, { 0, 0, 0 },
-        0.9)
 
     -- CR label text
     frame.CRText = frame.content:CreateFontString(nil, "OVERLAY")
     frame.CRText:SetFont(fontPath, fontSize, "")
     frame.CRText:SetText("CR:")
     frame.CRText:SetTextColor(1, 1, 1, 1)
-    frame.CRTextShadows = NRSKNUI:CreateStackedShadowText(frame.content, frame.CRText, fontPath, fontSize, { 0, 0, 0 },
-        0.9)
 
     self.frame = frame
 end
@@ -206,9 +142,9 @@ function CR:ApplyTextModeSettings()
 
     local db = self.db
     local textMode = db.TextMode or {}
-    local fontPath = NRSKNUI:GetFontPath(textMode.FontFace or "Friz Quadrata TT")
+    local fontName = textMode.FontFace or "Friz Quadrata TT"
     local fontSize = textMode.FontSize or 18
-    local fontOutline = NRSKNUI:GetFontOutline(textMode.FontOutline)
+    local fontOutline = textMode.FontOutline or "OUTLINE"
 
     -- Cache settings
     self.cachedSettings.separator = textMode.Separator or "|"
@@ -223,67 +159,27 @@ function CR:ApplyTextModeSettings()
     local chargeShadow = textMode.ChargeShadow or {}
     local timerShadow = textMode.TimerShadow or {}
 
-    -- Cache shadow settings
-    self.cachedSettings.timerUseSoftOutline = timerShadow.UseSoftOutline or false
-    self.cachedSettings.chargeUseSoftOutline = chargeShadow.UseSoftOutline or false
-    self.cachedSettings.separatorUseSoftOutline = sepShadow.UseSoftOutline or false
-
     -- Apply separator
     local sc = self.cachedSettings.separatorColor
     self.frame.separator:SetText(self.cachedSettings.separator)
     self.frame.separator:SetTextColor(sc[1], sc[2], sc[3], sc[4] or 1)
-    self:ApplyShadowSettings(self.frame.separator, self.frame.separatorShadows, sepShadow, fontPath, fontSize,
-        fontOutline, self.cachedSettings.separator)
+    NRSKNUI:ApplyFontToText(self.frame.separator, fontName, fontSize, fontOutline, sepShadow)
 
     -- Apply charge
-    self:ApplyShadowSettings(self.frame.charge, self.frame.chargeShadows, chargeShadow, fontPath, fontSize, fontOutline)
+    NRSKNUI:ApplyFontToText(self.frame.charge, fontName, fontSize, fontOutline, chargeShadow)
 
     -- Apply CR text
     self.frame.CRText:SetText(self.cachedSettings.separatorCharges)
     self.frame.CRText:SetTextColor(sc[1], sc[2], sc[3], sc[4] or 1)
-    self:ApplyShadowSettings(self.frame.CRText, self.frame.CRTextShadows, sepShadow, fontPath, fontSize, fontOutline,
-        self.cachedSettings.separatorCharges)
+    NRSKNUI:ApplyFontToText(self.frame.CRText, fontName, fontSize, fontOutline, sepShadow)
 
     -- Apply timer
     local tc = self.cachedSettings.timerColor
     self.frame.timerText:SetTextColor(tc[1], tc[2], tc[3], tc[4] or 1)
-    self:ApplyShadowSettings(self.frame.timerText, self.frame.timerShadows, timerShadow, fontPath, fontSize, fontOutline)
+    NRSKNUI:ApplyFontToText(self.frame.timerText, fontName, fontSize, fontOutline, timerShadow)
 
     self:UpdateAnchors()
     self:ApplyBackdropSettings()
-end
-
--- Apply shadow settings to a text element
-function CR:ApplyShadowSettings(fontString, shadows, shadowSettings, fontPath, fontSize, fontOutline, text)
-    local shadowColor = shadowSettings.Color or { 0, 0, 0, 1 }
-
-    if shadowSettings.UseSoftOutline then
-        fontString:SetFont(fontPath, fontSize, "")
-        fontString:SetShadowOffset(0, 0)
-        fontString:SetShadowColor(0, 0, 0, 0)
-        if shadows then
-            for _, shadow in ipairs(shadows) do
-                shadow:SetFont(fontPath, fontSize, "")
-                shadow:SetTextColor(0, 0, 0, 1)
-                if text then shadow:SetText(text) end
-                shadow:Show()
-            end
-        end
-    elseif shadowSettings.Enabled then
-        if shadows then
-            for _, shadow in ipairs(shadows) do shadow:Hide() end
-        end
-        fontString:SetFont(fontPath, fontSize, fontOutline)
-        fontString:SetShadowOffset(shadowSettings.OffsetX or 0, shadowSettings.OffsetY or 0)
-        fontString:SetShadowColor(shadowColor[1], shadowColor[2], shadowColor[3], shadowColor[4] or 1)
-    else
-        fontString:SetFont(fontPath, fontSize, fontOutline)
-        fontString:SetShadowOffset(0, 0)
-        fontString:SetShadowColor(0, 0, 0, 0)
-        if shadows then
-            for _, shadow in ipairs(shadows) do shadow:Hide() end
-        end
-    end
 end
 
 -- Apply backdrop settings
@@ -293,38 +189,18 @@ function CR:ApplyBackdropSettings()
     local textMode = self.db.TextMode or {}
     local backdrop = textMode.Backdrop or {}
 
+    -- Always use the same frame size to prevent text shifting
+    self.frame:SetSize(backdrop.FrameWidth or 100, backdrop.FrameHeight or 26)
+
     if backdrop.Enabled then
         local bgColor = backdrop.Color or { 0, 0, 0, 0.6 }
         local borderColor = backdrop.BorderColor or { 0, 0, 0, 1 }
         self.frame:SetBackdropColor(bgColor[1], bgColor[2], bgColor[3], bgColor[4] or 0.6)
         self.frame:SetBackdropBorderColor(borderColor[1], borderColor[2], borderColor[3], borderColor[4] or 1)
-        self.frame:SetSize(backdrop.FrameWidth or 100, backdrop.FrameHeight or 26)
     else
         self.frame:SetBackdropColor(0, 0, 0, 0)
         self.frame:SetBackdropBorderColor(0, 0, 0, 0)
-        self.frame:SetSize(100, 26)
     end
-end
-
--- Apply position
-function CR:ApplyPosition()
-    if not self.frame then return end
-
-    local db = self.db
-    local pos = db.Position or {}
-    local parent = NRSKNUI:ResolveAnchorFrame(db.anchorFrameType, db.ParentFrame)
-
-    self.frame:ClearAllPoints()
-    self.frame:SetPoint(
-        pos.AnchorFrom or "CENTER",
-        parent,
-        pos.AnchorTo or "CENTER",
-        pos.XOffset or 0,
-        pos.YOffset or 0
-    )
-    self.frame:SetFrameStrata(db.Strata or "HIGH")
-
-    NRSKNUI:SnapFrameToPixels(self.frame)
 end
 
 -- Update display
@@ -342,16 +218,10 @@ function CR:Update()
             if self.lastTimerText ~= "02:00" then
                 self.lastTimerText = "02:00"
                 self.frame.timerText:SetText("02:00")
-                if self.cachedSettings.timerUseSoftOutline then
-                    UpdateShadowTextContent(self.frame.timerShadows, "02:00")
-                end
             end
             if self.lastChargeText ~= "2" then
                 self.lastChargeText = "2"
                 self.frame.charge:SetText("2")
-                if self.cachedSettings.chargeUseSoftOutline then
-                    UpdateShadowTextContent(self.frame.chargeShadows, "2")
-                end
             end
             local ac = self.cachedSettings.availableColor or { 0.3, 1, 0.3, 1 }
             if self.lastChargeColor ~= "available" then
@@ -392,17 +262,11 @@ function CR:Update()
         if timerText ~= self.lastTimerText then
             self.lastTimerText = timerText
             self.frame.timerText:SetText(timerText)
-            if self.cachedSettings.timerUseSoftOutline then
-                UpdateShadowTextContent(self.frame.timerShadows, timerText)
-            end
         end
     else
         if self.lastTimerText ~= "00:00" then
             self.lastTimerText = "00:00"
             self.frame.timerText:SetText("00:00")
-            if self.cachedSettings.timerUseSoftOutline then
-                UpdateShadowTextContent(self.frame.timerShadows, "00:00")
-            end
         end
     end
 
@@ -411,9 +275,6 @@ function CR:Update()
     if chargeText ~= self.lastChargeText then
         self.lastChargeText = chargeText
         self.frame.charge:SetText(chargeText)
-        if self.cachedSettings.chargeUseSoftOutline then
-            UpdateShadowTextContent(self.frame.chargeShadows, chargeText)
-        end
     end
 
     -- Update charge color
@@ -432,23 +293,22 @@ function CR:OnUpdate(elapsed)
     self.lastUpdate = self.lastUpdate + elapsed
     if self.lastUpdate < UPDATE_INTERVAL then return end
     self.lastUpdate = 0
-    self:UpdateShadowAnchors()
     self:Update()
 end
 
 -- Apply all settings
 function CR:ApplySettings()
-    if not self.db.Enabled and not self.isPreview then
-        if self.frame then self.frame:Hide() end
-        return
-    end
-
     if not self.frame then
         self:CreateFrame()
     end
 
-    self:ApplyPosition()
+    NRSKNUI:ApplyFramePosition(self.frame, self.db.Position, self.db)
     self:ApplyTextModeSettings()
+
+    if not self.db.Enabled and not self.isPreview then
+        self.frame:Hide()
+        return
+    end
     self:Update()
 end
 
@@ -477,9 +337,9 @@ function CR:OnEnable()
     self.db.PreviewMode = false
     self.isPreview = false
 
-    if self.db.Enabled then
+    C_Timer.After(0.5, function()
         self:ApplySettings()
-    end
+    end)
 
     -- Set up OnUpdate
     self.frame:SetScript("OnUpdate", function(_, elapsed)

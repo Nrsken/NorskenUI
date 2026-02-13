@@ -4,6 +4,7 @@ local GUIFrame = NRSKNUI.GUIFrame
 local Theme = NRSKNUI.Theme
 
 -- Localization
+local ipairs = ipairs
 local table_insert = table.insert
 
 -- Get module reference
@@ -81,16 +82,7 @@ GUIFrame:RegisterContent("combatCross", function(scrollChild, yOffset)
             yOffset = "YOffset",
             strata = "Strata",
         },
-        defaults = {
-            anchorFrameType = "UIPARENT",
-            anchorFrameFrame = "UIParent",
-            selfPoint = "CENTER",
-            anchorPoint = "CENTER",
-            xOffset = 0,
-            yOffset = -10,
-            strata = "HIGH",
-        },
-        showAnchorFrameType = true,
+        showAnchorFrameType = false,
         showStrata = true,
         onChangeCallback = ApplySettings,
     })

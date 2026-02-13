@@ -382,6 +382,66 @@ local function RenderRaidBuffsTab(scrollChild, yOffset, activeCards)
     yOffset = yOffset + card3:GetContentHeight() + Theme.paddingSmall
 
     ----------------------------------------------------------------
+    -- Card 4: Font Settings
+    ----------------------------------------------------------------
+    local card4 = GUIFrame:CreateCard(scrollChild, "Font Settings", yOffset)
+    table_insert(activeCards, card4)
+    table_insert(allWidgets, card4)
+
+    -- Build font list
+    local fontList = {}
+    if LSM then
+        for name in pairs(LSM:HashTable("font")) do
+            table_insert(fontList, { key = name, text = name })
+        end
+        table_sort(fontList, function(a, b) return a.text < b.text end)
+    else
+        table_insert(fontList, { key = "Friz Quadrata TT", text = "Friz Quadrata TT" })
+    end
+
+    local outlineList = {
+        { key = "NONE",         text = "None" },
+        { key = "OUTLINE",      text = "Outline" },
+        { key = "THICKOUTLINE", text = "Thick" },
+        { key = "SOFTOUTLINE",  text = "Soft" },
+    }
+
+    -- Font and Outline
+    local row4a = GUIFrame:CreateRow(card4.content, 36)
+    local fontDropdown = GUIFrame:CreateDropdown(row4a, "Font", fontList,
+        db.RaidBuffDisplay.FontFace or "Friz Quadrata TT", 120,
+        function(key)
+            db.RaidBuffDisplay.FontFace = key
+            ApplySettings()
+        end)
+    row4a:AddWidget(fontDropdown, 0.5)
+    table_insert(allWidgets, fontDropdown)
+
+    local outlineDropdown = GUIFrame:CreateDropdown(row4a, "Outline", outlineList,
+        db.RaidBuffDisplay.FontOutline or "OUTLINE", 80,
+        function(key)
+            db.RaidBuffDisplay.FontOutline = key
+            ApplySettings()
+        end)
+    row4a:AddWidget(outlineDropdown, 0.5)
+    table_insert(allWidgets, outlineDropdown)
+    card4:AddRow(row4a, 36)
+
+    -- Font Size
+    local row4b = GUIFrame:CreateRow(card4.content, 36)
+    local fontSizeSlider = GUIFrame:CreateSlider(row4b, "Font Size", 8, 32, 1,
+        db.RaidBuffDisplay.FontSize or 14, 60,
+        function(val)
+            db.RaidBuffDisplay.FontSize = val
+            ApplySettings()
+        end)
+    row4b:AddWidget(fontSizeSlider, 1)
+    table_insert(allWidgets, fontSizeSlider)
+    card4:AddRow(row4b, 36)
+
+    yOffset = yOffset + card4:GetContentHeight() + Theme.paddingSmall
+
+    ----------------------------------------------------------------
     -- Card 4: Position Settings
     ----------------------------------------------------------------
     db.RaidBuffDisplay.Position = db.RaidBuffDisplay.Position or {}
@@ -695,6 +755,66 @@ local function RenderStancesTab(scrollChild, yOffset, activeCards)
     yOffset = yOffset + card3:GetContentHeight() + Theme.paddingSmall
 
     ----------------------------------------------------------------
+    -- Card 4: Font Settings
+    ----------------------------------------------------------------
+    local card4 = GUIFrame:CreateCard(scrollChild, "Font Settings", yOffset)
+    table_insert(activeCards, card4)
+    table_insert(allWidgets, card4)
+
+    -- Build font list
+    local fontList = {}
+    if LSM then
+        for name in pairs(LSM:HashTable("font")) do
+            table_insert(fontList, { key = name, text = name })
+        end
+        table_sort(fontList, function(a, b) return a.text < b.text end)
+    else
+        table_insert(fontList, { key = "Friz Quadrata TT", text = "Friz Quadrata TT" })
+    end
+
+    local outlineList = {
+        { key = "NONE",         text = "None" },
+        { key = "OUTLINE",      text = "Outline" },
+        { key = "THICKOUTLINE", text = "Thick" },
+        { key = "SOFTOUTLINE",  text = "Soft" },
+    }
+
+    -- Font and Outline
+    local row4a = GUIFrame:CreateRow(card4.content, 36)
+    local fontDropdown = GUIFrame:CreateDropdown(row4a, "Font", fontList,
+        db.StanceDisplay.FontFace or "Friz Quadrata TT", 120,
+        function(key)
+            db.StanceDisplay.FontFace = key
+            ApplySettings()
+        end)
+    row4a:AddWidget(fontDropdown, 0.5)
+    table_insert(allWidgets, fontDropdown)
+
+    local outlineDropdown = GUIFrame:CreateDropdown(row4a, "Outline", outlineList,
+        db.StanceDisplay.FontOutline or "OUTLINE", 80,
+        function(key)
+            db.StanceDisplay.FontOutline = key
+            ApplySettings()
+        end)
+    row4a:AddWidget(outlineDropdown, 0.5)
+    table_insert(allWidgets, outlineDropdown)
+    card4:AddRow(row4a, 36)
+
+    -- Font Size
+    local row4b = GUIFrame:CreateRow(card4.content, 36)
+    local fontSizeSlider = GUIFrame:CreateSlider(row4b, "Font Size", 8, 32, 1,
+        db.StanceDisplay.FontSize or 14, 60,
+        function(val)
+            db.StanceDisplay.FontSize = val
+            ApplySettings()
+        end)
+    row4b:AddWidget(fontSizeSlider, 1)
+    table_insert(allWidgets, fontSizeSlider)
+    card4:AddRow(row4b, 36)
+
+    yOffset = yOffset + card4:GetContentHeight() + Theme.paddingSmall
+
+    ----------------------------------------------------------------
     -- Card 4: Position Settings
     ----------------------------------------------------------------
     db.StanceDisplay.Position = db.StanceDisplay.Position or {}
@@ -842,6 +962,7 @@ local function RenderStanceTextsTab(scrollChild, yOffset, activeCards)
         { key = "NONE",         text = "None" },
         { key = "OUTLINE",      text = "Outline" },
         { key = "THICKOUTLINE", text = "Thick" },
+        { key = "SOFTOUTLINE",  text = "Soft" },
     }
 
     ----------------------------------------------------------------
@@ -886,9 +1007,9 @@ local function RenderStanceTextsTab(scrollChild, yOffset, activeCards)
     -- Font and Outline
     local row4a = GUIFrame:CreateRow(card4.content, 36)
     local fontDropdown = GUIFrame:CreateDropdown(row4a, "Font", fontList,
-        db.StanceText.Font or "Friz Quadrata TT", 120,
+        db.StanceText.FontFace or "Friz Quadrata TT", 120,
         function(key)
-            db.StanceText.Font = key
+            db.StanceText.FontFace = key
             ApplySettings()
         end)
     row4a:AddWidget(fontDropdown, 0.5)

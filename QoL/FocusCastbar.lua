@@ -152,14 +152,14 @@ function FCB:CreateFrame()
 
     -- Text elements
     local text = castBar:CreateFontString(nil, "OVERLAY")
-    text:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
     text:SetPoint("LEFT", castBar, "LEFT", 4, 0)
     text:SetJustifyH("LEFT")
+    NRSKNUI:ApplyFontToText(text, db.FontFace, db.FontSize, db.FontOutline)
 
     local time = castBar:CreateFontString(nil, "OVERLAY")
-    time:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
     time:SetPoint("RIGHT", castBar, "RIGHT", -4, 0)
     time:SetJustifyH("RIGHT")
+    NRSKNUI:ApplyFontToText(time, db.FontFace, db.FontSize, db.FontOutline)
 
     -- Store references
     self.frame, self.iconFrame, self.icon = frame, iconFrame, icon
@@ -201,8 +201,8 @@ function FCB:ApplySettings()
     local tickColor = kickColors.TickColor or { 1, 1, 1, 1 }
     self.kickTick:SetColorTexture(tickColor[1], tickColor[2], tickColor[3], tickColor[4] or 1)
 
-    NRSKNUI:ApplyFont(self.text, db.FontFace, db.FontSize, db.FontOutline)
-    NRSKNUI:ApplyFont(self.time, db.FontFace, db.FontSize, db.FontOutline)
+    NRSKNUI:ApplyFontToText(self.text, db.FontFace, db.FontSize, db.FontOutline)
+    NRSKNUI:ApplyFontToText(self.time, db.FontFace, db.FontSize, db.FontOutline)
     self.text:SetTextColor(textColor[1], textColor[2], textColor[3], textColor[4] or 1)
     self.time:SetTextColor(textColor[1], textColor[2], textColor[3], textColor[4] or 1)
 end
@@ -213,11 +213,7 @@ function FCB:ApplyPosition()
     local db = self.db
     local parent = NRSKNUI:ResolveAnchorFrame(db.anchorFrameType, db.ParentFrame)
     self.frame:SetParent(parent)
-    self.frame:ClearAllPoints()
-    self.frame:SetPoint(db.Position.AnchorFrom or "CENTER", parent, db.Position.AnchorTo or "CENTER",
-        db.Position.XOffset or 0, db.Position.YOffset or 200)
-    self.frame:SetFrameStrata(db.Strata)
-    NRSKNUI:SnapFrameToPixels(self.frame)
+    NRSKNUI:ApplyFramePosition(self.frame, db.Position, db)
 end
 
 -- Update bar color based on kick ready state

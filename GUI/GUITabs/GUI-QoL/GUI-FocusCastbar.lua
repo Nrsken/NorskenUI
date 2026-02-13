@@ -184,7 +184,7 @@ GUIFrame:RegisterContent("FocusCastbar", function(scrollChild, yOffset)
     row4a:AddWidget(fontDropdown, 0.5)
     table_insert(allWidgets, fontDropdown)
 
-    local outlineList = { ["NONE"] = "None", ["OUTLINE"] = "Outline", ["THICKOUTLINE"] = "Thick" }
+    local outlineList = { ["NONE"] = "None", ["OUTLINE"] = "Outline", ["THICKOUTLINE"] = "Thick", ["SOFTOUTLINE"] = "Soft" }
     local outlineDropdown = GUIFrame:CreateDropdown(row4a, "Outline", outlineList,
         db.FontOutline or "OUTLINE", 45,
         function(key)

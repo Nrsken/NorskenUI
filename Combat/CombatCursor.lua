@@ -177,9 +177,7 @@ end
 -- Apply color to the cursor circle
 function CC:ApplyColor()
     if not self.frame or not self.frame.texture then return end
-
-    local db = self.db
-    local r, g, b, a = NRSKNUI:GetAccentColor(db.ColorMode, db.Color)
+    local r, g, b, a = NRSKNUI:GetAccentColor(self.db.ColorMode, self.db.Color)
     self.frame.texture:SetVertexColor(r, g, b, a)
 end
 
@@ -224,10 +222,7 @@ end
 -- Apply all settings
 function CC:ApplySettings()
     local db = self.db
-
-    if not self.frame then
-        self:CreateFrame()
-    end
+    if not self.frame then self:CreateFrame() end
     if not self.frame then return end
 
     -- Update main circle
@@ -242,9 +237,7 @@ function CC:ApplySettings()
 
     -- Update GCD ring
     local gcd = db.GCD or {}
-    if not self.gcdFrame then
-        self:CreateGCDRing()
-    end
+    if not self.gcdFrame then self:CreateGCDRing() end
     if self.gcdFrame then
         self.gcdFrame:SetSize(gcd.Size or 25, gcd.Size or 25)
         local gcdTexPath = CC.GCDRingTextures[gcd.Texture] or CC.GCDRingTextures["Circle 5"]
@@ -363,18 +356,14 @@ function CC:OnEnable()
     self:RegisterEvent("SPELL_UPDATE_COOLDOWN", "UpdateGCDCooldown")
     self:RegisterEvent("ACTIONBAR_UPDATE_COOLDOWN", "UpdateGCDCooldown")
     self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
-    if self.db.Enabled then
-        self.frame:Show()
-    end
+    if self.db.Enabled then self.frame:Show() end
 end
 
 -- Handle spell cast for immediate GCD update
 function CC:UNIT_SPELLCAST_SUCCEEDED(_, unit)
     if unit ~= "player" then return end
-
     local gcd = self.db.GCD or {}
     if gcd.Mode == "disabled" then return end
-
     self:UpdateGCDCooldown()
 end
 

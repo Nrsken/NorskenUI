@@ -43,6 +43,7 @@ GUIFrame.SidebarConfig = {
                 { id = "cursorCircle",  text = "Cursor Circle" },
                 { id = "combatMessage", text = "Combat Texts" },
                 { id = "PetTexts",      text = "Pet Status Texts" },
+                { id = "gateway",       text = "Gateway Alert" },
             }
         },
         {
@@ -959,14 +960,11 @@ function GUIFrame:CreateHeader(parent)
     currentVersionText:SetJustifyH("LEFT")
     currentVersionText:SetShadowColor(0, 0, 0, 0)
     -- Create stacked shadow layers for separator
-    header.currentVersionTextShadow = NRSKNUI:CreateStackedShadowText(
-        header,
-        currentVersionText,
-        fontPath,
-        fontSize,
-        { 0, 0, 0 },
-        0.9
-    )
+    header.currentVersionTextShadow = NRSKNUI:CreateSoftOutline(currentVersionText, {
+        thickness = 1,
+        color = { 0, 0, 0 },
+        alpha = 0.9,
+    })
 
     -- Header element references
     header.logoContainer = logoContainer

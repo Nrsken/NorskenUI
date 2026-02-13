@@ -1,4 +1,32 @@
 package-as: NorskenUI
+enable-nolib-creation: no
+
+curse-id: 1460316
+
+externals:
+    Libs/AceAddon-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceAddon-3.0
+    Libs/AceDB-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceDB-3.0
+    Libs/AceEvent-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceEvent-3.0
+    Libs/AceHook-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceHook-3.0
+    Libs/LibSharedMedia-3.0: https://repos.curseforge.com/wow/libsharedmedia-3-0/trunk/LibSharedMedia-3.0
+    Libs/LibStub: https://repos.curseforge.com/wow/libstub/trunk
+    Libs/CallbackHandler-1.0: https://repos.curseforge.com/wow/callbackhandler/trunk/CallbackHandler-1.0
+    Libs/LibDBIcon-1.0: https://repos.wowace.com/wow/libdbicon-1-0/trunk/LibDBIcon-1.0
+    Libs/LibDataBroker-1.1:
+        url: https://github.com/tekkub/libdatabroker-1-1
+        tag: master
+    Libs/LibDualSpec-1.0:
+        url: https://github.com/AdiAddons/LibDualSpec-1.0.git
+        branch: master
+    Libs/TaintLess:
+        url: https://www.townlong-yak.com/addons.git/taintless
+        commit: default
+    Libs/LibEditMode:
+        url: https://github.com/p3lim-wow/LibEditMode.git
+        tag: master
+    Libs/LibEditModeOverride:
+        url: https://github.com/plusmouse/LibEditModeOverride
+        tag: main
 
 ignore:
     - README.md
@@ -9,4 +37,3 @@ ignore:
     - release.sh
     - .gitignore
     - .gitattributes
-

@@ -47,7 +47,8 @@ GUIFrame:RegisterContent("combatTimer", function(scrollChild, yOffset)
     -- Widget state update
     local function UpdateAllWidgetStates()
         local mainEnabled = db.Enabled ~= false
-        local shadowEnabled = db.FontShadow and db.FontShadow.Enabled == true
+        local usingSoftOutline = db.FontOutline == "SOFTOUTLINE"
+        local shadowEnabled = not usingSoftOutline and db.FontShadow and db.FontShadow.Enabled == true
         local bgEnabled = db.Backdrop and db.Backdrop.Enabled == true
 
         -- First: Apply main enable state to ALL widgets
@@ -59,7 +60,7 @@ GUIFrame:RegisterContent("combatTimer", function(scrollChild, yOffset)
 
         -- Second: Apply conditional states (only if main is enabled, otherwise already disabled)
         if mainEnabled then
-            -- Shadow widgets: only enabled if shadow is also enabled
+            -- Shadow widgets: only enabled if shadow is also enabled AND not using SOFTOUTLINE
             for _, widget in ipairs(shadowWidgets) do
                 if widget.SetEnabled then
                     widget:SetEnabled(shadowEnabled)
@@ -118,15 +119,6 @@ GUIFrame:RegisterContent("combatTimer", function(scrollChild, yOffset)
             yOffset = "YOffset",
             strata = "Strata",
         },
-        defaults = {
-            anchorFrameType = "SELECTFRAME",
-            anchorFrameFrame = "UIParent",
-            selfPoint = "CENTER",
-            anchorPoint = "CENTER",
-            xOffset = 0,
-            yOffset = -138,
-            strata = "HIGH",
-        },
         showAnchorFrameType = true,
         showStrata = true,
         onChangeCallback = ApplyPosition,
@@ -168,11 +160,17 @@ GUIFrame:RegisterContent("combatTimer", function(scrollChild, yOffset)
     table_insert(allWidgets, fontDropdown)
 
     -- Font Outline Dropdown
-    local outlineList = { ["NONE"] = "None", ["OUTLINE"] = "Outline", ["THICKOUTLINE"] = "Thick" }
+    local outlineList = {
+        { key = "NONE", text = "None" },
+        { key = "OUTLINE", text = "Outline" },
+        { key = "THICKOUTLINE", text = "Thick" },
+        { key = "SOFTOUTLINE", text = "Soft" },
+    }
     local outlineDropdown = GUIFrame:CreateDropdown(row3a, "Outline", outlineList, db.FontOutline or "OUTLINE", 45,
         function(key)
             db.FontOutline = key
             ApplySettings()
+            UpdateAllWidgetStates()
         end)
     row3a:AddWidget(outlineDropdown, 0.5)
     table_insert(allWidgets, outlineDropdown)
@@ -208,6 +206,7 @@ GUIFrame:RegisterContent("combatTimer", function(scrollChild, yOffset)
         end)
     row4b:AddWidget(shadowEnableCheck, 0.5)
     table_insert(allWidgets, shadowEnableCheck)
+    table_insert(shadowWidgets, shadowEnableCheck)
 
     local shadowColor = GUIFrame:CreateColorPicker(row4b, "Shadow Color", db.FontShadow.Color or { 0, 0, 0, 1 },
         function(r, g, b, a)

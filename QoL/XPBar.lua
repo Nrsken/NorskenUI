@@ -15,7 +15,6 @@ local UnitXPMax = UnitXPMax
 local GetXPExhaustion = GetXPExhaustion
 local tostring = tostring
 local unpack = unpack
-local ipairs = ipairs
 local GetMaxLevelForPlayerExpansion = GetMaxLevelForPlayerExpansion
 local MainStatusTrackingBarContainer = MainStatusTrackingBarContainer
 
@@ -67,6 +66,9 @@ function XPBar:OnEnable()
     self:CreateBar()
     self:RegisterEvents()
     self:Update()
+    C_Timer.After(1, function()
+        self:ApplyStyling()
+    end)
 
     -- Register with EditMode if not already registered
     if NRSKNUI.EditMode and not self.editModeRegistered then
@@ -82,9 +84,7 @@ function XPBar:OnEnable()
                 self.db.Position.AnchorTo = pos.AnchorTo
                 self.db.Position.XOffset = pos.XOffset
                 self.db.Position.YOffset = pos.YOffset
-
-                self.frame:ClearAllPoints()
-                self.frame:SetPoint(pos.AnchorFrom, UIParent, pos.AnchorTo, pos.XOffset, pos.YOffset)
+                NRSKNUI:ApplyFramePosition(self.bar, self.db.Position, self.db)
             end,
             guiPath = "XPBar",
         }
@@ -112,17 +112,17 @@ end
 -- Create XP bar
 function XPBar:CreateBar()
     if self.bar then return end
-    local posDB = self.db.Position
     local r, g, b, a = self:GetColor()
     local statusbar = NRSKNUI:GetStatusbarPath(self.db.StatusBarTexture or "NorskenUI")
 
     local bar = CreateFrame("StatusBar", "NorskenUI_XPBar", UIParent)
     bar:SetSize(self.db.width, self.db.height)
-    bar:SetPoint(posDB.AnchorFrom, UIParent, posDB.AnchorTo, posDB.XOffset, posDB.YOffset)
-    bar:SetFrameStrata(self.db.Strata)
     bar:SetStatusBarTexture(statusbar)
     bar:GetStatusBarTexture():SetDrawLayer("ARTWORK")
     bar:SetStatusBarColor(r, g, b, a)
+
+    -- Apply position
+    NRSKNUI:ApplyFramePosition(bar, self.db.Position, self.db)
 
     -- Create the Tick
     local tick = bar:CreateTexture(nil, "OVERLAY", nil, 1)
@@ -148,74 +148,22 @@ function XPBar:CreateBar()
     bar.rested:SetFrameLevel(bar:GetFrameLevel())
     bar.rested:GetStatusBarTexture():SetDrawLayer("BACKGROUND", 2)
 
-    -- Create border container
-    local borderFrame = CreateFrame("Frame", nil, bar)
-    borderFrame:SetAllPoints(bar)
-    borderFrame:SetFrameLevel(bar:GetFrameLevel() + 2)
-
-    -- Create top border
-    local borderTop = borderFrame:CreateTexture(nil, "BORDER", nil, 7)
-    borderTop:SetHeight(1)
-    borderTop:SetPoint("TOPLEFT", bar, "TOPLEFT", 0, 0)
-    borderTop:SetPoint("TOPRIGHT", bar, "TOPRIGHT", 0, 0)
-    borderTop:SetColorTexture(unpack(self.db.BackdropBorderColor))
-    borderTop:SetTexelSnappingBias(0)
-    borderTop:SetSnapToPixelGrid(false)
-
-    -- Create bottom border
-    local borderBottom = borderFrame:CreateTexture(nil, "BORDER", nil, 7)
-    borderBottom:SetHeight(1)
-    borderBottom:SetPoint("BOTTOMLEFT", bar, "BOTTOMLEFT", 0, 0)
-    borderBottom:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", 0, 0)
-    borderBottom:SetColorTexture(unpack(self.db.BackdropBorderColor))
-    borderBottom:SetTexelSnappingBias(0)
-    borderBottom:SetSnapToPixelGrid(false)
-
-    -- Create left border
-    local borderLeft = borderFrame:CreateTexture(nil, "BORDER", nil, 7)
-    borderLeft:SetWidth(1)
-    borderLeft:SetPoint("TOPLEFT", bar, "TOPLEFT", 0, 0)
-    borderLeft:SetPoint("BOTTOMLEFT", bar, "BOTTOMLEFT", 0, 0)
-    borderLeft:SetColorTexture(unpack(self.db.BackdropBorderColor))
-    borderLeft:SetTexelSnappingBias(0)
-    borderLeft:SetSnapToPixelGrid(false)
-
-    -- Create right border
-    local borderRight = borderFrame:CreateTexture(nil, "BORDER", nil, 7)
-    borderRight:SetWidth(1)
-    borderRight:SetPoint("TOPRIGHT", bar, "TOPRIGHT", 0, 0)
-    borderRight:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", 0, 0)
-    borderRight:SetColorTexture(unpack(self.db.BackdropBorderColor))
-    borderRight:SetTexelSnappingBias(0)
-    borderRight:SetSnapToPixelGrid(false)
-
-    -- Text stuff
-    local fontPath = NRSKNUI:GetFontPath(self.db.FontFace)
-    local fontSize = self.db.FontSize
-    local fontOutline = self.db.FontOutline
-    if fontOutline == "NONE" then fontOutline = "" end
+    -- Add borders using helper
+    NRSKNUI:AddBorders(bar, self.db.BackdropBorderColor)
 
     -- Progress text
-    bar.text = borderFrame:CreateFontString(nil, "OVERLAY")
+    bar.text = bar:CreateFontString(nil, "OVERLAY")
     bar.text:SetPoint("CENTER")
-    bar.text:SetFont(fontPath, fontSize, fontOutline)
+    NRSKNUI:ApplyFontToText(bar.text, self.db.FontFace, self.db.FontSize, self.db.FontOutline)
     bar.text:SetTextColor(unpack(self.db.TextColor))
-    bar.text:SetShadowOffset(0, 0)
-    bar.text:SetShadowColor(0, 0, 0, 0)
 
     -- Level text (right side)
-    bar.level = borderFrame:CreateFontString(nil, "OVERLAY")
+    bar.level = bar:CreateFontString(nil, "OVERLAY")
     bar.level:SetPoint("RIGHT", bar, "RIGHT", -4, 0)
-    bar.level:SetFont(fontPath, fontSize, fontOutline)
+    NRSKNUI:ApplyFontToText(bar.level, self.db.FontFace, self.db.FontSize, self.db.FontOutline)
     bar.level:SetTextColor(unpack(self.db.TextColor))
-    bar.level:SetShadowOffset(0, 0)
-    bar.level:SetShadowColor(0, 0, 0, 0)
-
-    NRSKNUI:SnapFrameToPixels(bar)
 
     self.bg = bar.bg
-    self.borders = { borderTop, borderBottom, borderLeft, borderRight }
-
     self.bar = bar
 end
 
@@ -294,7 +242,6 @@ end
 -- Function that GUI can call for updates
 function XPBar:ApplyStyling()
     if not self.bar then return end
-    local posDB = self.db.Position
     local r, g, b, a = self:GetColor()
 
     if not HideBlizzardBarInit and self.db.HideBlizzardBar then
@@ -317,30 +264,21 @@ function XPBar:ApplyStyling()
 
     -- Set bar size and position
     self.bar:SetSize(self.db.width, self.db.height)
-    self.bar:SetPoint(posDB.AnchorFrom, UIParent, posDB.AnchorTo, posDB.XOffset, posDB.YOffset)
+    NRSKNUI:ApplyFramePosition(self.bar, self.db.Position, self.db)
 
     -- Set backdrop coloring
     self.bar.bg:SetColorTexture(unpack(self.db.BackdropColor))
 
     -- Set backdrop border coloring
-    if self.borders then
-        for _, border in ipairs(self.borders) do
-            border:SetColorTexture(unpack(self.db.BackdropBorderColor))
-        end
+    if self.bar.SetBorderColor then
+        self.bar:SetBorderColor(unpack(self.db.BackdropBorderColor))
     end
 
     -- Set font stuff
-    local fontPath = NRSKNUI:GetFontPath(self.db.FontFace)
-    local fontSize = self.db.FontSize
-    local fontOutline = self.db.FontOutline
-    if fontOutline == "NONE" then fontOutline = "" end
-    self.bar.text:SetFont(fontPath, fontSize, fontOutline)
+    NRSKNUI:ApplyFontToText(self.bar.text, self.db.FontFace, self.db.FontSize, self.db.FontOutline)
     self.bar.text:SetTextColor(unpack(self.db.TextColor))
-    self.bar.level:SetFont(fontPath, fontSize, fontOutline)
+    NRSKNUI:ApplyFontToText(self.bar.level, self.db.FontFace, self.db.FontSize, self.db.FontOutline)
     self.bar.level:SetTextColor(unpack(self.db.TextColor))
-
-    -- Set new strata
-    self.bar:SetFrameStrata(self.db.Strata)
 
     -- Send a update to the data func, got check for max level hide there
     self:Update()

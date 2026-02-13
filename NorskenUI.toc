@@ -6,6 +6,7 @@
 ## SavedVariables: NorskenUIDB
 ## OptionalDeps: Ace3, LibSharedMedia-3.0
 ## IconTexture: Interface\AddOns\NorskenUI\Media\Logo\LogoRed.png
+## X-Curse-Project-ID: 1460316
 
 # Load Libraries
 Libs/Init.xml

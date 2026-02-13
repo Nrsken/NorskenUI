@@ -9,4 +9,5 @@
     <Script file="DurabilityUtil.lua"/>
     <Script file="CooldownStrings.lua"/>
     <Script file="FocusCastbar.lua"/>
+    <Script file="GateUsable.lua"/>
 </Ui>

@@ -68,23 +68,11 @@ end
 local function UpdateAllWidgetStates()
     local db = GetBattleResDB()
     if not db then return end
-    local sepShadowDB = db.TextMode.SeparatorShadow
-    local timeShadowDB = db.TextMode.TimerShadow
-    local chargeShadowDB = db.TextMode.ChargeShadow
+    local tm = db.TextMode or {}
     local mainEnabled = db.Enabled ~= false
 
-    -- Separator Text Shadow
-    local sepShadowEnabled = sepShadowDB and sepShadowDB.Enabled == true and sepShadowDB.UseSoftOutline == false
-    local sepSoftOutline = sepShadowDB and sepShadowDB.UseSoftOutline == false
-
-    -- Timer Text Shadow
-    local timeShadowEnabled = timeShadowDB and timeShadowDB.Enabled == true and timeShadowDB.UseSoftOutline == false
-    local timeSoftOutline = timeShadowDB and timeShadowDB.UseSoftOutline == false
-
-    -- Charge Text Shadow
-    local chargeShadowEnabled = chargeShadowDB and chargeShadowDB.Enabled == true and
-        chargeShadowDB.UseSoftOutline == false
-    local chargeSoftOutline = chargeShadowDB and chargeShadowDB.UseSoftOutline == false
+    -- Check if using soft outline (disables all shadow settings)
+    local usingSoftOutline = tm.FontOutline == "SOFTOUTLINE"
 
     -- Apply main enable state to ALL widgets
     for _, widget in ipairs(allWidgets) do
@@ -95,37 +83,40 @@ local function UpdateAllWidgetStates()
 
     -- Second: Apply conditional states (only if main is enabled, otherwise already disabled)
     if mainEnabled then
+        -- When using SOFTOUTLINE, disable all shadow widgets
+        local shadowWidgetsEnabled = not usingSoftOutline
+
         -- Separator Text Shadow
         for _, widget in ipairs(sepShadowWidgets) do
             if widget.SetEnabled then
-                widget:SetEnabled(sepShadowEnabled)
+                widget:SetEnabled(shadowWidgetsEnabled and tm.SeparatorShadow and tm.SeparatorShadow.Enabled)
             end
         end
         for _, widget in ipairs(sepShadowWidgetsToggle) do
             if widget.SetEnabled then
-                widget:SetEnabled(sepSoftOutline)
+                widget:SetEnabled(shadowWidgetsEnabled)
             end
         end
         -- Timer Text Shadow
         for _, widget in ipairs(timeShadowWidgets) do
             if widget.SetEnabled then
-                widget:SetEnabled(timeShadowEnabled)
+                widget:SetEnabled(shadowWidgetsEnabled and tm.TimerShadow and tm.TimerShadow.Enabled)
             end
         end
         for _, widget in ipairs(timeShadowWidgetsToggle) do
             if widget.SetEnabled then
-                widget:SetEnabled(timeSoftOutline)
+                widget:SetEnabled(shadowWidgetsEnabled)
             end
         end
         -- Charge Text Shadow
         for _, widget in ipairs(chargeShadowWidgets) do
             if widget.SetEnabled then
-                widget:SetEnabled(chargeShadowEnabled)
+                widget:SetEnabled(shadowWidgetsEnabled and tm.ChargeShadow and tm.ChargeShadow.Enabled)
             end
         end
         for _, widget in ipairs(chargeShadowWidgetsToggle) do
             if widget.SetEnabled then
-                widget:SetEnabled(chargeSoftOutline)
+                widget:SetEnabled(shadowWidgetsEnabled)
             end
         end
     end
@@ -249,6 +240,7 @@ local function RenderTextModeTab(scrollChild, yOffset, activeCards)
         { key = "NONE",         text = "None" },
         { key = "OUTLINE",      text = "Outline" },
         { key = "THICKOUTLINE", text = "Thick" },
+        { key = "SOFTOUTLINE",  text = "Soft" },
     }
 
     local growthList = {
@@ -277,6 +269,7 @@ local function RenderTextModeTab(scrollChild, yOffset, activeCards)
         function(key)
             tm.FontOutline = key
             ApplySettings()
+            UpdateAllWidgetStates()
         end)
     row1:AddWidget(outlineDropdown, 0.5)
     table_insert(allWidgets, outlineDropdown)
@@ -346,19 +339,8 @@ local function RenderTextModeTab(scrollChild, yOffset, activeCards)
             tm.SeparatorColor = { r, g, b, a }
             ApplySettings()
         end)
-    row3a:AddWidget(sepColor, 0.5)
+    row3a:AddWidget(sepColor, 1)
     table_insert(allWidgets, sepColor)
-
-    -- Row 1: Separator Soft Outline
-    local sepSoftCheck = GUIFrame:CreateCheckbox(row3a, "Use Soft Outline",
-        tm.SeparatorShadow.UseSoftOutline ~= false,
-        function(checked)
-            tm.SeparatorShadow.UseSoftOutline = checked
-            ApplySettings()
-            UpdateAllWidgetStates()
-        end)
-    row3a:AddWidget(sepSoftCheck, 0.5)
-    table_insert(allWidgets, sepSoftCheck)
     card2:AddRow(row3a, 39)
 
     -- Separator
@@ -431,18 +413,8 @@ local function RenderTextModeTab(scrollChild, yOffset, activeCards)
             tm.TimerColor = { r, g, b, a }
             ApplySettings()
         end)
-    row3atc:AddWidget(timerColor, 0.5)
+    row3atc:AddWidget(timerColor, 1)
     table_insert(allWidgets, timerColor)
-
-    local timerSoftCheck = GUIFrame:CreateCheckbox(row3atc, "Use Soft Outline",
-        tm.TimerShadow.UseSoftOutline ~= false,
-        function(checked)
-            tm.TimerShadow.UseSoftOutline = checked
-            ApplySettings()
-            UpdateAllWidgetStates()
-        end)
-    row3atc:AddWidget(timerSoftCheck, 0.5)
-    table_insert(allWidgets, timerSoftCheck)
     card3:AddRow(row3atc, 37)
 
     -- Separator
@@ -512,7 +484,7 @@ local function RenderTextModeTab(scrollChild, yOffset, activeCards)
             tm.ChargeAvailableColor = { r, g, b, a }
             ApplySettings()
         end)
-    row4a:AddWidget(chargeAvailColor, 0.25)
+    row4a:AddWidget(chargeAvailColor, 0.5)
     table_insert(allWidgets, chargeAvailColor)
 
     local chargeUnavailColor = GUIFrame:CreateColorPicker(row4a, "Unavailable Color",
@@ -521,18 +493,8 @@ local function RenderTextModeTab(scrollChild, yOffset, activeCards)
             tm.ChargeUnavailableColor = { r, g, b, a }
             ApplySettings()
         end)
-    row4a:AddWidget(chargeUnavailColor, 0.25)
+    row4a:AddWidget(chargeUnavailColor, 0.5)
     table_insert(allWidgets, chargeUnavailColor)
-
-    local chargeSoftCheck = GUIFrame:CreateCheckbox(row4a, "Use Soft Outline",
-        tm.ChargeShadow.UseSoftOutline ~= false,
-        function(checked)
-            tm.ChargeShadow.UseSoftOutline = checked
-            ApplySettings()
-            UpdateAllWidgetStates()
-        end)
-    row4a:AddWidget(chargeSoftCheck, 0.5)
-    table_insert(allWidgets, chargeSoftCheck)
     card4:AddRow(row4a, 39)
 
     -- Separator
@@ -598,7 +560,7 @@ local function RenderTextModeTab(scrollChild, yOffset, activeCards)
     table_insert(allWidgets, card5)
 
     -- Row 1: Enable Backdrop
-    local row5a = GUIFrame:CreateRow(card5.content, 34)
+    local row5a = GUIFrame:CreateRow(card5.content, 40)
     local backdropCheck = GUIFrame:CreateCheckbox(row5a, "Enable Backdrop", tm.Backdrop.Enabled == true,
         function(checked)
             tm.Backdrop.Enabled = checked
@@ -623,7 +585,7 @@ local function RenderTextModeTab(scrollChild, yOffset, activeCards)
         end)
     row5a:AddWidget(borderColor, (1 / 3))
     table_insert(allWidgets, borderColor)
-    card5:AddRow(row5a, 34)
+    card5:AddRow(row5a, 40)
 
     -- Row 2: Frame Width and Height sliders
     local row5b = GUIFrame:CreateRow(card5.content, 39)

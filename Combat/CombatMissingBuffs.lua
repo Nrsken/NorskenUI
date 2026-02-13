@@ -13,38 +13,22 @@ local MBUFFS = NRSKNUI.Addon:NewModule("MissingBuffs", "AceEvent-3.0")
 -- Localization
 local ipairs, pairs = ipairs, pairs
 local wipe = wipe
-local UnitClass = UnitClass
-local UnitExists = UnitExists
-local UnitIsDeadOrGhost = UnitIsDeadOrGhost
-local UnitIsConnected = UnitIsConnected
-local UnitIsPlayer = UnitIsPlayer
-local UnitCanAssist = UnitCanAssist
-local IsMounted = IsMounted
-local UnitOnTaxi = UnitOnTaxi
-local UnitInVehicle = UnitInVehicle
-local UnitHasVehicleUI = UnitHasVehicleUI
+local UnitClass, UnitExists, UnitIsDeadOrGhost = UnitClass, UnitExists, UnitIsDeadOrGhost
+local UnitIsConnected, UnitCanAssist, UnitIsPlayer = UnitIsConnected, UnitCanAssist, UnitIsPlayer
 local InCombatLockdown = InCombatLockdown
 local GetNumGroupMembers = GetNumGroupMembers
 local IsInRaid = IsInRaid
 local GetTime = GetTime
-local GetSpecialization = GetSpecialization
-local GetSpecializationInfo = GetSpecializationInfo
+local GetSpecialization, GetSpecializationInfo = GetSpecialization, GetSpecializationInfo
 local CreateFrame = CreateFrame
-local GetInventorySlotInfo = GetInventorySlotInfo
-local GetInventoryItemLink = GetInventoryItemLink
-local GetItemInfo = GetItemInfo
-local GetInventoryItemTexture = GetInventoryItemTexture
+local GetInventorySlotInfo, GetInventoryItemLink = GetInventorySlotInfo, GetInventoryItemLink
+local GetItemInfo, GetInventoryItemTexture = GetItemInfo, GetInventoryItemTexture
 local GetWeaponEnchantInfo = GetWeaponEnchantInfo
 local issecretvalue = issecretvalue
-local tonumber = tonumber
-local GetShapeshiftForm = GetShapeshiftForm
-local GetShapeshiftFormInfo = GetShapeshiftFormInfo
-local tostring = tostring
-local C_Spell = C_Spell
-local C_SpellBook = C_SpellBook
-local C_PetBattles = C_PetBattles
-local C_ChallengeMode = C_ChallengeMode
-local C_SpellActivationOverlay = C_SpellActivationOverlay
+local GetShapeshiftForm, GetShapeshiftFormInfo = GetShapeshiftForm, GetShapeshiftFormInfo
+local tostring, tonumber = tostring, tonumber
+local C_Spell, C_SpellBook, C_SpellActivationOverlay = C_Spell, C_SpellBook, C_SpellActivationOverlay
+local C_PetBattles, C_ChallengeMode = C_PetBattles, C_ChallengeMode
 local AuraUtil = AuraUtil
 local UIParent = UIParent
 local C_Timer = C_Timer
@@ -232,7 +216,7 @@ local function IsLoadConditionMet(loadCondition)
     return true -- Default to true for unknown conditions
 end
 
--- Helper Functions
+-- Helper Functions to get spell and unit info
 local function IsSpellKnown(spellId)
     return spellId and C_SpellBook.IsSpellKnown(spellId)
 end
@@ -242,9 +226,6 @@ local function GetSpellTexture(spellId)
     end
     return nil
 end
-local function IsPlayerMounted()
-    return IsMounted() or UnitOnTaxi("player") or UnitInVehicle("player") or UnitHasVehicleUI("player")
-end
 local function IsValidTarget(unit)
     return UnitExists(unit)
         and not UnitIsDeadOrGhost(unit)
@@ -253,6 +234,7 @@ local function IsValidTarget(unit)
         and UnitCanAssist("player", unit)
 end
 
+-- Helper to Check player buff status
 local function PlayerHasBuff(spellId, extraSpellIds)
     if not spellId then return false, nil end
     if issecretvalue(spellId) or issecretvalue(extraSpellIds) then return end
@@ -285,6 +267,7 @@ local function PlayerHasBuff(spellId, extraSpellIds)
     return hasBuff, expirationTime
 end
 
+-- Helper to Check unit buff status
 local function UnitHasBuff(unit, spellId, extraSpellIds)
     if issecretvalue(unit) then return end
     if not unit or not IsValidTarget(unit) then return true end
@@ -363,6 +346,7 @@ local function CheckBuffStatus(buff)
     return false, needsReapply
 end
 
+-- Check weapon enchant status
 local function HasWeaponEnchant(slot)
     local hasMain, _, _, _, hasOff = GetWeaponEnchantInfo()
     local slotName = slot == "main" and "MAINHANDSLOT" or slot == "off" and "SECONDARYHANDSLOT"
@@ -380,7 +364,12 @@ local function HasWeaponEnchant(slot)
         return nil, nil, false
     end
 
-    local hasEnchant = (slot == "main") and hasMain or hasOff
+    local hasEnchant
+    if slot == "main" then
+        hasEnchant = hasMain
+    else
+        hasEnchant = hasOff
+    end
     local icon = GetInventoryItemTexture("player", slotID)
 
     if not icon then
@@ -465,71 +454,12 @@ local function CheckCustomBuffs()
     return missing
 end
 
--- Icon Pool Management
+-- General buff icon creation
 local function CreateIcon()
-    local db = MBUFFS.db
-    local raidDb = db.RaidBuffDisplay or db
-
-    local iconFrame = CreateFrame("Frame", nil, containerFrame)
-    iconFrame:SetSize(raidDb.IconSize or db.IconSize or 48, raidDb.IconSize or db.IconSize or 48)
-    NRSKNUI:SnapFrameToPixels(iconFrame)
-
-    -- Create border container
-    iconFrame.iconBorder = CreateFrame("Frame", nil, iconFrame)
-    iconFrame.iconBorder:SetAllPoints(iconFrame)
-    iconFrame.iconBorder:SetFrameLevel(iconFrame:GetFrameLevel() + 1)
-
-    -- Create borders
-    local borderTop = iconFrame.iconBorder:CreateTexture(nil, "OVERLAY", nil, 7)
-    borderTop:SetHeight(1)
-    borderTop:SetPoint("TOPLEFT", iconFrame, "TOPLEFT", 0, 0)
-    borderTop:SetPoint("TOPRIGHT", iconFrame, "TOPRIGHT", 0, 0)
-    borderTop:SetColorTexture(0, 0, 0, 1)
-    borderTop:SetTexelSnappingBias(0)
-    borderTop:SetSnapToPixelGrid(false)
-
-    local borderBottom = iconFrame.iconBorder:CreateTexture(nil, "OVERLAY", nil, 7)
-    borderBottom:SetHeight(1)
-    borderBottom:SetPoint("BOTTOMLEFT", iconFrame, "BOTTOMLEFT", 0, 0)
-    borderBottom:SetPoint("BOTTOMRIGHT", iconFrame, "BOTTOMRIGHT", 0, 0)
-    borderBottom:SetColorTexture(0, 0, 0, 1)
-    borderBottom:SetTexelSnappingBias(0)
-    borderBottom:SetSnapToPixelGrid(false)
-
-    local borderLeft = iconFrame.iconBorder:CreateTexture(nil, "OVERLAY", nil, 7)
-    borderLeft:SetWidth(1)
-    borderLeft:SetPoint("TOPLEFT", iconFrame, "TOPLEFT", 0, 0)
-    borderLeft:SetPoint("BOTTOMLEFT", iconFrame, "BOTTOMLEFT", 0, 0)
-    borderLeft:SetColorTexture(0, 0, 0, 1)
-    borderLeft:SetTexelSnappingBias(0)
-    borderLeft:SetSnapToPixelGrid(false)
-
-    local borderRight = iconFrame.iconBorder:CreateTexture(nil, "OVERLAY", nil, 7)
-    borderRight:SetWidth(1)
-    borderRight:SetPoint("TOPRIGHT", iconFrame, "TOPRIGHT", 0, 0)
-    borderRight:SetPoint("BOTTOMRIGHT", iconFrame, "BOTTOMRIGHT", 0, 0)
-    borderRight:SetColorTexture(0, 0, 0, 1)
-    borderRight:SetTexelSnappingBias(0)
-    borderRight:SetSnapToPixelGrid(false)
-
-    -- Icon texture
-    iconFrame.icon = iconFrame:CreateTexture(nil, "ARTWORK")
-    iconFrame.icon:SetAllPoints(iconFrame)
-
-    -- Icon zoom
-    local zoom = 0.3
-    local texMin = 0.25 * zoom
-    local texMax = 1 - 0.25 * zoom
-    iconFrame.icon:SetTexCoord(texMin, texMax, texMin, texMax)
-
-    -- Text
-    iconFrame.text = iconFrame:CreateFontString(nil, "OVERLAY")
-    NRSKNUI:ApplyFont(iconFrame.text, db.Font, 14, db.FontOutline)
-    iconFrame.text:SetPoint("CENTER", iconFrame, "CENTER", 1, 0)
+    local raidDb = MBUFFS.db.RaidBuffDisplay
+    local iconFrame = NRSKNUI:CreateIconFrame(containerFrame, raidDb.IconSize)
+    NRSKNUI:ApplyFontSettings(iconFrame, raidDb, nil)
     iconFrame.text:SetTextColor(1, 1, 1, 1)
-    iconFrame.text:SetShadowOffset(0, 0)
-    iconFrame.text:SetShadowColor(0, 0, 0, 0)
-
     iconFrame:Hide()
     return iconFrame
 end
@@ -561,122 +491,53 @@ local function ReleaseAllIcons()
     wipe(activeIcons)
 end
 
--- Container for raid buff icons
+-- Container for general buff icons
 local function CreateContainerFrame()
     if containerFrame then return end
-    local db = MBUFFS.db
-    local raidDb = db.RaidBuffDisplay or {}
-    local pos = raidDb.Position or {}
-
+    local raidDb = MBUFFS.db.RaidBuffDisplay
     containerFrame = CreateFrame("Frame", "NorskenUI_MissingBuffContainer", UIParent)
-    containerFrame:SetSize(400, raidDb.IconSize or db.IconSize or 48)
-
-    local anchorFrame = NRSKNUI:ResolveAnchorFrame(raidDb.anchorFrameType, raidDb.ParentFrame)
-    containerFrame:SetPoint(
-        pos.AnchorFrom or "CENTER",
-        anchorFrame,
-        pos.AnchorTo or "CENTER",
-        pos.XOffset or 0,
-        pos.YOffset or 200
-    )
-    containerFrame:SetFrameStrata(raidDb.Strata or db.Strata or "HIGH")
+    containerFrame:SetSize(400, raidDb.IconSize)
+    NRSKNUI:ApplyFramePosition(containerFrame, raidDb.Position, raidDb)
     containerFrame:Hide()
 end
 
--- Stance icon frame
+-- Stance icon creation
 local function CreateStanceFrame()
     if stanceFrame then return end
-    local db = MBUFFS.db
-    local stanceDb = db.StanceDisplay or {}
-    local pos = stanceDb.Position or {}
+    local stanceDb = MBUFFS.db.StanceDisplay
 
-    stanceFrame = CreateFrame("Frame", "NorskenUI_MissingStanceIcon", UIParent)
-    stanceFrame:SetSize(stanceDb.IconSize or db.IconSize or 48, stanceDb.IconSize or db.IconSize or 48)
+    stanceFrame = NRSKNUI:CreateIconFrame(UIParent, stanceDb.IconSize, {
+        name = "NorskenUI_MissingStanceIcon",
+    })
 
-    local anchorFrame = NRSKNUI:ResolveAnchorFrame(stanceDb.anchorFrameType, stanceDb.ParentFrame)
-    stanceFrame:SetPoint(
-        pos.AnchorFrom or "CENTER",
-        anchorFrame,
-        pos.AnchorTo or "CENTER",
-        pos.XOffset or 0,
-        pos.YOffset or 150
-    )
-    stanceFrame:SetFrameStrata(stanceDb.Strata or db.Strata or "HIGH")
-    NRSKNUI:SnapFrameToPixels(stanceFrame)
-
-    -- Border
-    stanceFrame.border = CreateFrame("Frame", nil, stanceFrame)
-    stanceFrame.border:SetAllPoints(stanceFrame)
-    stanceFrame.border:SetFrameLevel(stanceFrame:GetFrameLevel() + 1)
-
-    local borderTop = stanceFrame.border:CreateTexture(nil, "OVERLAY", nil, 7)
-    borderTop:SetHeight(1)
-    borderTop:SetPoint("TOPLEFT", stanceFrame, "TOPLEFT", 0, 0)
-    borderTop:SetPoint("TOPRIGHT", stanceFrame, "TOPRIGHT", 0, 0)
-    borderTop:SetColorTexture(0, 0, 0, 1)
-
-    local borderBottom = stanceFrame.border:CreateTexture(nil, "OVERLAY", nil, 7)
-    borderBottom:SetHeight(1)
-    borderBottom:SetPoint("BOTTOMLEFT", stanceFrame, "BOTTOMLEFT", 0, 0)
-    borderBottom:SetPoint("BOTTOMRIGHT", stanceFrame, "BOTTOMRIGHT", 0, 0)
-    borderBottom:SetColorTexture(0, 0, 0, 1)
-
-    local borderLeft = stanceFrame.border:CreateTexture(nil, "OVERLAY", nil, 7)
-    borderLeft:SetWidth(1)
-    borderLeft:SetPoint("TOPLEFT", stanceFrame, "TOPLEFT", 0, 0)
-    borderLeft:SetPoint("BOTTOMLEFT", stanceFrame, "BOTTOMLEFT", 0, 0)
-    borderLeft:SetColorTexture(0, 0, 0, 1)
-
-    local borderRight = stanceFrame.border:CreateTexture(nil, "OVERLAY", nil, 7)
-    borderRight:SetWidth(1)
-    borderRight:SetPoint("TOPRIGHT", stanceFrame, "TOPRIGHT", 0, 0)
-    borderRight:SetPoint("BOTTOMRIGHT", stanceFrame, "BOTTOMRIGHT", 0, 0)
-    borderRight:SetColorTexture(0, 0, 0, 1)
-
-    -- Icon texture
-    stanceFrame.icon = stanceFrame:CreateTexture(nil, "ARTWORK")
-    stanceFrame.icon:SetAllPoints(stanceFrame)
-    local zoom = 0.3
-    local texMin = 0.25 * zoom
-    local texMax = 1 - 0.25 * zoom
-    stanceFrame.icon:SetTexCoord(texMin, texMax, texMin, texMax)
-
-    -- Text
-    stanceFrame.text = stanceFrame:CreateFontString(nil, "OVERLAY")
-    NRSKNUI:ApplyFont(stanceFrame.text, db.Font, db.FontSize or 12, db.FontOutline)
+    -- Position text above the icon
+    stanceFrame.text:ClearAllPoints()
     stanceFrame.text:SetPoint("BOTTOM", stanceFrame, "TOP", 1, 4)
+
+    NRSKNUI:ApplyFramePosition(stanceFrame, stanceDb.Position, stanceDb)
+    NRSKNUI:ApplyFontSettings(stanceFrame, stanceDb, nil)
     stanceFrame.text:SetTextColor(1, 1, 1, 1)
-    stanceFrame.text:SetShadowColor(0, 0, 0, 0)
     stanceFrame:Hide()
 end
 
 -- Stance text frame
 local function CreateStanceTextFrame()
     if stanceTextFrame then return end
-    local db = MBUFFS.db
-    local textDb = db.StanceText or {}
-    local pos = textDb.Position or {}
+    local textDb = MBUFFS.db.StanceText
 
-    stanceTextFrame = CreateFrame("Frame", "NorskenUI_StanceTextDisplay", UIParent)
-    stanceTextFrame:SetSize(200, 30)
+    -- Create frame using helper
+    stanceTextFrame = NRSKNUI:CreateTextFrame(UIParent, 200, 30, {
+        name = "NorskenUI_StanceTextDisplay",
+    })
 
-    local anchorFrom = pos.AnchorFrom or "CENTER"
-    local anchorFrame = NRSKNUI:ResolveAnchorFrame(textDb.anchorFrameType, textDb.ParentFrame)
-    stanceTextFrame:SetPoint(
-        anchorFrom,
-        anchorFrame,
-        pos.AnchorTo or "CENTER",
-        pos.XOffset or 0,
-        pos.YOffset or 100
-    )
-    stanceTextFrame:SetFrameStrata(textDb.Strata or "HIGH")
+    -- Apply position and font settings
+    NRSKNUI:ApplyFramePosition(stanceTextFrame, textDb.Position, textDb)
+    NRSKNUI:ApplyFontSettings(stanceTextFrame, textDb, nil)
 
-    -- Text with smart alignment based on anchor point
-    stanceTextFrame.text = stanceTextFrame:CreateFontString(nil, "OVERLAY")
-    NRSKNUI:ApplyFont(stanceTextFrame.text, textDb.Font, textDb.FontSize or 14, textDb.FontOutline)
-
-    local textPoint = NRSKNUI:GetTextPointFromAnchor(anchorFrom)
-    local textJustify = NRSKNUI:GetTextJustifyFromAnchor(anchorFrom)
+    -- Text alignment based on anchor point
+    local textPoint = NRSKNUI:GetTextPointFromAnchor(textDb.Position.AnchorFrom)
+    local textJustify = NRSKNUI:GetTextJustifyFromAnchor(textDb.Position.AnchorFrom)
+    stanceTextFrame.text:ClearAllPoints()
     stanceTextFrame.text:SetPoint(textPoint, stanceTextFrame, textPoint, 0, 0)
     stanceTextFrame.text:SetJustifyH(textJustify)
     stanceTextFrame.text:SetTextColor(1, 1, 1, 1)
@@ -684,39 +545,33 @@ local function CreateStanceTextFrame()
     stanceTextFrame:Hide()
 end
 
+-- Show the stance icon
 local function ShowStanceIcon(spellId, reverseIcon, currentSpellId)
     if not stanceFrame then CreateStanceFrame() end
-    local db = MBUFFS.db
-    local stanceDb = db.StanceDisplay or {}
+    local stanceDb = MBUFFS.db.StanceDisplay
     if stanceFrame then
+        -- Apply texture settings
         local displaySpellId = (reverseIcon and currentSpellId) and currentSpellId or spellId
         local texture = GetSpellTexture(displaySpellId)
         stanceFrame.icon:SetTexture(texture)
+
+        -- Apply Font Settings
+        NRSKNUI:ApplyFontSettings(stanceFrame, stanceDb, nil)
         stanceFrame.text:SetText(reverseIcon and "" or MISSING_TEXT)
 
-        local iconSize = stanceDb.IconSize or db.IconSize or 48
-        stanceFrame:SetSize(iconSize, iconSize)
-        stanceFrame.icon:SetSize(iconSize, iconSize)
-
-        NRSKNUI:ApplyFont(stanceFrame.text, db.Font, db.FontSize or 12, db.FontOutline)
-        stanceFrame:SetFrameStrata(stanceDb.Strata or db.Strata or "HIGH")
+        -- Apply icon size settings
+        stanceFrame:SetSize(stanceDb.IconSize, stanceDb.IconSize)
+        stanceFrame.icon:SetSize(stanceDb.IconSize, stanceDb.IconSize)
 
         -- Apply position with custom anchor frame
-        local pos = stanceDb.Position or {}
-        local anchorFrame = NRSKNUI:ResolveAnchorFrame(stanceDb.anchorFrameType, stanceDb.ParentFrame)
-        stanceFrame:ClearAllPoints()
-        stanceFrame:SetPoint(
-            pos.AnchorFrom or "CENTER",
-            anchorFrame,
-            pos.AnchorTo or "CENTER",
-            pos.XOffset or 0,
-            pos.YOffset or 150
-        )
+        NRSKNUI:ApplyFramePosition(stanceFrame, stanceDb.Position, stanceDb)
 
+        -- Show frame
         stanceFrame:Show()
     end
 end
 
+-- Hide the stance icon
 local function HideStanceIcon()
     if stanceFrame then
         stanceFrame:Hide()
@@ -726,8 +581,7 @@ end
 -- Stance text display functions
 local function UpdateStanceTextDisplay()
     if not MBUFFS.db then return end
-    local db = MBUFFS.db
-    local textDb = db.StanceText or {}
+    local textDb = MBUFFS.db.StanceText
 
     -- Check if stance text is enabled
     if not textDb.Enabled then
@@ -793,33 +647,22 @@ local function UpdateStanceTextDisplay()
         stanceTextFrame.text:SetTextColor(color[1], color[2], color[3], color[4] or 1)
 
         -- Update font
-        NRSKNUI:ApplyFont(stanceTextFrame.text, textDb.Font, textDb.FontSize or 14, textDb.FontOutline)
+        NRSKNUI:ApplyFontSettings(stanceTextFrame, textDb, nil)
 
-        -- Update position with custom anchor frame support
-        local pos = textDb.Position or {}
-        local anchorFrom = pos.AnchorFrom or "CENTER"
-        local anchorFrame = NRSKNUI:ResolveAnchorFrame(textDb.anchorFrameType, textDb.ParentFrame)
-        stanceTextFrame:ClearAllPoints()
-        stanceTextFrame:SetPoint(
-            anchorFrom,
-            anchorFrame,
-            pos.AnchorTo or "CENTER",
-            pos.XOffset or 0,
-            pos.YOffset or 100
-        )
-        stanceTextFrame:SetFrameStrata(textDb.Strata or "HIGH")
+        -- Update position
+        NRSKNUI:ApplyFramePosition(stanceTextFrame, textDb.Position, textDb)
 
         -- Update text alignment based on anchor point
-        local textPoint = NRSKNUI:GetTextPointFromAnchor(anchorFrom)
-        local textJustify = NRSKNUI:GetTextJustifyFromAnchor(anchorFrom)
+        local textPoint = NRSKNUI:GetTextPointFromAnchor(textDb.Position.AnchorFrom)
+        local textJustify = NRSKNUI:GetTextJustifyFromAnchor(textDb.Position.AnchorFrom)
         stanceTextFrame.text:ClearAllPoints()
         stanceTextFrame.text:SetPoint(textPoint, stanceTextFrame, textPoint, 0, 0)
         stanceTextFrame.text:SetJustifyH(textJustify)
-
         stanceTextFrame:Show()
     end
 end
 
+-- Hide stance text func
 local function HideStanceText()
     if stanceTextFrame then
         stanceTextFrame:Hide()
@@ -828,30 +671,27 @@ end
 
 -- Display Functions
 local function UpdateIconAppearance(iconFrame, buff, text)
-    local db = MBUFFS.db
-    local raidDb = db.RaidBuffDisplay or {}
-    local iconSize = raidDb.IconSize or db.IconSize or 48
+    local raidDb = MBUFFS.db.RaidBuffDisplay
 
+    -- Apply texture settings
     local texture = GetSpellTexture(buff.spellId)
-    if not texture then
-        texture = buff.iconTexture or WEAPON_ENCHANT_ICON
-    end
+    if not texture then texture = buff.iconTexture or WEAPON_ENCHANT_ICON end
     iconFrame.icon:SetTexture(texture)
+
+    -- Apply font settings
+    NRSKNUI:ApplyFontSettings(iconFrame, raidDb, nil)
     iconFrame.text:SetText(text or buff.text or GENERALBUFF_TEXT)
 
-    iconFrame:SetSize(iconSize, iconSize)
-    iconFrame.icon:SetSize(iconSize, iconSize)
-    iconFrame.iconBorder:SetAllPoints(iconFrame)
-
-    NRSKNUI:ApplyFont(iconFrame.text, db.Font, 14, db.FontOutline)
+    -- Apply size settings
+    iconFrame:SetSize(raidDb.IconSize, raidDb.IconSize)
+    iconFrame.icon:SetAllPoints(iconFrame)
 end
 
 -- Icon arranger, uses center horizontal layout
 -- TODO: Maybe add left and right layout?
 local function ArrangeIcons()
     if not containerFrame then return end
-    local db = MBUFFS.db
-    local raidDb = db.RaidBuffDisplay or {}
+    local raidDb = MBUFFS.db.RaidBuffDisplay or {}
     local count = #activeIcons
 
     if count == 0 then
@@ -859,32 +699,20 @@ local function ArrangeIcons()
         return
     end
 
-    local iconWidth = raidDb.IconSize or db.IconSize or 48
-    local spacing = raidDb.IconSpacing or db.IconSpacing or 8
-    local totalWidth = (iconWidth * count) + (spacing * (count - 1))
+    local totalWidth = (raidDb.IconSize * count) + (raidDb.IconSpacing * (count - 1))
+    containerFrame:SetSize(totalWidth, raidDb.IconSize)
 
-    containerFrame:SetSize(totalWidth, iconWidth)
-
-    local startX = -totalWidth / 2 + iconWidth / 2
-
+    local startX = -totalWidth / 2 + raidDb.IconSize / 2
     for i, iconFrame in ipairs(activeIcons) do
         iconFrame:ClearAllPoints()
-        iconFrame:SetPoint("CENTER", containerFrame, "CENTER", startX + (i - 1) * (iconWidth + spacing), 0)
+        iconFrame:SetPoint("CENTER", containerFrame, "CENTER", startX + (i - 1) * (raidDb.IconSize + raidDb.IconSpacing),
+            0)
         iconFrame:Show()
     end
 
-    -- Update container position with custom anchor frame support
-    local pos = raidDb.Position or {}
-    local anchorFrame = NRSKNUI:ResolveAnchorFrame(raidDb.anchorFrameType, raidDb.ParentFrame)
-    containerFrame:ClearAllPoints()
-    containerFrame:SetPoint(
-        pos.AnchorFrom or "CENTER",
-        anchorFrame,
-        pos.AnchorTo or "CENTER",
-        pos.XOffset or 0,
-        pos.YOffset or 200
-    )
-    containerFrame:SetFrameStrata(raidDb.Strata or db.Strata or "HIGH")
+    -- Update container position
+    NRSKNUI:ApplyFramePosition(containerFrame, raidDb.Position, raidDb)
+
     containerFrame:Show()
 end
 
@@ -893,11 +721,10 @@ local function CheckStances()
     HideStanceIcon()
     -- Also update stance text display
     UpdateStanceTextDisplay()
-    local db = MBUFFS.db
-    if not db then return end
+    if not MBUFFS.db then return end
 
     -- Check if stances feature is enabled at all
-    local stancesDb = db.Stances
+    local stancesDb = MBUFFS.db.Stances
     if not stancesDb then return end
     if stancesDb.Enabled == false then return end
 
@@ -1024,10 +851,9 @@ end
 
 -- Check only weapon enchants
 local function CheckWeaponEnchants()
-    local db = MBUFFS.db
-    if not db then return end
-    local consumablesDb = db.Consumables or {}
-    local raidDb = db.RaidBuffDisplay or {}
+    if not MBUFFS.db then return end
+    local consumablesDb = MBUFFS.db.Consumables or {}
+    local raidDb = MBUFFS.db.RaidBuffDisplay or {}
     for _, buff in ipairs(CUSTOM_BUFFS) do
         if buff.weaponSlot and buff.category then
             local dbKey = CATEGORY_TO_DB_KEY[buff.category]
@@ -1040,14 +866,14 @@ local function CheckWeaponEnchants()
                     local iconFrame = AcquireIcon()
                     local displayIcon = icon or WEAPON_ENCHANT_ICON
                     local text = buff.text or GENERALBUFF_TEXT
-                    local iconSize = raidDb.IconSize or db.IconSize or 48
+                    local iconSize = raidDb.IconSize
 
                     -- Set texture directly
                     iconFrame.icon:SetTexture(displayIcon)
-                    iconFrame.text:SetText(text)
                     iconFrame:SetSize(iconSize, iconSize)
                     iconFrame.icon:SetSize(iconSize, iconSize)
-                    NRSKNUI:ApplyFont(iconFrame.text, db.Font, 14, db.FontOutline)
+                    NRSKNUI:ApplyFontSettings(iconFrame, raidDb, nil)
+                    iconFrame.text:SetText(text)
                     activeIcons[#activeIcons + 1] = iconFrame
                     currentMissingBuffs[#currentMissingBuffs + 1] = { buff = buff, text = text }
                 end
@@ -1058,8 +884,7 @@ end
 
 -- Check glow-based raid buffs
 local function CheckGlowBasedRaidBuffs()
-    local db = MBUFFS.db
-    local consumablesDb = db.Consumables or {}
+    local consumablesDb = MBUFFS.db.Consumables or {}
     local raidBuffsSettings = consumablesDb.RaidBuffs or {}
     local raidBuffsEnabled = raidBuffsSettings.Enabled ~= false
     local raidBuffsLoadMet = IsLoadConditionMet(raidBuffsSettings.LoadCondition)
@@ -1147,10 +972,7 @@ local function CheckForMissingBuffs()
         HideAllNotifications()
         return
     end
-    --if MBUFFS.db.HideWhileMounted and IsPlayerMounted() then
-    --    HideAllNotifications()
-    --    return
-    --end
+
     wipe(currentMissingBuffs)
     -- Check custom buffs like flasks, food, weapon enchants, runes
     local customMissing = CheckCustomBuffs()
@@ -1246,6 +1068,10 @@ function MBUFFS:OnEnable()
     CreateStanceFrame()
     CreateStanceTextFrame()
 
+    C_Timer.After(0.5, function()
+        self:ApplySettings()
+    end)
+
     -- Register events
     self:RegisterEvent("UNIT_AURA", function(_, unit, updateInfo) OnAuraChange(unit, updateInfo) end)
     self:RegisterEvent("GROUP_ROSTER_UPDATE", function() CheckForMissingBuffs() end)
@@ -1295,10 +1121,9 @@ function MBUFFS:RegisterEditModeElements()
     if not stanceFrame then CreateStanceFrame() end
     if not stanceTextFrame then CreateStanceTextFrame() end
 
-    local db = self.db
-    local raidDb = db.RaidBuffDisplay or {}
-    local stanceDb = db.StanceDisplay or {}
-    local textDb = db.StanceText or {}
+    local raidDb = self.db.RaidBuffDisplay
+    local stanceDb = self.db.StanceDisplay
+    local textDb = self.db.StanceText
 
     -- Raid buff container
     NRSKNUI.EditMode:RegisterElement({
@@ -1403,8 +1228,7 @@ end
 
 -- Public settings applier, called from GUI when the user makes changes
 function MBUFFS:ApplySettings()
-    local db = self.db
-    if not db then return end
+    if not self.db then return end
 
     -- If preview is showing, refresh preview with new settings
     if IsTrackingPaused() then
@@ -1412,64 +1236,32 @@ function MBUFFS:ApplySettings()
         return
     end
 
-    local raidDb = db.RaidBuffDisplay or {}
-    local stanceDb = db.StanceDisplay or {}
-    local textDb = db.StanceText or {}
+    local raidDb = self.db.RaidBuffDisplay
+    local stanceDb = self.db.StanceDisplay
+    local textDb = self.db.StanceText
 
-    -- Update container frame with custom anchor frame support
+    -- Update container frame
     if containerFrame then
-        local pos = raidDb.Position or {}
-        local anchorFrame = NRSKNUI:ResolveAnchorFrame(raidDb.anchorFrameType, raidDb.ParentFrame)
-        containerFrame:ClearAllPoints()
-        containerFrame:SetPoint(
-            pos.AnchorFrom or "CENTER",
-            anchorFrame,
-            pos.AnchorTo or "CENTER",
-            pos.XOffset or 0,
-            pos.YOffset or 200
-        )
-        containerFrame:SetFrameStrata(raidDb.Strata or db.Strata or "HIGH")
+        NRSKNUI:ApplyFramePosition(containerFrame, raidDb.Position, raidDb)
     end
 
-    -- Update stance frame with custom anchor frame support
+    -- Update stance frame
     if stanceFrame then
-        local pos = stanceDb.Position or {}
-        local iconSize = stanceDb.IconSize or db.IconSize or 48
-        local anchorFrame = NRSKNUI:ResolveAnchorFrame(stanceDb.anchorFrameType, stanceDb.ParentFrame)
-        stanceFrame:SetSize(iconSize, iconSize)
-        stanceFrame:ClearAllPoints()
-        stanceFrame:SetPoint(
-            pos.AnchorFrom or "CENTER",
-            anchorFrame,
-            pos.AnchorTo or "CENTER",
-            pos.XOffset or 0,
-            pos.YOffset or 150
-        )
-        stanceFrame:SetFrameStrata(stanceDb.Strata or db.Strata or "HIGH")
+        stanceFrame:SetSize(stanceDb.IconSize, stanceDb.IconSize)
+        NRSKNUI:ApplyFramePosition(stanceFrame, stanceDb.Position, stanceDb)
 
         -- Update stance frame font
-        NRSKNUI:ApplyFont(stanceFrame.text, db.Font, db.FontSize or 12, db.FontOutline)
+        NRSKNUI:ApplyFontSettings(stanceFrame, stanceDb, nil)
     end
 
-    -- Update stance text frame with custom anchor frame support
+    -- Update stance text frame
     if stanceTextFrame then
-        local pos = textDb.Position or {}
-        local anchorFrom = pos.AnchorFrom or "CENTER"
-        local anchorFrame = NRSKNUI:ResolveAnchorFrame(textDb.anchorFrameType, textDb.ParentFrame)
-        NRSKNUI:ApplyFont(stanceTextFrame.text, textDb.Font, textDb.FontSize or 14, textDb.FontOutline)
-        stanceTextFrame:ClearAllPoints()
-        stanceTextFrame:SetPoint(
-            anchorFrom,
-            anchorFrame,
-            pos.AnchorTo or "CENTER",
-            pos.XOffset or 0,
-            pos.YOffset or 100
-        )
-        stanceTextFrame:SetFrameStrata(textDb.Strata or "HIGH")
+        NRSKNUI:ApplyFontSettings(stanceTextFrame, textDb, nil)
+        NRSKNUI:ApplyFramePosition(stanceTextFrame, textDb.Position, textDb)
 
         -- Update text alignment based on anchor point
-        local textPoint = NRSKNUI:GetTextPointFromAnchor(anchorFrom)
-        local textJustify = NRSKNUI:GetTextJustifyFromAnchor(anchorFrom)
+        local textPoint = NRSKNUI:GetTextPointFromAnchor(textDb.Position.AnchorFrom)
+        local textJustify = NRSKNUI:GetTextJustifyFromAnchor(textDb.Position.AnchorFrom)
         stanceTextFrame.text:ClearAllPoints()
         stanceTextFrame.text:SetPoint(textPoint, stanceTextFrame, textPoint, 0, 0)
         stanceTextFrame.text:SetJustifyH(textJustify)
@@ -1497,10 +1289,9 @@ local function ShowPreviewIcons()
     if not stanceFrame then CreateStanceFrame() end
     if not stanceTextFrame then CreateStanceTextFrame() end
 
-    local db = MBUFFS.db
-    local raidDb = db.RaidBuffDisplay or {}
-    local stanceDb = db.StanceDisplay or {}
-    local textDb = db.StanceText or {}
+    local raidDb = MBUFFS.db.RaidBuffDisplay or {}
+    local stanceDb = MBUFFS.db.StanceDisplay or {}
+    local textDb = MBUFFS.db.StanceText or {}
 
     -- Show raid buff preview with sample buffs
     local previewBuffs = {
@@ -1527,24 +1318,11 @@ local function ShowPreviewIcons()
     local previewStanceSpell = 386164
     local texture = GetSpellTexture(previewStanceSpell)
     if texture and stanceFrame then
-        local iconSize = stanceDb.IconSize or db.IconSize or 48
         stanceFrame.icon:SetTexture(texture)
         stanceFrame.text:SetText("MISSING")
-        stanceFrame:SetSize(iconSize, iconSize)
-        NRSKNUI:ApplyFont(stanceFrame.text, db.Font, db.FontSize or 12, db.FontOutline)
-
-        -- Apply custom anchor frame for stance icon
-        local pos = stanceDb.Position or {}
-        local anchorFrame = NRSKNUI:ResolveAnchorFrame(stanceDb.anchorFrameType, stanceDb.ParentFrame)
-        stanceFrame:ClearAllPoints()
-        stanceFrame:SetPoint(
-            pos.AnchorFrom or "CENTER",
-            anchorFrame,
-            pos.AnchorTo or "CENTER",
-            pos.XOffset or 0,
-            pos.YOffset or 150
-        )
-        stanceFrame:SetFrameStrata(stanceDb.Strata or db.Strata or "HIGH")
+        stanceFrame:SetSize(stanceDb.IconSize, stanceDb.IconSize)
+        NRSKNUI:ApplyFontSettings(stanceFrame, stanceDb, nil)
+        NRSKNUI:ApplyFramePosition(stanceFrame, stanceDb.Position, stanceDb)
         stanceFrame:Show()
     end
 
@@ -1555,7 +1333,7 @@ local function ShowPreviewIcons()
             stanceTextFrame:Hide()
         else
             -- Apply font settings
-            NRSKNUI:ApplyFont(stanceTextFrame.text, textDb.Font, textDb.FontSize or 14, textDb.FontOutline)
+            NRSKNUI:ApplyFontSettings(stanceTextFrame, textDb, nil)
 
             -- Get preview text and color from per-stance settings
             local previewText = "Battle Stance"
@@ -1564,7 +1342,7 @@ local function ShowPreviewIcons()
             -- Check if we have per-stance settings for the preview stance
             local classData = textDb["WARRIOR"]
             if classData then
-                local stanceSettings = classData["386164"] -- Battle Stance
+                local stanceSettings = classData["386164"]
                 if stanceSettings then
                     if stanceSettings.Text and stanceSettings.Text ~= "" then
                         previewText = stanceSettings.Text
@@ -1578,23 +1356,11 @@ local function ShowPreviewIcons()
             stanceTextFrame.text:SetText(previewText)
             stanceTextFrame.text:SetTextColor(previewColor[1], previewColor[2], previewColor[3], previewColor[4] or 1)
 
-            -- Apply custom anchor frame for stance text
-            local pos = textDb.Position or {}
-            local anchorFrom = pos.AnchorFrom or "CENTER"
-            local anchorFrame = NRSKNUI:ResolveAnchorFrame(textDb.anchorFrameType, textDb.ParentFrame)
-            stanceTextFrame:ClearAllPoints()
-            stanceTextFrame:SetPoint(
-                anchorFrom,
-                anchorFrame,
-                pos.AnchorTo or "CENTER",
-                pos.XOffset or 0,
-                pos.YOffset or 100
-            )
-            stanceTextFrame:SetFrameStrata(textDb.Strata or "HIGH")
+            NRSKNUI:ApplyFramePosition(stanceTextFrame, textDb.Position, textDb)
 
             -- Update text alignment based on anchor point
-            local textPoint = NRSKNUI:GetTextPointFromAnchor(anchorFrom)
-            local textJustify = NRSKNUI:GetTextJustifyFromAnchor(anchorFrom)
+            local textPoint = NRSKNUI:GetTextPointFromAnchor(textDb.Position.AnchorFrom)
+            local textJustify = NRSKNUI:GetTextJustifyFromAnchor(textDb.Position.AnchorFrom)
             stanceTextFrame.text:ClearAllPoints()
             stanceTextFrame.text:SetPoint(textPoint, stanceTextFrame, textPoint, 0, 0)
             stanceTextFrame.text:SetJustifyH(textJustify)
@@ -1608,7 +1374,7 @@ function MBUFFS:IsPaused()
     return IsTrackingPaused()
 end
 
--- Refresh preview appearanc
+-- Refresh preview appearance
 function MBUFFS:RefreshPreview()
     if not IsTrackingPaused() then return end
     ShowPreviewIcons()
@@ -1620,14 +1386,14 @@ function MBUFFS:ShowPreview()
     if not containerFrame then CreateContainerFrame() end
     if not stanceFrame then CreateStanceFrame() end
     if not stanceTextFrame then CreateStanceTextFrame() end
-    isPreviewActive = true -- Mark preview as active, this pauses tracking
-    ShowPreviewIcons()     -- Show preview icons
+    isPreviewActive = true
+    ShowPreviewIcons()
 end
 
 -- Public HidePreview for PreviewManager
 function MBUFFS:HidePreview()
-    isPreviewActive = false                                                          -- Mark preview as inactive
-    HideAllNotifications()                                                           -- Hide all preview elements
+    isPreviewActive = false
+    HideAllNotifications()
     wipe(currentMissingBuffs)
-    if self.db and self.db.Enabled then C_Timer.After(0.1, CheckForMissingBuffs) end -- Resume tracking if enabled
+    if self.db and self.db.Enabled then C_Timer.After(0.1, CheckForMissingBuffs) end
 end

@@ -124,21 +124,32 @@ function NRSKNUI:ResolveAnchorFrame(anchorFrameType, parentFrameName)
     return UIParent
 end
 
--- Convert font outline value for SetFont API (NONE -> "")
+-- Convert font outline value for SetFont API (NONE/SOFTOUTLINE -> "")
 function NRSKNUI:GetFontOutline(outline)
-    if not outline or outline == "NONE" or outline == "" then
+    if not outline or outline == "NONE" or outline == "SOFTOUTLINE" or outline == "" then
         return ""
     end
     return outline
 end
 
--- Safely apply font settings to a FontString
+-- Safely apply font settings to a FontString with fallback
 function NRSKNUI:ApplyFont(fontString, fontName, fontSize, fontOutline)
+    if not fontString then return false end
+
     local fontPath = self:GetFontPath(fontName)
+    if not fontPath or fontPath == "" then
+        fontPath = "Fonts\\FRIZQT__.TTF"
+    end
+
     local outline = self:GetFontOutline(fontOutline)
-    local success = fontString:SetFont(fontPath, fontSize or 12, outline)
+    local size = fontSize
+    if not size or size <= 0 then
+        size = 12
+    end
+
+    local success = fontString:SetFont(fontPath, size, outline)
     if not success then
-        fontString:SetFont("Fonts\\FRIZQT__.TTF", fontSize or 12, outline)
+        success = fontString:SetFont("Fonts\\FRIZQT__.TTF", size, outline)
     end
     return success
 end
@@ -173,7 +184,7 @@ NRSKNUI.PreviewManager = PreviewManager
 local PREVIEW_MODULES = {
     "MissingBuffs", "CombatCross", "CombatMessage", "CombatRes",
     "CombatTimer", "PetTexts", "XPBar", "Durability", "DragonRiding", "RaidAlerts",
-    "FocusCastbar"
+    "FocusCastbar", "Gateway"
 }
 
 -- State tracking
@@ -241,4 +252,25 @@ end
 -- Check if previews are currently active
 function PreviewManager:IsPreviewActive()
     return self.previewsActive
+end
+
+-- Global apply position settings func
+-- Example usage:
+-- NRSKNUI:ApplyFramePosition(self.frame, self.db.Position, self.db)
+function NRSKNUI:ApplyFramePosition(frame, posConfig, Config)
+    if not frame or not posConfig then return end
+
+    -- Resolve parent
+    local parent = self:ResolveAnchorFrame(Config.anchorFrameType, Config.ParentFrame)
+    -- Clear previous anchors and set new point
+    frame:ClearAllPoints()
+    frame:SetPoint(
+        posConfig.AnchorFrom or "CENTER",
+        parent,
+        posConfig.AnchorTo or "CENTER",
+        posConfig.XOffset or 0,
+        posConfig.YOffset or 0
+    )
+    frame:SetFrameStrata(Config.Strata or "MEDIUM")
+    self:SnapFrameToPixels(frame)
 end

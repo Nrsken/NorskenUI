@@ -56,32 +56,26 @@ end
 function CT:CreateFrame()
     if self.frame then return end
 
-    local db = self.db
-    local parent = NRSKNUI:ResolveAnchorFrame(db.anchorFrameType, db.ParentFrame)
-
-    local frame = CreateFrame("Frame", "NRSKNUI_CombatTimerFrame", parent, BackdropTemplateMixin and "BackdropTemplate")
+    local frame = CreateFrame("Frame", "NRSKNUI_CombatTimerFrame", UIParent, BackdropTemplateMixin and "BackdropTemplate")
     frame:SetSize(100, 25)
-    frame:SetPoint(
-        db.Position.AnchorFrom or "CENTER",
-        parent,
-        db.Position.AnchorTo or "CENTER",
-        db.Position.XOffset or 0,
-        db.Position.YOffset or -138
-    )
-    frame:SetFrameStrata(db.Strata or "HIGH")
+    NRSKNUI:ApplyFramePosition(frame, self.db.Position, self.db)
     frame:SetFrameLevel(100)
     frame:EnableMouse(false)
     frame:SetMouseClickEnabled(false)
     frame:Hide()
 
     -- Create font string
-    local text = frame:CreateFontString("NRSKNUI_CombatTimerText", "OVERLAY", "GameFontNormalLarge")
+    local text = frame:CreateFontString("NRSKNUI_CombatTimerText", "OVERLAY")
+    local fontPath = NRSKNUI:GetFontPath(self.db.FontFace)
+    local fontSize = self.db.FontSize
     text:SetPoint("CENTER", frame, "CENTER", 0, 0)
+    text:SetFont(fontPath, fontSize, "")
     text:SetText("00:00")
     text:SetJustifyH("CENTER")
     text:SetJustifyV("MIDDLE")
 
     self.frame = frame
+    frame.text = text
     self.text = text
 end
 
@@ -114,7 +108,6 @@ function CT:UpdateText()
     end
 
     local status = FormatTime(total_time, self.db.Format)
-
     if status ~= self.lastDisplayedText then
         self.text:SetText(status)
         self.lastDisplayedText = status
@@ -127,19 +120,8 @@ function CT:ApplySettings()
     if not self.text then return end
     local db = self.db
 
-    -- Apply font
-    NRSKNUI:ApplyFont(self.text, db.FontFace, db.FontSize, db.FontOutline)
-
-    -- Apply font shadow
-    local shadow = db.FontShadow or {}
-    if shadow.Enabled then
-        local shadowColor = shadow.Color or { 0, 0, 0, 1 }
-        self.text:SetShadowOffset(shadow.OffsetX or 0, shadow.OffsetY or 0)
-        self.text:SetShadowColor(shadowColor[1] or 0, shadowColor[2] or 0, shadowColor[3] or 0, shadowColor[4] or 1)
-    else
-        self.text:SetShadowOffset(0, 0)
-        self.text:SetShadowColor(0, 0, 0, 0)
-    end
+    -- Apply font settings
+    NRSKNUI:ApplyFontSettings(self.frame, db, nil)
 
     -- Apply text alignment based on anchor
     local justify = NRSKNUI:GetTextJustifyFromAnchor(db.Position.AnchorFrom)
@@ -165,8 +147,6 @@ function CT:ApplySettings()
 
     -- Apply frame strata
     if self.frame then
-        self.frame:SetFrameStrata(db.Strata or "HIGH")
-
         -- Apply backdrop
         local backdrop = db.Backdrop
         if backdrop and backdrop.Enabled then
@@ -191,30 +171,6 @@ function CT:ApplySettings()
 
     self:UpdateFrameSize()
     self:UpdateText()
-end
-
--- Apply position from DB
-function CT:ApplyPosition()
-    if not self.frame then return end
-
-    local db = self.db
-    local parent = NRSKNUI:ResolveAnchorFrame(db.anchorFrameType, db.ParentFrame)
-
-    if self.frame:GetParent() ~= parent then
-        self.frame:SetParent(parent)
-    end
-
-    self.frame:ClearAllPoints()
-    self.frame:SetPoint(
-        db.Position.AnchorFrom or "CENTER",
-        parent,
-        db.Position.AnchorTo or "CENTER",
-        db.Position.XOffset or 0,
-        db.Position.YOffset or -138
-    )
-    self.frame:SetFrameStrata(db.Strata or "HIGH")
-
-    NRSKNUI:SnapFrameToPixels(self.frame)
 end
 
 -- OnUpdate handler for timer updates
@@ -277,6 +233,13 @@ function CT:HidePreview()
     if not self.running and not self.db.Enabled then
         self.frame:Hide()
     end
+end
+
+-- Expose position update for GUI changes
+function CT:ApplyPosition()
+    if not self.db.Enabled then return end
+    if not self.frame then return end
+    NRSKNUI:ApplyFramePosition(self.frame, self.db.Position, self.db)
 end
 
 -- Module OnEnable

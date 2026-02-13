@@ -63,7 +63,7 @@ local function IsPetOnPassive()
 end
 
 -- Check if pet is dead and update tracking state
--- Uses both API check and tracked state to persist through player death/respawn
+-- Uses both API check and tracked state to persist through player death/respawn for consistency
 local function CheckAndUpdatePetDeathState()
     -- If pet exists and is alive, clear the death tracking
     if UnitExists("pet") and not UnitIsDeadOrGhost("pet") then
@@ -79,9 +79,7 @@ local function CheckAndUpdatePetDeathState()
 
     -- Pet unit doesn't exist - check our tracked state
     -- If we previously tracked the pet as dead, it's still dead
-    if petDeathTracked then
-        return true
-    end
+    if petDeathTracked then return true end
 
     -- Pet doesn't exist and wasn't tracked as dead = missing/dismissed
     return false
@@ -115,15 +113,12 @@ local function CheckPetStatus()
     end
 
     if UnitExists("pet") then
-        -- Check if pet is on passive
         if IsPetOnPassive() then
-            return PET_STATUS.PASSIVE, PET.db.PetPassive, PET.db.PassiveColor
+            return PET_STATUS.PASSIVE, PET.db.PetPassive, PET.db.PassiveColor -- Check if pet is on passive
         end
-        -- Pet exists and is alive and not passive
-        return PET_STATUS.NONE, nil, nil
+        return PET_STATUS.NONE, nil, nil                                      -- Pet exists and is alive and not passive
     else
-        -- Pet is missing
-        return PET_STATUS.MISSING, PET.db.PetMissing, PET.db.MissingColor
+        return PET_STATUS.MISSING, PET.db.PetMissing, PET.db.MissingColor -- Pet is missing
     end
 end
 
@@ -133,44 +128,24 @@ function PET:CreatePetTexts()
     local posDB = self.db.Position
     local frame = CreateFrame("Frame", "NRSKNUI_PetTextsFrame", UIParent)
     frame:SetSize(200, 50)
-    frame:SetPoint(posDB.AnchorFrom, UIParent, posDB.AnchorTo, posDB.XOffset, posDB.YOffset)
-    frame:SetFrameStrata(self.db.Strata or "HIGH")
-    NRSKNUI:SnapFrameToPixels(frame)
 
     local text = frame:CreateFontString(nil, "OVERLAY")
     local fontPath = NRSKNUI:GetFontPath(self.db.FontFace)
-    local fontSize = self.db.FontSize or 24
-    local fontOutline = self.db.FontOutline or "OUTLINE"
-    if fontOutline == "NONE" then fontOutline = "" end
-
-    -- Set font with settings
+    text:SetFont(fontPath, self.db.FontSize, "")
     text:SetTextColor(1, 0.82, 0)
-
-    -- Check if we want to use softoutline or not
-    if self.db.FontSoftOutline then
-        text:SetFont(fontPath, fontSize, "")
-        frame.timerShadows = NRSKNUI:CreateStackedShadowText(
-            frame,
-            text,
-            fontPath,
-            fontSize,
-            { 0, 0, 0 },
-            0.9
-        )
-    else
-        text:SetFont(fontPath, fontSize, fontOutline)
-        text:SetShadowColor(0, 0, 0, 0)
-        text:SetShadowOffset(0, 0)
-    end
-
     text:ClearAllPoints()
     text:SetPoint("CENTER", frame, "CENTER", 0, 0)
 
-    local width, height = math.max(text:GetWidth(), 170), math.max(text:GetHeight(), 18)
-    frame:SetSize(width + 5, height + 5 )
-
     self.frame = frame
+    self.frame.text = text
     self.text = text
+
+    local width, height = math.max(text:GetWidth(), 170), math.max(text:GetHeight(), 18)
+    frame:SetSize(width + 5, height + 5)
+
+    NRSKNUI:ApplyFontToText(self.text, self.db.FontFace, self.db.FontSize, self.db.FontOutline)
+    NRSKNUI:ApplyFramePosition(self.frame, posDB, self.db)
+
     self.frame:Hide()
 end
 
@@ -181,7 +156,6 @@ function PET:UpdatePetText()
     if message and color then
         self.text:SetText(message)
         self.text:SetTextColor(color[1], color[2], color[3], color[4] or 1)
-        NRSKNUI:UpdateStackedShadowText(self.frame.timerShadows, message)
         self.frame:Show()
     else
         if self.frame then self.frame:Hide() end
@@ -231,6 +205,11 @@ function PET:OnEnable()
     -- Run initial check
     self:UpdatePetText()
 
+    -- Delayed update, just to make sure object exists
+    C_Timer.After(1, function()
+        self:ApplySettings()
+    end)
+
     -- Define the registration config
     if NRSKNUI.EditMode and not self.editModeRegistered then
         local config = {
@@ -270,30 +249,6 @@ function PET:ShowPreview(state)
         self:CreatePetTexts()
     end
 
-    -- Register with EditMode if not already registered
-    if NRSKNUI.EditMode and not self.editModeRegistered then
-        local config = {
-            key = "PetTexts",
-            displayName = "Pet Texts",
-            frame = self.frame,
-            getPosition = function()
-                return self.db.Position
-            end,
-            setPosition = function(pos)
-                self.db.Position.AnchorFrom = pos.AnchorFrom
-                self.db.Position.AnchorTo = pos.AnchorTo
-                self.db.Position.XOffset = pos.XOffset
-                self.db.Position.YOffset = pos.YOffset
-
-                self.frame:ClearAllPoints()
-                self.frame:SetPoint(pos.AnchorFrom, UIParent, pos.AnchorTo, pos.XOffset, pos.YOffset)
-            end,
-            guiPath = "PetTexts",
-        }
-        NRSKNUI.EditMode:RegisterElement(config)
-        self.editModeRegistered = true
-    end
-
     -- Store preview state
     self.isPreview = true
     self.previewState = state or "missing"
@@ -313,7 +268,6 @@ function PET:ShowPreview(state)
 
     self.text:SetText(previewText)
     self.text:SetTextColor(previewColor[1], previewColor[2], previewColor[3], previewColor[4] or 1)
-    NRSKNUI:UpdateStackedShadowText(self.frame.timerShadows, previewText)
     self.frame:Show()
 end
 
@@ -331,54 +285,10 @@ end
 function PET:ApplySettings()
     if not self.frame then return end
 
-    local posDB = self.db.Position
-
-    -- Update position
-    self.frame:ClearAllPoints()
-    self.frame:SetPoint(posDB.AnchorFrom, UIParent, posDB.AnchorTo, posDB.XOffset, posDB.YOffset)
-    NRSKNUI:SnapFrameToPixels(self.frame)
-
-    -- Update strata
-    if self.db.Strata then
-        self.frame:SetFrameStrata(self.db.Strata)
-    end
-
+    -- Update position settings
+    NRSKNUI:ApplyFramePosition(self.frame, self.db.Position, self.db)
     -- Update font settings
-    local fontPath = NRSKNUI:GetFontPath(self.db.FontFace)
-    local fontSize = self.db.FontSize or 24
-    local fontOutline = self.db.FontOutline or "OUTLINE"
-    if fontOutline == "NONE" then fontOutline = "" end
-
-    -- Update softoutline stuff
-    if self.db.FontSoftOutline then
-        self.text:SetFont(fontPath, fontSize, "")
-        if not self.frame.timerShadows then
-            self.frame.timerShadows = NRSKNUI:CreateStackedShadowText(
-                self.frame,
-                self.text,
-                fontPath,
-                fontSize,
-                { 0, 0, 0 },
-                0.9
-            )
-        else
-            -- Update softoutline
-            for _, shadow in ipairs(self.frame.timerShadows) do
-                shadow:SetFont(fontPath, fontSize, "")
-                shadow:SetTextColor(0, 0, 0, 0.9)
-            end
-        end
-    else
-        -- Update softoutline
-        if self.frame.timerShadows then
-            for _, shadow in ipairs(self.frame.timerShadows) do
-                shadow:SetTextColor(0, 0, 0, 0)
-            end
-        end
-        self.text:SetFont(fontPath, fontSize, fontOutline)
-        self.text:SetShadowColor(0, 0, 0, 0)
-        self.text:SetShadowOffset(0, 0)
-    end
+    NRSKNUI:ApplyFontToText(self.text, self.db.FontFace, self.db.FontSize, self.db.FontOutline)
 
     -- If in preview mode, update the preview text
     if self.isPreview then

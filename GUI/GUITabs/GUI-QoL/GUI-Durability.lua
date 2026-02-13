@@ -175,7 +175,12 @@ local function RenderGeneralTab(scrollChild, yOffset, activeCards)
     row2:AddWidget(fontDropdown, 0.5)
     table_insert(allWidgets, fontDropdown)
 
-    local outlineList = { ["NONE"] = "None", ["OUTLINE"] = "Outline", ["THICKOUTLINE"] = "Thick" }
+    local outlineList = {
+        { key = "NONE", text = "None" },
+        { key = "OUTLINE", text = "Outline" },
+        { key = "THICKOUTLINE", text = "Thick" },
+        { key = "SOFTOUTLINE", text = "Soft" },
+    }
     local outlineDropdown = GUIFrame:CreateDropdown(row2, "Outline", outlineList, db.FontOutline or "OUTLINE", 45,
         function(key)
             db.FontOutline = key

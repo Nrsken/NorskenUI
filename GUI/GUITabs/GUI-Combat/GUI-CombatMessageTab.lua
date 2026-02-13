@@ -64,7 +64,8 @@ GUIFrame:RegisterContent("combatMessage", function(scrollChild, yOffset)
     -- Comprehensive widget state update
     local function UpdateAllWidgetStates()
         local mainEnabled = db.Enabled ~= false
-        local shadowEnabled = db.FontShadow and db.FontShadow.Enabled == true
+        local usingSoftOutline = db.FontOutline == "SOFTOUTLINE"
+        local shadowEnabled = not usingSoftOutline and db.FontShadow and db.FontShadow.Enabled == true
         local enterEnabled = db.EnterCombat and db.EnterCombat.Enabled ~= false
         local exitEnabled = db.ExitCombat and db.ExitCombat.Enabled ~= false
         local noTargetEnabled = db.NoTarget and db.NoTarget.Enabled == true
@@ -78,6 +79,7 @@ GUIFrame:RegisterContent("combatMessage", function(scrollChild, yOffset)
 
         -- Apply conditional states (only if main is enabled)
         if mainEnabled then
+            -- Disable all shadow widgets when using SOFTOUTLINE
             for _, widget in ipairs(shadowWidgets) do
                 if widget.SetEnabled then
                     widget:SetEnabled(shadowEnabled)
@@ -182,11 +184,17 @@ GUIFrame:RegisterContent("combatMessage", function(scrollChild, yOffset)
     row3a:AddWidget(fontDropdown, 0.5)
     table_insert(allWidgets, fontDropdown)
 
-    local outlineList = { ["NONE"] = "None", ["OUTLINE"] = "Outline", ["THICKOUTLINE"] = "Thick" }
+    local outlineList = {
+        { key = "NONE", text = "None" },
+        { key = "OUTLINE", text = "Outline" },
+        { key = "THICKOUTLINE", text = "Thick" },
+        { key = "SOFTOUTLINE", text = "Soft" },
+    }
     local outlineDropdown = GUIFrame:CreateDropdown(row3a, "Outline", outlineList, db.FontOutline or "OUTLINE", 45,
         function(key)
             db.FontOutline = key
             ApplySettings()
+            UpdateAllWidgetStates()
         end)
     row3a:AddWidget(outlineDropdown, 0.5)
     table_insert(allWidgets, outlineDropdown)
@@ -220,6 +228,7 @@ GUIFrame:RegisterContent("combatMessage", function(scrollChild, yOffset)
         end)
     row4a:AddWidget(shadowEnableCheck, 0.5)
     table_insert(allWidgets, shadowEnableCheck)
+    table_insert(shadowWidgets, shadowEnableCheck)
 
     local shadowColor = GUIFrame:CreateColorPicker(row4a, "Shadow Color", db.FontShadow.Color or { 0, 0, 0, 1 },
         function(r, g, b, a)

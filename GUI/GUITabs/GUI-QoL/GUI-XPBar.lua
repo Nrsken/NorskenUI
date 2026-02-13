@@ -149,7 +149,7 @@ GUIFrame:RegisterContent("XPBar", function(scrollChild, yOffset)
 
     -- Font Outline Dropdown
     local row3b = GUIFrame:CreateRow(card2.content, 37)
-    local outlineList = { ["NONE"] = "None", ["OUTLINE"] = "Outline", ["THICKOUTLINE"] = "Thick" }
+    local outlineList = { ["NONE"] = "None", ["OUTLINE"] = "Outline", ["THICKOUTLINE"] = "Thick", ["SOFTOUTLINE"] = "Soft" }
     local outlineDropdown = GUIFrame:CreateDropdown(row3b, "Outline", outlineList, db.FontOutline or "OUTLINE", 45,
         function(key)
             db.FontOutline = key

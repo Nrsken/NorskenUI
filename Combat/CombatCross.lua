@@ -14,7 +14,6 @@ local CC = NRSKNUI.Addon:NewModule("CombatCross", "AceEvent-3.0")
 local CreateFrame = CreateFrame
 local InCombatLockdown = InCombatLockdown
 local UIFrameFadeIn = UIFrameFadeIn
-local STANDARD_TEXT_FONT = STANDARD_TEXT_FONT
 local UIParent = UIParent
 
 -- Constants
@@ -46,9 +45,7 @@ end
 -- Module OnDisable
 function CC:OnDisable()
     self:UnregisterAllEvents()
-    if self.frame then
-        self.frame:Hide()
-    end
+    if self.frame then self.frame:Hide() end
 end
 
 -- Get color based on color mode
@@ -70,43 +67,49 @@ function CC:CreateFrame()
     self.frame:Hide()
 
     -- Create cross text
+    local fontSize = self.db.Thickness * FONT_SIZE_MULTIPLIER
     self.text = self.frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     self.text:SetPoint("CENTER")
+    self.text:SetFont(NRSKNUI.FONT, fontSize, "")
     self.text:SetText("+")
-    self.text:SetFont(NRSKNUI.FONT or STANDARD_TEXT_FONT, 24, "OUTLINE")
-    self.text:SetShadowOffset(0, 0)
-    self.text:SetShadowColor(0, 0, 0, 0)
+
+    if self.db.Outline then
+        self.frame.softOutline = NRSKNUI:CreateSoftOutline(self.text, {
+            thickness = 1,
+            color = { 0, 0, 0 },
+            alpha = 0.9,
+        })
+    end
 
     self.text:ClearAllPoints()
     self.text:SetPoint("CENTER", self.frame, "CENTER", 0, 0)
-
-    NRSKNUI:UpdateStackedShadowText(self.frame, "+")
 end
 
 -- Apply settings from profile
 function CC:ApplySettings()
     if not self.frame or not self.text then return end
 
-    -- Get position settings
-    local pos = self.db.Position or {}
-    local anchorFrom = pos.AnchorFrom or "CENTER"
-    local anchorTo = pos.AnchorTo or "CENTER"
-    local xOffset = pos.XOffset or 0
-    local yOffset = pos.YOffset or -10
-
-    -- Apply position
-    self.frame:ClearAllPoints()
-    self.frame:SetPoint(anchorFrom, UIParent, anchorTo, xOffset, yOffset)
-
-    -- Apply frame strata
-    self.frame:SetFrameStrata(self.db.Strata or "HIGH")
+    -- Apply position & Strata
+    NRSKNUI:ApplyFramePosition(self.frame, self.db.Position, self.db)
 
     -- Apply font
-    local fontSize = (self.db.Thickness or 22) * FONT_SIZE_MULTIPLIER
-    local fontPath = NRSKNUI.FONT or STANDARD_TEXT_FONT
+    local fontSize = self.db.Thickness * FONT_SIZE_MULTIPLIER
+    self.text:SetFont(NRSKNUI.FONT, fontSize, "")
 
-    if not self.text:SetFont(fontPath, fontSize, "OUTLINE") then
-        self.text:SetFont(STANDARD_TEXT_FONT, fontSize, "OUTLINE")
+    if self.db.Outline then
+        if not self.frame.softOutline then
+            self.frame.softOutline = NRSKNUI:CreateSoftOutline(self.text, {
+                thickness = 1,
+                color = { 0, 0, 0 },
+                alpha = 0.9,
+            })
+        else
+            self.frame.softOutline:SetShown(true)
+        end
+    else
+        if self.frame.softOutline then
+            self.frame.softOutline:SetShown(false)
+        end
     end
 
     -- Apply color

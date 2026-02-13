@@ -24,7 +24,6 @@ GUIFrame:RegisterContent("PetTexts", function(scrollChild, yOffset)
 
     local mod = GetModule()
     local allWidgets = {}
-    local fontWidgets = {}
 
     local function ApplySettings()
         if mod and mod.ApplySettings then
@@ -44,19 +43,10 @@ GUIFrame:RegisterContent("PetTexts", function(scrollChild, yOffset)
 
     local function UpdateAllWidgetStates()
         local mainEnabled = db.Enabled ~= false
-        local useSoftOutline = db.FontSoftOutline ~= true
 
         for _, widget in ipairs(allWidgets) do
             if widget.SetEnabled then
                 widget:SetEnabled(mainEnabled)
-            end
-        end
-
-        if mainEnabled then
-            for _, widget in ipairs(fontWidgets) do
-                if widget.SetEnabled then
-                    widget:SetEnabled(useSoftOutline)
-                end
             end
         end
     end
@@ -184,24 +174,19 @@ GUIFrame:RegisterContent("PetTexts", function(scrollChild, yOffset)
 
     -- Font Outline Dropdown
     local row3b = GUIFrame:CreateRow(card3.content, 37)
-    local outlineList = { ["NONE"] = "None", ["OUTLINE"] = "Outline", ["THICKOUTLINE"] = "Thick" }
+    local outlineList = {
+        { key = "NONE", text = "None" },
+        { key = "OUTLINE", text = "Outline" },
+        { key = "THICKOUTLINE", text = "Thick" },
+        { key = "SOFTOUTLINE", text = "Soft" },
+    }
     local outlineDropdown = GUIFrame:CreateDropdown(row3b, "Outline", outlineList, db.FontOutline or "OUTLINE", 45,
         function(key)
             db.FontOutline = key
             ApplySettings()
         end)
-    row3b:AddWidget(outlineDropdown, 0.5)
+    row3b:AddWidget(outlineDropdown, 1)
     table_insert(allWidgets, outlineDropdown)
-    table_insert(fontWidgets, outlineDropdown)
-
-    local enableSoftOutline = GUIFrame:CreateCheckbox(row3b, "Enable Soft Outline", db.FontSoftOutline ~= false,
-        function(checked)
-            db.FontSoftOutline = checked
-            ApplySettings()
-            UpdateAllWidgetStates()
-        end)
-    row3b:AddWidget(enableSoftOutline, 0.5)
-    table_insert(allWidgets, enableSoftOutline)
 
     card3:AddRow(row3b, 37)
 
