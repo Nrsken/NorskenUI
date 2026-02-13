@@ -7,6 +7,7 @@
 ## OptionalDeps: Ace3, LibSharedMedia-3.0
 ## IconTexture: Interface\AddOns\NorskenUI\Media\Logo\LogoRed.png
 ## X-Curse-Project-ID: 1460316
+## X-Wago-ID: 96ELgPNg
 
 # Load Libraries
 Libs/Init.xml
