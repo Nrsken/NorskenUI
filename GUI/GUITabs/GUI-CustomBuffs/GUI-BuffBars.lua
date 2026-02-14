@@ -45,10 +45,7 @@ local function CreateIconWithLabels(parent, spellOrItemID, isItem, size)
     iconFrame.texture:SetPoint("BOTTOMRIGHT", iconFrame, "BOTTOMRIGHT", -1, 1)
 
     -- Zoom for spell icons
-    local zoom = 0.3
-    local texMin = 0.25 * zoom
-    local texMax = 1 - 0.25 * zoom
-    iconFrame.texture:SetTexCoord(texMin, texMax, texMin, texMax)
+    NRSKNUI:ApplyZoom(iconFrame.texture, 0.3)
 
     -- Get texture and name based on type
     local texture, spellName

@@ -105,9 +105,7 @@ function FCB:CreateFrame()
     local icon = iconFrame:CreateTexture(nil, "ARTWORK")
     icon:SetPoint("TOPLEFT", 1, -1)
     icon:SetPoint("BOTTOMRIGHT", -1, 1)
-    local zoom = 0.3
-    local texMin, texMax = 0.25 * zoom, 1 - 0.25 * zoom
-    icon:SetTexCoord(texMin, texMax, texMin, texMax)
+    NRSKNUI:ApplyZoom(icon, 0.3)
 
     -- Castbar
     local castBar = CreateFrame("StatusBar", nil, frame)

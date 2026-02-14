@@ -158,13 +158,10 @@ function BB:CreateTrackerFrame(trackerIndex, config)
         frame.iconFrame.bg:SetAllPoints()
         frame.iconFrame.bg:SetColorTexture(0, 0, 0, 1)
 
-        local zoom = 0.3
-        local texMin = 0.25 * zoom
-        local texMax = 1 - 0.25 * zoom
         frame.icon = frame.iconFrame:CreateTexture(nil, "ARTWORK")
         frame.icon:SetPoint("TOPLEFT", 1, -1)
         frame.icon:SetPoint("BOTTOMRIGHT", -1, 1)
-        frame.icon:SetTexCoord(texMin, texMax, texMin, texMax)
+        NRSKNUI:ApplyZoom(frame.icon, 0.3)
 
         local iconTexture
         if config.Type == "Item" then

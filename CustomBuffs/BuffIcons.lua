@@ -116,12 +116,9 @@ function BI:CreateTrackerFrame(trackerIndex, config)
     frame.border:SetBackdropBorderColor(unpack(config.BorderColor))
 
     -- Icon texture with zoom to hide blizzard border
-    local zoom = 0.3
-    local texMin = 0.25 * zoom
-    local texMax = 1 - 0.25 * zoom
     frame.icon = frame:CreateTexture(nil, "ARTWORK")
     frame.icon:SetAllPoints()
-    frame.icon:SetTexCoord(texMin, texMax, texMin, texMax)
+    NRSKNUI:ApplyZoom(frame.icon, 0.3)
 
     -- Get icon based on type
     local iconTexture

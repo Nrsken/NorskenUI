@@ -54,6 +54,21 @@ function NRSKNUI:PixelScaleChanged(event)
     end
 end
 
+-- Pixelperfect
+-- Using native wow stuff to apply better settings for pixels
+do
+	local SCALE = 768 / select(2, GetPhysicalScreenSize())
+	function NRSKNUI:PixelPerfect(obj)
+		if obj.SetTexelSnappingBias then
+			obj:SetTexelSnappingBias(0)
+			obj:SetSnapToPixelGrid(false)
+		elseif obj.GetObjectType then
+			obj:SetIgnoreParentScale(true)
+			obj:SetScale(SCALE)
+		end
+	end
+end
+
 -- Scale
 -- Apply pixel-perfect scaling to a value
 function NRSKNUI:Scale(x)

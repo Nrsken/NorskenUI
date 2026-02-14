@@ -417,50 +417,14 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
     })
     backdrop:SetBackdropColor(backdropColor[1], backdropColor[2], backdropColor[3], backdropColor[4] or 0.8)
 
-    -- Create border container
+    -- Create border container at higher frame level
     local borderFrame = CreateFrame("Frame", nil, backdrop)
     borderFrame:SetAllPoints(backdrop)
     borderFrame:SetFrameLevel(backdrop:GetFrameLevel() + 1)
     backdrop._borderFrame = borderFrame
 
-    -- Create top border
-    local borderTop = borderFrame:CreateTexture(nil, "BORDER", nil, 7)
-    borderTop:SetHeight(1)
-    borderTop:SetPoint("TOPLEFT", backdrop, "TOPLEFT", 0, 0)
-    borderTop:SetPoint("TOPRIGHT", backdrop, "TOPRIGHT", 0, 0)
-    borderTop:SetColorTexture(borderColor[1], borderColor[2], borderColor[3], borderColor[4] or 1)
-    borderTop:SetTexelSnappingBias(0)
-    borderTop:SetSnapToPixelGrid(false)
-
-    -- Create bottom border
-    local borderBottom = borderFrame:CreateTexture(nil, "BORDER", nil, 7)
-    borderBottom:SetHeight(1)
-    borderBottom:SetPoint("BOTTOMLEFT", backdrop, "BOTTOMLEFT", 0, 0)
-    borderBottom:SetPoint("BOTTOMRIGHT", backdrop, "BOTTOMRIGHT", 0, 0)
-    borderBottom:SetColorTexture(borderColor[1], borderColor[2], borderColor[3], borderColor[4] or 1)
-    borderBottom:SetTexelSnappingBias(0)
-    borderBottom:SetSnapToPixelGrid(false)
-
-    -- Create left border
-    local borderLeft = borderFrame:CreateTexture(nil, "BORDER", nil, 7)
-    borderLeft:SetWidth(1)
-    borderLeft:SetPoint("TOPLEFT", backdrop, "TOPLEFT", 0, 0)
-    borderLeft:SetPoint("BOTTOMLEFT", backdrop, "BOTTOMLEFT", 0, 0)
-    borderLeft:SetColorTexture(borderColor[1], borderColor[2], borderColor[3], borderColor[4] or 1)
-    borderLeft:SetTexelSnappingBias(0)
-    borderLeft:SetSnapToPixelGrid(false)
-
-    -- Create right border
-    local borderRight = borderFrame:CreateTexture(nil, "BORDER", nil, 7)
-    borderRight:SetWidth(1)
-    borderRight:SetPoint("TOPRIGHT", backdrop, "TOPRIGHT", 0, 0)
-    borderRight:SetPoint("BOTTOMRIGHT", backdrop, "BOTTOMRIGHT", 0, 0)
-    borderRight:SetColorTexture(borderColor[1], borderColor[2], borderColor[3], borderColor[4] or 1)
-    borderRight:SetTexelSnappingBias(0)
-    borderRight:SetSnapToPixelGrid(false)
-
-    -- Store border textures for color updates
-    backdrop._borders = { borderTop, borderBottom, borderLeft, borderRight }
+    -- Add borders using helper with textures on borderFrame, stored on backdrop
+    NRSKNUI:AddBorders(backdrop, borderColor, borderFrame)
     backdrop._barName = barName
 
     -- Resize and re-anchor the Blizzard button to backdrop
@@ -545,10 +509,7 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
     end
 
     -- Icon zoom stuff bcs blizz border uggy
-    local zoom = 0.3
-    local texMin = 0.25 * zoom
-    local texMax = 1 - 0.25 * zoom
-    button.icon:SetTexCoord(texMin, texMax, texMin, texMax)
+    NRSKNUI:ApplyZoom(button.icon, 0.6)
 
     -- Store reference
     button.nrsknui_backdrop = backdrop
@@ -1443,11 +1404,7 @@ function ACB:UpdateBarBackdropColors(barKey)
         backdrop:SetBackdropColor(backdropColor[1], backdropColor[2], backdropColor[3], backdropColor[4] or 0.8)
 
         -- Update border colors
-        if backdrop._borders then
-            for _, border in ipairs(backdrop._borders) do
-                border:SetColorTexture(borderColor[1], borderColor[2], borderColor[3], borderColor[4] or 1)
-            end
-        end
+        backdrop:SetBorderColor(borderColor[1], borderColor[2], borderColor[3], borderColor[4] or 1)
         -- Update visibility based on HideEmptyBackdrops setting
         if backdrop._updateVisibility and hideEmpty then
             -- If we have the visibility function and hiding is enabled, update it

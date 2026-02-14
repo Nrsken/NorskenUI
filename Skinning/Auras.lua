@@ -80,10 +80,7 @@ local function StyleAuraFrame(aura, size, borderColor)
     BorderOverlay(aura, colorBorder)
 
     -- Icon zoom stuff bcs blizz border uggy
-    local zoom = 0.3
-    local texMin = 0.25 * zoom
-    local texMax = 1 - 0.25 * zoom
-    auraIcon:SetTexCoord(texMin, texMax, texMin, texMax)
+    NRSKNUI:ApplyZoom(auraIcon, 0.3)
 
     local auraW, auraH = aura:GetSize()
     if auraW and auraH and auraW > 0 and auraH > 0 then
@@ -128,10 +125,7 @@ local function StyleExternalAuraFrame(aura, size, borderColor)
     BorderOverlay(aura, colorBorder)
 
     -- Icon zoom stuff bcs blizz border uggy
-    local zoom = 0.3
-    local texMin = 0.25 * zoom
-    local texMax = 1 - 0.25 * zoom
-    auraIcon:SetTexCoord(texMin, texMax, texMin, texMax)
+    NRSKNUI:ApplyZoom(auraIcon, 0.3)
 
     local auraW, auraH = aura:GetSize()
     if auraW and auraH and auraW > 0 and auraH > 0 then
