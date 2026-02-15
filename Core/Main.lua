@@ -3,9 +3,21 @@ local _, NRSKNUI = ...
 
 -- Localization Setup
 local IsInInstance = IsInInstance
-local LSM = NRSKNUI.LSM
 local LibStub = LibStub
+local next = next
 local Theme = NRSKNUI.Theme
+local C_CVar = C_CVar
+
+local UVARS = {
+    taintLog = 0,
+}
+function NRSKNUI:OnLogin()
+    for key, value in next, UVARS do
+        C_CVar.SetCVar(key, value)
+    end
+    return true
+end
+NRSKNUI:OnLogin()
 
 -- Constants
 local DEFAULT_PROFILE = "Default"
@@ -13,12 +25,6 @@ local DEFAULT_PROFILE = "Default"
 -- Create the main addon object
 local NorskenUI = LibStub("AceAddon-3.0"):NewAddon("NorskenUI", "AceEvent-3.0", "AceHook-3.0")
 NRSKNUI.Addon = NorskenUI
-
--- Register media with LibSharedMedia
-if LSM then
-    LSM:Register("sound", "|cffe51039NorskenWhisper|r", [[Interface\AddOns\NorskenUI\Media\Sounds\Whisper.ogg]])
-    LSM:Register("border", "WHITE8X8", [[Interface\Buttons\WHITE8X8]])
-end
 
 -- Encounter state
 NRSKNUI.encounterActive = false

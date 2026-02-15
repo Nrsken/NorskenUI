@@ -104,6 +104,9 @@ function DUR:Create()
     self.Frame.text = Text
     self.Text = Text
 
+    -- Hide initially, causes weird first login issues otherwise
+    Frame:Hide()
+
     -- Apply position and font settings
     NRSKNUI:ApplyFramePosition(self.Frame, self.db.Text.Position, self.db.Text)
     NRSKNUI:ApplyFontToText(self.Text, self.db.FontFace, self.db.Text.FontSize, self.db.FontOutline)

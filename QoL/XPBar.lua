@@ -120,6 +120,7 @@ function XPBar:CreateBar()
     bar:SetStatusBarTexture(statusbar)
     bar:GetStatusBarTexture():SetDrawLayer("ARTWORK")
     bar:SetStatusBarColor(r, g, b, a)
+    bar:Hide()
 
     -- Apply position
     NRSKNUI:ApplyFramePosition(bar, self.db.Position, self.db)

@@ -4,11 +4,12 @@ local _, NRSKNUI = ...
 -- Module for pixelperfect utility
 
 -- Localization Setup
-local string_format = string.format
-local math_floor = math.floor
 local GetPhysicalScreenSize = GetPhysicalScreenSize
 local type = type
 local CreateFrame = CreateFrame
+local select = select
+local string_format = string.format
+local math_floor = math.floor
 local UIParent = UIParent
 
 -- UIMult

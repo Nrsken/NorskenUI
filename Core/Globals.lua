@@ -23,15 +23,17 @@ NRSKNUI.LDB = SafeLibStub("LibDataBroker-1.1")
 NRSKNUI.LDBIcon = SafeLibStub("LibDBIcon-1.0")
 NRSKNUI.LDS = SafeLibStub("LibDualSpec-1.0")
 
--- Standard addon font
+-- Standard addon font and statusbar
 NRSKNUI.PATH = ([[Interface\AddOns\%s\Media\]]):format(addonName)
 NRSKNUI.FONT = NRSKNUI.PATH .. [[Fonts\]] .. 'Expressway.TTF'
 NRSKNUI.SB = NRSKNUI.PATH .. [[Statusbars\]] .. 'NorskenUI.blp'
 
--- Register font with LSM
+-- Register LSM media
 if NRSKNUI.LSM then
     NRSKNUI.LSM:Register('font', 'Expressway', NRSKNUI.FONT)
     NRSKNUI.LSM:Register('statusbar', 'NorskenUI', NRSKNUI.SB)
+    NRSKNUI.LSM:Register('sound', '|cffe51039NorskenWhisper|r', [[Interface\AddOns\NorskenUI\Media\Sounds\Whisper.ogg]])
+    NRSKNUI.LSM:Register('border', 'WHITE8X8', [[Interface\Buttons\WHITE8X8]])
 end
 
 -- Helper to get Font Path from Name
@@ -96,6 +98,7 @@ local function SetupSlashCommands()
     end
     NRSKNUI:Print(NRSKNUI:ColorTextByTheme("/nui") .. " to open the configuration window.")
 
+    -- TODO: Add these into gui so user can toggle
     -- /rl instead of /reload shortcut :)
     SLASH_NRSKNUI_RL1 = "/rl"
     SlashCmdList["NRSKNUI_RL"] = function() ReloadUI() end

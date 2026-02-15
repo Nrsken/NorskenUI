@@ -1,8 +1,6 @@
 -- NorskenUI namespace
 local _, NRSKNUI = ...
 
--- TODO: Revisit keybind coloring, not done properly and gets overriden by blizzy
-
 -- Check for addon object
 if not NRSKNUI.Addon then
     error("ActionBars: Addon object not initialized. Check file load order!")
@@ -17,8 +15,6 @@ local CreateFrame = CreateFrame
 local ipairs = ipairs
 local pairs = pairs
 local InCombatLockdown = InCombatLockdown
-local UIFrameFadeIn = UIFrameFadeIn
-local UIFrameFadeOut = UIFrameFadeOut
 local PetHasActionBar = PetHasActionBar
 local GetNumShapeshiftForms = GetNumShapeshiftForms
 local GetCursorPosition = GetCursorPosition
@@ -27,6 +23,7 @@ local SecureCmdOptionParse = SecureCmdOptionParse
 local hooksecurefunc = hooksecurefunc
 local GetPetActionInfo = GetPetActionInfo
 local GetShapeshiftFormInfo = GetShapeshiftFormInfo
+local getmetatable = getmetatable
 local table_insert = table.insert
 local _G = _G
 
@@ -61,7 +58,7 @@ local function BuildBarConfig(barKey, barDB, globalMouseover)
     local frame = _G[frameInfo.frame]
     if not frame then return nil end
 
-    -- Determine mouseover settings (use global if globalOverride is true)
+    -- Determine mouseover settings, uses global if globalOverride is true
     local useGlobal = barDB.Mouseover and barDB.Mouseover.GlobalOverride
     local mouseoverEnabled, mouseoverAlpha
 
@@ -128,30 +125,30 @@ function ACB:BuildConfigTable()
     end
 end
 
--- Remap keybind text to shorter versions
+-- Remap keybind text to shorter versions, use only uppercase letters and remove spaces
 -- For example "Middle Mouse" becomes "M3"
-local function RemapKeyText(text)
-    if not text or text == "" then return "" end
-    text = text:gsub("s%-", "S")
-        :gsub("c%-", "C")
-        :gsub("a%-", "A")
-    text = text:gsub("Spacebar", "Sp")
-        :gsub("Middle Mouse", "M3")
-        :gsub("Mouse Wheel Up", "MWU")
-        :gsub("Mouse Wheel Down", "MWD")
-        :gsub("Mouse Button 4", "M4")
-        :gsub("Mouse Button 5", "M5")
-        :gsub("Num Pad%s*(%d)", "NP%1")
-    if not text:match("[%w-=`]") then return "" end
-    return text
+local function RemapKeyText(button)
+    local text = button.HotKey:GetText() or ''
+    if not text or text == "" then return end
+    text = text:upper()
+    text = text:gsub(' ', '')
+    text = text:gsub('%-', '')
+    text = text:gsub("SPACEBAR", "SP")
+    text = text:gsub("MIDDLEMOUSE", "M3")
+    text = text:gsub("MOUSEWHEELUP", "MWU")
+    text = text:gsub("MOUSEWHEELDOWN", "MWD")
+    text = text:gsub("MOUSEBUTTON4", "M4")
+    text = text:gsub("MOUSEBUTTON5", "M5")
+    text = text:gsub("NUMPAD%s*(%d)", "NP%1")
+    text = text:gsub("NUMPAD", "NP")
+    button.HotKey:SetText(text)
 end
 
--- Helper to get font sizes for a bar (respects GlobalOverride)
+-- Get font sizes for a bar, respects GlobalOverride
 function ACB:GetFontSizes(barKey)
     local barDB = self.db.Bars and self.db.Bars[barKey]
     local globalFontSizes = self.db.FontSizes or {}
     local barFontSizes = barDB and barDB.FontSizes or {}
-    -- Check if using global override
     local useGlobal = barFontSizes.GlobalOverride == true
     if useGlobal then
         return {
@@ -170,11 +167,10 @@ function ACB:GetFontSizes(barKey)
     end
 end
 
--- Helper to get text positions for a bar (respects GlobalOverride)
+-- Get text positions for a bar, respects GlobalOverride
 function ACB:GetTextPositions(barKey)
     local barDB = self.db.Bars and self.db.Bars[barKey]
     local barTextPos = barDB and barDB.TextPositions or {}
-    -- Check if using global override
     local useGlobal = barTextPos.GlobalOverride ~= false -- Default to true
     if useGlobal then
         return {
@@ -202,14 +198,14 @@ function ACB:GetTextPositions(barKey)
             macroAnchor = barTextPos.MacroAnchor or "BOTTOM",
             macroXOffset = barTextPos.MacroXOffset or 0,
             macroYOffset = barTextPos.MacroYOffset or -2,
-            cooldownAnchor = self.db.CooldownAnchor or "CENTER",
-            cooldownXOffset = self.db.CooldownXOffset or 0,
-            cooldownYOffset = self.db.CooldownYOffset or 0,
+            cooldownAnchor = barTextPos.CooldownAnchor or "CENTER",
+            cooldownXOffset = barTextPos.CooldownXOffset or 0,
+            cooldownYOffset = barTextPos.CooldownYOffset or 0,
         }
     end
 end
 
--- Helper to get bar-specific config
+-- Get bar-specific config
 function ACB:GetBarConfig(barKey)
     return self.db.Bars and self.db.Bars[barKey]
 end
@@ -255,26 +251,53 @@ function ACB:StyleButtonText(button, barKey)
         hotkey:ClearAllPoints()
         hotkey:SetPoint(textPos.keybindAnchor, button, textPos.keybindAnchor,
             textPos.keybindXOffset, textPos.keybindYOffset)
+        hotkey:SetWidth((button:GetWidth() - 2) or 0)
         hotkey:SetFont(fontpath, fontSize, self.db.FontOutline)
-        hotkey:SetTextColor(1, 1, 1, 1)
         hotkey:SetShadowColor(0, 0, 0, 0)
         hotkey:SetJustifyH("RIGHT")
+        hotkey:SetWordWrap(false)
 
-        -- Override SetTextColor to prevent Blizzard from changing our color
-        if not hotkey._nrsknColorLocked then
-            hotkey._nrsknColorLocked = true
-            hotkey.SetTextColor = function() end -- nop
-        end
+        -- Store original info for later use in hooks, so we can reapply styling and positioning when hotkeys are updated
+        hotkey._nrsknAnchor = textPos.keybindAnchor
+        hotkey._nrsknXOffset = textPos.keybindXOffset
+        hotkey._nrsknYOffset = textPos.keybindYOffset
+        hotkey._nrsknFontPath = fontpath
+        hotkey._nrsknFontSize = fontSize
+        hotkey._nrsknFontOutline = self.db.FontOutline
 
-        -- Remap keybind text
-        C_Timer.After(0.5, function()
-            if hotkey then
-                local remapped = RemapKeyText(hotkey:GetText())
-                if remapped ~= hotkey:GetText() then
-                    button.HotKey:SetText(remapped)
+        -- Hook SetVertexColor to apply white color unless range check red coloring is applied
+        -- Uses metatable method instead of normal hooksecurefunc, infinite loop otherwise
+        if not hotkey._nrsknColorHooked then
+            hotkey._nrsknColorHooked = true
+            hotkey._nrsknStyled = true
+            local metaSetVertexColor = getmetatable(hotkey).__index.SetVertexColor
+            hooksecurefunc(hotkey, "SetVertexColor", function(self, r, g, b, a)
+                if not (r and r > 0.9 and g < 0.2 and b < 0.2) then
+                    metaSetVertexColor(self, 1, 1, 1, 1)
                 end
-            end
-        end)
+            end)
+        end
+        -- Set white color initially
+        getmetatable(hotkey).__index.SetVertexColor(hotkey, 1, 1, 1, 1)
+
+        -- Hook UpdateHotkeys to reapply styling and remap text whenever hotkeys are updated
+        -- such as when changing bindings or action paging
+        if button.UpdateHotkeys and not button._nrsknHotkeyHooked then
+            button._nrsknHotkeyHooked = true
+            hooksecurefunc(button, 'UpdateHotkeys', function(self)
+                local hk = self.HotKey
+                if hk and hk._nrsknStyled then
+                    hk:ClearAllPoints()
+                    hk:SetPoint(hk._nrsknAnchor, self, hk._nrsknAnchor,
+                        hk._nrsknXOffset, hk._nrsknYOffset)
+                    hk:SetWidth((self:GetWidth() - 2) or 0)
+                    hk:SetFont(hk._nrsknFontPath, hk._nrsknFontSize, hk._nrsknFontOutline)
+                    hk:SetWordWrap(false)
+                end
+                RemapKeyText(self)
+            end)
+        end
+        RemapKeyText(button)
     end
 
     -- Style macro name text or hide if HideMacroText is enabled
@@ -291,12 +314,6 @@ function ACB:StyleButtonText(button, barKey)
             name:SetTextColor(1, 1, 1, 1)
             name:SetShadowColor(0, 0, 0, 0)
             name:SetJustifyH("CENTER")
-
-            -- Override SetTextColor to prevent Blizzard from changing our color
-            if not name._nrsknColorLocked then
-                name._nrsknColorLocked = true
-                name.SetTextColor = function() end
-            end
         end
     end
 
@@ -310,12 +327,6 @@ function ACB:StyleButtonText(button, barKey)
         count:SetTextColor(1, 1, 1, 1)
         count:SetShadowColor(0, 0, 0, 0)
         count:SetJustifyH("RIGHT")
-
-        -- Override SetTextColor to prevent Blizzard from changing our color
-        if not count._nrsknColorLocked then
-            count._nrsknColorLocked = true
-            count.SetTextColor = function() end
-        end
     end
 end
 
@@ -323,22 +334,21 @@ end
 function ACB:StyleButtonTextures(button)
     if not button then return end
 
-    -- Hide textures
-    NRSKNUI:Hide(button, 'Border')
-    NRSKNUI:Hide(button, 'Flash')
-    NRSKNUI:Hide(button, 'NewActionTexture')
+    -- Hide blizzard textures we don't need
+    NRSKNUI:Hide(button, 'Border')           -- equipped border
+    NRSKNUI:Hide(button, 'Flash')            -- red flash when out of mana or unusable
+    NRSKNUI:Hide(button, 'NewActionTexture') -- glow texture for new actions
     NRSKNUI:Hide(button, 'SpellHighlightTexture')
-    NRSKNUI:Hide(button, 'SlotBackground')
+    NRSKNUI:Hide(button, 'SlotBackground')   -- Hides the default slot background on action buttons
 
     -- Hide the normal texture
-    if button.NormalTexture then
-        button.NormalTexture:SetTexture(nil)
-        button.NormalTexture:Hide()
+    local normalTex = button:GetNormalTexture()
+    if normalTex then
+        normalTex:SetAlpha(0)
     end
     -- Hide checked texture
     if button.CheckedTexture then
-        button.CheckedTexture:SetTexture(nil)
-        button.CheckedTexture:Hide()
+        button:GetCheckedTexture():SetColorTexture(0, 0, 0, 0)
     end
 
     -- Style highlight texture
@@ -346,8 +356,8 @@ function ACB:StyleButtonTextures(button)
         button.HighlightTexture:SetTexture("Interface\\Buttons\\WHITE8x8")
         button.HighlightTexture:SetTexCoord(0, 1, 0, 1)
         button.HighlightTexture:ClearAllPoints()
-        button.HighlightTexture:SetPoint("TOPLEFT", button, "TOPLEFT", 0, 0)
-        button.HighlightTexture:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 0, 0)
+        button.HighlightTexture:SetPoint("TOPLEFT", button, "TOPLEFT", 1, -1)
+        button.HighlightTexture:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -1, 1)
         button.HighlightTexture:SetBlendMode("ADD")
         button.HighlightTexture:SetVertexColor(1, 1, 1, 0.3)
     end
@@ -363,20 +373,9 @@ function ACB:StyleButtonTextures(button)
         pushed:SetBlendMode("ADD")
         pushed:SetVertexColor(1, 1, 1, 0.4)
     end
-
-    -- Hook to show/hide push texture
-    button:HookScript("OnMouseDown", function(self)
-        if self.nrsknui_PushTexture then
-            self.nrsknui_PushTexture:Show()
-        end
-    end)
-    button:HookScript("OnMouseUp", function(self)
-        if self.nrsknui_PushTexture then
-            self.nrsknui_PushTexture:Hide()
-        end
-    end)
 end
 
+-- Check if a button has content for empty backdrop handling
 local function ButtonHasContent(barName, button)
     if barName == "PetBar" then
         local id = button:GetID()
@@ -400,7 +399,6 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
     local barConfig = self:GetBarConfig(barName)
     local backdropColor = barConfig and barConfig.BackdropColor or { 0, 0, 0, 0.8 }
     local borderColor = barConfig and barConfig.BorderColor or { 0, 0, 0, 1 }
-    local hideEmpty = barConfig and barConfig.HideEmptyBackdrops or false
 
     -- Create backdrop frame with dynamic name
     local backdrop = CreateFrame("Frame", "NRSKNUI_" .. barName .. "Backdrop" .. index, UIParent, "BackdropTemplate")
@@ -456,7 +454,7 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
         end
     end
 
-    -- Hook button updates (only if method exists)
+    -- Hook button updates, only if method exists
     if button.Update then
         hooksecurefunc(button, "Update", UpdateBackdropVisibility)
     end
@@ -489,14 +487,16 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
     end
 
     -- Blizzard elements hide/skin
-    if button.SlotArt then button.SlotArt:Hide() end
-    if button.IconMask then button.IconMask:Hide() end
-    if button.InterruptDisplay then button.InterruptDisplay:SetAlpha(0) end
-    if button.SpellCastAnimFrame then button.SpellCastAnimFrame:SetAlpha(0) end
+    if button.SlotArt then button.SlotArt:Hide() end                                           -- Hides the default slot background
+    if button.IconMask then button.IconMask:Hide() end                                         -- Hides the default circular mask on icons
+    if button.InterruptDisplay then button.InterruptDisplay:SetAlpha(0) end                    -- Hides the "slash" texture for interruptible spells
+    if button.SpellCastAnimFrame then button.SpellCastAnimFrame:SetAlpha(0) end                -- Hides the "shine" animation
     if button.icon then button.icon:SetAllPoints(button) end                                   -- Resize the icon to fit properly
     if button.cooldown then button.cooldown:SetAllPoints(button) end                           -- Fix cooldown/GCD swipe to match button size
     if button.SpellHighlightTexture then button.SpellHighlightTexture:SetAllPoints(button) end -- Fix action bar glow (proc highlights)
     if button.AutoCastable then button.AutoCastable:SetDrawLayer("OVERLAY", 7) end             -- Ensure glow is above the button
+
+    -- Reposition auto cast overlay and shine to match button size
     if button.AutoCastOverlay then
         button.AutoCastOverlay:ClearAllPoints()
         button.AutoCastOverlay:SetPoint("TOPLEFT", button, "TOPLEFT", -2, 2)
@@ -511,144 +511,111 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
     -- Icon zoom stuff bcs blizz border uggy
     NRSKNUI:ApplyZoom(button.icon, 0.6)
 
+    -- Create range overlay, red tint when out of range
+    local rangeOverlay = button:CreateTexture(nil, "OVERLAY", nil, 1)
+    rangeOverlay:SetAllPoints(button)
+    rangeOverlay:SetColorTexture(1, 0, 0, 0.2)
+    rangeOverlay:Hide()
+    button._nrsknRangeOverlay = rangeOverlay
+
     -- Store reference
     button.nrsknui_backdrop = backdrop
     return backdrop
 end
 
--- Helper to check if its safe to call :Show(), :Hide() in combat
--- We then later either do a clean animation fadein/fadeout if not in combat
--- Or if in combat, simply set alpha 1/0, this way i aboid forbidden errors happening
--- Can probably solve cleaner, but this works
-local function SafeFadeIn(frame, fadeTime, startAlpha, endAlpha)
-    --if InCombatLockdown() then return end
-    UIFrameFadeIn(frame, fadeTime, startAlpha, endAlpha)
-end
-local function SafeFadeOut(frame, fadeTime, startAlpha, endAlpha)
-    --if InCombatLockdown() then return end
-    UIFrameFadeOut(frame, fadeTime, startAlpha, endAlpha)
+-- Calculate button position based on layout
+local function CalculateButtonPosition(index, layout, columns, rows, growLeft, buttonSize, spacing)
+    local col, row
+    if layout == "HORIZONTAL" then
+        col = index % columns
+        row = math.floor(index / columns)
+    else
+        row = index % rows
+        col = math.floor(index / rows)
+    end
+    local dx = (growLeft and (columns - 1 - col) or col) * (buttonSize + spacing)
+    local dy = -(row * (buttonSize + spacing))
+    return dx, dy
 end
 
 -- Layout function, supports vertical and horizontal grid
 local function SkinBar(cfg)
     if not cfg or not cfg.frame then return end
-    local spacing = cfg.spacing
-    local buttonSize = cfg.buttonSize
-    local totalButtons = cfg.totalButtons
-    local layout = cfg.layout
-    local buttonsPerLine = cfg.buttonsPerLine
-    buttonsPerLine = math.max(1, math.min(buttonsPerLine, totalButtons))
-    local anchor = cfg.anchorFrom
-    local relTo = cfg.relativeTo
-    local relPt = cfg.anchorTO
-    local offsetX = cfg.x
-    local offsetY = cfg.y
+    local buttonsPerLine = math.max(1, math.min(cfg.buttonsPerLine, cfg.totalButtons))
+    local growLeft = cfg.growthDirection == "LEFT"
 
-    -- Horizontal layout styling
-    if layout == "HORIZONTAL" then
-        local columns   = buttonsPerLine
-        local rows      = math.ceil(totalButtons / columns)
-        local growLeft  = cfg.growthDirection == "LEFT"
-
-        -- Create container to help with mouseover functionality
-        local container = CreateFrame("Frame", "NRSKNUI_" .. cfg.name .. "_Container", UIParent)
-        container:SetSize(columns * buttonSize + (columns - 1) * spacing, rows * buttonSize + (rows - 1) * spacing)
-        container:SetPoint(anchor, relTo, relPt, offsetX, offsetY)
-        container:SetFrameStrata("LOW")
-
-        -- Initialize mouseover settings
-        local mouseoverEnabled = cfg.mouseover and cfg.mouseover.enabled
-        local initialAlpha = mouseoverEnabled and (cfg.mouseover.alpha or 0) or 1
-        container:SetAlpha(initialAlpha)
-        container._fadeAlpha = cfg.mouseover and cfg.mouseover.alpha or 0
-        container._fadeInDur = cfg.mouseover and cfg.mouseover.fadeInDuration or 0.3
-        container._fadeOutDur = cfg.mouseover and cfg.mouseover.fadeOutDuration or 1
-        container._mouseoverEnabled = mouseoverEnabled
-        container._isMouseOver = false
-        cfg.nrsknui_container = container
-
-        -- Iterate through buttons and lay them out properly
-        for i = 1, totalButtons do
-            local button = _G[cfg.buttonPrefix .. i]
-            if button then
-                ACB:StyleButtonTextures(button)
-                ACB:StyleButtonText(button, cfg.name)
-
-                local backdrop = ACB:CreateButtonBackdrop(button, cfg.name, i, buttonSize)
-                if backdrop then
-                    backdrop:SetParent(container)
-
-                    local index = i - 1
-                    local col = index % columns
-                    local row = math.floor(index / columns)
-
-                    -- For grow left, reverse the column position
-                    local dx
-                    if growLeft then
-                        dx = (columns - 1 - col) * (buttonSize + spacing)
-                    else
-                        dx = col * (buttonSize + spacing)
-                    end
-                    local dy = -(row * (buttonSize + spacing))
-
-                    backdrop:ClearAllPoints()
-                    backdrop:SetPoint("TOPLEFT", container, "TOPLEFT", dx, dy)
-                end
-            end
-        end
+    -- Calculate grid dimensions based on layout
+    local columns, rows
+    if cfg.layout == "HORIZONTAL" then
+        columns = buttonsPerLine
+        rows = math.ceil(cfg.totalButtons / columns)
     else
-        -- Vertical layout styling
-        local rows = buttonsPerLine
-        local columns = math.ceil(totalButtons / rows)
-        local growLeft = cfg.growthDirection == "LEFT"
+        rows = buttonsPerLine
+        columns = math.ceil(cfg.totalButtons / rows)
+    end
 
-        -- Create container
-        local container = CreateFrame("Frame", "NRSKNUI_" .. cfg.name .. "_Container", UIParent)
-        container:SetSize(columns * buttonSize + (columns - 1) * spacing, rows * buttonSize + (rows - 1) * spacing)
-        container:SetPoint(anchor, relTo, relPt, offsetX, offsetY)
-        container:SetFrameStrata("LOW")
+    -- Create container
+    local container = CreateFrame("Frame", "NRSKNUI_" .. cfg.name .. "_Container", UIParent)
+    container:SetSize(columns * cfg.buttonSize + (columns - 1) * cfg.spacing,
+        rows * cfg.buttonSize + (rows - 1) * cfg.spacing)
+    container:SetPoint(cfg.anchorFrom, cfg.relativeTo, cfg.anchorTO, cfg.x, cfg.y)
+    container:SetFrameStrata("LOW")
 
-        -- Initialize mouseover settings
-        local mouseoverEnabled = cfg.mouseover and cfg.mouseover.enabled
-        local initialAlpha = mouseoverEnabled and (cfg.mouseover.alpha or 0) or 1
-        container:SetAlpha(initialAlpha)
-        container._fadeAlpha = cfg.mouseover and cfg.mouseover.alpha or 0
-        container._fadeInDur = cfg.mouseover and cfg.mouseover.fadeInDuration or 0.3
-        container._fadeOutDur = cfg.mouseover and cfg.mouseover.fadeOutDuration or 1
-        container._mouseoverEnabled = mouseoverEnabled
-        container._isMouseOver = false
-        cfg.nrsknui_container = container
+    -- Initialize mouseover settings
+    local mouseoverEnabled = cfg.mouseover and cfg.mouseover.enabled
+    container:SetAlpha(mouseoverEnabled and (cfg.mouseover.alpha or 0) or 1)
+    container._fadeAlpha = cfg.mouseover and cfg.mouseover.alpha or 0
+    container._fadeInDur = cfg.mouseover and cfg.mouseover.fadeInDuration or 0.3
+    container._fadeOutDur = cfg.mouseover and cfg.mouseover.fadeOutDuration or 1
+    container._mouseoverEnabled = mouseoverEnabled
+    container._isMouseOver = false
+    cfg.nrsknui_container = container
 
-        -- Iterate through buttons and lay them out properly
-        for i = 1, totalButtons do
-            local button = _G[cfg.buttonPrefix .. i]
-            if button then
-                ACB:StyleButtonTextures(button)
-                ACB:StyleButtonText(button, cfg.name)
+    -- Iterate through buttons and lay them out
+    for i = 1, cfg.totalButtons do
+        local button = _G[cfg.buttonPrefix .. i]
+        if button then
+            ACB:StyleButtonTextures(button)
+            ACB:StyleButtonText(button, cfg.name)
 
-                local backdrop = ACB:CreateButtonBackdrop(button, cfg.name, i, buttonSize)
-                if backdrop then
-                    backdrop:SetParent(container)
-
-                    local index = i - 1
-                    local row = index % rows
-                    local col = math.floor(index / rows)
-
-                    -- For grow left, reverse the column position
-                    local dx
-                    if growLeft then
-                        dx = (columns - 1 - col) * (buttonSize + spacing)
-                    else
-                        dx = col * (buttonSize + spacing)
-                    end
-                    local dy = -(row * (buttonSize + spacing))
-
-                    backdrop:ClearAllPoints()
-                    backdrop:SetPoint("TOPLEFT", container, "TOPLEFT", dx, dy)
-                end
+            local backdrop = ACB:CreateButtonBackdrop(button, cfg.name, i, cfg.buttonSize)
+            if backdrop then
+                backdrop:SetParent(container)
+                local dx, dy = CalculateButtonPosition(i - 1, cfg.layout, columns, rows, growLeft, cfg.buttonSize,
+                    cfg.spacing)
+                backdrop:ClearAllPoints()
+                backdrop:SetPoint("TOPLEFT", container, "TOPLEFT", dx, dy)
             end
         end
     end
+end
+
+-- Smoothly fade a frame to target alpha over duration, combat safe
+local function CombatSafeFade(frame, targetAlpha, duration)
+    if frame._fadeTimer then frame._fadeTimer:Hide() end -- stop previous fade
+
+    local startAlpha = frame:GetAlpha()
+    local diff = targetAlpha - startAlpha
+    if diff == 0 or duration <= 0 then
+        frame:SetAlpha(targetAlpha)
+        return
+    end
+
+    -- Create a tiny helper frame
+    local fadeFrame = frame._fadeTimer or CreateFrame("Frame")
+    fadeFrame:Show()
+    fadeFrame.elapsed = 0
+
+    fadeFrame:SetScript("OnUpdate", function(self, dt)
+        self.elapsed = self.elapsed + dt
+        local progress = math.min(self.elapsed / duration, 1)
+        frame:SetAlpha(startAlpha + diff * progress)
+        if progress >= 1 then
+            self:Hide()
+        end
+    end)
+
+    frame._fadeTimer = fadeFrame
 end
 
 -- Mouseover function
@@ -674,15 +641,13 @@ local function SetupMouseoverScript(container)
     -- Fade in function
     local function FadeIn()
         if container._isMouseOver then return end
-        -- Check if mouseover is currently enabled
         if not container._mouseoverEnabled then return end
         container._isMouseOver = true
         local dur = container._fadeInDur or 0.3
-        if not InCombatLockdown() then
-            SafeFadeIn(container, dur, container:GetAlpha(), 1)
-        else
-            container:SetAlpha(1)
+        if InCombatLockdown() then
+            dur = 0.1 -- Force a faster fade in combat, make more sense to me since you want info faster
         end
+        CombatSafeFade(container, 1, dur)
     end
 
     -- Fade out function
@@ -699,14 +664,10 @@ local function SetupMouseoverScript(container)
             return
         end
 
-        -- Read current fade alpha from container (allows dynamic updates)
+        -- Read current fade alpha from container
         local alpha = container._fadeAlpha or 0
         local dur = container._fadeOutDur or 0.5
-        if not InCombatLockdown() then
-            SafeFadeOut(container, dur, container:GetAlpha(), alpha)
-        else
-            container:SetAlpha(alpha)
-        end
+        CombatSafeFade(container, alpha, dur)
     end
 
     -- Polling interval
@@ -732,7 +693,7 @@ end
 local function SetupBonusBarOverride(bar1Container, db)
     if not bar1Container then return end
 
-    -- Create a hidden frame to use with RegisterStateDriver (always create it)
+    -- Create a hidden frame to use with RegisterStateDriver
     local stateFrame = CreateFrame("Frame", "NRSKNUI_BonusBarStateFrame", UIParent, "SecureHandlerStateTemplate")
     stateFrame:SetSize(1, 1)
     stateFrame:Hide()
@@ -757,10 +718,10 @@ local function SetupBonusBarOverride(bar1Container, db)
             return
         end
 
-        -- In vehicle/bonusbar - force alpha 1
+        -- In vehicle/bonusbar, force alpha 1
         if state == "vehicle" then
             container._bonusBarActive = true
-            container:SetAlpha(1)
+            CombatSafeFade(container, 1, 0.3)
         else
             -- Normal state, restore appropriate alpha
             container._bonusBarActive = false
@@ -811,133 +772,75 @@ function ACB:UpdateBonusBarOverride()
     end
 end
 
--- Toggle a single bar on/off
-function ACB:ToggleBar(cfg, enabled)
-    if not cfg or not cfg.nrsknui_container then return end
-    if InCombatLockdown() then return end -- Don't toggle during combat
+-- Generic visibility handler for Pet and Stance bars
+local function SetupSpecialBarVisibility(container, blizzFrame, events, visibilityCheckFn)
+    if not container then return end
 
-    local container = cfg.nrsknui_container
-    if enabled then
-        container:Show()
-        local alpha = cfg.mouseover and cfg.mouseover.alpha or 1
-        container:SetAlpha(alpha)
-    else
-        container:Hide()
+    -- Move the blizzard frame offscreen, this way we can still use it for updates and checks
+    if blizzFrame then
+        blizzFrame:SetParent(UIParent)
+        blizzFrame:ClearAllPoints()
+        blizzFrame:SetPoint("TOP", UIParent, "BOTTOM", 0, -500)
+        blizzFrame:EnableMouse(false)
     end
+
+    local pendingUpdate = false
+    local function UpdateVisibility()
+        if InCombatLockdown() then
+            pendingUpdate = true
+            return
+        end
+
+        pendingUpdate = false
+        if visibilityCheckFn() then
+            container:Show()
+        else
+            container:Hide()
+        end
+    end
+
+    local eventFrame = CreateFrame("Frame")
+    for _, event in ipairs(events) do
+        eventFrame:RegisterEvent(event)
+    end
+    eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+    eventFrame:SetScript("OnEvent", function(_, event)
+        if event == "PLAYER_REGEN_ENABLED" then
+            if pendingUpdate then
+                UpdateVisibility()
+            end
+        else
+            UpdateVisibility()
+        end
+    end)
+
+    if not InCombatLockdown() then
+        UpdateVisibility()
+    else
+        pendingUpdate = true
+    end
+
+    container._visibilityFrame = eventFrame
 end
 
--- Setup visibility handling for Pet Bar (show only when pet has action bar)
+-- Setup PetBar visibility based on whether the player has a pet action bar
 local function SetupPetBarVisibility(container)
-    if not container then return end
-
-    -- Hide Blizzard's default pet bar frame
-    if PetActionBar then
-        PetActionBar:SetParent(UIParent)
-        PetActionBar:ClearAllPoints()
-        PetActionBar:SetPoint("TOP", UIParent, "BOTTOM", 0, -500)
-        PetActionBar:EnableMouse(false)
-    end
-
-    local pendingUpdate = false
-
-    local function UpdatePetBarVisibility()
-        -- Don't modify frames during combat
-        if InCombatLockdown() then
-            pendingUpdate = true
-            return
-        end
-
-        pendingUpdate = false
-        if PetHasActionBar() then
-            container:Show()
-        else
-            container:Hide()
-        end
-    end
-
-    -- Create event frame
-    local eventFrame = CreateFrame("Frame")
-    eventFrame:RegisterEvent("PET_BAR_UPDATE")
-    eventFrame:RegisterEvent("UNIT_PET")
-    eventFrame:RegisterEvent("PLAYER_CONTROL_GAINED")
-    eventFrame:RegisterEvent("PLAYER_CONTROL_LOST")
-    eventFrame:RegisterEvent("PLAYER_FARSIGHT_FOCUS_CHANGED")
-    eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
-    eventFrame:SetScript("OnEvent", function(self, event)
-        if event == "PLAYER_REGEN_ENABLED" then
-            -- Combat ended, process pending update
-            if pendingUpdate then
-                UpdatePetBarVisibility()
-            end
-        else
-            UpdatePetBarVisibility()
-        end
-    end)
-
-    -- Initial update (only if not in combat)
-    if not InCombatLockdown() then
-        UpdatePetBarVisibility()
-    else
-        pendingUpdate = true
-    end
-
-    container._visibilityFrame = eventFrame
+    SetupSpecialBarVisibility(
+        container,
+        PetActionBar,
+        { "PET_BAR_UPDATE", "UNIT_PET", "PLAYER_CONTROL_GAINED", "PLAYER_CONTROL_LOST", "PLAYER_FARSIGHT_FOCUS_CHANGED" },
+        PetHasActionBar
+    )
 end
 
--- Setup visibility handling for Stance Bar (show only when stances are available)
+-- Setup StanceBar visibility based on whether the player has shapeshift forms
 local function SetupStanceBarVisibility(container)
-    if not container then return end
-
-    -- Hide Blizzard's default stance bar frame
-    if StanceBar then
-        StanceBar:SetParent(UIParent)
-        StanceBar:ClearAllPoints()
-        StanceBar:SetPoint("TOP", UIParent, "BOTTOM", 0, -500)
-        StanceBar:EnableMouse(false)
-    end
-
-    local pendingUpdate = false
-
-    local function UpdateStanceBarVisibility()
-        -- Don't modify frames during combat
-        if InCombatLockdown() then
-            pendingUpdate = true
-            return
-        end
-
-        pendingUpdate = false
-        local numForms = GetNumShapeshiftForms()
-        if numForms and numForms > 0 then
-            container:Show()
-        else
-            container:Hide()
-        end
-    end
-
-    -- Create event frame
-    local eventFrame = CreateFrame("Frame")
-    eventFrame:RegisterEvent("UPDATE_SHAPESHIFT_FORMS")
-    eventFrame:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
-    eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
-    eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
-    eventFrame:SetScript("OnEvent", function(self, event)
-        if event == "PLAYER_REGEN_ENABLED" then
-            if pendingUpdate then
-                UpdateStanceBarVisibility()
-            end
-        else
-            UpdateStanceBarVisibility()
-        end
-    end)
-
-    -- Initial update (only if not in combat)
-    if not InCombatLockdown() then
-        UpdateStanceBarVisibility()
-    else
-        pendingUpdate = true
-    end
-
-    container._visibilityFrame = eventFrame
+    SetupSpecialBarVisibility(
+        container,
+        StanceBar,
+        { "UPDATE_SHAPESHIFT_FORMS", "UPDATE_SHAPESHIFT_FORM", "PLAYER_ENTERING_WORLD" },
+        function() return GetNumShapeshiftForms() > 0 end
+    )
 end
 
 -- Register each bar with my custom edit mode
@@ -993,11 +896,10 @@ end
 -- Module OnEnable
 function ACB:OnEnable()
     if not self.db.Enabled then return end
-    -- Build config from DB
     self:BuildConfigTable()
 
+    -- Delay skinning until after Blizzard's initial setup to avoid taint issues and ensure all elements exist
     C_Timer.After(0.5, function()
-        -- Skin and setup each bar
         for _, cfg in ipairs(configTable) do
             if cfg.enabled then
                 SkinBar(cfg)
@@ -1009,9 +911,10 @@ function ACB:OnEnable()
                     cfg.relativeTo
                 )
 
-                -- Setup bonusbar override for Bar1 (main action bar)
+                -- Setup bonusbar override for Bar1
                 if cfg.name == "Bar1" and cfg.nrsknui_container then
                     SetupBonusBarOverride(cfg.nrsknui_container, self.db)
+                    self:UpdateBonusBarOverride() -- Send an update incase player is mounted when loading in
                 end
 
                 -- Setup visibility handling for Pet and Stance bars
@@ -1023,77 +926,74 @@ function ACB:OnEnable()
             end
         end
 
-        Settings.SetValue("PROXY_SHOW_ACTIONBAR_" .. 2, false);
-        Settings.SetValue("PROXY_SHOW_ACTIONBAR_" .. 3, false);
-        Settings.SetValue("PROXY_SHOW_ACTIONBAR_" .. 4, false);
-        Settings.SetValue("PROXY_SHOW_ACTIONBAR_" .. 5, false);
-        Settings.SetValue("PROXY_SHOW_ACTIONBAR_" .. 6, false);
-        Settings.SetValue("PROXY_SHOW_ACTIONBAR_" .. 7, false);
-        Settings.SetValue("PROXY_SHOW_ACTIONBAR_" .. 8, false);
+        -- Disable native actionbars
+        for i = 2, 8 do
+            Settings.SetValue("PROXY_SHOW_ACTIONBAR_" .. i, false)
+        end
         C_CVar.SetCVar("countdownForCooldowns", 1)
         SettingsPanel:CommitSettings(true)
-
-        -- Disable action bar cast feedback
-        local castEvents = {
-            "UNIT_SPELLCAST_INTERRUPTED",
-            "UNIT_SPELLCAST_SUCCEEDED",
-            "UNIT_SPELLCAST_FAILED",
-            "UNIT_SPELLCAST_START",
-            "UNIT_SPELLCAST_STOP",
-            "UNIT_SPELLCAST_CHANNEL_START",
-            "UNIT_SPELLCAST_CHANNEL_STOP",
-            "UNIT_SPELLCAST_RETICLE_TARGET",
-            "UNIT_SPELLCAST_RETICLE_CLEAR",
-            "UNIT_SPELLCAST_EMPOWER_START",
-            "UNIT_SPELLCAST_EMPOWER_STOP",
-            "UNIT_SPELLCAST_SENT",
-        }
-        if ActionBarActionEventsFrame then
-            for _, event in ipairs(castEvents) do
-                ActionBarActionEventsFrame:UnregisterEvent(event)
-            end
-        end
 
         -- Re-apply styling after delays to catch Blizzard's late initialization
         C_Timer.After(1, function() ACB:UpdateButtonTexts() end)
         C_Timer.After(2, function() ACB:UpdateButtonTexts() end)
 
-        -- Setup drag detection to show backdrops while dragging spells
+        -- Setup drag detection and rangeindicator hook
         self:SetupDragDetection()
+        self:SetupRangeIndicatorHook()
     end)
 end
 
--- Show all backdrops temporarily (during spell drag)
-function ACB:ShowAllBackdropsTemporary()
-    local bars = { "Bar1", "Bar2", "Bar3", "Bar4", "Bar5", "Bar6", "Bar7", "Bar8" }
+-- Setup hook for range indicator to maintain white keybind color
+function ACB:SetupRangeIndicatorHook()
+    if self._rangeHookSetup then return end
+    self._rangeHookSetup = true
+
+    -- Hook the function that updates the range indicator on action buttons
+    hooksecurefunc("ActionButton_UpdateRangeIndicator", function(self, checksRange, inRange)
+        local hotkey = self.HotKey
+        if not hotkey or not hotkey._nrsknStyled then return end
+
+        -- Update range overlay (keybind color handled by SetVertexColor hook)
+        if self._nrsknRangeOverlay then
+            if checksRange and not inRange then
+                self._nrsknRangeOverlay:Show()
+            else
+                self._nrsknRangeOverlay:Hide()
+            end
+        end
+    end)
+end
+
+-- Helper to iterate all backdrops and call a function on each
+local function ForEachBackdrop(callback)
+    local bars = { "Bar1", "Bar2", "Bar3", "Bar4", "Bar5", "Bar6", "Bar7", "Bar8", "PetBar", "StanceBar" }
     for _, barKey in ipairs(bars) do
         local i = 1
         while true do
             local backdrop = _G["NRSKNUI_" .. barKey .. "Backdrop" .. i]
             if not backdrop then break end
-            backdrop:SetAlpha(1)
+            callback(backdrop)
             i = i + 1
         end
     end
+end
+
+-- Show all backdrops temporarily during drag
+function ACB:ShowAllBackdropsTemporary()
+    ForEachBackdrop(function(backdrop)
+        backdrop:SetAlpha(1)
+    end)
 end
 
 -- Restore backdrop visibility after drag ends
 function ACB:RestoreBackdropVisibility()
-    local bars = { "Bar1", "Bar2", "Bar3", "Bar4", "Bar5", "Bar6", "Bar7", "Bar8" }
-    for _, barKey in ipairs(bars) do
-        local i = 1
-        while true do
-            local backdrop = _G["NRSKNUI_" .. barKey .. "Backdrop" .. i]
-            if not backdrop then break end
-            -- Call the visibility update function if it exists
-            if backdrop._updateVisibility then
-                backdrop._updateVisibility()
-            else
-                backdrop:SetAlpha(1)
-            end
-            i = i + 1
+    ForEachBackdrop(function(backdrop)
+        if backdrop._updateVisibility then
+            backdrop._updateVisibility()
+        else
+            backdrop:SetAlpha(1)
         end
-    end
+    end)
 end
 
 -- Setup drag detection for showing backdrops while dragging spells
@@ -1115,6 +1015,8 @@ function ACB:SetupDragDetection()
 
     self.dragFrame = dragFrame
 end
+
+-- Update section for GUI changes --
 
 -- Update all button text styles (fonts, sizes, anchors)
 function ACB:UpdateButtonTexts()
@@ -1145,13 +1047,18 @@ function ACB:UpdateProfessionTextures()
     end
 end
 
+-- Helper to get validated bar data
+local function GetBarData(barKey)
+    local barDB = ACB.db and ACB.db.Bars and ACB.db.Bars[barKey]
+    local container = _G["NRSKNUI_" .. barKey .. "_Container"]
+    if not barDB or not container then return nil, nil end
+    return barDB, container
+end
+
 -- Update container position for a specific bar
 function ACB:UpdateBarPosition(barKey)
-    if not self.db or not self.db.Bars or not self.db.Bars[barKey] then return end
-
-    local barDB = self.db.Bars[barKey]
-    local container = _G["NRSKNUI_" .. barKey .. "_Container"]
-    if not container then return end
+    local barDB, container = GetBarData(barKey)
+    if not barDB or not container then return end
 
     local anchor = barDB.Position and barDB.Position.AnchorFrom or "BOTTOM"
     local relTo = _G[barDB.ParentFrame] or UIParent
@@ -1172,11 +1079,8 @@ end
 
 -- Update mouseover settings for a specific bar
 function ACB:UpdateBarMouseover(barKey)
-    if not self.db or not self.db.Bars or not self.db.Bars[barKey] then return end
-
-    local barDB = self.db.Bars[barKey]
-    local container = _G["NRSKNUI_" .. barKey .. "_Container"]
-    if not container then return end
+    local barDB, container = GetBarData(barKey)
+    if not barDB or not container then return end
 
     local globalMouseover = self.db.Mouseover or {}
     local useGlobal = barDB.Mouseover and barDB.Mouseover.GlobalOverride == true
@@ -1220,10 +1124,9 @@ end
 
 -- Update bar size and layout, requires more complex update
 function ACB:UpdateBarLayout(barKey)
-    if not self.db or not self.db.Bars or not self.db.Bars[barKey] then return end
-    local barDB = self.db.Bars[barKey]
-    local container = _G["NRSKNUI_" .. barKey .. "_Container"]
-    if not container then return end
+    local barDB, container = GetBarData(barKey)
+    if not barDB or not container then return end
+
     local buttonSize = barDB.ButtonSize or 40
     local spacing = barDB.Spacing or 1
     local totalButtons = barDB.TotalButtons or 12
@@ -1242,7 +1145,6 @@ function ACB:UpdateBarLayout(barKey)
         rows = buttonsPerLine
         columns = math.ceil(totalButtons / rows)
     end
-
     container:SetSize(
         columns * buttonSize + (columns - 1) * spacing,
         rows * buttonSize + (rows - 1) * spacing
@@ -1254,7 +1156,7 @@ function ACB:UpdateBarLayout(barKey)
         if button then
             local backdrop = button.nrsknui_backdrop
 
-            -- Create backdrop if it doesn't exist (for newly added buttons)
+            -- Create backdrop if it doesn't exist
             if not backdrop then
                 self:StyleButtonTextures(button)
                 self:StyleButtonText(button, barKey)
@@ -1273,26 +1175,8 @@ function ACB:UpdateBarLayout(barKey)
                 button:SetSize(buttonSize, buttonSize)
                 backdrop:SetSize(buttonSize, buttonSize)
 
-                -- Recalculate position
-                local index = i - 1
-                local col, row
-                if layout == "HORIZONTAL" then
-                    col = index % columns
-                    row = math.floor(index / columns)
-                else
-                    row = index % rows
-                    col = math.floor(index / rows)
-                end
-
-                -- For grow left, reverse the column position
-                local dx
-                if growLeft then
-                    dx = (columns - 1 - col) * (buttonSize + spacing)
-                else
-                    dx = col * (buttonSize + spacing)
-                end
-                local dy = -(row * (buttonSize + spacing))
-
+                -- Recalculate position using helper
+                local dx, dy = CalculateButtonPosition(i - 1, layout, columns, rows, growLeft, buttonSize, spacing)
                 backdrop:ClearAllPoints()
                 backdrop:SetPoint("TOPLEFT", container, "TOPLEFT", dx, dy)
 
@@ -1325,11 +1209,8 @@ end
 
 -- Toggle bar visibility
 function ACB:UpdateBarEnabled(barKey)
-    if not self.db or not self.db.Bars or not self.db.Bars[barKey] then return end
-
-    local barDB = self.db.Bars[barKey]
-    local container = _G["NRSKNUI_" .. barKey .. "_Container"]
-    if not container then return end
+    local barDB, container = GetBarData(barKey)
+    if not barDB or not container then return end
 
     if barDB.Enabled then
         container:Show()
@@ -1341,7 +1222,7 @@ end
 -- Main update function, called from GUI
 -- updateType can be: "all", "fonts", "positions", "mouseover", "layout", "bar"
 -- barKey is optional, used when updating a specific bar
--- This way i can do targeted updates in the GUI
+-- This way i can do targeted updates in the GUI instead of always doing a full update
 function ACB:UpdateSettings(updateType, barKey)
     if not self:IsEnabled() then return end
     updateType = updateType or "all"
@@ -1405,12 +1286,11 @@ function ACB:UpdateBarBackdropColors(barKey)
 
         -- Update border colors
         backdrop:SetBorderColor(borderColor[1], borderColor[2], borderColor[3], borderColor[4] or 1)
+
         -- Update visibility based on HideEmptyBackdrops setting
         if backdrop._updateVisibility and hideEmpty then
-            -- If we have the visibility function and hiding is enabled, update it
             backdrop._updateVisibility()
         elseif not hideEmpty then
-            -- If hiding is disabled, always show the backdrop
             backdrop:SetAlpha(1)
         end
 
@@ -1424,10 +1304,4 @@ function ACB:UpdateAllBackdropColors()
     for _, barKey in ipairs(bars) do
         self:UpdateBarBackdropColors(barKey)
     end
-end
-
--- Full refresh
-function ACB:Refresh()
-    self:UpdateSettings("all")
-    self:UpdateAllBackdropColors()
 end
