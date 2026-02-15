@@ -1,17 +1,26 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - '*'
+  workflow_dispatch:
 
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Get latest tag
+        id: get_tag
+        run: |
+          git fetch --tags
+          latest_tag=$(git tag --list "v*" --sort=-creatordate | head -n 1)
+          echo "Latest tag: $latest_tag"
+          echo "tag=$latest_tag" >> $GITHUB_OUTPUT
+
+      - name: Checkout latest tag
+        run: git checkout ${{ steps.get_tag.outputs.tag }}
 
       - uses: BigWigsMods/packager@v2
         env:
