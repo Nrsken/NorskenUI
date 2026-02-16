@@ -3,6 +3,9 @@ name: Release
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -15,12 +18,25 @@ jobs:
         id: get_tag
         run: |
           git fetch --tags
-          latest_tag=$(git tag --list "v*" --sort=-creatordate | head -n 1)
-          echo "Latest tag: $latest_tag"
+          latest_tag=$(git tag --list "v*" --sort=-v:refname | head -n 1)
+          if [ -z "$latest_tag" ]; then
+            latest_tag="v0.0.0"
+          fi
           echo "tag=$latest_tag" >> $GITHUB_OUTPUT
 
-      - name: Checkout latest tag
-        run: git checkout ${{ steps.get_tag.outputs.tag }}
+      - name: Bump version and tag
+        id: new_tag
+        run: |
+          tag=${{ steps.get_tag.outputs.tag }}
+          version=${tag#v}
+          IFS='.' read -r major minor patch <<< "$version"
+          patch=$((patch + 1))
+          new_tag="v$major.$minor.$patch"
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git tag "$new_tag"
+          git push origin "$new_tag"
+          echo "tag=$new_tag" >> $GITHUB_OUTPUT
 
       - uses: BigWigsMods/packager@v2
         env:
