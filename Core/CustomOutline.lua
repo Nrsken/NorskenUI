@@ -30,6 +30,7 @@ local ipairs = ipairs
 local hooksecurefunc = hooksecurefunc
 local setmetatable = setmetatable
 local unpack = unpack
+local UIFrameFade, UIFrameFadeIn, UIFrameFadeOut = UIFrameFade, UIFrameFadeIn, UIFrameFadeOut
 
 -- 8-direction offsets
 local SHADOW_OFFSETS = {
@@ -153,12 +154,15 @@ end
 function SoftOutline:Release()
     if not self.shadows then return end
     for _, shadow in ipairs(self.shadows) do
+        -- Cancel any active UIFrameFade on this shadow
+        if UIFrameFadeRemoveFrame then
+            UIFrameFadeRemoveFrame(shadow)
+        end
         shadow:Hide()
         shadow:ClearAllPoints()
         shadow:SetParent(nil)
     end
 
-    -- Clear reference on main text
     if self.main then
         self.main._nrsknSoftOutline = nil
     end
@@ -179,6 +183,77 @@ function SoftOutline:_HookMain()
     -- Store reference on main text so hooks can find current outline
     -- This is updated each time a new soft outline is created for this text
     main._nrsknSoftOutline = self
+
+    local SOFT_OUTLINE_FADEOUT_SPEED = 0.85
+    hooksecurefunc("UIFrameFade", function(frame, fadeInfo)
+        if not frame or not fadeInfo then return end
+
+        if frame._nrsknSoftOutline then
+            local outline = frame._nrsknSoftOutline
+            if not outline or not outline.shadows then return end
+
+            -- Determine if this is a fade out
+            local isFadeOut = fadeInfo.mode == "OUT"
+                or (fadeInfo.startAlpha and fadeInfo.endAlpha
+                    and fadeInfo.endAlpha < fadeInfo.startAlpha)
+
+            for _, shadow in ipairs(outline.shadows) do
+                local shadowFade = {}
+                shadowFade.mode = fadeInfo.mode
+                shadowFade.startAlpha = fadeInfo.startAlpha
+                shadowFade.endAlpha = fadeInfo.endAlpha
+                shadowFade.diffAlpha = fadeInfo.diffAlpha
+                if isFadeOut then
+                    shadowFade.timeToFade = fadeInfo.timeToFade * SOFT_OUTLINE_FADEOUT_SPEED
+                else
+                    shadowFade.timeToFade = fadeInfo.timeToFade
+                end
+
+                if fadeInfo.endAlpha == 0 then
+                    shadowFade.finishedFunc = function()
+                        shadow:Hide()
+                    end
+                end
+
+                UIFrameFade(shadow, shadowFade)
+            end
+        end
+    end)
+
+    -- Hook UIFrameFadeIn specifically to ensure shadows are shown at fade start
+    if UIFrameFadeIn then
+        hooksecurefunc("UIFrameFadeIn", function(frame, timeToFade, startAlpha, endAlpha)
+            if not frame then return end
+
+            -- If fading in a FontString with soft outline, show its shadows
+            if frame._nrsknSoftOutline then
+                local outline = frame._nrsknSoftOutline
+                if outline and outline.shadows and outline.isShown then
+                    for _, shadow in ipairs(outline.shadows) do
+                        shadow:SetAlpha(startAlpha or 0)
+                        shadow:Show()
+                    end
+                end
+            end
+        end)
+    end
+
+    -- Hook UIFrameFadeOut to handle hideOnFinish for shadows
+    if UIFrameFadeOut then
+        hooksecurefunc("UIFrameFadeOut", function(frame, timeToFade, startAlpha, endAlpha)
+            if not frame then return end
+
+            if frame._nrsknSoftOutline then
+                local outline = frame._nrsknSoftOutline
+                if outline and outline.shadows and outline.isShown then
+                    for _, shadow in ipairs(outline.shadows) do
+                        shadow:SetAlpha(startAlpha or 1)
+                        shadow:Show()
+                    end
+                end
+            end
+        end)
+    end
 
     -- Hook SetText
     hooksecurefunc(main, "SetText", function(_, text)
