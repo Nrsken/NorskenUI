@@ -27,13 +27,13 @@ local BUTTON_WIDTH = 100
 local BUTTON_HEIGHT = 26
 local MESSAGE_POPUP_SIZE = 64
 
--- Helper: Validate theme colors
+-- Validate theme colors
 local function ValidateThemeColor(color, default)
     if not color or type(color) ~= "table" then return default end
     return color
 end
 
--- Helper: Create Message Popup
+-- Create Message Popup
 function NRSKNUI:CreateMessagePopup(timer, text, fontSize, parentFrame, xOffset, yOffset)
     if NRSKNUI.msgContainer then
         NRSKNUI.msgContainer:Hide()
@@ -55,7 +55,10 @@ function NRSKNUI:CreateMessagePopup(timer, text, fontSize, parentFrame, xOffset,
     local msgText = msgContainer:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     msgText:SetPoint("CENTER")
     msgText:SetText(text)
-    msgText:SetFont(STANDARD_TEXT_FONT, fontSize, "OUTLINE")
+    msgText:SetFont(NRSKNUI.FONT, fontSize, "")
+
+    local shadow = {}
+    NRSKNUI:ApplyFontToText(msgText, "Expressway", fontSize, "SOFTOUTLINE", shadow)
 
     local accent = ValidateThemeColor(Theme.accent, { 1, 0.82, 0, 1 })
     msgText:SetTextColor(accent[1], accent[2], accent[3], 1)
@@ -75,7 +78,7 @@ function NRSKNUI:CreateMessagePopup(timer, text, fontSize, parentFrame, xOffset,
     return msgContainer
 end
 
--- Helper: Create themed button for prompts
+-- Create themed button for prompts
 local function CreateThemedButton(parent, Theme, labelText, isPrimary)
     local btn = CreateFrame("Button", nil, parent, "BackdropTemplate")
     btn:SetSize(BUTTON_WIDTH, BUTTON_HEIGHT)
@@ -118,6 +121,7 @@ local function CreateThemedButton(parent, Theme, labelText, isPrimary)
     return btn
 end
 
+-- TODO: Cleanup, very messy
 -- CreatePrompt: Create a themed prompt dialog
 -- Could have just made a table for texture stuff but im noob
 --[[ Usage:
