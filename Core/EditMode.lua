@@ -1,5 +1,6 @@
 -- NorskenUI namespace
 local _, NRSKNUI = ...
+local Theme = NRSKNUI.Theme
 
 -- Localization
 local CreateFrame = CreateFrame
@@ -7,9 +8,9 @@ local InCombatLockdown = InCombatLockdown
 local pairs = pairs
 local ipairs = ipairs
 local GetCursorPosition = GetCursorPosition
-local SetCursor = SetCursor
 local IsShiftKeyDown = IsShiftKeyDown
 local tonumber = tonumber
+local IsMouseButtonDown = IsMouseButtonDown
 local STANDARD_TEXT_FONT = STANDARD_TEXT_FONT
 local UIParent = UIParent
 
@@ -113,9 +114,6 @@ function EditMode:CreateOverlayFrame(element)
     local targetFrame = self:GetElementFrame(element)
     if not targetFrame then return nil end
 
-    local Theme = NRSKNUI.Theme
-    local accent = Theme.accent or { 0.898, 0.063, 0.224, 1 }
-
     -- Create overlay frame
     local overlay = CreateFrame("Frame", "NRSKNUI_EditMode_" .. element.key, UIParent, "BackdropTemplate")
     overlay:SetFrameStrata("TOOLTIP")
@@ -130,8 +128,8 @@ function EditMode:CreateOverlayFrame(element)
     })
 
     -- Apply colors
-    overlay:SetBackdropColor(accent[1], accent[2], accent[3], FILL_ALPHA)
-    overlay:SetBackdropBorderColor(accent[1], accent[2], accent[3], 1)
+    overlay:SetBackdropColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], FILL_ALPHA)
+    overlay:SetBackdropBorderColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
 
     -- Create identifier text
     local text = overlay:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -281,7 +279,7 @@ function EditMode:SetupDragHandlers(overlay, element)
         end
 
         -- Save using the ORIGINAL anchors, edit mode does not change anchor points
-        -- That is all the GUI and is why we have a open settings button on the nudge tool
+        -- That is all in the GUI and is why we have a open settings button on the nudge tool
         local newPos = {
             AnchorFrom = anchorFrom,
             AnchorTo = anchorTo,
@@ -324,19 +322,29 @@ function EditMode:SetupDragHandlers(overlay, element)
         self:SetAllPoints(targetFrame)
     end)
 
-    -- Cursor changes
-    overlay:SetScript("OnEnter", function(self) SetCursor("Interface\\CURSOR\\UI-Cursor-Move") end)
-    overlay:SetScript("OnLeave", function(self) SetCursor(nil) end)
+    -- Mouseover stuff
+    overlay:SetScript("OnEnter", function()
+        if overlay.text and EditMode.selectedElementKey ~= element.key then
+            overlay.text:SetTextColor(Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3], 1)
+            overlay:SetBackdropBorderColor(Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3], 1)
+        end
+    end)
+    overlay:SetScript("OnLeave", function()
+        if overlay.text and EditMode.selectedElementKey ~= element.key then
+            overlay.text:SetTextColor(Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3], 0.2)
+            overlay:SetBackdropBorderColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
+        end
+    end)
 
     -- Reset drag flag on mouse down
-    overlay:SetScript("OnMouseDown", function(self, button)
+    overlay:SetScript("OnMouseDown", function(_, button)
         if button == "LeftButton" then
             didDrag = false
         end
     end)
 
-    -- Click to select for nudge tool (only if we didn't drag)
-    overlay:SetScript("OnMouseUp", function(self, button)
+    -- Click to select for nudge tool
+    overlay:SetScript("OnMouseUp", function(_, button)
         if button == "LeftButton" and not didDrag then
             EditMode:SelectElement(element.key)
         end
@@ -363,8 +371,11 @@ function EditMode:Enter()
     self:SetupEscapeHandler()
     self:SetupShiftHandler()
     self:SetupCombatHandler()
-    NRSKNUI:Print(
-        "Edit Mode |cff00ff00enabled|r. Drag elements to reposition. Hold Shift to see through overlay. Press ESC or type /nui lock to exit.")
+    self:StartDeselectChecker()
+
+    local EnterMsg =
+    "Edit Mode |cff00ff00enabled|r.\nDrag elements to reposition.\nHold Shift to see through overlay.\nPress ESC or type /nui edit to exit."
+    NRSKNUI:CreateMessagePopup(20, EnterMsg, 14, UIParent, 200, 0)
 end
 
 -- Deactivate edit mode
@@ -387,7 +398,10 @@ function EditMode:Exit()
     self:RemoveEscapeHandler()
     self:RemoveShiftHandler()
     self:RemoveCombatHandler()
-    NRSKNUI:Print("Edit Mode |cffff0000disabled|r.")
+    self:StopDeselectChecker()
+    local ExitMsg =
+    "Edit Mode |cffff0000disabled|r."
+    NRSKNUI:CreateMessagePopup(1, ExitMsg, 14, UIParent, 200, 0)
 end
 
 -- Toggle edit mode on/off
@@ -463,32 +477,99 @@ function EditMode:RemoveShiftHandler()
     end
 end
 
+-- Animate backdrop + border + text alpha together
+local function AnimateOverlayAlpha(overlay, duration, fromAlpha, toAlpha, fillAlpha)
+    -- Cancel any existing fade animation
+    if overlay._fadeFrame then
+        overlay._fadeFrame:SetScript("OnUpdate", nil)
+    else
+        overlay._fadeFrame = CreateFrame("Frame", nil, overlay)
+    end
+
+    local elapsed = 0
+    overlay._fadeFrame:SetScript("OnUpdate", function(self, dt)
+        elapsed = elapsed + dt
+        local t = math.min(elapsed / duration, 1)
+        local alpha = fromAlpha + (toAlpha - fromAlpha) * t
+
+        overlay:SetBackdropColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], alpha * fillAlpha)
+        overlay:SetBackdropBorderColor(1, 1, 1, alpha)
+
+        if overlay.text then
+            overlay.text:SetAlpha(alpha)
+        end
+
+        if t >= 1 then
+            self:SetScript("OnUpdate", nil)
+        end
+    end)
+end
+
 -- Apply or remove Shift fade effect on selected overlay
 function EditMode:ApplyShiftFade(fade)
     self.isShiftFaded = fade
 
-    -- Only affect the selected element
     if not self.selectedElementKey then return end
 
     local overlay = self.overlayFrames[self.selectedElementKey]
     if not overlay then return end
-    local Theme = NRSKNUI.Theme
-    local accent = Theme.accent or { 0.898, 0.063, 0.224, 1 }
 
     if fade then
-        -- Fade to very low alpha
-        overlay:SetBackdropColor(accent[1], accent[2], accent[3], SHIFT_FADE_ALPHA * FILL_ALPHA)
-        overlay:SetBackdropBorderColor(1, 1, 1, SHIFT_FADE_ALPHA)
-        if overlay.text then
-            overlay.text:SetAlpha(SHIFT_FADE_ALPHA)
-        end
+        AnimateOverlayAlpha(overlay, 0.2, 1, SHIFT_FADE_ALPHA, FILL_ALPHA)
     else
-        -- Restore normal alpha
-        overlay:SetBackdropColor(accent[1], accent[2], accent[3], FILL_ALPHA)
-        overlay:SetBackdropBorderColor(1, 1, 1, 1)
-        if overlay.text then
-            overlay.text:SetAlpha(1)
+        AnimateOverlayAlpha(overlay, 0.2, SHIFT_FADE_ALPHA, 1, FILL_ALPHA)
+    end
+end
+
+-- Start checking for mouse clicks outside of overlays to deselect
+function EditMode:StartDeselectChecker()
+    if not self.deselectChecker then
+        self.deselectChecker = CreateFrame("Frame", nil, UIParent)
+    end
+
+    local wasMouseDown = false
+    self.deselectChecker:SetScript("OnUpdate", function()
+        if not EditMode.isActive then return end
+
+        local isDown = IsMouseButtonDown("LeftButton")
+        if wasMouseDown and not isDown then
+            -- Check if mouse is over any overlay or the nudge frame
+            local overAny = false
+
+            if EditMode.nudgeFrame and EditMode.nudgeFrame:IsMouseOver() then
+                overAny = true
+            end
+
+            -- Ignore clicks on the GUI main frame
+            if not overAny and NRSKNUI.GUIFrame and NRSKNUI.GUIFrame.mainFrame
+                and NRSKNUI.GUIFrame.mainFrame:IsShown()
+                and NRSKNUI.GUIFrame.mainFrame:IsMouseOver() then
+                overAny = true
+            end
+
+            if not overAny then
+                for _, overlay in pairs(EditMode.overlayFrames) do
+                    if overlay:IsShown() and overlay:IsMouseOver() then
+                        overAny = true
+                        break
+                    end
+                end
+            end
+
+            if not overAny then
+                EditMode:SelectElement(nil)
+            end
         end
+
+        wasMouseDown = isDown
+    end)
+    self.deselectChecker:Show()
+end
+
+function EditMode:StopDeselectChecker()
+    if self.deselectChecker then
+        self.deselectChecker:SetScript("OnUpdate", nil)
+        self.deselectChecker:Hide()
     end
 end
 
@@ -518,13 +599,11 @@ end
 -- Update overlay styling after theme change
 function EditMode:RefreshOverlays()
     if not self.isActive then return end
-    local Theme = NRSKNUI.Theme
-    local accent = Theme.accent or { 0.898, 0.063, 0.224, 1 }
 
     for key, overlay in pairs(self.overlayFrames) do
         if overlay then
-            overlay:SetBackdropColor(accent[1], accent[2], accent[3], FILL_ALPHA)
-            overlay:SetBackdropBorderColor(accent[1], accent[2], accent[3], 1)
+            overlay:SetBackdropColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], FILL_ALPHA)
+            overlay:SetBackdropBorderColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
         end
     end
 
@@ -536,16 +615,13 @@ end
 
 -- Select an element for nudging
 function EditMode:SelectElement(key)
-    local Theme = NRSKNUI.Theme
-    local accent = Theme.accent or { 0.898, 0.063, 0.224, 1 }
-
     -- Deselect previous
     if self.selectedElementKey and self.overlayFrames[self.selectedElementKey] then
         local prevOverlay = self.overlayFrames[self.selectedElementKey]
 
         -- Restore to normal state
-        prevOverlay:SetBackdropColor(accent[1], accent[2], accent[3], FILL_ALPHA)
-        prevOverlay:SetBackdropBorderColor(accent[1], accent[2], accent[3], 1)
+        prevOverlay:SetBackdropColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], FILL_ALPHA)
+        prevOverlay:SetBackdropBorderColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
         if prevOverlay.text then
             prevOverlay.text:SetTextColor(Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3], 0.2)
         end
@@ -559,7 +635,7 @@ function EditMode:SelectElement(key)
 
         -- Check if Shift is currently held
         if self.isShiftFaded and IsShiftKeyDown() then
-            overlay:SetBackdropColor(accent[1], accent[2], accent[3], SHIFT_FADE_ALPHA * FILL_ALPHA)
+            overlay:SetBackdropColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], SHIFT_FADE_ALPHA * FILL_ALPHA)
             overlay:SetBackdropBorderColor(1, 1, 1, SHIFT_FADE_ALPHA)
             if overlay.text then
                 overlay.text:SetTextColor(1, 1, 1, 1)
@@ -584,9 +660,6 @@ end
 -- Create the nudge frame with D-pad controls
 function EditMode:CreateNudgeFrame()
     if self.nudgeFrame then return self.nudgeFrame end
-
-    local Theme = NRSKNUI.Theme
-    local accent = Theme.accent or { 0.898, 0.063, 0.224, 1 }
     local arrowTexture = "Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\collapse.tga"
 
     -- Main frame
@@ -629,7 +702,7 @@ function EditMode:CreateNudgeFrame()
     selectedText:SetShadowColor(0, 0, 0, 0)
     selectedText:SetShadowOffset(0, 0)
     selectedText:SetText("Click to select")
-    selectedText:SetTextColor(accent[1], accent[2], accent[3], 1)
+    selectedText:SetTextColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
     frame.selectedText = selectedText
 
     -- Helper to create editbox for position values
@@ -664,7 +737,7 @@ function EditMode:CreateNudgeFrame()
         editBox:SetFont(NRSKNUI.FONT or STANDARD_TEXT_FONT, 12, "OUTLINE")
         editBox:SetShadowColor(0, 0, 0, 0)
         editBox:SetShadowOffset(0, 0)
-        editBox:SetTextColor(accent[1], accent[2], accent[3], 1)
+        editBox:SetTextColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
         editBox:SetJustifyH("CENTER")
         editBox:SetAutoFocus(false)
         editBox:SetText("--")
@@ -672,7 +745,7 @@ function EditMode:CreateNudgeFrame()
         editBox:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
 
         editBox:SetScript("OnEditFocusGained", function(self)
-            container:SetBackdropBorderColor(accent[1], accent[2], accent[3], 1)
+            container:SetBackdropBorderColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
             self:HighlightText()
         end)
 
@@ -693,7 +766,7 @@ function EditMode:CreateNudgeFrame()
             animGroup:Stop()
             colorFrom.r, colorFrom.g, colorFrom.b = hoverR, hoverG, hoverB
             if toAccent then
-                colorTo.r, colorTo.g, colorTo.b = accent[1], accent[2], accent[3]
+                colorTo.r, colorTo.g, colorTo.b = Theme.accent[1], Theme.accent[2], Theme.accent[3]
             else
                 colorTo.r, colorTo.g, colorTo.b = Theme.border[1], Theme.border[2], Theme.border[3]
             end
@@ -831,7 +904,7 @@ function EditMode:CreateNudgeFrame()
             if toAccent then
                 colorTo.r, colorTo.g, colorTo.b = Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3]
             else
-                colorTo.r, colorTo.g, colorTo.b = accent[1], accent[2], accent[3]
+                colorTo.r, colorTo.g, colorTo.b = Theme.accent[1], Theme.accent[2], Theme.accent[3]
             end
             animGroup:Play()
         end
@@ -908,7 +981,7 @@ function EditMode:CreateNudgeFrame()
         settingsAnimGroup:Stop()
         settingsColorFrom.r, settingsColorFrom.g, settingsColorFrom.b = settingsBtnR, settingsBtnG, settingsBtnB
         if toAccent then
-            settingsColorTo.r, settingsColorTo.g, settingsColorTo.b = accent[1], accent[2], accent[3]
+            settingsColorTo.r, settingsColorTo.g, settingsColorTo.b = Theme.accent[1], Theme.accent[2], Theme.accent[3]
         else
             settingsColorTo.r, settingsColorTo.g, settingsColorTo.b = Theme.border[1], Theme.border[2], Theme.border[3]
         end
@@ -945,8 +1018,6 @@ function EditMode:UpdateNudgeFrameInfo()
     if not self.nudgeFrame then return end
 
     local frame = self.nudgeFrame
-    local Theme = NRSKNUI.Theme
-    local accent = Theme.accent or { 0.898, 0.063, 0.224, 1 }
 
     if not self.selectedElementKey then
         frame.selectedText:SetText("Click to select")
@@ -964,7 +1035,7 @@ function EditMode:UpdateNudgeFrameInfo()
     if not element then return end
 
     frame.selectedText:SetText(element.displayName)
-    frame.selectedText:SetTextColor(accent[1], accent[2], accent[3], 1)
+    frame.selectedText:SetTextColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
     frame.xEditBox:SetEnabled(true)
     frame.yEditBox:SetEnabled(true)
     frame.settingsBtn:SetEnabled(true)
@@ -1026,7 +1097,6 @@ end
 -- Update nudge frame theme colors
 function EditMode:UpdateNudgeFrameTheme()
     if not self.nudgeFrame then return end
-    local Theme = NRSKNUI.Theme
 
     -- Update main frame backdrop
     self.nudgeFrame:SetBackdropColor(Theme.bgDark[1], Theme.bgDark[2], Theme.bgDark[3], 0.95)
