@@ -274,7 +274,7 @@ local Defaults = {
                         AnchorFrom = "CENTER",    -- Anchor point from
                         AnchorTo = "CENTER",      -- Anchor point to
                         XOffset = 0,              -- X offset
-                        YOffset = 104,            -- Y offset
+                        YOffset = 132,            -- Y offset
                     },
                 },
 
@@ -385,7 +385,7 @@ local Defaults = {
                     AnchorFrom = "CENTER", -- Anchor point from
                     AnchorTo = "CENTER",   -- Anchor point to
                     XOffset = 0,           -- X offset
-                    YOffset = 220,         -- Y offset
+                    YOffset = 280,         -- Y offset
                 },
                 Colors = {
                     Vigor = { 0.898, 0.063, 0.224, 1 },       -- Normal vigor color
@@ -416,8 +416,8 @@ local Defaults = {
                 Position = {
                     AnchorFrom = "CENTER",
                     AnchorTo = "CENTER",
-                    XOffset = 0.1,
-                    YOffset = 220.1,
+                    XOffset = 0,
+                    YOffset = 220,
                 },
 
                 -- Colors
@@ -454,10 +454,10 @@ local Defaults = {
 
                 -- Target Names
                 TargetNames = {
-                    Anchor = "CENTER",
+                    Anchor = "RIGHT",
                     XOffset = 0,
-                    YOffset = 4,
-                    FontSize = 10,
+                    YOffset = 14,
+                    FontSize = 12,
                 },
             },
 
@@ -1268,7 +1268,7 @@ local Defaults = {
                 backDropOne = {
                     Enabled = true,
                     autoSize = false,
-                    detailsBars = 7,
+                    detailsBars = 8,
                     width = 260,
                     height = 210,
                     BackgroundColor = { 0, 0, 0, 0.8 },
@@ -1286,7 +1286,7 @@ local Defaults = {
                 backDropTwo = {
                     Enabled = true,
                     autoSize = false,
-                    detailsBars = 7,
+                    detailsBars = 8,
                     width = 260,
                     height = 210,
                     BackgroundColor = { 0, 0, 0, 0.8 },

@@ -22,7 +22,6 @@ local CreateFrame = CreateFrame
 local GetPetActionInfo = GetPetActionInfo
 local PetHasActionBar = PetHasActionBar
 local UnitIsDeadOrGhost = UnitIsDeadOrGhost
-local ipairs = ipairs
 local C_Timer = C_Timer
 local C_SpellBook = C_SpellBook
 
@@ -77,8 +76,6 @@ local function CheckAndUpdatePetDeathState()
         return true
     end
 
-    -- Pet unit doesn't exist - check our tracked state
-    -- If we previously tracked the pet as dead, it's still dead
     if petDeathTracked then return true end
 
     -- Pet doesn't exist and wasn't tracked as dead = missing/dismissed
@@ -118,7 +115,7 @@ local function CheckPetStatus()
         end
         return PET_STATUS.NONE, nil, nil                                      -- Pet exists and is alive and not passive
     else
-        return PET_STATUS.MISSING, PET.db.PetMissing, PET.db.MissingColor -- Pet is missing
+        return PET_STATUS.MISSING, PET.db.PetMissing, PET.db.MissingColor     -- Pet is missing
     end
 end
 
@@ -172,12 +169,41 @@ function PET:OnInitialize()
     self:SetEnabledState(false)
 end
 
+function PET:RegWithEditMode()
+    -- Define the registration config
+    if NRSKNUI.EditMode and not self.editModeRegistered then
+        local config = {
+            key = "PetTexts",
+            displayName = "Pet Texts",
+            frame = self.frame,
+            -- getPosition must be a function that returns the table
+            getPosition = function()
+                return self.db.Position
+            end,
+            -- setPosition must be a function that saves the data and moves the frame
+            setPosition = function(pos)
+                self.db.Position.AnchorFrom = pos.AnchorFrom
+                self.db.Position.AnchorTo = pos.AnchorTo
+                self.db.Position.XOffset = pos.XOffset
+                self.db.Position.YOffset = pos.YOffset
+
+                self.frame:ClearAllPoints()
+                self.frame:SetPoint(pos.AnchorFrom, UIParent, pos.AnchorTo, pos.XOffset, pos.YOffset)
+            end,
+            guiPath = "PetTexts",
+        }
+        NRSKNUI.EditMode:RegisterElement(config)
+        self.editModeRegistered = true
+    end
+end
+
 -- Module OnEnable
 function PET:OnEnable()
     if not self.db.Enabled then return end
     if not petInfo then return end
 
     self:CreatePetTexts()
+    self:RegWithEditMode()
 
     self:RegisterEvent("UNIT_PET", function(_, unit)
         if unit == "player" then
@@ -209,32 +235,6 @@ function PET:OnEnable()
     C_Timer.After(1, function()
         self:ApplySettings()
     end)
-
-    -- Define the registration config
-    if NRSKNUI.EditMode and not self.editModeRegistered then
-        local config = {
-            key = "PetTexts",
-            displayName = "Pet Texts",
-            frame = self.frame,
-            -- getPosition must be a function that returns the table
-            getPosition = function()
-                return self.db.Position
-            end,
-            -- setPosition must be a function that saves the data and moves the frame
-            setPosition = function(pos)
-                self.db.Position.AnchorFrom = pos.AnchorFrom
-                self.db.Position.AnchorTo = pos.AnchorTo
-                self.db.Position.XOffset = pos.XOffset
-                self.db.Position.YOffset = pos.YOffset
-
-                self.frame:ClearAllPoints()
-                self.frame:SetPoint(pos.AnchorFrom, UIParent, pos.AnchorTo, pos.XOffset, pos.YOffset)
-            end,
-            guiPath = "PetTexts",
-        }
-        NRSKNUI.EditMode:RegisterElement(config)
-        self.editModeRegistered = true
-    end
 end
 
 function PET:OnDisable()
@@ -247,6 +247,7 @@ end
 function PET:ShowPreview(state)
     if not self.frame then
         self:CreatePetTexts()
+        self:RegWithEditMode()
     end
 
     -- Store preview state
