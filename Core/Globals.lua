@@ -259,12 +259,15 @@ end
 
 -- Global apply position settings func
 -- Example usage:
--- NRSKNUI:ApplyFramePosition(self.frame, self.db.Position, self.db)
-function NRSKNUI:ApplyFramePosition(frame, posConfig, Config)
+-- NRSKNUI:ApplyFramePosition(self.frame, self.db.Position, self.db, extra: true or empty)
+function NRSKNUI:ApplyFramePosition(frame, posConfig, Config, SetParent)
     if not frame or not posConfig then return end
 
     -- Resolve parent
     local parent = self:ResolveAnchorFrame(Config.anchorFrameType, Config.ParentFrame)
+    if SetParent then
+        frame:SetParent(parent)
+    end
     -- Clear previous anchors and set new point
     frame:ClearAllPoints()
     frame:SetPoint(
