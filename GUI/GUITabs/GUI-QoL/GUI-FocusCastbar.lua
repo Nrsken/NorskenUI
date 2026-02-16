@@ -184,7 +184,7 @@ GUIFrame:RegisterContent("FocusCastbar", function(scrollChild, yOffset)
     row4a:AddWidget(fontDropdown, 0.5)
     table_insert(allWidgets, fontDropdown)
 
-    local outlineList = { ["NONE"] = "None", ["OUTLINE"] = "Outline", ["THICKOUTLINE"] = "Thick", ["SOFTOUTLINE"] = "Soft" }
+    local outlineList = { ["NONE"] = "None", ["OUTLINE"] = "Outline", ["THICKOUTLINE"] = "Thick" }
     local outlineDropdown = GUIFrame:CreateDropdown(row4a, "Outline", outlineList,
         db.FontOutline or "OUTLINE", 45,
         function(key)
@@ -207,6 +207,71 @@ GUIFrame:RegisterContent("FocusCastbar", function(scrollChild, yOffset)
     card4:AddRow(row4b, 36)
 
     yOffset = yOffset + card4:GetContentHeight() + Theme.paddingSmall
+
+    ----------------------------------------------------------------
+    -- Card 4b: Target Names Settings
+    ----------------------------------------------------------------
+    local card4b = GUIFrame:CreateCard(scrollChild, "Target Names", yOffset)
+    table_insert(allWidgets, card4b)
+
+    -- Initialize TargetNames db if needed
+    if not db.TargetNames then
+        db.TargetNames = {
+            Anchor = "BOTTOM",
+            XOffset = 0,
+            YOffset = 4,
+            FontSize = 10,
+        }
+    end
+
+    -- Anchor dropdown and font size
+    local row4b1 = GUIFrame:CreateRow(card4b.content, 40)
+    local anchorList = {
+        ["LEFT"] = "Left",
+        ["CENTER"] = "Center",
+        ["RIGHT"] = "Right",
+    }
+    local anchorDropdown = GUIFrame:CreateDropdown(row4b1, "Anchor", anchorList,
+        db.TargetNames.Anchor or "BOTTOM", 50,
+        function(key)
+            db.TargetNames.Anchor = key
+            ApplySettings()
+        end)
+    row4b1:AddWidget(anchorDropdown, 0.5)
+    table_insert(allWidgets, anchorDropdown)
+
+    local targetFontSlider = GUIFrame:CreateSlider(row4b1, "Font Size", 6, 18, 1,
+        db.TargetNames.FontSize or 10, nil,
+        function(val)
+            db.TargetNames.FontSize = val
+            ApplySettings()
+        end)
+    row4b1:AddWidget(targetFontSlider, 0.5)
+    table_insert(allWidgets, targetFontSlider)
+    card4b:AddRow(row4b1, 40)
+
+    -- X and Y Offset sliders
+    local row4b2 = GUIFrame:CreateRow(card4b.content, 40)
+    local targetXSlider = GUIFrame:CreateSlider(row4b2, "X Offset", -100, 100, 1,
+        db.TargetNames.XOffset or 0, nil,
+        function(val)
+            db.TargetNames.XOffset = val
+            ApplySettings()
+        end)
+    row4b2:AddWidget(targetXSlider, 0.5)
+    table_insert(allWidgets, targetXSlider)
+
+    local targetYSlider = GUIFrame:CreateSlider(row4b2, "Y Offset", -50, 100, 1,
+        db.TargetNames.YOffset or 4, nil,
+        function(val)
+            db.TargetNames.YOffset = val
+            ApplySettings()
+        end)
+    row4b2:AddWidget(targetYSlider, 0.5)
+    table_insert(allWidgets, targetYSlider)
+    card4b:AddRow(row4b2, 40)
+
+    yOffset = yOffset + card4b:GetContentHeight() + Theme.paddingSmall
 
     ----------------------------------------------------------------
     -- Card 5: Colors (2 rows, 4 colors at 0.5 each)
