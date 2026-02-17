@@ -258,7 +258,7 @@ function NRSKNUI:CreateButtonFrame(parent, width, height, btnName, options)
         button.text = button:CreateFontString(nil, "OVERLAY")
         button.text:SetPoint(textPoint, button, textPoint, textOffset[1], textOffset[2])
         button.text:SetTextColor(1, 1, 1, 1)
-        NRSKNUI:ApplyFontToText(button.text, "Expressway", 17, "SOFTOUTLINE", shadowSettings)
+        NRSKNUI:ApplyFontToText(button.text, "Expressway", 14, "SOFTOUTLINE", shadowSettings)
     end
 
     -- icon
