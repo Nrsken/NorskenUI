@@ -62,6 +62,8 @@ local TOOLTIPS_TO_SKIN = {
     "QuickKeybindTooltip",
     "ReputationParagonTooltip",
     "WarCampaignTooltip",
+    "LibDBIconTooltip",
+    "SettingsTooltip",
 }
 
 -- Spec icon table for spec and class matching
@@ -603,12 +605,62 @@ local function tooltipAnchorReg()
     end)
 end
 
+-- Skin QueueStatusFrame, tooltip that is shown when you hover LFG eye on the minimap
+-- Has a unique structure where the backdrop is actually a child frame with textures
+-- so we have to hide those and apply our own backdrop to the main frame
+local function SkinQueueStatus()
+    local frame = QueueStatusFrame
+    if not frame then return end
+
+    local children = { frame:GetChildren() }
+    local borderFrame = children[1]
+
+    -- Hide all the default border textures
+    if borderFrame then
+        for _, region in ipairs({ borderFrame:GetRegions() }) do
+            region:SetAlpha(0)
+            region:Hide()
+        end
+        -- Prevent them from showing again
+        hooksecurefunc(borderFrame, "Show", function(self)
+            for _, region in ipairs({ self:GetRegions() }) do
+                region:SetAlpha(0)
+                region:Hide()
+            end
+        end)
+    end
+
+    -- Apply our backdrop to QueueStatusFrame itself
+    local backdrop = TT:GetOrCreateBackdrop(frame)
+    TT:UpdateBackdrop(backdrop)
+
+    -- Re-apply on every show since Blizzard may reset things
+    frame:HookScript("OnShow", function(self)
+        if borderFrame then
+            for _, region in ipairs({ borderFrame:GetRegions() }) do
+                region:SetAlpha(0)
+                region:Hide()
+            end
+        end
+        local bd = TT:GetOrCreateBackdrop(self)
+        TT:UpdateBackdrop(bd)
+        bd:Show()
+    end)
+
+    frame:HookScript("OnHide", function(self)
+        local bd = tooltipBackdrops[self]
+        if bd then bd:Hide() end
+    end)
+end
+
 -- Initialize tooltip skinning
 function TT:OnEnable()
     if not self.db.Enabled then return end
     if isInitialized then return end
     TT:CreateTooltipAnchorFrame()
     TT:Refresh()
+    SkinQueueStatus()
+
     isInitialized = true
     tooltipAnchorReg()
 
