@@ -65,12 +65,8 @@ end
 GetAddonMetadata()
 
 -- Helper to check if a module should load or not based on ElvUI presence and user settings
-function NRSKNUI:ShouldLoadModule()
-    if C_AddOns.IsAddOnLoaded("ElvUI") and NRSKNUI.db.profile.UseElvUI.Enabled then
-        return false -- Skip if ElvUI is loaded, to avoid conflicts
-    else
-        return true
-    end
+function NRSKNUI:ShouldNotLoadModule()
+    return C_AddOns.IsAddOnLoaded("ElvUI") and NRSKNUI.db.profile.UseElvUI.Enabled
 end
 
 -- IsEditModeActive: Check if Edit Mode is currently active

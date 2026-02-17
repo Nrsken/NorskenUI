@@ -895,7 +895,7 @@ end
 
 -- Module OnEnable
 function ACB:OnEnable()
-    if not NRSKNUI:ShouldLoadModule() == true then return end
+    if NRSKNUI:ShouldNotLoadModule() then return end
     if not self.db.Enabled then return end
     self:BuildConfigTable()
 

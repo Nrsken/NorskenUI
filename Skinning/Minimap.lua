@@ -52,7 +52,7 @@ end
 
 -- Module OnEnable
 function MAP:OnEnable()
-    if not NRSKNUI:ShouldLoadModule() == true then return end -- Skip if ElvUI is loaded, to avoid conflicts
+    if NRSKNUI:ShouldNotLoadModule() then return end -- Skip if ElvUI is loaded, to avoid conflicts
     if not self.db.Enabled then return end
 
     MAP:StripBlizzMap()

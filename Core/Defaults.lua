@@ -42,7 +42,7 @@ local Defaults = {
     profile = {
         -- ElvUI Integration
         UseElvUI = {
-            Enabled = false, -- Master toggle for ElvUI integration (disables my skins when true to avoid conflicts)
+            Enabled = true, -- Master toggle for ElvUI integration (disables my skins when true to avoid conflicts)
         },
         -- Minimap Icon Settings
         Minimap = {

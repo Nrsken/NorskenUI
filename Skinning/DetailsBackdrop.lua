@@ -39,7 +39,7 @@ end
 
 -- Module OnEnable
 function DBG:OnEnable()
-    if not NRSKNUI:ShouldLoadModule() == true then return end -- Skip if ElvUI is loaded, to avoid conflicts
+    if NRSKNUI:ShouldNotLoadModule() then return end -- Skip if ElvUI is loaded, to avoid conflicts
     if not C_AddOns.IsAddOnLoaded("Details") then return end -- Make sure we only enable this module if Details is enabled
     if not self.db.Enabled then return end
     if not backdropOneInitialized then

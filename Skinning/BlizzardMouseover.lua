@@ -30,7 +30,7 @@ end
 
 -- Module OnEnable
 function BMO:OnEnable()
-    if not NRSKNUI:ShouldLoadModule() == true then return end -- Skip if ElvUI is loaded, to avoid conflicts
+    if NRSKNUI:ShouldNotLoadModule() then return end -- Skip if ElvUI is loaded, to avoid conflicts
     if not self.db.Enabled then return end
     C_Timer.After(0.5, function() -- Slight delay just to make sure Blizzard Elements Exist
         self:SetupAllHooks()

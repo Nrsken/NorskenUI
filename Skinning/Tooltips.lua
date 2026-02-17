@@ -655,7 +655,7 @@ end
 
 -- Initialize tooltip skinning
 function TT:OnEnable()
-    if not NRSKNUI:ShouldLoadModule() == true then return end -- Skip if ElvUI is loaded, to avoid conflicts
+    if NRSKNUI:ShouldNotLoadModule() then return end -- Skip if ElvUI is loaded, to avoid conflicts
     if not self.db.Enabled then return end
     if isInitialized then return end
     TT:CreateTooltipAnchorFrame()

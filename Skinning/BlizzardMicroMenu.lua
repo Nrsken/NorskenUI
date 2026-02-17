@@ -52,7 +52,7 @@ end
 
 -- Module OnEnable
 function MM:OnEnable()
-    if not NRSKNUI:ShouldLoadModule() == true then return end -- Skip if ElvUI is loaded, to avoid conflicts
+    if NRSKNUI:ShouldNotLoadModule() then return end -- Skip if ElvUI is loaded, to avoid conflicts
     if not self.db.Enabled then return end
     C_Timer.After(0.5, function() -- Delay to ensure Blizzard frames exist
         MM:CreateMicroBarFrame()

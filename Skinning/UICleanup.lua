@@ -54,7 +54,7 @@ end
 
 -- Module OnEnable
 function UIC:OnEnable()
-    if not NRSKNUI:ShouldLoadModule() == true then return end -- Skip if ElvUI is loaded, to avoid conflicts
+    if NRSKNUI:ShouldNotLoadModule() then return end -- Skip if ElvUI is loaded, to avoid conflicts
     if not self.db.Enabled then return end
     C_Timer.After(1.0, function() -- Wait for frames to be ready
         SetupHideBlizzardClutter()
