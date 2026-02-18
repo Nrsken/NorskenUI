@@ -9,7 +9,7 @@ if not NorskenUI then
 end
 
 -- Create module
----@class Gateway
+---@class Gateway: AceModule, AceEvent-3.0
 local GATE = NorskenUI:NewModule("Gateway", "AceEvent-3.0")
 
 -- Localization Setup

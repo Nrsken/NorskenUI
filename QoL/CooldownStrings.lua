@@ -10,7 +10,7 @@ if not NorskenUI then
 end
 
 -- Create module
----@class CooldownStrings
+---@class CooldownStrings: AceModule, AceEvent-3.0
 local CS = NorskenUI:NewModule("CooldownStrings", "AceEvent-3.0")
 
 -- Localization

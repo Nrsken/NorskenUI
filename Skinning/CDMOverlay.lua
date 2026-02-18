@@ -9,7 +9,7 @@ if not NorskenUI then
 end
 
 -- Create module
----@class CDM
+---@class CDM: AceModule, AceEvent-3.0
 local CDM = NorskenUI:NewModule("CDM", "AceEvent-3.0")
 
 -- Localization

@@ -10,7 +10,7 @@ if not NorskenUI then
 end
 
 -- Create module
----@class Chat
+---@class Chat: AceModule, AceEvent-3.0
 local CHAT = NorskenUI:NewModule("Chat", "AceEvent-3.0")
 
 -- Localization

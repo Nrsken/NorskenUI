@@ -9,7 +9,7 @@ if not NorskenUI then
 end
 
 -- Create module
----@class FocusCastbar
+---@class FocusCastbar: AceModule, AceEvent-3.0
 local FCB = NorskenUI:NewModule("FocusCastbar", "AceEvent-3.0")
 
 -- Localization

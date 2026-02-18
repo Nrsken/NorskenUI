@@ -9,7 +9,7 @@ if not NorskenUI then
 end
 
 -- Create module
----@class UICleanup
+---@class UICleanup: AceModule, AceEvent-3.0
 local UIC = NorskenUI:NewModule("UICleanup", "AceEvent-3.0")
 
 -- Localization Setup

@@ -9,7 +9,7 @@ if not NorskenUI then
 end
 
 -- Create module
----@class XPBar
+---@class XPBar: AceModule, AceEvent-3.0
 local XPBar = NorskenUI:NewModule("XPBar", "AceEvent-3.0")
 
 -- Localization

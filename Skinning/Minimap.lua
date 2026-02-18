@@ -10,7 +10,7 @@ if not NorskenUI then
 end
 
 -- Create module
----@class Minimap
+---@class Minimap: AceModule, AceEvent-3.0
 local MAP = NorskenUI:NewModule("Minimap", "AceEvent-3.0")
 
 -- Localization

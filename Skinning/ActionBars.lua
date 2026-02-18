@@ -9,7 +9,7 @@ if not NorskenUI then
 end
 
 -- Create module
----@class ActionBars
+---@class ActionBars: AceModule, AceEvent-3.0
 local ACB = NorskenUI:NewModule("ActionBars", "AceEvent-3.0")
 
 -- Localization

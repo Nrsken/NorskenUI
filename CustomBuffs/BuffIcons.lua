@@ -9,7 +9,7 @@ if not NorskenUI then
 end
 
 -- Create module
----@class BuffIcons
+---@class BuffIcons: AceModule, AceEvent-3.0
 local BI = NorskenUI:NewModule("BuffIcons", "AceEvent-3.0")
 
 -- Localization

@@ -9,7 +9,7 @@ if not NorskenUI then
 end
 
 -- Create module
----@class MicroMenu
+---@class MicroMenu: AceModule, AceEvent-3.0
 local MM = NorskenUI:NewModule("MicroMenu", "AceEvent-3.0")
 
 -- Localization

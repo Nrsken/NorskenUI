@@ -9,7 +9,7 @@ if not NorskenUI then
 end
 
 -- Create module
----@class CursorCircle
+---@class CursorCircle: AceModule, AceEvent-3.0
 local CC = NorskenUI:NewModule("CursorCircle", "AceEvent-3.0")
 
 -- Localization

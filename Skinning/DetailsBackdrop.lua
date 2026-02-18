@@ -11,7 +11,7 @@ if not NorskenUI then
 end
 
 -- Create module
----@class DetailsBackdrop
+---@class DetailsBackdrop: AceModule, AceEvent-3.0
 local DBG = NorskenUI:NewModule("DetailsBackdrop", "AceEvent-3.0")
 
 -- Localization

@@ -9,7 +9,7 @@ if not NorskenUI then
 end
 
 -- Create module
----@class BlizzardMessages
+---@class BlizzardMessages: AceModule, AceEvent-3.0
 local BM = NorskenUI:NewModule("BlizzardMessages", "AceEvent-3.0")
 
 -- Localization

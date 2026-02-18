@@ -9,7 +9,7 @@ if not NorskenUI then
 end
 
 -- Create module
----@class CombatMessage
+---@class CombatMessage: AceModule, AceEvent-3.0
 local CM = NorskenUI:NewModule("CombatMessage", "AceEvent-3.0")
 
 -- Localization

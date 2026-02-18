@@ -9,7 +9,7 @@ if not NorskenUI then
 end
 
 -- Create module
----@class Auras
+---@class Auras: AceModule, AceEvent-3.0
 local AURAS = NorskenUI:NewModule("Auras", "AceEvent-3.0")
 
 -- Localization

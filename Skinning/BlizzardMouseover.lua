@@ -9,7 +9,7 @@ if not NorskenUI then
 end
 
 -- Create module
----@class BlizzardMouseover
+---@class BlizzardMouseover: AceModule, AceEvent-3.0
 local BMO = NorskenUI:NewModule("BlizzardMouseover", "AceEvent-3.0")
 
 -- Localization

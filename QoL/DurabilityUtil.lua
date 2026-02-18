@@ -9,7 +9,7 @@ if not NorskenUI then
 end
 
 -- Create module
----@class Durability
+---@class Durability: AceModule, AceEvent-3.0
 local DUR = NorskenUI:NewModule("Durability", "AceEvent-3.0")
 
 -- Localization

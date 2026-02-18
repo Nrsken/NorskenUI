@@ -9,7 +9,7 @@ if not NorskenUI then
 end
 
 -- Create module
----@class CombatRes
+---@class CombatRes: AceModule, AceEvent-3.0
 local CR = NorskenUI:NewModule("CombatRes", "AceEvent-3.0")
 
 -- Localization

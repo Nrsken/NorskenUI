@@ -9,7 +9,7 @@ if not NorskenUI then
 end
 
 -- Create module
----@class DragonRiding
+---@class DragonRiding: AceModule, AceEvent-3.0
 local DR = NorskenUI:NewModule("DragonRiding", "AceEvent-3.0")
 
 -- Localization

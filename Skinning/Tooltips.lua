@@ -11,7 +11,7 @@ if not NorskenUI then
 end
 
 -- Create module
----@class Tooltips
+---@class Tooltips: AceModule, AceEvent-3.0
 local TT = NorskenUI:NewModule("Tooltips", "AceEvent-3.0")
 
 -- Localization

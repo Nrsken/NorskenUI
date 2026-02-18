@@ -8,7 +8,7 @@ if not NorskenUI then
 end
 
 -- Create module
----@class CopyAnything
+---@class CopyAnything: AceModule, AceEvent-3.0
 local CopyAnything = NorskenUI:NewModule("CopyAnything", "AceEvent-3.0")
 
 -- Localization

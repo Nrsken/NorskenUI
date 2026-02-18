@@ -9,7 +9,7 @@ if not NorskenUI then
 end
 
 -- Create module
----@class PetTexts
+---@class PetTexts: AceModule, AceEvent-3.0
 local PET = NorskenUI:NewModule("PetTexts", "AceEvent-3.0")
 
 -- Localization

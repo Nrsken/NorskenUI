@@ -9,7 +9,7 @@ if not NorskenUI then
 end
 
 -- Create module
----@class Battlenet
+---@class Battlenet: AceModule, AceEvent-3.0
 local BNET = NorskenUI:NewModule("Battlenet", "AceEvent-3.0")
 
 -- Localization
