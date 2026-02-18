@@ -55,7 +55,7 @@ function CS:CreateFrame()
 
     -- Create main container frame
     local frame = CreateFrame("Frame", "NRSKNUI_CooldownStringsPanel", UIParent, "BackdropTemplate")
-    frame:SetSize(280, 180)
+    frame:SetSize(280, 220)
     frame:SetFrameStrata("DIALOG")
     frame:SetClampedToScreen(true)
 
@@ -274,7 +274,8 @@ function CS:CreatePanelDropdown(parent, labelText, options, selected, callback)
             -- Hover background
             local hoverBg = btn:CreateTexture(nil, "BACKGROUND")
             hoverBg:SetAllPoints()
-            hoverBg:SetColorTexture(Theme.accentHover[1], Theme.accentHover[2], Theme.accentHover[3], Theme.accentHover[4] or 0.25)
+            hoverBg:SetColorTexture(Theme.accentHover[1], Theme.accentHover[2], Theme.accentHover[3],
+                Theme.accentHover[4] or 0.25)
             hoverBg:Hide()
             btn._hoverBg = hoverBg
 
@@ -493,35 +494,6 @@ function CS:BuildUI()
 
     local yOffset = 0
 
-    -- Build profile options for dropdown
-    local profileOptions = {}
-    local profiles = db.Profiles or {}
-    for name, _ in pairs(profiles) do
-        profileOptions[name] = name
-    end
-
-    -- Create styled dropdown
-    local dropdownRow = self:CreatePanelDropdown(content, "Select Profile", profileOptions, self.selectedProfile,
-        function(value)
-            self.selectedProfile = value
-            self:UpdateEditBox()
-        end)
-    dropdownRow:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -yOffset)
-    dropdownRow:SetPoint("RIGHT", content, "RIGHT", 0, 0)
-
-    self.dropdownRow = dropdownRow
-
-    -- Select first profile if none selected
-    if not self.selectedProfile then
-        for name, _ in pairs(profiles) do
-            self.selectedProfile = name
-            dropdownRow:SetValue(name, true)
-            break
-        end
-    end
-
-    yOffset = yOffset + 42
-
     -- Edit box label
     local editLabel = content:CreateFontString(nil, "OVERLAY")
     editLabel:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -yOffset)
@@ -534,7 +506,7 @@ function CS:BuildUI()
     -- Edit box background
     local editBg = CreateFrame("Frame", nil, content, "BackdropTemplate")
     editBg:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -yOffset)
-    editBg:SetPoint("BOTTOMRIGHT", content, "BOTTOMRIGHT", 0, 0)
+    editBg:SetPoint("BOTTOMRIGHT", content, "BOTTOMRIGHT", 0, 52)
     editBg:SetBackdrop(CARD_BACKDROP)
     editBg:SetBackdropColor(Theme.bgDark[1], Theme.bgDark[2], Theme.bgDark[3], 1)
     editBg:SetBackdropBorderColor(Theme.border[1], Theme.border[2], Theme.border[3], 1)
@@ -662,6 +634,35 @@ function CS:BuildUI()
 
     self.editBox = editBox
     self.scrollFrame = scrollFrame
+
+    yOffset = yOffset + 115
+
+    -- Build profile options for dropdown
+    local profileOptions = {}
+    local profiles = db.Profiles or {}
+    for name, _ in pairs(profiles) do
+        profileOptions[name] = name
+    end
+
+    -- Create styled dropdown
+    local dropdownRow = self:CreatePanelDropdown(content, "Select Profile", profileOptions, self.selectedProfile,
+        function(value)
+            self.selectedProfile = value
+            self:UpdateEditBox()
+        end)
+    dropdownRow:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -yOffset)
+    dropdownRow:SetPoint("BOTTOMRIGHT", content, "BOTTOMRIGHT", 0, 0)
+
+    self.dropdownRow = dropdownRow
+
+    -- Select first profile if none selected
+    if not self.selectedProfile then
+        for name, _ in pairs(profiles) do
+            self.selectedProfile = name
+            dropdownRow:SetValue(name, true)
+            break
+        end
+    end
 
     -- Update UI based on current selection
     self:UpdateEditBox()
