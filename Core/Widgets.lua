@@ -14,6 +14,10 @@ NRSKNUI.Media = {
 
 -- Icon zoom helper bcs blizz border uggy
 -- Example Usage: NRSKNUI:ApplyZoom(auraIcon, 0.3)
+
+---@param obj Frame
+---@param zoom number
+-- Helper function to apply a zoom effect to an icon texture
 function NRSKNUI:ApplyZoom(obj, zoom)
     local texMin = 0.25 * zoom
     local texMax = 1 - 0.25 * zoom
@@ -36,6 +40,11 @@ NRSKNUI:AddBorders(backdrop, {0, 0, 0, 1}, borderFrame)
 
 frame:SetBorderColor(r, g, b, a)
 ]]
+
+---@param frame Frame
+---@param color table?
+---@param borderParent Frame?
+-- Helper function to create pixel-perfect borders on any frame
 function NRSKNUI:AddBorders(frame, color, borderParent)
     if not frame then return end
     color = color or { 0, 0, 0, 1 }
@@ -103,6 +112,11 @@ local icon = NRSKNUI:CreateIconFrame(parent, size, {
     textOffset = {1, 0},
 })
 ]]
+
+---@param parent Frame
+---@param size number
+---@param options table?
+-- Helper function to create a icon frame with borders, icon texture and text
 function NRSKNUI:CreateIconFrame(parent, size, options)
     options = options or {}
     local name = options.name
@@ -144,6 +158,12 @@ local textFrame = NRSKNUI:CreateTextFrame(parent, width, height, {
     textOffset = {0, 0},
 })
 ]]
+
+---@param parent Frame
+---@param width number
+---@param height number
+---@param options table
+-- Helper function to create a text frame with a FontString
 function NRSKNUI:CreateTextFrame(parent, width, height, options)
     options = options or {}
     local name = options.name
@@ -166,6 +186,13 @@ local backdrop = NRSKNUI:CreateStandardBackdrop(parent, "MyBackdrop", 5, {0,0,0,
 backdrop:SetBackgroundColor(r, g, b, a)
 backdrop:SetBorderColor(r, g, b, a)
 ]]
+
+---@param parent Frame
+---@param name string
+---@param frameLevel number
+---@param bgColor table
+---@param borderColor table
+-- Helper function to create a standard backdrop frame with optional border and background color support
 function NRSKNUI:CreateStandardBackdrop(parent, name, frameLevel, bgColor, borderColor)
     local backdrop = CreateFrame("Frame", name, parent, "BackdropTemplate")
     backdrop:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8" })

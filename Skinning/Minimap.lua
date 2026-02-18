@@ -11,6 +11,7 @@ end
 
 -- Create module
 ---@class Minimap: AceModule, AceEvent-3.0
+---@field RegisterEvent fun(self: any, event: string, callbackOrMethod?: string|function)
 local MAP = NorskenUI:NewModule("Minimap", "AceEvent-3.0")
 
 -- Localization
@@ -87,9 +88,12 @@ function MAP:OnEnable()
         end)
         hooked.queueOnShow = true
     end
-
     C_Timer.After(0.5, DisableMinimapEditMode)
-    self:RegisterEvent("PLAYER_ENTERING_WORLD", function() C_Timer.After(0.1, function() MAP:RefreshAll() end) end)
+    self:RegisterEvent("PLAYER_ENTERING_WORLD", function()
+        C_Timer.After(0.1, function()
+            self:RefreshAll()
+        end)
+    end)
 
     -- Register with custom edit mode
     NRSKNUI.EditMode:RegisterElement({
@@ -189,6 +193,8 @@ function MAP:SkinAddonCompartment()
         hooked.addonCompEnter = true
     end
 
+    ---@class AddonCompartmentFrame
+    ---@field Text FontString
     AddonCompartmentFrame:ClearAllPoints()
     AddonCompartmentFrame:SetSize(20, 20)
     AddonCompartmentFrame:SetPoint("BOTTOMRIGHT", Minimap, "BOTTOMRIGHT", -2, 2)

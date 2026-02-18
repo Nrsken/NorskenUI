@@ -170,6 +170,7 @@ end
 local function UpdateVigorColor(self)
     local db = self.db
     local r, g, b
+    ---@diagnostic disable-next-line
     if C_UnitAuras.GetAuraDataBySpellName('player', C_Spell.GetSpellName(THRILL_SPELL), 'HELPFUL') then
         -- Thrill of the Skies active - use thrill color
         local color = db.Colors and db.Colors.VigorThrill or { 0.2, 0.8, 0.2, 1 }

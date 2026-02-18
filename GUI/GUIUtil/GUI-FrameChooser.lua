@@ -50,11 +50,11 @@ local function RecurseGetName(frame)
     return nil
 end
 
--- EnsureFrameChooserUI: Create the frame chooser UI elements (highlight box, instructions)
+-- EnsureFrameChooserUI: Create the frame chooser UI elements
 local function EnsureFrameChooserUI()
     if chooserFrame then return end
 
-    -- Invisible frame that captures the OnUpdate
+    -- Invisible frame
     chooserFrame = CreateFrame("Frame", "NRSKNUIFrameChooser", UIParent)
     chooserFrame:SetFrameStrata("TOOLTIP")
     chooserFrame:SetAllPoints(UIParent)
@@ -113,26 +113,8 @@ local function OnUpdateHandler(self, elapsed)
 
     if focus then
         focusName = RecurseGetName(focus)
-
-        -- If it's WorldFrame or no name, check our displays
         if focusName == "WorldFrame" or not focusName then
             focusName = nil
-
-            -- Check NorskenAuras displays
-            local displays = NRSKNUI.db and NRSKNUI.db.profile.CustomIcons and NRSKNUI.db.profile.CustomIcons.Displays
-            if displays and NRSKNUI.DisplaySystem and NRSKNUI.DisplaySystem.regions then
-                for id, displayData in pairs(displays) do
-                    local region = NRSKNUI.DisplaySystem.regions[id]
-                    if region and region:IsVisible() and MouseIsOver(region) then
-                        local isGroup = displayData.type == "group" or displayData.type == "dynamicgroup"
-                        -- Prefer non-groups over groups when overlapping
-                        if not focusName or (not isGroup) then
-                            focus = region
-                            focusName = "NRSKNUI:" .. id
-                        end
-                    end
-                end
-            end
         end
 
         -- Update highlight box if focus changed
@@ -217,11 +199,6 @@ function FC:Stop(cancelled)
         else
             currentCallback(oldFocusName, false)  -- Confirm selection
         end
-    end
-
-    -- Refresh options
-    if NRSKNUI.OptionsRegistry then
-        NRSKNUI.OptionsRegistry:NotifyChange()
     end
 
     currentCallback = nil

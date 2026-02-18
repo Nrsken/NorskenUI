@@ -1,5 +1,6 @@
 -- NorskenUI namespace
 ---@class NRSKNUI
+---@diagnostic disable: undefined-field
 local NRSKNUI = select(2, ...)
 
 -- Check for addon object
@@ -173,7 +174,7 @@ function FCB:CreateFrame()
     -- Target name text
     local targetNames = {}
     for i = 1, MAX_TARGET_NAMES do
-        local targetText = frame:CreateFontString(nil, "OVERLAY", nil, 7)
+        local targetText = frame:CreateFontString(nil, "OVERLAY", nil)
         targetText:SetParent(castBar)
         targetText:SetAlpha(0)
         targetNames[i] = targetText

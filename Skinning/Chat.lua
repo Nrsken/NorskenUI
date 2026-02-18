@@ -494,6 +494,7 @@ local function SetupAndSkinChat()
                 if tex then
                     tex:Hide()
                     tex.Show = nop
+                    ---@diagnostic disable-next-line: redundant-parameter
                     tex:SetAlpha(0)
                     tex.SetAlpha = nop
                 end
@@ -733,7 +734,7 @@ local function SetupChatLinks()
         end)
     end
 
-    local SetHyperlink = _G.ItemRefTooltip.SetHyperlink
+    local SetHyperlink = _G.ItemRefTooltip.SetHyperlink --[[@as function]]
     function _G.ItemRefTooltip:SetHyperlink(link, ...)
         if link and (strsub(link, 1, 3) == "url") then
             local editbox = ChatEdit_ChooseBoxForSend()

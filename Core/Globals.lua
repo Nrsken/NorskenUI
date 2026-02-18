@@ -1,5 +1,6 @@
 -- NorskenUI namespace
 ---@class NRSKNUI
+---@diagnostic disable: undefined-field
 local NRSKNUI = select(2, ...)
 local addonName = select(1, ...)
 

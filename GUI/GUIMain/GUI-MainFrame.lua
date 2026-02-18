@@ -1,4 +1,5 @@
 -- NorskenUI namespace
+---@diagnostic disable: undefined-field
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 NRSKNUI.GUIFrame = NRSKNUI.GUIFrame or {}
@@ -248,12 +249,6 @@ function GUIFrame:CreateMainFrame()
             -- Fire on-close callbacks
             if GUIFrame.FireOnCloseCallbacks then
                 GUIFrame:FireOnCloseCallbacks()
-            end
-
-            -- Fire old GUIFactory callbacks for backward compatibility
-            local GUIFactory = NRSKNUI.GUIFactory
-            if GUIFactory and GUIFactory.FireOnCloseCallbacks then
-                GUIFactory:FireOnCloseCallbacks()
             end
 
             -- Run content cleanup callbacks
@@ -704,7 +699,7 @@ function GUIFrame:CreateShortcutFrame(parent)
                     if not C_AddOns.IsAddOnLoaded(addonName) then
                         local loaded, reason = C_AddOns.LoadAddOn(addonName)
                         if not loaded then
-                            NRSKNUI:Print("UnhaltedUnitFrames is disabled/missing", reason)
+                            NRSKNUI:Print("UnhaltedUnitFrames is disabled/missing")
                             return
                         end
                     end
@@ -723,7 +718,7 @@ function GUIFrame:CreateShortcutFrame(parent)
                     if not C_AddOns.IsAddOnLoaded(addonName) then
                         local loaded, reason = C_AddOns.LoadAddOn(addonName)
                         if not loaded then
-                            NRSKNUI:Print("BetterCooldownManager is disabled/missing", reason)
+                            NRSKNUI:Print("BetterCooldownManager is disabled/missing")
                             return
                         end
                     end
@@ -742,7 +737,7 @@ function GUIFrame:CreateShortcutFrame(parent)
                     if not C_AddOns.IsAddOnLoaded(addonName) then
                         local loaded, reason = C_AddOns.LoadAddOn(addonName)
                         if not loaded then
-                            NRSKNUI:Print("MinimapStats is disabled/missing", reason)
+                            NRSKNUI:Print("MinimapStats is disabled/missing")
                             return
                         end
                     end
@@ -1429,16 +1424,6 @@ end
 function GUIFrame:RefreshContent()
     if not self.contentArea then return end
 
-    -- Fire any registered content cleanup callbacks
-    if self.contentCleanupCallbacks then
-        for key, callback in pairs(self.contentCleanupCallbacks) do
-            local ok, err = pcall(callback)
-            if not ok and NRSKNUI.debug then
-                print("|cFFFF0000[NRSKNUI]|r Content cleanup callback '" .. key .. "' failed: " .. tostring(err))
-            end
-        end
-    end
-
     -- Clean up custom panel if exists
     if self.contentArea._customPanel then
         self.contentArea._customPanel:Hide()
@@ -1597,16 +1582,6 @@ function GUIFrame:Hide()
             self:SaveSessionState()
         end
 
-        -- Fire content cleanup callbacks
-        if self.contentCleanupCallbacks then
-            for key, callback in pairs(self.contentCleanupCallbacks) do
-                local ok, err = pcall(callback)
-                if not ok and NRSKNUI.debug then
-                    print("|cFFFF0000[NRSKNUI]|r Content cleanup callback '" .. key .. "' failed: " .. tostring(err))
-                end
-            end
-        end
-
         if self.shortcutFrame then
             self.shortcutFrame:Hide()
         end
@@ -1614,11 +1589,6 @@ function GUIFrame:Hide()
         -- Fire on-close callbacks, for previews registered via RegisterOnCloseCallback
         if self.FireOnCloseCallbacks then
             self:FireOnCloseCallbacks()
-        end
-
-        local GUIFactory = NRSKNUI.GUIFactory
-        if GUIFactory and GUIFactory.FireOnCloseCallbacks then
-            GUIFactory:FireOnCloseCallbacks()
         end
 
         NRSKNUI.GUIOpen = false

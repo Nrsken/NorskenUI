@@ -15,4 +15,9 @@
 ---@field SetEnabledState fun(self: AceAddon-3.0, state: boolean)
 ---@field IsEnabled fun(self: AceAddon-3.0): boolean
 
----@class AceModule: AceAddon-3.0
+---@class AceEvent-3.0
+---@field RegisterEvent fun(self: any, event: string, callbackOrMethod?: string|function)
+---@field UnregisterEvent fun(self: any, event: string)
+---@field UnregisterAllEvents fun(self: any)
+
+---@class AceModule: AceAddon-3.0, AceEvent-3.0
