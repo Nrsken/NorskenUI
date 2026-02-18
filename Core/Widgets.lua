@@ -211,6 +211,13 @@ button:SetBorderColor(r, g, b, a)
 button:SetHighlightColor(r, g, b, a)
 button:SetTextColor(r, g, b, a)
 ]]
+
+---@param parent Frame
+---@param width number
+---@param height number
+---@param btnName string
+---@param options table
+-- Helper function to create a button frame with backdrop, borders, and texture support
 function NRSKNUI:CreateButtonFrame(parent, width, height, btnName, options)
     -- Crate config, has defaults for all options to simplify usage when only a few custom settings are needed
     options = options or {}
