@@ -1,12 +1,23 @@
-local MINOR = 12
-local lib = LibStub:NewLibrary('LibEditMode', MINOR)
-if not lib then
-	-- this or a newer version is already loaded
-	return
+local MINOR = 15
+
+local _, ns = ...
+local lib
+if ns.LibEditMode then
+	lib = ns.LibEditMode
+else
+	lib = LibStub:NewLibrary('LibEditMode', MINOR)
+	if not lib then
+		-- this or a newer version is already loaded
+		return
+	end
 end
 
 lib.internal = {} -- internal methods, do not use directly
 local internal = lib.internal
+
+-- keep a variable stored for the latest version, used to avoid hooks and events
+-- firing for older versions of the library when it has been "globally" upgraded with LibStub
+lib.hookVersion = MINOR
 
 lib.frameSelections = lib.frameSelections or {}
 lib.frameCallbacks = lib.frameCallbacks or {}
@@ -22,7 +33,9 @@ lib.anonCallbacksRename = lib.anonCallbacksRename or {}
 lib.anonCallbacksDelete = lib.anonCallbacksDelete or {}
 
 lib.systemSettings = lib.systemSettings or {}
+lib.subSystemSettings = lib.subSystemSettings or {}
 lib.systemButtons = lib.systemButtons or {}
+lib.subSystemButtons = lib.subSystemButtons or {}
 
 lib.layoutCache = lib.layoutCache or {}
 
@@ -167,9 +180,8 @@ local function onMouseDown(self) -- replacement for EditModeSystemMixin:SelectSy
 		return
 	end
 
-	resetDialogs()
-	resetSelection()
-	EditModeManagerFrame:ClearSelectedSystem() -- possible taint
+	EventRegistry:TriggerEvent('EditModeExternal.hideDialog')
+	EditModeManagerFrame:ClearSelectedSystem() -- taint
 
 	if not self.isSelected then
 		self.parent:SetMovable(true)
@@ -236,69 +248,137 @@ local function onSpecChanged(_, unit)
 end
 
 local function onEditModeLayoutChanged()
-	local layouts = C_EditMode.GetLayouts().layouts
+	local layoutInfo = C_EditMode.GetLayouts()
+	local layouts = layoutInfo.layouts
 
-	for index = #layouts, 1, -1 do
-		if lib.layoutCache[index] then
-			local layout = layouts[index]
-			if lib.layoutCache[index].layoutName ~= layout.layoutName then
+	if #layouts > #lib.layoutCache then
+		-- a layout was created
+
+		for index, layout in next, layouts do
+			if not lib.layoutCache[index] then
+				for _, callback in next, lib.anonCallbacksCreate do
+					securecallfunction(callback, layout.layoutName, index, lib._layoutCopySource and lib._layoutCopySource.layoutName)
+				end
+			end
+		end
+
+		-- the game automatically switches to the newly created layout, which triggers
+		-- onEditModeChanged so we don't have to deal with that
+	elseif #layouts < #lib.layoutCache then
+		-- a layout was deleted
+
+		local newNames = {}
+		for _, layout in next, layouts do
+			newNames[layout.layoutName] = true
+		end
+
+		for _, layout in next, lib.layoutCache do
+			if not newNames[layout.layoutName] then
+				for _, callback in next, lib.anonCallbacksDelete do
+					securecallfunction(callback, layout.layoutName)
+				end
+
+				break
+			end
+		end
+
+		-- if the deleted layout was the current one the game automatically switches to Modern,
+		-- which triggers onEditModeChanged so we don't have to deal with that
+	else
+		-- a layout was renamed
+
+		for index, layout in next, layouts do
+			if layout.layoutName ~= lib.layoutCache[index].layoutName then
 				for _, callback in next, lib.anonCallbacksRename do
 					securecallfunction(callback, lib.layoutCache[index].layoutName, layout.layoutName, index)
 				end
-			end
 
-			table.remove(lib.layoutCache, index)
-		else
-			for _, callback in next, lib.anonCallbacksCreate do
-				securecallfunction(callback, layouts[index].layoutName, index)
+				if index == (lib.activeLayout - 2) then
+					-- the currently active layout was renamed, we trigger a layout update
+					lib.activeLayout = nil
+					onEditModeChanged(nil, layoutInfo)
+					return -- no need to proceed, the remaining tasks are already handled
+				end
+
+				break
 			end
 		end
 	end
 
-	for _, layout in next, lib.layoutCache do
-		for _, callback in next, lib.anonCallbacksDelete do
-			securecallfunction(callback, layout.layoutName)
-		end
-	end
-
+	lib._layoutCopySource = nil
 	lib.layoutCache = layouts
 end
 
-local isManagerHooked = false
-
-local function hookManager()
+do -- deal with hooks and events
 	-- listen for layout changes
-	EventRegistry:RegisterFrameEventAndCallback('EDIT_MODE_LAYOUTS_UPDATED', onEditModeChanged)
-	EventRegistry:RegisterFrameEventAndCallback('PLAYER_SPECIALIZATION_CHANGED', onSpecChanged)
-	EventRegistry:RegisterCallback('EditMode.SavedLayouts', onEditModeLayoutChanged)
-
-	-- hook EditMode shown state, since QuickKeybindMode will hide/show EditMode
-	EditModeManagerFrame:HookScript('OnShow', onEditModeEnter)
-	EditModeManagerFrame:HookScript('OnHide', onEditModeExit)
-
-	-- we don't want any custom frames dangling around
-	EditModeSystemSettingsDialog:HookScript('OnHide', resetDialogs)
-
-	-- unselect our selections whenever a system is selected and try to add an extension
-	hooksecurefunc(EditModeManagerFrame, 'SelectSystem', function(_, systemFrame)
-		resetDialogs()
-		resetSelection()
-
-		internal.dialog:Reset()
-
-		local systemID = systemFrame.system
-		if lib.systemSettings[systemID] or lib.systemButtons[systemID] then
-			internal.extension:Update(systemID)
+	EventRegistry:RegisterFrameEventAndCallback('EDIT_MODE_LAYOUTS_UPDATED', function(...)
+		if lib.hookVersion == MINOR then
+			onEditModeChanged(...)
 		end
 	end)
 
-	-- fetch layout info in case EDIT_MODE_LAYOUTS_UPDATED already fired
-	if lib.layoutCache then
-		onEditModeChanged(nil, C_EditMode.GetLayouts()) -- introduces a little latency
-	end
+	EventRegistry:RegisterFrameEventAndCallback('PLAYER_SPECIALIZATION_CHANGED', function(...)
+		if lib.hookVersion == MINOR then
+			onSpecChanged(...)
+		end
+	end)
+	EventRegistry:RegisterCallback('EditMode.SavedLayouts', function(...)
+		if lib.hookVersion == MINOR then
+			onEditModeLayoutChanged(...)
+		end
+	end)
 
-	isManagerHooked = true
+	-- hook EditMode shown state, since QuickKeybindMode will hide/show EditMode
+	EditModeManagerFrame:HookScript('OnShow', function(...)
+		if lib.hookVersion == MINOR then
+			onEditModeEnter(...)
+		end
+	end)
+	EditModeManagerFrame:HookScript('OnHide', function(...)
+		if lib.hookVersion == MINOR then
+			onEditModeExit(...)
+		end
+	end)
+
+	-- we don't want any custom frames dangling around
+	EditModeSystemSettingsDialog:HookScript('OnHide', function(...)
+		if lib.hookVersion == MINOR then
+			resetDialogs(...)
+		end
+	end)
+
+	-- unselect our selections whenever a system is selected and try to add an extension
+	hooksecurefunc(EditModeManagerFrame, 'SelectSystem', function(_, systemFrame)
+		if lib.hookVersion == MINOR then
+			resetDialogs()
+			resetSelection()
+
+			if internal.dialog then
+				internal.dialog:Reset() -- can this be moved to resetDialogs ?
+			end
+
+			local systemID = systemFrame.system
+			local subSystemID = systemFrame.systemIndex
+			local isKnownSystem = lib.systemSettings[systemID] or lib.systemButtons[systemID]
+			local isKnownSubSystem = subSystemID and ((lib.subSystemSettings[systemID] and lib.subSystemSettings[systemID][subSystemID]) or (lib.subSystemButtons[systemID] and lib.subSystemButtons[systemID][subSystemID]))
+			if isKnownSystem or isKnownSubSystem then
+				internal.extension:Update(systemID, isKnownSubSystem and subSystemID or nil)
+			end
+		end
+	end)
+
+	hooksecurefunc(EditModeManagerFrame, 'ShowNewLayoutDialog', function(_, sourceLayout)
+		if lib.hookVersion == MINOR then
+			lib._layoutCopySource = sourceLayout
+		end
+	end)
 end
+
+-- custom global callback hook that all addons that add custom dialogs should respond to
+EventRegistry:RegisterCallback('EditModeExternal.hideDialog', function()
+	resetDialogs()
+	resetSelection()
+end)
 
 --[[ LibEditMode:AddFrame(_frame, callback, default_) ![](https://img.shields.io/badge/function-blue)
 Register a frame to be controlled by the Edit Mode.
@@ -340,8 +420,9 @@ function lib:AddFrame(frame, callback, default, name)
 			resetSelection()
 		end)
 
-		if not isManagerHooked then
-			hookManager()
+		-- fetch layout info in case EDIT_MODE_LAYOUTS_UPDATED already fired
+		if lib.layoutCache then
+			onEditModeChanged(nil, C_EditMode.GetLayouts()) -- introduces a little latency
 		end
 	end
 end
@@ -441,90 +522,123 @@ function lib:RefreshFrameSettings(frame)
 	end
 end
 
---[[ LibEditMode:AddSystemSettings(_systemID, settings_) ![](https://img.shields.io/badge/function-blue)
+--[[ LibEditMode:AddSystemSettings(_systemID, settings[, subSystemID]_) ![](https://img.shields.io/badge/function-blue)
 Register extra settings for a Blizzard system, it will be displayed in an dialog attached to the system's dialog in the Edit Mode.
 
-* `systemID`: the ID of a system registered with the Edit Mode. See `Enum.EditModeSystem`.
+* `systemID`: the ID of a system registered with the Edit Mode. See [`Enum.EditModeSystem`](https://warcraft.wiki.gg/wiki/EDIT_MODE_LAYOUTS_UPDATED).
 * `settings`: table containing [SettingObject](Types#settingobject) entries _(table, number indexed)_
+* `subSystemID`: optional ID of a subsystem of a system registered with the Edit Mode. See [`Enum.EditMode...SystemIndices`](https://github.com/Gethe/wow-ui-source/blob/live/Interface/AddOns/Blizzard_APIDocumentationGenerated/EditModeManagerConstantsDocumentation.lua).
 --]]
-function lib:AddSystemSettings(systemID, settings)
-	if not lib.systemSettings[systemID] then
-		lib.systemSettings[systemID] = {}
-	end
+function lib:AddSystemSettings(systemID, settings, subSystemID)
+	if subSystemID then
+		if not lib.subSystemSettings[systemID] then
+			lib.subSystemSettings[systemID] = {}
+		end
 
-	-- while not ideal allow multiple addons to add their settings
-	for _, setting in next, settings do
-		table.insert(lib.systemSettings[systemID], setting)
+		if not lib.subSystemSettings[systemID][subSystemID] then
+			lib.subSystemSettings[systemID][subSystemID] = {}
+		end
+
+		for _, setting in next, settings do
+			table.insert(lib.subSystemSettings[systemID][subSystemID], setting)
+		end
+	else
+		if not lib.systemSettings[systemID] then
+			lib.systemSettings[systemID] = {}
+		end
+
+		for _, setting in next, settings do
+			table.insert(lib.systemSettings[systemID], setting)
+		end
 	end
 
 	if not internal.extension then
 		internal.extension = internal:CreateExtension()
 	end
 
-	if not isManagerHooked then
-		hookManager()
+	-- fetch layout info in case EDIT_MODE_LAYOUTS_UPDATED already fired
+	if lib.layoutCache then
+		onEditModeChanged(nil, C_EditMode.GetLayouts()) -- introduces a little latency
 	end
 end
 
---[[ LibEditMode:EnableSystemSetting(_systemID, settingName_) ![](https://img.shields.io/badge/function-blue)
+--[[ LibEditMode:EnableSystemSetting(_systemID, settingName[, subSystemID]_) ![](https://img.shields.io/badge/function-blue)
 Enables a setting on a frame.
 
-* `systemID`: the ID of a system registered with the Edit Mode. See `Enum.EditModeSystem`.
+* `systemID`: the ID of a system registered with the Edit Mode. See [`Enum.EditModeSystem`](https://warcraft.wiki.gg/wiki/EDIT_MODE_LAYOUTS_UPDATED).
 * `settingName`: a setting already registered with [AddSystemSettings](#libeditmodeaddsystemsettingssystemid-settings-)
+* `subSystemID`: optional ID of a subsystem of a system registered with the Edit Mode. See [`Enum.EditMode...SystemIndices`](https://github.com/Gethe/wow-ui-source/blob/live/Interface/AddOns/Blizzard_APIDocumentationGenerated/EditModeManagerConstantsDocumentation.lua).
 --]]
-function lib:EnableSystemSetting(systemID, settingName)
-	local settings = internal:GetSystemSettings(systemID)
+function lib:EnableSystemSetting(systemID, settingName, subSystemID)
+	local settings = internal:GetSystemSettings(systemID, subSystemID)
 	if settings then
 		for _, setting in next, settings do
 			if setting.name == settingName then
 				setting.disabled = false
-				internal.extension:Update(internal.extension.systemID)
+				internal.extension:Update(internal.extension.systemID, internal.extension.subSystemID)
 				break
 			end
 		end
 	end
 end
 
---[[ LibEditMode:DisableSystemSetting(_systemID, settingName_) ![](https://img.shields.io/badge/function-blue)
+--[[ LibEditMode:DisableSystemSetting(_systemID, settingName[, subSystemID]_) ![](https://img.shields.io/badge/function-blue)
 Disables a setting on a frame.
 
-* `systemID`: the ID of a system registered with the Edit Mode. See `Enum.EditModeSystem`.
+* `systemID`: the ID of a system registered with the Edit Mode. See [`Enum.EditModeSystem`](https://warcraft.wiki.gg/wiki/EDIT_MODE_LAYOUTS_UPDATED).
 * `settingName`: a setting already registered with [AddSystemSettings](#libeditmodeaddsystemsettingssystemid-settings-)
+* `subSystemID`: optional ID of a subsystem of a system registered with the Edit Mode. See [`Enum.EditMode...SystemIndices`](https://github.com/Gethe/wow-ui-source/blob/live/Interface/AddOns/Blizzard_APIDocumentationGenerated/EditModeManagerConstantsDocumentation.lua).
 --]]
-function lib:DisableSystemSetting(systemID, settingName)
-	local settings = internal:GetSystemSettings(systemID)
+function lib:DisableSystemSetting(systemID, settingName, subSystemID)
+	local settings = internal:GetSystemSettings(systemID, subSystemID)
 	if settings then
 		for _, setting in next, settings do
 			if setting.name == settingName then
 				setting.disabled = true
-				internal.extension:Update(internal.extension.systemID)
+				internal.extension:Update(internal.extension.systemID, internal.extension.subSystemID)
 				break
 			end
 		end
 	end
 end
 
---[[ LibEditMode:AddSystemSettingsButtons(_systemID, buttons_) ![](https://img.shields.io/badge/function-blue)
+--[[ LibEditMode:AddSystemSettingsButtons(_systemID, buttons[, subSystemID]_) ![](https://img.shields.io/badge/function-blue)
 Register extra buttons for a Blizzard system, it will be displayed in a dialog attached to the system's dialog in the Edit Mode.
 
-* `systemID`: the ID of a system registered with the Edit Mode. See `Enum.EditModeSystem`.
+* `systemID`: the ID of a system registered with the Edit Mode. See [`Enum.EditModeSystem`](https://warcraft.wiki.gg/wiki/EDIT_MODE_LAYOUTS_UPDATED).
 * `buttons`: table containing [ButtonObject](Types#buttonobject) entries _(table, number indexed)_
+* `subSystemID`: optional ID of a subsystem of a system registered with the Edit Mode. See [`Enum.EditMode...SystemIndices`](https://github.com/Gethe/wow-ui-source/blob/live/Interface/AddOns/Blizzard_APIDocumentationGenerated/EditModeManagerConstantsDocumentation.lua).
 --]]
-function lib:AddSystemSettingsButtons(systemID, buttons)
-	if not lib.systemButtons[systemID] then
-		lib.systemButtons[systemID] = {}
-	end
+function lib:AddSystemSettingsButtons(systemID, buttons, subSystemID)
+	if subSystemID then
+		if not lib.subSystemButtons[systemID] then
+			lib.subSystemButtons[systemID] = {}
+		end
 
-	for _, button in next, buttons do
-		table.insert(lib.systemButtons[systemID], button)
+		if not lib.subSystemButtons[systemID][subSystemID] then
+			lib.subSystemButtons[systemID][subSystemID] = {}
+		end
+
+		for _, setting in next, buttons do
+			table.insert(lib.subSystemButtons[systemID][subSystemID], setting)
+		end
+	else
+		if not lib.systemButtons[systemID] then
+			lib.systemButtons[systemID] = {}
+		end
+
+		for _, button in next, buttons do
+			table.insert(lib.systemButtons[systemID], button)
+		end
 	end
 
 	if not internal.extension then
 		internal.extension = internal:CreateExtension()
 	end
 
-	if not isManagerHooked then
-		hookManager()
+	-- fetch layout info in case EDIT_MODE_LAYOUTS_UPDATED already fired
+	if lib.layoutCache then
+		onEditModeChanged(nil, C_EditMode.GetLayouts()) -- introduces a little latency
 	end
 end
 
@@ -546,6 +660,7 @@ Possible events:
     * signature:
         * `layoutName`: name of the new layout
         * `layoutIndex`: index of the layout
+        * `sourceLayoutName`: name of the layout it was copied from, if it was copied
 * `rename`: triggered when a Edit Mode layout has been renamed
     * signature:
         * `oldLayoutName`: name of the layout that got renamed
@@ -553,7 +668,15 @@ Possible events:
         * `layoutIndex`: index of the layout
 * `delete`: triggered when a Edit Mode layout has been deleted
     * signature:
-        *`layoutName`: name of the layout that got deleted
+        * `layoutName`: name of the layout that got deleted
+
+Example:
+
+```lua
+LibEditMode:RegisterCallback('rename', function(oldLayoutName, newLayoutName, layoutIndex)
+    -- do something
+end)
+```
 --]]
 function lib:RegisterCallback(event, callback)
 	assert(event and type(event) == 'string', 'event must be a string')
@@ -647,16 +770,20 @@ function internal:MoveParent(selection, x, y)
 	updatePosition(selection, x, y)
 end
 
-function internal:GetSystemSettings(systemID)
-	if lib.systemSettings[systemID] then
+function internal:GetSystemSettings(systemID, subSystemID)
+	if subSystemID and lib.subSystemSettings[systemID] and lib.subSystemSettings[systemID][subSystemID] then
+		return lib.subSystemSettings[systemID][subSystemID], #lib.subSystemSettings[systemID][subSystemID]
+	elseif lib.systemSettings[systemID] then
 		return lib.systemSettings[systemID], #lib.systemSettings[systemID]
 	else
 		return nil, 0
 	end
 end
 
-function internal:GetSystemSettingsButtons(systemID)
-	if lib.systemButtons[systemID] then
+function internal:GetSystemSettingsButtons(systemID, subSystemID)
+	if subSystemID and lib.subSystemButtons[systemID] and lib.subSystemButtons[systemID][subSystemID] then
+		return lib.subSystemButtons[systemID][subSystemID], #lib.subSystemButtons[systemID][subSystemID]
+	elseif lib.systemButtons[systemID] then
 		return lib.systemButtons[systemID], #lib.systemButtons[systemID]
 	else
 		return nil, 0
@@ -677,22 +804,24 @@ Table containing the following entries:
 | default  | default value for the setting          | any                         | yes      |
 | get      | getter for the current value           | function                    | yes      |
 | set      | setter for the new value               | function                    | yes      |
-| disabled | whether the setting should be disabled | boolean                     | no       |
+| disabled | whether the setting should be disabled | boolean/function            | no       |
+| hidden   | whether the setting should be hidden   | boolean/function            | no       |
 
 - The getter passes `layoutName` as the sole argument and expects a value in return.
 - The setter passes (`layoutName`, `newValue`, `fromReset`) and expects no returns.
 - The description is shown in a tooltip.
+- The `disabled` and `hidden` options, if added as functions, must return a boolean
 
 Depending on the setting type there are additional required and optional entries:
 
 ### Dropdown ![](https://img.shields.io/badge/object-teal)
 
-| key       | value                                                                                                                 | type     | required |
-|:----------|:----------------------------------------------------------------------------------------------------------------------|:---------|:---------|
-| values    | indexed table containing [DropdownOption](#dropdownoption)s                                                           | table    | no       |
-| multiple  | whether the dropdown should allow selecing multiple options                                                           | boolean  | no       |
-| generator | [Dropdown `SetupMenu` "generator" (callback)](https://warcraft.wiki.gg/wiki/Patch_11.0.0/API_changes#New_menu_system) | function | no       |
-| height    | max height of the menu                                                                                                | integer  | no       |
+| key       | value                                                                                                                 | type           | required |
+|:----------|:----------------------------------------------------------------------------------------------------------------------|:---------------|:---------|
+| values    | indexed table containing [DropdownOption](#dropdownoption)s or a function that returns a compatible table             | table/function | no       |
+| multiple  | whether the dropdown should allow selecing multiple options                                                           | boolean        | no       |
+| generator | [Dropdown `SetupMenu` "generator" (callback)](https://warcraft.wiki.gg/wiki/Patch_11.0.0/API_changes#New_menu_system) | function       | no       |
+| height    | max height of the menu                                                                                                | integer        | no       |
 
 - Either `values` or `generator` is required, the former for simple menues and the latter for complex ones.
     - They are not exclusive, but `generator` takes precedence (e.g. `values` will be available but not used).
@@ -728,6 +857,22 @@ Table containing the following entries:
 The `default` field and the getter expects a [ColorMixin](https://warcraft.wiki.gg/wiki/ColorMixin) object, and the setter will pass one as its value.  
 Even if `hasOpacity` is set to `false` (which is the default value) the ColorMixin object will contain an alpha value, this is the default behavior of the ColorMixin.
 
+### Divider
+
+| key       | value                            | type    | required | default |
+|:----------|:---------------------------------|:--------|:---------|:--------|
+| hideLabel | whether or not to hide the label | boolean | no       | false   |
+
+### Expander
+
+| key            | value                            | type    | required | default |
+|:---------------|:---------------------------------|:--------|:---------|:--------|
+| hideArrow      | whether or not to hide the arrow | boolean | no       | false   |
+| expandedLabel  | text to display when expanded    | string  | no       |         |
+| collapsedLabel | text to display when collapsed   | string  | no       |         |
+
+For `expandedLabel` or `collapsedLabel` to work _both_ have to be defined. Otherwise the setting `name` will be used.
+
 ## ButtonObject ![](https://img.shields.io/badge/object-teal)
 
 Table containing the following entries:
@@ -746,6 +891,7 @@ One of:
 - `Slider`
 - `Divider`
 - `ColorPicker`
+- `Expander`
 --]]
 lib.SettingType = CopyTable(Enum.EditModeSettingDisplayType)
 lib.SettingType.ColorPicker = 10 -- leave some room for blizzard expansion

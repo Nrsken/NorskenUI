@@ -1,14 +1,21 @@
-local MINOR = 12
-local lib, minor = LibStub('LibEditMode')
-if minor > MINOR then
-	return
+local _, ns = ...
+local lib
+if ns.LibEditMode then
+	lib = ns.LibEditMode
+else
+	local MINOR, prevMinor = 15
+	lib, prevMinor = LibStub('LibEditMode')
+	if prevMinor > MINOR then
+		return
+	end
 end
 
 local internal = lib.internal
 
 local extensionMixin = {}
-function extensionMixin:Update(systemID)
+function extensionMixin:Update(systemID, subSystemID)
 	self.systemID = systemID
+	self.subSystemID = subSystemID
 
 	internal.ReleaseAllPools()
 
@@ -28,17 +35,32 @@ function extensionMixin:Update(systemID)
 	self:Layout()
 end
 
+function extensionMixin:RefreshWidgets()
+	for _, widget in next, self.Settings.widgets do
+		if widget.Refresh then
+			widget:Refresh()
+		end
+	end
+
+	if self:IsShown() then
+		self:Layout()
+	end
+end
+
 function extensionMixin:UpdateSettings()
-	local settings, num = internal:GetSystemSettings(self.systemID)
+	self.Settings.widgets = table.wipe(self.Settings.widgets or {})
+
+	local settings, num = internal:GetSystemSettings(self.systemID, self.subSystemID)
 	local isEmpty = num == 0
 	if not isEmpty then
 		for index, data in next, settings do
 			local pool = internal:GetPool(data.kind)
 			if pool then
-				local setting = pool:Acquire(self.Settings)
-				setting.layoutIndex = index
-				setting:Setup(data)
-				setting:Show()
+				local widget = pool:Acquire(self.Settings)
+				widget.layoutIndex = index
+				widget:Setup(data)
+
+				table.insert(self.Settings.widgets, widget)
 			end
 		end
 	end
@@ -52,7 +74,7 @@ function extensionMixin:UpdateSettings()
 end
 
 function extensionMixin:UpdateButtons(numSettings)
-	local buttons, num = internal:GetSystemSettingsButtons(self.systemID)
+	local buttons, num = internal:GetSystemSettingsButtons(self.systemID, self.subSystemID)
 	local isEmpty = num == 0
 	if not isEmpty then
 		if numSettings > 0 then
@@ -75,7 +97,7 @@ function extensionMixin:UpdateButtons(numSettings)
 end
 
 function extensionMixin:ResetSettings()
-	local settings, num = internal:GetSystemSettings(self.systemID)
+	local settings, num = internal:GetSystemSettings(self.systemID, self.subSystemID)
 	if num > 0 then
 		for _, data in next, settings do
 			if data.set then
@@ -83,7 +105,7 @@ function extensionMixin:ResetSettings()
 			end
 		end
 
-		self:Update(self.systemID)
+		self:Update(self.systemID, self.subSystemID)
 	end
 end
 

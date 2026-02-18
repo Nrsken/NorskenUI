@@ -1,12 +1,8 @@
 -- Copyright 2022-2023 plusmouse. Licensed under terms found in LICENSE file.
--- LibEditModeOverride-1.0
--- https://github.com/plusmouse/LibEditModeOverride
 
 local lib = LibStub:NewLibrary("LibEditModeOverride-1.0", 10)
 
-if not lib then
-  return
-end
+if not lib then return end
 
 local activeLayoutPending = false
 
@@ -174,7 +170,6 @@ end
 
 function lib:LoadLayouts()
   assert(lib:IsReady(), READY_ERROR)
-
   layoutInfo = C_EditMode.GetLayouts()
 
   if not reconciledLayouts then
