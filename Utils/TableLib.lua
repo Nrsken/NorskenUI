@@ -1,5 +1,6 @@
 -- NorskenUI namespace
-local _, NRSKNUI = ...
+---@class NRSKNUI
+local NRSKNUI = select(2, ...)
 
 -- Module from p3lim
 

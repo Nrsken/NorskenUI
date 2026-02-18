@@ -1,4 +1,6 @@
-local _, NRSKNUI = ...
+-- NorskenUI namespace
+---@class NRSKNUI
+local NRSKNUI = select(2, ...)
 
 -- Module used to hide frames
 

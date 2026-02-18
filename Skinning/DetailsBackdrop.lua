@@ -1,5 +1,6 @@
 -- NorskenUI namespace
-local _, NRSKNUI = ...
+---@class NRSKNUI
+local NRSKNUI = select(2, ...)
 
 -- Credit to unhalted for the idea of this module, not a copy of his code but liked his cook
 
@@ -10,6 +11,7 @@ if not NRSKNUI.Addon then
 end
 
 -- Create module
+---@class DetailsBackdrop
 local DBG = NRSKNUI.Addon:NewModule("DetailsBackdrop", "AceEvent-3.0")
 
 -- Localization

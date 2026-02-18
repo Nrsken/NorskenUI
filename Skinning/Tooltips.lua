@@ -1,5 +1,6 @@
 -- NorskenUI namespace
-local _, NRSKNUI = ...
+---@class NRSKNUI
+local NRSKNUI = select(2, ...)
 local LSM = NRSKNUI.LSM
 
 -- Check for addon object if available
@@ -10,6 +11,7 @@ if not NRSKNUI.Addon then
 end
 
 -- Create module
+---@class Tooltips
 local TT = NRSKNUI.Addon:NewModule("Tooltips", "AceEvent-3.0")
 
 -- Localization

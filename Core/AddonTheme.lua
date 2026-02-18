@@ -1,5 +1,6 @@
 -- NorskenUI namespace
-local _, NRSKNUI = ...
+---@class NRSKNUI
+local NRSKNUI = select(2, ...)
 
 -- Module with my addon theme settings and helpers
 

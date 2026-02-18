@@ -1,5 +1,6 @@
 -- NorskenUI namespace
-local _, NRSKNUI = ...
+---@class NRSKNUI
+local NRSKNUI = select(2, ...)
 
 -- Safety check
 if not NRSKNUI.Addon then
@@ -8,6 +9,7 @@ if not NRSKNUI.Addon then
 end
 
 -- Create module
+---@class Battlenet
 local BNET = NRSKNUI.Addon:NewModule("Battlenet", "AceEvent-3.0")
 
 -- Localization

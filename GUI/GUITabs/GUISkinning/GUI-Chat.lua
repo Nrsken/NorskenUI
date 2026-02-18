@@ -1,4 +1,6 @@
-local _, NRSKNUI = ...
+-- NorskenUI namespace
+---@class NRSKNUI
+local NRSKNUI = select(2, ...)
 local GUIFrame = NRSKNUI.GUIFrame
 local Theme = NRSKNUI.Theme
 local LSM = NRSKNUI.LSM

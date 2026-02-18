@@ -1,5 +1,6 @@
 -- NorskenUI namespace
-local _, NRSKNUI = ...
+---@class NRSKNUI
+local NRSKNUI = select(2, ...)
 
 if not NRSKNUI.Addon then
     error("CopyAnything: Addon object not initialized. Check file load order!")
@@ -7,6 +8,7 @@ if not NRSKNUI.Addon then
 end
 
 -- Create module
+---@class CopyAnything
 local CopyAnything = NRSKNUI.Addon:NewModule("CopyAnything", "AceEvent-3.0")
 
 -- Localization

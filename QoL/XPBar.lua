@@ -1,11 +1,16 @@
 -- NorskenUI namespace
-local _, NRSKNUI = ...
+---@class NRSKNUI
+local NRSKNUI = select(2, ...)
 
 -- Check for addon object
 if not NRSKNUI.Addon then
     error("XPBar: Addon object not initialized. Check file load order!")
     return
 end
+
+-- Create module
+---@class XPBar
+local XPBar = NRSKNUI.Addon:NewModule("XPBar", "AceEvent-3.0")
 
 -- Localization
 local UnitLevel = UnitLevel
@@ -20,9 +25,6 @@ local MainStatusTrackingBarContainer = MainStatusTrackingBarContainer
 
 -- Module variables
 local HideBlizzardBarInit = false
-
--- Create module
-local XPBar = NRSKNUI.Addon:NewModule("XPBar", "AceEvent-3.0")
 
 -- Module init
 function XPBar:OnInitialize()

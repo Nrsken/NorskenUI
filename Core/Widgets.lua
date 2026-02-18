@@ -1,4 +1,5 @@
-local _, NRSKNUI = ...
+---@class NRSKNUI
+local NRSKNUI = select(2, ...)
 local Theme = NRSKNUI.Theme
 
 local CreateFrame = CreateFrame

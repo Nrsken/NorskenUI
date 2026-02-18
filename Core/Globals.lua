@@ -1,6 +1,7 @@
 -- NorskenUI namespace
-local addonName, NRSKNUI = ...
-_G.NRSKNUI = NRSKNUI
+---@class NRSKNUI
+local NRSKNUI = select(2, ...)
+local addonName = select(1, ...)
 
 -- Localization
 local ipairs = ipairs

@@ -1,5 +1,6 @@
 -- NorskenUI namespace
-local _, NRSKNUI = ...
+---@class NRSKNUI
+local NRSKNUI = select(2, ...)
 
 function NRSKNUI.GUIFrame:CreateSpacer(parent, height)
     height = height or 16

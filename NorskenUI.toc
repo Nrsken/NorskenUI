@@ -11,10 +11,10 @@
 
 # Load Libraries
 Libs/Init.xml
-Utils/Utils.xml
 
 # Load Core files (initialization, database, events, commands)
 Core/Core.xml
+Utils/Utils.xml
 
 # Load modules
 Combat/Combat.xml

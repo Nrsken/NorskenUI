@@ -1,5 +1,6 @@
 -- NorskenUI namespace
-local _, NRSKNUI = ...
+---@class NRSKNUI
+local NRSKNUI = select(2, ...)
 
 -- Check for addon object
 if not NRSKNUI.Addon then
@@ -8,6 +9,7 @@ if not NRSKNUI.Addon then
 end
 
 -- Create module
+---@class ActionBars
 local ACB = NRSKNUI.Addon:NewModule("ActionBars", "AceEvent-3.0")
 
 -- Localization

@@ -1,5 +1,6 @@
 -- NorskenUI namespace
-local _, NRSKNUI = ...
+---@class NRSKNUI
+local NRSKNUI = select(2, ...)
 local Theme = NRSKNUI.Theme
 
 -- Check for addon object
@@ -9,6 +10,7 @@ if not NRSKNUI.Addon then
 end
 
 -- Create module
+---@class Minimap
 local MAP = NRSKNUI.Addon:NewModule("Minimap", "AceEvent-3.0")
 
 -- Localization
