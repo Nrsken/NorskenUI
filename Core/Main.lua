@@ -5,23 +5,9 @@ local NRSKNUI = select(2, ...)
 -- Localization Setup
 local IsInInstance = IsInInstance
 local LibStub = LibStub
-local next = next
 local Theme = NRSKNUI.Theme
-local C_CVar = C_CVar
 
 local aceAddon = LibStub("AceAddon-3.0")
-
-local UVARS = {
-    taintLog = 0,
-}
-function NRSKNUI:OnLogin()
-    for key, value in next, UVARS do
-        C_CVar.SetCVar(key, value)
-    end
-    return true
-end
-
-NRSKNUI:OnLogin()
 
 -- Constants
 local DEFAULT_PROFILE = "Default"

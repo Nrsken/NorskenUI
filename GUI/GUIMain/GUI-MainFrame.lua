@@ -64,6 +64,7 @@ GUIFrame.SidebarConfig = {
             text = "• Quality of Life",
             defaultExpanded = true,
             items = {
+                { id = "MiscVars",        text = "CVars" },
                 { id = "Automation",      text = "Automation" },
                 { id = "CopyAnything",    text = "Copy Anything" },
                 { id = "CooldownStrings", text = "CDM Profile Strings" },

@@ -10,4 +10,5 @@
     <Script file="CooldownStrings.lua"/>
     <Script file="FocusCastbar.lua"/>
     <Script file="GateUsable.lua"/>
+    <Script file="MiscVars.lua"/>
 </Ui>

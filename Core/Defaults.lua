@@ -240,6 +240,14 @@ local Defaults = {
 
         -- Miscellaneous Settings
         Miscellaneous = {
+            MiscVars = {
+                Enabled = true,
+
+                -- Cvar list
+                nameplateUseClassColorForFriendlyPlayerUnitNames = true,
+                nameplateShowOnlyNameForFriendlyPlayerUnits = true,
+            },
+
             Gateway = {
                 Enabled = true,
                 Color = { 0, 1, 0 },
