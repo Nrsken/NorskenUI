@@ -378,3 +378,31 @@ function NRSKNUI:CreateButtonFrame(parent, width, height, btnName, options)
 
     return button
 end
+
+-- Fade a frame to target alpha over duration, combat safe
+function NRSKNUI:CombatSafeFade(frame, targetAlpha, duration)
+    if frame._fadeTimer then frame._fadeTimer:Hide() end -- stop previous fade
+
+    local startAlpha = frame:GetAlpha()
+    local diff = targetAlpha - startAlpha
+    if diff == 0 or duration <= 0 then
+        frame:SetAlpha(targetAlpha)
+        return
+    end
+
+    -- Create a tiny helper frame
+    local fadeFrame = frame._fadeTimer or CreateFrame("Frame")
+    fadeFrame:Show()
+    fadeFrame.elapsed = 0
+
+    fadeFrame:SetScript("OnUpdate", function(self, dt)
+        self.elapsed = self.elapsed + dt
+        local progress = math.min(self.elapsed / duration, 1)
+        frame:SetAlpha(startAlpha + diff * progress)
+        if progress >= 1 then
+            self:Hide()
+        end
+    end)
+
+    frame._fadeTimer = fadeFrame
+end

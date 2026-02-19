@@ -196,7 +196,8 @@ function CHAT:UpdateEditBox()
         local editBox = _G['ChatFrame' .. i .. 'EditBox']
         if editBox and self.backdrops[editBox] then
             self.backdrops[editBox]:SetBackdropColor(bgColor[1], bgColor[2], bgColor[3], bgColor[4])
-            self.backdrops[editBox]:SetBackdropBorderColor(borderColor[1], borderColor[2], borderColor[3], borderColor[4])
+            self.backdrops[editBox]:SetBackdropBorderColor(borderColor[1], borderColor[2], borderColor[3], borderColor
+                [4])
         end
     end
 end
@@ -307,6 +308,7 @@ local function SetupChatButtons()
         btnOffset = { 0, 31 },
     })
     friendButton:SetTextColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
+    friendButton:SetAlpha(0)
 
     local function UpdateFriendText()
         friendButton:SetButtonText(QuickJoinToastButton.FriendCount:GetText())
@@ -316,6 +318,18 @@ local function SetupChatButtons()
     hooksecurefunc(QuickJoinToastButton.FriendCount, "SetText", UpdateFriendText)
     friendButton:SetScript("OnClick", function()
         QuickJoinToastButton:Click()
+    end)
+
+    friendButton:SetScript("OnEnter", function()
+        UIFrameFadeIn(friendButton, 0.2, friendButton:GetAlpha(), 1)
+    end)
+
+    friendButton:SetScript("OnLeave", function(self)
+        if not self:IsMouseOver() then
+            C_Timer.After(3, function()
+                UIFrameFadeOut(friendButton, 3, friendButton:GetAlpha(), 0)
+            end)
+        end
     end)
 
     CHAT.friendButton = friendButton
@@ -622,7 +636,6 @@ local function SetupAndSkinChat()
             -- Skin tab using shared helper
             SkinChatTab(chatTab, chatIndex, font, outline, tabSize, false)
             updateTabColor(chatIndex)
-
         elseif chatIndex == 2 then
             chatFrame:ClearAllPoints()
             chatFrame:SetPoint("TOPLEFT", CHAT.backdrop, "TOPLEFT", 1, -TAB_AREA_HEIGHT)
@@ -636,7 +649,6 @@ local function SetupAndSkinChat()
 
             SkinChatTab(chatTab, chatIndex, font, outline, tabSize, true)
             updateTabColor(chatIndex)
-
         elseif chatIndex == 3 then
             SkinChatTab(chatTab, chatIndex, font, outline, tabSize, true)
             updateTabColor(chatIndex)

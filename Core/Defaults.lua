@@ -531,6 +531,19 @@ local Defaults = {
         },
         -- Skinning Settings (CDM, Buffs, Action Bars, etc.)
         Skinning = {
+            BlizzardRM = {
+                Enabled = true,
+                -- Position Settings
+                Position = {        -- Position settings
+                    YOffset = -650, -- Y offset
+                },
+                Strata = "HIGH",
+                FadeOnMouseOut = true,
+                FadeInDuration = 0.3,
+                FadeOutDuration = 3,
+                Alpha = 0,
+            },
+
             Battlenet = {
                 Enabled = true,
                 -- Position Settings

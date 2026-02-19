@@ -28,7 +28,6 @@ local GetMoney = GetMoney
 local GetGuildBankWithdrawMoney = GetGuildBankWithdrawMoney
 local CreateFrame = CreateFrame
 local GameMovieFinished = GameMovieFinished
-local CinematicFinished = CinematicFinished
 local C_Container = C_Container
 local LFGListApplicationDialog = LFGListApplicationDialog
 local C_Item = C_Item
