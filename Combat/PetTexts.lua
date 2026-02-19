@@ -25,6 +25,7 @@ local CreateFrame = CreateFrame
 local GetPetActionInfo = GetPetActionInfo
 local PetHasActionBar = PetHasActionBar
 local UnitIsDeadOrGhost = UnitIsDeadOrGhost
+local IsPlayerSpell = IsPlayerSpell
 local C_Timer = C_Timer
 local C_SpellBook = C_SpellBook
 
@@ -95,11 +96,17 @@ local function CheckPetStatus()
     if not petInfo then return PET_STATUS.NONE, nil, nil end
     if IsPlayerMounted() then return PET_STATUS.NONE, nil, nil end
 
+    local specIndex = GetSpecialization()
+    local specID = GetSpecializationInfo(specIndex)
+
+    -- Check if current spec is MM Hunter (254) and if they are talented into Unbreakable Bond
+    if specID == 254 and IsPlayerSpell(1223323) then
+        return PET_STATUS.NONE, nil, nil
+    end
+
     -- Improved Spec Check
     if petInfo.specId then
-        local specIndex = GetSpecialization()
         if specIndex then
-            local specID = GetSpecializationInfo(specIndex)
             if specID ~= petInfo.specId then return PET_STATUS.NONE, nil, nil end
         end
     end
