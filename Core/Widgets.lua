@@ -169,12 +169,15 @@ function NRSKNUI:CreateTextFrame(parent, width, height, options)
     local name = options.name
     local textPoint = options.textPoint or "CENTER"
     local textOffset = options.textOffset or { 0, 0 }
+    local color = options.color or { 1, 1, 1, 1 }
 
     local frame = CreateFrame("Frame", name, parent)
     frame:SetSize(width, height)
 
     frame.text = frame:CreateFontString(nil, "OVERLAY")
     frame.text:SetPoint(textPoint, frame, textPoint, textOffset[1], textOffset[2])
+    frame.text:SetFont(NRSKNUI.FONT, 12, "")
+    frame.text:SetTextColor(color[1], color[2], color[3], color[4] or 1)
 
     return frame
 end
