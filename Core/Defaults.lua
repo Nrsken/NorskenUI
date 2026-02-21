@@ -242,7 +242,7 @@ local Defaults = {
         Miscellaneous = {
             HuntersMark = {
                 Enabled = true,
-                Color = { 1, 0.278, 0.392, 1 },
+                Color = { 1, 0.290, 0.301, 1 },
                 -- Font settings
                 FontFace = "Expressway",      -- Font face
                 FontSize = 22,                -- Font size
@@ -998,7 +998,7 @@ local Defaults = {
                         Position = {
                             AnchorFrom = "LEFT",
                             AnchorTo = "LEFT",
-                            XOffset = 43.1,
+                            XOffset = 42.1,
                             YOffset = 0.1,
                         },
                         Mouseover = {
