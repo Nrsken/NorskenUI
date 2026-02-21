@@ -579,6 +579,18 @@ local function CreateContainerFrame()
     containerFrame:Hide()
 end
 
+-- Warrior stance spell IDs for timer tracking
+local WARRIOR_STANCE_SPELLS = {
+    [386164] = true, -- Battle Stance
+    [386196] = true, -- Berserker Stance
+    [386208] = true, -- Defensive Stance
+}
+local STANCE_TIMER_DURATION = 3
+
+-- Stance timer state
+local stanceTimerHandle = nil
+local stanceTimerActive = false
+
 -- Stance icon creation
 local function CreateStanceFrame()
     if stanceFrame then return end
@@ -591,6 +603,29 @@ local function CreateStanceFrame()
     -- Position text above the icon
     stanceFrame.text:ClearAllPoints()
     stanceFrame.text:SetPoint("BOTTOM", stanceFrame, "TOP", 1, 4)
+
+    -- Create cooldown frame for stance timer
+    local cooldown = CreateFrame("Cooldown", nil, stanceFrame, "CooldownFrameTemplate")
+    cooldown:SetAllPoints(stanceFrame)
+    cooldown:SetFrameLevel(stanceFrame:GetFrameLevel() + 1)
+    cooldown:SetDrawEdge(false)
+    cooldown:SetDrawBling(false)
+    cooldown:SetSwipeColor(0, 0, 0, 0.6)
+    cooldown:SetReverse(true)
+    cooldown:SetHideCountdownNumbers(false)
+
+    -- Style cooldown text
+    local cdText = cooldown:GetRegions()
+    if cdText and cdText.SetFont then
+        cdText:SetFont(NRSKNUI.FONT or STANDARD_TEXT_FONT, stanceDb.IconSize * 0.5, "OUTLINE")
+        cdText:SetShadowColor(0, 0, 0, 0)
+        cdText:SetShadowOffset(0, 0)
+        cdText:ClearAllPoints()
+        cdText:SetPoint("CENTER", stanceFrame, "CENTER", 1, 0)
+    end
+
+    -- Store for later use
+    stanceFrame.cooldown = cooldown
 
     NRSKNUI:ApplyFramePosition(stanceFrame, stanceDb.Position, stanceDb)
     NRSKNUI:ApplyFontSettings(stanceFrame, stanceDb, nil)
@@ -780,6 +815,12 @@ end
 
 -- Check stances/forms
 local function CheckStances()
+    -- For warriors, don't interfere while stance timer is active and hide when timer is over
+    if playerClass == "WARRIOR" and stanceTimerActive then
+        UpdateStanceTextDisplay()
+        return
+    end
+
     if stanceFrame then
         stanceFrame:Hide()
     end
@@ -891,6 +932,30 @@ local function CheckStances()
             end
         end
     end
+end
+
+-- Show stance timer, only doing this for warrior since they have a 3 second CD when swapping stances
+local function ShowStanceTimer()
+    if not stanceFrame then CreateStanceFrame() end
+    if not stanceFrame then return end
+    if not stanceFrame.cooldown then return end
+
+    -- Mark timer as active so CheckStances won't interfere
+    stanceTimerActive = true
+
+    -- Start cooldown animation
+    stanceFrame.cooldown:SetAllPoints(stanceFrame)
+    stanceFrame.cooldown:SetCooldown(GetTime(), STANCE_TIMER_DURATION)
+    stanceFrame:Show()
+
+    -- After duration, clear flag and re-check stances
+    stanceTimerHandle = C_Timer.NewTimer(STANCE_TIMER_DURATION, function()
+        stanceTimerHandle = nil
+        stanceTimerActive = false
+        if stanceFrame and not isPreviewActive then
+            CheckStances()
+        end
+    end)
 end
 
 -- Show missing buffs
@@ -1198,6 +1263,20 @@ function MBUFFS:OnEnable()
         UpdateStanceTextDisplay()
     end)
 
+    -- For Warrior stance icon, show a 3 second cooldown when any stance spell is casted
+    self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED", function(_, unit, _, spellID)
+        if unit ~= "player" then return end
+        if playerClass ~= "WARRIOR" then return end
+        if not WARRIOR_STANCE_SPELLS[spellID] then return end
+        if isPreviewActive then return end
+
+        -- Check if stance display is enabled
+        local stanceDb = self.db and self.db.StanceDisplay
+        if not stanceDb or not stanceDb.Enabled then return end
+
+        ShowStanceTimer()
+    end)
+
     -- M+ events
     self:RegisterEvent("CHALLENGE_MODE_START", function() C_Timer.After(1, CheckForMissingBuffs) end)
     self:RegisterEvent("SPELL_ACTIVATION_OVERLAY_GLOW_SHOW", function() C_Timer.After(0.1, CheckForMissingBuffs) end)
@@ -1302,6 +1381,12 @@ end
 function MBUFFS:OnDisable()
     self:UnregisterAllEvents()
     HideAllNotifications()
+
+    -- Cancel stance timer if active
+    if stanceTimerHandle then
+        stanceTimerHandle:Cancel()
+        stanceTimerHandle = nil
+    end
 
     -- Unregister from edit mode
     if NRSKNUI.EditMode then
