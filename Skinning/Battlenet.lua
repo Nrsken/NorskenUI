@@ -167,5 +167,6 @@ end
 
 -- Refresh position (called from GUI)
 function BNET:ApplySettings()
+    if NRSKNUI:ShouldNotLoadModule() then return end
     PositionAnchorFrame()
 end

@@ -20,6 +20,7 @@ end
 
 -- Combat Message Tab Content
 GUIFrame:RegisterContent("Auras", function(scrollChild, yOffset)
+    if NRSKNUI:ShouldNotLoadModule() then return end
     local db = NRSKNUI.db and NRSKNUI.db.profile.Skinning.BuffDebuffFrames
     if not db then
         local errorCard = GUIFrame:CreateCard(scrollChild, "Error", yOffset)

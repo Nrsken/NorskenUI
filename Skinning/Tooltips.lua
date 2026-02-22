@@ -579,6 +579,7 @@ end
 
 -- ApplySettings
 function TT:ApplySettings()
+    if NRSKNUI:ShouldNotLoadModule() then return end
     self:Refresh()
 end
 

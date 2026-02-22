@@ -427,6 +427,7 @@ function DBG:UpdateDetailsBackdropTwo()
 end
 
 function DBG:ApplySettings()
+    if NRSKNUI:ShouldNotLoadModule() then return end
     if not self.db.Enabled then
         if self.backdropOne then
             self.backdropOne:Hide()

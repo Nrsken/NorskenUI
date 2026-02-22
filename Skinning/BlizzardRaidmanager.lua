@@ -106,12 +106,14 @@ function BRMG:SetupRaidManager()
 end
 
 function BRMG:ApplySettings()
+    if NRSKNUI:ShouldNotLoadModule() then return end
     self:SetupRaidManager()
     self:ApplyPosition()
 end
 
 -- Module OnEnable
 function BRMG:OnEnable()
+    if NRSKNUI:ShouldNotLoadModule() then return end
     if not self.db.Enabled then return end
     C_Timer.After(1, function()
         self:ApplySettings()

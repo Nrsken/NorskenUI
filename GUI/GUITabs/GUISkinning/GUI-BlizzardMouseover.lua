@@ -18,6 +18,7 @@ end
 
 -- Combat Message Tab Content
 GUIFrame:RegisterContent("BlizzardMouseover", function(scrollChild, yOffset)
+    if NRSKNUI:ShouldNotLoadModule() then return end
     local db = NRSKNUI.db and NRSKNUI.db.profile.Skinning.BlizzardMouseover
     if not db then
         local errorCard = GUIFrame:CreateCard(scrollChild, "Error", yOffset)

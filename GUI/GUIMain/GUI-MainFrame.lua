@@ -324,13 +324,21 @@ function GUIFrame:ApplyThemeColors()
         local r, g, b = Theme.accent[1], Theme.accent[2], Theme.accent[3]
         for _, header in ipairs(self.sidebarHeaderPool) do
             if header.inUse then
-                -- Update label color
-                if header.label then
-                    header.label:SetTextColor(r, g, b, 1)
-                end
-                -- Update arrow color
-                if header.arrow then
-                    header.arrow:SetVertexColor(r, g, b, 1)
+                -- Update label and arrow color (respect disabled state)
+                if header.disabled then
+                    if header.label then
+                        header.label:SetTextColor(Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3], 0.35)
+                    end
+                    if header.arrow then
+                        header.arrow:SetVertexColor(Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3], 0.35)
+                    end
+                else
+                    if header.label then
+                        header.label:SetTextColor(r, g, b, 1)
+                    end
+                    if header.arrow then
+                        header.arrow:SetVertexColor(r, g, b, 1)
+                    end
                 end
                 -- Update hover background gradient
                 if header.background then
@@ -363,9 +371,12 @@ function GUIFrame:ApplyThemeColors()
             if item.selectedBar then
                 item.selectedBar:SetColorTexture(selText[1], selText[2], selText[3], selText[4] or 1)
             end
-            -- Update text color based on selection
+            -- Update text color based on selection (skip disabled items)
             if item.inUse then
-                if item.id == self.selectedSidebarItem then
+                if item.disabled then
+                    -- Preserve greyed-out appearance for disabled items
+                    item.label:SetTextColor(Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3], 0.35)
+                elseif item.id == self.selectedSidebarItem then
                     item.label:SetTextColor(selText[1], selText[2], selText[3], selText[4] or 1)
                 else
                     item.label:SetTextColor(Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3], 1)

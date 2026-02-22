@@ -1313,6 +1313,7 @@ end
 
 -- Apply all settings, standard module interface
 function ACB:ApplySettings()
+    if NRSKNUI:ShouldNotLoadModule() then return end
     C_Timer.After(0.1, function()
         if InCombatLockdown() then return end
         self:HideBlizzardBars()

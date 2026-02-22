@@ -243,6 +243,7 @@ end
 
 -- ApplySettings
 function AURAS:ApplySettings()
+    if NRSKNUI:ShouldNotLoadModule() then return end
     if self:IsEnabled() then
         self:Refresh()
     end

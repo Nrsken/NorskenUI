@@ -255,6 +255,7 @@ end
 
 -- Main update function (called from GUI)
 function CHAT:ApplySettings()
+    if NRSKNUI:ShouldNotLoadModule() then return end
     self:UpdateBackdrop()
     self:UpdateFonts()
     self:UpdateEditBox()

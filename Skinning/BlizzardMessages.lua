@@ -196,6 +196,7 @@ end
 
 -- Apply all styles
 function BM:ApplySettings()
+    if NRSKNUI:ShouldNotLoadModule() then return end
     if not self.db or not self.db.Enabled then
         self:Reset()
         return

@@ -60,6 +60,7 @@ local function SetupHideBlizzardClutter()
 end
 
 function UIC:ApplySettings()
+    if NRSKNUI:ShouldNotLoadModule() then return end
     SetupHideBlizzardClutter()
 end
 

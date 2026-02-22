@@ -24,6 +24,7 @@ local itemHeight = 28
 function GUIFrame:ReleaseSectionHeaders()
     for _, header in ipairs(self.sidebarHeaderPool or {}) do
         header.inUse = false
+        header.disabled = nil
         header:Hide()
         header:ClearAllPoints()
     end
@@ -205,9 +206,11 @@ function GUIFrame:ConfigureSectionHeader(header, config, yOffset, isExpanded)
     if config.elvUIDisabled and NRSKNUI:ShouldNotLoadModule() then
         header.label:SetTextColor(Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3], 0.35)
         header.arrow:SetVertexColor(Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3], 0.35)
+        header.disabled = true
     else
         header.label:SetTextColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
         header.arrow:SetVertexColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
+        header.disabled = false
     end
 
     -- Store expanded state
@@ -286,6 +289,7 @@ function GUIFrame:ReleaseStaticSidebarItems()
         item:Hide()
         item:ClearAllPoints()
         item.id = nil
+        item.disabled = nil
         item.selectedOverlay:Hide()
         item.selectedBar:Hide()
     end
@@ -466,7 +470,11 @@ function GUIFrame:SelectSidebarItem(itemId)
     self.selectedSidebarItem = itemId
     for _, item in ipairs(self.staticSidebarItemPool) do
         if item.inUse then
-            if item.id == itemId then
+            -- Skip disabled items - preserve their greyed-out appearance
+            if item.disabled then
+                item.selectedOverlay:Hide()
+                item.selectedBar:Hide()
+            elseif item.id == itemId then
                 item.selectedOverlay:Show()
                 item.background:Hide()
                 item.label:SetTextColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], Theme.accent[4] or 1)
@@ -567,7 +575,9 @@ function GUIFrame:RefreshSidebarImmediate()
                         item.selectedOverlay:Hide()
                         item.selectedBar:Hide()
                         item:EnableMouse(false)
+                        item.disabled = true
                     else
+                        item.disabled = false
                         item:EnableMouse(true) -- re-enable in case it was previously disabled
                         if itemConfig.id == self.selectedSidebarItem then
                             item.selectedOverlay:Show()

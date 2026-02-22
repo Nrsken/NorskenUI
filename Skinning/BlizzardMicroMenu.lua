@@ -302,6 +302,7 @@ end
 
 -- Apply function
 function MM:ApplySettings()
+    if NRSKNUI:ShouldNotLoadModule() then return end
     if not self.db.Enabled then return end
     MM:UpdatePosition()
     MM:UpdateMicroBar()

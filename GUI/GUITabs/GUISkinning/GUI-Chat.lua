@@ -19,6 +19,7 @@ end
 
 -- Chat Tab Content
 GUIFrame:RegisterContent("Chat", function(scrollChild, yOffset)
+    if NRSKNUI:ShouldNotLoadModule() then return end
     local db = NRSKNUI.db and NRSKNUI.db.profile.Skinning.Chat
     if not db then
         local errorCard = GUIFrame:CreateCard(scrollChild, "Error", yOffset)

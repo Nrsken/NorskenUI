@@ -18,6 +18,7 @@ end
 
 -- Register UICleanup tab content
 GUIFrame:RegisterContent("UICleanup", function(scrollChild, yOffset)
+    if NRSKNUI:ShouldNotLoadModule() then return end
     -- Safety check for database
     local db = NRSKNUI.db and NRSKNUI.db.profile.Skinning.UICleanup
     if not db then

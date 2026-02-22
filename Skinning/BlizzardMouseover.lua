@@ -108,6 +108,7 @@ end
 -- Mouseover application
 -- called from GUI sliders
 function BMO:ApplySettings()
+    if NRSKNUI:ShouldNotLoadModule() then return end
     if self.db.Enabled then
         self:UpdateAllAlpha()
     end

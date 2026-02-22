@@ -20,6 +20,7 @@ end
 
 -- Register Content
 GUIFrame:RegisterContent("messages", function(scrollChild, yOffset)
+    if NRSKNUI:ShouldNotLoadModule() then return end
     local db = NRSKNUI.db and NRSKNUI.db.profile.Skinning.BlizzardMessages
     if not db then
         local errorCard = GUIFrame:CreateCard(scrollChild, "Error", yOffset)

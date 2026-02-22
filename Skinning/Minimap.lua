@@ -395,6 +395,7 @@ end
 
 -- Complete refresh
 function MAP:ApplySettings()
+    if NRSKNUI:ShouldNotLoadModule() then return end
     if not self.db.Enabled then return end
     MAP:ApplyPosSize()
     MAP:UpdateMinimapBorder()
