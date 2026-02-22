@@ -60,6 +60,7 @@
     <Script file="GUITabs\GUISkinning\GUI-Chat.lua" />
     <Script file="GUITabs\GUISkinning\GUI-ActionBarsTab.lua" />
     <Script file="GUITabs\GUISkinning\GUI-UICleanup.lua" />
+    <Script file="GUITabs\GUISkinning\GUI-BlizzardRaidmanager.lua" />
 
     <!-- GUI Custom Buffs Tabs -->
     <Script file="GUITabs\GUI-CustomBuffs\GUI-BuffBars.lua" />
