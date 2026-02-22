@@ -46,17 +46,26 @@ local Defaults = {
             CombatOnly = false,
             UpdateThrottle = 0.1,
             MaxRange = 40,
+
+            -- Colors
+            ColorOne = { 1, 0, 0 },
+            ColorTwo = { 1, 0.42, 0 },
+            ColorThree = { 1, 0.82, 0 },
+            ColorFour = { 0, 1, 0 },
+
+            -- Font
             FontFace = "Expressway",
-            FontSize = 40,
+            FontSize = 24,
             FontOutline = "SOFTOUTLINE",
+            -- Position
             Strata = "HIGH",
-            anchorFrameType = "UIPARENT",
+            anchorFrameType = "SELECTFRAME",
             ParentFrame = "UIParent",
             Position = {
                 AnchorFrom = "CENTER",
                 AnchorTo = "CENTER",
                 XOffset = 0,
-                YOffset = -50,
+                YOffset = -290,
             },
         },
 

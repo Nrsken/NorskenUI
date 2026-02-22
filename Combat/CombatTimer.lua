@@ -73,10 +73,8 @@ function CT:CreateFrame()
 
     -- Create font string
     local text = frame:CreateFontString("NRSKNUI_CombatTimerText", "OVERLAY")
-    local fontPath = NRSKNUI:GetFontPath(self.db.FontFace)
-    local fontSize = self.db.FontSize
     text:SetPoint("CENTER", frame, "CENTER", 0, 0)
-    text:SetFont(fontPath, fontSize, "")
+    text:SetFont(NRSKNUI.FONT, 14, "")
     text:SetText("00:00")
     text:SetJustifyH("CENTER")
     text:SetJustifyV("MIDDLE")
@@ -125,14 +123,13 @@ end
 -- Apply all settings from DB
 function CT:ApplySettings()
     if not self.text then return end
-    local db = self.db
 
     -- Apply font settings
-    NRSKNUI:ApplyFontSettings(self.frame, db, nil)
+    NRSKNUI:ApplyFontToText(self.text, self.db.FontFace, self.db.FontSize, self.db.FontOutline, {})
 
     -- Apply text alignment based on anchor
-    local justify = NRSKNUI:GetTextJustifyFromAnchor(db.Position.AnchorFrom)
-    local point = NRSKNUI:GetTextPointFromAnchor(db.Position.AnchorFrom)
+    local justify = NRSKNUI:GetTextJustifyFromAnchor(self.db.Position.AnchorFrom)
+    local point = NRSKNUI:GetTextPointFromAnchor(self.db.Position.AnchorFrom)
     self.text:ClearAllPoints()
     self.text:SetJustifyH(justify)
 
@@ -145,7 +142,7 @@ function CT:ApplySettings()
     end
 
     -- Apply text color based on combat state
-    local textColor = self.running and db.ColorInCombat or db.ColorOutOfCombat
+    local textColor = self.running and self.db.ColorInCombat or self.db.ColorOutOfCombat
     if textColor then
         self.text:SetTextColor(textColor[1] or 1, textColor[2] or 1, textColor[3] or 1, textColor[4] or 1)
     else
@@ -155,7 +152,7 @@ function CT:ApplySettings()
     -- Apply frame strata
     if self.frame then
         -- Apply backdrop
-        local backdrop = db.Backdrop
+        local backdrop = self.db.Backdrop
         if backdrop and backdrop.Enabled then
             local borderSize = backdrop.BorderSize or 1
             self.frame:SetBackdrop({

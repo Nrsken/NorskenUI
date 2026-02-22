@@ -56,6 +56,7 @@ GUIFrame.SidebarConfig = {
                 { id = "PetTexts",      text = "Pet Status Texts" },
                 { id = "gateway",       text = "Gateway Alert" },
                 { id = "FocusCastbar",  text = "Focus Castbar" },
+                { id = "RangeChecker",  text = "Range Checker Text" },
             }
         },
         {

@@ -132,14 +132,13 @@ end
 -- Create the Display
 function PET:CreatePetTexts()
     if self.frame then return end
-    local posDB = self.db.Position
     local frame = CreateFrame("Frame", "NRSKNUI_PetTextsFrame", UIParent)
     frame:SetSize(200, 50)
 
     local text = frame:CreateFontString(nil, "OVERLAY")
     local fontPath = NRSKNUI:GetFontPath(self.db.FontFace)
     text:SetFont(fontPath, self.db.FontSize, "")
-    text:SetTextColor(1, 0.82, 0)
+    text:SetTextColor(1, 0.82, 0, 1)
     text:ClearAllPoints()
     text:SetPoint("CENTER", frame, "CENTER", 0, 0)
 
@@ -149,9 +148,6 @@ function PET:CreatePetTexts()
 
     local width, height = math.max(text:GetWidth(), 170), math.max(text:GetHeight(), 18)
     frame:SetSize(width + 5, height + 5)
-
-    NRSKNUI:ApplyFontToText(self.text, self.db.FontFace, self.db.FontSize, self.db.FontOutline)
-    NRSKNUI:ApplyFramePosition(self.frame, posDB, self.db)
 
     self.frame:Hide()
 end
@@ -304,7 +300,7 @@ function PET:ApplySettings()
     -- Update position settings
     NRSKNUI:ApplyFramePosition(self.frame, self.db.Position, self.db)
     -- Update font settings
-    NRSKNUI:ApplyFontToText(self.text, self.db.FontFace, self.db.FontSize, self.db.FontOutline)
+    NRSKNUI:ApplyFontToText(self.text, self.db.FontFace, self.db.FontSize, self.db.FontOutline, {})
 
     -- If in preview mode, update the preview text
     if self.isPreview then

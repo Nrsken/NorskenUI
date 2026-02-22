@@ -144,6 +144,20 @@ end
 function SoftOutline:SetShown(shown)
     if not self.shadows then return end
     self.isShown = shown
+
+    -- If showing, check if text is actually visible
+    if shown and self.main then
+        local _, _, _, textAlpha = self.main:GetTextColor()
+        local frameAlpha = self.main:GetAlpha()
+        if textAlpha == 0 or frameAlpha == 0 then
+            -- Don't show shadows if text is invisible
+            for _, shadow in ipairs(self.shadows) do
+                shadow:SetShown(false)
+            end
+            return
+        end
+    end
+
     for _, shadow in ipairs(self.shadows) do
         shadow:SetShown(shown)
     end
@@ -231,9 +245,13 @@ function SoftOutline:_HookMain()
             if frame._nrsknSoftOutline then
                 local outline = frame._nrsknSoftOutline
                 if outline and outline.shadows and outline.isShown then
-                    for _, shadow in ipairs(outline.shadows) do
-                        shadow:SetAlpha(startAlpha or 0)
-                        shadow:Show()
+                    -- Check if text color alpha is visible
+                    local _, _, _, textAlpha = frame:GetTextColor()
+                    if textAlpha ~= 0 then
+                        for _, shadow in ipairs(outline.shadows) do
+                            shadow:SetAlpha(startAlpha or 0)
+                            shadow:Show()
+                        end
                     end
                 end
             end
@@ -248,9 +266,13 @@ function SoftOutline:_HookMain()
             if frame._nrsknSoftOutline then
                 local outline = frame._nrsknSoftOutline
                 if outline and outline.shadows and outline.isShown then
-                    for _, shadow in ipairs(outline.shadows) do
-                        shadow:SetAlpha(startAlpha or 1)
-                        shadow:Show()
+                    -- Check if text color alpha is visible
+                    local _, _, _, textAlpha = frame:GetTextColor()
+                    if textAlpha ~= 0 then
+                        for _, shadow in ipairs(outline.shadows) do
+                            shadow:SetAlpha(startAlpha or 1)
+                            shadow:Show()
+                        end
                     end
                 end
             end
@@ -324,6 +346,25 @@ function SoftOutline:_HookMain()
         end
     end)
 
+    -- Hook SetTextColor to handle text color alpha
+    -- When text color alpha is 0, hide shadows to prevent ghost outline
+    hooksecurefunc(main, "SetTextColor", function(_, r, g, b, a)
+        local outline = main._nrsknSoftOutline
+        if outline and outline.shadows then
+            if a == 0 then
+                -- Hide shadows when text color is fully transparent
+                for _, shadow in ipairs(outline.shadows) do
+                    shadow:Hide()
+                end
+            elseif outline.isShown then
+                -- Show shadows when text becomes visible again
+                for _, shadow in ipairs(outline.shadows) do
+                    shadow:Show()
+                end
+            end
+        end
+    end)
+
     -- Hook parent frame visibility
     local parent = main:GetParent()
     if parent and not parent._nrsknSoftOutlineHooked then
@@ -341,8 +382,13 @@ function SoftOutline:_HookMain()
         hooksecurefunc(parent, "Show", function()
             local outline = main._nrsknSoftOutline
             if outline and outline.shadows and outline.isShown then
-                for _, shadow in ipairs(outline.shadows) do
-                    shadow:Show()
+                -- Check if text is actually visible before showing shadows
+                local _, _, _, textAlpha = main:GetTextColor()
+                local frameAlpha = main:GetAlpha()
+                if textAlpha ~= 0 and frameAlpha ~= 0 then
+                    for _, shadow in ipairs(outline.shadows) do
+                        shadow:Show()
+                    end
                 end
             end
         end)
@@ -419,6 +465,15 @@ function NRSKNUI:CreateSoftOutline(mainText, options)
 
     -- Store reference on main text
     mainText._nrsknSoftOutline = outline
+
+    -- Check initial text alpha - hide shadows if text is invisible
+    local _, _, _, textAlpha = mainText:GetTextColor()
+    local frameAlpha = mainText:GetAlpha()
+    if textAlpha == 0 or frameAlpha == 0 then
+        for _, shadow in ipairs(outline.shadows) do
+            shadow:Hide()
+        end
+    end
 
     return outline
 end

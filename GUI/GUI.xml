@@ -36,6 +36,7 @@
     <Script file="GUITabs\GUI-Combat\GUI-MissingBuffsTab.lua" />
     <Script file="GUITabs\GUI-Combat\GUI-PetTextsTab.lua" />
     <Script file="GUITabs\GUI-Combat\GUI-GatewayTab.lua" />
+    <Script file="GUITabs\GUI-Combat\GUI-RangeChecker.lua" />
 
     <!-- GUI QoL Tabs -->
     <Script file="GUITabs\GUI-QoL\GUI-AutomationTab.lua" />
