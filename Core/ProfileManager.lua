@@ -24,6 +24,7 @@ local type = type
 local time = time
 local wipe = wipe
 local tostring = tostring
+local next = next
 
 --- Get list of all available profiles
 ---@return table List of profile names
@@ -385,4 +386,118 @@ function ProfileManager:RefreshAllModules()
 
     -- Start previews again
     if NRSKNUI.PreviewManager then NRSKNUI.PreviewManager:StartAllPreviews() end
+end
+
+-- WagoUI Integration API --
+
+-- Global API table for WagoUI Packs compatibility
+-- Uses C_EncodingUtil as per official Wago implementation guide, if i did somethings wrong, contact me :)
+-- https://github.com/methodgg/Wago-Creator-UI/blob/main/WagoUI_Libraries/LibAddonProfiles/ImplementationGuide.lua
+NorskenUIAPI = NorskenUIAPI or {}
+
+--- Export a profile by key
+---@param profileKey string The profile name to export
+---@return string The encoded profile string
+function NorskenUIAPI:ExportProfile(profileKey)
+    if not NRSKNUI.db then return "" end
+
+    local profileData = NRSKNUI.db.profiles[profileKey]
+    if not profileData then return "" end
+
+    local serialized = C_EncodingUtil.SerializeCBOR(profileData)
+    local compressed = C_EncodingUtil.CompressString(serialized, Enum.CompressionMethod.Deflate, Enum.CompressionLevel.OptimizeForSize)
+    local encoded = C_EncodingUtil.EncodeBase64(compressed)
+    return encoded or ""
+end
+
+--- Import a profile from string
+---@param profileString string The encoded profile string
+---@param profileKey string The name for the imported profile
+function NorskenUIAPI:ImportProfile(profileString, profileKey)
+    if not profileString or profileString == "" then return end
+    if not NRSKNUI.db then return end
+
+    local decoded = C_EncodingUtil.DecodeBase64(profileString)
+    if not decoded then return end
+
+    local decompressed = C_EncodingUtil.DecompressString(decoded, Enum.CompressionMethod.Deflate)
+    if not decompressed then return end
+
+    local profileData = C_EncodingUtil.DeserializeCBOR(decompressed)
+    if not profileData or type(profileData) ~= "table" then return end
+
+    -- Store profile and switch to it
+    NRSKNUI.db.profiles[profileKey] = profileData
+    NRSKNUI.db:SetProfile(profileKey)
+
+    -- Refresh without ReloadUI
+    ProfileManager:RefreshAllModules()
+end
+
+--- Decode a profile string without importing
+---@param profileString string The profile string to decode
+---@return table The decoded profile data
+function NorskenUIAPI:DecodeProfileString(profileString)
+    if not profileString or profileString == "" then return {} end
+
+    local decoded = C_EncodingUtil.DecodeBase64(profileString)
+    if not decoded then return {} end
+
+    local decompressed = C_EncodingUtil.DecompressString(decoded, Enum.CompressionMethod.Deflate)
+    if not decompressed then return {} end
+
+    local profileData = C_EncodingUtil.DeserializeCBOR(decompressed)
+    if profileData and type(profileData) == "table" then
+        return profileData
+    end
+
+    return {}
+end
+
+--- Set the active profile
+---@param profileKey string The profile to activate
+function NorskenUIAPI:SetProfile(profileKey)
+    if not profileKey or profileKey == "" then return end
+    if not NRSKNUI.db then return end
+
+    NRSKNUI.db:SetProfile(profileKey)
+    ProfileManager:RefreshAllModules()
+end
+
+--- Get all profile keys
+---@return table<string, boolean> Profile keys in format [key] = true
+function NorskenUIAPI:GetProfileKeys()
+    local keys = {}
+    if NRSKNUI.db and NRSKNUI.db.profiles then
+        for key in pairs(NRSKNUI.db.profiles) do
+            keys[key] = true
+        end
+    end
+    if not next(keys) then
+        keys["Default"] = true
+    end
+    return keys
+end
+
+--- Get current profile key
+---@return string The current profile name
+function NorskenUIAPI:GetCurrentProfileKey()
+    if NRSKNUI.db then
+        return NRSKNUI.db:GetCurrentProfile() or "Default"
+    end
+    return "Default"
+end
+
+--- Open config panel
+function NorskenUIAPI:OpenConfig()
+    if NRSKNUI.GUIFrame and NRSKNUI.GUIFrame.Show then
+        NRSKNUI.GUIFrame:Show()
+    end
+end
+
+--- Close config panel
+function NorskenUIAPI:CloseConfig()
+    if NRSKNUI.GUIFrame and NRSKNUI.GUIFrame.Hide then
+        NRSKNUI.GUIFrame:Hide()
+    end
 end
