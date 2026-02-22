@@ -59,16 +59,6 @@ GUIFrame.SidebarConfig = {
             }
         },
         {
-            id = "custom_section",
-            type = "header",
-            text = "• Custom Buffs",
-            defaultExpanded = true,
-            items = {
-                { id = "BuffIcons", text = "Buff Icons" },
-                { id = "BuffBars",  text = "Buff Bars" },
-            }
-        },
-        {
             id = "qol_section",
             type = "header",
             text = "• Quality of Life",
@@ -89,16 +79,6 @@ GUIFrame.SidebarConfig = {
             }
         },
         {
-            id = "cdm_section",
-            type = "header",
-            text = "• CDM Enhancements",
-            defaultExpanded = true,
-            items = {
-                { id = "CDM",     text = "Aura Overlay & Fonts" },
-                { id = "CDMGlow", text = "Hide Proc Animation" },
-            }
-        },
-        {
             id = "skinning_section",
             type = "header",
             text = "• Skinning",
@@ -115,6 +95,27 @@ GUIFrame.SidebarConfig = {
                 { id = "messages",          text = "Blizzard Texts" },
                 { id = "tooltips",          text = "Tooltips" },
                 { id = "DetailsBackdrop",   text = "Details Backdrop" },
+                { id = "BlizzardRM",        text = "Raid Manager" },
+            }
+        },
+        {
+            id = "cdm_section",
+            type = "header",
+            text = "• CDM Enhancements",
+            defaultExpanded = true,
+            items = {
+                { id = "CDM",     text = "Aura Overlay & Fonts" },
+                { id = "CDMGlow", text = "Hide Proc Animation" },
+            }
+        },
+        {
+            id = "custom_section",
+            type = "header",
+            text = "• Custom Buffs",
+            defaultExpanded = true,
+            items = {
+                { id = "BuffIcons", text = "Buff Icons" },
+                { id = "BuffBars",  text = "Buff Bars" },
             }
         },
     },
@@ -327,10 +328,12 @@ function GUIFrame:ApplyThemeColors()
                 -- Update label and arrow color (respect disabled state)
                 if header.disabled then
                     if header.label then
-                        header.label:SetTextColor(Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3], 0.35)
+                        header.label:SetTextColor(Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3],
+                            0.35)
                     end
                     if header.arrow then
-                        header.arrow:SetVertexColor(Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3], 0.35)
+                        header.arrow:SetVertexColor(Theme.textSecondary[1], Theme.textSecondary[2],
+                            Theme.textSecondary[3], 0.35)
                     end
                 else
                     if header.label then
