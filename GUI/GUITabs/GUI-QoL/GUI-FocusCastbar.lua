@@ -115,7 +115,7 @@ GUIFrame:RegisterContent("FocusCastbar", function(scrollChild, yOffset)
 
     -- Width and Height on same row
     local row2 = GUIFrame:CreateRow(card2.content, 40)
-    local widthSlider = GUIFrame:CreateSlider(row2, "Width", 100, 400, 1,
+    local widthSlider = GUIFrame:CreateSlider(row2, "Width", 100, 1000, 1,
         db.Width or 200, nil,
         function(val)
             db.Width = val
@@ -124,7 +124,7 @@ GUIFrame:RegisterContent("FocusCastbar", function(scrollChild, yOffset)
     row2:AddWidget(widthSlider, 0.5)
     table_insert(allWidgets, widthSlider)
 
-    local heightSlider = GUIFrame:CreateSlider(row2, "Height", 10, 40, 1,
+    local heightSlider = GUIFrame:CreateSlider(row2, "Height", 5, 500, 1,
         db.Height or 20, nil,
         function(val)
             db.Height = val
