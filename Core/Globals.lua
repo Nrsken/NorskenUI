@@ -184,7 +184,7 @@ NRSKNUI.PreviewManager = PreviewManager
 local PREVIEW_MODULES = {
     "MissingBuffs", "CombatCross", "CombatMessage", "CombatRes",
     "CombatTimer", "PetTexts", "XPBar", "Durability", "DragonRiding", "RaidAlerts",
-    "FocusCastbar", "Gateway", "HuntersMark"
+    "FocusCastbar", "Gateway", "HuntersMark", "BlizzardRM"
 }
 
 -- State tracking

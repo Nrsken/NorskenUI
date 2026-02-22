@@ -41,6 +41,38 @@ local Defaults = {
         },
     },
     profile = {
+        RangeChecker = {
+            Enabled = true,
+            CombatOnly = false,
+            UpdateThrottle = 0.1,
+            MaxRange = 40,
+            FontFace = "MEERES FONT",
+            FontSize = 40,
+            FontOutline = "SOFTOUTLINE",
+            Strata = "HIGH",
+            anchorFrameType = "UIPARENT",
+            ParentFrame = "UIParent",
+            Position = {
+                AnchorFrom = "CENTER",
+                AnchorTo = "CENTER",
+                XOffset = 0,
+                YOffset = -50,
+            },
+        },
+
+        BlizzardRM = {
+            Enabled = true,
+            -- Position Settings
+            Position = {        -- Position settings
+                YOffset = -650, -- Y offset
+            },
+            Strata = "HIGH",
+            FadeOnMouseOut = true,
+            FadeInDuration = 0.3,
+            FadeOutDuration = 3,
+            Alpha = 0,
+        },
+
         -- ElvUI Integration
         UseElvUI = {
             Enabled = true, -- Master toggle for ElvUI integration (disables my skins when true to avoid conflicts)

@@ -15,11 +15,10 @@ local BRMG = NorskenUI:NewModule("BlizzardRM", "AceEvent-3.0")
 -- Localization
 local hooksecurefunc = hooksecurefunc
 local InCombatLockdown = InCombatLockdown
-local CreateFrame = CreateFrame
 
 -- Update db, used for profile changes
 function BRMG:UpdateDB()
-    self.db = NRSKNUI.db.profile.Skinning.BlizzardRM
+    self.db = NRSKNUI.db.profile.BlizzardRM
 end
 
 -- Module init
@@ -30,6 +29,7 @@ end
 
 -- Fade in function
 local function FadeIn()
+    if not BRMG:IsEnabled() then return end
     if CompactRaidFrameManager._isMouseOver then return end
     CompactRaidFrameManager._isMouseOver = true
     local dur = BRMG.db.FadeInDuration
@@ -41,6 +41,7 @@ end
 
 -- Fade out function
 local function FadeOut()
+    if not BRMG:IsEnabled() then return end
     if not CompactRaidFrameManager._isMouseOver then return end
     CompactRaidFrameManager._isMouseOver = false
 
@@ -83,6 +84,7 @@ function BRMG:SetupRaidManager()
         end)
 
         hooksecurefunc("CompactRaidFrameManager_Toggle", function()
+            if not BRMG:IsEnabled() then return end
             BRMG:ApplyPosition()
             if MouseIsOver(CompactRaidFrameManager) then
                 FadeIn()
@@ -100,7 +102,7 @@ function BRMG:SetupRaidManager()
 
     -- Initial state: fade it out if the mouse isn't there
     if not MouseIsOver(CompactRaidFrameManager) then
-        CompactRaidFrameManager:SetAlpha(0)
+        CompactRaidFrameManager:SetAlpha(self.db.Alpha)
         CompactRaidFrameManager._isMouseOver = false
     end
 end
@@ -109,6 +111,13 @@ function BRMG:ApplySettings()
     if NRSKNUI:ShouldNotLoadModule() then return end
     self:SetupRaidManager()
     self:ApplyPosition()
+    if CompactRaidFrameManager then
+        if self.db.FadeOnMouseOut then
+            CompactRaidFrameManager:SetAlpha(self.db.Alpha)
+        else
+            CompactRaidFrameManager:SetAlpha(1)
+        end
+    end
 end
 
 -- Module OnEnable
@@ -118,4 +127,16 @@ function BRMG:OnEnable()
     C_Timer.After(1, function()
         self:ApplySettings()
     end)
+end
+
+-- Module OnEnable
+function BRMG:OnDisable()
+    -- Reset alpha back to fully visible
+    if CompactRaidFrameManager then
+        CompactRaidFrameManager:SetAlpha(1)
+        CompactRaidFrameManager._isMouseOver = nil
+
+        -- Reset strata to default
+        CompactRaidFrameManager:SetFrameStrata("HIGH")
+    end
 end
