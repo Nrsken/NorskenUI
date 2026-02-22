@@ -8,6 +8,7 @@ externals:
     Libs/AceAddon-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceAddon-3.0
     Libs/AceDB-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceDB-3.0
     Libs/AceEvent-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceEvent-3.0
+    Libs/AceSerializer-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceSerializer-3.0
     Libs/AceHook-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceHook-3.0
     Libs/LibSharedMedia-3.0: https://repos.curseforge.com/wow/libsharedmedia-3-0/trunk/LibSharedMedia-3.0
     Libs/LibStub: https://repos.curseforge.com/wow/libstub/trunk
@@ -28,6 +29,12 @@ externals:
     Libs/LibEditModeOverride:
         url: https://github.com/plusmouse/LibEditModeOverride
         tag: main
+    Libraries/LibRangeCheck-3.0:
+        url: https://github.com/WeakAuras/LibRangeCheck-3.0.git
+        branch: main
+    Libraries/LibDeflate:
+        url: https://github.com/SafeteeWoW/LibDeflate.git
+        tag: latest
 
 ignore:
     - README.md
