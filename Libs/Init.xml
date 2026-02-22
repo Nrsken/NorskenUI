@@ -11,6 +11,7 @@
     <Include file="LibDataBroker-1.1\LibDataBroker-1.1.lua" />
     <Include file="LibDBIcon-1.0\LibDBIcon-1.0.lua" />
     <Include file="LibDualSpec-1.0/LibDualSpec-1.0.lua"/>
+    <Script file="LibRangeCheck-3.0/LibRangeCheck-3.0.lua"/>
     <Include file="TaintLess/TaintLess.xml" />
     <Script file="LibEditModeOverride\LibEditModeOverride.lua" />
     <Include file="LibEditMode\embed.xml" />
