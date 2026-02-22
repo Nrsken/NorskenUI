@@ -240,7 +240,7 @@ function FCB:ApplySettings()
             local targetText = self.targetNames[i]
             targetText:ClearAllPoints()
             targetText:SetPoint(anchorPoint, self.frame, anchorPoint, targetSettings.XOffset, targetSettings.YOffset)
-            targetText:SetJustifyH(targetSettings.Anchor)
+            targetText:SetJustifyH(anchorPoint)
             NRSKNUI:ApplyFont(targetText, db.FontFace, targetSettings.FontSize, db.FontOutline)
         end
     end
