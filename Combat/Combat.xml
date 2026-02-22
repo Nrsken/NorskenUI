@@ -8,4 +8,5 @@
     <Script file="CombatCursor.lua" />
     <Script file="CombatMissingBuffs.lua" />
     <Script file="PetTexts.lua" />
+    <Script file="RangeChecker.lua" />
 </Ui>
