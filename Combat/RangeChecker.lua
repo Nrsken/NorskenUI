@@ -71,7 +71,7 @@ function RANGE:FormatRangeText(minRange, maxRange)
     elseif maxRange then
         return "0 - " .. maxRange
     elseif minRange then
-        return minRange
+        return tostring(minRange)
     else
         return "--"
     end
@@ -119,7 +119,7 @@ function RANGE:ShouldShow()
     if not self.db.Enabled then return false end
     if self.isPreview then return true end
     if not UnitExists("target") then return false end
-    if not UnitCanAttack("player", "target") then return false end
+    --if not UnitCanAttack("player", "target") then return false end
     if self.db.CombatOnly and not InCombatLockdown() then return false end
     return true
 end
