@@ -362,18 +362,18 @@ local function CheckMissingRaidBuffsFromGroup()
 
     -- Check each class's buffs
     for class, _ in pairs(classesInGroup) do
-        -- Skip player's own class buffs
         if class ~= playerClass then
             local classBuffs = CLASS_BUFFS[class]
             if classBuffs then
                 for _, buff in ipairs(classBuffs) do
-                    -- Check if player is missing this buff
-                    local hasBuff = PlayerHasBuff(buff.spellId, buff.extraBuffSpellIds)
-                    if not hasBuff then
-                        missing[#missing + 1] = {
-                            buff = buff,
-                            text = GENERALBUFF_TEXT,
-                        }
+                    if not buff.onlySelf then
+                        local hasBuff = PlayerHasBuff(buff.spellId, buff.extraBuffSpellIds)
+                        if not hasBuff then
+                            missing[#missing + 1] = {
+                                buff = buff,
+                                text = GENERALBUFF_TEXT,
+                            }
+                        end
                     end
                 end
             end
