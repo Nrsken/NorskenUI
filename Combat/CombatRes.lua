@@ -353,6 +353,16 @@ function CR:OnEnable()
         self:OnUpdate(elapsed)
     end)
 
+    -- Register events for when combat res charges become available
+    local function DelayedUpdate()
+        C_Timer.After(0.2, function()
+            self:Update()
+        end)
+    end
+    self:RegisterEvent("SPELL_UPDATE_CHARGES", DelayedUpdate)
+    self:RegisterEvent("CHALLENGE_MODE_START", DelayedUpdate)
+    self:RegisterEvent("PLAYER_ENTERING_WORLD", DelayedUpdate)
+
     -- Register with EditMode
     local config = {
         key = "CombatRes",
@@ -387,4 +397,5 @@ function CR:OnDisable()
         self.frame:Hide()
     end
     self.isPreview = false
+    self:UnregisterAllEvents()
 end
