@@ -47,6 +47,18 @@ GUIFrame:RegisterContent("ProfileManager", function(scrollChild, yOffset)
             local success, err = PM:SetProfile(key)
             if not success then
                 NRSKNUI:Print("Failed to switch profile: " .. (err or "Unknown error"))
+            else
+                NRSKNUI:CreatePrompt(
+                    "Profile Changed",
+                    "Profile switched to '" .. key .. "'.\n\nA UI reload is recommended to fully apply all settings.",
+                    false, nil, false, nil, nil, nil, nil,
+                    function()
+                        ReloadUI()
+                    end,
+                    nil,
+                    "Reload Now",
+                    "Later"
+                )
             end
         end)
     row1:AddWidget(profileDropdown, 1)
@@ -72,7 +84,19 @@ GUIFrame:RegisterContent("ProfileManager", function(scrollChild, yOffset)
         function(newState)
             local success = PM:SetUseGlobalProfile(newState)
             if success then
-                if not newState then
+                if newState then
+                    NRSKNUI:CreatePrompt(
+                        "Global Profile Enabled",
+                        "Global profile mode enabled.\n\nA UI reload is recommended to fully apply all settings.",
+                        false, nil, false, nil, nil, nil, nil,
+                        function()
+                            ReloadUI()
+                        end,
+                        nil,
+                        "Reload Now",
+                        "Later"
+                    )
+                else
                     NRSKNUI:Print("Global profile mode disabled")
                     C_Timer.After(0.1, function()
                         if GUIFrame.mainFrame and GUIFrame.mainFrame:IsShown() then
@@ -93,7 +117,20 @@ GUIFrame:RegisterContent("ProfileManager", function(scrollChild, yOffset)
             if not success then
                 NRSKNUI:Print("Failed to set global profile: " .. (err or "Unknown error"))
             else
-                if not useGlobal then
+                if useGlobal then
+                    -- Global mode is active, so this actually switches the profile
+                    NRSKNUI:CreatePrompt(
+                        "Global Profile Changed",
+                        "Global profile switched to '" .. key .. "'.\n\nA UI reload is recommended to fully apply all settings.",
+                        false, nil, false, nil, nil, nil, nil,
+                        function()
+                            ReloadUI()
+                        end,
+                        nil,
+                        "Reload Now",
+                        "Later"
+                    )
+                else
                     NRSKNUI:Print("Global profile set to: " .. key)
                 end
             end
