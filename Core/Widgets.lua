@@ -138,6 +138,7 @@ function NRSKNUI:CreateIconFrame(parent, size, options)
 
     -- Text (in OVERLAY so it's above the icon)
     frame.text = frame:CreateFontString(nil, "OVERLAY")
+    frame.text:SetFont(NRSKNUI.FONT, 12, "")
     frame.text:SetPoint(textPoint, frame, textPoint, textOffset[1], textOffset[2])
 
     -- Helper to update icon size
