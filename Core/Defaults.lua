@@ -310,6 +310,22 @@ local Defaults = {
 
         -- Miscellaneous Settings
         Miscellaneous = {
+            AuctionHouseFilter = {
+                Enabled = true,
+                AuctionHouse = {
+                    CurrentExpansion = true,
+                    FocusSearchBar = true,
+                },
+                CraftOrders = {
+                    CurrentExpansion = true,
+                    FocusSearchBar = false,
+                },
+                Auctionator = {
+                    CurrentExpansion = true,
+                    FocusSearchBar = false,
+                },
+            },
+
             HuntersMark = {
                 Enabled = true,
                 Color = { 1, 0.290, 0.301, 1 },

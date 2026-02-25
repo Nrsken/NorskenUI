@@ -12,4 +12,5 @@
     <Script file="GateUsable.lua"/>
     <Script file="MiscVars.lua"/>
     <Script file="HuntersMark.lua"/>
+    <Script file="AuctionHouseFilter.lua"/>
 </Ui>
