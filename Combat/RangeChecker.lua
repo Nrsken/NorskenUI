@@ -15,17 +15,10 @@ local LRC = LibStub("LibRangeCheck-3.0", true)
 
 -- Localization
 local CreateFrame = CreateFrame
-local UnitExists = UnitExists
-local UnitCanAttack = UnitCanAttack
+local UnitExists, UnitIsUnit = UnitExists, UnitIsUnit
 local InCombatLockdown = InCombatLockdown
 local unpack = unpack
-
--- Module state
-RANGE.frame = nil
-RANGE.text = nil
-RANGE.isPreview = false
-RANGE.gradientPalette = nil
-RANGE.lastRangeValue = nil
+local tostring = tostring
 
 -- Update db, used for profile changes
 function RANGE:UpdateDB()
@@ -119,7 +112,7 @@ function RANGE:ShouldShow()
     if not self.db.Enabled then return false end
     if self.isPreview then return true end
     if not UnitExists("target") then return false end
-    --if not UnitCanAttack("player", "target") then return false end
+    if UnitIsUnit("target", "player") then return false end -- Dont show range for urself hehe
     if self.db.CombatOnly and not InCombatLockdown() then return false end
     return true
 end
