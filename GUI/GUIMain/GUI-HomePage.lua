@@ -122,6 +122,28 @@ GUIFrame:RegisterContent("HomePage", function(scrollChild, yOffset)
     yOffset = yOffset + ElvUIcard:GetContentHeight() + Theme.paddingSmall
 
     ----------------------------------------------------------------
+    -- Card MapIcon: Minimap Icon Card
+    ----------------------------------------------------------------
+    local MapIconcard = GUIFrame:CreateCard(scrollChild, "Minimap Icon", yOffset)
+    local MapIconDB = NRSKNUI.db.profile.Minimap
+
+    -- Enable Checkbox
+    local MapIconrow = GUIFrame:CreateRow(MapIconcard.content, 36)
+    local enableMapIcon = GUIFrame:CreateCheckbox(MapIconrow, "Hide Minimap Icon", MapIconDB.hide ~= false,
+        function(checked)
+            MapIconDB.hide = checked
+        end,
+        true,
+        "Hide Minimap Icon",
+        "On",
+        "Off"
+    )
+    MapIconrow:AddWidget(enableMapIcon, 1)
+    MapIconcard:AddRow(MapIconrow, 36)
+
+    yOffset = yOffset + MapIconcard:GetContentHeight() + Theme.paddingSmall
+
+    ----------------------------------------------------------------
     -- Card 3: Current Profile
     ----------------------------------------------------------------
     local card3 = GUIFrame:CreateCard(scrollChild, "Profile", yOffset)
