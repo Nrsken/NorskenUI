@@ -319,8 +319,8 @@ local Defaults = {
                 Position = {
                     AnchorFrom = "CENTER",
                     AnchorTo = "CENTER",
-                    XOffset = 0,
-                    YOffset = 150,
+                    XOffset = 100,
+                    YOffset = 0,
                 },
             },
 
