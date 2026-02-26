@@ -83,9 +83,9 @@ function NRSKNUI:SetupMinimapIcon()
             end
         end,
         OnTooltipShow = function(tt)
-            tt:AddLine(NRSKNUI:ColorTextByTheme("Norsken") .. "|cffffffffUI|r")
-            tt:AddLine("Left-Click to open options", 1, 1, 1)
-            tt:AddLine("Right-Click to toggle anchors", 1, 1, 1)
+            tt:AddLine(NRSKNUI:ColorTextByTheme("Norsken") .. "|cffb3b3b3UI|r")
+            tt:AddLine("Left-Click to open options", 0.70, 0.70, 0.70)
+            tt:AddLine("Right-Click to toggle anchors", 0.70, 0.70, 0.70)
         end,
     })
 

@@ -309,10 +309,10 @@ function GUIFrame:ApplyThemeColors()
         frame.header:SetBackdropColor(Theme.bgMedium[1], Theme.bgMedium[2], Theme.bgMedium[3], Theme.bgMedium[4])
         -- Update logo colors
         if frame.header.logoN then
-            frame.header.logoN:SetVertexColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], Theme.accent[4] or 1)
+            frame.header.logoN:SetVertexColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 0.7)
         end
         if frame.header.logoAuras then
-            frame.header.logoAuras:SetVertexColor(Theme.textPrimary[1], Theme.textPrimary[2], Theme.textPrimary[3], 1)
+            frame.header.logoAuras:SetVertexColor(Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3], 1)
         end
     end
 

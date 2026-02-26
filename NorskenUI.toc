@@ -1,6 +1,6 @@
 ## Interface: 120000, 120001
-## Title: |cffe51039Norsken|r|cffffffffUI|r
-## Category: |cffe51039Norsken|r |cffffffffAddons|r
+## Title: |cffe51039Norsken|r|cffb3b3b3UI|r
+## Category: |cffe51039Norsken|r |cffb3b3b3Addons|r
 ## Version: @project-version@
 ## Author: Norsken
 ## SavedVariables: NorskenUIDB
