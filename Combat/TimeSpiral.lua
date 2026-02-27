@@ -56,9 +56,9 @@ local MOVEMENT_SPELLS = {
 
 -- Filter some spells that can cause false procs
 local FILTER_TALENTS = {
-    [427640] = { [198793] = true, [370965] = true }, -- Inertia
-    [427794] = { [195072] = true },                  -- Dash of Chaos
-    [385899] = { [385899] = true },                  -- Soulburn
+    [427640] = { [195072] = true }, -- Inertia
+    [427794] = { [195072] = true }, -- Dash of Chaos
+    [385899] = { [385899] = true }, -- Soulburn
 }
 
 -- Update db, used for profile changes
