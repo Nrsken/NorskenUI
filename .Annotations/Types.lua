@@ -13,12 +13,24 @@ ElvUI_SpellBookTooltip = ElvUI_SpellBookTooltip
 
 ---@class Cooldown
 ---@field SetSwipeTexture fun(self: Cooldown, texture: string, r?: number, g?: number, b?: number, a?: number)
+---@field SetDrawEdge fun(self: Cooldown, drawEdge: boolean)
+---@field SetReverse fun(self: Cooldown, reverse: boolean)
+---@field SetDrawSwipe fun(self: Cooldown, drawSwipe: boolean)
+---@field SetDrawBling fun(self: Cooldown, drawBling: boolean)
+---@field SetCountdownFormatter fun(self: Cooldown, formatter: function)
+---@field SetHideCountdownNumbers fun(self: Cooldown, hide: boolean)
 
 ---@type function
 GameMovieFinished = GameMovieFinished
 
 ---@type function
 GetMouseFocus = GetMouseFocus
+
+---@class AuraContainerUtil
+---@field ShouldIncludeAuraForFilterString fun(container: Frame, filterString: string, auraData: table): boolean
+---@field CreateAuraContainerGroup fun(description: table): table
+---@field CreateFramePoolProvider fun(pool: table): table
+AuraContainerUtil = AuraContainerUtil
 
 ---@param value any
 ---@return boolean
@@ -56,6 +68,8 @@ function issecretvalue(value) end
 ---@field SetInside fun(self: Frame, anchor?: Region, xOffset?: number, yOffset?: number, anchor2?: Region) Anchor inside another frame with pixel-scaled inset
 ---@field SetOutside fun(self: Frame, anchor?: Region, xOffset?: number, yOffset?: number, anchor2?: Region) Anchor outside another frame with pixel-scaled outset
 ---@field DisablePixelSnap fun(self: Frame) Disable pixel grid snapping for crisp rendering
+---@field SetMouseMotionEnabled fun(self: Frame, enabled: boolean) Enable or disable mouse motion events for the frame
+---@field SetDurationCooldown fun(self: Frame, cooldown: Cooldown) Set the cooldown frame for the aura button
 
 ---@class FontString
 ---@field SetAlphaFromBoolean fun(self: FontString, bool: boolean, alphaIfTrue: number?, alphaIfFalse: number?)
@@ -91,3 +105,12 @@ end
 ---@field SetInside fun(self: Texture, anchor?: Region, xOffset?: number, yOffset?: number, anchor2?: Region) Anchor inside another frame with pixel-scaled inset
 ---@field SetOutside fun(self: Texture, anchor?: Region, xOffset?: number, yOffset?: number, anchor2?: Region) Anchor outside another frame with pixel-scaled outset
 ---@field DisablePixelSnap fun(self: Texture) Disable pixel grid snapping for crisp rendering
+
+---@class AuraLayoutDB
+---@field IconSize number
+---@field IconSpacing number
+---@field IconsPerRow number
+---@field MaxIcons number
+---@field Position table
+---@field GrowthDirection "LEFT"|"RIGHT"
+---@field WrapDirection "UP"|"DOWN"
