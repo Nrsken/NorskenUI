@@ -3,29 +3,19 @@ local NRSKNUI = select(2, ...)
 local GUIFrame = NRSKNUI.GUIFrame
 local Theme = NRSKNUI.Theme
 
-local pairs = pairs
-local type = type
-local tostring = tostring
-local tinsert = tinsert
-local tonumber = tonumber
-local CreateFrame = CreateFrame
-local unpack = unpack
-
 GUIFrame:RegisterContent("CustomSkin_Debuffs", function(scrollChild, yOffset)
     local db = NRSKNUI.db and NRSKNUI.db.profile.Skinning.DebuffTracking
     if not db then return GUIFrame:ShowDBError(scrollChild, yOffset) end
 
-    ---@type DebuffTracking?
-    local DEBUFFS = NorskenUI and NorskenUI:GetModule("DebuffTracking", true)
+    ---@type AuraDebuffs?
+    local DBF = NorskenUI and NorskenUI:GetModule("AuraDebuffs", true)
     local manager = GUIFrame:CreateWidgetStateManager()
 
-    manager:SetCondition("borderColor", function() return db.BorderColorMode == "custom" end)
-    manager:SetCondition("borderTypes", function() return db.BorderColorMode == "dispel" end)
     manager:SetCondition("swipeOn", function() return db.Swipe end)
 
     local function ApplySettings()
-        if DEBUFFS and DEBUFFS:IsEnabled() and DEBUFFS.ApplySettings then
-            DEBUFFS:ApplySettings()
+        if DBF and DBF:IsEnabled() and DBF.ApplySettings then
+            DBF:ApplySettings()
         end
     end
 
@@ -39,12 +29,12 @@ GUIFrame:RegisterContent("CustomSkin_Debuffs", function(scrollChild, yOffset)
         value = db.Enabled,
         callback = function(checked)
             db.Enabled = checked
-            if DEBUFFS then
-                DEBUFFS.db.Enabled = checked
+            if DBF then
+                DBF.db.Enabled = checked
                 if checked then
-                    NorskenUI:EnableModule("DebuffTracking")
+                    NorskenUI:EnableModule("AuraDebuffs")
                 else
-                    NorskenUI:DisableModule("DebuffTracking")
+                    NorskenUI:DisableModule("AuraDebuffs")
                 end
             end
             UpdateAllWidgetStates()
@@ -90,7 +80,23 @@ GUIFrame:RegisterContent("CustomSkin_Debuffs", function(scrollChild, yOffset)
     manager:Register(iconSpacingSlider, "all")
     card2:AddRow(row2a, Theme.rowHeight)
 
+    local separator2a1 = GUIFrame:CreateSeparator(card2.content)
+    card2:AddRow(separator2a1, Theme.rowHeightSeparator)
+
     local row2b = GUIFrame:CreateRow(card2.content, Theme.rowHeight)
+    local maxIconsSlider = GUIFrame:CreateSlider(row2b, "Max Icons", {
+        min = 1,
+        max = 40,
+        step = 1,
+        value = db.MaxIcons,
+        callback = function(value)
+            db.MaxIcons = value
+            ApplySettings()
+        end
+    })
+    row2b:AddWidget(maxIconsSlider, 0.5)
+    manager:Register(maxIconsSlider, "all")
+
     local iconsPerRowSlider = GUIFrame:CreateSlider(row2b, "Icons Per Row", {
         min = 1,
         max = 20,
@@ -103,67 +109,55 @@ GUIFrame:RegisterContent("CustomSkin_Debuffs", function(scrollChild, yOffset)
     })
     row2b:AddWidget(iconsPerRowSlider, 0.5)
     manager:Register(iconsPerRowSlider, "all")
-
-    local maxRowsSlider = GUIFrame:CreateSlider(row2b, "Max Rows", {
-        min = 1,
-        max = 10,
-        step = 1,
-        value = db.MaxRows,
-        callback = function(value)
-            db.MaxRows = value
-            ApplySettings()
-        end
-    })
-    row2b:AddWidget(maxRowsSlider, 0.5)
-    manager:Register(maxRowsSlider, "all")
     card2:AddRow(row2b, Theme.rowHeight)
 
-    local sep2 = GUIFrame:CreateSeparator(card2.content)
-    card2:AddRow(sep2, Theme.rowHeightSeparator)
+    local separator2a2 = GUIFrame:CreateSeparator(card2.content)
+    card2:AddRow(separator2a2, Theme.rowHeightSeparator)
 
-    local row2c = GUIFrame:CreateRow(card2.content, Theme.rowHeight)
-    local growHList = {
+    local growthOptions = {
         { key = "LEFT",  text = "Left" },
         { key = "RIGHT", text = "Right" },
     }
-    local growHDropdown = GUIFrame:CreateDropdown(row2c, "Grow Horizontal", {
-        options = growHList,
-        value = db.GrowHorizontal or "LEFT",
-        callback = function(key)
-            db.GrowHorizontal = key
-            ApplySettings()
-        end
-    })
-    row2c:AddWidget(growHDropdown, 0.5)
-    manager:Register(growHDropdown, "all")
-
-    local growVList = {
+    local wrapOptions = {
         { key = "UP",   text = "Up" },
         { key = "DOWN", text = "Down" },
     }
-    local growVDropdown = GUIFrame:CreateDropdown(row2c, "Then Vertical", {
-        options = growVList,
-        value = db.GrowVertical or "DOWN",
+
+    local row2c = GUIFrame:CreateRow(card2.content, Theme.rowHeight)
+    local growthDropdown = GUIFrame:CreateDropdown(row2c, "Growth Direction", {
+        options = growthOptions,
+        value = db.GrowthDirection or "RIGHT",
         callback = function(key)
-            db.GrowVertical = key
+            db.GrowthDirection = key
             ApplySettings()
         end
     })
-    row2c:AddWidget(growVDropdown, 0.5)
-    manager:Register(growVDropdown, "all")
+    row2c:AddWidget(growthDropdown, 0.5)
+    manager:Register(growthDropdown, "all")
+
+    local wrapDropdown = GUIFrame:CreateDropdown(row2c, "Wrap Direction", {
+        options = wrapOptions,
+        value = db.WrapDirection or "DOWN",
+        callback = function(key)
+            db.WrapDirection = key
+            ApplySettings()
+        end
+    })
+    row2c:AddWidget(wrapDropdown, 0.5)
+    manager:Register(wrapDropdown, "all")
     card2:AddRow(row2c, Theme.rowHeight)
 
-    local separator3b = GUIFrame:CreateSeparator(card2.content)
-    card2:AddRow(separator3b, Theme.rowHeightSeparator)
+    local separator2a = GUIFrame:CreateSeparator(card2.content)
+    card2:AddRow(separator2a, Theme.rowHeightSeparator)
 
-    local rowSwipe = GUIFrame:CreateRow(card2.content, Theme.rowHeightLast)
+    local rowSwipe = GUIFrame:CreateRow(card2.content, Theme.rowHeight)
     local swipeCheck = GUIFrame:CreateCheckbox(rowSwipe, "Enable Swipe", {
         value = db.Swipe,
         callback = function(checked)
             db.Swipe = checked
             ApplySettings()
             UpdateAllWidgetStates()
-            if DEBUFFS then DEBUFFS:TogglePreview() end
+            if DBF then DBF:TogglePreview() end
         end
     })
     rowSwipe:AddWidget(swipeCheck, 0.5)
@@ -174,568 +168,47 @@ GUIFrame:RegisterContent("CustomSkin_Debuffs", function(scrollChild, yOffset)
         callback = function(checked)
             db.Reverse = checked
             ApplySettings()
-            if DEBUFFS then DEBUFFS:TogglePreview() end
+            if DBF then DBF:TogglePreview() end
         end
     })
     rowSwipe:AddWidget(reverseCheck, 0.5)
     manager:Register(reverseCheck, "all", "swipeOn")
     card2:AddRow(rowSwipe, Theme.rowHeight)
 
-    local separator3c = GUIFrame:CreateSeparator(card2.content)
-    card2:AddRow(separator3c, Theme.rowHeightSeparator)
+    local separator2b = GUIFrame:CreateSeparator(card2.content)
+    card2:AddRow(separator2b, Theme.rowHeightSeparator)
 
-    local rowInteraction = GUIFrame:CreateRow(card2.content, Theme.rowHeightLast)
-    local tooltipCheck = GUIFrame:CreateCheckbox(rowInteraction, "Show Tooltips", {
-        tooltip = "Show tooltips when hovering over debuff icons.",
+    local rowDispel = GUIFrame:CreateRow(card2.content, Theme.rowHeight)
+    local dispelBorderCheck = GUIFrame:CreateCheckbox(rowDispel, "Show Dispel Border", {
+        tooltip = "Show a colored border based on dispel type.",
+        value = db.ShowDispelBorder,
+        callback = function(checked)
+            db.ShowDispelBorder = checked
+            ApplySettings()
+        end
+    })
+    rowDispel:AddWidget(dispelBorderCheck, 0.5)
+    manager:Register(dispelBorderCheck, "all")
+
+    local tooltipCheck = GUIFrame:CreateCheckbox(rowDispel, "Show Tooltips", {
+        tooltip = "Show aura tooltip on hover.",
         value = db.ShowTooltips,
         callback = function(checked)
             db.ShowTooltips = checked
             ApplySettings()
         end
     })
-    rowInteraction:AddWidget(tooltipCheck, 0.5)
+    rowDispel:AddWidget(tooltipCheck, 0.5)
     manager:Register(tooltipCheck, "all")
-    card2:AddRow(rowInteraction, Theme.rowHeightLast, 0)
+    card2:AddRow(rowDispel, Theme.rowHeightLast, 0)
 
     yOffset = card2:GetNextOffset()
 
-    -- Card 3: Visual Settings
-    local card3 = GUIFrame:CreateCard(scrollChild, "Visual Settings", yOffset)
+    -- Card 3: ColorBlind Settings
+    local card3 = GUIFrame:CreateCard(scrollChild, "ColorBlind Settings", yOffset)
     manager:Register(card3, "all")
 
-    local row3a = GUIFrame:CreateRow(card3.content, Theme.rowHeightLast)
-    local borderModeList = {
-        { key = "custom", text = "Custom Color" },
-        { key = "dispel", text = "Dispel Type" },
-    }
-    local borderModeDropdown = GUIFrame:CreateDropdown(row3a, "Border Color Mode", {
-        options = borderModeList,
-        value = db.BorderColorMode or "custom",
-        callback = function(key)
-            db.BorderColorMode = key
-            ApplySettings()
-            UpdateAllWidgetStates()
-        end
-    })
-    row3a:AddWidget(borderModeDropdown, 0.5)
-    manager:Register(borderModeDropdown, "all")
-
-    local borderColorPicker = GUIFrame:CreateColorPicker(row3a, "Border Color", {
-        color = db.BorderColor,
-        callback = function(r, g, b, a)
-            db.BorderColor = { r, g, b, a }
-            ApplySettings()
-        end
-    })
-    row3a:AddWidget(borderColorPicker, 1)
-    manager:Register(borderColorPicker, "all", "borderColor")
-    card3:AddRow(row3a, Theme.rowHeightLast, 0)
-
-    yOffset = card3:GetNextOffset()
-
-    -- Card 3b: Dispel Type Colors
-    db.DispelColors = db.DispelColors or {}
-
-    local card3b = GUIFrame:CreateCard(scrollChild, "Dispel Type Colors", yOffset)
-    manager:Register(card3b, "all")
-
-    local dispelTypes = {
-        { name = "None",    label = "None" },
-        { name = "Magic",   label = "Magic" },
-        { name = "Curse",   label = "Curse" },
-        { name = "Disease", label = "Disease" },
-        { name = "Poison",  label = "Poison" },
-        { name = "Bleed",   label = "Bleed" },
-        { name = "Enrage",  label = "Enrage" },
-    }
-
-    local function GetDispelColorForPicker(name)
-        local custom = db.DispelColors[name]
-        if custom and type(custom) == "table" and custom[1] then
-            return custom
-        end
-        local index = NRSKNUI.DispelTypeNameToIndex[name]
-        return NRSKNUI:GetDefaultDispelColor(index)
-    end
-
-    local function CreateDispelColorRow(parent, type1, type2)
-        local row = GUIFrame:CreateRow(parent, Theme.rowHeight)
-
-        local picker1 = GUIFrame:CreateColorPicker(row, type1.label, {
-            color = GetDispelColorForPicker(type1.name),
-            callback = function(r, g, b, a)
-                db.DispelColors[type1.name] = { r, g, b, a }
-                NRSKNUI:SetDispelColor(type1.name, r, g, b, a)
-                ApplySettings()
-            end
-        })
-        row:AddWidget(picker1, 0.4)
-        manager:Register(picker1, "all", "borderTypes")
-
-        local reset1 = GUIFrame:CreateButton(row, "Reset", {
-            tooltip = "Reset to Blizzard default color",
-            height = 24,
-            callback = function()
-                db.DispelColors[type1.name] = nil
-                NRSKNUI:SetDispelColor(type1.name, nil)
-                local defaultColor = NRSKNUI:GetDefaultDispelColor(NRSKNUI.DispelTypeNameToIndex[type1.name])
-                picker1:SetColor(unpack(defaultColor))
-                ApplySettings()
-            end
-        })
-        row:AddWidget(reset1, 0.1, nil, 0, -14)
-        manager:Register(reset1, "all", "borderTypes")
-
-        if type2 then
-            local picker2 = GUIFrame:CreateColorPicker(row, type2.label, {
-                color = GetDispelColorForPicker(type2.name),
-                callback = function(r, g, b, a)
-                    db.DispelColors[type2.name] = { r, g, b, a }
-                    NRSKNUI:SetDispelColor(type2.name, r, g, b, a)
-                    ApplySettings()
-                end
-            })
-            row:AddWidget(picker2, 0.4)
-            manager:Register(picker2, "all", "borderTypes")
-
-            local reset2 = GUIFrame:CreateButton(row, "Reset", {
-                tooltip = "Reset to Blizzard default color",
-                height = 24,
-                callback = function()
-                    db.DispelColors[type2.name] = nil
-                    NRSKNUI:SetDispelColor(type2.name, nil)
-                    local defaultColor = NRSKNUI:GetDefaultDispelColor(NRSKNUI.DispelTypeNameToIndex[type2.name])
-                    picker2:SetColor(unpack(defaultColor))
-                    ApplySettings()
-                end
-            })
-            row:AddWidget(reset2, 0.1, nil, 0, -14)
-            manager:Register(reset2, "all", "borderTypes")
-        end
-
-        return row
-    end
-
-    local dispelRow1 = CreateDispelColorRow(card3b.content, dispelTypes[1], dispelTypes[2])
-    card3b:AddRow(dispelRow1, Theme.rowHeight)
-
-    local dispelRow1Sep = GUIFrame:CreateSeparator(card3b.content)
-    card3b:AddRow(dispelRow1Sep, Theme.rowHeightSeparator)
-
-    local dispelRow2 = CreateDispelColorRow(card3b.content, dispelTypes[3], dispelTypes[4])
-    card3b:AddRow(dispelRow2, Theme.rowHeight)
-
-    local dispelRow2Sep = GUIFrame:CreateSeparator(card3b.content)
-    card3b:AddRow(dispelRow2Sep, Theme.rowHeightSeparator)
-
-    local dispelRow3 = CreateDispelColorRow(card3b.content, dispelTypes[5], dispelTypes[6])
-    card3b:AddRow(dispelRow3, Theme.rowHeight)
-
-    local dispelRow3Sep = GUIFrame:CreateSeparator(card3b.content)
-    card3b:AddRow(dispelRow3Sep, Theme.rowHeightSeparator)
-
-    local dispelRow4 = CreateDispelColorRow(card3b.content, dispelTypes[7], nil)
-    card3b:AddRow(dispelRow4, Theme.rowHeightLast, 0)
-
-    yOffset = card3b:GetNextOffset()
-
-    -- Card 4: Filtering Options
-    local card4 = GUIFrame:CreateCard(scrollChild, "Filtering Options", yOffset)
-    manager:Register(card4, "all")
-
-    db.Filters = db.Filters or {}
-
-    local filterRowSize = 34
-    local infoFilterRow = GUIFrame:CreateRow(card4.content, filterRowSize)
-    local infoTextFilter = GUIFrame:CreateText(infoFilterRow, NRSKNUI:ColorTextByTheme("Filter Info"), {
-        text = NRSKNUI:ColorTextByTheme("• ") ..
-            "Select filter(s) that you want to remove from tracking.",
-        height = filterRowSize,
-        bgMode = "hide"
-    })
-    infoFilterRow:AddWidget(infoTextFilter, 1)
-    manager:Register(infoTextFilter, "all")
-    card4:AddRow(infoFilterRow, filterRowSize)
-
-    local filtersep1 = GUIFrame:CreateSeparator(card4.content)
-    card4:AddRow(filtersep1, Theme.rowHeightSeparator)
-
-    local row4b = GUIFrame:CreateRow(card4.content, Theme.rowHeight)
-    local playerFilterCheck = GUIFrame:CreateCheckbox(row4b, "PLAYER", {
-        tooltip = "Filters out debuffs applied by the player, for example Brewmaster Stagger and cheat death effects.",
-        value = db.Filters.PLAYER == true,
-        callback = function(checked)
-            db.Filters.PLAYER = checked
-            ApplySettings()
-        end
-    })
-    row4b:AddWidget(playerFilterCheck, 0.5)
-    manager:Register(playerFilterCheck, "all")
-
-    local raidFilterCheck = GUIFrame:CreateCheckbox(row4b, "RAID", {
-        tooltip =
-        "Filters out certain debuffs that only show up on raid frames, e.g. most debuffs that are relevant in a raid context.",
-        value = db.Filters.RAID == true,
-        callback = function(checked)
-            db.Filters.RAID = checked
-            ApplySettings()
-        end
-    })
-    row4b:AddWidget(raidFilterCheck, 0.5)
-    manager:Register(raidFilterCheck, "all")
-    card4:AddRow(row4b, Theme.rowHeight)
-
-    local row4d = GUIFrame:CreateRow(card4.content, Theme.rowHeight)
-    local ccCheck = GUIFrame:CreateCheckbox(row4d, "CROWD_CONTROL", {
-        tooltip = "Filters out crowd control effects.",
-        value = db.Filters.CROWD_CONTROL == true,
-        callback = function(checked)
-            db.Filters.CROWD_CONTROL = checked
-            ApplySettings()
-        end
-    })
-    row4d:AddWidget(ccCheck, 0.5)
-    manager:Register(ccCheck, "all")
-
-    local importantCheck = GUIFrame:CreateCheckbox(row4d, "IMPORTANT", {
-        tooltip = "Filters out debuffs that pass the IsSpellImportant check.",
-        value = db.Filters.IMPORTANT == true,
-        callback = function(checked)
-            db.Filters.IMPORTANT = checked
-            ApplySettings()
-        end
-    })
-    row4d:AddWidget(importantCheck, 0.5)
-    manager:Register(importantCheck, "all")
-    card4:AddRow(row4d, Theme.rowHeight)
-
-    local row4e = GUIFrame:CreateRow(card4.content, Theme.rowHeightLast)
-    local dispellableCheck = GUIFrame:CreateCheckbox(row4e, "RAID_PLAYER_DISPELLABLE", {
-        tooltip = "Filters out auras with a dispel type the player can dispel.",
-        value = db.Filters.RAID_PLAYER_DISPELLABLE == true,
-        callback = function(checked)
-            db.Filters.RAID_PLAYER_DISPELLABLE = checked
-            ApplySettings()
-        end
-    })
-    row4e:AddWidget(dispellableCheck, 0.5)
-    manager:Register(dispellableCheck, "all")
-
-    local nameplateCheck = GUIFrame:CreateCheckbox(row4e, "INCLUDE_NAME_PLATE_ONLY", {
-        tooltip = "Filters out auras that should be shown on nameplates.",
-        value = db.Filters.INCLUDE_NAME_PLATE_ONLY == true,
-        callback = function(checked)
-            db.Filters.INCLUDE_NAME_PLATE_ONLY = checked
-            ApplySettings()
-        end
-    })
-    row4e:AddWidget(nameplateCheck, 0.5)
-    manager:Register(nameplateCheck, "all")
-    card4:AddRow(row4e, Theme.rowHeightLast, 0)
-
-    yOffset = card4:GetNextOffset()
-
-    -- Card 5: Blocklist
-    local card5 = GUIFrame:CreateCard(scrollChild, "Blocklist", yOffset)
-    manager:Register(card5, "all")
-
-    db.Blocklist = db.Blocklist or {}
-
-    local selectedSpellId = nil
-    local blocklistDropdown, spellIdInput, labelInput
-    local spellIconFrame, spellIconTexture, spellIconBorder, spellNameLabel
-    local enabledToggle, deleteBtn
-
-    local function GetSortedBlocklist()
-        local sorted = {}
-        for spellId, entry in pairs(db.Blocklist) do
-            local label
-            if type(entry) == "table" then
-                label = entry.label or tostring(spellId)
-            elseif type(entry) == "string" then
-                label = entry
-            else
-                label = tostring(spellId)
-            end
-            tinsert(sorted, { spellId = spellId, label = label, entry = entry })
-        end
-        table.sort(sorted, function(a, b) return a.label < b.label end)
-        return sorted
-    end
-
-    local function BuildDropdownOptions()
-        local options = {}
-        for spellId, entry in pairs(db.Blocklist) do
-            local label
-            if type(entry) == "table" then
-                label = entry.label or tostring(spellId)
-            elseif type(entry) == "string" then
-                label = entry
-            else
-                label = tostring(spellId)
-            end
-            local isDisabled = type(entry) == "table" and not entry.enabled
-            local text = label .. " (" .. spellId .. ")"
-            if isDisabled then
-                text = "|cff666666" .. text .. "|r"
-            end
-            options[tostring(spellId)] = text
-        end
-        return options
-    end
-
-    local function GetFirstSpellId()
-        local sorted = GetSortedBlocklist()
-        if #sorted > 0 then
-            return sorted[1].spellId
-        end
-        return nil
-    end
-
-    local function UpdateSpellDisplay()
-        if not selectedSpellId or not db.Blocklist[selectedSpellId] then
-            spellIconFrame:Hide()
-            spellNameLabel:SetText("")
-            return
-        end
-
-        spellIconFrame:Show()
-
-        local entry = db.Blocklist[selectedSpellId]
-        local isDefault = type(entry) == "table" and entry.default
-        local isEnabled = type(entry) == "table" and entry.enabled ~= false or entry == true or type(entry) == "string"
-        local label = type(entry) == "table" and entry.label or (type(entry) == "string" and entry or "")
-
-        local spellInfo = C_Spell.GetSpellInfo(selectedSpellId)
-        local spellName = spellInfo and spellInfo.name or "Unknown Spell"
-        local spellIcon = spellInfo and spellInfo.iconID or 134400
-
-        spellIconTexture:SetTexture(spellIcon)
-        spellNameLabel:SetText(spellName)
-        spellIdInput:SetValue(tostring(selectedSpellId))
-        labelInput:SetValue(label)
-        enabledToggle.toggle:SetValue(isEnabled)
-
-        if isDefault then
-            deleteBtn:SetEnabled(false)
-        else
-            deleteBtn:SetEnabled(true)
-        end
-    end
-
-    local function SelectSpell(spellId)
-        selectedSpellId = spellId
-        UpdateSpellDisplay()
-    end
-
-    local textRowSize = 34
-    local infoRow = GUIFrame:CreateRow(card5.content, textRowSize)
-    local infoText = GUIFrame:CreateText(infoRow, NRSKNUI:ColorTextByTheme("Blocklist Filter Info"), {
-        text = NRSKNUI:ColorTextByTheme("• ") ..
-            "Only possible to add auras that have been made non secret by Blizzard, for example all the Bloodlust ID's.",
-        height = textRowSize,
-        bgMode = "hide"
-    })
-    infoRow:AddWidget(infoText, 1)
-    manager:Register(infoText, "all")
-    card5:AddRow(infoRow, textRowSize)
-
-    local sep1 = GUIFrame:CreateSeparator(card5.content)
-    card5:AddRow(sep1, Theme.rowHeightSeparator)
-
-    local selectRow = GUIFrame:CreateRow(card5.content, Theme.rowHeight)
-
-    blocklistDropdown = GUIFrame:CreateDropdown(selectRow, "Select Entry", {
-        options = BuildDropdownOptions(),
-        value = tostring(GetFirstSpellId()),
-        callback = function(key)
-            if key then
-                SelectSpell(tonumber(key))
-            end
-        end
-    })
-    selectRow:AddWidget(blocklistDropdown, 0.5)
-    manager:Register(blocklistDropdown, "all")
-
-    enabledToggle = GUIFrame:CreateCheckbox(selectRow, "Enabled", {
-        value = true,
-        callback = function(checked)
-            if selectedSpellId and db.Blocklist[selectedSpellId] then
-                local entry = db.Blocklist[selectedSpellId]
-                if type(entry) == "table" then
-                    entry.enabled = checked
-                else
-                    db.Blocklist[selectedSpellId] = { label = type(entry) == "string" and entry or nil, enabled = checked }
-                end
-                blocklistDropdown:SetOptions(BuildDropdownOptions())
-                blocklistDropdown:SetValue(tostring(selectedSpellId))
-                ApplySettings()
-            end
-        end
-    })
-    selectRow:AddWidget(enabledToggle, 0.5)
-    manager:Register(enabledToggle, "all")
-    card5:AddRow(selectRow, Theme.rowHeight)
-
-    local sep2a = GUIFrame:CreateSeparator(card5.content)
-    card5:AddRow(sep2a, Theme.rowHeightSeparator)
-
-    local detailRow = GUIFrame:CreateRow(card5.content, Theme.rowHeight)
-    local spellInfoContainer = CreateFrame("Frame", nil, detailRow)
-    spellInfoContainer:SetHeight(Theme.rowHeight)
-    detailRow:AddWidget(spellInfoContainer, 0.5)
-
-    spellIconFrame = CreateFrame("Frame", nil, spellInfoContainer)
-    spellIconFrame:SetSize(34, 34)
-    spellIconFrame:SetPoint("LEFT", spellInfoContainer, "LEFT", 0, 0)
-    spellIconFrame:EnableMouse(true)
-
-    spellIconTexture = spellIconFrame:CreateTexture(nil, "ARTWORK")
-    spellIconTexture:SetPoint("TOPLEFT", 1, -1)
-    spellIconTexture:SetPoint("BOTTOMRIGHT", -1, 1)
-    spellIconTexture:SetTexture(134400)
-    NRSKNUI:ApplyZoom(spellIconTexture, NRSKNUI.GlobalZoom)
-
-    spellIconBorder = CreateFrame("Frame", nil, spellIconFrame, "BackdropTemplate")
-    spellIconBorder:SetAllPoints()
-    spellIconBorder:SetBackdrop({ edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1 })
-    spellIconBorder:SetBackdropBorderColor(1, 0, 0, 1)
-
-    spellIconFrame:SetScript("OnEnter", function(self)
-        if selectedSpellId then
-            GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT", 30, 0)
-            GameTooltip:SetSpellByID(selectedSpellId)
-            GameTooltip:Show()
-        end
-    end)
-    spellIconFrame:SetScript("OnLeave", function()
-        GameTooltip:Hide()
-    end)
-
-    spellNameLabel = spellInfoContainer:CreateFontString(nil, "OVERLAY")
-    spellNameLabel:SetPoint("LEFT", spellIconFrame, "RIGHT", 6, 0)
-    spellNameLabel:SetPoint("RIGHT", spellInfoContainer, "RIGHT", -4, 0)
-    spellNameLabel:SetJustifyH("LEFT")
-    NRSKNUI:ApplyThemeFont(spellNameLabel, "normal")
-    spellNameLabel:SetTextColor(Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3], 1)
-
-    spellIdInput = GUIFrame:CreateEditBox(detailRow, "Spell ID", {
-        value = "",
-        callback = function(text)
-            local newSpellId = tonumber(text)
-            if newSpellId and selectedSpellId and newSpellId ~= selectedSpellId then
-                local entry = db.Blocklist[selectedSpellId]
-                if entry then
-                    db.Blocklist[newSpellId] = entry
-                    db.Blocklist[selectedSpellId] = nil
-                    selectedSpellId = newSpellId
-                    blocklistDropdown:SetOptions(BuildDropdownOptions())
-                    blocklistDropdown:SetValue(tostring(newSpellId))
-                    UpdateSpellDisplay()
-                    ApplySettings()
-                end
-            end
-        end
-    })
-    detailRow:AddWidget(spellIdInput, 0.25)
-    manager:Register(spellIdInput, "all")
-
-    labelInput = GUIFrame:CreateEditBox(detailRow, "Label", {
-        value = "",
-        callback = function(text)
-            if selectedSpellId and db.Blocklist[selectedSpellId] then
-                local entry = db.Blocklist[selectedSpellId]
-                if type(entry) == "table" then
-                    entry.label = (text and text ~= "") and text or nil
-                else
-                    db.Blocklist[selectedSpellId] = { label = (text and text ~= "") and text or nil, enabled = true }
-                end
-                blocklistDropdown:SetOptions(BuildDropdownOptions())
-                blocklistDropdown:SetValue(tostring(selectedSpellId))
-            end
-        end
-    })
-    detailRow:AddWidget(labelInput, 0.25)
-    manager:Register(labelInput, "all")
-    card5:AddRow(detailRow, Theme.rowHeight)
-
-    local buttonSep = GUIFrame:CreateSeparator(card5.content)
-    card5:AddRow(buttonSep, Theme.rowHeightSeparator)
-
-    local buttonRow = GUIFrame:CreateRow(card5.content, Theme.rowHeightLast)
-    local addBtn = GUIFrame:CreateButton(buttonRow, "Add New Entry", {
-        height = 24,
-        callback = function()
-            local entryNum = 1
-            local function labelExists(num)
-                local testLabel = "Entry " .. num
-                for _, entry in pairs(db.Blocklist) do
-                    local lbl = type(entry) == "table" and entry.label or (type(entry) == "string" and entry)
-                    if lbl == testLabel then return true end
-                end
-                return false
-            end
-            while labelExists(entryNum) do
-                entryNum = entryNum + 1
-            end
-            local newLabel = "Entry " .. entryNum
-            local newSpellId = -1
-            while db.Blocklist[newSpellId] do
-                newSpellId = newSpellId - 1
-            end
-
-            db.Blocklist[newSpellId] = {
-                label = newLabel,
-                enabled = true
-            }
-
-            blocklistDropdown:SetOptions(BuildDropdownOptions())
-            blocklistDropdown:SetValue(tostring(newSpellId))
-            SelectSpell(newSpellId)
-            ApplySettings()
-        end
-    })
-    buttonRow:AddWidget(addBtn, 0.5)
-
-    deleteBtn = GUIFrame:CreateButton(buttonRow, "Delete Entry", {
-        height = 24,
-        callback = function()
-            if selectedSpellId and db.Blocklist[selectedSpellId] then
-                local entry = db.Blocklist[selectedSpellId]
-                if type(entry) == "table" and entry.default then
-                    return
-                end
-                db.Blocklist[selectedSpellId] = nil
-                blocklistDropdown:SetOptions(BuildDropdownOptions())
-                local nextSpell = GetFirstSpellId()
-                if nextSpell then
-                    blocklistDropdown:SetValue(tostring(nextSpell))
-                    SelectSpell(nextSpell)
-                else
-                    selectedSpellId = nil
-                    spellIdInput:SetValue("")
-                    labelInput:SetValue("")
-                    UpdateSpellDisplay()
-                end
-                ApplySettings()
-            end
-        end
-    })
-    buttonRow:AddWidget(deleteBtn, 0.5)
-    card5:AddRow(buttonRow, Theme.rowHeightLast - 14, 0)
-
-    local firstSpell = GetFirstSpellId()
-    if firstSpell then
-        SelectSpell(firstSpell)
-    else
-        spellIconFrame:Hide()
-    end
-
-    yOffset = card5:GetNextOffset()
-
-    -- Card 6: Text Positions
-    local card6 = GUIFrame:CreateCard(scrollChild, "Text Positions", yOffset)
-    manager:Register(card6, "all")
+    manager:SetCondition("colorBlindOn", function() return db.ColorBlindText end)
 
     local textAnchorOptions = {
         { key = "TOPLEFT",     text = "Top Left" },
@@ -749,12 +222,90 @@ GUIFrame:RegisterContent("CustomSkin_Debuffs", function(scrollChild, yOffset)
         { key = "BOTTOMRIGHT", text = "Bottom Right" },
     }
 
+    db.ColorBlindPosition = db.ColorBlindPosition or { AnchorFrom = "TOP", AnchorTo = "BOTTOM", XOffset = 0, YOffset = -1 }
+
+    local row3a = GUIFrame:CreateRow(card3.content, Theme.rowHeight)
+    local colorBlindCheck = GUIFrame:CreateCheckbox(row3a, "ColorBlind Text", {
+        tooltip = "Show dispel type abbreviation text on debuffs.",
+        value = db.ColorBlindText,
+        callback = function(checked)
+            db.ColorBlindText = checked
+            ApplySettings()
+            UpdateAllWidgetStates()
+        end
+    })
+    row3a:AddWidget(colorBlindCheck, 0.5)
+    manager:Register(colorBlindCheck, "all")
+
+    local colorBlindSizeSlider = GUIFrame:CreateSlider(row3a, "Font Size", {
+        min = 8,
+        max = 24,
+        step = 1,
+        value = db.ColorBlindFontSize or 16,
+        callback = function(value)
+            db.ColorBlindFontSize = value
+            ApplySettings()
+        end
+    })
+    row3a:AddWidget(colorBlindSizeSlider, 0.5)
+    manager:Register(colorBlindSizeSlider, "all", "colorBlindOn")
+    card3:AddRow(row3a, Theme.rowHeight)
+
+    local sep3a = GUIFrame:CreateSeparator(card3.content)
+    card3:AddRow(sep3a, Theme.rowHeightSeparator)
+
+    local row3b = GUIFrame:CreateRow(card3.content, Theme.rowHeightLast)
+    local colorBlindAnchorDropdown = GUIFrame:CreateDropdown(row3b, "Anchor", {
+        options = textAnchorOptions,
+        value = db.ColorBlindPosition.AnchorFrom or "TOP",
+        callback = function(key)
+            db.ColorBlindPosition.AnchorFrom = key
+            db.ColorBlindPosition.AnchorTo = key == "TOP" and "BOTTOM" or key == "BOTTOM" and "TOP" or key
+            ApplySettings()
+        end
+    })
+    row3b:AddWidget(colorBlindAnchorDropdown, 1 / 3)
+    manager:Register(colorBlindAnchorDropdown, "all", "colorBlindOn")
+
+    local colorBlindXSlider = GUIFrame:CreateSlider(row3b, "X Offset", {
+        min = -50,
+        max = 50,
+        step = 1,
+        value = db.ColorBlindPosition.XOffset or 0,
+        callback = function(value)
+            db.ColorBlindPosition.XOffset = value
+            ApplySettings()
+        end
+    })
+    row3b:AddWidget(colorBlindXSlider, 1 / 3)
+    manager:Register(colorBlindXSlider, "all", "colorBlindOn")
+
+    local colorBlindYSlider = GUIFrame:CreateSlider(row3b, "Y Offset", {
+        min = -50,
+        max = 50,
+        step = 1,
+        value = db.ColorBlindPosition.YOffset or -1,
+        callback = function(value)
+            db.ColorBlindPosition.YOffset = value
+            ApplySettings()
+        end
+    })
+    row3b:AddWidget(colorBlindYSlider, 1 / 3)
+    manager:Register(colorBlindYSlider, "all", "colorBlindOn")
+    card3:AddRow(row3b, Theme.rowHeightLast, 0)
+
+    yOffset = card3:GetNextOffset()
+
+    -- Card 4: Text Positions
+    local card4 = GUIFrame:CreateCard(scrollChild, "Text Positions", yOffset)
+    manager:Register(card4, "all")
+
     db.TimerPosition = db.TimerPosition or {}
     db.StackPosition = db.StackPosition or
         { AnchorFrom = "BOTTOMRIGHT", AnchorTo = "BOTTOMRIGHT", XOffset = -1, YOffset = 1 }
 
-    local row6a = GUIFrame:CreateRow(card6.content, Theme.rowHeight)
-    local timerAnchorDropdown = GUIFrame:CreateDropdown(row6a, "Timer Anchor", {
+    local row4a = GUIFrame:CreateRow(card4.content, Theme.rowHeight)
+    local timerAnchorDropdown = GUIFrame:CreateDropdown(row4a, "Timer Anchor", {
         options = textAnchorOptions,
         value = db.TimerPosition.AnchorFrom or "CENTER",
         callback = function(key)
@@ -763,10 +314,10 @@ GUIFrame:RegisterContent("CustomSkin_Debuffs", function(scrollChild, yOffset)
             ApplySettings()
         end
     })
-    row6a:AddWidget(timerAnchorDropdown, 1 / 3)
+    row4a:AddWidget(timerAnchorDropdown, 1 / 3)
     manager:Register(timerAnchorDropdown, "all")
 
-    local timerXSlider = GUIFrame:CreateSlider(row6a, "Timer X", {
+    local timerXSlider = GUIFrame:CreateSlider(row4a, "Timer X", {
         min = -50,
         max = 50,
         step = 1,
@@ -776,10 +327,10 @@ GUIFrame:RegisterContent("CustomSkin_Debuffs", function(scrollChild, yOffset)
             ApplySettings()
         end
     })
-    row6a:AddWidget(timerXSlider, 1 / 3)
+    row4a:AddWidget(timerXSlider, 1 / 3)
     manager:Register(timerXSlider, "all")
 
-    local timerYSlider = GUIFrame:CreateSlider(row6a, "Timer Y", {
+    local timerYSlider = GUIFrame:CreateSlider(row4a, "Timer Y", {
         min = -50,
         max = 50,
         step = 1,
@@ -789,15 +340,15 @@ GUIFrame:RegisterContent("CustomSkin_Debuffs", function(scrollChild, yOffset)
             ApplySettings()
         end
     })
-    row6a:AddWidget(timerYSlider, 1 / 3)
+    row4a:AddWidget(timerYSlider, 1 / 3)
     manager:Register(timerYSlider, "all")
-    card6:AddRow(row6a, Theme.rowHeight)
+    card4:AddRow(row4a, Theme.rowHeight)
 
-    local textSettingSep = GUIFrame:CreateSeparator(card6.content)
-    card6:AddRow(textSettingSep, Theme.rowHeightSeparator)
+    local textSettingSep = GUIFrame:CreateSeparator(card4.content)
+    card4:AddRow(textSettingSep, Theme.rowHeightSeparator)
 
-    local row6b = GUIFrame:CreateRow(card6.content, Theme.rowHeightLast)
-    local stackAnchorDropdown = GUIFrame:CreateDropdown(row6b, "Stack Anchor", {
+    local row4b = GUIFrame:CreateRow(card4.content, Theme.rowHeightLast)
+    local stackAnchorDropdown = GUIFrame:CreateDropdown(row4b, "Stack Anchor", {
         options = textAnchorOptions,
         value = db.StackPosition.AnchorFrom,
         callback = function(key)
@@ -806,10 +357,10 @@ GUIFrame:RegisterContent("CustomSkin_Debuffs", function(scrollChild, yOffset)
             ApplySettings()
         end
     })
-    row6b:AddWidget(stackAnchorDropdown, 1 / 3)
+    row4b:AddWidget(stackAnchorDropdown, 1 / 3)
     manager:Register(stackAnchorDropdown, "all")
 
-    local stackXSlider = GUIFrame:CreateSlider(row6b, "Stack X", {
+    local stackXSlider = GUIFrame:CreateSlider(row4b, "Stack X", {
         min = -50,
         max = 50,
         step = 1,
@@ -819,10 +370,10 @@ GUIFrame:RegisterContent("CustomSkin_Debuffs", function(scrollChild, yOffset)
             ApplySettings()
         end
     })
-    row6b:AddWidget(stackXSlider, 1 / 3)
+    row4b:AddWidget(stackXSlider, 1 / 3)
     manager:Register(stackXSlider, "all")
 
-    local stackYSlider = GUIFrame:CreateSlider(row6b, "Stack Y", {
+    local stackYSlider = GUIFrame:CreateSlider(row4b, "Stack Y", {
         min = -50,
         max = 50,
         step = 1,
@@ -832,20 +383,20 @@ GUIFrame:RegisterContent("CustomSkin_Debuffs", function(scrollChild, yOffset)
             ApplySettings()
         end
     })
-    row6b:AddWidget(stackYSlider, 1 / 3)
+    row4b:AddWidget(stackYSlider, 1 / 3)
     manager:Register(stackYSlider, "all")
-    card6:AddRow(row6b, Theme.rowHeightLast, 0)
+    card4:AddRow(row4b, Theme.rowHeightLast, 0)
 
-    yOffset = card6:GetNextOffset()
+    yOffset = card4:GetNextOffset()
 
-    -- Card 7: Font Settings
+    -- Card 5: Font Settings
     local fontCard, fontOffset, fontWidgets = GUIFrame:CreateFontSettingsCard(scrollChild, yOffset, {
         title = "Font Settings",
         db = db,
         dbKeys = { fontFace = "FontFace", fontOutline = "FontOutline" },
         fontSizes = {
-            { label = "Count Size", dbKey = "FontSize" },
             { label = "Timer Size", dbKey = "TimerFontSize" },
+            { label = "Stack Size", dbKey = "StackFontSize" },
         },
         fontSizeRange = { 8, 32 },
         onChangeCallback = ApplySettings,
@@ -856,17 +407,13 @@ GUIFrame:RegisterContent("CustomSkin_Debuffs", function(scrollChild, yOffset)
 
     yOffset = fontOffset
 
-    -- Card 8: Position
+    -- Card 6: Position
     local posCard, posOffset = GUIFrame:CreatePositionCard(scrollChild, yOffset, {
         db = db,
         showAnchorFrameType = true,
         showStrata = true,
         disableAnchorFrom = true,
-        onChangeCallback = function()
-            if DEBUFFS and DEBUFFS.ApplyPosition then
-                DEBUFFS:ApplyPosition()
-            end
-        end,
+        onChangeCallback = ApplySettings
     })
     manager:Register(posCard, "all")
 

@@ -1973,35 +1973,32 @@ local Defaults = {
                 -- Icon settings
                 IconSize = 52,
                 IconSpacing = 1,
-                IconsPerRow = 5,
-                MaxRows = 1,
-                IconZoom = 0.32,
+                MaxIcons = 40,
+                IconsPerRow = 10,
+                GrowthDirection = "RIGHT",
+                WrapDirection = "DOWN",
                 Swipe = true,
                 Reverse = true,
 
-                -- Visual settings
-                BorderColor = { 0.8, 0, 0, 1 },
-                BorderColorMode = "dispel", -- "custom" or "dispel"
+                ShowDispelBorder = true,
 
-                -- Custom dispel type colors (nil = use Blizzard default)
-                DispelColors = {
-                    None = nil,
-                    Magic = nil,
-                    Curse = nil,
-                    Disease = nil,
-                    Poison = nil,
-                    Bleed = nil,
-                    Enrage = nil,
-                },
-
-                -- Font settings
+                -- General Font settings
                 UseGlobalFont = true,
                 FontFace = "Expressway",
-                FontSize = 14,
                 FontOutline = "OUTLINE",
-                TimerFontSize = 16,
 
-                -- Timer text position
+                -- Colorblind text settings
+                ColorBlindText = true,
+                ColorBlindFontSize = 14,
+                ColorBlindPosition = {
+                    AnchorFrom = "TOPLEFT",
+                    AnchorTo = "TOPLEFT",
+                    XOffset = 2,
+                    YOffset = -2,
+                },
+
+                -- Timer text settings
+                TimerFontSize = 16,
                 TimerPosition = {
                     AnchorFrom = "CENTER",
                     AnchorTo = "CENTER",
@@ -2009,7 +2006,8 @@ local Defaults = {
                     YOffset = 0,
                 },
 
-                -- Stack text position
+                -- Stack text settings
+                StackFontSize = 14,
                 StackPosition = {
                     AnchorFrom = "BOTTOMRIGHT",
                     AnchorTo = "BOTTOMRIGHT",
@@ -2028,28 +2026,8 @@ local Defaults = {
                     YOffset = 0,
                 },
 
-                -- Growth direction
-                GrowHorizontal = "LEFT", -- "LEFT" or "RIGHT"
-                GrowVertical = "DOWN",   -- "UP" or "DOWN"
-
                 -- Interaction
                 ShowTooltips = true,
-
-                -- Filtering
-                Filters = {
-                    PLAYER = true,
-                    RAID = false,
-                    CANCELABLE = false,
-                    NOT_CANCELABLE = false,
-                    INCLUDE_NAME_PLATE_ONLY = false,
-                    EXTERNAL_DEFENSIVE = false,
-                    CROWD_CONTROL = false,
-                    RAID_IN_COMBAT = false,
-                    RAID_PLAYER_DISPELLABLE = false,
-                    BIG_DEFENSIVE = false,
-                    IMPORTANT = false,
-                },
-                Blocklist = {},
             },
             DebuffTrackingDefault = {
                 Enabled = true,
