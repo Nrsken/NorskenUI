@@ -153,3 +153,35 @@ NRSKNUI.GEM_SOCKET_TYPES = {
 }
 
 NRSKNUI.SOCKETABLE_SLOTS = { 1, 2, 5, 6, 9, 10, 11, 12, 13, 14, 15 }
+
+NRSKNUI.timeFormatter = C_StringUtil.CreateNumericRuleFormatter()
+NRSKNUI.timeFormatter:SetBreakpoints({
+    {
+        threshold = 0,
+        format = "%0.1f",
+    },
+    {
+        threshold = 1.01,
+        format = "%d",
+    },
+    {
+        threshold = 60,
+        format = "%d:%02d",
+        components = { { div = 60 }, { mod = 60 } }
+    },
+    {
+        threshold = 600,
+        format = "%dm",
+        components = { { div = 60, step = 1, rounding = 1 } }
+    },
+    {
+        threshold = 5940,
+        format = "%dh",
+        components = { { div = 3600, step = 1, rounding = 1 } }
+    },
+    {
+        threshold = 356400,
+        format = "%dd",
+        components = { { div = 86400, step = 1, rounding = 1 } }
+    },
+})
