@@ -10,8 +10,8 @@ local ProfileManager = {}
 NRSKNUI.ProfileManager = ProfileManager
 
 -- Libraries
-local AceSerializer = LibStub("AceSerializer-3.0")
-local LibDeflate = LibStub("LibDeflate")
+local AceSerializer = NRSKNUI.Libs.AS
+local LibDeflate = NRSKNUI.Libs.LD
 
 -- Constants
 local EXPORT_PREFIX = "!NRSKNUI1!"
