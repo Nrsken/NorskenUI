@@ -5,13 +5,7 @@ local Theme = NRSKNUI.Theme
 local CreateFrame = CreateFrame
 local unpack = unpack
 local pairs = pairs
-local LCG = LibStub("LibCustomGlow-1.0", true)
-
--- Default backdrop colors
-NRSKNUI.Media = {
-    Background = { 0, 0, 0, 0.8 },
-    Border     = { 0, 0, 0, 1 },
-}
+local LCG = NRSKNUI.Libs.LCG
 
 -- Icon zoom helper bcs blizz border uggy
 -- Example Usage: NRSKNUI:ApplyZoom(auraIcon, 0.3)
@@ -47,16 +41,18 @@ frame:SetBorderColor(r, g, b, a)
 ---@param borderParent Frame?
 ---@param size number?
 -- Helper function to create pixel-perfect borders on any frame
-function NRSKNUI:AddBorders(frame, color, borderParent, size)
+function NRSKNUI:AddBorders(frame, color, borderParent, size, layer, sublevel)
     if not frame then return end
     color = color or { 0, 0, 0, 1 }
     borderParent = borderParent or frame
     local borderSize = size or 1
+    layer = layer or "OVERLAY"
+    sublevel = sublevel or 7
 
     frame.borders = frame.borders or {}
 
     local function CreateBorder(point1, point2, width, height)
-        local tex = borderParent:CreateTexture(nil, "OVERLAY", nil, 7)
+        local tex = borderParent:CreateTexture(nil, layer, nil, sublevel)
         tex:SetColorTexture(unpack(color))
         tex:SetTexelSnappingBias(0)
         tex:SetSnapToPixelGrid(false)
@@ -75,7 +71,7 @@ function NRSKNUI:AddBorders(frame, color, borderParent, size)
 
     frame.borders.top = CreateBorder("TOPLEFT", "TOPRIGHT", nil, borderSize)
 
-    frame.borders.bottom = borderParent:CreateTexture(nil, "OVERLAY", nil, 7)
+    frame.borders.bottom = borderParent:CreateTexture(nil, layer, nil, sublevel)
     frame.borders.bottom:SetHeight(borderSize)
     frame.borders.bottom:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 0, 0)
     frame.borders.bottom:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
@@ -85,7 +81,7 @@ function NRSKNUI:AddBorders(frame, color, borderParent, size)
 
     frame.borders.left = CreateBorder("TOPLEFT", "BOTTOMLEFT", borderSize, nil)
 
-    frame.borders.right = borderParent:CreateTexture(nil, "OVERLAY", nil, 7)
+    frame.borders.right = borderParent:CreateTexture(nil, layer, nil, sublevel)
     frame.borders.right:SetWidth(borderSize)
     frame.borders.right:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
     frame.borders.right:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
