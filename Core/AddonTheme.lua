@@ -4,7 +4,6 @@ local NRSKNUI = select(2, ...)
 -- Localization Setup
 local type = type
 local ipairs, pairs = ipairs, pairs
-local UnitClass = UnitClass
 
 -- Theme presets
 -- All pre-made themes are defined here
@@ -258,7 +257,7 @@ local ThemeDefaults = {
     rowHeightLabelSeparator = 22, -- LabelSeparator-only rows
 
     -- Font settings
-    fontFace                = NRSKNUI.FONT,
+    fontFace                = NRSKNUI.Media.Fonts.Expressway,
     fontSizeSmall           = 12,
     fontSizeNormal          = 12,
     fontSizeLarge           = 16,
@@ -305,16 +304,6 @@ local function CopyColor(color)
     return { color[1] or 1, color[2] or 1, color[3] or 1, color[4] or 1 }
 end
 
--- GetPlayerClassColor: Get the player's class color
-local function GetPlayerClassColor()
-    local _, class = UnitClass("player")
-    if class and RAID_CLASS_COLORS[class] then
-        local c = RAID_CLASS_COLORS[class]
-        return { c.r, c.g, c.b, 1 }
-    end
-    return { 1, 1, 1, 1 } -- Fallback to white
-end
-
 -- GetThemeDB: Get the theme database
 local function GetThemeDB()
     return NRSKNUI.db and NRSKNUI.db.global and NRSKNUI.db.global.Theme
@@ -348,7 +337,7 @@ local function GetThemeColor(key)
 
     -- Check if this key supports class color and we're in class mode
     if mode == "class" and ClassColorKeyLookup[key] then
-        local classColor = GetPlayerClassColor()
+        local classColor = NRSKNUI:GetPlayerClassColor()
         -- Special handling for selectedBg: always use alpha 0.25
         if key == "selectedBg" then
             return { classColor[1], classColor[2], classColor[3], 0.25 }
@@ -433,7 +422,7 @@ NRSKNUI.Theme = {
     rowHeightLabelSeparator = ThemeDefaults.rowHeightLabelSeparator,
 
     -- Font settings
-    fontFace                = NRSKNUI.FONT or "Fonts\\FRIZQT__.TTF",
+    fontFace                = NRSKNUI.Media.Fonts.Expressway or "Fonts\\FRIZQT__.TTF",
     fontSizeNormal          = ThemeDefaults.fontSizeNormal,
     fontSizeSmall           = ThemeDefaults.fontSizeSmall,
     fontSizeLarge           = ThemeDefaults.fontSizeLarge,
@@ -561,6 +550,12 @@ function NRSKNUI:NotifyThemeChange()
     -- Update EditMode overlays if active
     if self.EditMode and self.EditMode:IsActive() then
         self.EditMode:RefreshOverlays()
+    end
+
+    -- Update skinned Blizzard frames if their accent follows the theme
+    local BF = self.GetModule and self:GetModule("BlizzardFrames", true)
+    if BF and BF:IsEnabled() and BF.db and BF.db.General and BF.db.General.AccentMode == "Theme" then
+        BF:UpdateColors()
     end
 end
 
@@ -707,7 +702,7 @@ function NRSKNUI:ApplyThemeFont(fontString, size)
     end
 
     -- Get font face
-    local fontFace = Theme.fontFace or self.FONT or "Expressway"
+    local fontFace = Theme.fontFace or self.Media.Fonts.Expressway
 
     -- Apply font with OUTLINE, no shadow
     fontString:SetFont(fontFace, fontSize, "OUTLINE")

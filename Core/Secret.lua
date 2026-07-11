@@ -21,7 +21,6 @@ local CreateFrame = CreateFrame
 local issecretvalue = issecretvalue
 local issecrettable = issecrettable
 local canaccessvalue = canaccessvalue
-local UnitGUID = UnitGUID
 local GetUnitName = GetUnitName
 
 -- Secret Value Utilities
@@ -45,31 +44,14 @@ function NRSKNUI:IsSecretTable(object)
     return issecrettable and issecrettable(object)
 end
 
-function NRSKNUI:NotSecretTable(object)
-    return not self:IsSecretTable(object)
-end
-
 -- Check if a value can be accessed
 function NRSKNUI:CanAccessValue(value)
     return not canaccessvalue or canaccessvalue(value)
 end
 
-function NRSKNUI:CanNotAccessValue(value)
-    return not self:CanAccessValue(value)
-end
-
 -- Check if an object has secret values
 function NRSKNUI:HasSecretValues(object)
     return object and object.HasSecretValues and object:HasSecretValues()
-end
-
-function NRSKNUI:NoSecretValues(object)
-    return not self:HasSecretValues(object)
-end
-
--- Legacy alias for backwards compatibility
-function NRSKNUI:SecretCheck(value)
-    return self:IsSecretValue(value)
 end
 
 -- Safe Unit Helpers
@@ -83,17 +65,6 @@ function NRSKNUI:GetSafeUnitName(unit)
     if not self:IsSafeValue(name) then return nil end
 
     return name:gsub("%s?%(%*%)", "")
-end
-
--- Get unit GUID safely, returns nil if unit or guid is secret
-function NRSKNUI:GetSafeUnitGUID(unit)
-    if not self:IsSafeValue(unit) then return nil end
-    if type(unit) ~= "string" then return nil end
-
-    local guid = UnitGUID(unit)
-    if not self:IsSafeValue(guid) then return nil end
-
-    return guid
 end
 
 -- Safely get text from a FontString, returns nil if secret

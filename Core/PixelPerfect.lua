@@ -9,11 +9,12 @@ local next = next
 local pcall = pcall
 local string_format = string.format
 local math_floor = math.floor
+
 local UIParent = UIParent
 
+-- Reads the live UIParent scale and derives the pixel-perfect multiplier.
 function NRSKNUI:UIMult()
-    local uiScale = self.uiScale or (UIParent and UIParent:GetEffectiveScale()) or 1
-    self.mult = self.perfect / uiScale
+    self.mult = self.perfect / UIParent:GetEffectiveScale()
 end
 
 function NRSKNUI:PixelBestSize()
@@ -23,11 +24,6 @@ function NRSKNUI:PixelBestSize()
     return perfectScale
 end
 
-function NRSKNUI:UIScale()
-    self.uiScale = UIParent:GetEffectiveScale()
-    self:UIMult()
-end
-
 ---@param event string
 function NRSKNUI:PixelScaleChanged(event)
     if event == "UI_SCALE_CHANGED" then
@@ -35,7 +31,7 @@ function NRSKNUI:PixelScaleChanged(event)
         self.resolution = string_format("%dx%d", self.physicalWidth, self.physicalHeight)
         self.perfect = 768 / self.physicalHeight
     end
-    self:UIScale()
+    self:UIMult()
     if self.UpdateSpells then self:UpdateSpells() end
 end
 
@@ -53,16 +49,19 @@ do
     end
 end
 
----@param x number?
----@return number
-function NRSKNUI:Scale(x)
-    if not x or type(x) ~= "number" then return 0 end
-
-    local m = self.mult or 1
+local function ScaleValue(x)
+    local m = NRSKNUI.mult or 1
     if m == 1 or x == 0 then return x end
 
     local y = m > 1 and m or -m
     return x - x % (x < 0 and y or -y)
+end
+
+---@param x number?
+---@return number
+function NRSKNUI:Scale(x)
+    if not x or type(x) ~= "number" then return 0 end
+    return ScaleValue(x)
 end
 
 ---@param value number?
@@ -145,16 +144,6 @@ NRSKNUI:UIMult()
 
 -- GUI Widget Pixel Perfection System
 do
-    local function ScaleValue(x)
-        local m = NRSKNUI.mult
-        if m == 1 or x == 0 then
-            return x
-        else
-            local y = m > 1 and m or -m
-            return x - x % (x < 0 and y or -y)
-        end
-    end
-
     local function DisablePixelSnap(frame)
         if frame and not frame:IsForbidden() and not frame.NUIPixelSnapDisabled then
             if frame.SetSnapToPixelGrid then
@@ -220,6 +209,8 @@ do
         SetOutside = SetOutside,
         DisablePixelSnap = DisablePixelSnap,
     }
+
+    ---@class PixelMixin
 
     ---@param obj table Frame, Texture, FontString, or any widget
     function NRSKNUI:ApplyPixelMixin(obj)

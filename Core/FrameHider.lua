@@ -1,8 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 
--- Module used to hide frames safely
-
 local CreateFrame = CreateFrame
 local type = type
 local select = select
@@ -30,7 +28,8 @@ function NRSKNUI:Hide(object, ...)
 
     if object then
         if object.HideBase then
-            object:HideBase(true) -- Edit mode adds this fallback when it overrides Hide
+            -- Edit mode adds this fallback when it overrides Hide
+            object:HideBase(true)
         else
             object:Hide(true)
         end
@@ -41,11 +40,12 @@ function NRSKNUI:Hide(object, ...)
 
         if object.UnregisterAllEvents then
             object:UnregisterAllEvents()
-            object:SetAttribute('statehidden', true) -- Useful for hiding secure template based objects
+            -- Useful for hiding secure template based objects
+            object:SetAttribute('statehidden', true)
         end
 
+        -- Useful for hiding blizzard objects that respect user placement
         if object.SetUserPlaced then
-            -- Useful for hiding blizzard objects that respect user placement
             pcall(object.SetUserPlaced, object, true)
             pcall(object.SetDontSavePosition, object, true)
         end
@@ -66,8 +66,10 @@ function NRSKNUI:HideTextures(frame, ...)
 
     for _, region in ipairs({ frame:GetRegions() }) do
         if ... then
-            if region:IsObjectType("Texture") and region:GetAtlas() == ... then
-                region:Hide()
+            if region:IsObjectType("Texture") then
+                if region:GetAtlas() == ... then
+                    region:Hide()
+                end
             end
         else
             if region:IsObjectType("Texture") then

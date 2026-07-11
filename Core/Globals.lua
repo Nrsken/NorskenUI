@@ -1,32 +1,20 @@
 ---@class NRSKNUI
----@diagnostic disable: undefined-field
 local NRSKNUI = select(2, ...)
-local N = select(1, ...)
-
-NRSKNUI.AddOnName = C_AddOns.GetAddOnMetadata(N, "Title")
-NRSKNUI.Version = C_AddOns.GetAddOnMetadata(N, "Version")
-NRSKNUI.Author = C_AddOns.GetAddOnMetadata(N, "Author")
 
 local print = print
-local C_AddOns = C_AddOns
-local EditModeManagerFrame = EditModeManagerFrame
+local GetNumGroupMembers = GetNumGroupMembers
+local IsInRaid = IsInRaid
+local UnitClass = UnitClass
+local select = select
+local CreateFrame = CreateFrame
 local _G = _G
 
--- Get player data via LibSpecialization and let the Lib handle changes
-do
-    local LS = LibStub("LibSpecialization")
-    NRSKNUI.MySpec = { id = nil, role = nil, position = nil, talents = nil }
-    local function UpdateSpec()
-        NRSKNUI.MySpec.id, NRSKNUI.MySpec.role, NRSKNUI.MySpec.position, NRSKNUI.MySpec.talents = LS.MySpecialization()
-    end
-    C_Timer.After(0.1, function()
-        UpdateSpec()
-    end)
-    LS.RegisterPlayerSpecChange(NRSKNUI, UpdateSpec)
-end
+local EditModeManagerFrame = EditModeManagerFrame
+
+local IsAddonLoaded = C_AddOns and C_AddOns.IsAddOnLoaded
 
 -- Check if ElvUI is loaded use ElvUI skinning is enabled
-function NRSKNUI:ShouldNotLoadModule() return C_AddOns.IsAddOnLoaded("ElvUI") and NRSKNUI.db.profile.UseElvUI.Enabled end
+function NRSKNUI:ShouldNotLoadModule() return IsAddonLoaded("ElvUI") and NRSKNUI.db.profile.UseElvUI.Enabled end
 
 -- Check if Blizzard Edit Mode is currently active
 function NRSKNUI:IsEditModeActive() return EditModeManagerFrame and EditModeManagerFrame:IsShown() end
@@ -36,7 +24,11 @@ function NRSKNUI:Print(msg) print(self:ColorTextByTheme("Norsken") .. "UI:|r " .
 
 -- Preview Utilities --
 
-local PreviewManager = { guiOpen = false, editModeActive = false, previewsActive = false, }
+local PreviewManager = {
+    guiOpen = false,
+    editModeActive = false,
+    previewsActive = false,
+}
 NRSKNUI.PreviewManager = PreviewManager
 
 function PreviewManager:UpdatePreviewState()
@@ -83,6 +75,9 @@ end
 -- Positioning Utilities --
 
 -- Resolve anchor frame: SCREEN, UIPARENT or SELECTFRAME
+---@param anchorFrameType string
+---@param parentFrameName string
+---@return Frame
 function NRSKNUI:ResolveAnchorFrame(anchorFrameType, parentFrameName)
     if anchorFrameType == "SCREEN" or anchorFrameType == "UIPARENT" then
         return UIParent
@@ -94,6 +89,8 @@ function NRSKNUI:ResolveAnchorFrame(anchorFrameType, parentFrameName)
 end
 
 -- Get text justification based on anchor point
+---@param anchorPoint string
+---@return string
 function NRSKNUI:GetTextJustifyFromAnchor(anchorPoint)
     if not anchorPoint then return "CENTER" end
     if anchorPoint == "RIGHT" or anchorPoint == "TOPRIGHT" or anchorPoint == "BOTTOMRIGHT" then
@@ -104,9 +101,6 @@ function NRSKNUI:GetTextJustifyFromAnchor(anchorPoint)
     return "CENTER"
 end
 
--- Global apply position settings func
--- Example usage:
--- NRSKNUI:ApplyFramePosition(self.frame, self.db.Position, self.db, extra: true or empty)
 ---@param frame Frame
 ---@param posConfig table Position config with AnchorFrom, AnchorTo, XOffset, YOffset
 ---@param Config table Config with anchorFrameType, ParentFrame, Strata, ForcePixelPerfect
@@ -116,13 +110,47 @@ function NRSKNUI:ApplyFramePosition(frame, posConfig, Config, SetParent)
     local parent = self:ResolveAnchorFrame(Config.anchorFrameType, Config.ParentFrame)
     if SetParent then frame:SetParent(parent) end
     frame:ClearAllPoints()
-    frame:SetPoint(
-        posConfig.AnchorFrom or "CENTER",
-        parent,
-        posConfig.AnchorTo or "CENTER",
-        posConfig.XOffset or 0,
-        posConfig.YOffset or 0
-    )
+    frame:SetPoint(posConfig.AnchorFrom or "CENTER", parent, posConfig.AnchorTo or "CENTER", posConfig.XOffset or 0, posConfig.YOffset or 0)
     frame:SetFrameStrata(Config.Strata or "MEDIUM")
     self:SnapFrameToPixels(frame, Config.ForcePixelPerfect)
+end
+
+-- ApplyPosition injected onto the frame widget types, frame:ApplyPosition(self, Config, setParent)
+do
+    local function ApplyPosition(self, Config, setParent)
+        if not self or not Config then return end
+        local posConfig = Config.Position
+        if not posConfig then return end
+
+        local parent = NRSKNUI:ResolveAnchorFrame(Config.anchorFrameType, Config.ParentFrame)
+
+        if setParent then self:SetParent(parent) end
+
+        self:ClearAllPoints()
+        self:SetPoint(posConfig.AnchorFrom or "CENTER", parent, posConfig.AnchorTo or "CENTER", posConfig.XOffset or 0, posConfig.YOffset or 0)
+        self:SetFrameStrata(Config.Strata or "MEDIUM")
+        NRSKNUI:SnapFrameToPixels(self, Config.ForcePixelPerfect)
+    end
+
+    local methods = { ApplyPosition = ApplyPosition }
+    NRSKNUI:InjectAPI(CreateFrame("Frame"), methods)
+    NRSKNUI:InjectAPI(CreateFrame("Button"), methods)
+    NRSKNUI:InjectAPI(CreateFrame("StatusBar"), methods)
+end
+
+-- Class Utilities --
+
+---@param classFilenameToCheck 'WARRIOR'|'HUNTER'|'ROGUE'|'MAGE'|'PRIEST'|'WARLOCK'|'DRUID'|'SHAMAN'|'PALADIN'|'DEATHKNIGHT'|'MONK'|'DEMONHUNTER'
+function NRSKNUI:IsClassInGroup(classFilenameToCheck)
+    local numMembers = GetNumGroupMembers()
+    local prefix = (IsInRaid() and 'raid') or 'party'
+    local maxCheck = (IsInRaid() and numMembers) or (numMembers - 1)
+    for i = 1, maxCheck do
+        local unit = prefix .. i
+        local classFilename = select(2, UnitClass(unit))
+        if classFilename == classFilenameToCheck then
+            return true
+        end
+    end
+    return false
 end

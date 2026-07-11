@@ -4,7 +4,6 @@ local Theme = NRSKNUI.Theme
 
 -- Module with a bunch of color utilities
 
-local UnitClass = UnitClass
 local math_floor = math.floor
 local string_format = string.format
 local type = type
@@ -39,7 +38,7 @@ NRSKNUI.ClassColorHex = {
 ---Get the player's class color as an RGBA table.
 ---@return RGBA
 function NRSKNUI:GetPlayerClassColor()
-    local _, class = UnitClass("player")
+    local class = self.myclass
     if class and RAID_CLASS_COLORS[class] then
         local c = RAID_CLASS_COLORS[class]
         return { c.r, c.g, c.b, 1 }
@@ -71,8 +70,7 @@ function NRSKNUI:GetClassColorHex(classToken)
         if hex then return hex end
     end
     -- Fallback to player class
-    local _, class = UnitClass("player")
-    return self.ClassColorHex[class] or "FFFFFF"
+    return self.ClassColorHex[self.myclass] or "FFFFFF"
 end
 
 ---Get the RAID_CLASS_COLORS entry for a class token, falling back to the player's class.
@@ -85,8 +83,7 @@ function NRSKNUI:GetClassColorRaw(classToken)
         if color then return color end
     end
     -- Fallback to player class
-    local _, class = UnitClass("player")
-    return RAID_CLASS_COLORS[class]
+    return RAID_CLASS_COLORS[self.myclass]
 end
 
 ---Wrap text in a class color escape code.

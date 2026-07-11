@@ -1,19 +1,24 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
 
+    <Script file="Init.lua" />
+    <Script file="Defaults.lua" />
     <Script file="FrameHider.lua" />
+    <Script file="Secret.lua" />
     <Script file="Media.lua" />
+    <Script file="InjectionAPI.lua" />
+    <Script file="FontStyle.lua" />
+    <Script file="FontFactory.lua" />
     <Script file="AddonTheme.lua" />
     <Script file="Enums.lua" />
     <Script file="Widgets.lua" />
     <Script file="Curves.lua" />
     <Script file="Animations.lua" />
-    <Script file="Defaults.lua"/>
     <Script file="Globals.lua" />
-    <Script file="Secret.lua" />
     <Script file="PixelPerfect.lua" />
     <Script file="EditMode.lua" />
     <Script file="Main.lua" />
+    <Script file="Commands.lua" />
     <Script file="ProfileManager.lua" />
     <Script file="NUI-Dialog.lua" />
     <Script file="Colors.lua" />
