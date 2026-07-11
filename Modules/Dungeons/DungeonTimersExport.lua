@@ -5,8 +5,8 @@ local NRSKNUI = select(2, ...)
 local DT = NRSKNUI:GetModule("DungeonTimers")
 if not DT then return end
 
-local AS = LibStub("AceSerializer-3.0")
-local LD = LibStub("LibDeflate")
+local AS = NRSKNUI.Libs.AS
+local LD = NRSKNUI.Libs.LD
 
 local pairs, ipairs = pairs, ipairs
 local tostring, tonumber = tostring, tonumber

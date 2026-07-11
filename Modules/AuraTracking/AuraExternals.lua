@@ -4,7 +4,7 @@ local NRSKNUI = select(2, ...)
 ---@class ExternalBuffTracking: AceModule, AceEvent-3.0
 local EXTERNALS = NRSKNUI:NewModule("ExternalBuffTracking", "AceEvent-3.0")
 
-local LCG = LibStub("LibCustomGlow-1.0", true)
+local LCG = NRSKNUI.Libs.LCG
 
 EXTERNALS.buttons = {}
 
@@ -173,7 +173,7 @@ local function UpdateAuraButton(button, data)
         if not soundPlayedFor[data.auraInstanceID] then
             local db = EXTERNALS.db
             if db.SoundEnabled and db.Sound and db.Sound ~= "None" then
-                local LSM = NRSKNUI.LSM
+                local LSM = NRSKNUI.Libs.LSM
                 if LSM then
                     NRSKNUI:PlaySound(LSM:Fetch("sound", db.Sound))
                 end

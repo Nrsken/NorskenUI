@@ -25,7 +25,7 @@ function GUIFrame:CreateSoundSettingsCard(scrollChild, yOffset, config)
         onHideSound = dbKeys.onHideSound or "actionOnHideSound",
     }
 
-    local LSM = NRSKNUI.LSM
+    local LSM = NRSKNUI.Libs.LSM
     local soundList = { ["None"] = "None" }
     if LSM then
         for name in pairs(LSM:HashTable("sound")) do

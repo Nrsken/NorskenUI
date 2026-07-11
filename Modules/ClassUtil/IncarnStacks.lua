@@ -8,7 +8,7 @@ local NRSKNUI = select(2, ...)
 local INCARN = NRSKNUI:NewModule("IncarnStacks", "AceEvent-3.0")
 
 -- Libraries
-local LCG = LibStub("LibCustomGlow-1.0", true)
+local LCG = NRSKNUI.Libs.LCG
 
 -- Localization
 local CreateFrame = CreateFrame

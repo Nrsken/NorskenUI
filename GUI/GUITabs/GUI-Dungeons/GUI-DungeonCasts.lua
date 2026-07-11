@@ -2,7 +2,7 @@
 local NRSKNUI = select(2, ...)
 local GUIFrame = NRSKNUI.GUIFrame
 local Theme = NRSKNUI.Theme
-local LSM = NRSKNUI.LSM
+local LSM = NRSKNUI.Libs.LSM
 
 local table_insert = table.insert
 local ipairs = ipairs

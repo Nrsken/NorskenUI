@@ -649,7 +649,7 @@ function DT:ShowTriggerDisplay(dungeonKey, triggerId, trigger, barData)
 
     if shouldShowNow then
         if not frame:IsShown() and not barData.isPreview then
-            NRSKNUI:PlaySound(NRSKNUI.LSM:Fetch("sound", config.actionOnShowSound))
+            NRSKNUI:PlaySound(NRSKNUI.Libs.LSM:Fetch("sound", config.actionOnShowSound))
         end
         frame:Show()
         self:PositionAllBars()
@@ -666,7 +666,7 @@ function DT:HideTriggerDisplay(frameKey)
     local frame = self.triggerFrames[frameKey]
     if frame then
         if frame:IsShown() and frame.config and not (frame.barData and frame.barData.isPreview) then
-            NRSKNUI:PlaySound(NRSKNUI.LSM:Fetch("sound", frame.config.actionOnHideSound))
+            NRSKNUI:PlaySound(NRSKNUI.Libs.LSM:Fetch("sound", frame.config.actionOnHideSound))
         end
         frame:Hide()
         frame.barData = nil
@@ -820,7 +820,7 @@ function DT:DoScheduledScan(fireTime)
                     local shouldShow = self:CheckRemainingTime(config, remaining)
                     if shouldShow and not frame:IsShown() then
                         if not barData.isPreview then
-                            NRSKNUI:PlaySound(NRSKNUI.LSM:Fetch("sound",
+                            NRSKNUI:PlaySound(NRSKNUI.Libs.LSM:Fetch("sound",
                                 config.actionOnShowSound))
                         end
                         frame:Show()

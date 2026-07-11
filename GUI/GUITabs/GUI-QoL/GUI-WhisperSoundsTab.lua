@@ -1,7 +1,7 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 local GUIFrame = NRSKNUI.GUIFrame
-local LSM = NRSKNUI.LSM
+local LSM = NRSKNUI.Libs.LSM
 local Theme = NRSKNUI.Theme
 
 local pairs = pairs

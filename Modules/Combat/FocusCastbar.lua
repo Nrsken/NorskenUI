@@ -1,5 +1,4 @@
 ---@class NRSKNUI
----@diagnostic disable: undefined-field
 local NRSKNUI = select(2, ...)
 
 ---@class FocusCastbar: AceModule, AceEvent-3.0
@@ -24,7 +23,7 @@ local SetRaidTargetIconTexture = SetRaidTargetIconTexture
 local random = math.random
 local ipairs = ipairs
 
-local LCG = LibStub("LibCustomGlow-1.0", true)
+local LCG = NRSKNUI.Libs.LCG
 
 local FALLBACK_ICON = 136243
 local INTERRUPTED = "Interrupted"

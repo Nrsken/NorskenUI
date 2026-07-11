@@ -4,7 +4,7 @@ local NRSKNUI = select(2, ...)
 ---@class BurningRush: AceModule, AceEvent-3.0
 local BURN = NRSKNUI:NewModule("BurningRush", "AceEvent-3.0")
 
-local LCG = LibStub("LibCustomGlow-1.0", true)
+local LCG = NRSKNUI.Libs.LCG
 
 local CreateFrame = CreateFrame
 local UnitClass = UnitClass

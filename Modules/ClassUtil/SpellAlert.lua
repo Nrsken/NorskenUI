@@ -4,7 +4,7 @@ local NRSKNUI = select(2, ...)
 ---@class SpellAlert: AceModule, AceEvent-3.0
 local SA = NRSKNUI:NewModule("SpellAlert", "AceEvent-3.0")
 
-local LS = LibStub("LibSpecialization", true)
+local LS = NRSKNUI.Libs.LS
 
 local C_Timer = C_Timer
 local GetCVar = GetCVar

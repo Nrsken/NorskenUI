@@ -4,8 +4,8 @@ local NRSKNUI = select(2, ...)
 ---@class MissingBuffs: AceModule, AceEvent-3.0
 local MBUFFS = NRSKNUI:NewModule("MissingBuffs", "AceEvent-3.0")
 
-local LibSpec = LibStub("LibSpecialization")
-local LCG = LibStub("LibCustomGlow-1.0", true)
+local LibSpec = NRSKNUI.Libs.LS
+local LCG = NRSKNUI.Libs.LCG
 
 local ipairs, pairs = ipairs, pairs
 local select = select

@@ -4,8 +4,8 @@ local NRSKNUI = select(2, ...)
 ---@class MissingItems: AceModule, AceEvent-3.0
 local MITEMS = NRSKNUI:NewModule("MissingItems", "AceEvent-3.0")
 
-local AS = LibStub("AceSerializer-3.0")
-local LD = LibStub("LibDeflate")
+local AS = NRSKNUI.Libs.AS
+local LD = NRSKNUI.Libs.LD
 
 local pairs, ipairs = pairs, ipairs
 local wipe = wipe
@@ -475,8 +475,7 @@ function MITEMS:OnEnable()
     self:RegisterEditModeElements()
     self:SetupAuctionatorHook()
 
-    local LS = LibStub("LibSpecialization", true)
-    if LS then LS.RegisterPlayerSpecChange(self, UpdateDisplay) end
+    NRSKNUI.Libs.LS.RegisterPlayerSpecChange(self, UpdateDisplay)
 
     PreCacheItems()
     C_Timer.After(0.5, UpdateDisplay)
@@ -519,8 +518,7 @@ function MITEMS:OnDisable()
     if NRSKNUI.EditMode then NRSKNUI.EditMode:UnregisterElement("MissingItems") end
     self:HideAuctionatorButton()
 
-    local LS = LibStub("LibSpecialization", true)
-    if LS then LS.UnregisterPlayerSpecChange(self) end
+    NRSKNUI.Libs.LS.UnregisterPlayerSpecChange(self)
 end
 
 local auctionatorButton = nil
