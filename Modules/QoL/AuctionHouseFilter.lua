@@ -1,41 +1,45 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
-
----@class AuctionHouseFilter: AceModule, AceEvent-3.0
-local AHF = NRSKNUI:NewModule("AuctionHouseFilter", "AceEvent-3.0")
+---@class AuctionHouseFilter
+local AuctionHouseFilter = NRSKNUI:GetModule('AuctionHouseFilter')
 
 local C_Timer = C_Timer
-local C_AddOns = C_AddOns
 
-local hooksInstalled = false
-local displayModeHooked = false
+local IsAddOnLoaded = C_AddOns and C_AddOns.IsAddOnLoaded
 
-function AHF:UpdateDB()
+local auctioneerEnum = Enum and Enum.PlayerInteractionType.Auctioneer
+
+function AuctionHouseFilter:UpdateDB()
     self.db = NRSKNUI.db.profile.Miscellaneous.AuctionHouseFilter
 end
 
-function AHF:OnInitialize()
+function AuctionHouseFilter:OnInitialize()
     self:UpdateDB()
     self:SetEnabledState(false)
 end
 
-function AHF:ApplyAuctionHouseFilter()
+local displayModeHooked = false
+function AuctionHouseFilter:ApplyAuctionHouseFilter()
     if not self.db.Enabled then return end
     if not AuctionHouseFrame then return end
 
     -- Hook needed when using auctionator
     -- Otherwise when you click between blizzard tab and auctionator tab, filter is lost
-    if not displayModeHooked and C_AddOns.IsAddOnLoaded("Auctionator") then
+    if not displayModeHooked and IsAddOnLoaded('Auctionator') then
         displayModeHooked = true
         if AuctionHouseFrame.BrowseResultsFrame then
-            AuctionHouseFrame.BrowseResultsFrame:HookScript("OnShow",
-            function() C_Timer.After(0.05, function() self:ApplyFilter() end) end)
+            AuctionHouseFrame.BrowseResultsFrame:HookScript('OnShow', function()
+                C_Timer.After(0.05, function()
+                    self:ApplyFilter()
+                end)
+            end)
         end
     end
     self:ApplyFilter()
 end
 
-function AHF:ApplyFilter()
+-- Applies the filter settings to the Auction House frame.
+function AuctionHouseFilter:ApplyFilter()
     if not self.db.Enabled then return end
 
     C_Timer.After(0, function()
@@ -55,15 +59,18 @@ function AHF:ApplyFilter()
     end)
 end
 
-function AHF:ApplyCraftOrdersFilter()
+-- Applies the filter settings to the Craft Orders frame.
+function AuctionHouseFilter:ApplyCraftOrdersFilter()
     if not self.db.Enabled then return end
 
     C_Timer.After(0, function()
-        local frame = ProfessionsCustomerOrdersFrame
+        local frame = _G.ProfessionsCustomerOrdersFrame
+
         if not frame or not frame.BrowseOrders or not frame.BrowseOrders.SearchBar then return end
 
         if self.db.CraftOrders.CurrentExpansion then
             local filterDropdown = frame.BrowseOrders.SearchBar.FilterDropdown
+
             if filterDropdown and filterDropdown.filters then
                 filterDropdown.filters[Enum.AuctionHouseFilter.CurrentExpansionOnly] = true
             end
@@ -71,18 +78,20 @@ function AHF:ApplyCraftOrdersFilter()
 
         if self.db.CraftOrders.FocusSearchBar then
             local searchBox = frame.BrowseOrders.SearchBar.SearchBox
+
             if searchBox then searchBox:SetFocus() end
         end
     end)
 end
 
-function AHF:ApplyAuctionatorFilter()
+-- Applies auto editbox focus settings to the Auctionator frame.
+function AuctionHouseFilter:ApplyAuctionatorFilter()
     if not self.db.Enabled then return end
     if not self.db.Auctionator.FocusSearchBar then return end
-    if not C_AddOns.IsAddOnLoaded("Auctionator") then return end
+    if not IsAddOnLoaded('Auctionator') then return end
 
     C_Timer.After(0, function()
-        local frame = _G["AuctionatorShoppingFrame"]
+        local frame = _G['AuctionatorShoppingFrame']
         if not frame then return end
 
         local searchBox = frame.SearchOptions and frame.SearchOptions.SearchString
@@ -92,34 +101,24 @@ function AHF:ApplyAuctionatorFilter()
     end)
 end
 
-function AHF:SetupHooks()
-    if hooksInstalled then return end
-    hooksInstalled = true
-
-    self:RegisterEvent("AUCTION_HOUSE_SHOW", "ApplyAuctionHouseFilter")
-    self:RegisterEvent("CRAFTINGORDERS_SHOW_CUSTOMER", "ApplyCraftOrdersFilter")
-    self:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_SHOW", function(_, interactionType)
-        if interactionType == Enum.PlayerInteractionType.Auctioneer then
-            C_Timer.After(0.1, function()
-                self:ApplyAuctionatorFilter()
-            end)
-        end
-    end)
-end
-
-function AHF:ApplySettings()
+function AuctionHouseFilter:ApplySettings()
     if not self.db.Enabled then return end
+
     self:ApplyAuctionHouseFilter()
     self:ApplyCraftOrdersFilter()
     self:ApplyAuctionatorFilter()
 end
 
-function AHF:OnEnable()
+function AuctionHouseFilter:OnEnable()
     if not self.db.Enabled then return end
-    self:SetupHooks()
-end
 
-function AHF:OnDisable()
-    self:UnregisterAllEvents()
-    hooksInstalled = false
+    self:RegisterEvent('AUCTION_HOUSE_SHOW', 'ApplyAuctionHouseFilter')
+    self:RegisterEvent('CRAFTINGORDERS_SHOW_CUSTOMER', 'ApplyCraftOrdersFilter')
+    self:RegisterEvent('PLAYER_INTERACTION_MANAGER_FRAME_SHOW', function(_, interactionType)
+        if interactionType == auctioneerEnum then
+            C_Timer.After(0.1, function()
+                self:ApplyAuctionatorFilter()
+            end)
+        end
+    end)
 end

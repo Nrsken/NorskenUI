@@ -59,6 +59,9 @@ do
     LS.RegisterPlayerSpecChange(NRSKNUI, UpdateSpec)
 end
 
+-- Quality of Life Modules
+NRSKNUI.AuctionHouseFilter = NRSKNUI:NewModule('AuctionHouseFilter', 'AceEvent-3.0')
+
 -- Class Util Modules
 NRSKNUI.BurningRush = NRSKNUI:NewModule('BurningRush', 'AceEvent-3.0')
 
