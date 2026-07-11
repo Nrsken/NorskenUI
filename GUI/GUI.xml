@@ -79,21 +79,23 @@
     <Script file="GUITabs\GUI-QoL\GUI-Recuperate.lua" />
     <Script file="GUITabs\GUI-QoL\GUI-CharacterPanel.lua" />
     <Script file="GUITabs\GUI-QoL\GUI-MissingItemsTab.lua" />
+    <Script file="GUITabs\GUI-QoL\GUI-DetailsBackdrop.lua" />
+
+    <!-- GUI Advanceed Skinning Tabs -->
+    <Script file="GUITabs\GUI-AdvancedSkinning\GUI-TooltipsTab.lua" />
+    <Script file="GUITabs\GUI-AdvancedSkinning\GUI-MicroMenuTab.lua" />
+    <Script file="GUITabs\GUI-AdvancedSkinning\GUI-MinimapTab.lua" />
+    <Script file="GUITabs\GUI-AdvancedSkinning\GUI-Chatv2.lua" />
+    <Script file="GUITabs\GUI-AdvancedSkinning\GUI-ActionBarsTab.lua" />
 
     <!-- GUI Skinning Tabs -->
-    <Script file="GUITabs\GUISkinning\GUI-TooltipsTab.lua" />
-    <Script file="GUITabs\GUISkinning\GUI-BlizzMessagesTab.lua" />
-    <Script file="GUITabs\GUISkinning\GUI-BlizzardMouseover.lua" />
-    <Script file="GUITabs\GUISkinning\GUI-MicroMenuTab.lua" />
-    <Script file="GUITabs\GUISkinning\GUI-MinimapTab.lua" />
-    <Script file="GUITabs\GUISkinning\GUI-DetailsBackdrop.lua" />
-    <Script file="GUITabs\GUISkinning\GUI-ActionBarsTab.lua" />
-    <Script file="GUITabs\GUISkinning\GUI-UICleanup.lua" />
-    <Script file="GUITabs\GUISkinning\GUI-BlizzardRaidmanager.lua" />
-    <Script file="GUITabs\GUISkinning\GUI-UIWidgetsTab.lua" />
-    <Script file="GUITabs\GUISkinning\GUI-BnetFrame.lua" />
-    <Script file="GUITabs\GUISkinning\GUI-Chatv2.lua" />
-    <Script file="GUITabs\GUISkinning\GUI-BlizzElements.lua" />
+    <Script file="GUITabs\GUI-Skinning\GUI-BlizzMessagesTab.lua" />
+    <Script file="GUITabs\GUI-Skinning\GUI-BlizzardMouseover.lua" />
+    <Script file="GUITabs\GUI-Skinning\GUI-UICleanup.lua" />
+    <Script file="GUITabs\GUI-Skinning\GUI-BlizzardRaidmanager.lua" />
+    <Script file="GUITabs\GUI-Skinning\GUI-UIWidgetsTab.lua" />
+    <Script file="GUITabs\GUI-Skinning\GUI-BnetFrame.lua" />
+    <Script file="GUITabs\GUI-Skinning\GUI-BlizzElements.lua" />
 
     <!-- GUI Aura Tracking Tabs -->
     <Script file="GUITabs\GUI-AuraTracking\GUI-Buffs.lua" />

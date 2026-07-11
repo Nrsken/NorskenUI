@@ -91,6 +91,21 @@ GUIFrame.SidebarConfig = {
                 { id = "AuctionHouseFilter", text = "AH Current Expansion Filter" },
                 { id = "Recuperate",         text = "Recuperate Button" },
                 { id = "CharacterPanel",     text = "Character Panel Improvements" },
+                { id = "DetailsBackdrop",    text = "Details Backdrop" },
+            }
+        },
+        {
+            id = "advanced_skinning_section",
+            type = "header",
+            text = "Advanced Skinning",
+            defaultExpanded = false,
+            elvUIDisabled = true,
+            items = {
+                { id = "Chatv2",     text = "Chat" },
+                { id = "ActionBars", text = "Action Bars" },
+                { id = "Minimap",    text = "Minimap" },
+                { id = "MicroMenu",  text = "Micro Menu" },
+                { id = "tooltips",   text = "Tooltips" },
             }
         },
         {
@@ -101,15 +116,9 @@ GUIFrame.SidebarConfig = {
             elvUIDisabled = true,
             items = {
                 { id = "UICleanup",           text = "General UI Cleanup" },
-                { id = "Chatv2",              text = "Chat v2" },
-                { id = "ActionBars",          text = "Action Bars" },
-                { id = "Minimap",             text = "Minimap" },
-                { id = "MicroMenu",           text = "Micro Menu" },
                 { id = "BlizzardMouseover",   text = "Blizzard Mouseover" },
                 { id = "messages",            text = "Blizzard Texts" },
                 { id = "BlizzardElementsTab", text = "Blizzard Elements" },
-                { id = "tooltips",            text = "Tooltips" },
-                { id = "DetailsBackdrop",     text = "Details Backdrop" },
                 { id = "BlizzardRM",          text = "Raid Manager" },
                 { id = "UIWidgets",           text = "UI Widgets" },
                 { id = "Battlenet",           text = "Battlenet Popup" },

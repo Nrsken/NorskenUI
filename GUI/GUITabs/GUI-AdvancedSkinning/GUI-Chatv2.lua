@@ -2,7 +2,7 @@
 local NRSKNUI = select(2, ...)
 local GUIFrame = NRSKNUI.GUIFrame
 local Theme = NRSKNUI.Theme
-local LSM = NRSKNUI.LSM
+local LSM = NRSKNUI.Libs.LSM
 
 local pairs = pairs
 local ReloadUI = ReloadUI
@@ -53,7 +53,7 @@ local function RenderGeneralTab(scrollChild, db, manager)
     local yOffset = Theme.paddingSmall
 
     -- Card 1: Enable Toggle
-    local card1 = GUIFrame:CreateCard(scrollChild, "Chatv2 (Work in Progress)", yOffset)
+    local card1 = GUIFrame:CreateCard(scrollChild, "Chat", yOffset)
 
     local row1 = GUIFrame:CreateRow(card1.content, Theme.rowHeightLast)
     local enableCheck = GUIFrame:CreateCheckbox(row1, "Enable Custom Chat Panel", {
