@@ -149,7 +149,7 @@ function CC:CreateFrame()
 
     self.text = NRSKNUI:CreateText(self.frame, "OVERLAY")
     self.text:SetPoint("CENTER")
-    self.text:SetFont(NRSKNUI.FONT, self.db.Thickness * FONT_SIZE_MULTIPLIER, "")
+    self.text:SetFont(NRSKNUI.Media.Fonts.Expressway, self.db.Thickness * FONT_SIZE_MULTIPLIER, "")
     self.text:SetText("+")
 
     if self.db.Outline then
@@ -161,7 +161,7 @@ function CC:ApplySettings()
     if not self.frame or not self.text then return end
 
     NRSKNUI:ApplyFramePosition(self.frame, self.db.Position, self.db)
-    self.text:SetFont(NRSKNUI.FONT, self.db.Thickness * FONT_SIZE_MULTIPLIER, "")
+    self.text:SetFont(NRSKNUI.Media.Fonts.Expressway, self.db.Thickness * FONT_SIZE_MULTIPLIER, "")
 
     if self.db.Outline then
         if not self.frame.softOutline then

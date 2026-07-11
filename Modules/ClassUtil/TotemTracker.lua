@@ -1,6 +1,5 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
-
 ---@class TotemTracker: AceModule, AceEvent-3.0
 local TT = NRSKNUI:NewModule("TotemTracker", "AceEvent-3.0")
 
@@ -8,10 +7,10 @@ local CreateFrame = CreateFrame
 local ipairs = ipairs
 local GetTotemInfo = GetTotemInfo
 local GetTime = GetTime
-local UIParent = UIParent
 local GetTotemDuration = GetTotemDuration
 local InCombatLockdown = InCombatLockdown
 
+local UIParent = UIParent
 local MAX_TOTEMS = MAX_TOTEMS
 local TOTEM_PRIORITIES = STANDARD_TOTEM_PRIORITIES
 
@@ -61,8 +60,7 @@ local function ApplyCooldownTextStyle(cooldown, db)
 
     for _, region in ipairs({ cooldown:GetRegions() }) do
         if region:GetObjectType() == "FontString" then
-            NRSKNUI:ApplyFont(region, NRSKNUI:GetEffectiveFont(db), db.TimerFontSize, db.FontOutline)
-            region:SetShadowOffset(0, 0)
+            region:SetFontStyle(db, db.TimerFontSize)
             region:ClearAllPoints()
             region:SetPoint("CENTER", cooldown, "CENTER", 0, 0)
         end

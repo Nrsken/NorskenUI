@@ -463,11 +463,11 @@ function ACB:StyleButtonTextures(button)
     if not button then return end
 
     -- Hide blizzard textures we don't need
-    NRSKNUI:Hide(button, 'Border')           -- equipped border
-    NRSKNUI:Hide(button, 'Flash')            -- red flash when out of mana or unusable
-    NRSKNUI:Hide(button, 'NewActionTexture') -- glow texture for new actions
-    NRSKNUI:Hide(button, 'SpellHighlightTexture')
-    NRSKNUI:Hide(button, 'SlotBackground')   -- Hides the default slot background on action buttons
+    NRSKNUI:Banish(button, 'Border')           -- equipped border
+    NRSKNUI:Banish(button, 'Flash')            -- red flash when out of mana or unusable
+    NRSKNUI:Banish(button, 'NewActionTexture') -- glow texture for new actions
+    NRSKNUI:Banish(button, 'SpellHighlightTexture')
+    NRSKNUI:Banish(button, 'SlotBackground')   -- Hides the default slot background on action buttons
 
     -- Hide the normal texture
     local normalTex = button:GetNormalTexture()

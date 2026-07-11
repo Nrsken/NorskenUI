@@ -3,10 +3,10 @@
 
     <Script file="Init.lua" />
     <Script file="Defaults.lua" />
-    <Script file="FrameHider.lua" />
+    <Script file="PixelPerfect.lua" />
+    <Script file="InjectionAPI.lua" />
     <Script file="Secret.lua" />
     <Script file="Media.lua" />
-    <Script file="InjectionAPI.lua" />
     <Script file="FontStyle.lua" />
     <Script file="FontFactory.lua" />
     <Script file="AddonTheme.lua" />
@@ -15,7 +15,6 @@
     <Script file="Curves.lua" />
     <Script file="Animations.lua" />
     <Script file="Globals.lua" />
-    <Script file="PixelPerfect.lua" />
     <Script file="EditMode.lua" />
     <Script file="Main.lua" />
     <Script file="Commands.lua" />
@@ -24,5 +23,4 @@
     <Script file="Colors.lua" />
     <Script file="Constants.lua" />
     <Script file="LoadConditions.lua" />
-    <Script file="Backdrop.lua" />
 </Ui>

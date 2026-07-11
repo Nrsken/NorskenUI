@@ -56,25 +56,16 @@
     <Script file="GUITabs\GUI-Combat\GUI-PetTextsTab.lua" />
     <Script file="GUITabs\GUI-Combat\GUI-GatewayTab.lua" />
     <Script file="GUITabs\GUI-Combat\GUI-RangeChecker.lua" />
-    <Script file="GUITabs\GUI-Combat\GUI-TimeSpiral.lua" />
     <Script file="GUITabs\GUI-Combat\GUI-FocusCastbar.lua" />
     <Script file="GUITabs\GUI-Combat\GUI-PotionReady.lua" />
 
-    <!-- GUI Missing Buffs Tabs -->
-    <Script file="GUITabs\GUI-MissingBuffs\GUI-MissingBuffsTab.lua" />
-    <Script file="GUITabs\GUI-MissingBuffs\GUI-TargetedBuffs.lua" />
-    <Script file="GUITabs\GUI-MissingBuffs\GUI-StanceIcons.lua" />
-    <Script file="GUITabs\GUI-MissingBuffs\GUI-StanceTexts.lua" />
-
     <!-- GUI QoL Tabs -->
     <Script file="GUITabs\GUI-QoL\GUI-AutomationTab.lua" />
-    <Script file="GUITabs\GUI-QoL\GUI-DragonRiding.lua" />
     <Script file="GUITabs\GUI-QoL\GUI-CopyAnything.lua" />
     <Script file="GUITabs\GUI-QoL\GUI-XPBar.lua" />
     <Script file="GUITabs\GUI-QoL\GUI-Durability.lua" />
     <Script file="GUITabs\GUI-QoL\GUI-CooldownStrings.lua" />
     <Script file="GUITabs\GUI-QoL\GUI-CVars.lua" />
-    <Script file="GUITabs\GUI-QoL\GUI-HuntersMark.lua" />
     <Script file="GUITabs\GUI-QoL\GUI-AuctionHouseFilter.lua" />
     <Script file="GUITabs\GUI-QoL\GUI-Recuperate.lua" />
     <Script file="GUITabs\GUI-QoL\GUI-CharacterPanel.lua" />
@@ -97,12 +88,6 @@
     <Script file="GUITabs\GUI-Skinning\GUI-BnetFrame.lua" />
     <Script file="GUITabs\GUI-Skinning\GUI-BlizzElements.lua" />
 
-    <!-- GUI Aura Tracking Tabs -->
-    <Script file="GUITabs\GUI-AuraTracking\GUI-Buffs.lua" />
-    <Script file="GUITabs\GUI-AuraTracking\GUI-Debuffs.lua" />
-    <Script file="GUITabs\GUI-AuraTracking\GUI-DebuffsDefault.lua" />
-    <Script file="GUITabs\GUI-AuraTracking\GUI-ExternalBuffs.lua" />
-
     <!-- GUI Dungeons Tabs -->
     <Script file="GUITabs\GUI-Dungeons\GUI-InstanceReset.lua" />
     <Script file="GUITabs\GUI-Dungeons\GUI-HealerMana.lua" />
@@ -119,7 +104,6 @@
     <Script file="GUITabs\GUI-Miscellaneous\GUI-BenchAlert.lua" />
     <Script file="GUITabs\GUI-Miscellaneous\GUI-TotemTracker.lua" />
     <Script file="GUITabs\GUI-Miscellaneous\GUI-SpellAlert.lua" />
-    <Script file="GUITabs\GUI-Miscellaneous\GUI-BloodlustTracker.lua" />
     <Script file="GUITabs\GUI-Miscellaneous\GUI-WayFinder.lua" />
     <Script file="GUITabs\GUI-Miscellaneous\GUI-ReckonTracker.lua" />
     <Script file="GUITabs\GUI-Miscellaneous\GUI-TestTab.lua" />

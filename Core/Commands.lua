@@ -4,8 +4,6 @@ local NRSKNUI = select(2, ...)
 local string_gsub = string.gsub
 local ReloadUI = ReloadUI
 
-local FrameStackTooltip_Toggle = FrameStackTooltip_Toggle
-
 local loadAddOn = LoadAddOnWithErrorHandling or UIParentLoadAddOn -- UIParentLoadAddOn is renamed to: LoadAddOnWithErrorHandling in 12.1.X+
 
 -- Setup slash commands

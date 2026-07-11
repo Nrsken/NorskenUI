@@ -1,6 +1,9 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
+---@class Minimap
+local Map = NRSKNUI:GetModule('Minimap')
 local Theme = NRSKNUI.Theme
+local EM = NRSKNUI.EditMode
 
 local hooksecurefunc = hooksecurefunc
 local ipairs = ipairs
@@ -11,10 +14,16 @@ local IsMouseButtonDown = IsMouseButtonDown
 local HideUIPanel = HideUIPanel
 local ShowUIPanel = ShowUIPanel
 
+local math_floor = math.floor
+
 local mailBtn = MiniMapMailIcon
 local qBtn = QueueStatusButton
 local missionBtn = ExpansionLandingPageMinimapButton
+local AddonComp = AddonCompartmentFrame
 local _G = _G
+
+local IsAddOnLoaded = C_AddOns and C_AddOns.IsAddOnLoaded
+local LoadAddOn = C_AddOns and C_AddOns.LoadAddOn
 
 local hooked = {
     border = false,
@@ -27,24 +36,16 @@ local lastAppliedSize = nil
 local pendingSizeRefresh = false
 local pendingCombatUpdate = false
 
----@class Minimap: AceModule, AceEvent-3.0
-local MAP = NRSKNUI:NewModule('Minimap', 'AceEvent-3.0')
-
-function MAP:UpdateDB()
+function Map:UpdateDB()
     self.db = NRSKNUI.db.profile.Skinning.Minimap
 end
 
-function MAP:OnInitialize()
+function Map:OnInitialize()
     self:UpdateDB()
     self:SetEnabledState(false)
 end
 
-local function DisableMinimapEditMode()
-    if not MinimapCluster then return end
-    NRSKNUI:Hide(MinimapCluster)
-end
-
-function MAP:OnEnable()
+function Map:OnEnable()
     if NRSKNUI:ShouldNotLoadModule() then return end
     if not self.db.Enabled then return end
 
@@ -58,46 +59,25 @@ function MAP:OnEnable()
         hooked.queuePosition = true
     end
 
-    C_Timer.After(0.5, DisableMinimapEditMode)
+    -- Disable minimap in EditMode.
+    _G.MinimapCluster:Banish()
 
     self:RegisterEvent('PLAYER_ENTERING_WORLD')
 
-    NRSKNUI.EditMode:RegisterElement({
-        key = 'Minimap',
-        displayName = 'Minimap',
-        frame = Minimap,
-        getPosition = function()
-            local pos = self.db.Position
-            return {
-                AnchorFrom = pos.AnchorFrom,
-                AnchorTo = pos.AnchorTo,
-                XOffset = pos.X,
-                YOffset = pos.Y,
-            }
-        end,
-        setPosition = function(pos)
-            self.db.Position.AnchorFrom = pos.AnchorFrom
-            self.db.Position.AnchorTo = pos.AnchorTo
-            self.db.Position.X = pos.XOffset
-            self.db.Position.Y = pos.YOffset
-            Minimap:ClearAllPoints()
-            Minimap:SetPoint(pos.AnchorFrom, UIParent, pos.AnchorTo, pos.XOffset, pos.YOffset)
-        end,
-        guiPath = 'Minimap',
-    })
+    EM:Register(self, 'Minimap', _G.Minimap, 'Minimap')
 end
 
-function MAP:PLAYER_REGEN_ENABLED()
+function Map:PLAYER_REGEN_ENABLED()
     self:UnregisterEvent('PLAYER_REGEN_ENABLED')
     pendingCombatUpdate = false
     self:ApplySettings()
 end
 
-function MAP:PLAYER_ENTERING_WORLD()
+function Map:PLAYER_ENTERING_WORLD()
     C_Timer.After(0.1, function() self:ApplySettings() end)
 end
 
-function MAP:StripBlizzMap()
+function Map:StripBlizzMap()
     Minimap:SetParent(UIParent)
     if not Minimap.Layout then Minimap.Layout = nop end
 
@@ -109,72 +89,53 @@ function MAP:StripBlizzMap()
     Minimap:SetMaskTexture('Interface\\BUTTONS\\WHITE8X8')
     MinimapCompassTexture:SetTexture(nil)
 
-    NRSKNUI:Hide('MinimapCluster') -- gtfo lilpup, does so much wierd shit so we yeet it
-    NRSKNUI:Hide('MinimapCompassTexture')
-    NRSKNUI:Hide('MinimapCluster', 'BorderTop')
-    NRSKNUI:Hide('MinimapCluster', 'ZoneTextButton')
-    NRSKNUI:Hide('Minimap', 'ZoomIn')
-    NRSKNUI:Hide('Minimap', 'ZoomOut')
-    NRSKNUI:Hide('Minimap', 'ZoomHitArea')
-    NRSKNUI:Hide('GameTimeFrame')
+    _G['MinimapCluster']:Banish()
+    _G['MinimapCompassTexture']:Banish()
+    _G['MinimapCluster']:Banish('BorderTop')
+    _G['MinimapCluster']:Banish('ZoneTextButton')
+    _G['Minimap']:Banish('ZoomIn')
+    _G['Minimap']:Banish('ZoomOut')
+    _G['Minimap']:Banish('ZoomHitArea')
+    _G['GameTimeFrame']:Banish()
 
     MinimapCluster.Tracking:ClearAllPoints()
     MinimapCluster.Tracking.Button:SetMenuAnchor(AnchorUtil.CreateAnchor('TOPRIGHT', Minimap, 'BOTTOMLEFT'))
 end
 
-function MAP:UpdateAddonCompartment()
-    if not AddonCompartmentFrame then return end
+function Map:UpdateAddonCompartment()
+    if not AddonComp then return end
 
-    local db = self.db.AddOnComp
-
-    if not db.Enabled then
-        Minimap.SetParent(AddonCompartmentFrame, NRSKNUI.HiddenFrame)
+    if not self.db.AddOnComp.Enabled then
+        Minimap.SetParent(AddonComp, NRSKNUI.HiddenFrame)
         return
     end
 
-    for _, region in ipairs({ AddonCompartmentFrame:GetRegions() }) do
-        if region:GetObjectType() == 'Texture' then
-            local layer = region:GetDrawLayer()
-            if layer == 'ARTWORK' or layer == 'HIGHLIGHT' then
-                region:Hide()
-                region:SetAlpha(0)
-            end
-        end
-    end
+    AddonComp:StripTextures('Layer', { 'ARTWORK', 'HIGHLIGHT' })
+    AddonComp:SetParent(Minimap)
+    AddonComp:SetScale(1 / self.db.Scale)
+    AddonComp:ClearAllPoints()
+    AddonComp:SetSize(self.db.AddOnComp.Size, self.db.AddOnComp.Size)
+    AddonComp:SetPoint(self.db.AddOnComp.Anchor, Minimap, self.db.AddOnComp.Anchor, self.db.AddOnComp.X, self.db.AddOnComp.Y)
+    AddonComp:SetFrameLevel(Minimap:GetFrameLevel() + 2)
+    AddonComp:CreateBackdrop()
 
-    local bg = NRSKNUI:CreateStandardBackdrop(AddonCompartmentFrame, 'NRSKNUI_AddonCompBG', Minimap:GetFrameLevel() + 1)
-    bg:SetAllPoints()
+    local textSize = math_floor(self.db.AddOnComp.Size * 0.6)
+    AddonComp.Text:SetFontStyle(self.db, textSize, nil, nil, nil, true)
+    AddonComp.Text:SetFontJustify("Center", AddonComp, 1, 0)
+    AddonComp.Text:SetTextColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
 
     if not hooked.addonCompEnter then
-        AddonCompartmentFrame:HookScript('OnEnter', function()
-            bg:SetBorderColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
+        AddonComp:HookScript('OnEnter', function()
+            AddonComp:SetBorderColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
         end)
-        AddonCompartmentFrame:HookScript('OnLeave', function()
-            bg:SetBorderColor(0, 0, 0, 1)
+        AddonComp:HookScript('OnLeave', function()
+            AddonComp:SetBorderColor(0, 0, 0, 1)
         end)
         hooked.addonCompEnter = true
     end
-
-    AddonCompartmentFrame:SetParent(Minimap)
-    AddonCompartmentFrame:SetScale(1 / self.db.Scale)
-    AddonCompartmentFrame:ClearAllPoints()
-    AddonCompartmentFrame:SetSize(db.Size, db.Size)
-    AddonCompartmentFrame:SetPoint(db.Anchor, Minimap, db.Anchor, db.X, db.Y)
-    AddonCompartmentFrame:SetFrameLevel(Minimap:GetFrameLevel() + 2)
-
-    local textSize = math.floor(db.Size * 0.6)
-    local fontFace = NRSKNUI:GetFontPath(NRSKNUI:GetEffectiveFont(self.db))
-
-    AddonCompartmentFrame.Text:SetPoint('CENTER', AddonCompartmentFrame, 'CENTER', 1, 0)
-    AddonCompartmentFrame.Text:SetJustifyH('CENTER')
-    AddonCompartmentFrame.Text:SetJustifyV('MIDDLE')
-    AddonCompartmentFrame.Text:SetFont(fontFace, textSize, 'OUTLINE')
-    AddonCompartmentFrame.Text:SetTextColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
-    AddonCompartmentFrame.Text:SetShadowColor(0, 0, 0, 0)
-    AddonCompartmentFrame.Text:SetShadowOffset(0, 0)
 end
 
-function MAP:ApplyButtonReg()
+function Map:ApplyButtonReg()
     if self.clickOverlay then return end
 
     local clickOverlay = CreateFrame('Frame', nil, Minimap)
@@ -187,7 +148,7 @@ function MAP:ApplyButtonReg()
             if InCombatLockdown() then
                 NRSKNUI:Print('Cannot open calendar in combat.')
             else
-                if not C_AddOns.IsAddOnLoaded('Blizzard_Calendar') then C_AddOns.LoadAddOn('Blizzard_Calendar') end
+                if not IsAddOnLoaded('Blizzard_Calendar') then LoadAddOn('Blizzard_Calendar') end
                 if CalendarFrame:IsShown() then
                     HideUIPanel(CalendarFrame)
                 else
@@ -201,7 +162,7 @@ function MAP:ApplyButtonReg()
     self.clickOverlay = clickOverlay
 end
 
-function MAP:UpdateMinimapBorder()
+function Map:UpdateMinimapBorder()
     if not hooked.border then
         Minimap.Border = CreateFrame('Frame', nil, Minimap, 'BackdropTemplate')
         Minimap.Border:SetAllPoints(Minimap)
@@ -214,7 +175,7 @@ function MAP:UpdateMinimapBorder()
     Minimap.Border:SetBackdropBorderColor(unpack(self.db.Border.Color))
 end
 
-function MAP:UpdateMailBtn()
+function Map:UpdateMailBtn()
     if not mailBtn then return end
     local mailFrame = MinimapCluster.IndicatorFrame.MailFrame
     local db = self.db.Mail
@@ -234,7 +195,7 @@ end
 
 local landingPageHooked = false
 
-function MAP:UpdateLandingPageBtn()
+function Map:UpdateLandingPageBtn()
     if not missionBtn then return end
 
     local lpDB = self.db.LandingPage
@@ -267,6 +228,7 @@ function MAP:UpdateLandingPageBtn()
         if missionBtn.UpdateIconForGarrison then
             hooksecurefunc(missionBtn, 'UpdateIconForGarrison', ForcePosition)
         end
+
         if missionBtn.SetLandingPageIconOffset then
             hooksecurefunc(missionBtn, 'SetLandingPageIconOffset', ForcePosition)
         end
@@ -286,7 +248,7 @@ function MAP:UpdateLandingPageBtn()
     end
 end
 
-function MAP:UpdateInstanceBtn()
+function Map:UpdateInstanceBtn()
     local db = self.db.InstanceDifficulty
     local instanceFrame = MinimapCluster.InstanceDifficulty
 
@@ -299,13 +261,14 @@ function MAP:UpdateInstanceBtn()
     instanceFrame:SetScale(db.Scale)
     instanceFrame:ClearAllPoints()
     instanceFrame:SetPoint(db.Anchor, Minimap, db.Anchor, db.X, db.Y)
+
     for _, child in ipairs({ instanceFrame.ChallengeMode, instanceFrame.Default, instanceFrame.Guild }) do
         child:ClearAllPoints()
         child:SetPoint('CENTER', instanceFrame, 'CENTER', 0, 0)
     end
 end
 
-function MAP:UpdateQueueBtn()
+function Map:UpdateQueueBtn()
     if not qBtn then return end
 
     local db = self.db.QueueStatus
@@ -327,7 +290,7 @@ end
 ---@field deferZoom? boolean GUI size slider - defer zoom refresh until mouse released
 
 ---@param opts? MinimapLayoutOpts
-function MAP:ApplyLayout(opts)
+function Map:ApplyLayout(opts)
     opts = opts or {}
 
     if opts.scaleChanged then
@@ -376,7 +339,39 @@ function MAP:ApplyLayout(opts)
     end
 end
 
-function MAP:CreateBugSackButton()
+---@param btn Button
+local function UpdateBugSackButtonState(btn)
+    if not btn then return end
+
+    local bugSack = _G.BugSack
+    local bugGrabber = _G.BugGrabber
+    local count = #bugSack:GetErrors(bugGrabber:GetSessionId())
+
+    if count == 0 then
+        btn.Text:SetTextColor(0.25, 1, 0.25)
+    else
+        btn.Text:SetTextColor(1, 0.25, 0.25)
+    end
+    btn.Text:SetText(count)
+end
+
+function Map:UpdateBugSackButton()
+    local btn = hooked.bugSackButton
+    if not btn or not self.db.BugSack.Enabled then return end
+
+    btn:SetScale(1 / self.db.Scale)
+    btn:SetSize(self.db.BugSack.Size, self.db.BugSack.Size)
+
+    btn:ClearAllPoints()
+    btn:SetPoint(self.db.BugSack.Anchor, Minimap, self.db.BugSack.Anchor, self.db.BugSack.X, self.db.BugSack.Y)
+
+    btn.Text:SetFontStyle(self.db, self.db.BugSack.Size - 4)
+
+    UpdateBugSackButtonState(btn)
+    btn:Show()
+end
+
+function Map:CreateBugSackButton()
     if not self.db.BugSack.Enabled then
         if hooked.bugSackButton then
             hooked.bugSackButton:Hide()
@@ -384,41 +379,44 @@ function MAP:CreateBugSackButton()
         return
     end
 
-    if not C_AddOns.IsAddOnLoaded('BugSack') then return end
+    if not IsAddOnLoaded('BugSack') then return end
+    if not IsAddOnLoaded('!BugGrabber') then return end
+
     local bugSackLDB = NRSKNUI.Libs.LDB:GetDataObjectByName('BugSack')
     if not bugSackLDB then return end
-    local bugAddon = _G['BugSack']
-    if not bugAddon or not bugAddon.UpdateDisplay or not bugAddon.GetErrors then return end
+
+    local bugSack = _G.BugSack
+    local bugGrabber = _G.BugGrabber
+    if (not bugSack) or
+        (not bugGrabber) or
+        (not bugSack.UpdateDisplay) or
+        (not bugSack.GetErrors) then
+        return
+    end
 
     if not hooked.bugSackButton then
-        local btn = CreateFrame('Button', 'NRSKNABugSackButton', Minimap, 'BackdropTemplate')
+        local btn = CreateFrame('Button', 'NRSKNUI_BugSackButton', Minimap)
+        btn:SetScale(1 / self.db.Scale)
+        btn:SetSize(self.db.BugSack.Size, self.db.BugSack.Size)
+        btn:CreateBackdrop()
+
         btn.Text = btn:CreateFontString(nil, 'OVERLAY')
-        btn.Text:SetFont('Fonts\\FRIZQT__.TTF', 12, 'OUTLINE')
-        btn.Text:SetPoint('CENTER', btn, 'CENTER', 0, 0)
-        btn.Text:SetTextColor(1, 1, 1)
-        btn.Text:SetText('|cFF40FF400|r')
+        btn.Text:SetFontStyle(self.db, self.db.BugSack.Size - 4)
+        btn.Text:SetPoint('CENTER')
 
-        btn:SetBackdrop({
-            bgFile = 'Interface\\Buttons\\WHITE8x8',
-            edgeFile = 'Interface\\Buttons\\WHITE8x8',
-            tile = false,
-            tileSize = 0,
-            edgeSize = 1,
-            insets = { left = 0, right = 0, top = 0, bottom = 0 },
-        })
-        btn:SetBackdropColor(0.1, 0.1, 0.1, 0.9)
-        btn:SetBackdropBorderColor(0, 0, 0, 1)
+        -- Set inital state of the button based on the current error count.
+        UpdateBugSackButtonState(btn)
 
-        btn:SetScript('OnClick', function(self, mouseButton)
+        btn:SetScript('OnClick', function(_, mouseButton)
             if bugSackLDB.OnClick then
-                bugSackLDB.OnClick(self, mouseButton)
+                bugSackLDB.OnClick(btn, mouseButton)
             end
         end)
 
-        btn:SetScript('OnEnter', function(self)
-            btn:SetBackdropBorderColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
+        btn:SetScript('OnEnter', function()
+            btn:SetBorderColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
             if bugSackLDB.OnTooltipShow then
-                GameTooltip:SetOwner(self, 'ANCHOR_NONE')
+                GameTooltip:SetOwner(btn, 'ANCHOR_NONE')
                 GameTooltip:SetPoint('BOTTOMRIGHT', Minimap, 'BOTTOMLEFT', -2, -1)
                 bugSackLDB.OnTooltipShow(GameTooltip)
                 GameTooltip:Show()
@@ -426,18 +424,25 @@ function MAP:CreateBugSackButton()
         end)
 
         btn:SetScript('OnLeave', function()
-            btn:SetBackdropBorderColor(0, 0, 0, 1)
+            btn:SetBorderColor(0, 0, 0, 1)
             GameTooltip:Hide()
         end)
 
-        hooksecurefunc(bugAddon, 'UpdateDisplay', function()
-            local count = #bugAddon:GetErrors(BugGrabber:GetSessionId())
-            if count == 0 then
-                btn.Text:SetText('|cFF40FF40' .. count .. '|r')
-            else
-                btn.Text:SetText('|cFFFF4040' .. count .. '|r')
+        -- Update the button state whenever BugSack updates its display.
+        hooksecurefunc(bugSack, 'UpdateDisplay', function()
+            if self.db.BugSack.Enabled then
+                UpdateBugSackButtonState(btn)
             end
         end)
+
+        -- If HidingBar addon is loaded, auto add our button to the ignore list.
+        if IsAddOnLoaded('HidingBar') then
+            local HidingBarPublicAPI = _G.HidingBarAddon
+
+            if HidingBarPublicAPI and HidingBarPublicAPI.addToIgnoreFrameList then
+                HidingBarPublicAPI:addToIgnoreFrameList('NRSKNUI_BugSackButton')
+            end
+        end
 
         hooked.bugSackButton = btn
     end
@@ -445,21 +450,8 @@ function MAP:CreateBugSackButton()
     self:UpdateBugSackButton()
 end
 
-function MAP:UpdateBugSackButton()
-    local btn = hooked.bugSackButton
-    local db = self.db.BugSack
-    if btn and db then
-        btn:SetScale(1 / self.db.Scale)
-        btn:SetSize(db.Size, db.Size)
-        btn:ClearAllPoints()
-        btn:SetPoint(db.Anchor, Minimap, db.Anchor, db.X, db.Y)
-        btn.Text:SetFont('Fonts\\FRIZQT__.TTF', db.Size - 4, 'OUTLINE')
-        btn:Show()
-    end
-end
-
 ---@param opts? MinimapLayoutOpts
-function MAP:ApplySettings(opts)
+function Map:ApplySettings(opts)
     if NRSKNUI:ShouldNotLoadModule() then return end
     if not self.db.Enabled then return end
 

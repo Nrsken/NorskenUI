@@ -40,7 +40,7 @@ end
 
 function XPBar:HideBlizzardXPBar()
     if not MainStatusTrackingBarContainer then return end
-    NRSKNUI:Hide(MainStatusTrackingBarContainer)
+    NRSKNUI:Banish(MainStatusTrackingBarContainer)
     MainStatusTrackingBarContainer:UnregisterAllEvents()
     MainStatusTrackingBarContainer:Hide()
     MainStatusTrackingBarContainer:SetAlpha(0)

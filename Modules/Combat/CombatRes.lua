@@ -1,7 +1,7 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 
----@class CombatRes: AceModule, AceEvent-3.0
+---@class CombatRes : NRSKNUI.Module
 local CR = NRSKNUI:NewModule("CombatRes", "AceEvent-3.0")
 
 local CreateFrame = CreateFrame

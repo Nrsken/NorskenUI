@@ -29,32 +29,7 @@ GUIFrame.SidebarConfig = {
                 { id = "cursorCircle",  text = "Cursor Circle" },
                 { id = "FocusCastbar",  text = "Focus Castbar" },
                 { id = "RangeChecker",  text = "Range Checker Text" },
-                { id = "TimeSpiral",    text = "Time Spiral" },
                 { id = "PotionReady",   text = "Potion Ready" },
-            }
-        },
-        {
-            id = "missingBuffs_section",
-            type = "header",
-            text = "Missing Buffs & Stances",
-            defaultExpanded = false,
-            items = {
-                { id = "missingBuffs",  text = "Missing Buffs" },
-                { id = "targetedBuffs", text = "Targeted Buffs" },
-                { id = "stanceIcons",   text = "Stance Icons" },
-                { id = "stanceTexts",   text = "Stance Texts" },
-            }
-        },
-        {
-            id = "buffs_section",
-            type = "header",
-            text = "Aura Tracking",
-            defaultExpanded = false,
-            items = {
-                { id = "CustomSkin_Buffs",          text = "Default Buffs",             elvUIDisabled = true },
-                { id = "CustomSkin_DebuffsDefault", text = "Default Debuffs",           elvUIDisabled = true },
-                { id = "CustomSkin_Debuffs",        text = "Advanced Debuffs" },
-                { id = "CustomSkin_Externals",      text = "External & Defensive Buffs" },
             }
         },
         {
@@ -63,15 +38,12 @@ GUIFrame.SidebarConfig = {
             text = "Class Util",
             defaultExpanded = false,
             items = {
-                { id = "BurningRush",      text = NRSKNUI:ColorTextByClass("Warlock: Burning Rush", "WARLOCK") },
                 { id = "IncarnStacks",     text = NRSKNUI:ColorTextByClass("Guardian Druid: Incarn Stacks", "DRUID") },
-                { id = "HuntersMark",      text = NRSKNUI:ColorTextByClass("Hunter: Mark Missing", "HUNTER") },
                 { id = "ReckonTracker",    text = NRSKNUI:ColorTextByClass("Dev DH: Reckon Tracker", "DEMONHUNTER") },
                 { id = "PetTexts",         text = "Pet Status Texts" },
                 { id = "gateway",          text = "Gateway Alert" },
                 { id = "TotemTracker",     text = "Totem Tracker" },
                 { id = "SpellAlert",       text = "Spell Alert Overlay" },
-                { id = "BloodlustTracker", text = "Bloodlust Tracker" },
             }
         },
         {
@@ -85,7 +57,6 @@ GUIFrame.SidebarConfig = {
                 { id = "Automation",         text = "Automation" },
                 { id = "CopyAnything",       text = "Copy Anything" },
                 { id = "CooldownStrings",    text = "CDM Profile Strings" },
-                { id = "DragonRiding",       text = "Dragon Riding UI" },
                 { id = "XPBar",              text = "XP Bar" },
                 { id = "Durability",         text = "Durability Util" },
                 { id = "AuctionHouseFilter", text = "AH Current Expansion Filter" },

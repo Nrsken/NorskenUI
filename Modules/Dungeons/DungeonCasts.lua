@@ -1,5 +1,4 @@
 ---@class NRSKNUI
----@diagnostic disable: undefined-field
 local NRSKNUI = select(2, ...)
 
 ---@class DungeonCasts: AceModule, AceEvent-3.0

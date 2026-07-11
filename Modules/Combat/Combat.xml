@@ -7,7 +7,6 @@
     <Script file="CombatRes.lua" />
     <Script file="CombatCursor.lua" />
     <Script file="RangeChecker.lua" />
-    <Script file="TimeSpiral.lua" />
     <Script file="FocusCastbar.lua"/>
     <Script file="PotionReady.lua"/>
 </Ui>

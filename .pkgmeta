@@ -52,5 +52,5 @@ ignore:
     - release.sh
     - .gitignore
     - .gitattributes
-    - .Annotations/
+    - .wowlua-ls-NUIAnnotations/
     - .wowluarc.json

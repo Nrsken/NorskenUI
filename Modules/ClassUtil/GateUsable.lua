@@ -1,207 +1,169 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
-
 ---@class Gateway: AceModule, AceEvent-3.0
-local GATE = NRSKNUI:NewModule("Gateway", "AceEvent-3.0")
+local Gateway = NRSKNUI:GetModule('Gateway', 'AceEvent-3.0')
 
-local C_Item = C_Item
-local C_Timer = C_Timer
-local IsUsableItem = C_Item.IsUsableItem
-local GetItemCount = C_Item.GetItemCount
-local GetItemInfo = C_Item.GetItemInfo
-local UnitClass = UnitClass
+local EM = NRSKNUI.EditMode
+
 local IsInGroup = IsInGroup
-local IsInRaid = IsInRaid
-local GetNumGroupMembers = GetNumGroupMembers
 local unpack = unpack
+local CreateFrame = CreateFrame
+
+local UIParent = UIParent
+
+local IsUsableItem = C_Item and C_Item.IsUsableItem
+local GetItemCount = C_Item and C_Item.GetItemCount
+local GetItemInfo = C_Item and C_Item.GetItemInfo
 
 local GATEWAY_ITEM_ID = 188152
 
-GATE.isPreview = false
-
-function GATE:UpdateDB()
+function Gateway:UpdateDB()
     self.db = NRSKNUI.db.profile.Miscellaneous.Gateway
 end
 
-function GATE:OnInitialize()
+function Gateway:OnInitialize()
     self:UpdateDB()
-    self.wasUsable = false
-    self.hasItem = false
-    self.itemName = nil
-    self.hasWarlockInGroup = false
+    self.wasUsable = nil
     self:SetEnabledState(false)
 end
 
-function GATE:CheckGroupForWarlock()
-    local _, _, playerClassID = UnitClass("player")
-    if playerClassID == 9 then
+-- Check if the player is a warlock or if there is a warlock in the group/raid.
+function Gateway:CheckGroupForWarlock()
+    -- Player is a warlock.
+    if NRSKNUI.myclass == 'WARLOCK' then
         self.hasWarlockInGroup = true
         return true
     end
 
+    -- Player is not a warlock and is not in a group.
     if not IsInGroup() then
         self.hasWarlockInGroup = false
         return false
     end
 
-    local numMembers = GetNumGroupMembers()
-    local prefix = IsInRaid() and "raid" or "party"
-    local maxCheck = IsInRaid() and numMembers or (numMembers - 1)
-
-    for i = 1, maxCheck do
-        local unit = prefix .. i
-        local _, _, classID = UnitClass(unit)
-        if classID == 9 then
-            self.hasWarlockInGroup = true
-            return true
-        end
+    -- Check if there is a warlock in the group/raid.
+    if NRSKNUI:IsClassInGroup('WARLOCK') then
+        self.hasWarlockInGroup = true
+        return true
     end
 
+    -- No warlocks found in the group.
     self.hasWarlockInGroup = false
     return false
 end
 
-function GATE:OnEnable()
-    if not self.db.Enabled then return end
-    self:CreateAlertFrame()
-    C_Timer.After(0.5, function() self:ApplySettings() end)
-    self:RegisterEvent("PLAYER_ENTERING_WORLD", "FullUpdate")
-    self:RegisterEvent("BAG_UPDATE", "FullUpdate")
-    self:RegisterEvent("SPELL_UPDATE_USABLE", "CheckUsable")
-    self:RegisterEvent("GROUP_ROSTER_UPDATE", "OnGroupChanged")
-    self:FullUpdate()
+function Gateway:FullUpdate()
+    self:CheckGroupForWarlock()
+    local count = GetItemCount(GATEWAY_ITEM_ID)
+    self.hasItem = count and count > 0
 
-    if NRSKNUI.EditMode and not self.editModeRegistered then
-        NRSKNUI.EditMode:RegisterElement({
-            key = "GatewayAlert",
-            displayName = "Gateway Alert",
-            frame = self.alertFrame,
-            getPosition = function() return self.db.Position end,
-            setPosition = function(pos)
-                self.db.Position.AnchorFrom = pos.AnchorFrom
-                self.db.Position.AnchorTo = pos.AnchorTo
-                self.db.Position.XOffset = pos.XOffset
-                self.db.Position.YOffset = pos.YOffset
-                NRSKNUI:ApplyFramePosition(self.alertFrame, self.db.Position, self.db)
-            end,
-            guiPath = "gateway",
-        })
-        self.editModeRegistered = true
+    if self.hasItem then
+        if not self.itemName then self.itemName = GetItemInfo(GATEWAY_ITEM_ID) end
+        self:CheckUsable()
+    else
+        self:UpdateState(false)
     end
 end
 
-function GATE:OnDisable()
-    self:UnregisterAllEvents()
-    if self.alertFrame then self.alertFrame:Hide() end
-    self.wasUsable = false
-    self.hasItem = false
-    self.isPreview = false
-    self.hasWarlockInGroup = false
-end
-
-function GATE:OnGroupChanged()
-    self:CheckGroupForWarlock()
-    self:CheckUsable()
-end
-
-function GATE:FullUpdate()
-    C_Timer.After(0.5, function()
-        self:CheckGroupForWarlock()
-        local count = GetItemCount(GATEWAY_ITEM_ID)
-        self.hasItem = count and count > 0
-        if self.hasItem then
-            if not self.itemName then self.itemName = GetItemInfo(GATEWAY_ITEM_ID) end
-            self:CheckUsable()
-        else
-            self:UpdateState(false)
-        end
-    end)
-end
-
-function GATE:CheckUsable()
+function Gateway:CheckUsable()
+    -- Player does not have item.
     if not self.hasItem then
         self:UpdateState(false)
         return
     end
 
+    -- No warlock in the group.
     if not self.hasWarlockInGroup then
         self:UpdateState(false)
         return
     end
 
-    self:UpdateState(IsUsableItem(GATEWAY_ITEM_ID) and true or false)
+    -- Update state based on item usability.
+    local isUsable = IsUsableItem(GATEWAY_ITEM_ID)
+    self:UpdateState((isUsable and true) or false)
 end
 
-function GATE:UpdateState(isUsable)
-    if self.isPreview then return end
-    if isUsable == self.wasUsable then return end
+function Gateway:UpdateState(isUsable)
+    if self.isPreview or not self.alertFrame or isUsable == self.wasUsable then return end
     self.wasUsable = isUsable
 
     if isUsable then
-        self.alertFrame.text:SetText(self.db.Text)
-        self.alertFrame:SetAlpha(1)
         self.alertFrame:Show()
     else
-        if self.alertFrame then self.alertFrame:Hide() end
+        self.alertFrame:Hide()
     end
-    self:SendMessage("NRSKNUI_GATEWAY_STATE_CHANGED", isUsable)
 end
 
-function GATE:CreateAlertFrame()
+function Gateway:CreateAlertFrame()
     if self.alertFrame then return end
 
-    local frame = NRSKNUI:CreateTextFrame(UIParent, 300, 40, { name = "NRSKNUI_GatewayAlert" })
-    frame:Hide()
+    local frame = CreateFrame('Frame', 'NRSKNUI_GatewayAlert', UIParent)
+    frame:SetSize(300, 40)
 
+    frame.text = frame:CreateFontString(nil, 'OVERLAY')
+    frame.text:SetAllPoints(frame)
+
+    -- Finalize the frame and register it with Anchors.
     self.alertFrame = frame
-    return frame
+    EM:Register(self, 'GatewayAlert', self.alertFrame, 'gateway')
+    frame:Hide()
 end
 
-function GATE:ApplySettings()
+function Gateway:ApplySettings()
     if not self.alertFrame then return end
-    NRSKNUI:ApplyFramePosition(self.alertFrame, self.db.Position, self.db)
+
+    self.alertFrame:ApplyPosition(self.db)
+    self.alertFrame.text:SetFontStyle(self.db)
     self.alertFrame.text:SetText(self.db.Text)
     self.alertFrame.text:SetTextColor(unpack(self.db.Color))
-    NRSKNUI:SetTextFont(self.alertFrame.text, NRSKNUI:GetEffectiveFont(self.db), self.db.FontSize, self.db.FontOutline,
-        self.db.FontShadow)
-
-    if self.db.Strata then self.alertFrame:SetFrameStrata(self.db.Strata) end
 end
 
-function GATE:ShowPreview()
-    if not self.alertFrame then self:CreateAlertFrame() end
+function Gateway:OnEnable()
+    if not self.db.Enabled then return end
 
-    if NRSKNUI.EditMode and not self.editModeRegistered then
-        NRSKNUI.EditMode:RegisterElement({
-            key = "GatewayAlert",
-            displayName = "Gateway Alert",
-            frame = self.alertFrame,
-            getPosition = function() return self.db.Position end,
-            setPosition = function(pos)
-                self.db.Position.AnchorFrom = pos.AnchorFrom
-                self.db.Position.AnchorTo = pos.AnchorTo
-                self.db.Position.XOffset = pos.XOffset
-                self.db.Position.YOffset = pos.YOffset
-                NRSKNUI:ApplyFramePosition(self.alertFrame, self.db.Position, self.db)
-            end,
-            guiPath = "gateway",
-        })
-        self.editModeRegistered = true
+    self:CreateAlertFrame()
+    self:ApplySettings()
+    self:FullUpdate()
+
+    -- Register events for checking usability and group changes.
+    self:RegisterEvent('PLAYER_ENTERING_WORLD', 'FullUpdate')
+    self:RegisterEvent('BAG_UPDATE', 'FullUpdate')
+    self:RegisterEvent('SPELL_UPDATE_USABLE', 'CheckUsable')
+    self:RegisterEvent('GROUP_ROSTER_UPDATE', function()
+        self:CheckGroupForWarlock()
+        self:CheckUsable()
+    end)
+end
+
+function Gateway:OnDisable()
+    self:UnregisterAllEvents()
+    if self.alertFrame then
+        self.alertFrame:Hide()
+        EM:UnregisterModuleElement('GatewayAlert')
     end
+    self.wasUsable = nil
+    self.hasItem = false
+    self.isPreview = false
+    self.hasWarlockInGroup = false
+end
+
+function Gateway:ShowPreview()
+    if not self.alertFrame then return end
 
     self.isPreview = true
-    self.alertFrame.text:SetText(self.db.Text)
-    self.alertFrame:SetAlpha(1)
     self.alertFrame:Show()
     self:ApplySettings()
 end
 
-function GATE:HidePreview()
+function Gateway:HidePreview()
     self.isPreview = false
+
     if self.db.Enabled then
         self.wasUsable = nil
         self:CheckUsable()
     else
-        if self.alertFrame then self.alertFrame:Hide() end
+        if self.alertFrame then
+            self.alertFrame:Hide()
+        end
     end
 end

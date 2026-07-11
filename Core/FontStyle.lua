@@ -8,6 +8,7 @@ local type = type
 local format = string.format
 local CreateFrame = CreateFrame
 local CreateFont = CreateFont
+local select = select
 local CreateFontFamily = CreateFontFamily
 
 local animEnum = Enum and Enum.FontStringScaleAnimationMode
@@ -289,16 +290,6 @@ local function SetFontStyle(self, source, size, outline, shadow, skip, setOwner)
     return true
 end
 
--- Publish onto both metatables.
-do
-    -- FontString and Font are distinct types, so a FontString we create and a named Blizzard Font object, e.g. InvoiceTextFontNormal, need the method injected separately.
-    local methods = { SetFontStyle = SetFontStyle }
-    NRSKNUI:InjectAPI(CreateFrame('Frame'):CreateFontString(), methods)
-    if _G.GameFontNormal then
-        NRSKNUI:InjectAPI(_G.GameFontNormal, methods)
-    end
-end
-
 ---@param anchorPoint string?
 ---@return string 'LEFT'|'CENTER'|'RIGHT'
 local function GetTextJustifyHFromAnchor(anchorPoint)
@@ -328,7 +319,7 @@ end
 ---resets justify, so this MUST run after the font pass or the alignment reverts on a
 ---profile change. AnchorFrom encodes both axes: TOPRIGHT -> point TOPRIGHT, H RIGHT, V TOP.
 ---@param self table FontString
----@param source table DB block with a Position.AnchorFrom
+---@param source table|string DB block with a Position.AnchorFrom or a string anchor
 ---@param parent table? anchor parent, defaults to self:GetParent()
 ---@param offsetX number?
 ---@param offsetY number?
@@ -346,7 +337,12 @@ local function SetFontJustify(self, source, parent, offsetX, offsetY, skip)
         }
     end
 
-    local anchor = (source.Position and source.Position.AnchorFrom) or 'CENTER'
+    local anchor
+    if type(source) == 'string' then
+        anchor = source
+    else
+        anchor = (source.Position and source.Position.AnchorFrom) or 'CENTER'
+    end
 
     -- Flip the X offset when the anchor is on the right side of the parent.
     if anchor == 'LEFT' then
@@ -362,9 +358,6 @@ local function SetFontJustify(self, source, parent, offsetX, offsetY, skip)
 
     return true
 end
-
--- Publish SetFontJustify onto the FontString metatable.
-NRSKNUI:InjectAPI(CreateFrame('Frame'):CreateFontString(), { SetFontJustify = SetFontJustify })
 
 ---Re-apply every registered string. Runs on profile change, call after a global font change too.
 ---skip == true keeps the setters from mutating their registries mid-loop.
@@ -395,4 +388,15 @@ do
         NRSKNUI.db.RegisterCallback(callbackTarget, 'OnProfileCopied', OnProfileChanged)
         NRSKNUI.db.RegisterCallback(callbackTarget, 'OnProfileReset', OnProfileChanged)
     end)
+end
+
+-- Publish onto both metatables.
+do
+    -- FontString and Font are distinct types, so a FontString we create and a named Blizzard Font object, e.g. InvoiceTextFontNormal, need the method injected separately.
+    local methods = {
+        SetFontStyle = SetFontStyle,
+        SetFontJustify = SetFontJustify,
+    }
+    NRSKNUI:InjectAPI(CreateFrame('Frame'):CreateFontString(), methods)
+    NRSKNUI:InjectAPI(_G.GameFontNormal, methods)
 end

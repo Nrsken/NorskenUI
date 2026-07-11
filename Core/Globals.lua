@@ -74,20 +74,6 @@ end
 
 -- Positioning Utilities --
 
--- Resolve anchor frame: SCREEN, UIPARENT or SELECTFRAME
----@param anchorFrameType string
----@param parentFrameName string
----@return Frame
-function NRSKNUI:ResolveAnchorFrame(anchorFrameType, parentFrameName)
-    if anchorFrameType == "SCREEN" or anchorFrameType == "UIPARENT" then
-        return UIParent
-    elseif anchorFrameType == "SELECTFRAME" and parentFrameName then
-        local frame = _G[parentFrameName]
-        return frame or UIParent
-    end
-    return UIParent
-end
-
 -- Get text justification based on anchor point
 ---@param anchorPoint string
 ---@return string
@@ -113,29 +99,6 @@ function NRSKNUI:ApplyFramePosition(frame, posConfig, Config, SetParent)
     frame:SetPoint(posConfig.AnchorFrom or "CENTER", parent, posConfig.AnchorTo or "CENTER", posConfig.XOffset or 0, posConfig.YOffset or 0)
     frame:SetFrameStrata(Config.Strata or "MEDIUM")
     self:SnapFrameToPixels(frame, Config.ForcePixelPerfect)
-end
-
--- ApplyPosition injected onto the frame widget types, frame:ApplyPosition(self, Config, setParent)
-do
-    local function ApplyPosition(self, Config, setParent)
-        if not self or not Config then return end
-        local posConfig = Config.Position
-        if not posConfig then return end
-
-        local parent = NRSKNUI:ResolveAnchorFrame(Config.anchorFrameType, Config.ParentFrame)
-
-        if setParent then self:SetParent(parent) end
-
-        self:ClearAllPoints()
-        self:SetPoint(posConfig.AnchorFrom or "CENTER", parent, posConfig.AnchorTo or "CENTER", posConfig.XOffset or 0, posConfig.YOffset or 0)
-        self:SetFrameStrata(Config.Strata or "MEDIUM")
-        NRSKNUI:SnapFrameToPixels(self, Config.ForcePixelPerfect)
-    end
-
-    local methods = { ApplyPosition = ApplyPosition }
-    NRSKNUI:InjectAPI(CreateFrame("Frame"), methods)
-    NRSKNUI:InjectAPI(CreateFrame("Button"), methods)
-    NRSKNUI:InjectAPI(CreateFrame("StatusBar"), methods)
 end
 
 -- Class Utilities --

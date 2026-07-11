@@ -113,10 +113,10 @@ local function ReskinProgressBar(bar, color)
         return
     end
 
-    BSKIN:StripTextures(bar)
+    NRSKNUI:HideTextures(bar)
     BSKIN:CreateStatusBarBackdrop(bar)
 
-    bar:SetStatusBarTexture(NRSKNUI.Media.Statusbar or "Interface\\Buttons\\WHITE8x8")
+    bar:SetStatusBarTexture(NRSKNUI.Media.Statusbars.NorskenUI)
     bar:SetStatusBarColor(color[1], color[2], color[3])
 
     BOT.coloredProgressBars[bar] = true
@@ -354,7 +354,7 @@ function BOT:SkinScenarioTracker()
             end
 
             if block.StatusBar then
-                block.StatusBar:SetStatusBarTexture(NRSKNUI.Media.Statusbar or "Interface\\Buttons\\WHITE8x8")
+                block.StatusBar:SetStatusBarTexture(NRSKNUI.Media.Statusbars.NorskenUI)
                 block.StatusBar:SetStatusBarColor(Theme.accent[1], Theme.accent[2], Theme.accent[3])
                 block.StatusBar:SetHeight(10)
             end

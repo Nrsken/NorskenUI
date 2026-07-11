@@ -312,6 +312,76 @@ function EditMode:UnregisterModuleElement(key)
     self:UnregisterElement(key)
 end
 
+-- Insert a space at every camelCase boundary so a key doubles as a display name.
+local function SpaceKey(key)
+    return (key:gsub("(%l)(%u)", "%1 %2"))
+end
+
+---@param module NRSKNUI.Module
+---@param config table|string
+---@param frame Frame?
+---@param guiPath string?
+---@param opts table?
+function EditMode:Register(module, config, frame, guiPath, opts)
+    if not module then return end
+
+    if type(config) == "string" then
+        local key = config
+        config = opts or {}
+        config.key = key
+        config.frame = frame or config.frame
+        config.guiPath = guiPath or config.guiPath
+    end
+
+    if not config or not config.key then return end
+    if self.registeredElements[config.key] then return end
+
+    local dbOverride = config.db
+    local function ResolveDB() return dbOverride or module.db end
+    if not ResolveDB() then return end
+
+    config.module = module
+    config.frame = config.frame or module.frame
+    config.displayName = config.displayName or SpaceKey(config.key)
+    config.guiPath = config.guiPath or config.key
+
+    local posKey = config.positionKey or "Position"
+
+    if not config.getPosition then
+        config.getPosition = function() return ResolveDB()[posKey] end
+    end
+
+    if not config.setPosition then
+        local apply = config.apply
+        config.setPosition = function(pos)
+            local p = ResolveDB()[posKey]
+            p.AnchorFrom = pos.AnchorFrom
+            p.AnchorTo = pos.AnchorTo
+            p.XOffset = pos.XOffset
+            p.YOffset = pos.YOffset
+
+            if type(apply) == "function" then
+                apply(module)
+            elseif type(apply) == "string" and module[apply] then
+                module[apply](module)
+            elseif module.ApplyPosition then
+                module:ApplyPosition()
+            else
+                NRSKNUI:ApplyFramePosition(config.frame, p, ResolveDB())
+            end
+        end
+    end
+
+    if not config.getParentFrame then
+        config.getParentFrame = function()
+            local d = ResolveDB()
+            return NRSKNUI:ResolveAnchorFrame(d.anchorFrameType, d.ParentFrame)
+        end
+    end
+
+    self:RegisterElement(config)
+end
+
 function EditMode:GetElementFrame(element)
     if element.frame then
         return element.frame
@@ -342,7 +412,7 @@ function EditMode:CreateOverlayFrame(element)
     local text = overlay:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     text:SetPoint("CENTER", overlay, "CENTER", 0, 0)
     text:SetText(element.displayName)
-    text:SetFont(NRSKNUI.FONT or STANDARD_TEXT_FONT, TEXT_FONT_SIZE, "OUTLINE")
+    text:SetFont(NRSKNUI.Media.Fonts.Expressway, TEXT_FONT_SIZE, "OUTLINE")
     text:SetShadowOffset(0, 0)
     text:SetShadowColor(0, 0, 0, 0)
     text:SetTextColor(Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3], 1)
@@ -723,7 +793,7 @@ function EditMode:CreateNudgeFrame()
 
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     title:SetPoint("TOP", frame, "TOP", 0, -6)
-    title:SetFont(NRSKNUI.FONT or STANDARD_TEXT_FONT, 16, "OUTLINE")
+    title:SetFont(NRSKNUI.Media.Fonts.Expressway, 16, "OUTLINE")
     title:SetShadowColor(0, 0, 0, 0)
     title:SetShadowOffset(0, 0)
     title:SetText("Nudge Tool")
@@ -732,7 +802,7 @@ function EditMode:CreateNudgeFrame()
 
     local selectedText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     selectedText:SetPoint("TOP", title, "BOTTOM", 0, -2)
-    selectedText:SetFont(NRSKNUI.FONT or STANDARD_TEXT_FONT, 12, "OUTLINE")
+    selectedText:SetFont(NRSKNUI.Media.Fonts.Expressway, 12, "OUTLINE")
     selectedText:SetShadowColor(0, 0, 0, 0)
     selectedText:SetShadowOffset(0, 0)
     selectedText:SetText("Click to select")
@@ -746,7 +816,7 @@ function EditMode:CreateNudgeFrame()
 
         local label = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         label:SetPoint("LEFT", row, "LEFT", 0, 0)
-        label:SetFont(NRSKNUI.FONT or STANDARD_TEXT_FONT, 12, "OUTLINE")
+        label:SetFont(NRSKNUI.Media.Fonts.Expressway, 12, "OUTLINE")
         label:SetShadowColor(0, 0, 0, 0)
         label:SetShadowOffset(0, 0)
         label:SetText(labelText)
@@ -767,7 +837,7 @@ function EditMode:CreateNudgeFrame()
         editBox:SetPoint("TOPLEFT", 4, -2)
         editBox:SetPoint("BOTTOMRIGHT", -4, 2)
         editBox:SetFontObject("GameFontNormal")
-        editBox:SetFont(NRSKNUI.FONT or STANDARD_TEXT_FONT, 12, "OUTLINE")
+        editBox:SetFont(NRSKNUI.Media.Fonts.Expressway, 12, "OUTLINE")
         editBox:SetShadowColor(0, 0, 0, 0)
         editBox:SetShadowOffset(0, 0)
         editBox:SetTextColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
@@ -963,7 +1033,7 @@ function EditMode:CreateNudgeFrame()
 
     local settingsBtnText = settingsBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     settingsBtnText:SetPoint("CENTER")
-    settingsBtnText:SetFont(NRSKNUI.FONT or STANDARD_TEXT_FONT, 12, "OUTLINE")
+    settingsBtnText:SetFont(NRSKNUI.Media.Fonts.Expressway, 12, "OUTLINE")
     settingsBtnText:SetShadowColor(0, 0, 0, 0)
     settingsBtnText:SetShadowOffset(0, 0)
     settingsBtnText:SetText("Open Settings")

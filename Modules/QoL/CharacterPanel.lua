@@ -143,78 +143,46 @@ function CHAR:OnInitialize()
     self:SetEnabledState(false)
 end
 
-function CHAR:UpdateItemLevelText()
-    local itemLevelFrame = CharacterStatsPane and CharacterStatsPane.ItemLevelFrame
-    if not itemLevelFrame or not itemLevelFrame.Value then return end
+local function UpdateItemLevelText()
+    local ivlText = _G.CharacterStatsPane.ItemLevelFrame.Value
+    ivlText:SetFontStyle(CHAR.db, CHAR.db.IlvlValueSize)
 
     local _, avgItemLevelEquipped = GetAverageItemLevel()
-    if self.db.Enabled and self.db.DecimalItemLevel then
-        itemLevelFrame.Value:SetText(format("%.2f", avgItemLevelEquipped))
+    if CHAR.db.Enabled and CHAR.db.DecimalItemLevel then
+        ivlText:SetText(format("%.2f", avgItemLevelEquipped))
     else
-        itemLevelFrame.Value:SetText(format("%d", floor(avgItemLevelEquipped)))
+        ivlText:SetText(format("%d", floor(avgItemLevelEquipped)))
     end
-end
-
-function CHAR:SetupDecimalItemLevel()
-    if self._decimalIlvlHooked then return end
-    self._decimalIlvlHooked = true
-
-    self:SecureHook("PaperDollFrame_SetItemLevel", function(_, unit)
-        if not self.db.DecimalItemLevel then return end
-        if unit ~= "player" then return end
-        self:UpdateItemLevelText()
-    end)
-end
-
-function CHAR:ApplyFont(fontString, size)
-    local db = self.db
-    local fontFace = NRSKNUI:GetEffectiveFont(db)
-    local outline = db.FontOutline or "OUTLINE"
-    local shadow = db.FontShadow or {}
-
-    NRSKNUI:SetTextFont(fontString, fontFace, size, outline, shadow)
 end
 
 function CHAR:StyleCharacterTexts()
     -- Level + Class spec text, has (H)/(A) as faction indicator aswell
-    if CharacterLevelText then
-        self:ApplyFont(CharacterLevelText, self.db.LevelTextSize or 12)
-        CharacterLevelText:SetWidth(0)
-        CharacterLevelText:SetWordWrap(true)
-    end
+    _G.CharacterLevelText:SetFontStyle(CHAR.db, CHAR.db.LevelTextSize)
+    _G.CharacterLevelText:SetWidth(0)
+    _G.CharacterLevelText:SetWordWrap(true)
 
     -- Character name + title text
-    if CharacterFrameTitleText then
-        self:ApplyFont(CharacterFrameTitleText, self.db.NameTextSize or 12)
+    if _G.CharacterFrameTitleText then
+        _G.CharacterFrameTitleText:SetFontStyle(CHAR.db, CHAR.db.NameTextSize)
     end
-
-    self:StyleStatsPaneTexts()
-end
-
-function CHAR:StyleStatsPaneTexts()
-    local statsPane = CharacterStatsPane
-    if not statsPane then return end
-    local categorySize = self.db.CategoryFontSize or 12
 
     -- "Item level" Title text
-    if statsPane.ItemLevelCategory and statsPane.ItemLevelCategory.Title then
-        self:ApplyFont(statsPane.ItemLevelCategory.Title, categorySize)
-        statsPane.ItemLevelCategory.Title:SetTextColor(unpack(NRSKNUI:GetPlayerClassColor()))
-    end
-
-    -- Item level value text
-    if statsPane.ItemLevelFrame and statsPane.ItemLevelFrame.Value then
-        self:ApplyFont(statsPane.ItemLevelFrame.Value, self.db.IlvlValueSize or 16)
-    end
+    _G.CharacterStatsPane.ItemLevelCategory.Title:SetFontStyle(CHAR.db, CHAR.db.CategoryFontSize)
+    _G.CharacterStatsPane.ItemLevelCategory.Title:SetTextColor(unpack(NRSKNUI:GetPlayerClassColor()))
 
     -- "Attributes & Enhancements" Title texts
-    local categories = { statsPane.AttributesCategory, statsPane.EnhancementsCategory }
+    local categories = {
+        _G.CharacterStatsPane.AttributesCategory,
+        _G.CharacterStatsPane.EnhancementsCategory,
+    }
     for _, category in ipairs(categories) do
         if category and category.Title then
-            self:ApplyFont(category.Title, categorySize)
+            category.Title:SetFontStyle(CHAR.db, CHAR.db.CategoryFontSize)
             category.Title:SetTextColor(unpack(NRSKNUI:GetPlayerClassColor()))
         end
     end
+
+    UpdateItemLevelText()
 end
 
 -- Item Track Indicators --
@@ -314,9 +282,9 @@ function CHAR:CreateTrackOverlay(slotFrame, slotID)
     overlay:SetFrameLevel(slotFrame:GetFrameLevel() + 10)
 
     if isRight then
-        overlay:SetPoint("BOTTOMRIGHT", slotFrame, "BOTTOMRIGHT", 1, 0)
+        overlay:SetPoint("BOTTOMRIGHT", slotFrame, "BOTTOMRIGHT", 1, 1)
     else
-        overlay:SetPoint("BOTTOMLEFT", slotFrame, "BOTTOMLEFT", 0, 0)
+        overlay:SetPoint("BOTTOMLEFT", slotFrame, "BOTTOMLEFT", 0, 1)
     end
 
     overlay.text = NRSKNUI:CreateText(overlay, "OVERLAY")
@@ -371,49 +339,8 @@ function CHAR:HideAllTrackIndicators()
     end
 end
 
-function CHAR:SetupTrackIndicators()
-    if not self.db.TrackIndicators or not self.db.TrackIndicators.Enabled then return end
-    if self._trackIndicatorsHooked then return end
-    self._trackIndicatorsHooked = true
-
-    self:RegisterEvent("PLAYER_EQUIPMENT_CHANGED", function(_, slotID)
-        if self.db.TrackIndicators and self.db.TrackIndicators.Enabled then
-            self:UpdateSlotTrackIndicator(slotID)
-        end
-    end)
-
-    if PaperDollFrame then
-        PaperDollFrame:HookScript("OnShow", function()
-            if self.db.TrackIndicators and self.db.TrackIndicators.Enabled then
-                self:UpdateAllTrackIndicators()
-            end
-        end)
-    end
-end
-
-function CHAR:SetupStatTextHook()
-    if self._statTextHooked then return end
-    self._statTextHooked = true
-
-    hooksecurefunc("PaperDollFrame_SetLabelAndText", function(statFrame)
-        if not self.db.Enabled then return end
-        if CharacterStatsPane and statFrame == CharacterStatsPane.ItemLevelFrame then return end
-        local statsSize = self.db.StatsFontSize or 12
-
-        if statFrame.Label then
-            self:ApplyFont(statFrame.Label, statsSize)
-        end
-        if statFrame.Value then
-            self:ApplyFont(statFrame.Value, statsSize)
-        end
-    end)
-end
-
-function CHAR:UpdateLevelTextWithFaction()
-    local levelText = CharacterLevelText
-    if not levelText then return end
-
-    local text = levelText:GetText()
+local function UpdateLevelTextWithFaction()
+    local text = _G.CharacterLevelText:GetText()
     if not text then return end
 
     text = text:gsub(" |c%x%x%x%x%x%x%x%x%([AH]%)|r$", "")
@@ -425,19 +352,7 @@ function CHAR:UpdateLevelTextWithFaction()
         text = text .. " |cffe63333(H)|r"
     end
 
-    levelText:SetText(text)
-end
-
-function CHAR:SetupLevelTextHook()
-    if self._levelTextHooked then return end
-    self._levelTextHooked = true
-
-    hooksecurefunc("PaperDollFrame_SetLevel", function()
-        if self.db.Enabled then
-            self:UpdateLevelTextWithFaction()
-            self:UpdateRaceTextPosition()
-        end
-    end)
+    _G.CharacterLevelText:SetText(text)
 end
 
 function CHAR:CreateRaceText()
@@ -462,7 +377,7 @@ function CHAR:ShowRaceText()
     if not self.db.ShowRaceText then return end
 
     local text = self:CreateRaceText()
-    self:ApplyFont(text, self.db.LevelTextSize or 12)
+    text:SetFontStyle(self.db, self.db.LevelTextSize)
     text:SetText(GetRealmName() .. " - " .. UnitRace("player"))
     text:Show()
     self:UpdateRaceTextPosition()
@@ -479,14 +394,11 @@ end
 
 function CHAR:ApplySettings()
     if not self.db.Enabled then return end
-    self:SetupDecimalItemLevel()
-    self:UpdateItemLevelText()
+
+    UpdateItemLevelText()
     self:StyleCharacterTexts()
-    self:SetupStatTextHook()
-    self:SetupLevelTextHook()
-    self:UpdateLevelTextWithFaction()
+    UpdateLevelTextWithFaction()
     self:SetupGemSocketHelper()
-    self:SetupTrackIndicators()
     if self.db.ShowRaceText then
         self:ShowRaceText()
     else
@@ -500,15 +412,74 @@ function CHAR:ApplySettings()
     end
 end
 
+local hooks = {
+    SetItemLevel = false,
+    SetLabelAndText = false,
+    SetLevel = false,
+    TrackIndicators = false,
+
+}
+
+local function SetupHooks()
+    if not hooks.SetItemLevel then
+        CHAR:SecureHook("PaperDollFrame_SetItemLevel", function(_, unit)
+            if not CHAR.db.DecimalItemLevel then return end
+            if unit ~= "player" then return end
+            UpdateItemLevelText()
+        end)
+        hooks.SetItemLevel = true
+    end
+
+    if not hooks.SetLabelAndText then
+        hooksecurefunc("PaperDollFrame_SetLabelAndText", function(statFrame)
+            if not CHAR.db.Enabled then return end
+            if CharacterStatsPane and statFrame == _G.CharacterStatsPane.ItemLevelFrame then return end
+
+            statFrame.Label:SetFontStyle(CHAR.db, CHAR.db.StatsFontSize)
+            statFrame.Value:SetFontStyle(CHAR.db, CHAR.db.StatsFontSize)
+        end)
+        hooks.SetLabelAndText = true
+    end
+
+    if not hooks.SetLevel then
+        hooksecurefunc("PaperDollFrame_SetLevel", function()
+            if CHAR.db.Enabled then
+                UpdateLevelTextWithFaction()
+                CHAR:UpdateRaceTextPosition()
+            end
+        end)
+        hooks.SetLevel = true
+    end
+
+    if CHAR.db.TrackIndicators.Enabled and not hooks.SetLabelAndText then
+        CHAR:RegisterEvent("PLAYER_EQUIPMENT_CHANGED", function(_, slotID)
+            if CHAR.db.TrackIndicators and CHAR.db.TrackIndicators.Enabled then
+                CHAR:UpdateSlotTrackIndicator(slotID)
+            end
+        end)
+
+        if PaperDollFrame then
+            PaperDollFrame:HookScript("OnShow", function()
+                if CHAR.db.TrackIndicators and CHAR.db.TrackIndicators.Enabled then
+                    CHAR:UpdateAllTrackIndicators()
+                end
+            end)
+        end
+        hooks.SetLabelAndText = true
+    end
+end
+
 function CHAR:OnEnable()
     if not self.db.Enabled then return end
+
+    SetupHooks()
+
     C_Timer.After(0.5, function()
         self:ApplySettings()
     end)
 end
 
 function CHAR:OnDisable()
-    self:UpdateItemLevelText()
     self:DisableGemSocketHelper()
     self:HideAllTrackIndicators()
     self:HideRaceText()
@@ -523,7 +494,6 @@ local socketCache = {}
 local function GetScanTooltip()
     if not scanTooltip then
         scanTooltip = CreateFrame("GameTooltip", "NRSKNUIScanTooltip", nil, "GameTooltipTemplate")
-        ---@diagnostic disable-next-line: param-type-mismatch
         scanTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
     end
     return scanTooltip
@@ -565,7 +535,7 @@ function CHAR:ScanItemSockets(slotID)
 
     local tt = GetScanTooltip()
     tt:ClearLines()
-    tt:SetInventoryItem("player", slotID)
+    tt:SetInventoryItem("player", slotID, false, false)
 
     local nextEmptyIndex = 1
 

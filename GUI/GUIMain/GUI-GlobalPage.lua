@@ -2,7 +2,7 @@
 local NRSKNUI = select(2, ...)
 local GUIFrame = NRSKNUI.GUIFrame
 local Theme = NRSKNUI.Theme
-local LSM = NRSKNUI.LSM or LibStub("LibSharedMedia-3.0", true)
+local LSM = NRSKNUI.Libs.LSM
 
 local pairs = pairs
 
@@ -36,6 +36,7 @@ GUIFrame:RegisterContent("GlobalPage", function(scrollChild, yOffset)
             fontDB.Enabled = checked
             UpdateAllWidgetStates()
             ApplyToAllModules()
+            NRSKNUI:RefreshFontStyles()
         end,
         msgPopup = true,
         msgText = "Global Font",
@@ -55,6 +56,7 @@ GUIFrame:RegisterContent("GlobalPage", function(scrollChild, yOffset)
         callback = function(key)
             fontDB.FontFace = key
             ApplyToAllModules()
+            NRSKNUI:RefreshFontStyles()
         end,
         searchable = true,
         isFontPreview = true

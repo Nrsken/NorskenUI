@@ -3,7 +3,6 @@ local NRSKNUI = select(2, ...)
 
 local pairs, type = pairs, type
 local pcall = pcall
-local select = select
 local next = next
 local hooksecurefunc = hooksecurefunc
 local CreateFrame = CreateFrame
@@ -312,58 +311,4 @@ function NRSKNUI:SetTextFont(fontString, fontName, fontSize, fontOutline, shadow
     end
 
     return true
-end
-
----Iterates over a frame's child frames and styles each FontString region with the configured font, outline, and a caller-defined size.
----@param frame Frame
----@param db table
----@param getSize fun(fontString: FontString, parent: Frame): number?
-function NRSKNUI:StyleChildFontStrings(frame, db, getSize)
-    if type(frame) == 'string' then
-        frame = _G[frame]
-    end
-
-    local font = self:GetFontName(db)
-    local outline = self:GetFontOutline(db.FontOutline)
-    local fontShadowColor = db.FontShadow.Color
-    local fontShadowOffsetX = db.FontShadow.OffsetX
-    local fontShadowOffsetY = db.FontShadow.OffsetY
-
-    for i = 1, frame:GetNumChildren() do
-        local child = select(i, frame:GetChildren())
-
-        for j = 1, child:GetNumRegions() do
-            local region = select(j, child:GetRegions())
-
-            if region:IsObjectType('FontString') then
-                local size = getSize and getSize(region, child) or db.FontSize
-
-                region:SetFont(font, size, outline)
-                region:SetShadowOffset(fontShadowOffsetX, fontShadowOffsetY)
-                region:SetShadowColor(fontShadowColor[1], fontShadowColor[2], fontShadowColor[3], fontShadowColor[4])
-            end
-        end
-    end
-end
-
----Iterates over a table with fonts and their size key
----@param fontTable table example: fontTable = { fontStringName = 'sizeKey' }
----@param db table
----@param global boolean
-function NRSKNUI:StyleFontstringTable(fontTable, db, global)
-    local outline = self:GetFontOutline(db.FontOutline)
-    local font = self:GetFontName(db)
-    local shadow = db.FontShadow
-
-    for fontStringName, sizeKey in next, fontTable do
-        local fontString
-        if global then
-            fontString = _G[fontStringName]
-        else
-            fontString = fontStringName
-        end
-        fontString:SetFont(font, db[sizeKey], outline)
-        fontString:SetShadowColor(shadow.Color[1], shadow.Color[2], shadow.Color[3], shadow.Color[4])
-        fontString:SetShadowOffset(shadow.OffsetX, shadow.OffsetY)
-    end
 end

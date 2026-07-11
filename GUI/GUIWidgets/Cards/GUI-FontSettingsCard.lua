@@ -37,8 +37,7 @@ local NRSKNUI = select(2, ...)
 ---@class GUIFrame
 local GUIFrame = NRSKNUI.GUIFrame
 local Theme = NRSKNUI.Theme
----@diagnostic disable-next-line: undefined-global
-local LSM = NRSKNUI.LSM or LibStub("LibSharedMedia-3.0", true)
+local LSM = NRSKNUI.Libs.LSM
 
 local table_insert = table.insert
 local pairs = pairs
@@ -219,15 +218,18 @@ function GUIFrame:CreateFontSettingsCard(scrollChild, yOffset, config)
     table_insert(widgets, fontDropdown)
     fontDropdownRef = fontDropdown
 
-    local outlineOptions = {
-        { key = "NONE", text = "None" },
-        { key = "OUTLINE", text = "Outline" },
-        { key = "THICKOUTLINE", text = "Thick" },
-    }
+    -- Render the canonical outline vocabulary (single source of truth in FontStyle.lua).
+    -- A value may be a string or a list of equivalents; the first entry is canonical.
+    local outlineOptions = {}
+    for _, option in ipairs(NRSKNUI.FontOutlines) do
+        local value = option.value
+        if type(value) == "table" then value = value[1] end
+        table_insert(outlineOptions, { key = value, text = option.label })
+    end
     if includeSoftOutline then
+        -- Legacy pseudo-outline, not part of the font-object vocabulary; only offered
+        -- to modules that still drive it through the old styling path.
         table_insert(outlineOptions, { key = "SOFTOUTLINE", text = "Soft" })
-        table_insert(outlineOptions, { key = "SLUG", text = "Slug" })
-        table_insert(outlineOptions, { key = "SLUG,OUTLINE", text = "Slug Outline" })
     end
 
     local outlineDropdown = GUIFrame:CreateDropdown(row1, "Outline", {

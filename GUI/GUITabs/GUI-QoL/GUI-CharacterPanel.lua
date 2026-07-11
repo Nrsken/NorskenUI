@@ -122,7 +122,6 @@ GUIFrame:RegisterContent("CharacterPanel", function(scrollChild, yOffset)
             trackDb.Enabled = checked
             if CharacterPanel then
                 if checked then
-                    CharacterPanel:SetupTrackIndicators()
                     CharacterPanel:UpdateAllTrackIndicators()
                 else
                     CharacterPanel:HideAllTrackIndicators()
@@ -248,7 +247,7 @@ GUIFrame:RegisterContent("CharacterPanel", function(scrollChild, yOffset)
         includeSoftOutline = true,
         onChangeCallback = function()
             if CharacterPanel then
-                CharacterPanel:StyleCharacterTexts()
+                CharacterPanel:ApplySettings()
             end
         end,
         globalOverride = {},

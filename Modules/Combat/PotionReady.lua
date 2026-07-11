@@ -1,14 +1,18 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
-
----@class PotionReady: AceModule, AceEvent-3.0
-local POT = NRSKNUI:NewModule("PotionReady", "AceEvent-3.0")
+---@class PotionReady
+local PotionReady = NRSKNUI:GetModule("PotionReady")
+local EM = NRSKNUI.EditMode
+local LC = NRSKNUI.LoadConditions
 
 local unpack = unpack
 local select = select
 local GetTime = GetTime
 local GetInstanceInfo = GetInstanceInfo
-local C_Timer = C_Timer
+local CreateFrame = CreateFrame
+
+local GetItemCooldown = C_Item and C_Item.GetItemCooldown
+local NewTimer = C_Timer and C_Timer.NewTimer
 
 -- R2 Light's Potential but can be any dmg pot, since they all share cd
 local POTION_ID = 241308
@@ -16,82 +20,45 @@ local POTION_ID = 241308
 -- Chache pot state to avoid unnecessary checks
 local potionOnCooldown = false
 
-function POT:UpdateDB()
+function PotionReady:UpdateDB()
     self.db = NRSKNUI.db.profile.PotionReady
 end
 
-function POT:OnInitialize()
+function PotionReady:OnInitialize()
     self:UpdateDB()
     self:SetEnabledState(false)
 end
 
-function POT:OnEnable()
-    if not self.db.Enabled then return end
-    self:CreateAlertFrame()
-    C_Timer.After(0.5, function() self:ApplySettings() end)
-    self:EditModeReg()
-
-    -- Only check pot state if not already on cooldown
-    self:RegisterEvent("BAG_UPDATE_COOLDOWN", function()
-        if not potionOnCooldown then POT:UpdateCooldownState() end
-    end)
-
-    -- Pot cooldown is reset on M+ key start and boss resets, kills or wipes
-    self:RegisterEvent("CHALLENGE_MODE_START", "UpdateCooldownState")
-    self:RegisterEvent("ENCOUNTER_END", function()
-        if select(2, GetInstanceInfo()) == "raid" then POT:UpdateCooldownState() end
-    end)
-
-    -- Register for load condition changes
-    NRSKNUI.LoadConditions:RegisterCallback(self, self.UpdateCooldownState)
-
-    -- Check inital pot state, reloads and logins for example
-    self:UpdateCooldownState()
-end
-
-function POT:OnDisable()
-    self:UnregisterAllEvents()
-    NRSKNUI.LoadConditions:UnregisterCallback(self)
-    if self.cooldownTimer then
-        self.cooldownTimer:Cancel()
-        self.cooldownTimer = nil
-    end
-    if self.alertFrame then self.alertFrame:Hide() end
-    self.isPreview = false
-end
-
-function POT:CreateAlertFrame()
+function PotionReady:CreateAlertFrame()
     if self.alertFrame then return end
-    local frame = NRSKNUI:CreateTextFrame(UIParent, 300, 40, { name = "NRSKNUI_PotionReady" })
-    frame:Hide()
+
+    local frame = CreateFrame('Frame', 'NRSKNUI_PotionReadyAlert', UIParent)
+    frame:SetSize(300, 40)
+
+    frame.text = frame:CreateFontString(nil, 'OVERLAY')
+    frame.text:SetAllPoints(frame)
+
+    -- Finalize the frame and register it with Anchors.
     self.alertFrame = frame
-    return frame
+    EM:Register(self, 'PotionReadyAlert', self.alertFrame, 'PotionReady')
+    frame:Hide()
 end
 
-function POT:ApplySettings()
+function PotionReady:ApplySettings()
     if not self.alertFrame then return end
-    local frame = self.alertFrame
-    local db = self.db
 
-    frame.text:SetTextColor(unpack(db.Color))
-    NRSKNUI:SetTextFont(frame.text, NRSKNUI:GetEffectiveFont(self.db), db.FontSize, db.FontOutline, db.FontShadow)
-    frame.text:SetText(db.Text)
+    self.alertFrame:ApplyPosition(self.db)
+    self.alertFrame.text:SetFontStyle(self.db)
+    self.alertFrame.text:SetFontJustify(self.db)
+    self.alertFrame.text:SetText(self.db.Text)
+    self.alertFrame.text:SetTextColor(unpack(self.db.Color))
 
-    local w = frame.text:GetStringWidth()
-    local h = frame.text:GetStringHeight()
-    frame:SetSize(w + 4, h + 4)
-
-    NRSKNUI:ApplyFramePosition(frame, self.db.Position, db)
-
-    local textPoint = NRSKNUI:GetTextJustifyFromAnchor(db.Position.AnchorFrom)
-    frame.text:ClearAllPoints()
-    frame.text:SetPoint(textPoint, frame, textPoint, 0, 0)
-    frame.text:SetJustifyH(textPoint)
-
-    if db.Strata then frame:SetFrameStrata(db.Strata) end
+    local w = self.alertFrame.text:GetStringWidth()
+    local h = self.alertFrame.text:GetStringHeight()
+    self.alertFrame:SetSize(w + 4, h + 4)
 end
 
-function POT:UpdateCooldownState()
+function PotionReady:UpdateCooldownState()
     if self.isPreview then return end
 
     if self.cooldownTimer then
@@ -99,19 +66,18 @@ function POT:UpdateCooldownState()
         self.cooldownTimer = nil
     end
 
-    local startTime, duration = C_Item.GetItemCooldown(POTION_ID)
+    local startTime, duration = GetItemCooldown(POTION_ID)
     local remaining = duration > 0 and (startTime + duration) - GetTime() or 0
     if remaining > 0 then
         potionOnCooldown = true
         if self.alertFrame then self.alertFrame:Hide() end
-        self.cooldownTimer = C_Timer.NewTimer(remaining, function()
+        self.cooldownTimer = NewTimer(remaining, function()
             self.cooldownTimer = nil
             self:UpdateCooldownState()
         end)
     else
         potionOnCooldown = false
-        if self.db.Enabled and self.alertFrame and NRSKNUI.LoadConditions:Check(self.db.LoadConditions) then
-            self.alertFrame.text:SetText(self.db.Text)
+        if self.db.Enabled and self.alertFrame and LC:Check(self.db.LoadConditions) then
             self.alertFrame:Show()
         elseif self.alertFrame then
             self.alertFrame:Hide()
@@ -119,40 +85,59 @@ function POT:UpdateCooldownState()
     end
 end
 
-function POT:ShowPreview()
-    if not self.alertFrame then self:CreateAlertFrame() end
-    self:EditModeReg()
+function PotionReady:OnEnable()
+    if not self.db.Enabled then return end
+
+    self:CreateAlertFrame()
+    self:ApplySettings()
+    self:UpdateCooldownState()
+
+    -- Register for load condition changes
+    LC:RegisterCallback(self, self.UpdateCooldownState)
+
+    -- Only check pot state if not already on cooldown
+    self:RegisterEvent("BAG_UPDATE_COOLDOWN", function()
+        if not potionOnCooldown then
+            PotionReady:UpdateCooldownState()
+        end
+    end)
+
+    -- Pot cooldown is reset on M+ key start and boss resets, kills or wipes
+    self:RegisterEvent("CHALLENGE_MODE_START", "UpdateCooldownState")
+    self:RegisterEvent("ENCOUNTER_END", function()
+        if select(2, GetInstanceInfo()) == "raid" then
+            PotionReady:UpdateCooldownState()
+        end
+    end)
+end
+
+function PotionReady:OnDisable()
+    LC:UnregisterCallback(self)
+    if self.cooldownTimer then
+        self.cooldownTimer:Cancel()
+        self.cooldownTimer = nil
+    end
+    if self.alertFrame then
+        self.alertFrame:Hide()
+        EM:UnregisterModuleElement('PotionReadyAlert')
+    end
+    self.isPreview = false
+end
+
+function PotionReady:ShowPreview()
+    if not self.alertFrame then return end
+
     self.isPreview = true
     self:ApplySettings()
-    self.alertFrame.text:SetText(self.db.Text)
     self.alertFrame:Show()
 end
 
-function POT:HidePreview()
+function PotionReady:HidePreview()
     self.isPreview = false
+
     if not self.db.Enabled and self.alertFrame then
         self.alertFrame:Hide()
     else
         self:UpdateCooldownState()
-    end
-end
-
-function POT:EditModeReg()
-    if NRSKNUI.EditMode and not self.editModeRegistered then
-        NRSKNUI.EditMode:RegisterElement({
-            key = "PotionReady",
-            displayName = "Potion Ready",
-            frame = self.alertFrame,
-            getPosition = function() return self.db.Position end,
-            setPosition = function(pos)
-                self.db.Position.AnchorFrom = pos.AnchorFrom
-                self.db.Position.AnchorTo = pos.AnchorTo
-                self.db.Position.XOffset = pos.XOffset
-                self.db.Position.YOffset = pos.YOffset
-                NRSKNUI:ApplyFramePosition(self.alertFrame, self.db.Position, self.db)
-            end,
-            guiPath = "PotionReady",
-        })
-        self.editModeRegistered = true
     end
 end

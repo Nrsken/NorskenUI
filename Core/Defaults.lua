@@ -1,4 +1,3 @@
--- NRSKNUI namespace
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 
@@ -7,7 +6,6 @@ local Defaults = {
     global = {
         UseGlobalProfile = false,  -- Switch to global profile
         GlobalProfile = "Default", -- Name of global profile to use
-        UIScale = 0,               -- 0 = auto (use perfect scale), otherwise custom value
 
         -- Theme settings
         -- Mode: "preset", "class", or "custom"
@@ -242,15 +240,11 @@ local Defaults = {
                 XOffset = 794,                   -- X offset
                 YOffset = -433,                  -- Y offset
             },
-            Backdrop = {                         -- Backdrop settings
-                Enabled = false,                 -- Enable/disable backdrop
-                Color = { 0, 0, 0, 0.6 },        -- Backdrop color
-                BorderColor = { 0, 0, 0, 1 },    -- Border color
-                BorderSize = 1,
-                bgWidth = 5,
-                bgHeight = 5,
-
-            },
+            BackdropEnabled = false,             -- Enable/disable backdrop
+            BackgroundColor = { 0, 0, 0, 0.8 },
+            BorderColor = { 0, 0, 0, 1 },
+            BackdropWidth = 8,
+            BackdropHeight = 5,
             PrintEnd = false,
         },
 
@@ -653,7 +647,7 @@ local Defaults = {
                 UseGlobalFont = true,
                 FontFace = "Expressway",
                 FontSize = 18,
-                FontOutline = "SOFTOUTLINE",
+                FontOutline = "OUTLINE",
                 Strata = "HIGH",
                 anchorFrameType = "UIPARENT",
                 ParentFrame = "UIParent",
@@ -1058,6 +1052,14 @@ local Defaults = {
                     OffsetX = 1,
                     OffsetY = -1,
                 },
+
+                FontTabSize = 11,
+                FontButtonSize = 15,
+
+                FontSmallSize = 11,
+                FontMediumSize = 12,
+                FontLargeSize = 13,
+
                 ObjectiveTracker = {
                     Enabled = true,
                     SkinHeaders = true,
@@ -1069,6 +1071,20 @@ local Defaults = {
                     QuestTitleSize = 13,
                     ColorMode = "Theme",
                     CustomColor = { 0, 1, 0.17, 1 },
+                },
+                General = {
+                    BorderColor = { 0, 0, 0, 1 },
+                    BackgroundColor = { 0, 0, 0, 0.8 },
+                    PanelColor = { 0.2, 0.2, 0.2, 1 },
+                    DisabledColor = { 0, 0, 0, 0.4 },
+                    AccentMode = "Theme", -- "Theme" | "Class" | "Custom"
+                    CustomAccentColor = { 0, 1, 0.17, 1 },
+                    HighlightColor = { 0.5, 0.5, 0.5, 0.1 },
+                },
+                Frames = {
+                    CharacterFrame = true,
+                    InspectFrame = true,
+                    PlayerSpells = true,
                 },
             },
 
@@ -1717,9 +1733,20 @@ local Defaults = {
 
             -- Minimap Skinning
             Minimap = {
-                Enabled = true,              -- Master toggle for minimap skinning
-                Size = 232,                  -- Minimap size (square)
-                Scale = 1,                   -- Minimap scale
+                Enabled = true, -- Master toggle for minimap skinning
+                Size = 232,     -- Minimap size (square)
+                Scale = 1,      -- Minimap scale
+
+                UseGlobalFont = true,
+                FontFace = "Expressway",
+                FontOutline = "OUTLINE",
+                FontShadow = {
+                    Enabled = false,
+                    Color = { 0, 0, 0, 0 },
+                    OffsetX = 0,
+                    OffsetY = 0,
+                },
+
                 Position = {                 -- Position
                     AnchorFrom = "TOPRIGHT", -- Anchor point
                     AnchorTo = "TOPRIGHT",
@@ -1774,8 +1801,6 @@ local Defaults = {
                     X = 2,
                     Y = 2,
                 },
-                UseGlobalFont = true,
-                FontFace = "Expressway",
             },
 
             -- MicroMenu Skinning

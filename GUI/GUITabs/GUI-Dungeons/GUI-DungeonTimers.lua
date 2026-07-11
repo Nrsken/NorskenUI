@@ -174,7 +174,7 @@ local function CreateSpellIconPreview(parent, spellId, size)
 
     local nameLabel = container:CreateFontString(nil, "OVERLAY")
     nameLabel:SetPoint("LEFT", iconFrame, "RIGHT", Theme.paddingSmall, 0)
-    nameLabel:SetFont(NRSKNUI.FONT or "Fonts\\FRIZQT__.TTF", Theme.fontSizeSmall, "OUTLINE")
+    nameLabel:SetFont(NRSKNUI.Media.Fonts.Expressway, Theme.fontSizeSmall, "OUTLINE")
     nameLabel:SetTextColor(Theme.textPrimary[1], Theme.textPrimary[2], Theme.textPrimary[3], 1)
     nameLabel:SetText(spellName)
 

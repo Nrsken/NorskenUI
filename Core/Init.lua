@@ -21,6 +21,7 @@ NRSKNUI.AddOnName = GetAddOnMetadata(addonName, "Title")
 NRSKNUI.Version = GetAddOnMetadata(addonName, "Version")
 NRSKNUI.Author = GetAddOnMetadata(addonName, "Author")
 NRSKNUI.myclass = select(2, UnitClass('player'))
+NRSKNUI.ClearTexture = 0
 
 -- Setup libraries
 NRSKNUI.Libs = {
@@ -51,6 +52,14 @@ do
     NRSKNUI:RegisterEvent("PLAYER_LOGIN", UpdateSpec) -- Update initial spec info on login
     LS.RegisterPlayerSpecChange(NRSKNUI, UpdateSpec)
 end
+
+-- Class Util Modules
+NRSKNUI.BloodlustTracker = NRSKNUI:NewModule("BloodlustTracker", "AceEvent-3.0")
+NRSKNUI.BurningRush = NRSKNUI:NewModule("BurningRush", "AceEvent-3.0")
+
+-- Advanced Skinning Modules
+NRSKNUI.Tooltips = NRSKNUI:NewModule('Tooltips', 'AceEvent-3.0')
+NRSKNUI.Minimap = NRSKNUI:NewModule('Minimap', 'AceEvent-3.0')
 
 -- Skinning Modules
 NRSKNUI.Skinning = NRSKNUI:NewModule('Skinning', 'AceEvent-3.0')

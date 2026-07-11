@@ -1,5 +1,8 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
+---@class Tooltips: AceModule, AceEvent-3.0
+local Tooltips = NRSKNUI:GetModule('Tooltips')
+local EM = NRSKNUI.EditMode
 
 local EnumerateFrames = EnumerateFrames
 local hooksecurefunc = hooksecurefunc
@@ -76,12 +79,6 @@ local combatHideTypes = {
     [unitAuraEnum] = 'Auras',
 }
 
-local tooltipTexts = {
-    GameTooltipHeaderText = 'HeaderTextSize',
-    GameTooltipText = 'TextSize',
-    GameTooltipTextSmall = 'TextSmallSize',
-}
-
 local levelLineMatch1 = TOOLTIP_UNIT_LEVEL:gsub('%s?%%s%s?%-?', ''):lower()
 local levelLineMatch2 = TOOLTIP_UNIT_LEVEL_RACE:gsub('^%%2$s%s?(.-)%s?%%1$s', '%1'):gsub('^%-?г?о?%s?', ''):gsub('%s?%%s%s?%-?', ''):lower()
 
@@ -98,14 +95,11 @@ local guildRankFormat = '<%s> [%s]'
 local skinnedFrames = {}     -- Every frame we put a backdrop on, so GUI color changes can be reapplied.
 local statusBarTooltips = {} -- Tooltips with a StatusBar
 
----@class Tooltips: AceModule, AceEvent-3.0
-local TT = NRSKNUI:NewModule('Tooltips', 'AceEvent-3.0')
-
-function TT:UpdateDB()
+function Tooltips:UpdateDB()
     self.db = NRSKNUI.db.profile.Skinning.Tooltips
 end
 
-function TT:OnInitialize()
+function Tooltips:OnInitialize()
     self:UpdateDB()
     self:SetEnabledState(false)
 end
@@ -113,7 +107,7 @@ end
 ---@param group string
 ---@return boolean
 local function ShouldHideInCombat(group)
-    local db = TT.db
+    local db = Tooltips.db
     if not db.HideInCombat or not db.HideInCombatTypes[group] then return false end
     if not InCombatLockdown() then return false end
 
@@ -136,13 +130,14 @@ end
 local customAnchor
 local function CustomAnchorHandler()
     if not customAnchor then
-        customAnchor = CreateFrame('Frame', 'NRSKNUI_ToolTipAnchorFrame', UIParent)
+        customAnchor = CreateFrame('Frame', 'NRSKNUI_TooltipAnchorFrame', UIParent)
         customAnchor:SetSize(170, 60)
         customAnchor:SetClampedToScreen(true)
-        TT.TTAnchor = customAnchor
+        Tooltips.TTAnchor = customAnchor
+        EM:Register(Tooltips, 'TooltipAnchor', Tooltips.TTAnchor, 'tooltips')
     end
 
-    local pos = TT.db.Position
+    local pos = Tooltips.db.Position
     customAnchor:ClearAllPoints()
     customAnchor:SetPoint(pos.AnchorFrom, UIParent, pos.AnchorTo, pos.XOffset, pos.YOffset)
 end
@@ -151,7 +146,7 @@ end
 ---@param tooltip Tooltip
 local function AnchorTooltip(tooltip)
     if not tooltip or tooltip:IsForbidden() then return end
-    if not customAnchor or not TT.db.Enabled then return end
+    if not customAnchor or not Tooltips.db.Enabled then return end
 
     tooltip:ClearAllPoints()
     tooltip:SetPoint('BOTTOMRIGHT', customAnchor, 'BOTTOMRIGHT', 0, 0)
@@ -161,8 +156,8 @@ end
 ---@param key string
 ---@param down number
 local function OnModifierChanged(_, key, down)
-    if key:sub(2) ~= TT.db.Mod then return end
-    if not TT.db.HideInCombat or not InCombatLockdown() then return end
+    if key:sub(2) ~= Tooltips.db.Mod then return end
+    if not Tooltips.db.HideInCombat or not InCombatLockdown() then return end
     if GameTooltip:IsForbidden() then return end
 
     if down == 1 then
@@ -179,9 +174,9 @@ end
 -- Runs both on OnShow and whenever item data is set on an already-shown tooltip, so the border always matches the currently displayed item.
 ---@param tooltip GameTooltip & PublicBackdropMixin
 local function UpdateBorderColor(tooltip)
-    if not TT.db.ShowItemQualityBorder then return end
+    if not Tooltips.db.ShowItemQualityBorder then return end
     if tooltip:IsForbidden() then return end
-    if not NRSKNUI:BackdropExists(tooltip) then return end
+    if not tooltip:HasBackdrop() then return end
 
     if GetDisplayedItem and GetColorDataForItemQuality and tooltip.IsTooltipType then
         local _, link = GetDisplayedItem(tooltip)
@@ -193,7 +188,7 @@ local function UpdateBorderColor(tooltip)
         end
     end
 
-    local BC = TT.db.BorderColor
+    local BC = Tooltips.db.BorderColor
     tooltip:SetBorderColor(BC[1], BC[2], BC[3], BC[4])
 end
 
@@ -243,13 +238,13 @@ end
 
 ---@param tooltip Tooltip
 local function StyleStatusBar(tooltip)
-    if TT.db.ShowStatusBar then
+    if Tooltips.db.ShowStatusBar then
         tooltip.StatusBar:SetAlpha(1)
         tooltip.StatusBar:ClearAllPoints()
         tooltip.StatusBar:SetPoint('BOTTOMLEFT', tooltip, 'BOTTOMLEFT', 2, 2)
         tooltip.StatusBar:SetPoint('BOTTOMRIGHT', tooltip, 'BOTTOMRIGHT', -2, 2)
         tooltip.StatusBar:SetHeight(3)
-        tooltip.StatusBar:SetStatusBarTexture(NRSKNUI:GetBarTexture(TT.db))
+        tooltip.StatusBar:SetStatusBarTexture(NRSKNUI:GetBarTexture(Tooltips.db))
     else
         tooltip.StatusBar:Hide()
         tooltip.StatusBar:SetAlpha(0)
@@ -260,60 +255,63 @@ end
 -- Also calling Update() ourselves when we change font size in the GUI for live update, so we need a recursion block.
 local stylingQueueStatus = false
 local function StyleQueueStatusFonts()
-    if not QueueStatusFrame or stylingQueueStatus then return end
+    local queueFrame = _G.QueueStatusFrame
+
+    if not queueFrame or stylingQueueStatus then return end
     stylingQueueStatus = true
-    NRSKNUI:StyleChildFontStrings(QueueStatusFrame, TT.db, function(region, child)
-        if region == child.Title then return TT.db.HeaderTextSize end
-        return TT.db.TextSize
+
+    queueFrame:StyleChildFontStrings(Tooltips.db, function(region, child)
+        if region == child.Title then
+            return Tooltips.db.HeaderTextSize
+        end
+        return Tooltips.db.TextSize
     end)
-    QueueStatusFrame:Update()
+
+    queueFrame:Update()
     stylingQueueStatus = false
 end
 
 local function SkinQueueStatus()
-    if not QueueStatusFrame then return end
-    if NRSKNUI:BackdropExists(QueueStatusFrame) then return end
+    local queueFrame = _G.QueueStatusFrame
+
+    if not queueFrame then return end
+    if queueFrame:HasBackdrop() then return end
 
     -- Hide original border & background and create our own
-    NRSKNUI:Hide(QueueStatusFrame, 'NineSlice')
+    queueFrame:Banish('NineSlice')
+    queueFrame:CreateBackdrop()
 
-    ---@cast QueueStatusFrame Frame & PublicBackdropMixin
-    NRSKNUI:CreateBackdrop(QueueStatusFrame)
-
-    skinnedFrames[#skinnedFrames + 1] = QueueStatusFrame
+    skinnedFrames[#skinnedFrames + 1] = queueFrame
 
     -- Restyle whenever entries are (re)built
-    hooksecurefunc(QueueStatusFrame, 'Update', StyleQueueStatusFonts)
+    hooksecurefunc(queueFrame, 'Update', StyleQueueStatusFonts)
 end
 
 ---@param tooltip Tooltip
 local function SetupSkinning(tooltip)
     if tooltip:IsForbidden() then return end
     if not tooltip.NineSlice or tooltip.IsEmbedded then return end -- Not skinnable
-    if NRSKNUI:BackdropExists(tooltip) then return end
+    if NRSKNUI:HasBackdrop(tooltip) then return end
 
     -- Hide original border & background and create our own
-    NRSKNUI:Hide(tooltip, 'NineSlice')
-
-    ---@cast tooltip Tooltip & PublicBackdropMixin
-    NRSKNUI:CreateBackdrop(tooltip)
+    tooltip:Banish('NineSlice')
+    tooltip:CreateBackdrop()
 
     skinnedFrames[#skinnedFrames + 1] = tooltip
 
     tooltip:HookScript('OnShow', UpdateBorderColor)
 
     -- Style the compare header
-    if tooltip.CompareHeader and not NRSKNUI:BackdropExists(tooltip.CompareHeader) then
-        -- Hide original texture and create our own border & background.
-        NRSKNUI:HideTextures(tooltip.CompareHeader, 'tooltip-compare-label')
-        NRSKNUI:CreateBackdrop(tooltip.CompareHeader)
+    if tooltip.CompareHeader and not tooltip.CompareHeader:HasBackdrop() then
+        tooltip.CompareHeader:StripTextures('Atlas', 'tooltip-compare-label')
+        tooltip.CompareHeader:CreateBackdrop()
         tooltip.CompareHeader:SetPoint('BOTTOMLEFT', tooltip, 'TOPLEFT', 0, -1)
     end
 
     if tooltip.StatusBar then
         statusBarTooltips[#statusBarTooltips + 1] = tooltip
         hooksecurefunc(tooltip.StatusBar, 'Show', function(bar)
-            if not TT.db.ShowStatusBar then bar:Hide() end
+            if not Tooltips.db.ShowStatusBar then bar:Hide() end
         end)
         tooltip.StatusBar:HookScript('OnValueChanged', tooltipHealthChanged)
         StyleStatusBar(tooltip)
@@ -435,8 +433,8 @@ local function StyleGuildLine(data)
     -- Only overwrite if line 2 really is the guild line.
     if not text:find(guildName, 1, true) then return end
 
-    local coloredGuildName = NRSKNUI:ColorText(guildName, TT.db.GuildNameColor)
-    local coloredRankname = NRSKNUI:ColorText(guildRank, TT.db.GuildRankColor)
+    local coloredGuildName = NRSKNUI:ColorText(guildName, Tooltips.db.GuildNameColor)
+    local coloredRankname = NRSKNUI:ColorText(guildRank, Tooltips.db.GuildRankColor)
 
     if not issecretvalue(guildRank) and guildRank then
         line:SetText(guildRankFormat:format(coloredGuildName, coloredRankname))
@@ -449,7 +447,7 @@ end
 ---@param tooltip Tooltip
 ---@param data TooltipData
 local function AddMountLine(tooltip, data)
-    if not TT.db.ShowMountInfo or not GetMountFromSpell or InCombatLockdown() then return end
+    if not Tooltips.db.ShowMountInfo or not GetMountFromSpell or InCombatLockdown() then return end
     if NRSKNUI:IsRestricted() then return end
 
     local unit = GetPlayerUnit(data)
@@ -479,16 +477,16 @@ local tooltipTypeProcessed = {
 
 local function TooltipProcessor()
     -- Remove unit threat line, very useless xd
-    if TT.db.HideThreatLine and not tooltipTypeProcessed.threat then
+    if Tooltips.db.HideThreatLine and not tooltipTypeProcessed.threat then
         preCall(unitThreatEnum, function(tooltip)
-            if not TT.db.Enabled or not TT.db.HideThreatLine then return end
+            if not Tooltips.db.Enabled or not Tooltips.db.HideThreatLine then return end
             if not tooltip:IsForbidden() then return true end
         end)
         tooltipTypeProcessed.threat = true
     end
 
     -- Style tooltip border color based on item quality
-    if TT.db.ShowItemQualityBorder and not tooltipTypeProcessed.item then
+    if Tooltips.db.ShowItemQualityBorder and not tooltipTypeProcessed.item then
         postCall(itemEnum, UpdateBorderColor)
         tooltipTypeProcessed.item = true
     end
@@ -498,14 +496,14 @@ local function TooltipProcessor()
     -- Hide selected tooltip types during combat, overridden by holding the modifier key
     for enum, group in next, combatHideTypes do
         postCall(enum, function(tooltip)
-            if not TT.db.Enabled then return end
+            if not Tooltips.db.Enabled then return end
             if tooltip:IsForbidden() or tooltip ~= GameTooltip then return end
             if ShouldHideInCombat(group) then tooltip:Hide() end
         end)
     end
 
     postCall(unitEnum, function(tooltip, data)
-        if not TT.db.Enabled then return end
+        if not Tooltips.db.Enabled then return end
         if tooltip:IsForbidden() then return end
         -- Skip styling when the tooltip was combat-hidden above
         if tooltip == GameTooltip and ShouldHideInCombat('Units') then return end
@@ -520,7 +518,7 @@ local function TooltipProcessor()
 
     -- Color unit name, style realm name: 'Norsken (TarrenMill)' and apply statusbar coloring.
     preCall(unitNameEnum, function(tooltip, data)
-        if not TT.db.Enabled then return end
+        if not Tooltips.db.Enabled then return end
         if tooltip:IsForbidden() or not tooltip:IsTooltipType(unitEnum) then return end
 
         local unitGUID = select(3, tooltip:GetUnit())
@@ -540,7 +538,7 @@ local function TooltipProcessor()
 
         local name, realm = UnitNameFromGUID(unitGUID)
         if realm ~= nil then
-            local coloredRealm = NRSKNUI:ColorText(format("(%s)", realm), TT.db.NameRealmColor)
+            local coloredRealm = NRSKNUI:ColorText(format("(%s)", realm), Tooltips.db.NameRealmColor)
             tooltip:AddLine(nameRealmFormat:format(name, coloredRealm), r, g, b)
         elseif name ~= nil then
             tooltip:AddLine(name, r, g, b)
@@ -553,16 +551,16 @@ local function TooltipProcessor()
 
     -- Color unitOwner name, for example 'Norsken's Pet/Minion/Statue'
     preCall(unitOwnerEnum, function(tooltip, data)
-        if not TT.db.Enabled then return end
+        if not Tooltips.db.Enabled then return end
         if tooltip:IsForbidden() or not tooltip:IsTooltipType(unitEnum) then return end
 
-        tooltip:AddLine(data.leftText, TT.db.MinionColor[1], TT.db.MinionColor[2], TT.db.MinionColor[3])
+        tooltip:AddLine(data.leftText, Tooltips.db.MinionColor[1], Tooltips.db.MinionColor[2], Tooltips.db.MinionColor[3])
         return true
     end)
 
     -- Fully replace money frame tooltips and add our own styleable line
     preCall(sellPriceEnum, function(tooltip, lineData)
-        if not TT.db.Enabled or not GetCoinTextureString then return end
+        if not Tooltips.db.Enabled or not GetCoinTextureString then return end
         if tooltip:IsForbidden() then return end
 
         tooltip:AddLine(SELL_PRICE .. ': ' .. GetCoinTextureString(lineData.price), WHITE_FONT_COLOR:GetRGB())
@@ -573,7 +571,7 @@ local function TooltipProcessor()
 end
 
 -- Expose setting application globally for GUI and profile changes.
-function TT:ApplySettings()
+function Tooltips:ApplySettings()
     if NRSKNUI:ShouldNotLoadModule() then return end
     if not self.db.Enabled then return end
 
@@ -581,14 +579,16 @@ function TT:ApplySettings()
     CustomAnchorHandler()
     StyleQueueStatusFonts()
 
-    NRSKNUI:StyleFontstringTable(tooltipTexts, self.db, true)
+    _G.GameTooltipHeaderText:SetFontStyle(self.db, self.db.HeaderTextSize)
+    _G.GameTooltipText:SetFontStyle(self.db, self.db.TextSize)
+    _G.GameTooltipTextSmall:SetFontStyle(self.db, self.db.TextSmallSize)
 
     for _, tooltip in next, statusBarTooltips do StyleStatusBar(tooltip) end
     for _, frame in next, skinnedFrames do frame:UpdateBackdropFromDB(self.db) end
 end
 
 local hooksDone = false
-function TT:OnEnable()
+function Tooltips:OnEnable()
     if NRSKNUI:ShouldNotLoadModule() then return end -- Don't enable module if ElvUI is enabled.
     if not self.db.Enabled then return end
 
@@ -606,7 +606,7 @@ function TT:OnEnable()
         hooksecurefunc('GameTooltip_SetDefaultAnchor', AnchorTooltip)
         -- Hook when blizzard tries to set backdrop style, this catches and styles any tooltip that we might have missed in the initial check.
         hooksecurefunc('SharedTooltip_SetBackdropStyle', function(tooltip)
-            if not TT.db.Enabled then return end
+            if not Tooltips.db.Enabled then return end
             if tooltip:GetObjectType() == 'GameTooltip' then
                 SetupSkinning(tooltip)
             end
@@ -615,31 +615,5 @@ function TT:OnEnable()
     end
 
     -- Kill tooltip handling in Blizzards editmode, we control it with out custom anchor.
-    NRSKNUI:Hide(TooltipContainer)
-
-    -- Register the custom anchor with addons editmode.
-    local config = {
-        key = 'TooltipModule',
-        displayName = 'Tooltip Anchor',
-        frame = self.TTAnchor,
-        getPosition = function()
-            return self.db.Position
-        end,
-        setPosition = function(pos)
-            self.db.Position.AnchorFrom = pos.AnchorFrom
-            self.db.Position.AnchorTo = pos.AnchorTo
-            self.db.Position.XOffset = pos.XOffset
-            self.db.Position.YOffset = pos.YOffset
-            CustomAnchorHandler()
-        end,
-        getParentFrame = function()
-            return UIParent
-        end,
-        guiPath = 'tooltips',
-    }
-    NRSKNUI.EditMode:RegisterElement(config)
-end
-
-function TT:OnDisable()
-    self:UnregisterAllEvents()
+    TooltipContainer:Banish()
 end

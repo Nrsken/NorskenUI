@@ -3,11 +3,9 @@
 
     <Script file="BurningRush.lua"/>
     <Script file="GateUsable.lua"/>
-    <Script file="HuntersMark.lua"/>
     <Script file="IncarnStacks.lua"/>
     <Script file="PetTexts.lua"/>
     <Script file="TotemTracker.lua"/>
     <Script file="SpellAlert.lua" />
-    <Script file="BloodlustTracker.lua" />
     <Script file="ReckonTracker.lua" />
 </Ui>

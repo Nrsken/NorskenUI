@@ -1,15 +1,11 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
-
----@class BurningRush: AceModule, AceEvent-3.0
-local BURN = NRSKNUI:NewModule("BurningRush", "AceEvent-3.0")
-
+---@class BurningRush
+local BURN = NRSKNUI:GetModule('BurningRush')
+local EM = NRSKNUI.EditMode
 local LCG = NRSKNUI.Libs.LCG
 
 local CreateFrame = CreateFrame
-local UnitClass = UnitClass
-local select = select
-local IsSpellKnown = IsSpellKnown
 local UIParent = UIParent
 
 local SPELL_ID = 111400
@@ -44,7 +40,7 @@ function BURN:CreateFrame()
     if iconFrame then return end
 
     iconFrame = NRSKNUI:CreateIconFrame(UIParent, self.db.IconSize, {
-        name = "NRSKNUI_BurningRushIcon",
+        name = 'NRSKNUI_BurningRushIcon',
         zoom = NRSKNUI.GlobalZoom,
         borderColor = { 0, 0, 0, 1 },
     })
@@ -56,7 +52,7 @@ function BURN:CreateFrame()
 
     self.frame = iconFrame
     self.iconFrame = iconFrame
-
+    EM:Register(self, 'BurningRush', iconFrame, 'BurningRush')
     self:ApplySettings()
 end
 
@@ -87,7 +83,7 @@ function BURN:StartGlow()
     if not self.db.GlowEnabled then return end
     if not LCG then return end
 
-    if self.db.GlowType == "pixel" then
+    if self.db.GlowType == 'pixel' then
         LCG.PixelGlow_Start(iconFrame, self.db.GlowColor,
             self.db.GlowLines,
             self.db.GlowFrequency,
@@ -96,17 +92,17 @@ function BURN:StartGlow()
             self.db.GlowXOffset, self.db.GlowYOffset,
             self.db.GlowBorder,
             nil)
-    elseif self.db.GlowType == "autocast" then
+    elseif self.db.GlowType == 'autocast' then
         LCG.AutoCastGlow_Start(iconFrame, self.db.GlowColor,
             self.db.GlowLines,
             self.db.GlowFrequency,
             self.db.GlowScale,
             self.db.GlowXOffset, self.db.GlowYOffset,
             nil)
-    elseif self.db.GlowType == "button" then
+    elseif self.db.GlowType == 'button' then
         LCG.ButtonGlow_Start(iconFrame, self.db.GlowColor,
             self.db.GlowFrequency)
-    elseif self.db.GlowType == "proc" then
+    elseif self.db.GlowType == 'proc' then
         LCG.ProcGlow_Start(iconFrame, {
             color = self.db.GlowColor,
             startAnim = self.db.GlowStartAnim,
@@ -166,26 +162,6 @@ function BURN:ShowPreview()
     self:ApplySettings()
     self:StartGlow()
     if iconFrame then iconFrame:Show() end
-
-    NRSKNUI.EditMode:RegisterModuleElement(self, {
-        key = "BurningRush",
-        displayName = "Burning Rush",
-        frame = iconFrame,
-        getPosition = function()
-            return self.db.Position
-        end,
-        setPosition = function(pos)
-            self.db.Position.AnchorFrom = pos.AnchorFrom
-            self.db.Position.AnchorTo = pos.AnchorTo
-            self.db.Position.XOffset = pos.XOffset
-            self.db.Position.YOffset = pos.YOffset
-            self:ApplyPosition()
-        end,
-        getParentFrame = function()
-            return NRSKNUI:ResolveAnchorFrame(self.db.anchorFrameType, self.db.ParentFrame)
-        end,
-        guiPath = "BurningRush",
-    })
 end
 
 function BURN:HidePreview()
@@ -193,8 +169,6 @@ function BURN:HidePreview()
     self:StopGlow()
     if iconFrame then iconFrame:Hide() end
     if self.BurningRushActive then self:ShowDisplay() end
-
-    NRSKNUI.EditMode:UnregisterModuleElement("BurningRush")
 end
 
 function BURN:TogglePreview()
@@ -211,51 +185,27 @@ function BURN:IsPreviewActive()
 end
 
 function BURN:OnEnable()
-    local className = select(2, UnitClass("player"))
-    local isKnown = IsSpellKnown(111400)
-    if not className == "WARLOCK" or not isKnown then return end
+    if NRSKNUI.myclass ~= 'WARLOCK' or not C_SpellBook.IsSpellInSpellBook(111400) then return end
     if not self.db or not self.db.Enabled then return end
 
     self:CreateFrame()
     C_Timer.After(0.5, function() self:ApplyPosition() end)
 
-    if not eventFrame then eventFrame = CreateFrame("Frame") end
-    eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
-    eventFrame:RegisterEvent("SPELL_ACTIVATION_OVERLAY_GLOW_HIDE")
-    eventFrame:SetScript("OnEvent", function(_, event, arg1, _, spellID)
-        if event == "UNIT_SPELLCAST_SUCCEEDED" then
+    if not eventFrame then eventFrame = CreateFrame('Frame') end
+    eventFrame:RegisterUnitEvent('UNIT_SPELLCAST_SUCCEEDED', 'player')
+    eventFrame:RegisterEvent('SPELL_ACTIVATION_OVERLAY_GLOW_HIDE')
+    eventFrame:SetScript('OnEvent', function(_, event, arg1, _, spellID)
+        if event == 'UNIT_SPELLCAST_SUCCEEDED' then
             self:OnSpellCast(spellID)
-        elseif event == "SPELL_ACTIVATION_OVERLAY_GLOW_HIDE" then
+        elseif event == 'SPELL_ACTIVATION_OVERLAY_GLOW_HIDE' then
             self:OnGlowHide(arg1)
         end
     end)
 
-    self:RegisterEvent("PLAYER_DEAD", function()
+    self:RegisterEvent('PLAYER_DEAD', function()
         self.BurningRushActive = false
         self:HideDisplay()
     end)
-
-    if NRSKNUI.EditMode then
-        NRSKNUI.EditMode:RegisterElement({
-            key = "BurningRush",
-            displayName = "Burning Rush",
-            frame = iconFrame,
-            getPosition = function()
-                return self.db.Position
-            end,
-            setPosition = function(pos)
-                self.db.Position.AnchorFrom = pos.AnchorFrom
-                self.db.Position.AnchorTo = pos.AnchorTo
-                self.db.Position.XOffset = pos.XOffset
-                self.db.Position.YOffset = pos.YOffset
-                self:ApplyPosition()
-            end,
-            getParentFrame = function()
-                return NRSKNUI:ResolveAnchorFrame(self.db.anchorFrameType, self.db.ParentFrame)
-            end,
-            guiPath = "BurningRush",
-        })
-    end
 end
 
 function BURN:OnDisable()
@@ -266,11 +216,10 @@ function BURN:OnDisable()
     self.BurningRushActive = false
     isPreviewActive = false
     self.glowActive = false
-    self:UnregisterAllEvents()
 
     if eventFrame then
         eventFrame:UnregisterAllEvents()
-        eventFrame:SetScript("OnEvent", nil)
+        eventFrame:SetScript('OnEvent', nil)
     end
-    if NRSKNUI.EditMode then NRSKNUI.EditMode:UnregisterElement("BurningRush") end
+    if NRSKNUI.EditMode then NRSKNUI.EditMode:UnregisterElement('BurningRush') end
 end
