@@ -47,6 +47,27 @@ function PublicBackdropMixin:UpdateBackdropFromDB(db)
 	end
 end
 
+---Hide or show the backdrop and borders. Used to toggle the backdrop on/off without destroying it.
+---@param show boolean
+function PublicBackdropMixin:ToggleBackdrop(show)
+	if self.backdropBackground then
+		if show then
+			self.backdropBackground:Show()
+		else
+			self.backdropBackground:Hide()
+		end
+	end
+	if self.BackDropBorders then
+		for _, edge in pairs(self.BackDropBorders) do
+			if show then
+				edge:Show()
+			else
+				edge:Hide()
+			end
+		end
+	end
+end
+
 local CreateTextureMixin = CreateFrame("Frame").CreateTexture
 
 ---@param frame Frame
@@ -57,7 +78,6 @@ function NRSKNUI:CreateBackdrop(frame)
 	frame.BackDropBorders = {}
 
 	local BG = CreateTextureMixin(frame, nil, "BACKGROUND")
-	--BG:SetAllPoints(frame)
 	BG:SetPoint("TOPLEFT", frame, "TOPLEFT", 1, -1)
 	BG:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -1, 1)
 	frame.backdropBackground = BG
