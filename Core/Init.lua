@@ -17,11 +17,17 @@ _G.NorskenUI = NRSKNUI
 
 -- Setup addon variables
 NRSKNUI.Locale = GetLocale()
-NRSKNUI.AddOnName = GetAddOnMetadata(addonName, "Title")
-NRSKNUI.Version = GetAddOnMetadata(addonName, "Version")
-NRSKNUI.Author = GetAddOnMetadata(addonName, "Author")
+NRSKNUI.AddOnName = GetAddOnMetadata(addonName, 'Title')
+NRSKNUI.Version = GetAddOnMetadata(addonName, 'Version')
+NRSKNUI.Author = GetAddOnMetadata(addonName, 'Author')
 NRSKNUI.myclass = select(2, UnitClass('player'))
 NRSKNUI.ClearTexture = 0
+
+do
+    if NRSKNUI.Version == '@project-version@' then
+        NRSKNUI.Version = 'Development Version'
+    end
+end
 
 -- Setup libraries
 NRSKNUI.Libs = {
@@ -49,12 +55,12 @@ do
     local function UpdateSpec()
         NRSKNUI.MySpec.id, NRSKNUI.MySpec.role, NRSKNUI.MySpec.position, NRSKNUI.MySpec.talents = LS.MySpecialization()
     end
-    NRSKNUI:RegisterEvent("PLAYER_LOGIN", UpdateSpec) -- Update initial spec info on login
+    NRSKNUI:RegisterEvent('PLAYER_LOGIN', UpdateSpec) -- Update initial spec info on login
     LS.RegisterPlayerSpecChange(NRSKNUI, UpdateSpec)
 end
 
 -- Class Util Modules
-NRSKNUI.BurningRush = NRSKNUI:NewModule("BurningRush", "AceEvent-3.0")
+NRSKNUI.BurningRush = NRSKNUI:NewModule('BurningRush', 'AceEvent-3.0')
 
 -- Advanced Skinning Modules
 NRSKNUI.Tooltips = NRSKNUI:NewModule('Tooltips', 'AceEvent-3.0')
@@ -67,6 +73,6 @@ NRSKNUI.Skinning = NRSKNUI:NewModule('Skinning', 'AceEvent-3.0')
 NRSKNUI.Gateway = NRSKNUI:NewModule('Gateway', 'AceEvent-3.0')
 
 -- Combat Modules
-NRSKNUI.CombatTimer = NRSKNUI:NewModule("CombatTimer", "AceEvent-3.0")
-NRSKNUI.PotionReady = NRSKNUI:NewModule("PotionReady", "AceEvent-3.0")
-NRSKNUI.RangeChecker = NRSKNUI:NewModule("RangeChecker", "AceEvent-3.0")
+NRSKNUI.CombatTimer = NRSKNUI:NewModule('CombatTimer', 'AceEvent-3.0')
+NRSKNUI.PotionReady = NRSKNUI:NewModule('PotionReady', 'AceEvent-3.0')
+NRSKNUI.RangeChecker = NRSKNUI:NewModule('RangeChecker', 'AceEvent-3.0')
