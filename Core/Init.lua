@@ -54,7 +54,6 @@ do
 end
 
 -- Class Util Modules
-NRSKNUI.BloodlustTracker = NRSKNUI:NewModule("BloodlustTracker", "AceEvent-3.0")
 NRSKNUI.BurningRush = NRSKNUI:NewModule("BurningRush", "AceEvent-3.0")
 
 -- Advanced Skinning Modules
