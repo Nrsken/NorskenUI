@@ -12,4 +12,5 @@
     <Script file="Recuperate.lua"/>
     <Script file="CharacterPanel.lua"/>
     <Script file="MissingItems.lua"/>
+    <Script file="DetailsBackdrop.lua" />
 </Ui>

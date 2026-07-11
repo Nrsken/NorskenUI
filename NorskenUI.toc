@@ -20,6 +20,7 @@ Modules/Combat/Combat.xml
 Modules/MissingBuffs/MissingBuffs.xml
 Modules/ClassUtil/ClassUtil.xml
 Modules/QoL/QoL.xml
+Modules/AdvancedSkinning/AdvancedSkinning.xml
 Modules/Skinning/Skinning.xml
 Modules/Dungeons/Dungeons.xml
 Modules/Miscellaneous/Miscellaneous.xml

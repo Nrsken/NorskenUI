@@ -4,7 +4,7 @@ local NRSKNUI = select(2, ...)
 ---@class Chatv2: AceModule, AceEvent-3.0, AceHook-3.0
 local CHAT = NRSKNUI:NewModule("Chatv2", "AceEvent-3.0", "AceHook-3.0")
 
-local LSM = NRSKNUI.LSM
+local LSM = NRSKNUI.Libs.LSM
 local Theme = NRSKNUI.Theme
 
 local CreateFrame = CreateFrame
@@ -2515,8 +2515,7 @@ function CHAT:SetBlizzEditModeLockText(frame, shown)
     local text = state.lockText
     if state.textOverlay then state.textOverlay:Show() end
 
-    local fontPath = NRSKNUI.FONT or STANDARD_TEXT_FONT
-    text:SetFont(fontPath, 12, "OUTLINE")
+    text:SetFont(NRSKNUI.Media.Fonts.Expressway, 12, "OUTLINE")
     text:SetShadowColor(0, 0, 0, 0)
     text:SetShadowOffset(0, 0)
     text:SetTextColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)

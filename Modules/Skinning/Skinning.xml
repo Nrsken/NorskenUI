@@ -1,19 +1,12 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
 
-    <Script file="Tooltips.lua" />
+    <Include file="BlizzardElements\BlizzardElements.xml" />
+
+    <Script file="Battlenet.lua" />
     <Script file="BlizzardMessages.lua" />
     <Script file="BlizzardMouseover.lua" />
-    <Script file="BlizzardMicroMenu.lua" />
-    <Script file="Minimap.lua" />
-    <Script file="DetailsBackdrop.lua" />
-    <Script file="ActionBars.lua" />
-    <Script file="ChatMessageHandler.lua" />
-    <Script file="Chatv2.lua" />
-    <Script file="UICleanup.lua" />
-    <Script file="Battlenet.lua" />
     <Script file="BlizzardRaidmanager.lua" />
+    <Script file="UICleanup.lua" />
     <Script file="UIWidgets.lua" />
-
-    <Include file="BlizzardElements\BlizzardElements.xml" />
 </Ui>

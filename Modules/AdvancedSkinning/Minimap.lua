@@ -11,8 +11,6 @@ local IsMouseButtonDown = IsMouseButtonDown
 local HideUIPanel = HideUIPanel
 local ShowUIPanel = ShowUIPanel
 
-local LibStub = LibStub
-
 local mailBtn = MiniMapMailIcon
 local qBtn = QueueStatusButton
 local missionBtn = ExpansionLandingPageMinimapButton
@@ -387,9 +385,7 @@ function MAP:CreateBugSackButton()
     end
 
     if not C_AddOns.IsAddOnLoaded('BugSack') then return end
-    local ldb = LibStub('LibDataBroker-1.1', true)
-    if not ldb then return end
-    local bugSackLDB = ldb:GetDataObjectByName('BugSack')
+    local bugSackLDB = NRSKNUI.Libs.LDB:GetDataObjectByName('BugSack')
     if not bugSackLDB then return end
     local bugAddon = _G['BugSack']
     if not bugAddon or not bugAddon.UpdateDisplay or not bugAddon.GetErrors then return end
