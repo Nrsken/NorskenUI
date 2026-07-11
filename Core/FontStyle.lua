@@ -8,7 +8,6 @@ local type = type
 local format = string.format
 local CreateFrame = CreateFrame
 local CreateFont = CreateFont
-local select = select
 local CreateFontFamily = CreateFontFamily
 
 local animEnum = Enum and Enum.FontStringScaleAnimationMode
