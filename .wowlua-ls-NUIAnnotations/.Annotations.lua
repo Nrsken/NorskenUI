@@ -114,6 +114,7 @@
 ---@field SetPixelInside fun(self: Frame, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor inset to a frame's corners (defaults 1px)
 ---@field SetPixelOutside fun(self: Frame, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor outset from a frame's corners (defaults 1px)
 ---@field SetPixelSnap fun(self: Frame) Disable Blizzard's grid snapping / texel bias on this object
+---@field AddBorders fun(self: Frame) Add a 1px border to all 4 edges (or custom size/color)
 local Frame
 
 ---Strip textures/atlases in a controlled way. `'Keyed'` recurses keyed children then clears own regions.
@@ -172,6 +173,7 @@ function Frame:StyleChildFontStrings(source, getSize, outline, shadow, skip, set
 ---@field SetPixelOutside fun(self: Button, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor outset from a frame's corners (defaults 1px)
 ---@field SetPixelSnap fun(self: Button) Disable Blizzard's grid snapping / texel bias on this object
 ---@field StyleButton fun(self: Button, noHover?: boolean, noPushed?: boolean, noChecked?: boolean) Swap Blizzard highlight/pushed/checked art for flat additive overlays
+---@field AddBorders fun(self: Button) Add a 1px border to all 4 edges (or custom size/color)
 local Button
 
 ---Strip textures/atlases in a controlled way. `'Keyed'` recurses keyed children then clears own regions.
@@ -218,6 +220,7 @@ function Button:ApplyPosition(Config, setParent) end
 ---@field SetPixelInside fun(self: StatusBar, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor inset to a frame's corners (defaults 1px)
 ---@field SetPixelOutside fun(self: StatusBar, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor outset from a frame's corners (defaults 1px)
 ---@field SetPixelSnap fun(self: StatusBar) Disable Blizzard's grid snapping / texel bias on this object
+---@field AddBorders fun(self: StatusBar) Add a 1px border to all 4 edges (or custom size/color)
 local StatusBar
 
 ---Strip textures/atlases in a controlled way. `'Keyed'` recurses keyed children then clears own regions.
@@ -260,6 +263,8 @@ function StatusBar:ApplyPosition(Config, setParent) end
 ---@field SetPixelInside fun(self: Texture, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor inset to a frame's corners (defaults 1px)
 ---@field SetPixelOutside fun(self: Texture, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor outset from a frame's corners (defaults 1px)
 ---@field SetPixelSnap fun(self: Texture) Disable Blizzard's grid snapping / texel bias on this texture
+---@field SetZoom fun(self: Texture, zoom?: number) Apply a zoom crop via SetTexCoord (uses NRSKNUI.GlobalZoom when omitted)
+---@field StripTextures fun(self: Texture, stripType?: string, a?: string|string[]|boolean, b?: boolean) Strip this texture (clear, or per `stripType`). Same modes as the frame version.
 local Texture
 
 ---Strip this texture (clear, or per `stripType`). Same modes as the frame version.

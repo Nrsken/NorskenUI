@@ -600,7 +600,10 @@ function BSKIN:HandleItemButton(button)
     button.NUISkinned = true
 
     local icon = button.icon or button.Icon
-    if icon then icon:SetZoom() end
+    if icon then
+        icon:SetPixelInside()
+        icon:SetZoom()
+    end
 
     local normal = button.GetNormalTexture and button:GetNormalTexture()
     if normal then normal:SetAlpha(0) end
@@ -644,7 +647,7 @@ function BSKIN:HandleItemButton(button)
         hooksecurefunc(button, 'DisplayAsAzeriteEmpoweredItem', UpdateAzeriteEmpoweredItem)
     end
 
-    NRSKNUI:AddBorders(button, self:GetBorderColor())
+    button:AddBorders()
 
     ---@cast button Button & SkinnedItemButtonMixin
     Mixin(button, SkinnedItemButtonMixin)

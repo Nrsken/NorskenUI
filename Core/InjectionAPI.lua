@@ -463,6 +463,78 @@ local function HasBackdrop(frame)
     return NRSKNUI:HasBackdrop(frame)
 end
 
+-- Border utility --
+
+---@class PublicBorderMixin : Frame
+---@field Borders table
+local PublicBorderMixin = {}
+
+---Set the color of the backdrops borders
+---@param r number
+---@param g number
+---@param b number
+---@param a? number
+function PublicBorderMixin:SetBorderColor(r, g, b, a)
+    if self.Borders then
+        for _, edge in pairs(self.Borders) do
+            edge:SetColorTexture(r, g, b, a)
+        end
+    end
+end
+
+---Helper that can be used by ApplySettings function to update coloring with db values.
+---@param db table
+function PublicBorderMixin:UpdateBackdropFromDB(db)
+    if self.Borders then
+        for _, edge in pairs(self.Borders) do
+            edge:SetColorTexture(db.BorderColor[1], db.BorderColor[2], db.BorderColor[3], db.BorderColor[4])
+        end
+    end
+end
+
+---@param frame Frame
+local function AddBorders(frame)
+    if not frame then return end
+    ---@cast frame Frame & PublicBackdropMixin
+    Mixin(frame, PublicBorderMixin)
+
+    frame.Borders = {}
+
+    -- Top border
+    local TB = CreateTextureMixin(frame, nil, 'OVERLAY')
+    TB:SetHeight(1)
+    TB:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
+    TB:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
+    DisablePixelSnap(TB)
+    insert(frame.Borders, TB)
+
+    -- Left border
+    local LB = CreateTextureMixin(frame, nil, 'OVERLAY')
+    LB:SetWidth(1)
+    LB:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
+    LB:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 0, 0)
+    DisablePixelSnap(LB)
+    insert(frame.Borders, LB)
+
+    -- Bottom border
+    local BB = CreateTextureMixin(frame, nil, 'OVERLAY')
+    BB:SetHeight(1)
+    BB:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 0, 0)
+    BB:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
+    DisablePixelSnap(BB)
+    insert(frame.Borders, BB)
+
+    -- Right border
+    local RB = CreateTextureMixin(frame, nil, 'OVERLAY')
+    RB:SetWidth(1)
+    RB:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
+    RB:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
+    DisablePixelSnap(RB)
+    insert(frame.Borders, RB)
+
+    frame:SetBorderColor(0, 0, 0, 1)
+end
+
 -- Button utility --
 
 -- Each interactive state swaps Blizzard's art for a flat additive overlay clamped inside
@@ -561,6 +633,7 @@ do
     -- Inject methods in this file.
     local injectMethods = {
         CreateBackdrop = CreateBackdrop,
+        AddBorders = AddBorders,
         HasBackdrop = HasBackdrop,
         StripTextures = StripTextures,
         ApplyPosition = ApplyPosition,
