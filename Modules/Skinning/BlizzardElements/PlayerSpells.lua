@@ -27,30 +27,16 @@ end
 local function SkinSpellBook(S, book)
     if not book then return end
 
-    NRSKNUI:HideTextures(book)
-    NRSKNUI:HideTextures(book, 'Named')
+
     if book.BookCornerFlipbook then book.BookCornerFlipbook:SetAlpha(0) end
 
     if book.SearchBox then S:HandleEditBox(book.SearchBox) end
     SkinTabSystem(S, book.CategoryTabSystem)
-
-    local paged = book.PagedSpellsFrame
-    if paged then
-        local controls = paged.PagingControls
-        if controls then
-            if controls.BackwardButton then S:HandleNextPrevButton(controls.BackwardButton) end
-            if controls.ForwardButton then S:HandleNextPrevButton(controls.ForwardButton) end
-        end
-        for _, view in ipairs(paged.ViewFrames or {}) do
-            NRSKNUI:HideTextures(view)
-        end
-    end
 end
 
 local function SkinTalents(S, talents)
     if not talents then return end
 
-    NRSKNUI:HideTextures(talents)
     if talents.BlackBG then talents.BlackBG:SetAlpha(0) end
     if talents.BottomBar then talents.BottomBar:SetAlpha(0) end
 
@@ -61,8 +47,12 @@ local function SkinTalents(S, talents)
     local dropdown = talents.LoadSystem and talents.LoadSystem.Dropdown
     if dropdown then S:HandleDropdownButton(dropdown) end
 
-    if talents.HeroTalentsContainer then
-        NRSKNUI:HideTextures(talents.HeroTalentsContainer)
+
+    -- Hero talents select frame.
+    local heroTalents = _G.HeroTalentsSelectionDialog
+    if heroTalents then
+        heroTalents:StripTextures('Keyed')
+        S:CreatePanelBackdrop(heroTalents)
     end
 end
 
@@ -77,7 +67,6 @@ end
 local function SkinSpec(S, spec)
     if not spec then return end
 
-    NRSKNUI:HideTextures(spec)
     SkinSpecContents(spec)
     spec:HookScript("OnShow", SkinSpecContents)
 end

@@ -278,7 +278,6 @@ function BSKIN:HandlePortraitFrame(frame)
     if not frame or frame.NUISkinned then return end
     frame.NUISkinned = true
 
-    frame:StripTextures()
     frame:StripTextures('Keyed')
 
     self:CreatePanelBackdrop(frame)

@@ -407,8 +407,7 @@ local function SkinGearManagerPopup(S)
         if frame.NUISkinned then return end
         frame.NUISkinned = true
 
-        frame:StripTextures()
-        frame:StripTextures('Named')
+        frame:StripTextures('Keyed')
         S:CreatePanelBackdrop(frame)
         S:HandleCloseButton(frame.CloseButton, frame)
 
@@ -442,8 +441,7 @@ local function SkinReputation(S)
 
     local detail = rep.ReputationDetailFrame
     if detail then
-        detail:StripTextures()
-        detail:StripTextures('Named')
+        detail:StripTextures('Keyed')
         S:CreatePanelBackdrop(detail)
         S:HandleCloseButton(detail.CloseButton, detail)
         S:HandleCheckBox(detail.AtWarCheckbox)
@@ -547,8 +545,7 @@ BSKIN:RegisterSkin('Blizzard_TokenUI', 'CharacterFrame', function(S)
     -- Skins the popup window when you click on a currency.
     local popup = _G.TokenFramePopup
     if popup then
-        popup:StripTextures()
-        popup:StripTextures('Named')
+        popup:StripTextures('Keyed')
         S:CreatePanelBackdrop(popup)
         S:HandleCheckBox(popup.InactiveCheckbox)
         S:HandleCheckBox(popup.BackpackCheckbox)
@@ -567,8 +564,7 @@ BSKIN:RegisterSkin('Blizzard_TokenUI', 'CharacterFrame', function(S)
     -- Skins the warbound currency transfer window.
     local menu = _G.CurrencyTransferMenu
     if menu then
-        menu:StripTextures()
-        menu:StripTextures('Named')
+        menu:StripTextures('Keyed')
         S:CreatePanelBackdrop(menu)
         S:HandleCloseButton(menu.CloseButton, menu)
 
