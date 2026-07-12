@@ -1,0 +1,39 @@
+{
+    "library": [
+        "Libs/"
+    ],
+    "flavors": [
+        "retail"
+    ],
+    "globals": {
+        "read": [
+            "NorskenUIDB",
+            "BugGrabber",
+            "HidingBarAddon",
+            "BugSack"
+        ],
+        "write": [
+            "NorskenUI"
+        ]
+    },
+    "hint": {
+        "enable": true,
+        "parameterNames": false,
+        "variableTypes": false,
+        "functionReturnTypes": false,
+        "forVariableTypes": false,
+        "parameterTypes": false,
+        "chainedReturnTypes": false
+    },
+    "codeLens": {
+        "enable": true,
+        "references": false,
+        "implementations": false,
+        "overrides": true
+    },
+    "diagnostics": {
+        "disable": [
+            "inject-field"
+        ]
+    }
+}
