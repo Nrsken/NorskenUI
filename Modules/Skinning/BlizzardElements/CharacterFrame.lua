@@ -11,12 +11,11 @@ local CreateColor = CreateColor
 local GetSpecializationInfoByID = GetSpecializationInfoByID
 local CreateFrame = CreateFrame
 local unpack = unpack
+local next = next
 
-local EquipmentFlyout_SetBackgroundTexture = EquipmentFlyout_SetBackgroundTexture
 local PaperDollFrame_UpdateStats = PaperDollFrame_UpdateStats
 local PaperDollItemSlotButton_Update = PaperDollItemSlotButton_Update
 local PaperDollFrame_UpdateSidebarTabs = PaperDollFrame_UpdateSidebarTabs
-local EquipmentFlyout_DisplayButton = EquipmentFlyout_DisplayButton
 
 --[[
 Note to self with taint rules for this file:

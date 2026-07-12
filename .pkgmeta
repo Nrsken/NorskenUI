@@ -54,3 +54,4 @@ ignore:
     - .gitattributes
     - .wowlua-ls-NUIAnnotations/
     - .wowluarc.json
+    - Docs/
