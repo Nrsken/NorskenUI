@@ -250,9 +250,7 @@ function BSKIN:HandleCloseButton(button, relativeTo, xOffset, yOffset)
     button:StripTextures()
 
     if relativeTo then
-        ---@cast button Button & PixelMixin
-        NRSKNUI:ApplyPixelMixin(button)
-        button:Point('TOPRIGHT', relativeTo, 'TOPRIGHT', xOffset or -2, yOffset or -2)
+        button:SetPixelPoint('TOPRIGHT', relativeTo, 'TOPRIGHT', xOffset or -2, yOffset or -2)
     end
 
     local size = math_max(8, button:GetWidth() * 0.8)
@@ -602,19 +600,22 @@ function BSKIN:HandleItemButton(button)
     button.NUISkinned = true
 
     local icon = button.icon or button.Icon
-    if icon then NRSKNUI:ApplyZoom(icon, NRSKNUI.GlobalZoom) end
+    if icon then icon:SetZoom() end
 
     local normal = button.GetNormalTexture and button:GetNormalTexture()
     if normal then normal:SetAlpha(0) end
 
+    button:StyleButton()
+
     local highlight = button.GetHighlightTexture and button:GetHighlightTexture()
-    if highlight then highlight:SetColorTexture(1, 1, 1, 0.25) end
+    local pushed = button.GetPushedTexture and button:GetPushedTexture()
+    local checked = button.GetCheckedTexture and button:GetCheckedTexture()
 
     -- Strip the slot ring/background art.
     -- Keep-set by reference, regions Blizzard drives per item state must survive (a blanket HideTextures would kill the icon)
     local keep = {}
     for _, region in pairs({
-        icon, normal, highlight,
+        icon, normal, highlight, pushed, checked,
         button.IconBorder, button.IconOverlay, button.IconOverlay2,
         button.searchOverlay, button.SearchOverlay, button.ignoreTexture,
         button.UpgradeIcon, button.NewItemTexture, button.LevelLinkLockTexture,
@@ -678,6 +679,15 @@ function BSKIN:HandleIconBorder(iconBorder, owner)
     hooksecurefunc(iconBorder, 'SetShown', function(_, shown)
         if not shown then owner:NUIResetQualityColor() end
     end)
+
+    -- Sync current state: Blizzard has usually already colored + shown the border
+    -- for the equipped item before we hooked, so our hooks missed that first pass.
+    -- IsShown is a plain bool and the vertex color isn't a secret, so this is safe.
+    if iconBorder:IsShown() then
+        owner:NUISetQualityColor(iconBorder:GetVertexColor())
+    else
+        owner:NUIResetQualityColor()
+    end
 end
 
 -- Status bars
@@ -841,7 +851,6 @@ local function StyleControlButtons(frame)
         local button = frame[v.buttonName]
         if button then
             if not button.IsSkinned then
-                NRSKNUI:ApplyPixelMixin(button)
                 BSKIN:HandleButton(button)
                 button:SetSize(22, 22)
 
@@ -862,9 +871,9 @@ local function StyleControlButtons(frame)
                 button:ClearAllPoints()
 
                 if lastButton then
-                    button:Point('LEFT', lastButton, 'RIGHT', 1, 0)
+                    button:SetPixelPoint('LEFT', lastButton, 'RIGHT', 1, 0)
                 else
-                    button:Point('LEFT', 6, 0)
+                    button:SetPixelPoint('LEFT', 6, 0)
                 end
 
                 lastButton = button

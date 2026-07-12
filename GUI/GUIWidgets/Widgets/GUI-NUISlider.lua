@@ -28,6 +28,7 @@ local STEPPER_TEXTURE = "Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\colla
 ---@field value? number
 ---@field labelWidth? number
 ---@field callback? fun(value: number)
+---@field callbackOnRelease? boolean
 ---@field tooltip? any
 ---@field cvartooltip? boolean
 
@@ -58,6 +59,7 @@ function GUIFrame:CreateSlider(parent, labelText, config)
     local callback = config.callback
     local tooltip = config.tooltip
     local cvarTooltip = config.cvartooltip
+    local callbackOnRelease = config.callbackOnRelease
 
     local rowHeight = 36
     local row = CreateFrame("Frame", nil, parent)
@@ -306,18 +308,27 @@ function GUIFrame:CreateSlider(parent, labelText, config)
 
     local throttleDelay = 0.1
     local lastUpdate = 0
+    local curDrag = false
+
+    local function FireCallback(val)
+        if callback then callback(val) end
+        if NRSKNUI.EditMode and NRSKNUI.EditMode.isActive then
+            NRSKNUI.EditMode:UpdateNudgeFrameInfo()
+        end
+    end
+
     slider:SetScript("OnValueChanged", function(_, val)
         UpdateFill()
         UpdateThumbPosition()
+        if callbackOnRelease and curDrag then
+            return
+        end
         local currentTime = GetTime()
         if currentTime - lastUpdate < throttleDelay then
             return
         end
         lastUpdate = currentTime
-        if callback then callback(val) end
-        if NRSKNUI.EditMode and NRSKNUI.EditMode.isActive then
-            NRSKNUI.EditMode:UpdateNudgeFrameInfo()
-        end
+        FireCallback(val)
     end)
 
     slider:SetScript("OnSizeChanged", function()
@@ -384,8 +395,6 @@ function GUIFrame:CreateSlider(parent, labelText, config)
         end
     end)
 
-    local curDrag = false
-
     slider:SetScript("OnMouseDown", function(_, button)
         if button == "LeftButton" then
             hoverAnimGroup:Stop()
@@ -398,6 +407,9 @@ function GUIFrame:CreateSlider(parent, labelText, config)
     slider:SetScript("OnMouseUp", function(sliderFrame, button)
         if button == "LeftButton" then
             curDrag = false
+            if callbackOnRelease then
+                FireCallback(sliderFrame:GetValue())
+            end
             if sliderFrame:IsMouseOver() then
                 AnimateThumbColor(true, false)
             else

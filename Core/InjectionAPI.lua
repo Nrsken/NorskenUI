@@ -10,8 +10,11 @@ local select = select
 local pcall = pcall
 local ipairs = ipairs
 local Mixin = Mixin
-local table_insert = table.insert
 local EnumerateFrames = EnumerateFrames
+local issecrettable = issecrettable
+
+local floor = math.floor
+local insert = table.insert
 
 local _G = _G
 
@@ -32,11 +35,141 @@ function NRSKNUI:InjectAPI(object, methods)
     end
 end
 
+-- Pixel-perfect widget methods --
+
+---When NRSKNUI.Mult is 1 the coordinate already lands on the pixel grid, otherwise snap it to the nearest whole pixel.
+---@param value number
+---@return number
+local function ToPixelGrid(value)
+    local mult = NRSKNUI.Mult
+    if mult == 1 or value == 0 then
+        return value
+    end
+    return floor(value / mult + 0.5) * mult
+end
+
+---Turn off Blizzard's own grid snapping / texel bias so our pixel math is authoritative.
+---Works on textures directly and on status bars via their fill texture. Runs once per object.
+---@param object Frame|Texture
+local function DisablePixelSnap(object)
+    if not object or object.NUIPixelSnapDisabled then return end
+    if issecrettable(object) or object:IsForbidden() then return end
+
+    local target = object
+    if not object.SetSnapToPixelGrid and object.GetStatusBarTexture then
+        target = object:GetStatusBarTexture()
+    end
+
+    if type(target) == 'table' and target.SetSnapToPixelGrid then
+        target:SetSnapToPixelGrid(false)
+        target:SetTexelSnappingBias(0)
+    end
+
+    object.NUIPixelSnapDisabled = true
+end
+
+---Sets the size of a frame to the nearest pixel grid.
+---@param object Frame
+---@param width number
+---@param height number
+---@param ... any Additional arguments to pass to SetSize
+local function SetPixelSize(object, width, height, ...)
+    local w = ToPixelGrid(width)
+
+    object:SetSize(w, height and ToPixelGrid(height) or w, ...)
+end
+
+---Sets the width of a frame to the nearest pixel grid.
+---@param object Frame
+---@param width number
+---@param ... any Additional arguments to pass to SetWidth
+local function SetPixelWidth(object, width, ...)
+    object:SetWidth(ToPixelGrid(width), ...)
+end
+
+---Sets the height of a frame to the nearest pixel grid.
+---@param object Frame
+---@param height number
+---@param ... any Additional arguments to pass to SetHeight
+local function SetPixelHeight(object, height, ...)
+    object:SetHeight(ToPixelGrid(height), ...)
+end
+
+---Sets the point of a frame to the nearest pixel grid.
+---@param object Frame
+---@param point string
+---@param arg2 Frame|string|number? The frame (or its global name) to anchor to, or a number for xOffset if omitted.
+---@param arg3 string|number? The point on the anchor frame to attach to, or a number for yOffset if omitted.
+---@param arg4 number? The xOffset, or nil if omitted.
+---@param arg5 number? The yOffset, or nil if omitted.
+---@param ... any Additional arguments to pass to SetPoint
+local function SetPixelPoint(object, point, arg2, arg3, arg4, arg5, ...)
+    if not arg2 then arg2 = object:GetParent() end
+    if type(arg2) == 'number' then
+        arg2 = ToPixelGrid(arg2)
+    end
+    if type(arg3) == 'number' then
+        arg3 = ToPixelGrid(arg3)
+    end
+    if type(arg4) == 'number' then
+        arg4 = ToPixelGrid(arg4)
+    end
+    if type(arg5) == 'number' then
+        arg5 = ToPixelGrid(arg5)
+    end
+
+    -- Overloaded passthrough: arg2/arg3 may be a relativeTo frame + relativePoint, or the
+    -- short x/y offset form. The union is intentional and can't match SetPoint's typed overloads.
+    ---@diagnostic disable-next-line: param-type-mismatch
+    object:SetPoint(point, arg2, arg3, arg4, arg5, ...)
+end
+
+---Anchor a region a fixed pixel inset to another frame via its corners.
+---When `outside` is set the inset flips outward so the region frames the anchor instead of sitting in it.
+---@param object Frame
+---@param anchor Frame
+---@param xOffset number
+---@param yOffset number
+---@param anchor2 Frame? Optional second anchor frame for the bottom-right corner. Defaults to `anchor`.
+---@param outside boolean? If true, the inset flips outward instead of inward.
+local function AnchorPixelBox(object, anchor, xOffset, yOffset, anchor2, outside)
+    anchor = anchor or object:GetParent()
+    local x = ToPixelGrid(xOffset or 1)
+    local y = ToPixelGrid(yOffset or 1)
+    if outside then x, y = -x, -y end
+
+    -- Need to pcall ClearAllPoints because some Blizzard frames throw an error if you try to clear points on a frame that has no points set yet.
+    if pcall(object.GetPoint, object) then object:ClearAllPoints() end
+    DisablePixelSnap(object)
+    object:SetPoint('TOPLEFT', anchor, 'TOPLEFT', x, -y)
+    object:SetPoint('BOTTOMRIGHT', anchor2 or anchor, 'BOTTOMRIGHT', -x, y)
+end
+
+---Sets the point of a frame to the nearest pixel grid, inset from another frame's corners.
+---@param object Frame
+---@param anchor Frame
+---@param xOffset number
+---@param yOffset number
+---@param anchor2 Frame? Optional second anchor frame for the bottom-right corner. Defaults to `anchor`.
+local function SetPixelInside(object, anchor, xOffset, yOffset, anchor2)
+    AnchorPixelBox(object, anchor, xOffset, yOffset, anchor2, false)
+end
+
+---Sets the point of a frame to the nearest pixel grid, outset from another frame's corners.
+---@param object Frame
+---@param anchor Frame
+---@param xOffset number
+---@param yOffset number
+---@param anchor2 Frame? Optional second anchor frame for the bottom-right corner. Defaults to `anchor`.
+local function SetPixelOutside(object, anchor, xOffset, yOffset, anchor2)
+    AnchorPixelBox(object, anchor, xOffset, yOffset, anchor2, true)
+end
+
 -- Hide object utility --
 
 -- Hidden dummy frame we anchor stuff we want to hide to
-local hidden = CreateFrame('Frame')
-hidden:Hide()
+local hideFrame = CreateFrame('Frame')
+hideFrame:Hide()
 
 ---Hide objects safely and reparent them to a hidden frame
 ---@param object Frame|string The frame (or its global name) to hide.
@@ -77,18 +210,28 @@ function NRSKNUI:Banish(object, ...)
             pcall(object.SetDontSavePosition, object, true)
         end
 
-        object:SetParent(hidden)
+        object:SetParent(hideFrame)
     end
 end
 
 -- Expose frame so it can be accessed
-NRSKNUI.HiddenFrame = hidden
+NRSKNUI.HiddenFrame = hideFrame
 
 local function Banish(object, ...)
     NRSKNUI:Banish(object, ...)
 end
 
 -- Texture utility --
+
+---@param object Texture
+---@param zoom number? Falls back to NRSKNUI.GlobalZoom if not provided.
+local function SetZoom(object, zoom)
+    local zoomMult = zoom or NRSKNUI.GlobalZoom
+    local texMin = 0.25 * zoomMult
+    local texMax = 1 - 0.25 * zoomMult
+
+    object:SetTexCoord(texMin, texMax, texMin, texMax)
+end
 
 -- Keyed children commonly carrying default Blizzard frame art
 local STRIP_CHILD_KEYS = { 'Bg', 'BG', 'TitleBg', 'TopTileStreaks',
@@ -198,6 +341,8 @@ local function StripTextures(object, stripType, a, b)
     NRSKNUI:StripTextures(object, stripType, a, b)
 end
 
+-- Backdrop utility --
+
 ---@class PublicBackdropMixin : Frame
 ---@field BackDropBorders table
 local PublicBackdropMixin = {}
@@ -263,47 +408,43 @@ end
 local CreateTextureMixin = CreateFrame('Frame').CreateTexture
 
 ---@param frame Frame
----@param template string? Optional template name, e.g. 'BorderTemplate'
-function NRSKNUI:CreateBackdrop(frame, template)
+function NRSKNUI:CreateBackdrop(frame)
     ---@cast frame Frame & PublicBackdropMixin
     Mixin(frame, PublicBackdropMixin)
 
     frame.BackDropBorders = {}
 
-    if template ~= 'BorderTemplate' then
-        local BG = CreateTextureMixin(frame, nil, 'BACKGROUND')
-        BG:SetPoint('TOPLEFT', frame, 'TOPLEFT', 1, -1)
-        BG:SetPoint('BOTTOMRIGHT', frame, 'BOTTOMRIGHT', -1, 1)
-        frame.backdropBackground = BG
-        NRSKNUI:PixelPerfect(BG)
-
-        frame:SetBackgroundColor(0, 0, 0, 0.8)
-    end
+    local BG = CreateTextureMixin(frame, nil, 'BACKGROUND')
+    BG:SetPoint('TOPLEFT', frame, 'TOPLEFT', 1, -1)
+    BG:SetPoint('BOTTOMRIGHT', frame, 'BOTTOMRIGHT', -1, 1)
+    frame.backdropBackground = BG
+    BG:SetPixelSnap()
 
     local LB = CreateTextureMixin(frame, nil, 'BORDER')
     LB:SetPoint('TOPLEFT', frame, 1, -1)
     LB:SetPoint('BOTTOMLEFT', frame, 1, 1)
-    table_insert(frame.BackDropBorders, LB)
-    NRSKNUI:PixelPerfect(LB)
+    insert(frame.BackDropBorders, LB)
+    LB:SetPixelSnap()
 
     local TB = CreateTextureMixin(frame, nil, 'BORDER')
     TB:SetPoint('TOPLEFT', frame, 1, -1)
     TB:SetPoint('TOPRIGHT', frame, -1, -1)
-    table_insert(frame.BackDropBorders, TB)
-    NRSKNUI:PixelPerfect(TB)
+    insert(frame.BackDropBorders, TB)
+    TB:SetPixelSnap()
 
     local RB = CreateTextureMixin(frame, nil, 'BORDER')
     RB:SetPoint('TOPRIGHT', frame, -1, -1)
     RB:SetPoint('BOTTOMRIGHT', frame, -1, 1)
-    table_insert(frame.BackDropBorders, RB)
-    NRSKNUI:PixelPerfect(RB)
+    insert(frame.BackDropBorders, RB)
+    RB:SetPixelSnap()
 
     local BB = CreateTextureMixin(frame, nil, 'BORDER')
     BB:SetPoint('BOTTOMLEFT', frame, 1, 1)
     BB:SetPoint('BOTTOMRIGHT', frame, -1, 1)
-    table_insert(frame.BackDropBorders, BB)
-    NRSKNUI:PixelPerfect(BB)
+    insert(frame.BackDropBorders, BB)
+    BB:SetPixelSnap()
 
+    frame:SetBackgroundColor(0, 0, 0, 0.8)
     frame:SetBorderColor(0, 0, 0, 1)
 end
 
@@ -314,12 +455,44 @@ function NRSKNUI:HasBackdrop(frame)
     return not not frame.BackDropBorders
 end
 
-local function CreateBackdrop(frame, template)
-    NRSKNUI:CreateBackdrop(frame, template)
+local function CreateBackdrop(frame)
+    NRSKNUI:CreateBackdrop(frame)
 end
 
 local function HasBackdrop(frame)
     return NRSKNUI:HasBackdrop(frame)
+end
+
+-- Button utility --
+
+-- Each interactive state swaps Blizzard's art for a flat additive overlay clamped inside
+-- the button. Driven from a table so all three states share one code path.
+local BUTTON_STATES = {
+    { field = 'hover',   set = 'SetHighlightTexture', get = 'GetHighlightTexture', r = 1,   g = 1,   b = 1,   a = 0.3 },
+    { field = 'pushed',  set = 'SetPushedTexture',    get = 'GetPushedTexture',    r = 0.9, g = 0.8, b = 0.1, a = 0.3 },
+    { field = 'checked', set = 'SetCheckedTexture',   get = 'GetCheckedTexture',   r = 1,   g = 1,   b = 1,   a = 0.3 },
+}
+
+---@param button Button
+---@param noHover boolean?
+---@param noPushed boolean?
+---@param noChecked boolean?
+local function StyleButton(button, noHover, noPushed, noChecked)
+    if not button.CreateTexture then return end
+
+    local skip = { hover = noHover, pushed = noPushed, checked = noChecked }
+
+    for _, state in ipairs(BUTTON_STATES) do
+        if button[state.set] and not button[state.field] and not skip[state.field] then
+            button[state.set](button, NRSKNUI.ClearTexture)
+
+            local texture = button[state.get](button)
+            texture:SetPixelInside()
+            texture:SetBlendMode('ADD')
+            texture:SetColorTexture(state.r, state.g, state.b, state.a)
+            button[state.field] = texture
+        end
+    end
 end
 
 -- Positioning utility --
@@ -339,22 +512,26 @@ function NRSKNUI:ResolveAnchorFrame(anchorFrameType, parentFrameName)
     return UIParent
 end
 
+local function ResolveAnchorFrame(anchorFrameType, parentFrameName)
+    return NRSKNUI:ResolveAnchorFrame(anchorFrameType, parentFrameName)
+end
+
 -- ApplyPosition injected onto the frame widget types, frame:ApplyPosition(self, Config, setParent)
 local function ApplyPosition(self, Config, setParent)
     if not self or not Config then return end
     local posConfig = Config.Position
     if not posConfig then return end
 
-    local parent = NRSKNUI:ResolveAnchorFrame(Config.anchorFrameType, Config.ParentFrame)
+    local parent = ResolveAnchorFrame(Config.anchorFrameType, Config.ParentFrame)
 
     if setParent then self:SetParent(parent) end
 
     self:ClearAllPoints()
-    self:SetPoint(posConfig.AnchorFrom or 'CENTER', parent, posConfig.AnchorTo or 'CENTER', posConfig.XOffset or 0,
-        posConfig.YOffset or 0)
+    self:SetPoint(posConfig.AnchorFrom or 'CENTER', parent, posConfig.AnchorTo or 'CENTER', posConfig.XOffset or 0, posConfig.YOffset or 0)
     self:SetFrameStrata(Config.Strata or 'MEDIUM')
-    NRSKNUI:SnapFrameToPixels(self, Config.ForcePixelPerfect)
 end
+
+-- Fontstring utility --
 
 ---Iterates over a frame's child frames and styles each FontString region with the configured font, outline, and a caller-defined size.
 ---@param frame Frame
@@ -380,16 +557,6 @@ local function StyleChildFontStrings(frame, source, getSize, outline, shadow, sk
     end
 end
 
----@param obj Texture
----@param zoom number?
-local function SetZoom(obj, zoom)
-    local zoomMult = zoom or NRSKNUI.GlobalZoom
-    local texMin = 0.25 * zoomMult
-    local texMax = 1 - 0.25 * zoomMult
-
-    obj:SetTexCoord(texMin, texMax, texMin, texMax)
-end
-
 do
     -- Inject methods in this file.
     local injectMethods = {
@@ -400,6 +567,14 @@ do
         Banish = Banish,
         StyleChildFontStrings = StyleChildFontStrings,
         SetZoom = SetZoom,
+        SetPixelSize = SetPixelSize,
+        SetPixelWidth = SetPixelWidth,
+        SetPixelHeight = SetPixelHeight,
+        SetPixelPoint = SetPixelPoint,
+        SetPixelInside = SetPixelInside,
+        SetPixelOutside = SetPixelOutside,
+        SetPixelSnap = DisablePixelSnap,
+        StyleButton = StyleButton,
     }
 
     -- Small wrapper to call the NRSKNUI:InjectAPI method, so we don't have to pass the methods
@@ -413,6 +588,7 @@ do
     InjectAPI(object)
     InjectAPI(object:CreateTexture())
     InjectAPI(object:CreateMaskTexture())
+    InjectAPI(object:CreateFontString())
 
     object = EnumerateFrames()
     while object do

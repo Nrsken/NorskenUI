@@ -10,35 +10,34 @@ local LDS = NRSKNUI.Libs.LDS
 
 -- OnInitialize: Called when the addon is initialized
 function NRSKNUI:OnInitialize()
-    NRSKNUI.MyGUID = UnitGUID('player') -- Player GUID is not reliably available at file-scope load time
+    self.MyGUID = UnitGUID('player') -- Player GUID is not reliably available at file-scope load time
 
-    NRSKNUI.db = NRSKNUI.Libs.AceDB:New("NorskenUIDB", NRSKNUI:GetDefaultDB(), true)
+    self.db = self.Libs.AceDB:New("NorskenUIDB", self:GetDefaultDB(), true)
 
-    LDS:EnhanceDatabase(NRSKNUI.db, "NorskenUI")
+    LDS:EnhanceDatabase(self.db, "NorskenUI")
     -- Hook CheckDualSpecState to skip spec-based switching when global profile is active
-    local originalCheckDualSpecState = NRSKNUI.db.CheckDualSpecState
-    NRSKNUI.db.CheckDualSpecState = function(db)
-        if NRSKNUI.db.global.UseGlobalProfile then return end
+    local originalCheckDualSpecState = self.db.CheckDualSpecState
+    self.db.CheckDualSpecState = function(db)
+        if self.db.global.UseGlobalProfile then return end
         originalCheckDualSpecState(db)
     end
 
-    if NRSKNUI.db.global.UseGlobalProfile then
-        local profileName = NRSKNUI.db.global.GlobalProfile or "Default"
-        NRSKNUI.db:SetProfile(profileName)
+    if self.db.global.UseGlobalProfile then
+        local profileName = self.db.global.GlobalProfile or "Default"
+        self.db:SetProfile(profileName)
     end
 
     -- Profile change callbacks (registered after the global-profile switch above,
     -- so that switch does not trigger a full module refresh during init)
     local function OnProfileRefresh()
-        NRSKNUI:ValidateProfileFonts()
-        NRSKNUI.ProfileManager:RefreshAllModules()
+        self:ValidateProfileFonts()
+        self.ProfileManager:RefreshAllModules()
     end
-    NRSKNUI.db.RegisterCallback(NRSKNUI, "OnProfileChanged", OnProfileRefresh)
-    NRSKNUI.db.RegisterCallback(NRSKNUI, "OnProfileCopied", OnProfileRefresh)
-    NRSKNUI.db.RegisterCallback(NRSKNUI, "OnProfileReset", OnProfileRefresh)
+    self.db.RegisterCallback(self, "OnProfileChanged", OnProfileRefresh)
+    self.db.RegisterCallback(self, "OnProfileCopied", OnProfileRefresh)
+    self.db.RegisterCallback(self, "OnProfileReset", OnProfileRefresh)
 
-    -- Compute the pixel-perfect multiplier from the current UI scale
-    NRSKNUI:UIMult()
+    self:UpdateMult()
 end
 
 local function SetupMinimapIcon()
@@ -46,9 +45,9 @@ local function SetupMinimapIcon()
         type = "launcher",
         text = "NorskenUI",
         icon = "Interface\\AddOns\\NorskenUI\\Media\\Logo\\logocookingsPT1128x128OTBRED.png",
-        iconR = Theme.accent[1],
-        iconG = Theme.accent[2],
-        iconB = Theme.accent[3],
+        iconR = 1,
+        iconG = 1,
+        iconB = 1,
         OnClick = function(_, button)
             if button == "LeftButton" then
                 if NRSKNUI.GUIFrame then
@@ -81,21 +80,23 @@ end
 -- OnEnable: Called when the addon is enabled
 function NRSKNUI:OnEnable()
     -- Method to fix old frame sizing data that messes up sidebar width
-    local currentVersion = NRSKNUI:GetDefaultDB().global.GUIState.GUIFrameLayoutVersion or 1
+    local currentVersion = self:GetDefaultDB().global.GUIState.GUIFrameLayoutVersion or 1
     local rawState = _G.NorskenUIDB.global.GUIState
     if (rawState and rawState.GUIFrameLayoutVersion or 0) < currentVersion then
-        local frame = NRSKNUI.db.global.GUIState.frame
+        local frame = self.db.global.GUIState.frame
         if frame then frame.width, frame.height = nil, nil end
-        NRSKNUI.db.global.GUIState.GUIFrameLayoutVersion = currentVersion
+        self.db.global.GUIState.GUIFrameLayoutVersion = currentVersion
     end
 
-    NRSKNUI:RefreshTheme()
     SetupMinimapIcon()
+
+    self:RefreshTheme()
     self:SetupSlashCommands()
+    self:SetUIScale()
 
     -- Show login message if enabled
-    if NRSKNUI.db.profile.Minimap.LoginMessage ~= false then
-        NRSKNUI:Print(NRSKNUI:ColorTextByTheme("/nui") .. " to open the configuration window.")
+    if self.db.profile.Minimap.LoginMessage ~= false then
+        self:Print(self:ColorTextByTheme("/nui") .. " to open the configuration window.")
     end
 
     -- Automatically enable modules based on their saved settings
@@ -107,4 +108,5 @@ function NRSKNUI:OnEnable()
 
     -- Event Registration
     self:RegisterEvent("PLAYER_ENTERING_WORLD", OnPlayerEnteringWorld)
+    self:RegisterEvent('UI_SCALE_CHANGED', 'ChangedScaleEvent')
 end

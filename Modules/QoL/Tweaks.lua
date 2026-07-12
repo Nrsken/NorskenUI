@@ -3,7 +3,7 @@ local NRSKNUI = select(2, ...)
 ---@class Tweaks
 local Tweaks = NRSKNUI:GetModule('Tweaks')
 
-local pairs = pairs
+local ipairs = ipairs
 local _G = _G
 
 function Tweaks:UpdateDB()
@@ -22,8 +22,16 @@ function Tweaks:SetEnterAccept()
             TextureLoadingGroupMixin.AddTexture({ textures = object }, key)
         end
 
-        for key, dialog in pairs(StaticPopupDialogs) do
-            SetTrueSafely(dialog, 'enterClicksFirstButton')
+        local enterclicks = {
+            'ABANDON_QUEST',
+            'ABANDON_QUEST_WITH_ITEMS',
+        }
+
+        for _, name in ipairs(enterclicks) do
+            local dialog = StaticPopupDialogs[name]
+            if dialog then
+                SetTrueSafely(dialog, 'enterClicksFirstButton')
+            end
         end
     end
 end

@@ -195,8 +195,6 @@ function TT:LayoutButtons(visibleButtons)
             btn:SetPoint("TOP", containerFrame, "TOP", 0, yOffset)
         end
     end
-
-    NRSKNUI:SnapFrameToPixels(containerFrame, db.ForcePixelPerfect)
 end
 
 ---@param btn table

@@ -778,7 +778,6 @@ function GUIFrame:CreateHeader(parent)
     header:SetScript("OnDragStart", function() parent:StartMoving() end)
     header:SetScript("OnDragStop", function()
         parent:StopMovingOrSizing()
-        NRSKNUI:SnapFrameToPixels(parent)
         GUIFrame:SaveFramePosition()
     end)
 
@@ -975,7 +974,6 @@ function GUIFrame:CreateFooter(parent)
             if GUIFrame.sidebar and GUIFrame.sidebar.UpdateScrollBarVisibility then
                 C_Timer.After(0.05, GUIFrame.sidebar.UpdateScrollBarVisibility)
             end
-            NRSKNUI:SnapFrame(parent)
             GUIFrame:SaveFramePosition()
         end
     end)
@@ -994,7 +992,6 @@ function GUIFrame:CreateFooter(parent)
     end)
     footer:SetScript("OnDragStop", function()
         parent:StopMovingOrSizing()
-        NRSKNUI:SnapFrameToPixels(parent)
         GUIFrame:SaveFramePosition()
     end)
 

@@ -76,7 +76,7 @@ function NRSKNUI.GUI.CreateScrollbar(scrollFrame, options)
     scrollbar:SetOrientation("VERTICAL")
 
     -- Pixel-perfect stepping
-    local pixelStep = NRSKNUI:PixelBestSize()
+    local pixelStep = NRSKNUI.PerfectPixel
     scrollbar:SetValueStep(pixelStep)
     scrollbar:SetMinMaxValues(0, 1)
     scrollbar:SetValue(0)

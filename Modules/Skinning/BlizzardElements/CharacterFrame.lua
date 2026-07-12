@@ -10,6 +10,7 @@ local select = select
 local CreateColor = CreateColor
 local GetSpecializationInfoByID = GetSpecializationInfoByID
 local CreateFrame = CreateFrame
+local unpack = unpack
 
 local EquipmentFlyout_SetBackgroundTexture = EquipmentFlyout_SetBackgroundTexture
 local PaperDollFrame_UpdateStats = PaperDollFrame_UpdateStats
@@ -26,29 +27,19 @@ Hook bodies must stay visual-only since they can fire in combat.
 ]]
 
 local SLOT_NAMES = {
-    'Head',
-    'Neck',
-    'Shoulder',
-    'Back',
-    'Chest',
-    'Shirt',
-    'Tabard',
-    'Wrist',
-    'Hands',
-    'Waist',
-    'Legs',
-    'Feet',
-    'Finger0',
-    'Finger1',
-    'Trinket0',
-    'Trinket1',
-    'MainHand',
-    'SecondaryHand',
+    'Head', 'Neck', 'Shoulder', 'Back', 'Chest', 'Shirt', 'Tabard',
+    'Wrist', 'Hands', 'Waist', 'Legs', 'Feet', 'Finger0', 'Finger1', 'Trinket0',
+    'Trinket1', 'MainHand', 'SecondaryHand',
 }
 
--- Collapsible list headers (Reputation/Token). Two generations coexist:
--- Old rows carry Right/HighlightRight arrow textures, new ones a ToggleCollapseButton with RefreshIcon.
--- Both derive state from IsCollapsed.
+local FLYOUT_POS = {
+    [0xFFFFFFFF] = true, -- PLACEINBAGS
+    [0xFFFFFFFE] = true, -- IGNORESLOT
+    [0xFFFFFFFD] = true, -- UNIGNORESLOT
+}
+
+local EXPAND_BUTTON_ATLAS = 'UI-QuestTrackerButton-Secondary-Expand'
+local COLLAPSE_BUTTON_ATLAS = 'UI-QuestTrackerButton-Secondary-Collapse'
 local EXPAND_ARROW_ATLAS = 'Soulbinds_Collection_CategoryHeader_Expand'
 local COLLAPSE_ARROW_ATLAS = 'Soulbinds_Collection_CategoryHeader_Collapse'
 local OLD_ARROW_ATLASES = {
@@ -60,20 +51,19 @@ local OLD_ARROW_ATLASES = {
 ---@param atlas string?
 local function UpdateCollapseArrow(texture, atlas)
     if atlas and not OLD_ARROW_ATLASES[atlas] then return end
+
     local header = texture:GetParent()
     if not header.IsCollapsed then return end
-    texture:SetAtlas(header:IsCollapsed() and EXPAND_ARROW_ATLAS or COLLAPSE_ARROW_ATLAS)
-end
 
-local EXPAND_BUTTON_ATLAS = 'UI-QuestTrackerButton-Secondary-Expand'
-local COLLAPSE_BUTTON_ATLAS = 'UI-QuestTrackerButton-Secondary-Collapse'
+    texture:SetAtlas((header:IsCollapsed() and EXPAND_ARROW_ATLAS) or COLLAPSE_ARROW_ATLAS)
+end
 
 ---@param button Button
 local function UpdateToggleCollapseButton(button)
     local header = button.GetHeader and button:GetHeader()
     if not header or not header.IsCollapsed then return end
 
-    local atlas = header:IsCollapsed() and EXPAND_BUTTON_ATLAS or COLLAPSE_BUTTON_ATLAS
+    local atlas = (header:IsCollapsed() and EXPAND_BUTTON_ATLAS) or COLLAPSE_BUTTON_ATLAS
     button:SetNormalAtlas(atlas)
     button:SetPushedAtlas(atlas)
 end
@@ -83,10 +73,12 @@ end
 ---@param row NUIListRow
 local function SkinHeaderRow(row)
     if row.Right and row.HighlightRight then
-        row:StripTextures()
+        row:StripTextures('Keyed')
         BSKIN:CreatePanelBackdrop(row, 'Transparent')
+
         UpdateCollapseArrow(row.Right)
         UpdateCollapseArrow(row.HighlightRight)
+
         hooksecurefunc(row.Right, 'SetAtlas', UpdateCollapseArrow)
         hooksecurefunc(row.HighlightRight, 'SetAtlas', UpdateCollapseArrow)
     end
@@ -122,10 +114,8 @@ local function SkinEquipSetRow(row)
     -- Add border to the spec icons, but not the new set + texture icon.
     if row.icon:GetTexture() ~= 514607 then
         local frame = CreateFrame("Frame", nil, row)
-        frame:SetPoint('TOPLEFT', row.icon, 'TOPLEFT', 0, 0)
-        frame:SetPoint('BOTTOMRIGHT', row.icon, 'BOTTOMRIGHT', 0, 0)
-        -- Own the border on the icon's own frame at ARTWORK so it sits above the item
-        -- icon (ARTWORK, 0) but below Blizzard's SpecRing/SpecIcon overlay (OVERLAY, -3).
+        frame:SetPixelPoint('TOPLEFT', row.icon, 'TOPLEFT', 0, 0)
+        frame:SetPixelPoint('BOTTOMRIGHT', row.icon, 'BOTTOMRIGHT', 0, 0)
         NRSKNUI:AddBorders(frame, nil, row.icon:GetParent(), nil, "ARTWORK", 7)
     end
 
@@ -137,13 +127,14 @@ local function SkinEquipSetRow(row)
         end
     end
 
-    NRSKNUI:ApplyZoom(row.icon, NRSKNUI.GlobalZoom)
+    row.icon:SetZoom()
+
     if row.HighlightBar then
-        row.HighlightBar:SetColorTexture(1, 1, 1, 0.25)
+        row.HighlightBar:SetColorTexture(unpack(NRSKNUI.HighlightColor))
         row.HighlightBar:SetDrawLayer('BACKGROUND')
     end
     if row.SelectedBar then
-        row.SelectedBar:SetColorTexture(0.8, 0.8, 0.8, 0.25)
+        row.SelectedBar:SetColorTexture(unpack(NRSKNUI.SelectedColor))
         row.SelectedBar:SetDrawLayer('BACKGROUND')
     end
 end
@@ -189,14 +180,14 @@ local function SetupCustomPortrait()
     end
 
     local frame = CreateFrame('Frame', nil, PaperDollFrame)
-    frame:SetSize(45, 45)
-    frame:SetPoint('TOPLEFT', PaperDollFrame, 'TOPLEFT', 7, -7)
+    frame:SetPixelSize(45, 45)
+    frame:SetPixelPoint('TOPLEFT', PaperDollFrame, 'TOPLEFT', 7, -7)
     NRSKNUI:AddBorders(frame)
 
     frame.icon = frame:CreateTexture(nil, "ARTWORK")
     frame.icon:SetAllPoints(frame)
     frame.icon:SetTexture(icon)
-    NRSKNUI:ApplyZoom(frame.icon, NRSKNUI.GlobalZoom)
+    frame.icon:SetZoom()
 end
 
 local function SkinShell(S)
@@ -207,8 +198,8 @@ local function SkinShell(S)
     -- For example, backdrop for the item level, Attributes and Enhancements rows.
     local insetRight = CharacterFrame.InsetRight or _G.CharacterFrameInsetRight
     if insetRight then
-        insetRight:StripTextures()
-        if insetRight.NineSlice then insetRight.NineSlice:StripTextures() end
+        insetRight:StripTextures('Keyed')
+        if insetRight.NineSlice then insetRight.NineSlice:StripTextures('Keyed') end
         if insetRight.Bg then insetRight.Bg:SetAlpha(0) end
     end
 end
@@ -222,9 +213,9 @@ local function SkinTabs(S)
 
         tab:ClearAllPoints()
         if prev then
-            tab:SetPoint('TOPLEFT', prev, 'TOPRIGHT', -1, 0)
+            tab:SetPixelPoint('TOPLEFT', prev, 'TOPRIGHT', -1, 0)
         else
-            tab:SetPoint('TOPLEFT', CharacterFrame, 'BOTTOMLEFT', 0, 1)
+            tab:SetPixelPoint('TOPLEFT', CharacterFrame, 'BOTTOMLEFT', 0, 1)
         end
         prev = tab
 
@@ -244,28 +235,22 @@ local function SkinModelScene(S)
     local scene = CharacterModelScene
     if not scene then return end
 
-    scene:StripTextures()
-
-    --local PanelColor = S:GetColors().panel
-    --local backdrop = S:CreatePanelBackdrop(scene, PanelColor[4], true)
-    --if backdrop then
-    --    backdrop:SetBackgroundColor(PanelColor[1], PanelColor[2], PanelColor[3], PanelColor[4])
-    --end
+    scene:StripTextures('Keyed')
 
     -- Hide the model scene backdrop that has the racial specific texture.
     for _, corner in ipairs({ 'TopLeft', 'TopRight', 'BotLeft', 'BotRight' }) do
         local bg = _G['CharacterModelFrameBackground' .. corner]
-        if bg then bg:SetAlpha(0.2) end
+        if bg then bg:SetAlpha(0) end
     end
-    --local overlay = _G.CharacterModelFrameBackgroundOverlay
-    --if overlay then overlay:Hide() end
+    local overlay = _G.CharacterModelFrameBackgroundOverlay
+    if overlay then overlay:Hide() end
 
-    S:HandleControlButtons(_G.CharacterModelScene.ControlFrame)
+    local controlFrame = _G.CharacterModelScene.ControlFrame
+    S:HandleControlButtons(controlFrame)
 end
 
 local GRAD_BRIGHT = CreateColor(0.6, 0.6, 0.6, 0.25)
 local GRAD_FADE = CreateColor(0.6, 0.6, 0.6, 0)
-local WHITE8X8 = [[Interface\Buttons\WHITE8X8]]
 
 ---Center-out horizontal gradient
 ---@param frame NUIStatFrame
@@ -273,16 +258,16 @@ local function AddStatGradients(frame)
     local height = frame:GetHeight()
 
     local left = frame:CreateTexture(nil, 'BORDER')
-    left:SetSize(80, height)
-    left:SetPoint('LEFT', frame, 'CENTER')
-    left:SetTexture(WHITE8X8)
+    left:SetPixelSize(80, height)
+    left:SetPixelPoint('LEFT', frame, 'CENTER')
+    left:SetTexture(NRSKNUI.WhiteTexture)
     left:SetGradient('HORIZONTAL', GRAD_BRIGHT, GRAD_FADE)
     frame.NUILeftGrad = left
 
     local right = frame:CreateTexture(nil, 'BORDER')
-    right:SetSize(80, height)
-    right:SetPoint('RIGHT', frame, 'CENTER')
-    right:SetTexture(WHITE8X8)
+    right:SetPixelSize(80, height)
+    right:SetPixelPoint('RIGHT', frame, 'CENTER')
+    right:SetTexture(NRSKNUI.WhiteTexture)
     right:SetGradient('HORIZONTAL', GRAD_FADE, GRAD_BRIGHT)
     frame.NUIRightGrad = right
 end
@@ -306,18 +291,18 @@ local function SkinStatsPane(S)
     local pane = CharacterStatsPane
     if not pane then return end
 
-    pane:StripTextures()
+    pane:StripTextures('Keyed')
 
     for _, key in ipairs({ 'ItemLevelCategory', 'AttributesCategory', 'EnhancementsCategory' }) do
         local category = pane[key]
         if category then
-            category:StripTextures()
+            category:StripTextures('Keyed')
             -- Slim centered header plate, repositioning our own backdrop is fine
             local backdrop = S:CreatePanelBackdrop(category, 'Transparent')
             if backdrop then
                 backdrop:ClearAllPoints()
-                backdrop:SetPoint('CENTER')
-                backdrop:SetSize(150, 18)
+                backdrop:SetPixelPoint('CENTER')
+                backdrop:SetPixelSize(150, 18)
             end
             local title = category.Title
             if title then
@@ -360,17 +345,17 @@ local function SkinSidebarTabs(S)
             if backdrop then
                 -- Adjust backdrop size slightly so that the borders can be seen.
                 backdrop:ClearAllPoints()
-                backdrop:SetPoint('TOPLEFT', tab, 'TOPLEFT', -2, 2)
-                backdrop:SetPoint('BOTTOMRIGHT', tab, 'BOTTOMRIGHT', 2, -2)
+                backdrop:SetPixelPoint('TOPLEFT', tab, 'TOPLEFT', -2, 2)
+                backdrop:SetPixelPoint('BOTTOMRIGHT', tab, 'BOTTOMRIGHT', 2, -2)
             end
 
             if tab.Icon then tab.Icon:SetAllPoints(tab) end
             if tab.Highlight then
-                tab.Highlight:SetColorTexture(1, 1, 1, 0.3)
+                tab.Highlight:SetColorTexture(unpack(NRSKNUI.HighlightColor))
                 tab.Highlight:SetAllPoints(tab)
             end
             if tab.Hider then
-                tab.Hider:SetColorTexture(0, 0, 0, 0.8)
+                tab.Hider:SetColorTexture(unpack(NRSKNUI.BlackBgColor))
                 tab.Hider:SetAllPoints(tab)
             end
             if tab.TabBg then tab.TabBg:SetAlpha(0) end
@@ -389,7 +374,7 @@ local function SkinSidebarTabs(S)
         tab = _G['PaperDollSidebarTab' .. i]
     end
 
-    _G['PaperDollSidebarTabs']:StripTextures()
+    _G['PaperDollSidebarTabs']:StripTextures('Keyed')
 end
 
 local function SkinSidebarPane(S, pane, skinRow)
@@ -399,7 +384,7 @@ local function SkinSidebarPane(S, pane, skinRow)
 end
 
 local function SkinGearManagerPopup(S)
-    local popup = GearManagerPopupFrame
+    local popup = _G.GearManagerPopupFrame
     if not popup then return end
 
     popup:HookScript('OnShow', function(frame)
@@ -413,7 +398,7 @@ local function SkinGearManagerPopup(S)
 
         local borderBox = frame.BorderBox
         if borderBox then
-            borderBox:StripTextures()
+            borderBox:StripTextures('Keyed')
             S:HandleEditBox(borderBox.IconSelectorEditBox)
             S:HandleButton(borderBox.OkayButton, 'Transparent')
             S:HandleButton(borderBox.CancelButton, 'Transparent')
@@ -425,21 +410,24 @@ local function SkinGearManagerPopup(S)
 end
 
 local function SkinEquipmentManager(S)
+    local PaperDollFrameEquipSet = _G.PaperDollFrameEquipSet
+    local PaperDollFrameSaveSet = _G.PaperDollFrameSaveSet
+
     S:HandleButton(PaperDollFrameEquipSet, 'Transparent')
     S:HandleButton(PaperDollFrameSaveSet, 'Transparent')
     SkinGearManagerPopup(S)
 end
 
 local function SkinReputation(S)
-    local rep = ReputationFrame
+    local rep = _G.ReputationFrame
     if not rep then return end
 
-    rep:StripTextures()
+    rep:StripTextures('Keyed')
     if rep.ScrollBar then S:HandleTrimScrollBar(rep.ScrollBar) end
     if rep.ScrollBox then S:HookScrollBoxChildren(rep.ScrollBox, SkinReputationRow) end
     if rep.filterDropdown then S:HandleDropdownButton(rep.filterDropdown) end
 
-    local detail = rep.ReputationDetailFrame
+    local detail = _G.ReputationFrame.ReputationDetailFrame
     if detail then
         detail:StripTextures('Keyed')
         S:CreatePanelBackdrop(detail)
@@ -452,47 +440,65 @@ local function SkinReputation(S)
     end
 end
 
-local function SkinEquipmentFlyout(S)
-    local flyout = EquipmentFlyoutFrame
-    if not flyout then return end
+local function UpdateItemButtons(S)
+    local flyoutButtonFrame = _G.EquipmentFlyoutFrame.buttonFrame
 
-    if flyout.buttonFrame then
-        flyout.buttonFrame:StripTextures()
-        S:CreatePanelBackdrop(flyout.buttonFrame)
-    end
-    -- Blizzard creates fresh bg textures on the button frame as the flyout grows, so the strip has to run again on every open.
-    if EquipmentFlyout_SetBackgroundTexture then
-        hooksecurefunc('EquipmentFlyout_SetBackgroundTexture', function()
-            EquipmentFlyoutFrame.buttonFrame:StripTextures()
-        end)
-    end
+    flyoutButtonFrame:StripTextures('Keyed')
+    S:CreatePanelBackdrop(flyoutButtonFrame)
 
-    if _G.EquipmentFlyoutFrameHighlight then
-        _G.EquipmentFlyoutFrameHighlight:StripTextures()
-    end
-    local buttons = _G.EquipmentFlyoutFrameButtons
-    if buttons then
-        if buttons.bg1 then buttons.bg1:SetAlpha(0) end
-        buttons:DisableDrawLayer('ARTWORK')
-    end
+    local w, h = flyoutButtonFrame:GetSize()
+    flyoutButtonFrame:SetPixelSize(w + 3, h)
 
-    local nav = flyout.NavigationFrame
-    if nav then
-        nav:StripTextures()
-        S:CreatePanelBackdrop(nav)
-        S:HandleNextPrevButton(nav.PrevButton)
-        S:HandleNextPrevButton(nav.NextButton)
-    end
+    local flyoutButtons = _G.EquipmentFlyoutFrame.buttons
 
-    if EquipmentFlyout_DisplayButton then
-        hooksecurefunc('EquipmentFlyout_DisplayButton', function(button)
-            BSKIN:HandleItemButton(button)
-        end)
+    for _, button in next, flyoutButtons do
+        S:HandleItemButton(button)
+
+        -- Pooled buttons reused as a special action slot inherit no quality color,
+        -- so re-assert the default border in case they last showed a quality item.
+        if FLYOUT_POS[button.location] then
+            button:NUIResetQualityColor()
+        end
     end
 end
 
+local function EquipmentUpdateNavigation(S)
+    local flyoutNavigationFrame = _G.EquipmentFlyoutFrame.NavigationFrame
+    if not flyoutNavigationFrame then return end
+
+    local flyoutButtons = _G.EquipmentFlyoutFrameButtons
+
+    flyoutNavigationFrame:ClearAllPoints()
+    flyoutNavigationFrame:SetPixelPoint('TOPLEFT', flyoutButtons, 'BOTTOMLEFT', 0, 0)
+    flyoutNavigationFrame:SetPixelPoint('TOPRIGHT', flyoutButtons, 'BOTTOMRIGHT', 0, 0)
+
+    flyoutNavigationFrame:StripTextures('Keyed')
+    S:CreatePanelBackdrop(flyoutNavigationFrame)
+end
+
+local function SkinEquipmentFlyout(S)
+    local flyout = _G.EquipmentFlyoutFrame
+    if not flyout then return end
+
+    local equipmentFlyoutHighlight = _G.EquipmentFlyoutFrameHighlight
+    local equipmentFlyoutFrame = _G.EquipmentFlyoutFrameButtons
+    local equipmentFlyoutBg = _G.EquipmentFlyoutFrameButtons.bg1
+    local prevButton = _G.EquipmentFlyoutFrame.NavigationFrame.PrevButton
+    local nextButton = _G.EquipmentFlyoutFrame.NavigationFrame.NextButton
+
+    equipmentFlyoutHighlight:StripTextures('Keyed')
+    equipmentFlyoutBg:SetAlpha(0)
+    equipmentFlyoutFrame:DisableDrawLayer('ARTWORK')
+
+    S:HandleNextPrevButton(prevButton)
+    S:HandleNextPrevButton(nextButton)
+
+    hooksecurefunc('EquipmentFlyout_SetBackgroundTexture', function() EquipmentUpdateNavigation(S) end)
+    hooksecurefunc('EquipmentFlyout_UpdateItems', function() UpdateItemButtons(S) end)
+end
+
 BSKIN:RegisterSkin('Blizzard_UIPanels_Game', 'CharacterFrame', function(S)
-    if not CharacterFrame then return end
+    if not _G.CharacterFrame then return end
 
     SkinShell(S)
     SkinTabs(S)
@@ -519,14 +525,14 @@ BSKIN:RegisterSkin('Blizzard_UIPanels_Game', 'CharacterFrame', function(S)
     if PaperDollItemSlotButton_Update then
         hooksecurefunc('PaperDollItemSlotButton_Update', function(slot)
             local highlight = slot:GetHighlightTexture()
-            if highlight then highlight:SetColorTexture(1, 1, 1, 0.25) end
+            if highlight then highlight:SetColorTexture(unpack(NRSKNUI.HighlightColor)) end
         end)
     end
 end)
 
 -- The currency tab lives in the LoadOnDemand Blizzard_TokenUI addon
 BSKIN:RegisterSkin('Blizzard_TokenUI', 'CharacterFrame', function(S)
-    local token = TokenFrame
+    local token = _G.TokenFrame
     if not token then return end
 
     -- Deeper changes to this scrollbar taint currency transfers

@@ -24,6 +24,12 @@ local Defaults = {
             fontShadow     = false,
         },
 
+        -- Global UIParent scale.
+        UIScale = {
+            Enabled = true,
+            Scale   = 0.71,
+        },
+
         -- GUI State (only frame position/size persists across logins)
         GUIState = {
             GUIFrameLayoutVersion = 67, -- Bump this to force a one-time frame size reset for all users
@@ -493,7 +499,6 @@ local Defaults = {
             IconSpacing = 1,
             GrowDirection = "RIGHT",
             ShowTimer = true,
-            ForcePixelPerfect = false,
             Swipe = false,
             Reverse = false,
 

@@ -3,6 +3,7 @@
 
     <Script file="Init.lua" />
     <Script file="Defaults.lua" />
+    <Script file="Main.lua" />
     <Script file="PixelPerfect.lua" />
     <Script file="InjectionAPI.lua" />
     <Script file="Secret.lua" />
@@ -16,7 +17,6 @@
     <Script file="Animations.lua" />
     <Script file="Globals.lua" />
     <Script file="EditMode.lua" />
-    <Script file="Main.lua" />
     <Script file="Commands.lua" />
     <Script file="ProfileManager.lua" />
     <Script file="NUI-Dialog.lua" />

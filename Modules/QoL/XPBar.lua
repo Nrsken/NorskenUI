@@ -192,7 +192,6 @@ function XPBar:ApplySettings()
     self.bar.rested:SetStatusBarColor(rR, gR, bR, aR)
 
     self.bar:SetSize(self.db.width, self.db.height)
-    NRSKNUI:SnapFrameSize(self.bar)
     NRSKNUI:ApplyFramePosition(self.bar, self.db.Position, self.db)
 
     self.bar.tick:SetHeight(self.bar:GetHeight())

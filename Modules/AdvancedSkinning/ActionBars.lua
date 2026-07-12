@@ -481,7 +481,7 @@ function ACB:StyleButtonTextures(button)
 
     -- Style highlight texture
     if button.HighlightTexture then
-        NRSKNUI.DisablePixelSnap(button.HighlightTexture)
+        button.HighlightTexture:SetPixelSnap()
         button.HighlightTexture:SetTexture("Interface\\Buttons\\WHITE8x8")
         button.HighlightTexture:SetTexCoord(0, 1, 0, 1)
         button.HighlightTexture:ClearAllPoints()
@@ -494,7 +494,7 @@ function ACB:StyleButtonTextures(button)
     -- Style pushed texture
     local pushed = button:GetPushedTexture()
     if pushed then
-        NRSKNUI.DisablePixelSnap(pushed)
+        pushed:SetPixelSnap()
         pushed:SetTexture("Interface\\Buttons\\WHITE8x8")
         pushed:SetTexCoord(0, 1, 0, 1)
         pushed:ClearAllPoints()
@@ -532,7 +532,7 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
 
     -- Create backdrop frame with raw integer size (pixel-perfect approach)
     local backdrop = CreateFrame("Frame", "NRSKNUI_" .. barName .. "Backdrop" .. index, UIParent, "BackdropTemplate")
-    NRSKNUI.DisablePixelSnap(backdrop)
+    backdrop:SetPixelSnap()
     backdrop:SetSize(buttonSize, buttonSize)
     backdrop:SetFrameStrata("BACKGROUND")
     backdrop:SetFrameLevel(1)
@@ -559,7 +559,7 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
     -- Resize and re-anchor the Blizzard button with raw integer size
     button:SetParent(backdrop)
     button:ClearAllPoints()
-    NRSKNUI.DisablePixelSnap(button)
+    button:SetPixelSnap()
     button:SetSize(buttonSize, buttonSize)
     button:SetPoint("CENTER", backdrop, "CENTER", 0, 0)
 
@@ -632,15 +632,15 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
     if button.InterruptDisplay then button.InterruptDisplay:SetAlpha(0) end     -- Hides the "slash" texture for interruptible spells
     if button.SpellCastAnimFrame then button.SpellCastAnimFrame:SetAlpha(0) end -- Hides the "shine" animation
     if button.icon then
-        NRSKNUI.DisablePixelSnap(button.icon)
+        button.icon:SetPixelSnap()
         button.icon:SetAllPoints(button)
     end
     if button.cooldown then
-        NRSKNUI.DisablePixelSnap(button.cooldown)
+        button.cooldown:SetPixelSnap()
         button.cooldown:SetAllPoints(button)
     end
     if button.SpellHighlightTexture then
-        NRSKNUI.DisablePixelSnap(button.SpellHighlightTexture)
+        button.SpellHighlightTexture:SetPixelSnap()
         button.SpellHighlightTexture:SetAllPoints(button)
     end
     if button.AutoCastable then button.AutoCastable:SetDrawLayer("OVERLAY", 7) end -- Ensure glow is above the button
@@ -671,7 +671,7 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
 
     -- Create range overlay, red tint when out of range
     local rangeOverlay = button:CreateTexture(nil, "OVERLAY", nil, 1)
-    NRSKNUI.DisablePixelSnap(rangeOverlay)
+    rangeOverlay:SetPixelSnap()
     rangeOverlay:SetAllPoints(button)
     local rangeColor = self.db.RangeOverlayColor
     rangeOverlay:SetColorTexture(rangeColor[1], rangeColor[2], rangeColor[3], rangeColor[4])
@@ -850,7 +850,7 @@ local function SkinBar(cfg)
 
     -- Create container with size and position
     local container = CreateFrame("Frame", "NRSKNUI_" .. cfg.name .. "_Container", UIParent)
-    NRSKNUI.DisablePixelSnap(container)
+    container:SetPixelSnap()
     container:SetFrameStrata("LOW")
     container:SetSize(containerWidth, containerHeight)
     cfg.nrsknui_container = container
@@ -1642,15 +1642,15 @@ function ACB:UpdateBarLayout(barKey)
 
                 -- Update icon and cooldown to match new size
                 if button.icon then
-                    NRSKNUI.DisablePixelSnap(button.icon)
+                    button.icon:SetPixelSnap()
                     button.icon:SetAllPoints(button)
                 end
                 if button.cooldown then
-                    NRSKNUI.DisablePixelSnap(button.cooldown)
+                    button.cooldown:SetPixelSnap()
                     button.cooldown:SetAllPoints(button)
                 end
                 if button.SpellHighlightTexture then
-                    NRSKNUI.DisablePixelSnap(button.SpellHighlightTexture)
+                    button.SpellHighlightTexture:SetPixelSnap()
                     button.SpellHighlightTexture:SetAllPoints(button)
                 end
 

@@ -1655,7 +1655,7 @@ function CHAT:ApplyFrameStyle(frame, template, glossTex, ignoreUpdates, forcePix
     end
 
     ReplaceSetupTextureCoordinates(frame)
-    NRSKNUI.DisablePixelSnap(frame)
+    frame:SetPixelSnap()
 
     if template == "NoBackdrop" then
         frame:SetBackdrop(nil)
@@ -1663,7 +1663,7 @@ function CHAT:ApplyFrameStyle(frame, template, glossTex, ignoreUpdates, forcePix
     end
 
     local db = self.db
-    local edgeSize = NRSKNUI:Scale(1)
+    local edgeSize = 1
 
     frame:SetBackdrop({
         bgFile = glossTex and (type(glossTex) == "string" and glossTex or BLANK_TEX) or BLANK_TEX,

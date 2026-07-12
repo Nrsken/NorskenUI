@@ -87,6 +87,7 @@ local DELETE_GOOD_ITEM = DELETE_GOOD_ITEM
 local GetCVarBool = C_CVar and C_CVar.GetCVarBool
 local SetCVar = C_CVar and C_CVar.SetCVar
 local SetCVarBitfield = C_CVar and C_CVar.SetCVarBitfield
+local RegisterCVar = C_CVar and C_CVar.RegisterCVar
 
 --TODO: See if still needed in 12.1.0+
 local BONUSROLL_GOLD_QUEST_ID = 95279
@@ -573,6 +574,8 @@ end
 
 function Automation:ApplyAutoHideHelptips()
     if not self.db.AutoHideHelptips then return end
+
+    RegisterCVar("hideHelptips", 1)
 
     -- Close all help tips for the current session and mark them as closed for future sessions.
     for index = 1, NUM_LE_FRAME_TUTORIALS do

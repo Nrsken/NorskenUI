@@ -89,7 +89,7 @@ end
 
 ---@param frame Frame
 ---@param posConfig table Position config with AnchorFrom, AnchorTo, XOffset, YOffset
----@param Config table Config with anchorFrameType, ParentFrame, Strata, ForcePixelPerfect
+---@param Config table Config with anchorFrameType, ParentFrame, Strata
 ---@param SetParent boolean? If true, also set frame parent
 function NRSKNUI:ApplyFramePosition(frame, posConfig, Config, SetParent)
     if not frame or not posConfig then return end
@@ -98,7 +98,6 @@ function NRSKNUI:ApplyFramePosition(frame, posConfig, Config, SetParent)
     frame:ClearAllPoints()
     frame:SetPoint(posConfig.AnchorFrom or "CENTER", parent, posConfig.AnchorTo or "CENTER", posConfig.XOffset or 0, posConfig.YOffset or 0)
     frame:SetFrameStrata(Config.Strata or "MEDIUM")
-    self:SnapFrameToPixels(frame, Config.ForcePixelPerfect)
 end
 
 -- Class Utilities --

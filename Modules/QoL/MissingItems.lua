@@ -182,7 +182,6 @@ local MAX_QUALITY_ICONS = 3
 
 local function CreateQualityIcon(parent, size)
     local container = CreateFrame("Frame", nil, parent)
-    NRSKNUI:ApplyPixelMixin(container)
     container:SetSize(size, size)
 
     local iconTexture = container:CreateTexture(nil, "ARTWORK")
@@ -210,13 +209,11 @@ end
 local function CreateTextLine()
     local db = MITEMS.db.Display
     local textFrame = CreateFrame("Frame", nil, containerFrame)
-    NRSKNUI:ApplyPixelMixin(textFrame)
-    textFrame:Size(300, db.FontSize + 4)
+    textFrame:SetPixelSize(300, db.FontSize + 4)
 
     local text = NRSKNUI:CreateText(textFrame, "OVERLAY")
-    NRSKNUI:ApplyPixelMixin(text)
-    text:Point("CENTER", textFrame, "CENTER", 0, 0)
-    text:DisablePixelSnap()
+    text:SetPixelPoint("CENTER", textFrame, "CENTER", 0, 0)
+    text:SetPixelSnap()
     NRSKNUI:SetTextFont(text, NRSKNUI:GetEffectiveFont(db), db.FontSize, db.FontOutline)
     text:SetJustifyH("CENTER")
 
@@ -259,7 +256,7 @@ local function SetupQualityIcons(textFrame, breakdown, db)
         end
 
         iconContainer:SetSize(iconSize, iconSize)
-        iconContainer:Point("LEFT", textFrame.text, "RIGHT", xOffset, 0)
+        iconContainer:SetPixelPoint("LEFT", textFrame.text, "RIGHT", xOffset, 0)
 
         if data.qualityAtlas and iconContainer.qualityTexture then
             iconContainer.qualityTexture:SetAtlas(data.qualityAtlas, false)
@@ -308,8 +305,7 @@ local function CreateContainerFrame()
     if containerFrame then return end
     local db = MITEMS.db.Display
     containerFrame = CreateFrame("Frame", "NRSKNUI_MissingItemsContainer", UIParent)
-    NRSKNUI:ApplyPixelMixin(containerFrame)
-    containerFrame:Size(300, 200)
+    containerFrame:SetPixelSize(300, 200)
     NRSKNUI:ApplyFramePosition(containerFrame, db.Position, db)
     containerFrame:Hide()
 end
@@ -321,11 +317,11 @@ local function ArrangeTexts()
     for i, textFrame in ipairs(activeTexts) do
         textFrame:ClearAllPoints()
         local yOffset = -(i - 1) * lineHeight
-        textFrame:Point("TOP", containerFrame, "TOP", 0, yOffset)
+        textFrame:SetPixelPoint("TOP", containerFrame, "TOP", 0, yOffset)
     end
 
     local totalHeight = #activeTexts * lineHeight
-    if containerFrame then containerFrame:Height(math.max(totalHeight, 20)) end
+    if containerFrame then containerFrame:SetPixelHeight(math.max(totalHeight, 20)) end
 end
 
 local function UpdateDisplay()
@@ -504,7 +500,7 @@ function MITEMS:RegisterEditModeElements()
             if containerFrame then
                 local anchorFrame = NRSKNUI:ResolveAnchorFrame(displayDb.anchorFrameType, displayDb.ParentFrame)
                 containerFrame:ClearAllPoints()
-                containerFrame:Point(pos.AnchorFrom, anchorFrame, pos.AnchorTo, pos.XOffset, pos.YOffset)
+                containerFrame:SetPixelPoint(pos.AnchorFrom, anchorFrame, pos.AnchorTo, pos.XOffset, pos.YOffset)
             end
         end,
         guiPath = "missingItems",
@@ -606,8 +602,7 @@ local function CreateAuctionatorButton()
     local bgColor = Theme.bgMedium
 
     local btn = CreateFrame("Button", "NRSKNUI_AuctionatorShopButton", UIParent, "BackdropTemplate")
-    NRSKNUI:ApplyPixelMixin(btn)
-    btn:Size(140, 24)
+    btn:SetPixelSize(140, 24)
     btn._bgColor = bgColor
 
     btn:SetBackdrop({
@@ -619,8 +614,7 @@ local function CreateAuctionatorButton()
     btn:SetBackdropBorderColor(Theme.border[1], Theme.border[2], Theme.border[3], 1)
 
     btn.bg = btn:CreateTexture("NRSKNUI_AuctionatorShopButtonBG", "BACKGROUND")
-    NRSKNUI:ApplyPixelMixin(btn.bg)
-    btn.bg:SetInside(btn)
+    btn.bg:SetPixelInside(btn)
     btn.bg:SetColorTexture(Theme.bgLight[1], Theme.bgLight[2], Theme.bgLight[3], 1)
 
     local hoverAnimGroup = btn:CreateAnimationGroup()
@@ -655,12 +649,11 @@ local function CreateAuctionatorButton()
     end
 
     local textWidget = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    NRSKNUI:ApplyPixelMixin(textWidget)
     NRSKNUI:ApplyThemeFont(textWidget, "normal")
     textWidget:SetTextColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
     textWidget:SetText("Import Low Stock")
-    textWidget:Point("CENTER")
-    textWidget:DisablePixelSnap()
+    textWidget:SetPixelPoint("CENTER")
+    textWidget:SetPixelSnap()
     btn.text = textWidget
 
     btn:SetScript("OnEnter", function() AnimateBorderColor(true) end)
@@ -717,7 +710,7 @@ function MITEMS:ShowAuctionatorButton()
 
     local btn = CreateAuctionatorButton()
     btn:ClearAllPoints()
-    btn:Point("TOPRIGHT", AuctionatorShoppingFrame, "BOTTOMRIGHT", 4, -28)
+    btn:SetPixelPoint("TOPRIGHT", AuctionatorShoppingFrame, "BOTTOMRIGHT", 4, -28)
     btn:SetParent(AuctionatorShoppingFrame)
     btn:SetFrameStrata("HIGH")
     btn:Show()
@@ -785,7 +778,7 @@ function MITEMS:ApplySettings()
     for _, textFrame in ipairs(textPool) do
         local db = self.db.Display
         NRSKNUI:SetTextFont(textFrame.text, NRSKNUI:GetEffectiveFont(db), db.FontSize, db.FontOutline)
-        textFrame:Height(db.FontSize + 4)
+        textFrame:SetPixelHeight(db.FontSize + 4)
     end
 
     if containerFrame and self.db then

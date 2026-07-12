@@ -11,8 +11,7 @@ local unpack = unpack
 local math_floor, math_max = math.floor, math.max
 local string_format = string.format
 
-local disabledEnum = Enum and Enum.OnUpdateMode.Disabled
-local runWhenVisibleEnum = Enum and Enum.OnUpdateMode.RunWhenVisible
+
 
 local IsEncounterInProgress = C_InstanceEncounter and C_InstanceEncounter.IsEncounterInProgress
 
@@ -51,8 +50,7 @@ function CombatTimer:CreateFrame()
     frame:EnableMouse(false)
     frame:SetMouseClickEnabled(false)
 
-    ---@cast frame Frame & PublicBackdropMixin
-    NRSKNUI:CreateBackdrop(frame)
+    frame:CreateBackdrop()
 
     frame.text = frame:CreateFontString(nil, 'OVERLAY')
     frame.text:SetAllPoints(frame)
@@ -60,6 +58,8 @@ function CombatTimer:CreateFrame()
     -- Install the ticker once, SetTicking flips its run mode instead of re-attaching a closure.
     self.onUpdate = function(_, elapsed) self:OnUpdate(elapsed) end
     if frame.SetOnUpdateMode then
+        local disabledEnum = Enum and Enum.OnUpdateMode.Disabled
+        local runWhenVisibleEnum = Enum and Enum.OnUpdateMode.RunWhenVisible
         frame:SetScript('OnUpdate', self.onUpdate)
         frame:SetOnUpdateMode(disabledEnum)
     end
@@ -145,6 +145,8 @@ function CombatTimer:SetTicking(enabled)
     if not frame then return end
 
     if frame.SetOnUpdateMode then
+        local disabledEnum = Enum and Enum.OnUpdateMode.Disabled
+        local runWhenVisibleEnum = Enum and Enum.OnUpdateMode.RunWhenVisible
         frame:SetOnUpdateMode((enabled and runWhenVisibleEnum) or disabledEnum)
     else
         frame:SetScript('OnUpdate', (enabled and self.onUpdate) or nil)

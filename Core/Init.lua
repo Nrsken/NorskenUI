@@ -21,7 +21,12 @@ NRSKNUI.AddOnName = GetAddOnMetadata(addonName, 'Title')
 NRSKNUI.Version = GetAddOnMetadata(addonName, 'Version')
 NRSKNUI.Author = GetAddOnMetadata(addonName, 'Author')
 NRSKNUI.myclass = select(2, UnitClass('player'))
+
 NRSKNUI.ClearTexture = 0
+NRSKNUI.WhiteTexture = 'Interface\\Buttons\\WHITE8X8'
+NRSKNUI.HighlightColor = { 1, 1, 1, 0.25 }
+NRSKNUI.SelectedColor = { 0.8, 0.8, 0.8, 0.25 }
+NRSKNUI.BlackBgColor = { 0, 0, 0, 0.8 }
 
 do
     if NRSKNUI.Version == '@project-version@' then
