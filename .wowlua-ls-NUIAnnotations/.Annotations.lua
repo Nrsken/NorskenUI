@@ -68,19 +68,6 @@
 ---@field HookScript fun(self: NRSKNUI.Module, frame: Frame, script: string, handler?: any)
 ---@field Unhook fun(self: NRSKNUI.Module, obj: any, method?: string)
 
--- Skinning Toolkit
-
----  nil         = clear every own texture (SetTexture/SetAtlas nil) but leave regions live for state-driven frames,
----  'Keyed'     = Recurse known keyed children (NineSlice, Inset, Bg…) then clear own regions,
----  'Kill'      = hide every own texture and block re-show,
----  'Layer'     = hide own textures whose draw layer matches `a`,
----  'Atlas'     = hide own textures whose atlas matches `a`,
----  'ClearHide' = clear + force alpha 0, so state-driven frames can re-atlas but stay invisible,
----  'Alpha'     = only set alpha 0 on own textures, leaving them live.
-
---   'Layer'/'Atlas' -> a = layer/atlas name, or a set { name = true } of names.
---   'Keyed'         -> a = banish, hide + block re-show, b = alphaZero.
-
 ---@class SkinEntry
 ---@field addonName string?
 ---@field key string
@@ -119,6 +106,14 @@
 ---@field SetBackgroundColor fun(self: Frame, r: number, g: number, b: number, a: number?)
 ---@field UpdateBackdropFromDB fun(self: Frame, db: table)
 ---@field SetBorderColor fun(self: Frame, r: number, g: number, b: number, a: number?)
+---@field ToggleBackdrop fun(self: Frame, show: boolean)
+---@field SetPixelSize fun(self: Frame, width: number, height?: number, ...) Pixel-snapped SetSize (falls back to width for height)
+---@field SetPixelWidth fun(self: Frame, width: number, ...) Pixel-snapped SetWidth
+---@field SetPixelHeight fun(self: Frame, height: number, ...) Pixel-snapped SetHeight
+---@field SetPixelPoint fun(self: Frame, point: string, arg2?: any, arg3?: any, arg4?: any, arg5?: any, ...) SetPoint with numeric offsets snapped to the pixel grid
+---@field SetPixelInside fun(self: Frame, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor inset to a frame's corners (defaults 1px)
+---@field SetPixelOutside fun(self: Frame, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor outset from a frame's corners (defaults 1px)
+---@field SetPixelSnap fun(self: Frame) Disable Blizzard's grid snapping / texel bias on this object
 local Frame
 
 ---Strip textures/atlases in a controlled way. `'Keyed'` recurses keyed children then clears own regions.
@@ -132,8 +127,7 @@ function Frame:StripTextures(stripType, a, b) end
 ---Build a pixel-perfect backdrop (bg + 4 border edges) and mix in the backdrop API.
 ---
 ---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#createbackdrop)
----@param template? string 'BorderTemplate' for border only (no background fill)
-function Frame:CreateBackdrop(template) end
+function Frame:CreateBackdrop() end
 
 ---Return true if a NorskenUI backdrop was already added.
 ---
@@ -169,6 +163,15 @@ function Frame:StyleChildFontStrings(source, getSize, outline, shadow, skip, set
 ---@field SetBackgroundColor fun(self: Button, r: number, g: number, b: number, a: number?)
 ---@field UpdateBackdropFromDB fun(self: Button, db: table)
 ---@field SetBorderColor fun(self: Button, r: number, g: number, b: number, a: number?)
+---@field ToggleBackdrop fun(self: Button, show: boolean)
+---@field SetPixelSize fun(self: Button, width: number, height?: number, ...) Pixel-snapped SetSize (falls back to width for height)
+---@field SetPixelWidth fun(self: Button, width: number, ...) Pixel-snapped SetWidth
+---@field SetPixelHeight fun(self: Button, height: number, ...) Pixel-snapped SetHeight
+---@field SetPixelPoint fun(self: Button, point: string, arg2?: any, arg3?: any, arg4?: any, arg5?: any, ...) SetPoint with numeric offsets snapped to the pixel grid
+---@field SetPixelInside fun(self: Button, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor inset to a frame's corners (defaults 1px)
+---@field SetPixelOutside fun(self: Button, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor outset from a frame's corners (defaults 1px)
+---@field SetPixelSnap fun(self: Button) Disable Blizzard's grid snapping / texel bias on this object
+---@field StyleButton fun(self: Button, noHover?: boolean, noPushed?: boolean, noChecked?: boolean) Swap Blizzard highlight/pushed/checked art for flat additive overlays
 local Button
 
 ---Strip textures/atlases in a controlled way. `'Keyed'` recurses keyed children then clears own regions.
@@ -182,8 +185,7 @@ function Button:StripTextures(stripType, a, b) end
 ---Build a pixel-perfect backdrop (bg + 4 border edges) and mix in the backdrop API.
 ---
 ---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#createbackdrop)
----@param template? string 'BorderTemplate' for border only (no background fill)
-function Button:CreateBackdrop(template) end
+function Button:CreateBackdrop() end
 
 ---Return true if a NorskenUI backdrop was already added.
 ---
@@ -208,6 +210,14 @@ function Button:ApplyPosition(Config, setParent) end
 ---@field SetBackgroundColor fun(self: StatusBar, r: number, g: number, b: number, a: number?)
 ---@field UpdateBackdropFromDB fun(self: StatusBar, db: table)
 ---@field SetBorderColor fun(self: StatusBar, r: number, g: number, b: number, a: number?)
+---@field ToggleBackdrop fun(self: StatusBar, show: boolean)
+---@field SetPixelSize fun(self: StatusBar, width: number, height?: number, ...) Pixel-snapped SetSize (falls back to width for height)
+---@field SetPixelWidth fun(self: StatusBar, width: number, ...) Pixel-snapped SetWidth
+---@field SetPixelHeight fun(self: StatusBar, height: number, ...) Pixel-snapped SetHeight
+---@field SetPixelPoint fun(self: StatusBar, point: string, arg2?: any, arg3?: any, arg4?: any, arg5?: any, ...) SetPoint with numeric offsets snapped to the pixel grid
+---@field SetPixelInside fun(self: StatusBar, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor inset to a frame's corners (defaults 1px)
+---@field SetPixelOutside fun(self: StatusBar, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor outset from a frame's corners (defaults 1px)
+---@field SetPixelSnap fun(self: StatusBar) Disable Blizzard's grid snapping / texel bias on this object
 local StatusBar
 
 ---Strip textures/atlases in a controlled way. `'Keyed'` recurses keyed children then clears own regions.
@@ -221,8 +231,7 @@ function StatusBar:StripTextures(stripType, a, b) end
 ---Build a pixel-perfect backdrop (bg + 4 border edges) and mix in the backdrop API.
 ---
 ---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#createbackdrop)
----@param template? string 'BorderTemplate' for border only (no background fill)
-function StatusBar:CreateBackdrop(template) end
+function StatusBar:CreateBackdrop() end
 
 ---Return true if a NorskenUI backdrop was already added.
 ---
@@ -244,6 +253,13 @@ function StatusBar:Banish(...) end
 function StatusBar:ApplyPosition(Config, setParent) end
 
 ---@class Texture ---@diagnostic disable-line: class-shadows-builtin
+---@field SetPixelSize fun(self: Texture, width: number, height?: number, ...) Pixel-snapped SetSize (falls back to width for height)
+---@field SetPixelWidth fun(self: Texture, width: number, ...) Pixel-snapped SetWidth
+---@field SetPixelHeight fun(self: Texture, height: number, ...) Pixel-snapped SetHeight
+---@field SetPixelPoint fun(self: Texture, point: string, arg2?: any, arg3?: any, arg4?: any, arg5?: any, ...) SetPoint with numeric offsets snapped to the pixel grid
+---@field SetPixelInside fun(self: Texture, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor inset to a frame's corners (defaults 1px)
+---@field SetPixelOutside fun(self: Texture, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor outset from a frame's corners (defaults 1px)
+---@field SetPixelSnap fun(self: Texture) Disable Blizzard's grid snapping / texel bias on this texture
 local Texture
 
 ---Strip this texture (clear, or per `stripType`). Same modes as the frame version.
@@ -259,6 +275,17 @@ function Texture:StripTextures(stripType, a, b) end
 ---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#setzoom-texture)
 ---@param zoom? number
 function Texture:SetZoom(zoom) end
+
+-- FontStrings receive the pixel-perfect widget methods too (injected in InjectionAPI).
+---@class FontString ---@diagnostic disable-line: class-shadows-builtin
+---@field SetPixelSize fun(self: FontString, width: number, height?: number, ...) Pixel-snapped SetSize (falls back to width for height)
+---@field SetPixelWidth fun(self: FontString, width: number, ...) Pixel-snapped SetWidth
+---@field SetPixelHeight fun(self: FontString, height: number, ...) Pixel-snapped SetHeight
+---@field SetPixelPoint fun(self: FontString, point: string, arg2?: any, arg3?: any, arg4?: any, arg5?: any, ...) SetPoint with numeric offsets snapped to the pixel grid
+---@field SetPixelInside fun(self: FontString, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor inset to a frame's corners (defaults 1px)
+---@field SetPixelOutside fun(self: FontString, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor outset from a frame's corners (defaults 1px)
+---@field SetPixelSnap fun(self: FontString) Disable Blizzard's grid snapping / texel bias on this object
+local FontString
 
 ---@class _G
 ---@field StaticPopup1Button1 Button
