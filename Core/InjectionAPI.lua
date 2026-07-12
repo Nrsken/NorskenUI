@@ -1,6 +1,7 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 
+local next = next
 local pairs = pairs
 local type = type
 local getmetatable = getmetatable
@@ -98,114 +99,103 @@ local STRIP_CHILD_KEYS = { 'Bg', 'BG', 'TitleBg', 'TopTileStreaks',
     'FilligreeOverlay', 'Portrait', 'portrait', 'ScrollFrameBorder', 'ScrollUpBorder', 'ScrollDownBorder',
 }
 
----Strip textures/atlases from a frame in a controlled way.
----@param object Frame|string|Texture The frame (or its global name) to strip.
----@param stripType string? Selector:
----  nil     = clear every texture (SetTexture/SetAtlas nil) but leave regions live for state-driven frames,
----  'Kill'  = hide every texture and block re-show,
----  'Layer' = hide textures whose draw layer matches `key`,
----  'Atlas' = hide textures whose atlas matches `key`,
----  'ClearHide' = clear + force alpha 0, so state-driven frames can re-atlas but stay invisible,
----  'Keyed' = strip default art from known keyed children (NineSlice, Inset, Bg etc).
----  'Alpha' = Only sets alpha to 0 for all textures, leaving them live for state-driven frames.
----@param key string|string[]? Draw layer name(s) for 'Layer', atlas name(s) for 'Atlas'. Accepts a single value or a list.
-function NRSKNUI:StripTextures(object, stripType, key)
-    -- If the frame is a texture, clear it and return.
-    if object:IsObjectType('Texture') then
-        object:SetTexture(NRSKNUI.ClearTexture)
-        object:SetAtlas('')
-        return
+---Strip a single texture region according to the mode.
+---@param region Texture
+---@param stripType string?
+---@param a string|table<string, boolean>|boolean|nil
+---@param b boolean?
+local function StripRegion(region, stripType, a, b)
+    if stripType == 'Kill' then -- Hide and block re-show, for frames that aggressively re-Show their art.
+        region:Hide()
+        region.Show = region.Hide
+    elseif stripType == 'Layer' then -- Hide a specific draw layer (or any layer in the set).
+        local layer = region:GetDrawLayer()
+        if (type(a) == 'table' and a[layer]) or layer == a then
+            region:Hide()
+            region:SetAlpha(0)
+        end
+    elseif stripType == 'Atlas' then -- Hide a specific atlas texture (or any atlas in the set).
+        local atlas = region:GetAtlas()
+        if (type(a) == 'table' and a[atlas]) or atlas == a then
+            region:Hide()
+        end
+    elseif stripType == 'ClearHide' then -- Clear content and force invisible; alpha 0 survives Blizzard re-setting atlases on state changes, so the art can't come back.
+        region:SetTexture(nil)
+        region:SetAtlas('')
+        region:SetAlpha(0)
+    elseif stripType == 'Alpha' then -- Only set alpha to 0, leaving the texture/atlas live for state-driven frames.
+        region:SetAlpha(0)
+    elseif stripType == 'Keyed' then -- Recurse known keyed children, then clear own regions.
+        if a then
+            region:Hide()
+            region.Show = region.Hide
+        elseif b then
+            region:SetAlpha(0)
+        else
+            region:SetTexture(nil)
+            region:SetAtlas('')
+        end
+    else -- Default, clear texture + atlas but leave the region live, so state-driven Blizzard frames can re-drive it via SetAtlas.
+        region:SetTexture(nil)
+        region:SetAtlas('')
     end
+end
 
-    -- If the frame is a string, look it up in the global table and reassign it to the frame variable.
+---Strip textures/atlases from a frame (or texture) in a controlled way.
+---@param object Frame|Texture|string The frame (or its global name) to strip.
+---@param stripType string? Selector: nil, 'Keyed', 'Kill', 'Layer', 'Atlas', 'ClearHide', 'Alpha'.
+---@param a string|string[]|boolean? For 'Layer'/'Atlas': draw layer / atlas name(s), single or list. For 'Keyed': banish (kill) flag.
+---@param b boolean? For 'Keyed': alphaZero — set alpha 0 instead of clearing. Ignored by other modes.
+function NRSKNUI:StripTextures(object, stripType, a, b)
+    -- Resolve a global name to its frame.
     if type(object) == 'string' then
         object = _G[object]
     end
+    if not object then return end
 
-    -- If the frame is nil or not a valid frame, return early.
-    if not object then
+    -- Normalize a 'Layer'/'Atlas' key list into a set.
+    local matcher = a
+    if type(matcher) == 'table' then
+        local set = {}
+        for _, k in ipairs(matcher) do
+            set[k] = true
+        end
+        matcher = set
+    end
+
+    -- A single texture, strip it directly.
+    if object:IsObjectType('Texture') then
+        ---@cast object Texture
+        StripRegion(object, stripType, matcher, b)
         return
     end
 
-    -- Strip default art from a frame's known keyed children.
+    -- 'Keyed', recurse into known keyed children then fall through to strip this frame's own regions.
     if stripType == 'Keyed' then
-        for _, childKey in ipairs(STRIP_CHILD_KEYS) do
-            local child = object[childKey]
-            if child then
-                if child.IsObjectType and child:IsObjectType('Texture') then
-                    -- Clear the texture and atlas, and force alpha 0 so state-driven frames can't re-show it.
-                    child:SetTexture(nil)
-                    child:SetAtlas('')
-                    child:SetAlpha(0)
-                elseif child.GetRegions then  -- Recurse into the child to strip its own keyed children.
-                    self:StripTextures(child) -- clear the child's own art
+        local FrameName = object.GetName and object:GetName()
 
-                    -- If the child has a NineSlice, hide its regions too.
-                    if child.NineSlice then
-                        self:StripTextures(child.NineSlice)
-                    end
+        for _, childKey in next, STRIP_CHILD_KEYS do
+            local child = object[childKey] or (FrameName and _G[FrameName .. childKey])
 
-                    -- If the child has a Bg, hide its regions too.
-                    if child.Bg and child.Bg.SetTexture then
-                        child.Bg:SetTexture(nil)
-                        child.Bg:SetAtlas('')
-                        child.Bg:SetAlpha(0)
-                    end
-                end
+            if child and child.StripTextures then
+                -- 'Keyed' never normalizes a arg aka banish, so forward it as-is.
+                self:StripTextures(child, 'Keyed', a, b)
             end
         end
-        return
     end
 
     if not object.GetRegions then return end
 
-    -- When key is a list, turn it into a set so region matching is a single lookup.
-    local keySet
-    if type(key) == 'table' then
-        keySet = {}
-        for _, k in ipairs(key) do keySet[k] = true end
-    end
-
+    ---@cast object Frame
     for _, region in ipairs({ object:GetRegions() }) do
         if region:IsObjectType('Texture') then
-            if stripType == 'Kill' then
-                -- Hide and block re-show, for frames that aggressively re-Show their art.
-                region:Hide()
-                region.Show = region.Hide
-            elseif stripType == 'Layer' then
-                -- Hide a specific draw layer (or any layer in the key list).
-                local layer = region:GetDrawLayer()
-                if keySet and keySet[layer] or layer == key then
-                    region:Hide()
-                    region:SetAlpha(0)
-                end
-            elseif stripType == 'Atlas' then
-                -- Hide a specific atlas texture (or any atlas in the key list).
-                local atlas = region:GetAtlas()
-                if keySet and keySet[atlas] or atlas == key then
-                    region:Hide()
-                end
-            elseif stripType == 'ClearHide' then
-                -- Clear content and force invisible; alpha 0 survives Blizzard
-                -- re-setting atlases on state changes, so the art can't come back.
-                region:SetTexture(nil)
-                region:SetAtlas('')
-                region:SetAlpha(0)
-            elseif stripType == 'Alpha' then
-                -- Only set alpha to 0, leaving the texture/atlas live for state-driven frames.
-                region:SetAlpha(0)
-            else
-                -- Default: clear texture + atlas but leave the region live, so
-                -- state-driven Blizzard frames can re-drive it via SetAtlas.
-                region:SetTexture(nil)
-                region:SetAtlas('')
-            end
+            StripRegion(region, stripType, matcher, b)
         end
     end
 end
 
-local function StripTextures(object, stripType, key)
-    NRSKNUI:StripTextures(object, stripType, key)
+local function StripTextures(object, stripType, a, b)
+    NRSKNUI:StripTextures(object, stripType, a, b)
 end
 
 ---@class PublicBackdropMixin : Frame
