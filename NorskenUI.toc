@@ -12,6 +12,9 @@
 # Load Libraries
 Libs/Init.xml
 
+# Load Locales
+Locales/Locales.xml
+
 # Load Core files
 Core/Core.xml
 
