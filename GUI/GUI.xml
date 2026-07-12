@@ -61,6 +61,7 @@
 
     <!-- GUI QoL Tabs -->
     <Script file="GUITabs\GUI-QoL\GUI-AutomationTab.lua" />
+    <Script file="GUITabs\GUI-QoL\GUI-Tweaks.lua" />
     <Script file="GUITabs\GUI-QoL\GUI-CopyAnything.lua" />
     <Script file="GUITabs\GUI-QoL\GUI-XPBar.lua" />
     <Script file="GUITabs\GUI-QoL\GUI-Durability.lua" />

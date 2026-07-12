@@ -37,6 +37,7 @@ NRSKNUI.Libs = {
     LS = _G.LibStub('LibSpecialization'),
     LRC = _G.LibStub('LibRangeCheck-3.0'),
     AS = _G.LibStub('AceSerializer-3.0'),
+    AL = _G.LibStub('AceLocale-3.0'),
     LD = _G.LibStub('LibDeflate'),
     LDB = _G.LibStub('LibDataBroker-1.1'),
     LDBIcon = _G.LibStub('LibDBIcon-1.0'),
@@ -61,6 +62,8 @@ end
 
 -- Quality of Life Modules
 NRSKNUI.AuctionHouseFilter = NRSKNUI:NewModule('AuctionHouseFilter', 'AceEvent-3.0')
+NRSKNUI.Automation = NRSKNUI:NewModule('Automation', 'AceEvent-3.0')
+NRSKNUI.Tweaks = NRSKNUI:NewModule('Tweaks', 'AceEvent-3.0', 'AceHook-3.0')
 
 -- Class Util Modules
 NRSKNUI.BurningRush = NRSKNUI:NewModule('BurningRush', 'AceEvent-3.0')

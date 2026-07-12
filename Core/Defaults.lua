@@ -810,19 +810,35 @@ local Defaults = {
             },
             Automation = {
                 Enabled = true,
+                -- Global override key for all automation (merchant, role check, quests).
+                OverrideKey = 'Shift',  -- 'Shift' | 'Alt' | 'Ctrl' | 'Cmd'
+                OverrideMode = 'Block', -- 'Block' (hold to skip) | 'Require' (hold to run)
                 SkipCinematics = true,
-                HideTalkingHead = true,
-                HideHelptips = true,
+                AutoHideHelptips = true,
                 AutoSellJunk = true,
                 AutoRepair = true,
                 UseGuildFunds = true,
                 AutoRoleCheck = true,
                 AutoFillDelete = true,
                 AutoLoot = true,
+                FastLoot = true,
+                -- Quest Automation
                 AutoCompleteQuest = false,
-                AutoAcceptQuest = false,
-                AutoVoidcoresGold = false,
+                AutoAcceptRegular = false,
+                AutoAcceptDaily = false,
+                AutoAcceptWeekly = false,
+                AutoAcceptEvent = false,
+                AutoBonusRollQuest = false,
+                AutoBonusRollMode = 'Gold', -- 'Gold' | 'Marl' | 'Crest'
             },
+
+            Tweaks = {
+                Enabled = true,
+                HideTalkingHead = true,
+                HideBossBanner = true,
+                EnterAccept = false,
+            },
+
             CooldownStrings = {
                 Enabled = true,
                 Profiles = {},

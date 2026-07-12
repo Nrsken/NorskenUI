@@ -38,12 +38,12 @@ GUIFrame.SidebarConfig = {
             text = "Class Util",
             defaultExpanded = false,
             items = {
-                { id = "IncarnStacks",     text = NRSKNUI:ColorTextByClass("Guardian Druid: Incarn Stacks", "DRUID") },
-                { id = "ReckonTracker",    text = NRSKNUI:ColorTextByClass("Dev DH: Reckon Tracker", "DEMONHUNTER") },
-                { id = "PetTexts",         text = "Pet Status Texts" },
-                { id = "gateway",          text = "Gateway Alert" },
-                { id = "TotemTracker",     text = "Totem Tracker" },
-                { id = "SpellAlert",       text = "Spell Alert Overlay" },
+                { id = "IncarnStacks",  text = NRSKNUI:ColorTextByClass("Guardian Druid: Incarn Stacks", "DRUID") },
+                { id = "ReckonTracker", text = NRSKNUI:ColorTextByClass("Dev DH: Reckon Tracker", "DEMONHUNTER") },
+                { id = "PetTexts",      text = "Pet Status Texts" },
+                { id = "gateway",       text = "Gateway Alert" },
+                { id = "TotemTracker",  text = "Totem Tracker" },
+                { id = "SpellAlert",    text = "Spell Alert Overlay" },
             }
         },
         {
@@ -55,6 +55,7 @@ GUIFrame.SidebarConfig = {
                 { id = "missingItems",       text = "Missing Items" },
                 { id = "MiscVars",           text = "CVar Browser" },
                 { id = "Automation",         text = "Automation" },
+                { id = "Tweaks",             text = "Tweaks" },
                 { id = "CopyAnything",       text = "Copy Anything" },
                 { id = "CooldownStrings",    text = "CDM Profile Strings" },
                 { id = "XPBar",              text = "XP Bar" },
