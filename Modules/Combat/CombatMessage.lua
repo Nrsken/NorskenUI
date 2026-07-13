@@ -168,6 +168,10 @@ function CM:CreateContainer()
     container:SetFrameLevel(100)
 
     self.container = container
+
+    -- Coalesced one-shot layout, arm with container:ScheduleUpdate(), auto-disarms after firing.
+    container:SetScheduledUpdate(function() self:ArrangeMessages() end)
+
     self:ApplyContainerPosition()
 end
 
@@ -258,6 +262,7 @@ function CM:ArrangeMessages()
         self.container:SetSize(100, 20)
     end
 end
+
 
 function CM:ShowFlashMessage(msgType, customText, customColor)
     if not self.db.Enabled then return end
@@ -414,13 +419,7 @@ function CM:ApplySettings()
             end
         end
 
-        self.arrangeGeneration = (self.arrangeGeneration or 0) + 1
-        local myGeneration = self.arrangeGeneration
-        C_Timer.After(0, function()
-            if self.arrangeGeneration ~= myGeneration then return end
-            self:ArrangeMessages()
-        end)
-
+        self.container:ScheduleUpdate()
         self:CheckNoTarget()
     end
 end
@@ -456,14 +455,7 @@ function CM:UpdatePreview()
             end
         end
     end
-
-    self.arrangeGeneration = (self.arrangeGeneration or 0) + 1
-    local myGeneration = self.arrangeGeneration
-    C_Timer.After(0, function()
-        if self.arrangeGeneration ~= myGeneration then return end
-        if not self.isPreview then return end
-        self:ArrangeMessages()
-    end)
+    self.container:ScheduleUpdate()
 end
 
 function CM:HidePreview()

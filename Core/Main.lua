@@ -94,6 +94,8 @@ function NRSKNUI:OnEnable()
     self:SetupSlashCommands()
     self:SetUIScale()
 
+    --self:TestEnv()
+
     -- Show login message if enabled
     if self.db.profile.Minimap.LoginMessage ~= false then
         self:Print(self:ColorTextByTheme("/nui") .. " to open the configuration window.")
