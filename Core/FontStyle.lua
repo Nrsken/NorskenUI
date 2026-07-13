@@ -398,4 +398,11 @@ do
     }
     NRSKNUI:InjectAPI(CreateFrame('Frame'):CreateFontString(), methods)
     NRSKNUI:InjectAPI(_G.GameFontNormal, methods)
+
+    -- EditBox has SetFontObject too, but it is not a FontString, so it needs its own proxy to get the methods.
+    local editBoxProxy = CreateFrame('EditBox', nil, NRSKNUI.HiddenFrame)
+    editBoxProxy:SetAutoFocus(false)
+    editBoxProxy:ClearFocus()
+    editBoxProxy:Hide()
+    NRSKNUI:InjectAPI(editBoxProxy, methods)
 end
