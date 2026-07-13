@@ -299,11 +299,45 @@ local function SkinTabs(S)
     end
 end
 
+-- Skin the item slots and their popout buttons for the equipment manager.
 local function SkinSlots(S)
     for _, name in ipairs(SLOT_NAMES) do
         local slot = _G['Character' .. name .. 'Slot']
+        local pb = slot.popoutButton
+
+        if slot.verticalFlyout then
+            S:HandleArrowButton(pb, 'down')
+            pb.NUIClosedDir, pb.NUIOpenDir = 'down', 'up'
+            pb:SetPixelPoint('TOP', slot, 'BOTTOM', 0, 3)
+        else
+            S:HandleArrowButton(pb, 'right')
+            pb.NUIClosedDir, pb.NUIOpenDir = 'right', 'left'
+            pb:SetPixelPoint('LEFT', slot, 'RIGHT', -3, 0)
+        end
+
         if slot then S:HandleItemButton(slot) end
     end
+end
+
+-- Hooks for the flyout arrows, so that they can be re-positioned and re-skinned when the flyout opens/closes.
+local flyoutOpenButton
+local function HookFlyoutArrows()
+    local flyout = _G.EquipmentFlyoutFrame
+    if not flyout or flyout.NUIArrowHooked then return end
+    flyout.NUIArrowHooked = true
+
+    flyout:HookScript('OnShow', function(f)
+        flyoutOpenButton = f.button and f.button.popoutButton
+        if flyoutOpenButton then
+            flyoutOpenButton:NUISetArrowDirection(flyoutOpenButton.NUIOpenDir, true)
+        end
+    end)
+    flyout:HookScript('OnHide', function()
+        if flyoutOpenButton then
+            flyoutOpenButton:NUISetArrowDirection(flyoutOpenButton.NUIClosedDir, false)
+        end
+        flyoutOpenButton = nil
+    end)
 end
 
 local function SkinModelScene(S)
@@ -578,6 +612,7 @@ BSKIN:RegisterSkin('Blizzard_UIPanels_Game', 'CharacterFrame', function(S)
     SkinShell(S)
     SkinTabs(S)
     SkinSlots(S)
+    HookFlyoutArrows()
     SkinModelScene(S)
     SkinStatsPane(S)
     SkinSidebarTabs(S)

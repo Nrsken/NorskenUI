@@ -122,7 +122,7 @@ end
 function BSKIN:HandleIcon(icon, createBackdrop)
     if not icon then return end
 
-    NRSKNUI:ApplyZoom(icon, NRSKNUI.GlobalZoom)
+    icon:SetZoom()
 
     if createBackdrop and not icon.backdrop then
         local parent = icon:GetParent()
@@ -139,7 +139,7 @@ function BSKIN:HandleIcon(icon, createBackdrop)
     end
 end
 
--- Buttons
+-- Buttons --
 
 ---Explicit SetTextColor overrides the font object in every state, so the mixin
 ---owns the disabled/hover look. The backdrop is dimmed via alpha rather than
@@ -284,7 +284,7 @@ function BSKIN:HandlePortraitFrame(frame)
     return frame
 end
 
--- Tabs
+-- Tabs --
 
 ---@param selected boolean
 function SkinnedTabMixin:NUISetTabSelected(selected, disabled)
@@ -375,7 +375,7 @@ function BSKIN:HandleTab(tab)
     self:RegisterSkinned(tab)
 end
 
--- Scrollbars / scrollboxes
+-- Scrollbars / scrollboxes --
 
 function SkinnedThumbMixin:NUIUpdateThumbColor()
     if self.NUIActive then
@@ -471,7 +471,7 @@ function BSKIN:HookScrollBoxChildren(scrollBox, skinChild)
     scrollBox:ForEachFrame(skinChild)
 end
 
--- Inputs
+-- Inputs --
 
 ---Skin an EditBox/SearchBox, strips box art (keeps the search icon) and adds a backdrop.
 ---@param editBox NUIEditBox
@@ -693,7 +693,7 @@ function BSKIN:HandleIconBorder(iconBorder, owner)
     end
 end
 
--- Status bars
+-- Status bars --
 
 ---@param colors SkinColors
 function SkinnedStatusBarMixin:NUIUpdateSkinColors(colors)
@@ -837,7 +837,7 @@ function BSKIN:ReskinCollapse(button, isAtlas)
     button.styled = true
 end
 
--- Control buttons
+-- Control buttons --
 
 local CONTROL_BUTTONS = {
     { buttonName = 'zoomInButton',      rotation = 0,   size = 0.5, atlasName = PLUS_ATLAS },
@@ -891,4 +891,52 @@ function BSKIN:HandleControlButtons(frame)
         frame.NUISkinned = true
         hooksecurefunc(frame, 'UpdateLayout', StyleControlButtons)
     end
+end
+
+-- Arrow buttons --
+
+local ARROW_ROTATION = {
+    left  = 0,
+    up    = math_rad(-90),
+    down  = math_rad(90),
+    right = math_rad(180),
+}
+
+---@param button Button
+---@param direction string 'left'|'right'|'up'|'down'
+function BSKIN:HandleArrowButton(button, direction)
+    if not button or button.NUISkinned then return end
+    button.NUISkinned = true
+
+    button:StripTextures()
+
+    local arrow = button:CreateTexture(nil, 'ARTWORK')
+    arrow:SetPoint('CENTER')
+    arrow:SetSize(14, 38)
+    arrow:SetAtlas(ARROW_ATLAS)
+    arrow:SetTexelSnappingBias(0)
+    arrow:SetSnapToPixelGrid(true)
+    arrow:SetDesaturated(true)
+
+    -- Store the arrow texture on the button for later access
+    button.NUIArrow = arrow
+    function button:NUISetArrowDirection(dir, open)
+        self.NUIArrow:SetRotation(ARROW_ROTATION[dir] or 0)
+        if open then
+            self.NUIColorR, self.NUIColorG, self.NUIColorB = BSKIN:GetAccentColor()
+        else
+            self.NUIColorR, self.NUIColorG, self.NUIColorB = 1, 1, 1
+        end
+        self.NUIArrow:SetVertexColor(self.NUIColorR, self.NUIColorG, self.NUIColorB)
+    end
+
+    -- Set the initial direction and color of the arrow.
+    button:NUISetArrowDirection(direction)
+
+    button:HookScript('OnEnter', function()
+        arrow:SetVertexColor(BSKIN:GetAccentColor())
+    end)
+    button:HookScript('OnLeave', function()
+        arrow:SetVertexColor(button.NUIColorR, button.NUIColorG, button.NUIColorB)
+    end)
 end
