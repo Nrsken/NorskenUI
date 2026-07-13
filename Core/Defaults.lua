@@ -952,7 +952,7 @@ local Defaults = {
                 FontEditBoxSize = 12,
 
                 FontTabSize = 11,
-                FontButtonSize = 15,
+                FontButtonSize = 11,
 
                 FontSmallSize = 11,
                 FontMediumSize = 12,
@@ -973,6 +973,7 @@ local Defaults = {
                 General = {
                     BorderColor = { 0, 0, 0, 1 },
                     BackgroundColor = { 0, 0, 0, 0.8 },
+                    WidgetColor = { 0.078, 0.078, 0.078, 1 },
                     PanelColor = { 0.2, 0.2, 0.2, 1 },
                     DisabledColor = { 0, 0, 0, 0.4 },
                     AccentMode = "Theme", -- "Theme" | "Class" | "Custom"

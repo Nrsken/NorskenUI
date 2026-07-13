@@ -190,6 +190,7 @@ function Frame:StyleChildFontStrings(source, getSize, outline, shadow, skip, set
 ---@field ApplyOnUpdate fun(self: Button, throttle: number, callback: fun(self: Button, elapsed: number)) Add a callback to run on the frame's OnUpdate script (multiple callbacks can be added)
 ---@field SetScheduledUpdate fun(self: Button, callback: fun(self: Button), whenVisible?: boolean) Install a coalesced one-shot handler; arm it with ScheduleUpdate
 ---@field ScheduleUpdate fun(self: Button) Arm the SetScheduledUpdate handler to run once next frame; repeated calls coalesce
+---@field RegisterCallback fun(self: table, event: string, callback: fun(btn: any), owner: table)
 local Button
 
 ---Strip textures/atlases in a controlled way. `'Keyed'` recurses keyed children then clears own regions.

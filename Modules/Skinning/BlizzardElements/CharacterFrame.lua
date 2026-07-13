@@ -650,7 +650,7 @@ BSKIN:RegisterSkin('Blizzard_TokenUI', 'CharacterFrame', function(S)
     -- HandleTrimScrollBar's alpha-only thumb treatment is the safe ceiling
     if token.ScrollBar then S:HandleTrimScrollBar(token.ScrollBar) end
     if token.ScrollBox then S:HookScrollBoxChildren(token.ScrollBox, SkinTokenRow) end
-    if token.filterDropdown then S:HandleDropdownButton(token.filterDropdown) end
+    if token.filterDropdown then S:HandleDropdownButton(token.filterDropdown, 'Transparent') end
 
     -- HandleButton here taints currency transfers, just desaturate the button
     local logToggle = token.CurrencyTransferLogToggleButton

@@ -612,22 +612,27 @@ function NRSKNUI:ResolveAnchorFrame(anchorFrameType, parentFrameName)
     return UIParent
 end
 
-local function ResolveAnchorFrame(anchorFrameType, parentFrameName)
-    return NRSKNUI:ResolveAnchorFrame(anchorFrameType, parentFrameName)
-end
-
--- ApplyPosition injected onto the frame widget types, frame:ApplyPosition(self, Config, setParent)
+-- ApplyPosition injected onto the frame widget types.
 local function ApplyPosition(self, Config, setParent)
     if not self or not Config then return end
     local posConfig = Config.Position
     if not posConfig then return end
 
-    local parent = ResolveAnchorFrame(Config.anchorFrameType, Config.ParentFrame)
+    local parent
+    if Config.anchorFrameType == 'SCREEN' or Config.anchorFrameType == 'UIPARENT' then
+        parent = UIParent
+    elseif Config.anchorFrameType == 'SELECTFRAME' and Config.ParentFrame then
+        local frame = _G[Config.ParentFrame]
+        parent = frame or UIParent
+    end
+    parent = parent or UIParent
 
-    if setParent then self:SetParent(parent) end
+    if setParent then
+        self:SetParent(parent)
+    end
 
     self:ClearAllPoints()
-    self:SetPoint(posConfig.AnchorFrom or 'CENTER', parent, posConfig.AnchorTo or 'CENTER', posConfig.XOffset or 0, posConfig.YOffset or 0)
+    self:SetPixelPoint(posConfig.AnchorFrom or 'CENTER', parent, posConfig.AnchorTo or 'CENTER', posConfig.XOffset or 0, posConfig.YOffset or 0)
     self:SetFrameStrata(Config.Strata or 'MEDIUM')
 end
 

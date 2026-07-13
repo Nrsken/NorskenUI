@@ -139,6 +139,65 @@ function BSKIN:HandleIcon(icon, createBackdrop)
     end
 end
 
+-- Arrow buttons --
+
+local ARROW_ROTATION = {
+    left  = 0,
+    up    = math_rad(-90),
+    down  = math_rad(90),
+    right = math_rad(180),
+}
+
+local function CreateArrowTexture(button, direction, sizeX, sizeY, point, relativeTo, relativePoint, xOffset, yOffset)
+    if button.NUIArrow then return end
+
+    local arrow = button:CreateTexture(nil, 'ARTWORK')
+    arrow:SetPixelPoint(point or 'CENTER', relativeTo or button, relativePoint or 'CENTER', xOffset or 0, yOffset or 0)
+    arrow:SetPixelSize(sizeX, sizeY)
+    arrow:SetAtlas(ARROW_ATLAS)
+    arrow:SetPixelSnap()
+    arrow:SetDesaturated(true)
+
+    -- Store the arrow texture on the button for later access
+    button.NUIArrow = arrow
+    function button:NUISetArrowDirection(dir, open)
+        self.NUIArrow:SetRotation(ARROW_ROTATION[dir] or 0)
+        if open then
+            self.NUIColorR, self.NUIColorG, self.NUIColorB = BSKIN:GetAccentColor()
+        else
+            self.NUIColorR, self.NUIColorG, self.NUIColorB = 1, 1, 1
+        end
+        -- Keep the hover color while the cursor is over the button so closing the
+        -- menu mid-hover doesn't slam the arrow back to its resting color.
+        if self:IsMouseOver() then
+            self.NUIArrow:SetVertexColor(BSKIN:GetAccentColor())
+        else
+            self.NUIArrow:SetVertexColor(self.NUIColorR, self.NUIColorG, self.NUIColorB)
+        end
+    end
+
+    -- Set the initial direction and color of the arrow.
+    button:NUISetArrowDirection(direction)
+
+    button:HookScript('OnEnter', function()
+        arrow:SetVertexColor(BSKIN:GetAccentColor())
+    end)
+    button:HookScript('OnLeave', function()
+        arrow:SetVertexColor(button.NUIColorR, button.NUIColorG, button.NUIColorB)
+    end)
+end
+
+---@param button Button
+---@param direction string 'left'|'right'|'up'|'down'
+function BSKIN:HandleArrowButton(button, direction)
+    if not button or button.NUISkinned then return end
+    button.NUISkinned = true
+
+    local sizeX, sizeY = 14, 38
+    button:StripTextures()
+    CreateArrowTexture(button, direction, sizeX, sizeY)
+end
+
 -- Buttons --
 
 ---Explicit SetTextColor overrides the font object in every state, so the mixin
@@ -535,23 +594,48 @@ function BSKIN:HandleCheckBox(check)
 end
 
 ---Skin a modern dropdown button (WowStyle1DropdownTemplate/DropdownButton).
----Hides the box art via alpha (survives state-driven atlas swaps), keeps the arrow.
+---Hides the box art via alpha (survives state-driven atlas swaps) and replaces
+---the native arrow with ours, flipping it left/down as the menu opens/closes.
 ---@param dropdown Button
-function BSKIN:HandleDropdownButton(dropdown)
+---@param template string? 'Transparent' halves the background alpha
+function BSKIN:HandleDropdownButton(dropdown, template)
     if not dropdown or dropdown.NUISkinned then return end
     dropdown.NUISkinned = true
 
+    dropdown.Arrow:StripTextures('Alpha')
+
+    local sizeX, sizeY = 22, 22
+    CreateArrowTexture(dropdown, 'left', sizeX, sizeY, 'RIGHT', dropdown, 'RIGHT', -2, 0)
+
     if dropdown.Background then dropdown.Background:SetAlpha(0) end
-    self:CreatePanelBackdrop(dropdown)
+    self:CreatePanelBackdrop(dropdown, template)
 
     ---@cast dropdown Button & SkinnedButtonMixin
     Mixin(dropdown, SkinnedButtonMixin)
 
-    dropdown:HookScript('OnEnter', dropdown.NUIOnEnter)
-    dropdown:HookScript('OnLeave', dropdown.NUIOnLeave)
+    local function UpdateText()
+        dropdown:NUIUpdateState(dropdown.NUIMenuOpen or dropdown:IsMouseOver())
+    end
+
+    if dropdown.OnButtonStateChanged then
+        hooksecurefunc(dropdown, 'OnButtonStateChanged', UpdateText)
+    end
+
+    dropdown:RegisterCallback(DropdownButtonMixin.Event.OnMenuOpen, function(btn)
+        btn.NUIMenuOpen = true
+        btn:NUISetArrowDirection('down', true)
+        UpdateText()
+    end, dropdown)
+    dropdown:RegisterCallback(DropdownButtonMixin.Event.OnMenuClose, function(btn)
+        btn.NUIMenuOpen = false
+        btn:NUISetArrowDirection('left', false)
+        UpdateText()
+    end, dropdown)
+
+    UpdateText()
 end
 
--- Item buttons and quality borders
+-- Item buttons and quality borders --
 
 ---Forward Blizzard IconBorder quality colors onto our borders.
 ---r/g/b may be secret values: passed straight through, never compared or branched on.
@@ -891,52 +975,4 @@ function BSKIN:HandleControlButtons(frame)
         frame.NUISkinned = true
         hooksecurefunc(frame, 'UpdateLayout', StyleControlButtons)
     end
-end
-
--- Arrow buttons --
-
-local ARROW_ROTATION = {
-    left  = 0,
-    up    = math_rad(-90),
-    down  = math_rad(90),
-    right = math_rad(180),
-}
-
----@param button Button
----@param direction string 'left'|'right'|'up'|'down'
-function BSKIN:HandleArrowButton(button, direction)
-    if not button or button.NUISkinned then return end
-    button.NUISkinned = true
-
-    button:StripTextures()
-
-    local arrow = button:CreateTexture(nil, 'ARTWORK')
-    arrow:SetPoint('CENTER')
-    arrow:SetSize(14, 38)
-    arrow:SetAtlas(ARROW_ATLAS)
-    arrow:SetTexelSnappingBias(0)
-    arrow:SetSnapToPixelGrid(true)
-    arrow:SetDesaturated(true)
-
-    -- Store the arrow texture on the button for later access
-    button.NUIArrow = arrow
-    function button:NUISetArrowDirection(dir, open)
-        self.NUIArrow:SetRotation(ARROW_ROTATION[dir] or 0)
-        if open then
-            self.NUIColorR, self.NUIColorG, self.NUIColorB = BSKIN:GetAccentColor()
-        else
-            self.NUIColorR, self.NUIColorG, self.NUIColorB = 1, 1, 1
-        end
-        self.NUIArrow:SetVertexColor(self.NUIColorR, self.NUIColorG, self.NUIColorB)
-    end
-
-    -- Set the initial direction and color of the arrow.
-    button:NUISetArrowDirection(direction)
-
-    button:HookScript('OnEnter', function()
-        arrow:SetVertexColor(BSKIN:GetAccentColor())
-    end)
-    button:HookScript('OnLeave', function()
-        arrow:SetVertexColor(button.NUIColorR, button.NUIColorG, button.NUIColorB)
-    end)
 end
