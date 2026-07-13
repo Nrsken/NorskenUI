@@ -484,10 +484,38 @@ end
 
 ---Helper that can be used by ApplySettings function to update coloring with db values.
 ---@param db table
-function PublicBorderMixin:UpdateBackdropFromDB(db)
+function PublicBorderMixin:UpdateBorderFromDB(db)
     if self.Borders then
         for _, edge in pairs(self.Borders) do
             edge:SetColorTexture(db.BorderColor[1], db.BorderColor[2], db.BorderColor[3], db.BorderColor[4])
+        end
+    end
+end
+
+---@param parent Frame
+function PublicBorderMixin:SetBorderParent(parent)
+    if self.Borders then
+        for _, edge in pairs(self.Borders) do
+            edge:SetParent(parent)
+        end
+    end
+end
+
+---@param layer string
+---@param sublevel number
+function PublicBorderMixin:SetBorderLayer(layer, sublevel)
+    if self.Borders then
+        for _, edge in pairs(self.Borders) do
+            edge:SetDrawLayer(layer, sublevel)
+        end
+    end
+end
+
+---@param shown boolean
+function PublicBorderMixin:SetBorderShown(shown)
+    if self.Borders then
+        for _, edge in pairs(self.Borders) do
+            edge:SetShown(shown)
         end
     end
 end

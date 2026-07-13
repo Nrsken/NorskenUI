@@ -949,6 +949,8 @@ local Defaults = {
                     OffsetY = -1,
                 },
 
+                FontEditBoxSize = 12,
+
                 FontTabSize = 11,
                 FontButtonSize = 15,
 

@@ -98,6 +98,9 @@
 ---@field SetFontStyle fun(self: Font, source: any, size: number?, outline: string?, shadow: table?, skip: boolean?, setOwner: boolean?)
 ---@field SetFontJustify fun(self: Font, source: table|string, parent: Frame?, offsetX: number?, offsetY: number?, skip: boolean?)
 
+---@class EditBox ---@diagnostic disable-line: class-shadows-builtin
+---@field SetFontStyle fun(self: EditBox, source: any, size: number?, outline: string?, shadow: table?, skip: boolean?, setOwner: boolean?)
+
 -- NorskenUI injected widget API. Full docs: Docs/API.md
 -- Each method links to its section via the [Documentation] line so the editor hover
 -- shows a clickable link, like the built-in WoW API annotations.
@@ -115,6 +118,9 @@
 ---@field SetPixelOutside fun(self: Frame, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor outset from a frame's corners (defaults 1px)
 ---@field SetPixelSnap fun(self: Frame) Disable Blizzard's grid snapping / texel bias on this object
 ---@field AddBorders fun(self: Frame) Add a 1px border to all 4 edges (or custom size/color)
+---@field SetBorderLayer fun(self: Frame, layer: string, sublevel?: number) Set the draw layer of all 4 edges (e.g. 'ARTWORK', 'OVERLAY')
+---@field SetBorderParent fun(self: Frame, parent: Frame, sublevel?: number) Reparent all 4 edges to a new parent (e.g. the frame's texture)
+---@field SetBorderShown fun(self: Frame, shown: boolean) Show/hide all 4 edges
 local Frame
 
 ---Strip textures/atlases in a controlled way. `'Keyed'` recurses keyed children then clears own regions.
@@ -174,6 +180,9 @@ function Frame:StyleChildFontStrings(source, getSize, outline, shadow, skip, set
 ---@field SetPixelSnap fun(self: Button) Disable Blizzard's grid snapping / texel bias on this object
 ---@field StyleButton fun(self: Button, noHover?: boolean, noPushed?: boolean, noChecked?: boolean) Swap Blizzard highlight/pushed/checked art for flat additive overlays
 ---@field AddBorders fun(self: Button) Add a 1px border to all 4 edges (or custom size/color)
+---@field SetBorderLayer fun(self: Button, layer: string, sublevel?: number) Set the draw layer of all 4 edges (e.g. 'ARTWORK', 'OVERLAY')
+---@field SetBorderParent fun(self: Button, parent: Frame) Reparent all 4 edges to a new parent (e.g. the frame's texture)
+---@field SetBorderShown fun(self: Button, shown: boolean) Show/hide all 4 edges
 local Button
 
 ---Strip textures/atlases in a controlled way. `'Keyed'` recurses keyed children then clears own regions.
@@ -221,6 +230,9 @@ function Button:ApplyPosition(Config, setParent) end
 ---@field SetPixelOutside fun(self: StatusBar, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor outset from a frame's corners (defaults 1px)
 ---@field SetPixelSnap fun(self: StatusBar) Disable Blizzard's grid snapping / texel bias on this object
 ---@field AddBorders fun(self: StatusBar) Add a 1px border to all 4 edges (or custom size/color)
+---@field SetBorderLayer fun(self: StatusBar, layer: string, sublevel?: number) Set the draw layer of all 4 edges (e.g. 'ARTWORK', 'OVERLAY')
+---@field SetBorderParent fun(self: StatusBar, parent: Frame) Reparent all 4 edges to a new parent (e.g. the frame's texture)
+---@field SetBorderShown fun(self: StatusBar, shown: boolean) Show/hide all 4 edges
 local StatusBar
 
 ---Strip textures/atlases in a controlled way. `'Keyed'` recurses keyed children then clears own regions.

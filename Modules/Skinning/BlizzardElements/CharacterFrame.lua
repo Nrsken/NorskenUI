@@ -1,6 +1,5 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
-
 local BSKIN = NRSKNUI.BlizzSkin
 
 local _G = _G
@@ -17,14 +16,6 @@ local PaperDollFrame_UpdateStats = PaperDollFrame_UpdateStats
 local PaperDollItemSlotButton_Update = PaperDollItemSlotButton_Update
 local PaperDollFrame_UpdateSidebarTabs = PaperDollFrame_UpdateSidebarTabs
 
---[[
-Note to self with taint rules for this file:
-CharacterFrame is UIPanel-managed and it's slot buttons feed secure equip paths.
-Never SetPoint/SetParent/Show/Hide the frame, its Insets or slot buttons textures, alpha and our own backdrop children only.
-All fields we add are NUI-prefixed.
-Hook bodies must stay visual-only since they can fire in combat.
-]]
-
 local SLOT_NAMES = {
     'Head', 'Neck', 'Shoulder', 'Back', 'Chest', 'Shirt', 'Tabard',
     'Wrist', 'Hands', 'Waist', 'Legs', 'Feet', 'Finger0', 'Finger1', 'Trinket0',
@@ -36,6 +27,9 @@ local FLYOUT_POS = {
     [0xFFFFFFFE] = true, -- IGNORESLOT
     [0xFFFFFFFD] = true, -- UNIGNORESLOT
 }
+
+-- FileID of the "+ New Set" (Character-Plus) icon; this row never gets an icon border.
+local NEW_SET_ICON = 514607
 
 local EXPAND_BUTTON_ATLAS = 'UI-QuestTrackerButton-Secondary-Expand'
 local COLLAPSE_BUTTON_ATLAS = 'UI-QuestTrackerButton-Secondary-Collapse'
@@ -99,43 +93,52 @@ end
 
 ---@param row NUIListRow
 local function SkinEquipSetRow(row)
-    if row.NUISkinned or not row.icon then return end
-    row.NUISkinned = true
+    if not row.icon then return end
 
-    for _, key in ipairs({ 'BgTop', 'BgMiddle', 'BgBottom' }) do
-        local tex = row[key]
-        if tex then
-            tex:SetTexture(nil)
-            tex:SetAlpha(0)
+    if not row.NUISkinned then
+        row.NUISkinned = true
+
+        for _, key in ipairs({ 'BgTop', 'BgMiddle', 'BgBottom' }) do
+            local tex = row[key]
+            if tex then
+                tex:SetTexture(nil)
+                tex:SetAlpha(0)
+            end
         end
-    end
 
-    -- Add border to the spec icons, but not the new set + texture icon.
-    if row.icon:GetTexture() ~= 514607 then
+        -- Build the icon border once and keep it on the row. Rows are pooled and
+        -- recycled between gear sets and the "+ New Set" button, so its visibility
+        -- is toggled per update below instead of baked in at skin time.
         local frame = CreateFrame("Frame", nil, row)
         frame:SetPixelPoint('TOPLEFT', row.icon, 'TOPLEFT', 0, 0)
         frame:SetPixelPoint('BOTTOMRIGHT', row.icon, 'BOTTOMRIGHT', 0, 0)
-        NRSKNUI:AddBorders(frame, nil, row.icon:GetParent(), nil, "ARTWORK", 7)
-    end
+        frame:AddBorders()
+        frame:SetBorderLayer('ARTWORK', 7)
+        frame:SetBorderParent(row.icon:GetParent())
+        row.NUIIconBorder = frame
 
-    for i = 1, row:GetNumRegions() do
-        local db = BSKIN:GetDB()
-        local region = select(i, row:GetRegions())
-        if region and region:GetObjectType() == 'FontString' then
-            region:SetFontStyle(db, db.FontMediumSize)
+        for i = 1, row:GetNumRegions() do
+            local db = BSKIN:GetDB()
+            local region = select(i, row:GetRegions())
+            if region and region:GetObjectType() == 'FontString' then
+                region:SetFontStyle(db, db.FontMediumSize)
+            end
+        end
+
+        row.icon:SetZoom()
+
+        if row.HighlightBar then
+            row.HighlightBar:SetColorTexture(unpack(NRSKNUI.HighlightColor))
+            row.HighlightBar:SetDrawLayer('BACKGROUND')
+        end
+        if row.SelectedBar then
+            row.SelectedBar:SetColorTexture(unpack(NRSKNUI.SelectedColor))
+            row.SelectedBar:SetDrawLayer('BACKGROUND')
         end
     end
 
-    row.icon:SetZoom()
-
-    if row.HighlightBar then
-        row.HighlightBar:SetColorTexture(unpack(NRSKNUI.HighlightColor))
-        row.HighlightBar:SetDrawLayer('BACKGROUND')
-    end
-    if row.SelectedBar then
-        row.SelectedBar:SetColorTexture(unpack(NRSKNUI.SelectedColor))
-        row.SelectedBar:SetDrawLayer('BACKGROUND')
-    end
+    -- Border on the spec icons, but never on the new set "+" icon.
+    row.NUIIconBorder:SetBorderShown(row.icon:GetTexture() ~= NEW_SET_ICON)
 end
 
 ---@param row NUIListRow
@@ -181,12 +184,85 @@ local function SetupCustomPortrait()
     local frame = CreateFrame('Frame', nil, PaperDollFrame)
     frame:SetPixelSize(45, 45)
     frame:SetPixelPoint('TOPLEFT', PaperDollFrame, 'TOPLEFT', 7, -7)
-    NRSKNUI:AddBorders(frame)
+    frame:AddBorders()
 
     frame.icon = frame:CreateTexture(nil, "ARTWORK")
     frame.icon:SetAllPoints(frame)
     frame.icon:SetTexture(icon)
     frame.icon:SetZoom()
+end
+
+-- Current search text, lowercased. Shared between the edit box handler and the data provider filter hook below.
+local titleSearchText = ''
+local function FilterTitleProvider()
+    if titleSearchText == '' then return end
+
+    local scrollBox = PaperDollFrame.TitleManagerPane.ScrollBox
+    local dataProvider = scrollBox and scrollBox:GetDataProvider()
+    if not dataProvider then return end
+
+    dataProvider:RemoveAllByPredicate(function(elementData)
+        local title = elementData.playerTitle
+        return title.id ~= -1 and not title.name:lower():find(titleSearchText, 1, true)
+    end)
+end
+
+-- Title search feature.
+local function TitleSearch(S)
+    local scrollBox = PaperDollFrame.TitleManagerPane.ScrollBox
+    if not scrollBox then return end
+
+    local scrollParent = scrollBox:GetParent()
+
+    scrollBox:SetPixelPoint('TOPLEFT', scrollParent, 'TOPLEFT', 4, -24)
+    scrollBox:SetPixelPoint('BOTTOMRIGHT', scrollParent, 'BOTTOMRIGHT', 4, 1)
+
+    local frame = CreateFrame('Frame', nil, scrollParent)
+    frame:SetPixelSize(scrollBox:GetWidth(), 24)
+    frame:SetPixelPoint('TOPLEFT', scrollParent, 'TOPLEFT', 4, 0)
+    frame:CreateBackdrop()
+    frame:SetBackgroundColor(0, 0, 0, 0.5)
+
+    local db = BSKIN:GetDB()
+    local r, g, b, a = BSKIN:GetAccentColor()
+
+    local editBox = CreateFrame("EditBox", nil, frame)
+    editBox:SetPoint("TOPLEFT", frame, "TOPLEFT", 6, -4)
+    editBox:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -6, 4)
+    editBox:SetFontStyle(db, db.FontEditBoxSize)
+    editBox:SetTextColor(r, g, b, a)
+    editBox:SetAutoFocus(false)
+    frame.editBox = editBox
+
+    -- Placeholder shown whenever the box is empty.
+    local hint = editBox:CreateFontString(nil, 'ARTWORK')
+    hint:SetFontStyle(db, db.FontEditBoxSize)
+    hint:SetTextColor(0.6, 0.6, 0.6, 0.7)
+    hint:SetPoint('LEFT', editBox, 'LEFT', 0, 0)
+    hint:SetText('Search Titles...')
+
+    -- Small helper to reset the search.
+    local function ClearSearch()
+        editBox:ClearFocus()
+        editBox:SetText('')
+        titleSearchText = ''
+        hint:SetShown(true)
+        PaperDollTitlesPane_Update()
+    end
+
+    editBox:SetScript('OnEscapePressed', ClearSearch)
+    editBox:SetScript('OnEditFocusGained', function(self) editBox:SetTextColor(r, g, b, a) end)
+    editBox:SetScript('OnEditFocusLost', function(self) editBox:SetTextColor(0.6, 0.6, 0.6, 0.7) end)
+    editBox:SetScript('OnTextChanged', function(self)
+        local text = self:GetText() or ''
+        hint:SetShown(text == '')
+        titleSearchText = text:lower()
+        -- Re-run Blizzard's populate, our hook re-applies the filter afterwards.
+        PaperDollTitlesPane_UpdateScrollBox()
+    end)
+
+    hooksecurefunc('PaperDollTitlesPane_UpdateScrollBox', FilterTitleProvider)
+    hooksecurefunc('PlayerTitleButton_OnClick', ClearSearch)
 end
 
 local function SkinShell(S)
@@ -505,6 +581,7 @@ BSKIN:RegisterSkin('Blizzard_UIPanels_Game', 'CharacterFrame', function(S)
     SkinModelScene(S)
     SkinStatsPane(S)
     SkinSidebarTabs(S)
+    TitleSearch(S)
 
     -- Tabs are created lazily
     if PaperDollFrame_UpdateSidebarTabs then
