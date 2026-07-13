@@ -23,4 +23,5 @@
     <Script file="Colors.lua" />
     <Script file="Constants.lua" />
     <Script file="LoadConditions.lua" />
+    <Script file="Testenv.lua" />
 </Ui>
