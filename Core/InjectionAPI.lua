@@ -657,6 +657,26 @@ local function StyleChildFontStrings(frame, source, getSize, outline, shadow, sk
     end
 end
 
+-- OnUpdate Utility --
+
+---@param frame Frame
+---@param throttle number
+---@param callback fun(frame: Frame)
+local function ApplyOnUpdate(frame, throttle, callback)
+    if throttle and callback then
+        local total = 0
+        frame:SetScript('OnUpdate', function(_, elapsed)
+            total = total + elapsed
+            if total > throttle then
+                total = 0
+                callback(frame)
+            end
+        end)
+    else
+        frame:SetScript('OnUpdate', nil)
+    end
+end
+
 do
     -- Inject methods in this file.
     local injectMethods = {
@@ -676,6 +696,7 @@ do
         SetPixelOutside = SetPixelOutside,
         SetPixelSnap = DisablePixelSnap,
         StyleButton = StyleButton,
+        ApplyOnUpdate = ApplyOnUpdate,
     }
 
     -- Small wrapper to call the NRSKNUI:InjectAPI method, so we don't have to pass the methods

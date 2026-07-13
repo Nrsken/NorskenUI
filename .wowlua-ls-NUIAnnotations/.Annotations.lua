@@ -121,6 +121,7 @@
 ---@field SetBorderLayer fun(self: Frame, layer: string, sublevel?: number) Set the draw layer of all 4 edges (e.g. 'ARTWORK', 'OVERLAY')
 ---@field SetBorderParent fun(self: Frame, parent: Frame, sublevel?: number) Reparent all 4 edges to a new parent (e.g. the frame's texture)
 ---@field SetBorderShown fun(self: Frame, shown: boolean) Show/hide all 4 edges
+---@field ApplyOnUpdate fun(self: Frame, throttle: number, callback: fun(self: Frame, elapsed: number)) Add a callback to run on the frame's OnUpdate script (multiple callbacks can be added)
 local Frame
 
 ---Strip textures/atlases in a controlled way. `'Keyed'` recurses keyed children then clears own regions.
@@ -183,6 +184,7 @@ function Frame:StyleChildFontStrings(source, getSize, outline, shadow, skip, set
 ---@field SetBorderLayer fun(self: Button, layer: string, sublevel?: number) Set the draw layer of all 4 edges (e.g. 'ARTWORK', 'OVERLAY')
 ---@field SetBorderParent fun(self: Button, parent: Frame) Reparent all 4 edges to a new parent (e.g. the frame's texture)
 ---@field SetBorderShown fun(self: Button, shown: boolean) Show/hide all 4 edges
+---@field ApplyOnUpdate fun(self: Button, throttle: number, callback: fun(self: Button, elapsed: number)) Add a callback to run on the frame's OnUpdate script (multiple callbacks can be added)
 local Button
 
 ---Strip textures/atlases in a controlled way. `'Keyed'` recurses keyed children then clears own regions.
@@ -233,6 +235,7 @@ function Button:ApplyPosition(Config, setParent) end
 ---@field SetBorderLayer fun(self: StatusBar, layer: string, sublevel?: number) Set the draw layer of all 4 edges (e.g. 'ARTWORK', 'OVERLAY')
 ---@field SetBorderParent fun(self: StatusBar, parent: Frame) Reparent all 4 edges to a new parent (e.g. the frame's texture)
 ---@field SetBorderShown fun(self: StatusBar, shown: boolean) Show/hide all 4 edges
+---@field ApplyOnUpdate fun(self: StatusBar, throttle: number, callback: fun(self: StatusBar, elapsed: number)) Add a callback to run on the frame's OnUpdate script (multiple callbacks can be added)
 local StatusBar
 
 ---Strip textures/atlases in a controlled way. `'Keyed'` recurses keyed children then clears own regions.
