@@ -51,7 +51,7 @@ end
 ---Turn off Blizzard's own grid snapping / texel bias so our pixel math is authoritative.
 ---Works on textures directly and on status bars via their fill texture. Runs once per object.
 ---@param object Frame|Texture
-local function DisablePixelSnap(object)
+local function SetPixelSnap(object)
     if not object or object.NUIPixelSnapDisabled then return end
     if issecrettable(object) or object:IsForbidden() then return end
 
@@ -140,7 +140,7 @@ local function AnchorPixelBox(object, anchor, xOffset, yOffset, anchor2, outside
 
     -- Need to pcall ClearAllPoints because some Blizzard frames throw an error if you try to clear points on a frame that has no points set yet.
     if pcall(object.GetPoint, object) then object:ClearAllPoints() end
-    DisablePixelSnap(object)
+    SetPixelSnap(object)
     object:SetPoint('TOPLEFT', anchor, 'TOPLEFT', x, -y)
     object:SetPoint('BOTTOMRIGHT', anchor2 or anchor, 'BOTTOMRIGHT', -x, y)
 end
@@ -533,7 +533,7 @@ local function AddBorders(frame)
     TB:SetHeight(1)
     TB:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
     TB:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
-    DisablePixelSnap(TB)
+    SetPixelSnap(TB)
     insert(frame.Borders, TB)
 
     -- Left border
@@ -541,7 +541,7 @@ local function AddBorders(frame)
     LB:SetWidth(1)
     LB:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
     LB:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 0, 0)
-    DisablePixelSnap(LB)
+    SetPixelSnap(LB)
     insert(frame.Borders, LB)
 
     -- Bottom border
@@ -549,7 +549,7 @@ local function AddBorders(frame)
     BB:SetHeight(1)
     BB:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 0, 0)
     BB:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
-    DisablePixelSnap(BB)
+    SetPixelSnap(BB)
     insert(frame.Borders, BB)
 
     -- Right border
@@ -557,7 +557,7 @@ local function AddBorders(frame)
     RB:SetWidth(1)
     RB:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
     RB:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
-    DisablePixelSnap(RB)
+    SetPixelSnap(RB)
     insert(frame.Borders, RB)
 
     frame:SetBorderColor(0, 0, 0, 1)
@@ -727,7 +727,7 @@ do
         SetPixelPoint = SetPixelPoint,
         SetPixelInside = SetPixelInside,
         SetPixelOutside = SetPixelOutside,
-        SetPixelSnap = DisablePixelSnap,
+        SetPixelSnap = SetPixelSnap,
         StyleButton = StyleButton,
         ApplyOnUpdate = ApplyOnUpdate,
         SetScheduledUpdate = SetScheduledUpdate,
