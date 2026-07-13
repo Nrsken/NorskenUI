@@ -97,6 +97,7 @@ local function SkinEquipSetRow(row)
 
     if not row.NUISkinned then
         row.NUISkinned = true
+        local db = BSKIN:GetDB()
 
         for _, key in ipairs({ 'BgTop', 'BgMiddle', 'BgBottom' }) do
             local tex = row[key]
@@ -118,7 +119,6 @@ local function SkinEquipSetRow(row)
         row.NUIIconBorder = frame
 
         for i = 1, row:GetNumRegions() do
-            local db = BSKIN:GetDB()
             local region = select(i, row:GetRegions())
             if region and region:GetObjectType() == 'FontString' then
                 region:SetFontStyle(db, db.FontMediumSize)
@@ -320,7 +320,7 @@ local function SkinModelScene(S)
     local overlay = _G.CharacterModelFrameBackgroundOverlay
     if overlay then overlay:Hide() end
 
-    local controlFrame = _G.CharacterModelScene.ControlFrame
+    local controlFrame = scene.ControlFrame
     S:HandleControlButtons(controlFrame)
 end
 
