@@ -146,9 +146,9 @@ function DC:CreateBarFrame()
     frame.spark:SetBlendMode("ADD")
     frame.spark:SetTexture([[Interface\CastingBar\UI-CastingBar-Spark]])
 
-    frame.nameText = NRSKNUI:CreateText(frame.castBar, "OVERLAY")
-    frame.timeText = NRSKNUI:CreateText(frame.castBar, "OVERLAY")
-    frame.targetText = NRSKNUI:CreateText(frame.castBar, "OVERLAY")
+    frame.nameText = frame.castBar:CreateFontString(nil, "OVERLAY")
+    frame.timeText = frame.castBar:CreateFontString(nil, "OVERLAY")
+    frame.targetText = frame.castBar:CreateFontString(nil, "OVERLAY")
 
     frame.raidIcon = frame:CreateTexture(nil, "OVERLAY")
     frame.raidIcon:SetTexture("Interface/TargetingFrame/UI-RaidTargetingIcons")
@@ -178,7 +178,8 @@ function DC:ConfigureBar(bar)
 
     local borderColor = db.BorderColor
     if not bar.borders then
-        NRSKNUI:AddBorders(bar, borderColor)
+        bar:AddBorders()
+        bar:SetBorderColor(borderColor[1], borderColor[2], borderColor[3], borderColor[4])
     else
         bar:SetBorderColor(borderColor[1], borderColor[2], borderColor[3], borderColor[4])
     end
@@ -187,12 +188,13 @@ function DC:ConfigureBar(bar)
         bar.iconFrame:SetSize(height, height)
         bar.iconFrame:Show()
         bar.iconFrame:SetBackdropColor(0, 0, 0, 0.8)
-        if not bar.iconFrame.borders then
-            NRSKNUI:AddBorders(bar.iconFrame, borderColor)
+        if not bar.iconFrame:HasBorder() then
+            bar.iconFrame:AddBorders()
+            bar.iconFrame:SetBorderColor(borderColor[1], borderColor[2], borderColor[3], borderColor[4])
         else
             bar.iconFrame:SetBorderColor(borderColor[1], borderColor[2], borderColor[3], borderColor[4])
         end
-        NRSKNUI:ApplyZoom(bar.icon, NRSKNUI.GlobalZoom)
+        bar.icon:SetZoom()
     else
         bar.iconFrame:Hide()
     end
@@ -217,18 +219,15 @@ function DC:ConfigureBar(bar)
     bar.nameText:ClearAllPoints()
     bar.nameText:SetPoint("LEFT", bar.castBar, "LEFT", 4, 0)
     bar.nameText:SetJustifyH(textDb.NameAlign)
-    NRSKNUI:SetTextFont(bar.nameText, NRSKNUI:GetEffectiveFont(barDb), barDb.FontSize, barDb.FontOutline)
+    bar.nameText:SetFontStyle(barDb)
     bar.nameText:SetTextColor(tc[1], tc[2], tc[3], tc[4])
 
     bar.timeText:ClearAllPoints()
     bar.timeText:SetPoint("RIGHT", bar.castBar, "RIGHT", -4, 0)
     bar.timeText:SetJustifyH(textDb.TimeAlign)
-    NRSKNUI:SetTextFont(bar.timeText, NRSKNUI:GetEffectiveFont(barDb), barDb.FontSize, barDb.FontOutline)
+    bar.timeText:SetFontStyle(barDb)
     bar.timeText:SetTextColor(tc[1], tc[2], tc[3], tc[4])
     bar.timeText:SetShown(textDb.ShowTime)
-    if bar.timeText.softOutline then
-        bar.timeText.softOutline:SetShown(textDb.ShowTime)
-    end
 
     local targetDb = db.Target
     bar.targetText:ClearAllPoints()
@@ -239,7 +238,7 @@ function DC:ConfigureBar(bar)
         bar.targetText:SetPoint("RIGHT", bar.timeText, "LEFT", -4, 0)
         bar.targetText:SetJustifyH("RIGHT")
     end
-    NRSKNUI:SetTextFont(bar.targetText, NRSKNUI:GetEffectiveFont(barDb), barDb.FontSize, barDb.FontOutline)
+    bar.targetText:SetFontStyle(barDb)
     bar.targetText:SetTextColor(tc[1], tc[2], tc[3], tc[4])
     bar.targetText:Hide()
 

@@ -56,7 +56,7 @@ GUIFrame:RegisterPanel('BlizzardElementsTab', function(container)
 
         renderItem = function(btn, item, isSelected)
             btn._icon:SetTexture('Interface\\Icons\\INV_Misc_Note_01')
-            NRSKNUI:ApplyZoom(btn._icon, NRSKNUI.GlobalZoom)
+            btn._icon:SetZoom()
 
             btn._label:SetShadowColor(0, 0, 0, 0)
             btn._label:SetText(item.name)

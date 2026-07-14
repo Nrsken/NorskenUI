@@ -186,7 +186,7 @@ local function CreateQualityIcon(parent, size)
 
     local iconTexture = container:CreateTexture(nil, "ARTWORK")
     iconTexture:SetAllPoints()
-    NRSKNUI:ApplyZoom(iconTexture, NRSKNUI.GlobalZoom)
+    iconTexture:SetZoom()
     container.icon = iconTexture
 
     local qualitySize = math.max(size * 0.7, 10)
@@ -211,10 +211,10 @@ local function CreateTextLine()
     local textFrame = CreateFrame("Frame", nil, containerFrame)
     textFrame:SetPixelSize(300, db.FontSize + 4)
 
-    local text = NRSKNUI:CreateText(textFrame, "OVERLAY")
+    local text = textFrame:CreateFontString(nil, "OVERLAY")
     text:SetPixelPoint("CENTER", textFrame, "CENTER", 0, 0)
     text:SetPixelSnap()
-    NRSKNUI:SetTextFont(text, NRSKNUI:GetEffectiveFont(db), db.FontSize, db.FontOutline)
+    text:SetFontStyle(db)
     text:SetJustifyH("CENTER")
 
     textFrame.text = text
@@ -777,7 +777,7 @@ function MITEMS:ApplySettings()
 
     for _, textFrame in ipairs(textPool) do
         local db = self.db.Display
-        NRSKNUI:SetTextFont(textFrame.text, NRSKNUI:GetEffectiveFont(db), db.FontSize, db.FontOutline)
+        textFrame.text:SetFontStyle(db)
         textFrame:SetPixelHeight(db.FontSize + 4)
     end
 

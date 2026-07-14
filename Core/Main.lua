@@ -31,12 +31,14 @@ function NRSKNUI:OnInitialize()
     -- so that switch does not trigger a full module refresh during init)
     local function OnProfileRefresh()
         self:ValidateProfileFonts()
+        self:ApplyBlizzardFonts(true)
         self.ProfileManager:RefreshAllModules()
     end
     self.db.RegisterCallback(self, "OnProfileChanged", OnProfileRefresh)
     self.db.RegisterCallback(self, "OnProfileCopied", OnProfileRefresh)
     self.db.RegisterCallback(self, "OnProfileReset", OnProfileRefresh)
 
+    self:ApplyGlobalFontVars()
     self:UpdateMult()
 end
 

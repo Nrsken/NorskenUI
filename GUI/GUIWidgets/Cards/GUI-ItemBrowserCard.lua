@@ -75,7 +75,7 @@ function GUIFrame:CreateItemBrowserCard(scrollChild, yOffset, config)
         iconTexture:SetPoint("BOTTOMRIGHT", -1, 1)
         local itemIcon = C_Item.GetItemIconByID(currentItemID)
         iconTexture:SetTexture(itemIcon or 134400)
-        NRSKNUI:ApplyZoom(iconTexture, NRSKNUI.GlobalZoom)
+        iconTexture:SetZoom()
 
         local iconBorder = CreateFrame("Frame", nil, iconFrame, "BackdropTemplate")
         iconBorder:SetAllPoints()

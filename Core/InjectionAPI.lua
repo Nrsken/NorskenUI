@@ -520,6 +520,15 @@ function PublicBorderMixin:SetBorderShown(shown)
     end
 end
 
+---@param parent Frame
+function PublicBorderMixin:SetBorderParent(parent)
+    if self.Borders then
+        for _, edge in pairs(self.Borders) do
+            edge:SetParent(parent)
+        end
+    end
+end
+
 ---@param frame Frame
 local function AddBorders(frame)
     if not frame then return end
@@ -561,6 +570,10 @@ local function AddBorders(frame)
     insert(frame.Borders, RB)
 
     frame:SetBorderColor(0, 0, 0, 1)
+end
+
+local function HasBorder(frame)
+    return not not frame.Borders
 end
 
 -- Button utility --
@@ -721,6 +734,7 @@ do
         CreateBackdrop = CreateBackdrop,
         AddBorders = AddBorders,
         HasBackdrop = HasBackdrop,
+        HasBorder = HasBorder,
         StripTextures = StripTextures,
         ApplyPosition = ApplyPosition,
         Banish = Banish,

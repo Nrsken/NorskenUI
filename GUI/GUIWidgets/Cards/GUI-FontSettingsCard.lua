@@ -218,8 +218,6 @@ function GUIFrame:CreateFontSettingsCard(scrollChild, yOffset, config)
     table_insert(widgets, fontDropdown)
     fontDropdownRef = fontDropdown
 
-    -- Render the canonical outline vocabulary (single source of truth in FontStyle.lua).
-    -- A value may be a string or a list of equivalents; the first entry is canonical.
     local outlineOptions = {}
     for _, option in ipairs(NRSKNUI.FontOutlines) do
         local value = option.value
@@ -227,8 +225,6 @@ function GUIFrame:CreateFontSettingsCard(scrollChild, yOffset, config)
         table_insert(outlineOptions, { key = value, text = option.label })
     end
     if includeSoftOutline then
-        -- Legacy pseudo-outline, not part of the font-object vocabulary; only offered
-        -- to modules that still drive it through the old styling path.
         table_insert(outlineOptions, { key = "SOFTOUTLINE", text = "Soft" })
     end
 

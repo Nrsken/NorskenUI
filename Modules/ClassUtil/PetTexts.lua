@@ -93,7 +93,7 @@ function PET:CreatePetTexts()
     local frame = CreateFrame("Frame", "NRSKNUI_PetTextsFrame", UIParent)
     frame:SetSize(200, 50)
 
-    local text = NRSKNUI:CreateText(frame, "OVERLAY")
+    local text = frame:CreateFontString(nil, "OVERLAY")
     text:SetTextColor(1, 0.82, 0, 1)
     text:SetPoint("CENTER", frame, "CENTER", 0, 0)
 
@@ -202,8 +202,8 @@ function PET:ShowPreview(state)
     if frameJustCreated then
         self:CreatePetTexts()
         self:RegWithEditMode()
-        NRSKNUI:ApplyFramePosition(self.frame, self.db.Position, self.db)
-        NRSKNUI:SetTextFont(self.text, NRSKNUI:GetEffectiveFont(self.db), self.db.FontSize, self.db.FontOutline, self.db.FontShadow)
+        self.frame:ApplyPosition(self.db)
+        self.text:SetFontStyle(self.db)
     end
 
     self.isPreview = true
@@ -242,8 +242,8 @@ function PET:ApplySettings()
 
     if not self.frame then return end
 
-    NRSKNUI:ApplyFramePosition(self.frame, self.db.Position, self.db)
-    NRSKNUI:SetTextFont(self.text, NRSKNUI:GetEffectiveFont(self.db), self.db.FontSize, self.db.FontOutline, self.db.FontShadow)
+    self.frame:ApplyPosition(self.db)
+    self.text:SetFontStyle(self.db)
 
     if self.isPreview then
         self:ShowPreview(self.previewState)

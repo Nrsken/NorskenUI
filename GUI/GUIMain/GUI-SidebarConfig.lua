@@ -89,7 +89,6 @@ GUIFrame.SidebarConfig = {
             items = {
                 { id = "UICleanup",           text = "General UI Cleanup" },
                 { id = "BlizzardMouseover",   text = "Blizzard Mouseover" },
-                { id = "messages",            text = "Blizzard Texts" },
                 { id = "BlizzardElementsTab", text = "Blizzard Elements" },
                 { id = "BlizzardRM",          text = "Raid Manager" },
                 { id = "UIWidgets",           text = "UI Widgets" },

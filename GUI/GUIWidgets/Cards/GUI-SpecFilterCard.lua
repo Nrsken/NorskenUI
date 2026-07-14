@@ -75,7 +75,7 @@ local function CreateSpecIcon(parent, spec, classColor, isSelected, onClick)
     icon:SetSize(ICON_SIZE - 2, ICON_SIZE - 2)
     icon:SetPoint("CENTER", btn, "CENTER", 0, 0)
     icon:SetTexture(spec.icon)
-    NRSKNUI:ApplyZoom(icon, NRSKNUI.GlobalZoom)
+    icon:SetZoom()
 
     local function UpdateVisual(selected)
         if selected then

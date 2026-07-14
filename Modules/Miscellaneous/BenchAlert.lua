@@ -99,7 +99,11 @@ end
 
 function BA:CreateAlertFrame()
     if self.alertFrame then return end
-    local frame = NRSKNUI:CreateTextFrame(UIParent, 300, 40, { name = "NRSKNUI_BenchAlert" })
+    local frame = CreateFrame("Frame", "NRSKNUI_BenchAlertFrame", UIParent)
+    frame:SetSize(300, 50)
+    frame.text = frame:CreateFontString(nil, "OVERLAY")
+    frame.text:SetFontStyle(self.db)
+
     frame:Hide()
     self.alertFrame = frame
     return frame
@@ -107,10 +111,9 @@ end
 
 function BA:ApplySettings()
     if not self.alertFrame then return end
-    NRSKNUI:ApplyFramePosition(self.alertFrame, self.db.Position, self.db)
+    self.alertFrame:ApplyPosition(self.db)
     self.alertFrame.text:SetTextColor(unpack(self.db.Color))
-    NRSKNUI:SetTextFont(self.alertFrame.text, NRSKNUI:GetEffectiveFont(self.db), self.db.FontSize, self.db.FontOutline,
-        self.db.FontShadow)
+    self.alertFrame.text:SetFontStyle(self.db, self.db.FontSize)
 
     if self.db.Strata then self.alertFrame:SetFrameStrata(self.db.Strata) end
 end
@@ -129,7 +132,7 @@ function BA:ShowPreview()
                 self.db.Position.AnchorTo = pos.AnchorTo
                 self.db.Position.XOffset = pos.XOffset
                 self.db.Position.YOffset = pos.YOffset
-                NRSKNUI:ApplyFramePosition(self.alertFrame, self.db.Position, self.db)
+                self.alertFrame:ApplyPosition(self.db)
             end,
             guiPath = "benchalert",
         })

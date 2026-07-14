@@ -106,7 +106,7 @@ function GUIFrame:CreateSpellBrowserCard(scrollChild, yOffset, config)
             iconTexture:SetPoint("TOPLEFT", 1, -1)
             iconTexture:SetPoint("BOTTOMRIGHT", -1, 1)
             iconTexture:SetTexture(spell.icon or 134400)
-            NRSKNUI:ApplyZoom(iconTexture, NRSKNUI.GlobalZoom)
+            iconTexture:SetZoom()
 
             local iconBorder = CreateFrame("Frame", nil, iconFrame, "BackdropTemplate")
             iconBorder:SetAllPoints()

@@ -46,11 +46,11 @@ local function SetupCustomPortrait()
     local frame = CreateFrame('Frame', nil, InspectFrame)
     frame:SetSize(45, 45)
     frame:SetPoint('TOPLEFT', InspectFrame, 'TOPLEFT', 7, -7)
-    NRSKNUI:AddBorders(frame)
+    frame:AddBorders()
 
     frame.icon = frame:CreateTexture(nil, "ARTWORK")
     frame.icon:SetAllPoints(frame)
-    NRSKNUI:ApplyZoom(frame.icon, NRSKNUI.GlobalZoom)
+    frame.icon:SetZoom()
     BSKIN.CustomPortraitFrame = frame
 end
 

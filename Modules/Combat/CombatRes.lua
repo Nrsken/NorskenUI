@@ -88,17 +88,21 @@ function CR:CreateFrame()
     frame.content = CreateFrame("Frame", nil, frame)
     frame.content:SetSize(1, 24)
 
-    frame.timerText = NRSKNUI:CreateText(frame.content, "OVERLAY")
+    frame.timerText = frame.content:CreateFontString(nil, "OVERLAY")
+    frame.timerText:SetFontStyle(db)
     frame.timerText:SetTextColor(1, 1, 1, 1)
 
-    frame.separator = NRSKNUI:CreateText(frame.content, "OVERLAY")
+    frame.separator = frame.content:CreateFontString(nil, "OVERLAY")
+    frame.separator:SetFontStyle(db)
     frame.separator:SetText(db.Separator)
     frame.separator:SetTextColor(1, 1, 1, 1)
 
-    frame.charge = NRSKNUI:CreateText(frame.content, "OVERLAY")
+    frame.charge = frame.content:CreateFontString(nil, "OVERLAY")
+    frame.charge:SetFontStyle(db)
     frame.charge:SetTextColor(1, 1, 1, 1)
 
-    frame.CRText = NRSKNUI:CreateText(frame.content, "OVERLAY")
+    frame.CRText = frame.content:CreateFontString(nil, "OVERLAY")
+    frame.CRText:SetFontStyle(db)
     frame.CRText:SetText("CR:")
     frame.CRText:SetTextColor(1, 1, 1, 1)
 
@@ -114,16 +118,16 @@ function CR:ApplyTextSettings()
 
     self.frame.separator:SetText(db.Separator)
     self.frame.separator:SetTextColor(sc[1], sc[2], sc[3], sc[4])
-    NRSKNUI:SetTextFont(self.frame.separator, NRSKNUI:GetEffectiveFont(self.db), db.FontSize, db.FontOutline, db.FontShadow)
+    self.frame.separator:SetFontStyle(db)
 
-    NRSKNUI:SetTextFont(self.frame.charge, NRSKNUI:GetEffectiveFont(self.db), db.FontSize, db.FontOutline, db.FontShadow)
+    self.frame.charge:SetFontStyle(db)
 
     self.frame.CRText:SetText(db.SeparatorCharges)
     self.frame.CRText:SetTextColor(sc[1], sc[2], sc[3], sc[4])
-    NRSKNUI:SetTextFont(self.frame.CRText, NRSKNUI:GetEffectiveFont(self.db), db.FontSize, db.FontOutline, db.FontShadow)
+    self.frame.CRText:SetFontStyle(db)
 
     self.frame.timerText:SetTextColor(tc[1], tc[2], tc[3], tc[4])
-    NRSKNUI:SetTextFont(self.frame.timerText, NRSKNUI:GetEffectiveFont(self.db), db.FontSize, db.FontOutline, db.FontShadow)
+    self.frame.timerText:SetFontStyle(db)
 
     self:UpdateAnchors()
     self:ApplyBackdropSettings()

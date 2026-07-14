@@ -553,7 +553,9 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
     backdrop._borderFrame = borderFrame
 
     -- Add borders using helper with textures on borderFrame, stored on backdrop
-    NRSKNUI:AddBorders(backdrop, borderColor, borderFrame)
+    backdrop:AddBorders()
+    backdrop:SetBorderColor(unpack(borderColor))
+    backdrop:SetBorderParent(borderFrame)
     backdrop._barName = barName
 
     -- Resize and re-anchor the Blizzard button with raw integer size
@@ -667,7 +669,7 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
     end
 
     -- Icon zoom stuff bcs blizz border uggy
-    NRSKNUI:ApplyZoom(button.icon, NRSKNUI.GlobalZoom)
+    button.icon:SetZoom()
 
     -- Create range overlay, red tint when out of range
     local rangeOverlay = button:CreateTexture(nil, "OVERLAY", nil, 1)

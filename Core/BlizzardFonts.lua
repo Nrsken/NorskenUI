@@ -3,12 +3,47 @@ local NRSKNUI = select(2, ...)
 
 local _G = _G
 local pairs = pairs
-local type = type
+local tostring = tostring
+local max = math.max
+local CreateFrame = CreateFrame
 
 local vertexEnum = Enum and Enum.FontStringScaleAnimationMode and Enum.FontStringScaleAnimationMode.Vertex
 local fontSizeEnum = Enum and Enum.FontStringScaleAnimationMode and Enum.FontStringScaleAnimationMode.FontSize
 
+local originalData = {}
+
+-- Fonts that are pinned to their original size and cannot be resized by the Families/Overrides system.
+local pinnedSizes = {
+    GameFontNormalHuge = true, -- RaidWarning animates GameFontNormalHuge via SetTextHeight and we can't access RAID_NOTICE_MIN/MAX_HEIGHT.
+}
+
+-- Special fonts that can be styled independently of the master blizzardFonts settings.
+NRSKNUI.SpecialFonts = {
+    { key = 'ZoneText',     label = 'Zone Text',     objects = { 'ZoneTextFont', 'WorldMapTextFont' } },
+    { key = 'SubZoneText',  label = 'Sub Zone Text', objects = { 'SubZoneTextFont' } },
+    { key = 'PvPZoneText',  label = 'PvP Zone Text', objects = { 'PVPArenaTextString', 'PVPInfoTextString' } },
+    { key = 'ErrorText',    label = 'Error Text',    objects = { 'ErrorFont' } },
+    { key = 'ActionStatus', label = 'Action Status', objects = { 'ActionStatus.Text' } },
+    { key = 'ChatBubbles',  label = 'Chat Bubbles',  objects = { 'ChatBubbleFont' } },
+    {
+        key = 'Nameplates',
+        label = 'Nameplates',
+        objects = {
+            'SystemFont_NamePlate',
+            'SystemFont_NamePlateFixed',
+            'SystemFont_LargeNamePlate',
+            'SystemFont_LargeNamePlateFixed',
+            'SystemFont_NamePlateCastBar',
+        },
+    },
+    { key = 'CombatText', label = 'Combat Text',    objects = { 'CombatTextFont' }, lodAddon = 'Blizzard_CombatText' },
+    { key = 'CombatFont', label = 'Combat Font',    globalVar = 'DAMAGE_TEXT_FONT', relog = true },
+    { key = 'NameFont',   label = 'Unit Name Font', globalVar = 'UNIT_NAME_FONT',   relog = true },
+}
+
 ---Assign a family name to a font size, we use this to categorize fonts and apply consistent sizing.
+---@param size number the font size to categorize
+---@return string family the family name for this size
 local function FamilyOf(size)
     if size <= 9 then
         return 'tiny'
@@ -25,26 +60,16 @@ local function FamilyOf(size)
     end
 end
 
----Normalize a SetFont outline string to a valid token, or empty string if none.
-local function NormalizeFlags(outline)
-    if type(outline) ~= 'string' then
-        return ''
-    end
-    local flags = outline:upper():gsub('%s+', '')
-    if flags == 'NONE' or flags:find('SLUG') then
-        return ''
-    end
-    return NRSKNUI.ValidOutlines[flags] and flags or ''
-end
-
-local originalData = {}
+---Store the original font data for a Blizzard font object so we can restore it later.
+---@param obj table font object to capture
+---@return table|nil the captured font data, or nil if the object is unrealized or tainted
 local function StoreOriginalFontData(obj)
     local existing = originalData[obj]
-    if existing then return existing end
+    if existing then return existing end -- Already captured
 
     local path, size, flags = obj:GetFont()
-    if not path or not size then return end             -- font object not yet realized
-    if not NRSKNUI:CanAccessValue(size) then return end -- tainted by another addon, comparing it in FamilyOf would error
+    if not path or not size then return end             -- Font object not yet realized
+    if not NRSKNUI:CanAccessValue(size) then return end -- Tainted by another addon, comparing it in FamilyOf would error
 
     -- Capture the native shadow too so hiding it stays fully reversible
     local sr, sg, sb, sa = obj:GetShadowColor()
@@ -61,83 +86,106 @@ local function StoreOriginalFontData(obj)
     return existing
 end
 
-local function ResolveSize(name, originalSize, family, cfg)
+---Resolve the final font size, outline flags, slug, and shadow visibility for a font object.
+---@param name string the font object name, used to look up overrides
+---@param orig table the original font data captured for this object
+---@param cfg table the blizzardFonts config table
+---@param outlineMode boolean whether to apply the configured outline (false keeps the object outline-free)
+---@param noSlug boolean whether to hard-block slug for this object, for fonts that read poorly with it
+---@param spec table? Specials db entry, FontFace/Size/Outline/HideShadow override the globals
+---@return number size the resolved font size to apply
+---@return string flags the resolved outline flags to apply
+---@return boolean slug whether to force slug on
+---@return boolean hideShadow whether to hide the shadow on this font object
+local function ResolveStyle(name, orig, cfg, outlineMode, noSlug, spec)
     local override = cfg.Overrides and cfg.Overrides[name]
-    if override and override.size then
-        return override.size
+
+    -- Resolve size
+    local size
+    if spec and spec.Size then
+        size = spec.Size
+    elseif override and override.size then
+        size = override.size
+    elseif name and pinnedSizes[name] then
+        size = orig.size
+    else
+        local offset = cfg.Families and cfg.Families[orig.family]
+        size = max(orig.size + (offset or 0), 1) -- Clamp so that size wont be <= 0
     end
 
-    local offset = cfg.Families and cfg.Families[family]
-    return originalSize + (offset or 0)
-end
-
-local function ResolveOutline(name, cfg)
-    local override = cfg.Overrides and cfg.Overrides[name]
-    if override and override.outline then
-        return override.outline
+    -- Resolve outline and slug
+    local outlineValue, slugPref
+    if spec and spec.Outline then
+        outlineValue, slugPref = spec.Outline, false
+    else
+        outlineValue = outlineMode and ((override and override.outline) or cfg.Outline) or nil
+        if noSlug then
+            slugPref = false
+        elseif override and override.slug ~= nil then -- explicit true forces on, false forces off
+            slugPref = override.slug
+        else
+            slugPref = cfg.Slug
+        end
     end
-    return cfg.Outline
-end
+    local flags, slug = NRSKNUI:ResolveFlags(outlineValue, slugPref)
 
-local function ResolveSlug(name, cfg)
-    local override = cfg.Overrides and cfg.Overrides[name]
-    if override and override.slug ~= nil then -- explicit true forces on, false forces off
-        return override.slug
+    -- Resolve shadow visibility
+    local hideShadow
+    if spec and spec.HideShadow ~= nil then
+        hideShadow = spec.HideShadow
+    elseif override and override.hideShadow ~= nil then -- explicit true forces hidden, false forces the native shadow back
+        hideShadow = override.hideShadow
+    else
+        hideShadow = cfg.HideShadow
     end
-    return cfg.Slug
+
+    return size, flags, slug, hideShadow
 end
 
--- Returns true when the native shadow should be hidden for this object.
-local function ResolveHideShadow(name, cfg)
-    local override = cfg.Overrides and cfg.Overrides[name]
-    if override and override.hideShadow ~= nil then -- explicit true forces hidden, false forces the native shadow back
-        return override.hideShadow
+---Put an object back exactly the way we found it, including scale-animation mode.
+---@param obj table font object to restore
+local function RestoreOriginal(obj)
+    local orig = originalData[obj]
+    if not orig then return end
+
+    obj:SetFont(orig.path, orig.size, orig.flags)
+
+    local s = orig.shadow
+    obj:SetShadowColor(s[1], s[2], s[3], s[4])
+    obj:SetShadowOffset(s[5], s[6])
+
+    -- Slug fonts were switched to vertex scaling, put them back to the default.
+    if obj.SetScaleAnimationMode and fontSizeEnum then
+        obj:SetScaleAnimationMode(fontSizeEnum)
     end
-    return cfg.HideShadow
 end
 
--- SLUG rendering silently overrides MONOCHROME/THICKOUTLINE, so need to check if it's allowed.
-local function SlugAllowed(outline)
-    return not (outline:find('MONOCHROME') or outline:find('THICKOUTLINE'))
-end
-
--- Combine an outline token and slug into a SetFont flag string.
-local function BuildFlags(outline, slug)
-    if slug and outline ~= '' then
-        return 'SLUG,' .. outline
-    end
-    if slug then
-        return 'SLUG'
-    end
-    return outline
-end
-
+---Set the font for a Blizzard font object, applying the configured outline, slug, and shadow settings.
 ---@param obj table font object to style
 ---@param outlineMode boolean? apply the configured outline (false keeps the object outline-free)
 ---@param noSlug boolean? hard-block slug for this object, for fonts that read poorly with it
-function NRSKNUI:SetFont(obj, outlineMode, noSlug)
+---@param spec table? Specials db entry, FontFace/Size/Outline/HideShadow override the globals
+function NRSKNUI:SetFont(obj, outlineMode, noSlug, spec)
     if not obj then return end
     local font = self.db.profile.globalMedia.profileFont.FontFace
     local blizDB = self.db.profile.globalMedia.blizzardFonts
 
     local orig = StoreOriginalFontData(obj)
     if not orig then return end -- unrealized or tainted, skip so we never index a nil capture
-    local path = self:ResolveFontPath(font)
+    local path = self:ResolveFontPath(spec and spec.FontFace or font)
 
     local name = obj:GetName()
-    local size = ResolveSize(name, orig.size, orig.family, blizDB)
-    local outline = outlineMode and NormalizeFlags(ResolveOutline(name, blizDB)) or ''
+    local size, flags, slug, hideShadow = ResolveStyle(name, orig, blizDB, outlineMode, noSlug, spec)
 
-    local slug = not noSlug and ResolveSlug(name, blizDB) and SlugAllowed(outline)
     -- Slug needs vertex-based scale animation, everything else font-size based.
     if obj.SetScaleAnimationMode and vertexEnum then
         obj:SetScaleAnimationMode(slug and vertexEnum or fontSizeEnum)
     end
 
-    obj:SetFont(path, size, BuildFlags(outline, slug))
+    obj:SetFont(path, size, flags)
 
-    -- Hide the shadow, or restore the captured native one so toggling off reverts without a reload.
-    if ResolveHideShadow(name, blizDB) then
+    -- Hide the shadow or restore the captured native one so toggling off reverts without a reload.
+    if hideShadow then
         obj:SetShadowColor(0, 0, 0, 0)
         obj:SetShadowOffset(0, 0)
     else
@@ -147,23 +195,27 @@ function NRSKNUI:SetFont(obj, outlineMode, noSlug)
     end
 end
 
-function NRSKNUI:ApplyBlizzardFonts()
+local lastSignature
+---@param force boolean? force a full re-apply even if nothing changed.
+function NRSKNUI:ApplyBlizzardFonts(force)
     local db = self.db.profile.globalMedia
 
     if not db.blizzardFonts.Enabled then
-        -- Restore anything we previously touched to its captured Blizzard font.
-        for obj, orig in pairs(originalData) do
-            obj:SetFont(orig.path, orig.size, orig.flags)
-            local s = orig.shadow
-            obj:SetShadowColor(s[1], s[2], s[3], s[4])
-            obj:SetShadowOffset(s[5], s[6])
-            -- Slug fonts were switched to vertex scaling, put them back to the default.
-            if obj.SetScaleAnimationMode and fontSizeEnum then
-                obj:SetScaleAnimationMode(fontSizeEnum)
+        if force or lastSignature ~= 'disabled' then
+            lastSignature = 'disabled'
+            for obj in pairs(originalData) do
+                RestoreOriginal(obj)
             end
         end
+        self:ApplySpecialFonts()
         return
     end
+
+    -- Skip the full pass when nothing that shapes it changed.
+    local cfg = db.blizzardFonts
+    local sig = self:ResolveFontPath(db.profileFont.FontFace) .. '|' .. tostring(cfg.Outline) .. '|' .. tostring(cfg.Slug) .. '|' .. tostring(cfg.HideShadow)
+    if not force and sig == lastSignature then return end
+    lastSignature = sig
 
     -- Number Fonts --
     self:SetFont(_G.Number12Font, true)             -- Crafting order duration dropdown text
@@ -178,10 +230,6 @@ function NRSKNUI:ApplyBlizzardFonts()
     self:SetFont(_G.NumberFontNormal, true)         -- Stacks, timewarped badge e.g
     self:SetFont(_G.NumberFontNormalLarge, true)    -- Large number text
     self:SetFont(_G.NumberFontSmallWhiteLeft, true) -- Some journey text
-
-    -- Map Fonts --
-    self:SetFont(_G.WorldMapTextFont, true) -- World map zone names, quest titles, etc.
-    self:SetFont(_G.SubZoneTextFont, true)  -- Subzone text, e.g. "The Great Sea"
 
     -- Game Fonts --
     self:SetFont(_G.Game10Font_o1, true)            -- Some number text?
@@ -202,7 +250,7 @@ function NRSKNUI:ApplyBlizzardFonts()
     self:SetFont(_G.Game72Font, true, true)         -- 'What's new' frame big text, looks bad with slug, too big.
 
     -- Fancy Fonts --
-    self:SetFont(_G.Fancy16Font, true)  --Some artifact text maybe?
+    self:SetFont(_G.Fancy16Font, true)  -- Some artifact text maybe?
     self:SetFont(_G.Fancy24Font, true)  -- Artifact collection frame, weapon name
     self:SetFont(_G.Fancy27Font, false) -- Catchup experience text
 
@@ -266,7 +314,7 @@ function NRSKNUI:ApplyBlizzardFonts()
     self:SetFont(_G.AchievementCriteriaFont, false)    -- Achievement criteria text
     self:SetFont(_G.AchievementDateFont, true)         -- Achievement date text
 
-    -- Quest fonts, outline looks scuffed so skip --
+    -- Quest Fonts, outline looks scuffed so skip --
     self:SetFont(_G.QuestMapRewardsFont, false)    -- Quest log rewards item names
     self:SetFont(_G.QuestTitleFont, false)         -- Quest log quest titles
     self:SetFont(_G.QuestFont, false)              -- Quest log quest objectives
@@ -287,10 +335,84 @@ function NRSKNUI:ApplyBlizzardFonts()
     self:SetFont(_G.UserScaledFontGameHighlight, true)      -- 'Zone' text
     self:SetFont(_G.FriendsFont_UserText, true)
 
-    -- Blizzard options fonts --
+    -- Blizzard Options Fonts --
     self:SetFont(_G.UserScaledFontHeader, true) -- 'Example' text
     self:SetFont(_G.UserScaledFontBody, true)   -- 'This is a preview of the text size...' text
 
-    -- Chat fonts --
+    -- Chat Fonts --
     self:SetFont(_G.ChatFontNormal, true)
+
+    -- Special Fonts --
+    self:ApplySpecialFonts()
+end
+
+---Look up a global object by name, supporting dot notation for nested objects.
+---@param name string the global object name to look up, e.g. 'ActionStatus.Text'
+---@return table|nil the object, or nil if not found
+local function LookupObject(name)
+    local dot = name:find('.', 1, true)
+    if dot then
+        local parent = _G[name:sub(1, dot - 1)]
+        return parent and parent[name:sub(dot + 1)]
+    end
+    return _G[name]
+end
+
+---Apply the global font variables for special fonts.
+function NRSKNUI:ApplyGlobalFontVars()
+    local media = self.db.profile.globalMedia
+    local specials = media.blizzardFonts.Specials
+    if not specials then return end
+
+    for i = 1, #self.SpecialFonts do
+        local entry = self.SpecialFonts[i]
+
+        if entry.globalVar then
+            local sdb = specials[entry.key]
+
+            if sdb and sdb.Enabled then
+                _G[entry.globalVar] = self:ResolveFontPath(sdb.FontFace or media.profileFont.FontFace)
+            end
+        end
+    end
+end
+
+---Apply the Specials settings to the objects they control, skipping any that are not enabled.
+function NRSKNUI:ApplySpecialFonts()
+    local specials = self.db.profile.globalMedia.blizzardFonts.Specials
+    if not specials then return end
+
+    self:ApplyGlobalFontVars()
+
+    for i = 1, #self.SpecialFonts do
+        local entry = self.SpecialFonts[i]
+        local sdb = specials[entry.key]
+
+        if sdb and entry.objects then
+            for j = 1, #entry.objects do
+                local obj = LookupObject(entry.objects[j])
+
+                if obj then
+                    if sdb.Enabled then
+                        self:SetFont(obj, true, nil, sdb)
+                    else
+                        RestoreOriginal(obj)
+                    end
+                end
+            end
+        end
+    end
+end
+
+do
+    -- CombatTextFont only exists once the LoD Blizzard_CombatText addon loads.
+    local watcher = CreateFrame('Frame')
+    watcher:RegisterEvent('ADDON_LOADED')
+    watcher:SetScript('OnEvent', function(frame, _, addon)
+        if addon ~= 'Blizzard_CombatText' then return end
+        frame:UnregisterAllEvents()
+        if NRSKNUI.db then
+            NRSKNUI:ApplySpecialFonts()
+        end
+    end)
 end

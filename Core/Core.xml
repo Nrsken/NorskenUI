@@ -7,8 +7,8 @@
     <Script file="PixelPerfect.lua" />
     <Script file="InjectionAPI.lua" />
     <Script file="Secret.lua" />
-    <Script file="Media.lua" />
-    <Script file="FontStyle.lua" />
+    <Script file="MediaCore.lua" />
+    <Script file="FontCore.lua" />
     <Script file="BlizzardFonts.lua" />
     <Script file="FontFactory.lua" />
     <Script file="AddonTheme.lua" />

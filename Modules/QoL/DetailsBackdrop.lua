@@ -82,8 +82,11 @@ function DBG:CreateBackdrop(index)
     local detailsBase = _G["DetailsBaseFrame" .. index]
     local detailsWindow = _G["Details_WindowFrame" .. index]
 
-    local backdrop = NRSKNUI:CreateStandardBackdrop(UIParent, "NRSKNUI_DetailsBg" .. index, 1, bgDB.BackgroundColor,
-        bgDB.BorderColor)
+    local backdrop = CreateFrame("Frame", "NRSKNUI_DetailsBg" .. index, UIParent)
+    backdrop:CreateBackdrop()
+    backdrop:SetBackgroundColor(unpack(bgDB.BackgroundColor))
+    backdrop:SetBorderColor(unpack(bgDB.BorderColor))
+    backdrop:SetFrameLevel(1)
 
     local detailsBars = bgDB.detailsBars
     if bgDB.autoSize and detailsBase and detailsWindow then

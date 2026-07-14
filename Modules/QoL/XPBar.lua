@@ -1,8 +1,8 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
-
----@class XPBar: AceModule, AceEvent-3.0
-local XPBar = NRSKNUI:NewModule("XPBar", "AceEvent-3.0")
+---@class XPBar
+local XPBar = NRSKNUI:GetModule('XPBar')
+local EM = NRSKNUI.EditMode
 
 local CreateFrame = CreateFrame
 local UnitLevel = UnitLevel
@@ -20,11 +20,11 @@ XPBar.isPreview = false
 
 local function FormatNumber(value)
     if value >= 1e9 then
-        return string_format("%.2fb", value / 1e9)
+        return string_format('%.2fb', value / 1e9)
     elseif value >= 1e6 then
-        return string_format("%.1fm", value / 1e6)
+        return string_format('%.1fm', value / 1e6)
     elseif value >= 1e3 then
-        return string_format("%.1fk", value / 1e3)
+        return string_format('%.1fk', value / 1e3)
     end
     return tostring(value)
 end
@@ -38,93 +38,47 @@ function XPBar:OnInitialize()
     self:SetEnabledState(false)
 end
 
-function XPBar:HideBlizzardXPBar()
-    if not MainStatusTrackingBarContainer then return end
-    NRSKNUI:Banish(MainStatusTrackingBarContainer)
-    MainStatusTrackingBarContainer:UnregisterAllEvents()
-    MainStatusTrackingBarContainer:Hide()
-    MainStatusTrackingBarContainer:SetAlpha(0)
-end
-
-function XPBar:OnEnable()
-    if not self.db.Enabled then return end
-
-    self:CreateBar()
-    self:RegisterEvents()
-    self:Update()
-
-    C_Timer.After(1, function()
-        self:ApplySettings()
-        self:HideBlizzardXPBar()
-    end)
-
-    NRSKNUI.EditMode:RegisterElement({
-        key = "XPBar",
-        displayName = "XP Bar",
-        frame = self.bar,
-        getPosition = function() return self.db.Position end,
-        setPosition = function(pos)
-            self.db.Position.AnchorFrom = pos.AnchorFrom
-            self.db.Position.AnchorTo = pos.AnchorTo
-            self.db.Position.XOffset = pos.XOffset
-            self.db.Position.YOffset = pos.YOffset
-            NRSKNUI:ApplyFramePosition(self.bar, self.db.Position, self.db)
-        end,
-        guiPath = "XPBar",
-    })
-end
-
-function XPBar:OnDisable()
-    if self.bar then self.bar:Hide() end
-    self:UnregisterAllEvents()
-end
-
 function XPBar:CreateBar()
     if self.bar then return end
 
     local statusbar = NRSKNUI:GetStatusbarPath(NRSKNUI:GetEffectiveStatusBar(self.db))
 
-    local bar = CreateFrame("StatusBar", "NRSKNUI_XPBar", UIParent)
+    local bar = CreateFrame('StatusBar', 'NRSKNUI_XPBar', UIParent)
     bar:SetStatusBarTexture(statusbar)
-    bar:GetStatusBarTexture():SetDrawLayer("ARTWORK")
-    bar:Hide()
+    bar:GetStatusBarTexture():SetDrawLayer('ARTWORK')
+    bar:AddBorders()
 
-    local tick = bar:CreateTexture(nil, "OVERLAY", nil, 1)
-    tick:SetWidth(1)
-    tick:SetColorTexture(0, 0, 0, 1)
-    tick:SetPoint("CENTER", bar:GetStatusBarTexture(), "RIGHT", 0, 0)
-    tick:Hide()
-    bar.tick = tick
+    bar.tick = bar:CreateTexture(nil, 'OVERLAY', nil, 1)
+    bar.tick:SetPixelWidth(1)
+    bar.tick:SetColorTexture(0, 0, 0, 1)
+    bar.tick:SetPixelPoint('CENTER', bar:GetStatusBarTexture(), 'RIGHT', 0, 0)
+    bar.tick:Hide()
 
-    bar.bg = bar:CreateTexture(nil, "BACKGROUND", nil, -8)
+    bar.bg = bar:CreateTexture(nil, 'BACKGROUND', nil, -8)
     bar.bg:SetAllPoints()
 
-    bar.rested = CreateFrame("StatusBar", nil, bar)
+    bar.rested = CreateFrame('StatusBar', nil, bar)
     bar.rested:SetAllPoints()
     bar.rested:SetStatusBarTexture(statusbar)
     bar.rested:SetFrameLevel(bar:GetFrameLevel())
-    bar.rested:GetStatusBarTexture():SetDrawLayer("BACKGROUND", 2)
+    bar.rested:GetStatusBarTexture():SetDrawLayer('BACKGROUND', 2)
 
-    NRSKNUI:AddBorders(bar, self.db.BackdropBorderColor)
+    bar.text = bar:CreateFontString(nil, 'OVERLAY')
+    bar.text:SetPixelPoint('CENTER')
+    bar.text:SetFontStyle(self.db)
 
-    bar.text = NRSKNUI:CreateText(bar, "OVERLAY")
-    bar.text:SetPoint("CENTER")
-
-    bar.level = NRSKNUI:CreateText(bar, "OVERLAY")
-    bar.level:SetPoint("RIGHT", bar, "RIGHT", -4, 0)
+    bar.level = bar:CreateFontString(nil, 'OVERLAY')
+    bar.level:SetPixelPoint('RIGHT', bar, 'RIGHT', -4, 0)
+    bar.level:SetFontStyle(self.db)
 
     self.bar = bar
-
-    -- Basic setup without full font styling - ApplySettings will be called by OnEnable after delay
-    self.bar:SetSize(self.db.width, self.db.height)
-    NRSKNUI:ApplyFramePosition(self.bar, self.db.Position, self.db)
-    self:Update()
+    bar:Hide()
 end
 
 function XPBar:RegisterEvents()
-    self:RegisterEvent("PLAYER_XP_UPDATE", "Update")
-    self:RegisterEvent("UPDATE_EXHAUSTION", "Update")
-    self:RegisterEvent("PLAYER_LEVEL_UP", function()
+    self:RegisterEvent('PLAYER_XP_UPDATE', 'Update')
+    self:RegisterEvent('UPDATE_EXHAUSTION', 'Update')
+    self:RegisterEvent('PLAYER_LEVEL_UP', function()
         C_Timer.After(0.1, function() self:Update() end)
     end)
 end
@@ -132,7 +86,7 @@ end
 function XPBar:Update()
     if not self.bar then return end
 
-    local currentLevel = UnitLevel("player")
+    local currentLevel = UnitLevel('player')
     local maxLevel = GetMaxLevelForPlayerExpansion()
     local isMaxLevel = currentLevel >= maxLevel
 
@@ -149,8 +103,8 @@ function XPBar:Update()
         maxXP = 250000
         restedXP = 50000
     else
-        currXP = UnitXP("player")
-        maxXP = UnitXPMax("player")
+        currXP = UnitXP('player')
+        maxXP = UnitXPMax('player')
         restedXP = GetXPExhaustion() or 0
     end
 
@@ -161,8 +115,8 @@ function XPBar:Update()
     self.bar.rested:SetValue(math_min(currXP + restedXP, maxXP))
 
     local percent = (currXP / maxXP) * 100
-    self.bar.text:SetFormattedText("%s / %s (%.1f%%)", FormatNumber(currXP), FormatNumber(maxXP), percent)
-    self.bar.level:SetFormattedText("Lv %d", currentLevel)
+    self.bar.text:SetFormattedText('%s / %s (%.1f%%)', FormatNumber(currXP), FormatNumber(maxXP), percent)
+    self.bar.level:SetFormattedText('Lv %d', currentLevel)
 
     if currXP > 0 and currXP < maxXP then
         self.bar.tick:Show()
@@ -179,7 +133,7 @@ function XPBar:ApplySettings()
     local r, g, b, a = NRSKNUI:GetAccentColor(self.db.ColorMode, self.db.StatusColor)
     local rR, gR, bR, aR = NRSKNUI:GetAccentColor(self.db.ColorModeRested, self.db.RestedColor)
 
-    if self.db.ColorModeRested == "theme" or self.db.ColorModeRested == "class" then
+    if self.db.ColorModeRested == 'theme' or self.db.ColorModeRested == 'class' then
         aR = 0.25
     end
 
@@ -191,26 +145,47 @@ function XPBar:ApplySettings()
     self.bar:SetStatusBarColor(r, g, b, a)
     self.bar.rested:SetStatusBarColor(rR, gR, bR, aR)
 
-    self.bar:SetSize(self.db.width, self.db.height)
-    NRSKNUI:ApplyFramePosition(self.bar, self.db.Position, self.db)
+    self.bar:SetPixelSize(self.db.width, self.db.height)
+    self.bar:ApplyPosition(self.db)
 
-    self.bar.tick:SetHeight(self.bar:GetHeight())
+    self.bar.tick:SetPixelHeight(self.bar:GetHeight())
     self.bar.bg:SetColorTexture(unpack(self.db.BackdropColor))
 
     if self.bar.SetBorderColor then self.bar:SetBorderColor(unpack(self.db.BackdropBorderColor)) end
 
-    NRSKNUI:SetTextFont(self.bar.text, NRSKNUI:GetEffectiveFont(self.db), self.db.FontSize, self.db.FontOutline,
-        self.db.FontShadow)
+    self.bar.text:SetFontStyle(self.db)
     self.bar.text:SetTextColor(unpack(self.db.TextColor))
-    NRSKNUI:SetTextFont(self.bar.level, NRSKNUI:GetEffectiveFont(self.db), self.db.FontSize, self.db.FontOutline,
-        self.db.FontShadow)
+    self.bar.level:SetFontStyle(self.db)
     self.bar.level:SetTextColor(unpack(self.db.TextColor))
 
     self:Update()
 end
 
+function XPBar:OnEnable()
+    if not self.db.Enabled then return end
+
+    self:CreateBar()
+    self:ApplySettings()
+
+    self:RegisterEvents()
+    self:Update()
+
+    if MainStatusTrackingBarContainer then
+        MainStatusTrackingBarContainer:Banish()
+        MainStatusTrackingBarContainer:UnregisterAllEvents()
+        MainStatusTrackingBarContainer:Hide()
+        MainStatusTrackingBarContainer:SetAlpha(0)
+    end
+
+    EM:Register(self, 'XPBar', self.bar, 'XPBar')
+end
+
+function XPBar:OnDisable()
+    if self.bar then self.bar:Hide() end
+end
+
 function XPBar:ShowPreview()
-    if not self.bar then self:CreateBar() end
+    if not self.bar then return end
     self.isPreview = true
     self.bar:Show()
     self:ApplySettings()

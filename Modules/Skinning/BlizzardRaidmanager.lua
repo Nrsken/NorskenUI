@@ -22,7 +22,7 @@ local function FadeIn()
     CompactRaidFrameManager._isMouseOver = true
     local dur = BRMG.db.FadeInDuration
     if InCombatLockdown() then dur = 0.1 end
-    NRSKNUI:CombatSafeFade(CompactRaidFrameManager, 1, dur)
+    --NRSKNUI:CombatSafeFade(CompactRaidFrameManager, 1, dur)
 end
 
 local function FadeOut()
@@ -35,7 +35,7 @@ local function FadeOut()
         return
     end
 
-    NRSKNUI:CombatSafeFade(CompactRaidFrameManager, BRMG.db.Alpha, BRMG.db.FadeOutDuration)
+    --NRSKNUI:CombatSafeFade(CompactRaidFrameManager, BRMG.db.Alpha, BRMG.db.FadeOutDuration)
 end
 
 function BRMG:ApplyPosition()

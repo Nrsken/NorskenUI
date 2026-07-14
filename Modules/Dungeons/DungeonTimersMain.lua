@@ -471,25 +471,23 @@ function DT:CreateBarFrame(dungeonKey, triggerId, trigger)
         frame.icon = frame.iconFrame:CreateTexture(nil, "ARTWORK")
         frame.icon:SetPoint("TOPLEFT", 1, -1)
         frame.icon:SetPoint("BOTTOMRIGHT", -1, 1)
-        if NRSKNUI.ApplyZoom then NRSKNUI:ApplyZoom(frame.icon, NRSKNUI.GlobalZoom) end
+        frame.icon:SetZoom()
     end
 
     local FontSize = config.FontSize
     local FontOutline = config.FontOutline
     local FontShadow = config.FontShadow
 
-    frame.text1 = NRSKNUI:CreateText(frame.bar, "OVERLAY")
+    frame.text1 = frame.bar:CreateFontString(nil, "OVERLAY")
     frame.text1:SetPoint(config.barText1Justify, frame.bar, config.barText1Justify,
         config.barText1XOffset, config.barText1YOffset)
-    NRSKNUI:SetTextFont(frame.text1, NRSKNUI:GetEffectiveFont(config.displaySettings), FontSize, FontOutline,
-        FontShadow)
+    frame.text1:SetFontStyle(config.displaySettings, FontSize, FontOutline, FontShadow)
     frame.text1:SetTextColor(unpack(config.textColor))
 
-    frame.text2 = NRSKNUI:CreateText(frame.bar, "OVERLAY")
+    frame.text2 = frame.bar:CreateFontString(nil, "OVERLAY")
     frame.text2:SetPoint(config.barText2Justify, frame.bar, config.barText2Justify,
         config.barText2XOffset, config.barText2YOffset)
-    NRSKNUI:SetTextFont(frame.text2, NRSKNUI:GetEffectiveFont(config.displaySettings), FontSize, FontOutline,
-        FontShadow)
+    frame.text2:SetFontStyle(config.displaySettings, FontSize, FontOutline, FontShadow)
     frame.text2:SetTextColor(unpack(config.textColor))
 
     frame.config = config
@@ -516,10 +514,9 @@ function DT:CreateTextFrame(dungeonKey, triggerId, trigger)
     local FontOutline = config.FontOutline
     local FontShadow = config.FontShadow
 
-    frame.displayText = NRSKNUI:CreateText(frame, "OVERLAY")
+    frame.displayText = frame:CreateFontString(nil, "OVERLAY")
     frame.displayText:SetPoint(config.textJustify, frame, config.textJustify, 0, 0)
-    NRSKNUI:SetTextFont(frame.displayText, NRSKNUI:GetEffectiveFont(config.displaySettings), FontSize, FontOutline,
-        FontShadow)
+    frame.displayText:SetFontStyle(config.displaySettings, FontSize, FontOutline, FontShadow)
     frame.displayText:SetTextColor(unpack(config.textColor))
 
     frame.config = config
@@ -1036,19 +1033,11 @@ function DT:UpdateFrameVisuals()
                 end
 
                 if frame.text1 then
-                    NRSKNUI:SetTextFont(frame.text1, NRSKNUI:GetEffectiveFont(barDisplay), barDisplay.FontSize,
-                        barDisplay.FontOutline, barDisplay.FontShadow)
-                    if frame.text1._nrsknSoftOutline then
-                        frame.text1._nrsknSoftOutline:_ApplyOffsets()
-                    end
+                    frame.text1:SetFontStyle(barDisplay)
                 end
 
                 if frame.text2 then
-                    NRSKNUI:SetTextFont(frame.text2, NRSKNUI:GetEffectiveFont(barDisplay), barDisplay.FontSize,
-                        barDisplay.FontOutline, barDisplay.FontShadow)
-                    if frame.text2._nrsknSoftOutline then
-                        frame.text2._nrsknSoftOutline:_ApplyOffsets()
-                    end
+                    frame.text2:SetFontStyle(barDisplay)
                 end
             else
                 local FontSize = textDisplay.FontSize or 14
@@ -1059,11 +1048,7 @@ function DT:UpdateFrameVisuals()
                     frame.displayText:SetJustifyH(textDisplay.textAlign or "LEFT")
                     frame.displayText:SetPoint(textDisplay.textAlign or "LEFT", frame, textDisplay.textAlign or "LEFT", 0,
                         0)
-                    NRSKNUI:SetTextFont(frame.displayText, NRSKNUI:GetEffectiveFont(textDisplay), FontSize,
-                        textDisplay.FontOutline, textDisplay.FontShadow)
-                    if frame.displayText._nrsknSoftOutline then
-                        frame.displayText._nrsknSoftOutline:_ApplyOffsets()
-                    end
+                    frame.displayText:SetFontStyle(textDisplay, FontSize)
                 end
             end
         end

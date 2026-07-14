@@ -63,22 +63,28 @@ function FCB:CreateFrame()
     local parent = NRSKNUI:ResolveAnchorFrame(db.anchorFrameType, db.ParentFrame)
     local height = db.Height
 
-    local frame = NRSKNUI:CreateStandardBackdrop(parent, "NRSKNUI_FocusCastbarFrame", 100, db.BackdropColor,
-        db.BorderColor)
+    local frame = CreateFrame("Frame", "NRSKNUI_FocusCastbarFrame", parent)
     frame:SetSize(db.Width, height)
     frame:SetPoint(db.Position.AnchorFrom, parent, db.Position.AnchorTo, db.Position.XOffset, db.Position.YOffset)
+    frame:SetFrameLevel(100)
+    frame:CreateBackdrop()
+    frame:SetBackgroundColor(unpack(db.BackdropColor))
+    frame:SetBorderColor(unpack(db.BorderColor))
     frame:SetFrameStrata(db.Strata)
     frame:EnableMouse(false)
     frame:Hide()
 
-    local iconFrame = NRSKNUI:CreateStandardBackdrop(frame, nil, nil, db.BackdropColor, db.BorderColor)
-    iconFrame:SetSize(height, height)
-    iconFrame:SetPoint("LEFT", frame, "LEFT", 0, 0)
+    local iconFrame = CreateFrame("Frame", nil, frame)
+    iconFrame:SetPixelSize(height, height)
+    iconFrame:SetPixelPoint("LEFT", frame, "LEFT", 0, 0)
+    iconFrame:CreateBackdrop()
+    iconFrame:SetBackgroundColor(unpack(db.BackdropColor))
+    iconFrame:SetBorderColor(unpack(db.BorderColor))
 
     local icon = iconFrame:CreateTexture(nil, "ARTWORK")
     icon:SetPoint("TOPLEFT", 1, -1)
     icon:SetPoint("BOTTOMRIGHT", -1, 1)
-    NRSKNUI:ApplyZoom(icon, NRSKNUI.GlobalZoom)
+    icon:SetZoom()
 
     local castBar = CreateFrame("StatusBar", nil, frame)
     castBar:SetPoint("LEFT", iconFrame, "RIGHT", 0, 0)
@@ -124,15 +130,15 @@ function FCB:CreateFrame()
     kickTick:AddMaskTexture(tickMask)
     kickTick:SetAlpha(0)
 
-    local text = NRSKNUI:CreateText(castBar, "OVERLAY")
+    local text = castBar:CreateFontString(nil, "OVERLAY")
     text:SetPoint("LEFT", castBar, "LEFT", 4, 0)
     text:SetJustifyH("LEFT")
 
-    local time = NRSKNUI:CreateText(castBar, "OVERLAY")
+    local time = castBar:CreateFontString(nil, "OVERLAY")
     time:SetPoint("RIGHT", castBar, "RIGHT", -4, 0)
     time:SetJustifyH("RIGHT")
 
-    local targetText = NRSKNUI:CreateText(frame, "OVERLAY")
+    local targetText = frame:CreateFontString(nil, "OVERLAY")
     targetText:SetParent(castBar)
     targetText:Hide()
 
@@ -176,8 +182,8 @@ function FCB:ApplySettings()
     local tickColor = db.KickIndicator.TickColor
     self.kickTick:SetColorTexture(tickColor[1], tickColor[2], tickColor[3], tickColor[4])
 
-    NRSKNUI:SetTextFont(self.text, NRSKNUI:GetEffectiveFont(self.db), db.FontSize, db.FontOutline, db.FontShadow)
-    NRSKNUI:SetTextFont(self.time, NRSKNUI:GetEffectiveFont(self.db), db.FontSize, db.FontOutline, db.FontShadow)
+    self.text:SetFontStyle(db)
+    self.time:SetFontStyle(db)
     self.text:SetTextColor(db.TextColor[1], db.TextColor[2], db.TextColor[3], db.TextColor[4])
     self.time:SetTextColor(db.TextColor[1], db.TextColor[2], db.TextColor[3], db.TextColor[4])
 
@@ -187,7 +193,7 @@ function FCB:ApplySettings()
         self.targetText:ClearAllPoints()
         self.targetText:SetPoint(anchorPoint, self.frame, anchorPoint, targetSettings.XOffset, targetSettings.YOffset)
         self.targetText:SetJustifyH(anchorPoint)
-        NRSKNUI:SetTextFont(self.targetText, NRSKNUI:GetEffectiveFont(self.db), targetSettings.FontSize, db.FontOutline, db.FontShadow)
+        self.targetText:SetFontStyle(db, targetSettings.FontSize)
     end
 
     if self.targetMarker then
@@ -771,7 +777,6 @@ function FCB:EnsureOnUpdate()
         self.frame:SetScript("OnUpdate", function(_, elapsed) self:OnUpdate(elapsed) end)
     end
 end
-
 
 function FCB:ShowPreview()
     if not self.frame then self:CreateFrame() end

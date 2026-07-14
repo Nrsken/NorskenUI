@@ -13,6 +13,7 @@
 ---@class AuctionHouseFilter : NRSKNUI.Module, NRSKNUI.AceEvent
 ---@class Automation : NRSKNUI.Module, NRSKNUI.AceEvent, NRSKNUI.AceHook
 ---@class Tweaks : NRSKNUI.Module, NRSKNUI.AceEvent, NRSKNUI.AceHook
+---@class XPBar : NRSKNUI.Module, NRSKNUI.AceEvent
 
 -- Typed accessors. Overloads dispatch on the literal module name.
 
@@ -31,6 +32,7 @@ local NRSKNUI
 ---@overload fun(self: NRSKNUI, name: "AuctionHouseFilter", silent?: boolean): AuctionHouseFilter
 ---@overload fun(self: NRSKNUI, name: "Automation", silent?: boolean): Automation
 ---@overload fun(self: NRSKNUI, name: "Tweaks", silent?: boolean): Tweaks
+---@overload fun(self: NRSKNUI, name: "XPBar", silent?: boolean): XPBar
 ---@param name string
 ---@param silent? boolean
 ---@return NRSKNUI.Module
@@ -48,6 +50,7 @@ function NRSKNUI:GetModule(name, silent) end
 ---@overload fun(self: NRSKNUI, name: "AuctionHouseFilter", ...: string): AuctionHouseFilter
 ---@overload fun(self: NRSKNUI, name: "Automation", ...: string): Automation
 ---@overload fun(self: NRSKNUI, name: "Tweaks", ...: string): Tweaks
+---@overload fun(self: NRSKNUI, name: "XPBar", ...: string): XPBar
 ---@param name string
 ---@param ... string
 ---@return NRSKNUI.Module

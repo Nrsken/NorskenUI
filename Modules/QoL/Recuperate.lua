@@ -89,11 +89,11 @@ function REC:CreateButton()
 
     button.icon = button:CreateTexture(nil, "ARTWORK")
     button.icon:SetAllPoints(button)
-    NRSKNUI:ApplyZoom(button.icon, NRSKNUI.GlobalZoom)
+    button.icon:SetZoom()
 
     if spellInfo and spellInfo.iconID then button.icon:SetTexture(spellInfo.iconID) end
 
-    NRSKNUI:AddBorders(button, { 0, 0, 0, 1 })
+    button:AddBorders()
 
     button.highlight = button:CreateTexture(nil, "HIGHLIGHT")
     button.highlight:SetAllPoints(button)

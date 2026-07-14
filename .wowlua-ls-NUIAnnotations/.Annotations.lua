@@ -91,15 +91,15 @@
 ---@field ToggleCollapseButton Button?
 
 ---@class FontString ---@diagnostic disable-line: class-shadows-builtin
----@field SetFontStyle fun(self: FontString, source: any, size: number?, outline: string?, shadow: table?, skip: boolean?, setOwner: boolean?)
+---@field SetFontStyle fun(self: FontString, source?: string|table, size: number?, outline: string?, shadow: table?, skip: boolean?, setOwner: boolean?)
 ---@field SetFontJustify fun(self: FontString, source: table|string, parent: Frame?, offsetX: number?, offsetY: number?, skip: boolean?)
 
 ---@class Font ---@diagnostic disable-line: class-shadows-builtin
----@field SetFontStyle fun(self: Font, source: any, size: number?, outline: string?, shadow: table?, skip: boolean?, setOwner: boolean?)
+---@field SetFontStyle fun(self: Font, source?: string|table, size: number?, outline: string?, shadow: table?, skip: boolean?, setOwner: boolean?)
 ---@field SetFontJustify fun(self: Font, source: table|string, parent: Frame?, offsetX: number?, offsetY: number?, skip: boolean?)
 
 ---@class EditBox ---@diagnostic disable-line: class-shadows-builtin
----@field SetFontStyle fun(self: EditBox, source: any, size: number?, outline: string?, shadow: table?, skip: boolean?, setOwner: boolean?)
+---@field SetFontStyle fun(self: EditBox, source?: string|table, size: number?, outline: string?, shadow: table?, skip: boolean?, setOwner: boolean?)
 
 -- NorskenUI injected widget API. Full docs: Docs/API.md
 -- Each method links to its section via the [Documentation] line so the editor hover

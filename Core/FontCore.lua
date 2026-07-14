@@ -1,6 +1,5 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
-local LSM = NRSKNUI.Libs.LSM
 
 local pairs = pairs
 local ipairs = ipairs
@@ -14,40 +13,13 @@ local animEnum = Enum and Enum.FontStringScaleAnimationMode
 local vertexEnum = Enum and Enum.FontStringScaleAnimationMode.Vertex
 local fontSizeEnum = Enum and Enum.FontStringScaleAnimationMode.FontSize
 
-local IsKnownFile = C_UIFileAsset and C_UIFileAsset.IsKnownFile
-
--- STANDARD_TEXT_FONT is locale-correct (ARKai_T on zhCN, 2002 on koKR, etc) a hardcoded FRIZQT__ fallback renders CJK text as boxes on those clients.
-local FALLBACK_FONT = STANDARD_TEXT_FONT or (GameFontNormal and GameFontNormal:GetFont()) or 'Fonts\\FRIZQT__.TTF'
-local DEFAULT_SIZE = 12
-local DEFAULT_FONT_NAME = 'Expressway'
+local DEFAULT_SIZE = NRSKNUI.Media.FallbackSize
+local DEFAULT_FONT_NAME = NRSKNUI.Media.DefaultFont
 
 NRSKNUI.StyledFonts = NRSKNUI.StyledFonts or {}
 NRSKNUI.StyledJustify = NRSKNUI.StyledJustify or {}
 
----@param font string? LSM name or literal path
----@return string path
-local function ResolveFontPath(font)
-    if font and font ~= '' then
-        if LSM:IsValid('font', font) then
-            local path = LSM:Fetch('font', font, true) -- noDefault: nil when unregistered
-            if path and (not IsKnownFile or IsKnownFile(path)) then
-                return path
-            end
-        elseif IsKnownFile and IsKnownFile(font) then
-            return font -- already a real file path
-        end
-    end
-    return FALLBACK_FONT
-end
-
--- Exposed so other Core systems (e.g. BlizzardFonts) resolve font names the same
--- locale-safe way instead of hitting LSM directly and risking CJK box-glyphs.
----@param font string? LSM name or literal path
----@return string path
-function NRSKNUI:ResolveFontPath(font)
-    return ResolveFontPath(font)
-end
-
+---Return the global font name from the profile, or the default if not set.
 ---@return string
 local function GetGlobalFontName()
     local profile = NRSKNUI.db and NRSKNUI.db.profile
@@ -71,7 +43,7 @@ NRSKNUI.FontOutlines = {
     { value = { 'SLUG,OUTLINE', 'OUTLINE,SLUG' },                       label = 'Slug Outline' },
 }
 
--- Validation set derived from the canonical list. NONE is excluded (it maps to '').
+-- Validation set derived from the canonical list. NONE is excluded, it maps to ''.
 NRSKNUI.ValidOutlines = { [''] = true }
 for _, option in ipairs(NRSKNUI.FontOutlines) do
     local value = option.value
@@ -85,15 +57,30 @@ for _, option in ipairs(NRSKNUI.FontOutlines) do
 end
 local ValidOutlines = NRSKNUI.ValidOutlines
 
----@param outline string?
----@return string
-local function NormalizeOutline(outline)
-    if type(outline) ~= 'string' then return '' end
+---Resolve an outline value and slug preference into final SetFont flags.
+---@param value string|nil outline value, e.g. 'THICKOUTLINE,MONOCHROME' or 'NONE'
+---@param slugPref boolean? force slug on top of the outline, nil lets the value decide
+---@return string flags the final SetFont flag string, slug included when active
+---@return boolean slug whether slug ended up active (drives scale-animation mode)
+function NRSKNUI:ResolveFlags(value, slugPref)
+    local flags = type(value) == 'string' and value:upper():gsub('%s+', '') or ''
+    if flags == 'NONE' then flags = '' end
+    -- Legacy alias: SOFTOUTLINE (old CreateSoftOutline overlay) renders as a normal outline.
+    flags = flags:gsub('SOFTOUTLINE', 'OUTLINE')
 
-    local flags = outline:upper():gsub('%s+', '')
-    if flags == 'NONE' or flags == 'SOFTOUTLINE' then return '' end
+    if flags:find('SLUG') then
+        slugPref = true
+        flags = flags:gsub('SLUG', ''):gsub('^,', ''):gsub(',$', ''):gsub(',,', ',')
+    end
+    if flags ~= '' and not ValidOutlines[flags] then
+        flags = ''
+    end
 
-    return ValidOutlines[flags] and flags or ''
+    local slug = slugPref and not (flags:find('MONOCHROME') or flags:find('THICKOUTLINE'))
+    if slug then
+        flags = flags ~= '' and ('SLUG,' .. flags) or 'SLUG'
+    end
+    return flags, slug or false
 end
 
 local ALPHABETS = {
@@ -138,7 +125,7 @@ local function BuildFontMembers(fontPath, size, style)
     return members
 end
 
--- Shadow carries arbitrary color/offset, so it is part of the object's identity.
+---Shadow carries arbitrary color/offset, so it is part of the object's identity.
 ---@param shadow table?
 ---@return string
 local function ShadowSignature(shadow)
@@ -226,8 +213,8 @@ end
 ---@param self table FontString or Font object
 ---@param source string|table|nil DB block, explicit LSM name / path, or nil for the global font
 ---@param size number? explicit size, or a size override when `source` is a DB block
----@param outline string? explicit outline (ignored when `source` is a DB block)
----@param shadow table? explicit shadow (ignored when `source` is a DB block)
+---@param outline string? explicit outline, or an outline override when `source` is a DB block
+---@param shadow table? explicit shadow, or a shadow override when `source` is a DB block
 ---@param skip boolean? internal: set during RefreshFontStyles to avoid re-registering
 ---@param setOwner boolean? point the widget's state font objects at ours so every state resolves to our fontObject
 ---@return boolean
@@ -259,21 +246,21 @@ local function SetFontStyle(self, source, size, outline, shadow, skip, setOwner)
         if not useGlobal then
             font = db.FontFace or db.Font or db.fontFace
         end
-        size = size or db.FontSize -- `size` acts as an optional override here
-        outline = db.FontOutline
-        shadow = db.FontShadow
+        -- Explicit args act as optional overrides over the DB block here.
+        size = size or db.FontSize
+        outline = outline or db.FontOutline
+        shadow = shadow or db.FontShadow
     else
         font = source
     end
 
-    local fontPath = ResolveFontPath(font or GetGlobalFontName())
+    local fontPath = NRSKNUI:ResolveFontPath(font or GetGlobalFontName())
     size = (type(size) == 'number' and size > 0) and size or DEFAULT_SIZE
-    local style = NormalizeOutline(outline)
+    local style, slug = NRSKNUI:ResolveFlags(outline)
     local obj = AcquireFontObject(fontPath, size, style, ShadowSignature(shadow), shadow)
 
     -- SLUG needs vertex-based scaling, everything else uses font-size scaling.
     if self.SetScaleAnimationMode and animEnum then
-        local slug = style:find('SLUG') ~= nil
         self:SetScaleAnimationMode(slug and vertexEnum or fontSizeEnum)
     end
 

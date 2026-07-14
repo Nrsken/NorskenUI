@@ -44,6 +44,9 @@
     <!-- GUI Theme Page -->
     <Script file="GUITabs\GUI-ThemePage.lua" />
 
+    <!-- GUI Fonts Page -->
+    <Script file="GUITabs\GUI-FontsPage.lua" />
+
     <!-- GUI Profiles Tab -->
     <Script file="GUITabs\GUI-ProfilesTab.lua" />
 
@@ -81,7 +84,6 @@
     <Script file="GUITabs\GUI-AdvancedSkinning\GUI-ActionBarsTab.lua" />
 
     <!-- GUI Skinning Tabs -->
-    <Script file="GUITabs\GUI-Skinning\GUI-BlizzMessagesTab.lua" />
     <Script file="GUITabs\GUI-Skinning\GUI-BlizzardMouseover.lua" />
     <Script file="GUITabs\GUI-Skinning\GUI-UICleanup.lua" />
     <Script file="GUITabs\GUI-Skinning\GUI-BlizzardRaidmanager.lua" />

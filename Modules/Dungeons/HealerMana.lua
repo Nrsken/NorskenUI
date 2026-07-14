@@ -86,17 +86,15 @@ function HM:CreateHealerFrame(index)
     frame.icon:SetPoint("TOPLEFT", 1, -1)
     frame.icon:SetPoint("BOTTOMRIGHT", -1, 1)
 
-    frame.name = NRSKNUI:CreateText(frame, "OVERLAY")
+    frame.name = frame:CreateFontString(nil, "OVERLAY")
     frame.name:SetPoint("BOTTOMLEFT", frame.iconFrame, "RIGHT", 4, self.db.NameYOffset)
     frame.name:SetJustifyH("LEFT")
-    NRSKNUI:SetTextFont(frame.name, NRSKNUI:GetEffectiveFont(self.db), self.db.NameFontSize, self.db.FontOutline,
-        self.db.FontShadow)
+    frame.name:SetFontStyle(self.db, self.db.NameFontSize)
 
-    frame.mana = NRSKNUI:CreateText(frame, "OVERLAY")
+    frame.mana = frame:CreateFontString(nil, "OVERLAY")
     frame.mana:SetPoint("TOPLEFT", frame.iconFrame, "RIGHT", 4, self.db.ManaYOffset)
     frame.mana:SetJustifyH("LEFT")
-    NRSKNUI:SetTextFont(frame.mana, NRSKNUI:GetEffectiveFont(self.db), self.db.ManaFontSize, self.db.FontOutline,
-        self.db.FontShadow)
+    frame.mana:SetFontStyle(self.db, self.db.ManaFontSize)
 
     frame:Hide()
     return frame
@@ -393,7 +391,7 @@ function HM:UpdateHealerFrame(healer)
     end
 
     frame.icon:SetTexture(icon or FALLBACK_ICON)
-    NRSKNUI:ApplyZoom(frame.icon, NRSKNUI.GlobalZoom)
+    frame.icon:SetZoom()
 
     frame.name:SetText(healer.name)
     frame.name:SetTextColor(healer.classColor[1], healer.classColor[2], healer.classColor[3])
@@ -447,16 +445,14 @@ function HM:ShowPreview()
         frame.iconFrame:SetSize(self.db.IconSize, self.db.IconSize)
         frame.name:ClearAllPoints()
         frame.name:SetPoint("BOTTOMLEFT", frame.iconFrame, "RIGHT", 4, self.db.NameYOffset)
-        NRSKNUI:SetTextFont(frame.name, NRSKNUI:GetEffectiveFont(self.db), self.db.NameFontSize, self.db.FontOutline,
-            self.db.FontShadow)
+        frame.name:SetFontStyle(self.db, self.db.NameFontSize)
         frame.mana:ClearAllPoints()
         frame.mana:SetPoint("TOPLEFT", frame.iconFrame, "RIGHT", 4, self.db.ManaYOffset)
-        NRSKNUI:SetTextFont(frame.mana, NRSKNUI:GetEffectiveFont(self.db), self.db.ManaFontSize, self.db.FontOutline,
-            self.db.FontShadow)
+        frame.mana:SetFontStyle(self.db, self.db.ManaFontSize)
 
         frame.icon:SetTexture(icon or FALLBACK_ICON)
         frame.icon:SetVertexColor(1, 1, 1)
-        NRSKNUI:ApplyZoom(frame.icon, NRSKNUI.GlobalZoom)
+        frame.icon:SetZoom()
 
         frame.name:SetText(healer.name)
         frame.name:SetTextColor(healer.classColor[1], healer.classColor[2], healer.classColor[3])
@@ -501,12 +497,10 @@ function HM:ApplySettings()
         frame.iconFrame:SetSize(self.db.IconSize, self.db.IconSize)
         frame.name:ClearAllPoints()
         frame.name:SetPoint("BOTTOMLEFT", frame.iconFrame, "RIGHT", 4, self.db.NameYOffset)
-        NRSKNUI:SetTextFont(frame.name, NRSKNUI:GetEffectiveFont(self.db), self.db.NameFontSize, self.db.FontOutline,
-            self.db.FontShadow)
+        frame.name:SetFontStyle(self.db, self.db.NameFontSize)
         frame.mana:ClearAllPoints()
         frame.mana:SetPoint("TOPLEFT", frame.iconFrame, "RIGHT", 4, self.db.ManaYOffset)
-        NRSKNUI:SetTextFont(frame.mana, NRSKNUI:GetEffectiveFont(self.db), self.db.ManaFontSize, self.db.FontOutline,
-            self.db.FontShadow)
+        frame.mana:SetFontStyle(self.db, self.db.ManaFontSize)
     end
 
     self:UpdateContainerSize()

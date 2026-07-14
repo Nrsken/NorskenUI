@@ -44,17 +44,30 @@ end
 function RK:CreateFrame()
     if self.frame then return end
 
-    local frame = NRSKNUI:CreateIconFrame(UIParent, self.db.Size, { name = "NRSKNUI_RerollKeystone", })
+    local frame = CreateFrame("Frame", "NRSKNUI_RerollKeystone", UIParent)
+    frame:SetSize(self.db.Size, self.db.Size)
+
+    -- Add borders
+    frame:AddBorders()
+    frame:SetBorderColor(unpack(self.db.BorderColor))
+
+    -- Icon texture with zoom
+    frame.icon = frame:CreateTexture(nil, "ARTWORK")
+    frame.icon:SetAllPoints(frame)
+    frame.icon:SetZoom(self.db.Zoom)
+
+    frame.text = frame:CreateFontString(nil, "OVERLAY")
+    frame.text:SetPixelPoint(self.db.TextPoint, frame, self.db.TextPoint, self.db.TextOffset[1], self.db.TextOffset[2])
 
     frame.icon:SetTexture(525134)
 
-    frame.text:SetPoint("BOTTOM", frame, "TOP", 0, 8)
-    NRSKNUI:SetTextFont(frame.text, NRSKNUI:GetEffectiveFont(self.db), self.db.FontSize, self.db.FontOutline, {})
+    frame.text:SetPixelPoint("BOTTOM", frame, "TOP", 0, 8)
+    frame.text:SetFontStyle(self.db)
     frame.text:SetTextColor(unpack(self.db.FontColor))
 
-    local keyText = NRSKNUI:CreateText(frame, "OVERLAY")
-    keyText:SetPoint("TOP", frame, "BOTTOM", 0, -8)
-    NRSKNUI:SetTextFont(keyText, NRSKNUI:GetEffectiveFont(self.db), self.db.FontSizeKey, self.db.FontOutline, {})
+    local keyText = frame:CreateFontString(nil, "OVERLAY")
+    keyText:SetPixelPoint("TOP", frame, "BOTTOM", 0, -8)
+    keyText:SetFontStyle(self.db, self.db.FontSizeKey)
     keyText:SetTextColor(unpack(self.db.FontColorKey))
     frame.keyText = keyText
 
@@ -64,16 +77,14 @@ end
 
 function RK:ApplySettings()
     if not self.frame then return end
-    local font = NRSKNUI:GetEffectiveFont(self.db)
 
-    self.frame:SetIconSize(self.db.Size)
+    self.frame:SetPixelSize(self.db.Size)
     NRSKNUI:ApplyFramePosition(self.frame, self.db.Position, self.db)
-    NRSKNUI:SetTextFont(self.frame.text, font, self.db.FontSize, self.db.FontOutline, {})
+    self.frame.text:SetFontStyle(self.db)
     self.frame.text:SetTextColor(unpack(self.db.FontColor))
-    NRSKNUI:SetTextFont(self.frame.keyText, font, self.db.FontSizeKey, self.db.FontOutline, {})
+    self.frame.keyText:SetFontStyle(self.db, self.db.FontSizeKey)
     self.frame.keyText:SetTextColor(unpack(self.db.FontColorKey))
 
-    self.frame:RefreshGlow(self.db)
 end
 
 function RK:UpdateDisplay()
@@ -102,7 +113,6 @@ function RK:StartTimer()
     self:ApplySettings()
     self:UpdateDisplay()
     self.frame:Show()
-    if self.db.GlowEnabled then self.frame:StartGlow(self.db) end
 
     self.timerHandle = C_Timer.NewTicker(1, function()
         self:CheckTimer()
@@ -132,7 +142,6 @@ function RK:StopTimer()
     end
 
     self:UnregisterEvent("ITEM_CHANGED")
-    if self.frame then self.frame:StopGlow() end
 
     if self.frame and not self.isPreview then self.frame:Hide() end
 end
@@ -172,7 +181,6 @@ end
 function RK:OnDisable()
     self:StopTimer()
     if self.frame then
-        self.frame:StopGlow()
         self.frame:Hide()
     end
     self.isPreview = false
@@ -186,12 +194,10 @@ function RK:ShowPreview()
     self.frame:SetAlpha(1)
     self.frame:Show()
     self:ApplySettings()
-    if self.db.GlowEnabled then self.frame:StartGlow(self.db) end
 end
 
 function RK:HidePreview()
     self.isPreview = false
     if not self.frame then return end
-    self.frame:StopGlow()
     if not self.timerActive then self.frame:Hide() end
 end

@@ -490,6 +490,15 @@ function GUIFrame:CreateHeader(parent)
         toolTip = "Open Anchors"
     })
 
+    CreateHeaderButton({
+        size = 22,
+        xOffset = -152,
+        -- Placeholder texture until a dedicated Fonts icon is picked.
+        texture = "Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\fill.png",
+        onClick = function() GUIFrame:OpenPage("FontsPage") end,
+        toolTip = "Open Font Settings Page"
+    })
+
     -- Shortcut Menu Button
     local ITEM_HEIGHT = 24
     local MAX_HEIGHT = 400

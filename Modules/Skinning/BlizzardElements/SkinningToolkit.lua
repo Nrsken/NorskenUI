@@ -129,7 +129,8 @@ function BSKIN:HandleIcon(icon, createBackdrop)
         local backdrop = CreateFrame('Frame', nil, parent)
         backdrop:SetPoint('TOPLEFT', icon, -1, 1)
         backdrop:SetPoint('BOTTOMRIGHT', icon, 1, -1)
-        NRSKNUI:AddBorders(backdrop, self:GetBorderColor())
+        backdrop:AddBorders()
+        backdrop:SetBorderColor(self:GetBorderColor())
 
         ---@cast backdrop Frame & PublicBackdropMixin & SkinnedIconBackdropMixin
         Mixin(backdrop, SkinnedIconBackdropMixin)

@@ -1,16 +1,16 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 
-local pairs, type = pairs, type
+local pairs = pairs
+local type = type
 local pcall = pcall
 local next = next
 local hooksecurefunc = hooksecurefunc
 local CreateFrame = CreateFrame
 local PlaySoundFile = PlaySoundFile
 
-local C_UIFileAsset = C_UIFileAsset
-local IsKnownFile = C_UIFileAsset and C_UIFileAsset.IsKnownFile
 local GetFileID = C_UIFileAsset and C_UIFileAsset.GetFileID
+local IsKnownFile = C_UIFileAsset and C_UIFileAsset.IsKnownFile
 
 local LSM = NRSKNUI.Libs.LSM
 
@@ -29,6 +29,9 @@ NRSKNUI.Media = {
     Statusbars = {},
     Sounds = {},
     Solid = [[Interface\Buttons\WHITE8X8]],
+    FallbackFont = FALLBACK_FONT,
+    FallbackSize = FALLBACK_SIZE,
+    DefaultFont = DEFAULT_FONT_NAME,
 }
 
 local mediaKeys = {
@@ -78,6 +81,46 @@ RegisterLSMMedia('statusbar', 'NorskenUI.blp', true)
 -- Sound reg
 RegisterLSMMedia('sound', 'Whisper.ogg', '|cffe51039NorskenWhisper|r')
 
+---@param font string? LSM name or literal path
+---@return string path
+local function ResolveFontPath(font)
+    if font and font ~= '' then
+        if LSM:IsValid('font', font) then
+            local path = LSM:Fetch('font', font, true) -- noDefault: nil when unregistered
+            if path and (not IsKnownFile or IsKnownFile(path)) then
+                return path
+            end
+        elseif IsKnownFile and IsKnownFile(font) then
+            return font -- already a real file path
+        end
+    end
+    return FALLBACK_FONT
+end
+
+---@param font string? LSM name or literal path
+---@return string path
+function NRSKNUI:ResolveFontPath(font)
+    return ResolveFontPath(font)
+end
+
+-- Applies late loading LSM fonts.
+local lastResolvedPath
+local function ReapplyIfFontChanged()
+    if not lastResolvedPath then return end
+    local db = NRSKNUI.db
+    local profileFont = db and db.profile.globalMedia.profileFont
+    if not profileFont then return end
+
+    local path = ResolveFontPath(profileFont.FontFace)
+    if path == lastResolvedPath then return end
+    lastResolvedPath = path
+
+    NRSKNUI:DeferUntilUnrestricted(0, function()
+        NRSKNUI:ApplyBlizzardFonts()
+        NRSKNUI:RefreshFontStyles()
+    end)
+end
+
 -- Font preloader using new C_UIFileAsset API
 do
     -- Hidden frame that we yeet outside the screen, we will add fontstrings to this later.
@@ -105,12 +148,14 @@ do
         PreloadFontAndCache(Path)
     end
 
-    -- Preload fonts that other addons add.
+    -- Preload fonts that other addons add, and re-apply if the registration just made
+    -- the configured font resolvable.
     hooksecurefunc(LSM, 'Register', function(_, Type, _, Path)
         if not Type or type(Type) ~= 'string' then return end
 
         if Type == 'font' and Path then
             PreloadFontAndCache(Path)
+            ReapplyIfFontChanged()
         end
     end)
 end
@@ -121,6 +166,13 @@ do
     loginFrame:SetScript('OnEvent', function(self)
         self:UnregisterAllEvents()
         NRSKNUI:ValidateProfileFonts()
+
+        -- Seed the late-registration baseline with the now-validated configured face.
+        local db = NRSKNUI.db
+        local profileFont = db and db.profile.globalMedia.profileFont
+        if profileFont then
+            lastResolvedPath = ResolveFontPath(profileFont.FontFace)
+        end
     end)
 end
 
@@ -199,24 +251,6 @@ function NRSKNUI:GetFontOutline(outline)
     return outline
 end
 
----@param fontString FontString
----@param fontName string
----@param fontSize number
----@param fontOutline string
----@return boolean
-function NRSKNUI:ApplyFont(fontString, fontName, fontSize, fontOutline)
-    if not fontString then return false end
-
-    local fontPath = self:GetFontPath(fontName)
-    local size = (fontSize and fontSize > 0) and fontSize or FALLBACK_SIZE
-    local outline = self:GetFontOutline(fontOutline)
-
-    local result = fontString:SetFont(fontPath, size, outline)
-    if result then return true end
-
-    return fontString:SetFont(FALLBACK_FONT, size, outline) or false
-end
-
 ---@param moduleDB table?
 ---@return string
 function NRSKNUI:GetEffectiveFont(moduleDB)
@@ -249,66 +283,4 @@ end
 
 function NRSKNUI:GetFontName(moduleDB)
     return self:GetFontPath(self:GetEffectiveFont(moduleDB))
-end
-
----@param parent Frame
----@param layer DrawLayer?
----@return FontString
-function NRSKNUI:CreateText(parent, layer)
-    local fs = parent:CreateFontString(nil, layer or 'OVERLAY')
-    fs:SetFont(FALLBACK_FONT, FALLBACK_SIZE, '')
-    return fs
-end
-
----@param fontString FontString
----@param fontName string
----@param fontSize number
----@param fontOutline string
----@param shadowSettings table?
----@return boolean
-function NRSKNUI:SetTextFont(fontString, fontName, fontSize, fontOutline, shadowSettings)
-    if not fontString then return false end
-
-    fontName = fontName or DEFAULT_FONT_NAME
-    fontSize = (fontSize and fontSize > 0) and fontSize or FALLBACK_SIZE
-    fontOutline = fontOutline or 'OUTLINE'
-    shadowSettings = shadowSettings or {}
-
-    local fontPath = self:GetFontPath(fontName)
-    local outline = self:GetFontOutline(fontOutline)
-
-    local success = fontString:SetFont(fontPath, fontSize, outline) or false
-    if not success then
-        success = fontString:SetFont(FALLBACK_FONT, fontSize, outline) or false
-        fontPath = FALLBACK_FONT
-    end
-
-    if not success then
-        return false
-    end
-
-    if fontOutline == 'SOFTOUTLINE' then
-        fontString:SetShadowOffset(0, 0)
-        fontString:SetShadowColor(0, 0, 0, 0)
-        if not fontString.softOutline then
-            fontString.softOutline = self:CreateSoftOutline(fontString, {
-                fontPath = fontPath,
-                fontSize = fontSize,
-            })
-        else
-            fontString.softOutline:SetFont(fontPath, fontSize)
-        end
-        fontString.softOutline:SetShown(true)
-    else
-        if fontString.softOutline then
-            fontString.softOutline:SetShown(false)
-        end
-        if shadowSettings.Enabled then
-            local c = shadowSettings.Color or { 0, 0, 0, 1 }
-            fontString:SetShadowColor(c[1], c[2], c[3], c[4] or 0.9)
-            fontString:SetShadowOffset(shadowSettings.OffsetX or 1, shadowSettings.OffsetY or -1)
-        end
-    end
-
-    return true
 end

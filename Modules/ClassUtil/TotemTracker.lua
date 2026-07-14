@@ -87,9 +87,9 @@ function TT:CreateTotemButton(slot)
 
     btn.icon = btn:CreateTexture(nil, "ARTWORK")
     btn.icon:SetAllPoints(btn)
-    NRSKNUI:ApplyZoom(btn.icon, 0.08)
+    btn.icon:SetZoom()
 
-    NRSKNUI:AddBorders(btn, { 0, 0, 0, 1 })
+    btn:AddBorders()
 
     btn.highlight = btn:CreateTexture(nil, "HIGHLIGHT")
     btn.highlight:SetPoint("TOPLEFT", btn, "TOPLEFT", 1, -1)

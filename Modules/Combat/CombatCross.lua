@@ -14,7 +14,6 @@ local UnitExists = UnitExists
 
 local FONT_SIZE_MULTIPLIER = 2
 local RANGE_UPDATE_THROTTLE = 0.1
-local SOFT_OUTLINE_CONFIG = { thickness = 1, color = { 0, 0, 0 }, alpha = 0.9 }
 
 function CC:UpdateDB()
     self.db = NRSKNUI.db.profile.CombatCross
@@ -147,31 +146,17 @@ function CC:CreateFrame()
     self.frame:SetFrameLevel(100)
     self.frame:Hide()
 
-    self.text = NRSKNUI:CreateText(self.frame, "OVERLAY")
+    self.text = self.frame:CreateFontString(nil, "OVERLAY")
     self.text:SetPoint("CENTER")
-    self.text:SetFont(NRSKNUI.Media.Fonts.Expressway, self.db.Thickness * FONT_SIZE_MULTIPLIER, "")
+    self.text:SetFontStyle("Expressway", self.db.Thickness * FONT_SIZE_MULTIPLIER, self.db.Outline and "OUTLINE" or "NONE")
     self.text:SetText("+")
-
-    if self.db.Outline then
-        self.text.softOutline = NRSKNUI:CreateSoftOutline(self.text, SOFT_OUTLINE_CONFIG)
-    end
 end
 
 function CC:ApplySettings()
     if not self.frame or not self.text then return end
 
     NRSKNUI:ApplyFramePosition(self.frame, self.db.Position, self.db)
-    self.text:SetFont(NRSKNUI.Media.Fonts.Expressway, self.db.Thickness * FONT_SIZE_MULTIPLIER, "")
-
-    if self.db.Outline then
-        if not self.frame.softOutline then
-            self.frame.softOutline = NRSKNUI:CreateSoftOutline(self.text, SOFT_OUTLINE_CONFIG)
-        else
-            self.frame.softOutline:SetShown(true)
-        end
-    elseif self.frame.softOutline then
-        self.frame.softOutline:SetShown(false)
-    end
+    self.text:SetFontStyle("Expressway", self.db.Thickness * FONT_SIZE_MULTIPLIER, self.db.Outline and "OUTLINE" or "NONE")
 
     self:ResetColor()
 end

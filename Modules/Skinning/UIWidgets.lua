@@ -135,7 +135,8 @@ function UIW:StyleStatusBarWidget(widget)
                 backdrop.bg:SetAllPoints()
                 backdrop.bg:SetColorTexture(unpack(barDB.BackdropColor))
 
-                NRSKNUI:AddBorders(backdrop, barDB.BorderColor)
+                backdrop:AddBorders()
+                backdrop:SetBorderColor(unpack(barDB.BorderColor))
                 bar.nrsknBackdrop = backdrop
             end
         end

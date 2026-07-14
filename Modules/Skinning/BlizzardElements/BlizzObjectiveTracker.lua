@@ -57,7 +57,7 @@ local function ReskinQuestIcon(button, skipBorder)
     local icon = button.icon or button.Icon
     if icon and not skipBorder then
         icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-        NRSKNUI:AddBorders(button, { 0, 0, 0, 1 })
+        button:AddBorders()
     end
 
     button.styled = true
@@ -272,7 +272,7 @@ function BOT:SkinScenarioTracker()
                 bg:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8" })
                 bg:SetBackdropColor(0, 0, 0, 0.5)
                 bg:SetFrameLevel(block:GetFrameLevel() - 1)
-                NRSKNUI:AddBorders(bg, { 0, 0, 0, 1 })
+                bg:AddBorders()
                 block.bg = bg
             end
         end)
@@ -299,7 +299,7 @@ function BOT:SkinScenarioTracker()
                         for currencyFrame in widgetFrame.currencyPool:EnumerateActive() do
                             if currencyFrame.Icon and not currencyFrame.styled then
                                 currencyFrame.Icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-                                NRSKNUI:AddBorders(currencyFrame, { 0, 0, 0, 1 })
+                                currencyFrame:AddBorders()
                                 currencyFrame.styled = true
                             end
                         end
@@ -319,7 +319,7 @@ function BOT:SkinScenarioTracker()
                 end
                 if frame.Portrait and not frame.styled then
                     frame.Portrait:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-                    NRSKNUI:AddBorders(frame, { 0, 0, 0, 1 })
+                    frame:AddBorders()
                     frame.styled = true
                 end
 
@@ -368,7 +368,7 @@ function BOT:SkinScenarioTracker()
             bg:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8" })
             bg:SetBackdropColor(0, 0, 0, 0.5)
             bg:SetFrameLevel(block:GetFrameLevel() - 1)
-            NRSKNUI:AddBorders(bg, { 0, 0, 0, 1 })
+            bg:AddBorders()
             block.bg = bg
 
             block.styled = true
@@ -382,7 +382,7 @@ function BOT:SkinScenarioTracker()
             if spellButton and not spellButton.styled then
                 if spellButton.Icon then
                     spellButton.Icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-                    NRSKNUI:AddBorders(spellButton, { 0, 0, 0, 1 })
+                    spellButton:AddBorders()
                 end
                 spellButton:SetNormalTexture(0)
                 spellButton:SetPushedTexture(0)

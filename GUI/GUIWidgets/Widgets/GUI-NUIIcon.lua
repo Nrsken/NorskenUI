@@ -38,7 +38,7 @@ function GUIFrame:CreateIcon(parent, config)
         iconTexture:SetTexture(134400)
     end
 
-    NRSKNUI:ApplyZoom(iconTexture, NRSKNUI.GlobalZoom)
+    iconTexture:SetZoom()
     container.icon = iconTexture
 
     if showBorder then

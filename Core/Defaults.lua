@@ -58,6 +58,33 @@ local Defaults = {
                 HideShadow = true,
                 Families = {},
                 Overrides = {},
+                Specials = {
+                    ZoneText = {
+                        Enabled = true,
+                        Size = 40,
+                        Hide = false,
+                        Position = { Anchor = "TOP", X = 0, Y = -200 },
+                    },
+                    SubZoneText = { Enabled = true, Size = 20 },
+                    PvPZoneText = { Enabled = true, Size = 20 },
+                    ErrorText = {
+                        Enabled = true,
+                        Size = 14,
+                        Hide = false,
+                        Position = { Anchor = "TOP", X = 0, Y = -281 },
+                    },
+                    ActionStatus = {
+                        Enabled = true,
+                        Size = 14,
+                        Hide = false,
+                        Position = { Anchor = "TOP", X = 0, Y = -251 },
+                    },
+                    ChatBubbles = { Enabled = true, Size = 8 },
+                    Nameplates = { Enabled = false },
+                    CombatText = { Enabled = false },
+                    CombatFont = { Enabled = false }, -- DAMAGE_TEXT_FONT, relog to apply/revert
+                    NameFont = { Enabled = false },   -- UNIT_NAME_FONT, relog to apply/revert
+                },
             },
         },
 
@@ -1745,60 +1772,6 @@ local Defaults = {
                 FadeOutDuration = 1,  -- Fade out duration
                 BagMouseover = {
                     Enabled = true,   -- Enable mouseover fading
-                },
-            },
-
-            -- Blizzard Messages Skinning
-            BlizzardMessages = {
-                Enabled = true, -- Master toggle for Blizzard messages skinning
-                -- Global font settings
-                UseGlobalFont = true,
-                FontFace = "Expressway", -- Font face
-                FontOutline = "OUTLINE", -- Font outline
-                FontShadow = {
-                    Enabled = false,
-                    Color = { 0, 0, 0, 1 },
-                    OffsetX = 1,
-                    OffsetY = -1,
-                },
-                -- UIErrorsFrame (red error messages at top of screen)
-                UIErrorsFrame = {
-                    Hide = false, -- Show/hide error messages
-                    Size = 14,    -- Font size
-                    -- Position
-                    Position = {
-                        Anchor = "TOP", -- Anchor point
-                        X = 0,          -- X offset
-                        Y = -281,       -- Y offset
-                    },
-                },
-                -- ActionStatusText (action feedback messages)
-                ActionStatusText = {
-                    Hide = false, -- Show/hide action status messages
-                    Size = 14,    -- Font size
-                    -- Position
-                    Position = {
-                        Anchor = "TOP", -- Anchor point
-                        X = 0,          -- X offset
-                        Y = -251,       -- Y offset
-                    },
-                },
-                -- Chat bubbles font
-                ChatBubbles = {
-                    Enabled = true, -- Enable chat bubble font skinning
-                    Size = 8,       -- Font size
-                },
-                ZoneText = {
-                    Hide = false,
-                    SubZone = {
-                        Size = 20,
-                    },
-                    MainZone = {
-                        Size = 40,
-                        Anchor = "TOP", -- Anchor point
-                        X = 0,          -- X offset
-                        Y = -200,       -- Y offset
-                    },
                 },
             },
 

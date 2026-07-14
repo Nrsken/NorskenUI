@@ -171,7 +171,7 @@ GUIFrame:RegisterPanel("missingItems", function(container)
 
             if item.icon then
                 btn._icon:SetTexture(item.icon)
-                NRSKNUI:ApplyZoom(btn._icon, NRSKNUI.GlobalZoom)
+                btn._icon:SetZoom()
             else
                 btn._icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
             end
