@@ -13,7 +13,6 @@
     <Script file="FontFactory.lua" />
     <Script file="AddonTheme.lua" />
     <Script file="Enums.lua" />
-    <Script file="Widgets.lua" />
     <Script file="Curves.lua" />
     <Script file="Animations.lua" />
     <Script file="Globals.lua" />

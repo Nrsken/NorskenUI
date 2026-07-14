@@ -49,7 +49,6 @@ function RK:CreateFrame()
 
     -- Add borders
     frame:AddBorders()
-    frame:SetBorderColor(unpack(self.db.BorderColor))
 
     -- Icon texture with zoom
     frame.icon = frame:CreateTexture(nil, "ARTWORK")
@@ -57,7 +56,6 @@ function RK:CreateFrame()
     frame.icon:SetZoom(self.db.Zoom)
 
     frame.text = frame:CreateFontString(nil, "OVERLAY")
-    frame.text:SetPixelPoint(self.db.TextPoint, frame, self.db.TextPoint, self.db.TextOffset[1], self.db.TextOffset[2])
 
     frame.icon:SetTexture(525134)
 
