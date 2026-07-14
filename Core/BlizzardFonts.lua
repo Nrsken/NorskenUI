@@ -1,0 +1,295 @@
+---@class NRSKNUI
+local NRSKNUI = select(2, ...)
+
+local _G = _G
+local pairs = pairs
+local type = type
+
+local vertexEnum = Enum and Enum.FontStringScaleAnimationMode and Enum.FontStringScaleAnimationMode.Vertex
+local fontSizeEnum = Enum and Enum.FontStringScaleAnimationMode and Enum.FontStringScaleAnimationMode.FontSize
+
+---Assign a family name to a font size, we use this to categorize fonts and apply consistent sizing.
+local function FamilyOf(size)
+    if size <= 9 then
+        return 'tiny'
+    elseif size <= 11 then
+        return 'small'
+    elseif size <= 14 then
+        return 'medium'
+    elseif size <= 18 then
+        return 'large'
+    elseif size <= 24 then
+        return 'huge'
+    else
+        return 'display'
+    end
+end
+
+---Normalize a SetFont outline string to a valid token, or empty string if none.
+local function NormalizeFlags(outline)
+    if type(outline) ~= 'string' then
+        return ''
+    end
+    local flags = outline:upper():gsub('%s+', '')
+    if flags == 'NONE' or flags:find('SLUG') then
+        return ''
+    end
+    return NRSKNUI.ValidOutlines[flags] and flags or ''
+end
+
+local originalData = {}
+local function StoreOriginalFontData(obj)
+    local existing = originalData[obj]
+    if existing then return existing end
+
+    local path, size, flags = obj:GetFont()
+    if not path or not size then return end             -- font object not yet realized
+    if not NRSKNUI:CanAccessValue(size) then return end -- tainted by another addon, comparing it in FamilyOf would error
+
+    -- Capture the native shadow too so hiding it stays fully reversible
+    local sr, sg, sb, sa = obj:GetShadowColor()
+    local sx, sy = obj:GetShadowOffset()
+
+    existing = {
+        path = path,
+        size = size,
+        flags = flags or '',
+        family = FamilyOf(size),
+        shadow = { sr, sg, sb, sa, sx, sy },
+    }
+    originalData[obj] = existing
+    return existing
+end
+
+local function ResolveSize(name, originalSize, family, cfg)
+    local override = cfg.Overrides and cfg.Overrides[name]
+    if override and override.size then
+        return override.size
+    end
+
+    local offset = cfg.Families and cfg.Families[family]
+    return originalSize + (offset or 0)
+end
+
+local function ResolveOutline(name, cfg)
+    local override = cfg.Overrides and cfg.Overrides[name]
+    if override and override.outline then
+        return override.outline
+    end
+    return cfg.Outline
+end
+
+local function ResolveSlug(name, cfg)
+    local override = cfg.Overrides and cfg.Overrides[name]
+    if override and override.slug ~= nil then -- explicit true forces on, false forces off
+        return override.slug
+    end
+    return cfg.Slug
+end
+
+-- Returns true when the native shadow should be hidden for this object.
+local function ResolveHideShadow(name, cfg)
+    local override = cfg.Overrides and cfg.Overrides[name]
+    if override and override.hideShadow ~= nil then -- explicit true forces hidden, false forces the native shadow back
+        return override.hideShadow
+    end
+    return cfg.HideShadow
+end
+
+-- SLUG rendering silently overrides MONOCHROME/THICKOUTLINE, so need to check if it's allowed.
+local function SlugAllowed(outline)
+    return not (outline:find('MONOCHROME') or outline:find('THICKOUTLINE'))
+end
+
+-- Combine an outline token and slug into a SetFont flag string.
+local function BuildFlags(outline, slug)
+    if slug and outline ~= '' then
+        return 'SLUG,' .. outline
+    end
+    if slug then
+        return 'SLUG'
+    end
+    return outline
+end
+
+---@param obj table font object to style
+---@param outlineMode boolean? apply the configured outline (false keeps the object outline-free)
+---@param noSlug boolean? hard-block slug for this object, for fonts that read poorly with it
+function NRSKNUI:SetFont(obj, outlineMode, noSlug)
+    if not obj then return end
+    local font = self.db.profile.globalMedia.profileFont.FontFace
+    local blizDB = self.db.profile.globalMedia.blizzardFonts
+
+    local orig = StoreOriginalFontData(obj)
+    if not orig then return end -- unrealized or tainted, skip so we never index a nil capture
+    local path = self:ResolveFontPath(font)
+
+    local name = obj:GetName()
+    local size = ResolveSize(name, orig.size, orig.family, blizDB)
+    local outline = outlineMode and NormalizeFlags(ResolveOutline(name, blizDB)) or ''
+
+    local slug = not noSlug and ResolveSlug(name, blizDB) and SlugAllowed(outline)
+    -- Slug needs vertex-based scale animation, everything else font-size based.
+    if obj.SetScaleAnimationMode and vertexEnum then
+        obj:SetScaleAnimationMode(slug and vertexEnum or fontSizeEnum)
+    end
+
+    obj:SetFont(path, size, BuildFlags(outline, slug))
+
+    -- Hide the shadow, or restore the captured native one so toggling off reverts without a reload.
+    if ResolveHideShadow(name, blizDB) then
+        obj:SetShadowColor(0, 0, 0, 0)
+        obj:SetShadowOffset(0, 0)
+    else
+        local s = orig.shadow
+        obj:SetShadowColor(s[1], s[2], s[3], s[4])
+        obj:SetShadowOffset(s[5], s[6])
+    end
+end
+
+function NRSKNUI:ApplyBlizzardFonts()
+    local db = self.db.profile.globalMedia
+
+    if not db.blizzardFonts.Enabled then
+        -- Restore anything we previously touched to its captured Blizzard font.
+        for obj, orig in pairs(originalData) do
+            obj:SetFont(orig.path, orig.size, orig.flags)
+            local s = orig.shadow
+            obj:SetShadowColor(s[1], s[2], s[3], s[4])
+            obj:SetShadowOffset(s[5], s[6])
+            -- Slug fonts were switched to vertex scaling, put them back to the default.
+            if obj.SetScaleAnimationMode and fontSizeEnum then
+                obj:SetScaleAnimationMode(fontSizeEnum)
+            end
+        end
+        return
+    end
+
+    -- Number Fonts --
+    self:SetFont(_G.Number12Font, true)             -- Crafting order duration dropdown text
+    self:SetFont(_G.Number12Font_o1, true)          -- Some number text?
+    self:SetFont(_G.Number12FontOutline, true)      -- 'Midnight Engineering 1/100' text
+    self:SetFont(_G.Number13FontYellow, true)       -- Auctions list text
+    self:SetFont(_G.Number13FontWhite, true)        -- Some auction house text
+    self:SetFont(_G.Number14FontWhite, true)        -- Crafting order item name texts
+    self:SetFont(_G.Number14FontGray, true)         -- Some auction house text
+    self:SetFont(_G.Number15FontWhite, true)        -- Some auction house text
+    self:SetFont(_G.NumberFontNormalSmall, true)    -- Calendar, EncounterJournal
+    self:SetFont(_G.NumberFontNormal, true)         -- Stacks, timewarped badge e.g
+    self:SetFont(_G.NumberFontNormalLarge, true)    -- Large number text
+    self:SetFont(_G.NumberFontSmallWhiteLeft, true) -- Some journey text
+    -- Map Fonts --
+    self:SetFont(_G.WorldMapTextFont, true)         -- World map zone names, quest titles, etc.
+    self:SetFont(_G.SubZoneTextFont, true)          -- Subzone text, e.g. "The Great Sea"
+
+    -- Game Fonts --
+    self:SetFont(_G.Game10Font_o1, true)            -- Some number text?
+    self:SetFont(_G.Game12Font, true)               -- Some quests text?
+    self:SetFont(_G.Game13Font_o1, true)            -- Some quests text?
+    self:SetFont(_G.Game13FontShadow, true)         -- PvP text when inspecting a player?
+    self:SetFont(_G.Game15Font_Shadow, true)        -- Campaign quest log titles
+    self:SetFont(_G.Game16Font, true)               -- Help text on the map?
+    self:SetFont(_G.Game18Font, true)               -- Talent Lodout Ex / MissionUI Bonus Chance
+    self:SetFont(_G.Game24Font, true)
+    self:SetFont(_G.Game30Font, true)               -- Spec choice / Mission Level
+    self:SetFont(_G.Game27Font, true)               -- Omnium Folio title text
+    self:SetFont(_G.Game32Font_Shadow2, true, true) -- Looks bad with slug, too big.
+    self:SetFont(_G.Game40Font, true, true)         -- New Season! text in lfg.
+    self:SetFont(_G.Game40Font_Shadow2, true, true) -- Looks bad with slug, too big.
+    self:SetFont(_G.Game48Font, true, true)
+    self:SetFont(_G.Game60Font, true, true)         -- Looks bad with slug, too big.
+    self:SetFont(_G.Game72Font, true, true)         -- 'What's new' frame big text, looks bad with slug, too big.
+
+    -- Fancy Fonts --
+    self:SetFont(_G.Fancy16Font, true)  --Some artifact text maybe?
+    self:SetFont(_G.Fancy24Font, true)  -- Artifact collection frame, weapon name
+    self:SetFont(_G.Fancy27Font, false) -- Catchup experience text
+
+    -- Game Fonts --
+    self:SetFont(_G.GameFontNormalTiny, true)  -- 'Current CPU', 'Avarage CPU' etc text in the addons menu
+    self:SetFont(_G.GameFontNormalTiny2, true) -- RaiderIO records text
+    self:SetFont(_G.GameFontNormalMed1, true)  -- Guildfinder frame text / WoW Token Info
+    self:SetFont(_G.GameFontNormalMed3, true)  -- 'Ongoing Events' text on the map
+    self:SetFont(_G.GameFontNormalMed2, true)  -- Talent tree spec page role texts.
+    self:SetFont(_G.GameFontNormalHuge, true)
+    self:SetFont(_G.GameFontNormal, true)
+    self:SetFont(_G.GameFontNormalSmall, true)          -- Tab labels, etc.
+    self:SetFont(_G.GameFontNormalHuge2, true)          -- Mythic weekly dung text
+    self:SetFont(_G.GameFontNormalHuge3, true)          -- Some text in the store frame, probably for Trader’s Tender?
+    self:SetFont(_G.GameFontNormalHuge4, true)          -- 'Searching...' text in the auction house frame
+    self:SetFont(_G.GameFontNormalLarge2, true)         -- Talent tree spec page active spec.
+    self:SetFont(_G.GameFontNormal_NoShadow, true)      -- Some 'New' text for collections
+    self:SetFont(_G.GameFontHighlightSmall2, true)      -- Profession requires X materials text
+    self:SetFont(_G.GameFontHighlightMedium, true)      -- Achievement category names, Questlog quest titles, etc.
+    self:SetFont(_G.GameFontHighlightHuge2, true, true) -- Talent tree node names / Talent point texts, looks bad with slug, too big.
+    self:SetFont(_G.GameFontHighlightMed2, false)
+    self:SetFont(_G.GameFontBlack, false)               -- Dungeon journal text
+    self:SetFont(_G.GameFontWhite, true)                -- Toy box 'Page 1 / 56' text
+    self:SetFont(_G.GameFontWhiteSmall, true)           -- Spellbook spell labels
+
+    -- Misc Fonts --
+    self:SetFont(_G.SubSpellFont, false)         -- Spellbook Sub Names / Profession description texts
+    self:SetFont(_G.GameTooltipHeader, false)    -- Tooltip header / Suggested quest description text
+    self:SetFont(_G.PriceFont, true)
+    self:SetFont(_G.TextStatusBarText, true)     -- Some '0/0' text for bars
+    self:SetFont(_G.InvoiceTextFontNormal, true) -- Invoice frame text
+    self:SetFont(_G.MailFont_Large, false)       -- Mail frame subject text
+    self:SetFont(_G.DestinyFontHuge, false)      -- Garrison Mission Report / Suggested content text
+    self:SetFont(_G.SplashHeaderFont, true)      -- Splash screen header text
+
+    -- System Fonts --
+    self:SetFont(_G.System15Font, true)
+    self:SetFont(_G.SystemFont_Small2, true) -- Store frame text
+    self:SetFont(_G.SystemFont_Med1, false)  -- Adventure guide description text
+    self:SetFont(_G.SystemFont_Med2, false)  -- 'Bring your friends to Azeroth...' text
+    self:SetFont(_G.SystemFont_Med3, false)  -- Adventure guide reward text
+    self:SetFont(_G.SystemFont_Huge2, false) -- Spellbook spec text
+    self:SetFont(_G.SystemFont_Huge1_Outline, true)
+    self:SetFont(_G.SystemFont_Shadow_Huge2, true)
+    self:SetFont(_G.SystemFont_Shadow_Large2, true)
+    self:SetFont(_G.SystemFont_Shadow_Med2, true)           -- 'What's New' text in the collections frame
+    self:SetFont(_G.SystemFont_Shadow_Med3, true)
+    self:SetFont(_G.SystemFont_Shadow_Small, true)          -- 'Already Known' text in profession trainer frame
+    self:SetFont(_G.SystemFont_Shadow_Small2, true)         -- Campaign: 0/3 Chapters text
+    self:SetFont(_G.SystemFont16_Shadow_ThickOutline, true) -- Talent & Profession SpendText
+    self:SetFont(_G.SystemFont22_Shadow_ThickOutline, true) -- Talent & Profession HeaderText
+    self:SetFont(_G.SystemFont_Shadow_Large_Outline, false) -- Not sure.
+    self:SetFont(_G.SystemFont_Shadow_Med1_Outline, true)
+    self:SetFont(_G.SystemFont_Large, false)                -- Spellbook spell labels
+    self:SetFont(_G.SystemFont_Shadow_Large, true)          -- Talent tree hero specialization names
+    self:SetFont(_G.SystemFont_OutlineThick_Huge2, true)    -- Talent tree node names
+
+    -- Achievement Fonts --
+    self:SetFont(_G.AchievementPointsFontSmall, true)  -- Achievement points text
+    self:SetFont(_G.AchievementDescriptionFont, false) -- Achievement description text
+    self:SetFont(_G.AchievementCriteriaFont, false)    -- Achievement criteria text
+    self:SetFont(_G.AchievementDateFont, true)         -- Achievement date text
+
+    -- Quest fonts, outline looks scuffed so skip --
+    self:SetFont(_G.QuestMapRewardsFont, false)    -- Quest log rewards item names
+    self:SetFont(_G.QuestTitleFont, false)         -- Quest log quest titles
+    self:SetFont(_G.QuestFont, false)              -- Quest log quest objectives
+    self:SetFont(_G.QuestFontNormalSmall, false)   -- Quest log quest objectives
+    self:SetFont(_G.QuestFont_Super_Huge, false)   -- Quest log quest titles
+    self:SetFont(_G.QuestFont_Large, false)        -- Quest log quest titles
+    self:SetFont(_G.QuestFont_Shadow_Small, false) -- Quest log quest objectives
+    self:SetFont(_G.QuestFont_Huge, false)         -- Quest log rewards title text
+    self:SetFont(_G.QuestFont_Enormous, false)     -- Quest log quest titles
+
+    -- Friendlist Fonts --
+    self:SetFont(_G.FriendsFont_Small, true)                -- 'Tell your friends what you're doing' text
+    self:SetFont(_G.FriendsFont_Normal, true)               -- 'Blizzard services are unavailable' text
+    self:SetFont(_G.FriendsFont_Large, true)                -- 'Blizzard services are unavailable' text
+    self:SetFont(_G.UserScaledFontGameDisableSmall, true)   -- 'Search Zones, Guilds, Classes, Races, Levels' text
+    self:SetFont(_G.UserScaledFontGameNormalSmall, true)
+    self:SetFont(_G.UserScaledFontGameHighlightSmall, true) -- 'Name' text
+    self:SetFont(_G.UserScaledFontGameHighlight, true)      -- 'Zone' text
+    self:SetFont(_G.FriendsFont_UserText, true)
+
+    -- Blizzard options fonts --
+    self:SetFont(_G.UserScaledFontHeader, true) -- 'Example' text
+    self:SetFont(_G.UserScaledFontBody, true)   -- 'This is a preview of the text size...' text
+
+    -- Chat fonts --
+    self:SetFont(_G.ChatFontNormal, true)
+end

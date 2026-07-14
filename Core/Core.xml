@@ -9,6 +9,7 @@
     <Script file="Secret.lua" />
     <Script file="Media.lua" />
     <Script file="FontStyle.lua" />
+    <Script file="BlizzardFonts.lua" />
     <Script file="FontFactory.lua" />
     <Script file="AddonTheme.lua" />
     <Script file="Enums.lua" />

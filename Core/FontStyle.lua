@@ -40,6 +40,14 @@ local function ResolveFontPath(font)
     return FALLBACK_FONT
 end
 
+-- Exposed so other Core systems (e.g. BlizzardFonts) resolve font names the same
+-- locale-safe way instead of hitting LSM directly and risking CJK box-glyphs.
+---@param font string? LSM name or literal path
+---@return string path
+function NRSKNUI:ResolveFontPath(font)
+    return ResolveFontPath(font)
+end
+
 ---@return string
 local function GetGlobalFontName()
     local profile = NRSKNUI.db and NRSKNUI.db.profile

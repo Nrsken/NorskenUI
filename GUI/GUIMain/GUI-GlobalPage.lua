@@ -67,6 +67,99 @@ GUIFrame:RegisterContent('GlobalPage', function(scrollChild, yOffset)
 
     yOffset = GlobalFontCard:GetNextOffset()
 
+    -- Blizzard UI Font
+    local blizzDB = db.blizzardFonts
+    blizzDB.Families = blizzDB.Families or {}
+    manager:SetCondition('blizzFontsON', function() return blizzDB.Enabled end)
+
+    local BlizzardFontCard = GUIFrame:CreateCard(scrollChild, 'Blizzard UI Font', yOffset)
+
+    local bRow1 = GUIFrame:CreateRow(BlizzardFontCard.content, Theme.rowHeight)
+    local blizzToggle = GUIFrame:CreateCheckbox(bRow1, 'Style Blizzard Fonts', {
+        value = blizzDB.Enabled,
+        callback = function(checked)
+            blizzDB.Enabled = checked
+            UpdateAllWidgetStates()
+            NRSKNUI:ApplyBlizzardFonts()
+        end,
+        msgPopup = true,
+        msgText = 'Blizzard UI Font',
+        tooltip = "Apply your global font face across Blizzard's UI, adding an outline where it reads cleanly. Big display text and unsafe fonts keep their native outline.",
+    })
+    bRow1:AddWidget(blizzToggle, 0.5)
+
+    local outlineOptions = {}
+    for _, option in ipairs(NRSKNUI.FontOutlines) do
+        local value = option.value
+        if type(value) == 'table' then value = value[1] end
+        if not value:find('SLUG') then
+            table.insert(outlineOptions, { key = value, text = option.label })
+        end
+    end
+
+    local blizzOutline = GUIFrame:CreateDropdown(bRow1, 'Outline', {
+        options = outlineOptions,
+        value = blizzDB.Outline,
+        callback = function(key)
+            blizzDB.Outline = key
+            NRSKNUI:ApplyBlizzardFonts()
+        end,
+    })
+    bRow1:AddWidget(blizzOutline, 0.5)
+    manager:Register(blizzOutline, 'all', 'blizzFontsON')
+    BlizzardFontCard:AddRow(bRow1, Theme.rowHeight)
+
+    local bRowSlug = GUIFrame:CreateRow(BlizzardFontCard.content, Theme.rowHeight)
+    local blizzSlug = GUIFrame:CreateCheckbox(bRowSlug, 'Use Slug Rendering', {
+        value = blizzDB.Slug,
+        callback = function(checked)
+            blizzDB.Slug = checked
+            NRSKNUI:ApplyBlizzardFonts()
+        end,
+        tooltip = 'Higher-quality glyph rendering on supported fonts, combined with the outline above where enabled.',
+    })
+    bRowSlug:AddWidget(blizzSlug, 0.5)
+    manager:Register(blizzSlug, 'all', 'blizzFontsON')
+
+    local blizzHideShadow = GUIFrame:CreateCheckbox(bRowSlug, 'Hide Shadows', {
+        value = blizzDB.HideShadow,
+        callback = function(checked)
+            blizzDB.HideShadow = checked
+            NRSKNUI:ApplyBlizzardFonts()
+        end,
+        tooltip = "Remove the drop shadow from styled fonts for a flatter look. Native shadows return when unchecked.",
+    })
+    bRowSlug:AddWidget(blizzHideShadow, 0.5)
+    manager:Register(blizzHideShadow, 'all', 'blizzFontsON')
+    BlizzardFontCard:AddRow(bRowSlug, Theme.rowHeight)
+
+    local function AddFamilySlider(row, famKey, label)
+        local slider = GUIFrame:CreateSlider(row, label, {
+            min = -8,
+            max = 8,
+            step = 1,
+            value = blizzDB.Families[famKey] or 0,
+            callback = function(val)
+                blizzDB.Families[famKey] = val
+                NRSKNUI:ApplyBlizzardFonts()
+            end,
+        })
+        row:AddWidget(slider, 0.5)
+        manager:Register(slider, 'all', 'blizzFontsON')
+    end
+
+    local bRow2 = GUIFrame:CreateRow(BlizzardFontCard.content, Theme.rowHeight)
+    AddFamilySlider(bRow2, 'small', 'Small Size')
+    AddFamilySlider(bRow2, 'medium', 'Medium Size')
+    BlizzardFontCard:AddRow(bRow2, Theme.rowHeight)
+
+    local bRow3 = GUIFrame:CreateRow(BlizzardFontCard.content, Theme.rowHeightLast)
+    AddFamilySlider(bRow3, 'large', 'Large Size')
+    AddFamilySlider(bRow3, 'huge', 'Huge Size')
+    BlizzardFontCard:AddRow(bRow3, Theme.rowHeightLast, 0)
+
+    yOffset = BlizzardFontCard:GetNextOffset()
+
     local GlobalBarCard = GUIFrame:CreateCard(scrollChild, 'Global Bar', yOffset)
     local row2 = GUIFrame:CreateRow(GlobalBarCard.content, Theme.rowHeightLast)
     local globalBarToggle = GUIFrame:CreateCheckbox(row2, 'Use Global Bar Texture', {

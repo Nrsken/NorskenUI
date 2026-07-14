@@ -51,6 +51,14 @@ local Defaults = {
             Enabled = true,
             profileFont = { Enabled = true, FontFace = "Expressway", },
             profileBar = { Enabled = true, statusBar = "NorskenUI", },
+            blizzardFonts = {
+                Enabled = true,
+                Outline = "OUTLINE",
+                Slug = true,
+                HideShadow = true,
+                Families = {},
+                Overrides = {},
+            },
         },
 
         RerollKeystone = {

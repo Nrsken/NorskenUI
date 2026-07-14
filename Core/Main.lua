@@ -93,6 +93,7 @@ function NRSKNUI:OnEnable()
     self:RefreshTheme()
     self:SetupSlashCommands()
     self:SetUIScale()
+    self:ApplyBlizzardFonts()
 
     --self:TestEnv()
 
