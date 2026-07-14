@@ -3,6 +3,7 @@ local NRSKNUI = select(2, ...)
 
 ---@class CombatRes : NRSKNUI.Module
 local CR = NRSKNUI:NewModule("CombatRes", "AceEvent-3.0")
+local EM = NRSKNUI.EditMode
 
 local CreateFrame = CreateFrame
 local UIParent = UIParent
@@ -218,7 +219,7 @@ end
 function CR:ApplySettings()
     if not self.frame then self:CreateFrame() end
 
-    NRSKNUI:ApplyFramePosition(self.frame, self.db.Position, self.db)
+    self.frame:ApplyPosition(self.db)
     self:ApplyTextSettings()
 
     if not self.db.Enabled and not self.isPreview then
@@ -259,30 +260,7 @@ function CR:OnEnable()
     self:RegisterEvent("CHALLENGE_MODE_START", DelayedUpdate)
     self:RegisterEvent("PLAYER_ENTERING_WORLD", DelayedUpdate)
 
-    local config = {
-        key = "CombatRes",
-        displayName = "Combat Res",
-        frame = self.frame,
-        getPosition = function()
-            return self.db.Position
-        end,
-        setPosition = function(pos)
-            self.db.Position.AnchorFrom = pos.AnchorFrom
-            self.db.Position.AnchorTo = pos.AnchorTo
-            self.db.Position.XOffset = pos.XOffset
-            self.db.Position.YOffset = pos.YOffset
-            if self.frame then
-                local parent = NRSKNUI:ResolveAnchorFrame(self.db.anchorFrameType, self.db.ParentFrame)
-                self.frame:ClearAllPoints()
-                self.frame:SetPoint(pos.AnchorFrom, parent, pos.AnchorTo, pos.XOffset, pos.YOffset)
-            end
-        end,
-        getParentFrame = function()
-            return NRSKNUI:ResolveAnchorFrame(self.db.anchorFrameType, self.db.ParentFrame)
-        end,
-        guiPath = "battleRes",
-    }
-    NRSKNUI.EditMode:RegisterElement(config)
+    EM:Register(self, 'CombatRes', self.frame, 'battleRes')
 end
 
 function CR:OnDisable()

@@ -2,6 +2,7 @@
 local NRSKNUI = select(2, ...)
 ---@class TotemTracker: AceModule, AceEvent-3.0
 local TT = NRSKNUI:NewModule("TotemTracker", "AceEvent-3.0")
+local EM = NRSKNUI.EditMode
 
 local CreateFrame = CreateFrame
 local ipairs = ipairs
@@ -125,7 +126,7 @@ function TT:UpdateContainerPosition()
 
     local db = self.db
     local position = db.Position
-    local parent = NRSKNUI:ResolveAnchorFrame(db.anchorFrameType, db.ParentFrame)
+    local parent = UIParent
 
     containerFrame:ClearAllPoints()
 
@@ -328,27 +329,7 @@ function TT:OnEnable()
     self:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED", "OnTotemUpdate")
     C_Timer.After(0.1, function() self:UpdateTotems() end)
 
-    if NRSKNUI.EditMode then
-        NRSKNUI.EditMode:RegisterElement({
-            key = "TotemTracker",
-            displayName = "Totem Tracker",
-            frame = containerFrame,
-            getPosition = function()
-                return self.db.Position
-            end,
-            setPosition = function(pos)
-                self.db.Position.AnchorFrom = pos.AnchorFrom
-                self.db.Position.AnchorTo = pos.AnchorTo
-                self.db.Position.XOffset = pos.XOffset
-                self.db.Position.YOffset = pos.YOffset
-                self:ApplySettings()
-            end,
-            getParentFrame = function()
-                return NRSKNUI:ResolveAnchorFrame(self.db.anchorFrameType, self.db.ParentFrame)
-            end,
-            guiPath = "TotemTracker",
-        })
-    end
+    EM:Register(self, 'TotemTracker', containerFrame, 'TotemTracker')
 end
 
 function TT:OnDisable()

@@ -5,7 +5,7 @@
     <Script file="Defaults.lua" />
     <Script file="Main.lua" />
     <Script file="PixelPerfect.lua" />
-    <Script file="InjectionAPI.lua" />
+    <Script file="API.lua" />
     <Script file="Secret.lua" />
     <Script file="MediaCore.lua" />
     <Script file="FontCore.lua" />

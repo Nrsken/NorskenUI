@@ -4,6 +4,8 @@ local NRSKNUI = select(2, ...)
 ---@class Recuperate: AceModule, AceEvent-3.0
 local REC = NRSKNUI:NewModule("Recuperate", "AceEvent-3.0")
 
+local EM = NRSKNUI.EditMode
+
 local UnitHealthPercent = UnitHealthPercent
 local UnitIsDeadOrGhost = UnitIsDeadOrGhost
 local CreateFrame = CreateFrame
@@ -112,7 +114,6 @@ function REC:ApplySettings()
         return
     end
     self.button:SetSize(self.db.Size, self.db.Size)
-    NRSKNUI:ApplyFramePosition(self.button, self.db.Position, self.db)
 end
 
 function REC:OnEnable()
@@ -134,20 +135,7 @@ function REC:OnEnable()
     self:RegisterEvent("PLAYER_UNGHOST", "UpdateAlpha")
     self:UpdateAlpha()
 
-    NRSKNUI.EditMode:RegisterElement({
-        key = "RecuperateButton",
-        displayName = "Recuperate Button",
-        frame = self.button,
-        getPosition = function() return self.db.Position end,
-        setPosition = function(pos)
-            self.db.Position.AnchorFrom = pos.AnchorFrom
-            self.db.Position.AnchorTo = pos.AnchorTo
-            self.db.Position.XOffset = pos.XOffset
-            self.db.Position.YOffset = pos.YOffset
-            NRSKNUI:ApplyFramePosition(self.button, self.db.Position, self.db)
-        end,
-        guiPath = "Recuperate",
-    })
+    EM:Register(self, 'RecuperateButton', self.button, 'Recuperate')
 end
 
 function REC:OnDisable()

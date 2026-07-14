@@ -3,6 +3,7 @@ local NRSKNUI = select(2, ...)
 
 ---@class CombatMessage: AceModule, AceEvent-3.0
 local CM = NRSKNUI:NewModule("CombatMessage", "AceEvent-3.0")
+local EM = NRSKNUI.EditMode
 
 local CreateFrame = CreateFrame
 local UnitExists, UnitIsDead, UnitIsDeadOrGhost = UnitExists, UnitIsDead, UnitIsDeadOrGhost
@@ -143,36 +144,18 @@ local function FormatPartyDeathMessage(db, unitID, fallbackName)
     return FormatDeathMessage(format, name, nameColor, db.PartyDeath.TextColor)
 end
 
-function CM:ApplyContainerPosition()
-    if not self.container then return end
-
-    local grow = GROW_ANCHORS[self.db.Grow] or GROW_ANCHORS.DOWN
-    local parent = NRSKNUI:ResolveAnchorFrame(self.db.anchorFrameType, self.db.ParentFrame)
-
-    self.container:ClearAllPoints()
-    self.container:SetPoint(
-        grow.containerAnchor,
-        parent,
-        self.db.Position.AnchorTo or "CENTER",
-        self.db.Position.XOffset or 0,
-        self.db.Position.YOffset or 0
-    )
-    self.container:SetFrameStrata(self.db.Strata or "HIGH")
-end
-
 function CM:CreateContainer()
     if self.container then return end
 
     local container = CreateFrame("Frame", "NRSKNUI_CombatMessageContainer", UIParent)
     container:SetSize(100, 20)
     container:SetFrameLevel(100)
+    container:ApplyPosition(self.db)
 
     self.container = container
 
     -- Coalesced one-shot layout, arm with container:ScheduleUpdate(), auto-disarms after firing.
     container:SetScheduledUpdate(function() self:ArrangeMessages() end)
-
-    self:ApplyContainerPosition()
 end
 
 function CM:GetMessageFrame(msgType)
@@ -262,7 +245,6 @@ function CM:ArrangeMessages()
         self.container:SetSize(100, 20)
     end
 end
-
 
 function CM:ShowFlashMessage(msgType, customText, customColor)
     if not self.db.Enabled then return end
@@ -404,8 +386,7 @@ end
 
 function CM:ApplySettings()
     if not self.container then return end
-    self:ApplyContainerPosition()
-
+    self.container:ApplyPosition(self.db)
     for msgType, frame in pairs(self.messageFrames) do self:UpdateFrameFont(frame, msgType) end
 
     if self.isPreview then
@@ -508,30 +489,7 @@ function CM:OnEnable()
     self.inCombat = InCombatLockdown()
     if self.inCombat then self:CheckNoTarget() end
 
-    NRSKNUI.EditMode:RegisterElement({
-        key = "CombatMessages",
-        displayName = "Combat Messages",
-        frame = self.container,
-        getPosition = function()
-            local grow = GROW_ANCHORS[self.db.Grow] or GROW_ANCHORS.DOWN
-            return {
-                AnchorFrom = grow.containerAnchor,
-                AnchorTo = self.db.Position.AnchorTo,
-                XOffset = self.db.Position.XOffset,
-                YOffset = self.db.Position.YOffset,
-            }
-        end,
-        setPosition = function(pos)
-            self.db.Position.AnchorTo = pos.AnchorTo
-            self.db.Position.XOffset = pos.XOffset
-            self.db.Position.YOffset = pos.YOffset
-            self:ApplyContainerPosition()
-        end,
-        getParentFrame = function()
-            return NRSKNUI:ResolveAnchorFrame(self.db.anchorFrameType, self.db.ParentFrame)
-        end,
-        guiPath = "combatMessage",
-    })
+    EM:Register(self, 'CombatMessages', self.container, 'combatMessage')
 end
 
 function CM:OnDisable()

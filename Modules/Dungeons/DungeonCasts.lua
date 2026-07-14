@@ -4,6 +4,8 @@ local NRSKNUI = select(2, ...)
 ---@class DungeonCasts: AceModule, AceEvent-3.0
 local DC = NRSKNUI:NewModule("DungeonCasts", "AceEvent-3.0")
 
+local EM = NRSKNUI.EditMode
+
 local CreateFrame = CreateFrame
 local UnitCastingInfo, UnitChannelInfo = UnitCastingInfo, UnitChannelInfo
 local UnitCastingDuration, UnitChannelDuration = UnitCastingDuration, UnitChannelDuration
@@ -109,7 +111,7 @@ function DC:ApplyAnchorPosition()
     if not self.anchorFrame then return end
     local frameDb = self.db.Frame
     local pos = frameDb.Position
-    local parent = NRSKNUI:ResolveAnchorFrame(frameDb.anchorFrameType, frameDb.ParentFrame)
+    local parent = UIParent
     local growUp = frameDb.GrowthDirection == "UP"
 
     self.anchorFrame:SetParent(parent)
@@ -803,26 +805,7 @@ function DC:OnEnable()
     self:CheckInstanceType()
     self:SetUpdateFrameRunning(self.instanceActive)
 
-    NRSKNUI.EditMode:RegisterElement({
-        key = "DungeonCasts",
-        displayName = "Dungeon Casts",
-        frame = self.anchorFrame,
-        getPosition = function() return self.db.Frame.Position end,
-        setPosition = function(pos)
-            local p = self.db.Frame.Position
-            p.AnchorTo = pos.AnchorTo
-            p.XOffset = pos.XOffset
-            p.YOffset = pos.YOffset
-            self:ApplyPosition()
-        end,
-        getAnchorFrom = function()
-            return self.db.Frame.GrowthDirection == "UP" and "BOTTOM" or "TOP"
-        end,
-        getParentFrame = function()
-            return NRSKNUI:ResolveAnchorFrame(self.db.Frame.anchorFrameType, self.db.Frame.ParentFrame)
-        end,
-        guiPath = "DungeonCasts",
-    })
+    EM:Register(self, 'DungeonCasts', self.anchorFrame, 'DungeonCasts')
 end
 
 function DC:OnDisable()

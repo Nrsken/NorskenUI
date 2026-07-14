@@ -367,15 +367,16 @@ function EditMode:Register(module, config, frame, guiPath, opts)
             elseif module.ApplyPosition then
                 module:ApplyPosition()
             else
-                NRSKNUI:ApplyFramePosition(config.frame, p, ResolveDB())
+                config.frame:ApplyPosition(ResolveDB())
             end
         end
     end
 
+    --TODO: Fix real anchor
     if not config.getParentFrame then
         config.getParentFrame = function()
             local d = ResolveDB()
-            return NRSKNUI:ResolveAnchorFrame(d.anchorFrameType, d.ParentFrame)
+            return UIParent
         end
     end
 

@@ -3,6 +3,7 @@ local NRSKNUI = select(2, ...)
 
 ---@class BenchAlert: AceModule, AceEvent-3.0
 local BA = NRSKNUI:NewModule("BenchAlert", "AceEvent-3.0")
+local EM = NRSKNUI.EditMode
 
 local IsInRaid = IsInRaid
 local IsInInstance = IsInInstance
@@ -33,23 +34,7 @@ function BA:OnEnable()
     self:RegisterEvent("PLAYER_DIFFICULTY_CHANGED", "CheckConditions")
     self:CheckConditions()
 
-    if NRSKNUI.EditMode and not self.editModeRegistered then
-        NRSKNUI.EditMode:RegisterElement({
-            key = "BenchAlert",
-            displayName = "Bench Alert",
-            frame = self.alertFrame,
-            getPosition = function() return self.db.Position end,
-            setPosition = function(pos)
-                self.db.Position.AnchorFrom = pos.AnchorFrom
-                self.db.Position.AnchorTo = pos.AnchorTo
-                self.db.Position.XOffset = pos.XOffset
-                self.db.Position.YOffset = pos.YOffset
-                NRSKNUI:ApplyFramePosition(self.alertFrame, self.db.Position, self.db)
-            end,
-            guiPath = "benchalert",
-        })
-        self.editModeRegistered = true
-    end
+    EM:Register(self, 'BenchAlert', self.alertFrame, 'benchalert')
 end
 
 function BA:OnDisable()

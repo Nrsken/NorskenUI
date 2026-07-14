@@ -4,6 +4,8 @@ local NRSKNUI = select(2, ...)
 ---@class HealerMana: AceModule, AceEvent-3.0, AceTimer-3.0
 local HM = NRSKNUI:NewModule("HealerMana", "AceEvent-3.0", "AceTimer-3.0")
 
+local EM = NRSKNUI.EditMode
+
 local CreateFrame = CreateFrame
 local UnitExists = UnitExists
 local UnitIsConnected = UnitIsConnected
@@ -161,7 +163,7 @@ function HM:ApplyPosition()
         YOffset = pos.YOffset,
     }
 
-    NRSKNUI:ApplyFramePosition(self.containerFrame, adjustedPos, self.db)
+    self.containerFrame:ApplyPosition(adjustedPos)
 end
 
 function HM:UpdateContainerSize()
@@ -537,30 +539,7 @@ function HM:OnEnable()
 
     C_Timer_After(0.5, function() self:ApplyPosition() end)
 
-    NRSKNUI.EditMode:RegisterElement({
-        key = "HealerMana",
-        displayName = "Healer Mana",
-        frame = self.containerFrame,
-        getPosition = function()
-            return self:GetCurrentPosition()
-        end,
-        setPosition = function(pos)
-            local currentPos = self:GetCurrentPosition()
-            currentPos.AnchorFrom = pos.AnchorFrom
-            currentPos.AnchorTo = pos.AnchorTo
-            currentPos.XOffset = pos.XOffset
-            currentPos.YOffset = pos.YOffset
-            self:ApplyPosition()
-        end,
-        getAnchorFrom = function()
-            local pos = self:GetCurrentPosition()
-            return self:GetGrowAnchor(pos.AnchorFrom)
-        end,
-        getParentFrame = function()
-            return NRSKNUI:ResolveAnchorFrame(self.db.anchorFrameType, self.db.ParentFrame)
-        end,
-        guiPath = "HealerMana",
-    })
+    EM:Register(self, 'HealerMana', self.containerFrame, 'HealerMana')
 end
 
 function HM:OnDisable()

@@ -3,6 +3,7 @@ local NRSKNUI = select(2, ...)
 
 ---@class Durability: AceModule, AceEvent-3.0
 local DUR = NRSKNUI:NewModule("Durability", "AceEvent-3.0")
+local EM = NRSKNUI.EditMode
 
 local CreateFrame = CreateFrame
 local wipe = wipe
@@ -118,7 +119,8 @@ function DUR:ApplySettings()
     if not self.db then return end
 
     if self.text then
-        NRSKNUI:ApplyFramePosition(self.frame, self.db.Text.Position, self.db.Text)
+        self.frame:ApplyPosition(self.db.Text)
+
         self.text:SetFontStyle(self.db, self.db.Text.FontSize)
 
         if self.db.Text.Enabled or self.isPreview then
@@ -140,7 +142,7 @@ function DUR:ApplySettings()
 
     if self.warningText then
         self.warningText:SetFontStyle(self.db, self.db.WarningText.FontSize)
-        NRSKNUI:ApplyFramePosition(self.warningFrame, self.db.WarningText.Position, { anchorFrameType = "UIPARENT" })
+        self.warningFrame:ApplyPosition(self.db.WarningText)
 
         local color = self.db.WarningText.WarningColor
         self.warningText:SetText(self.db.WarningText.WarningText)
@@ -178,49 +180,8 @@ function DUR:OnEnable()
     self:RegisterEvents()
     C_Timer.After(0.5, function() self:ApplySettings() end)
 
-    NRSKNUI.EditMode:RegisterElement({
-        key = "DurabilityWarning",
-        displayName = "Low Durability Warning",
-        frame = self.warningFrame,
-        getPosition = function()
-            return self.db.WarningText.Position
-        end,
-        setPosition = function(pos)
-            self.db.WarningText.Position.AnchorFrom = pos.AnchorFrom
-            self.db.WarningText.Position.AnchorTo = pos.AnchorTo
-            self.db.WarningText.Position.XOffset = pos.XOffset
-            self.db.WarningText.Position.YOffset = pos.YOffset
-            if self.warningFrame then
-                self.warningFrame:ClearAllPoints()
-                self.warningFrame:SetPoint(pos.AnchorFrom, UIParent, pos.AnchorTo, pos.XOffset, pos.YOffset)
-            end
-        end,
-        guiPath = "Durability",
-    })
-
-    NRSKNUI.EditMode:RegisterElement({
-        key = "DurabilityText",
-        displayName = "Durability Text",
-        frame = self.frame,
-        getPosition = function()
-            return self.db.Text.Position
-        end,
-        setPosition = function(pos)
-            self.db.Text.Position.AnchorFrom = pos.AnchorFrom
-            self.db.Text.Position.AnchorTo = pos.AnchorTo
-            self.db.Text.Position.XOffset = pos.XOffset
-            self.db.Text.Position.YOffset = pos.YOffset
-            if self.frame then
-                local parent = NRSKNUI:ResolveAnchorFrame(self.db.Text.anchorFrameType, self.db.Text.ParentFrame)
-                self.frame:ClearAllPoints()
-                self.frame:SetPoint(pos.AnchorFrom, parent, pos.AnchorTo, pos.XOffset, pos.YOffset)
-            end
-        end,
-        getParentFrame = function()
-            return NRSKNUI:ResolveAnchorFrame(self.db.Text.anchorFrameType, self.db.Text.ParentFrame)
-        end,
-        guiPath = "Durability",
-    })
+    EM:Register(self, 'DurabilityText', self.frame, 'Durability')
+    EM:Register(self, 'DurabilityWarning', self.warningFrame, 'Durability')
 end
 
 function DUR:OnDisable()

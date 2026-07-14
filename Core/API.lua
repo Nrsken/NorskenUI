@@ -610,19 +610,17 @@ end
 
 -- Positioning utility --
 
---TODO: Make local
--- Resolve anchor frame: SCREEN, UIPARENT or SELECTFRAME
----@param anchorFrameType string
----@param parentFrameName string
----@return Frame
-function NRSKNUI:ResolveAnchorFrame(anchorFrameType, parentFrameName)
-    if anchorFrameType == 'SCREEN' or anchorFrameType == 'UIPARENT' then
-        return UIParent
-    elseif anchorFrameType == 'SELECTFRAME' and parentFrameName then
-        local frame = _G[parentFrameName]
-        return frame or UIParent
+---Get justification based on anchor point
+---@param anchorPoint string
+---@return string
+function NRSKNUI:GetJustifyFromAnchor(anchorPoint)
+    if not anchorPoint then return "CENTER" end
+    if anchorPoint == "RIGHT" or anchorPoint == "TOPRIGHT" or anchorPoint == "BOTTOMRIGHT" then
+        return "RIGHT"
+    elseif anchorPoint == "LEFT" or anchorPoint == "TOPLEFT" or anchorPoint == "BOTTOMLEFT" then
+        return "LEFT"
     end
-    return UIParent
+    return "CENTER"
 end
 
 -- ApplyPosition injected onto the frame widget types.

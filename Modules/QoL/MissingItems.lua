@@ -7,6 +7,9 @@ local MITEMS = NRSKNUI:NewModule("MissingItems", "AceEvent-3.0")
 local AS = NRSKNUI.Libs.AS
 local LD = NRSKNUI.Libs.LD
 
+
+local EM = NRSKNUI.EditMode
+
 local pairs, ipairs = pairs, ipairs
 local wipe = wipe
 local table_insert = table.insert
@@ -306,7 +309,7 @@ local function CreateContainerFrame()
     local db = MITEMS.db.Display
     containerFrame = CreateFrame("Frame", "NRSKNUI_MissingItemsContainer", UIParent)
     containerFrame:SetPixelSize(300, 200)
-    NRSKNUI:ApplyFramePosition(containerFrame, db.Position, db)
+    containerFrame:ApplyPosition(db)
     containerFrame:Hide()
 end
 
@@ -481,30 +484,7 @@ function MITEMS:RegisterEditModeElements()
     if not NRSKNUI.EditMode then return end
 
     if not containerFrame then CreateContainerFrame() end
-
-    local displayDb = self.db.Display
-
-    NRSKNUI.EditMode:RegisterElement({
-        key = "MissingItems",
-        displayName = "Missing Items",
-        frame = containerFrame,
-        getPosition = function()
-            return displayDb.Position or {}
-        end,
-        setPosition = function(pos)
-            displayDb.Position = displayDb.Position or {}
-            displayDb.Position.AnchorFrom = pos.AnchorFrom
-            displayDb.Position.AnchorTo = pos.AnchorTo
-            displayDb.Position.XOffset = pos.XOffset
-            displayDb.Position.YOffset = pos.YOffset
-            if containerFrame then
-                local anchorFrame = NRSKNUI:ResolveAnchorFrame(displayDb.anchorFrameType, displayDb.ParentFrame)
-                containerFrame:ClearAllPoints()
-                containerFrame:SetPixelPoint(pos.AnchorFrom, anchorFrame, pos.AnchorTo, pos.XOffset, pos.YOffset)
-            end
-        end,
-        guiPath = "missingItems",
-    })
+    EM:Register(self, 'MissingItems', containerFrame, 'missingItems')
 end
 
 function MITEMS:OnDisable()
@@ -783,7 +763,7 @@ function MITEMS:ApplySettings()
 
     if containerFrame and self.db then
         local db = self.db.Display
-        NRSKNUI:ApplyFramePosition(containerFrame, db.Position, db)
+        containerFrame:ApplyPosition(db)
     end
 
     UpdateDisplay()

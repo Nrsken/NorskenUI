@@ -3,6 +3,7 @@ local NRSKNUI = select(2, ...)
 
 ---@class FocusCastbar: AceModule, AceEvent-3.0
 local FCB = NRSKNUI:NewModule("FocusCastbar", "AceEvent-3.0")
+local EM = NRSKNUI.EditMode
 
 local CreateFrame = CreateFrame
 local UnitCastingInfo, UnitChannelInfo = UnitCastingInfo, UnitChannelInfo
@@ -60,12 +61,11 @@ end
 function FCB:CreateFrame()
     if self.frame then return end
     local db = self.db
-    local parent = NRSKNUI:ResolveAnchorFrame(db.anchorFrameType, db.ParentFrame)
     local height = db.Height
 
-    local frame = CreateFrame("Frame", "NRSKNUI_FocusCastbarFrame", parent)
+    local frame = CreateFrame("Frame", "NRSKNUI_FocusCastbarFrame", UIParent)
     frame:SetSize(db.Width, height)
-    frame:SetPoint(db.Position.AnchorFrom, parent, db.Position.AnchorTo, db.Position.XOffset, db.Position.YOffset)
+    frame:SetPoint(db.Position.AnchorFrom, UIParent, db.Position.AnchorTo, db.Position.XOffset, db.Position.YOffset)
     frame:SetFrameLevel(100)
     frame:CreateBackdrop()
     frame:SetBackgroundColor(unpack(db.BackdropColor))
@@ -189,7 +189,7 @@ function FCB:ApplySettings()
 
     if self.targetText then
         local targetSettings = db.TargetNames
-        local anchorPoint = NRSKNUI:GetTextJustifyFromAnchor(targetSettings.Anchor)
+        local anchorPoint = NRSKNUI:GetJustifyFromAnchor(targetSettings.Anchor)
         self.targetText:ClearAllPoints()
         self.targetText:SetPoint(anchorPoint, self.frame, anchorPoint, targetSettings.XOffset, targetSettings.YOffset)
         self.targetText:SetJustifyH(anchorPoint)
@@ -198,13 +198,13 @@ function FCB:ApplySettings()
 
     if self.targetMarker then
         local markerSettings = db.TargetMarker
-        local anchorPoint = NRSKNUI:GetTextJustifyFromAnchor(markerSettings.Anchor)
+        local anchorPoint = NRSKNUI:GetJustifyFromAnchor(markerSettings.Anchor)
         self.targetMarker:SetSize(markerSettings.Size, markerSettings.Size)
         self.targetMarker:ClearAllPoints()
         self.targetMarker:SetPoint(anchorPoint, self.frame, anchorPoint, markerSettings.XOffset, markerSettings.YOffset)
     end
 
-    NRSKNUI:ApplyFramePosition(self.frame, self.db.Position, self.db, true)
+    self.frame:ApplyPosition(self.db, true)
 
     if self.isPreview then
         self:RefreshPreviewSoftOutlines()
@@ -970,22 +970,7 @@ function FCB:OnEnable()
     self:CacheInterruptId()
     self:ToggleTargetMarkerIntegration()
 
-    -- EditMode registration
-    NRSKNUI.EditMode:RegisterElement({
-        key = "FocusCastbar",
-        displayName = "Focus Castbar",
-        frame = self.frame,
-        getPosition = function() return self.db.Position end,
-        setPosition = function(pos)
-            self.db.Position.AnchorFrom, self.db.Position.AnchorTo = pos.AnchorFrom, pos.AnchorTo
-            self.db.Position.XOffset, self.db.Position.YOffset = pos.XOffset, pos.YOffset
-            NRSKNUI:ApplyFramePosition(self.frame, self.db.Position, self.db, true)
-        end,
-        getParentFrame = function()
-            return NRSKNUI:ResolveAnchorFrame(self.db.anchorFrameType, self.db.ParentFrame)
-        end,
-        guiPath = "FocusCastbar",
-    })
+    EM:Register(self, 'FocusCastbar', self.frame, 'FocusCastbar')
 end
 
 function FCB:OnDisable()

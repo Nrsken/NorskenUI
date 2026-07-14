@@ -155,7 +155,7 @@ end
 function CC:ApplySettings()
     if not self.frame or not self.text then return end
 
-    NRSKNUI:ApplyFramePosition(self.frame, self.db.Position, self.db)
+    self.frame:ApplyPosition(self.db)
     self.text:SetFontStyle("Expressway", self.db.Thickness * FONT_SIZE_MULTIPLIER, self.db.Outline and "OUTLINE" or "NONE")
 
     self:ResetColor()

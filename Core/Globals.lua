@@ -6,7 +6,6 @@ local GetNumGroupMembers = GetNumGroupMembers
 local IsInRaid = IsInRaid
 local UnitClass = UnitClass
 local select = select
-local CreateFrame = CreateFrame
 local _G = _G
 
 local EditModeManagerFrame = EditModeManagerFrame
@@ -14,13 +13,19 @@ local EditModeManagerFrame = EditModeManagerFrame
 local IsAddonLoaded = C_AddOns and C_AddOns.IsAddOnLoaded
 
 -- Check if ElvUI is loaded use ElvUI skinning is enabled
-function NRSKNUI:ShouldNotLoadModule() return IsAddonLoaded("ElvUI") and NRSKNUI.db.profile.UseElvUI.Enabled end
+function NRSKNUI:ShouldNotLoadModule()
+    return IsAddonLoaded("ElvUI") and NRSKNUI.db.profile.UseElvUI.Enabled
+end
 
 -- Check if Blizzard Edit Mode is currently active
-function NRSKNUI:IsEditModeActive() return EditModeManagerFrame and EditModeManagerFrame:IsShown() end
+function NRSKNUI:IsEditModeActive()
+    return EditModeManagerFrame and EditModeManagerFrame:IsShown()
+end
 
 -- Print message with class colored addon name prefix
-function NRSKNUI:Print(msg) print(self:ColorTextByTheme("Norsken") .. "UI:|r " .. msg) end
+function NRSKNUI:Print(msg)
+    print(self:ColorTextByTheme("Norsken") .. "UI:|r " .. msg)
+end
 
 -- Preview Utilities --
 
@@ -70,34 +75,6 @@ end
 
 function PreviewManager:IsPreviewActive()
     return self.previewsActive
-end
-
--- Positioning Utilities --
-
--- Get text justification based on anchor point
----@param anchorPoint string
----@return string
-function NRSKNUI:GetTextJustifyFromAnchor(anchorPoint)
-    if not anchorPoint then return "CENTER" end
-    if anchorPoint == "RIGHT" or anchorPoint == "TOPRIGHT" or anchorPoint == "BOTTOMRIGHT" then
-        return "RIGHT"
-    elseif anchorPoint == "LEFT" or anchorPoint == "TOPLEFT" or anchorPoint == "BOTTOMLEFT" then
-        return "LEFT"
-    end
-    return "CENTER"
-end
-
----@param frame Frame
----@param posConfig table Position config with AnchorFrom, AnchorTo, XOffset, YOffset
----@param Config table Config with anchorFrameType, ParentFrame, Strata
----@param SetParent boolean? If true, also set frame parent
-function NRSKNUI:ApplyFramePosition(frame, posConfig, Config, SetParent)
-    if not frame or not posConfig then return end
-    local parent = self:ResolveAnchorFrame(Config.anchorFrameType, Config.ParentFrame)
-    if SetParent then frame:SetParent(parent) end
-    frame:ClearAllPoints()
-    frame:SetPoint(posConfig.AnchorFrom or "CENTER", parent, posConfig.AnchorTo or "CENTER", posConfig.XOffset or 0, posConfig.YOffset or 0)
-    frame:SetFrameStrata(Config.Strata or "MEDIUM")
 end
 
 -- Class Utilities --

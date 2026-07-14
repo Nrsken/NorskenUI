@@ -3,6 +3,7 @@ local NRSKNUI = select(2, ...)
 
 ---@class RerollKeystone: AceModule, AceEvent-3.0
 local RK = NRSKNUI:NewModule("RerollKeystone", "AceEvent-3.0")
+local EM = NRSKNUI.EditMode
 
 local GetTime = GetTime
 local GetRealZoneText = GetRealZoneText
@@ -77,12 +78,11 @@ function RK:ApplySettings()
     if not self.frame then return end
 
     self.frame:SetPixelSize(self.db.Size)
-    NRSKNUI:ApplyFramePosition(self.frame, self.db.Position, self.db)
+    self.frame:ApplyPosition(self.db)
     self.frame.text:SetFontStyle(self.db)
     self.frame.text:SetTextColor(unpack(self.db.FontColor))
     self.frame.keyText:SetFontStyle(self.db, self.db.FontSizeKey)
     self.frame.keyText:SetTextColor(unpack(self.db.FontColorKey))
-
 end
 
 function RK:UpdateDisplay()
@@ -160,20 +160,7 @@ function RK:OnEnable()
     end)
     self:RegisterEvent("PLAYER_LEAVING_WORLD", function() self:StopTimer() end)
 
-    NRSKNUI.EditMode:RegisterElement({
-        key = "RerollKeystone",
-        displayName = "Reroll Keystone",
-        frame = self.frame,
-        getPosition = function() return self.db.Position end,
-        setPosition = function(pos)
-            self.db.Position.AnchorFrom = pos.AnchorFrom
-            self.db.Position.AnchorTo = pos.AnchorTo
-            self.db.Position.XOffset = pos.XOffset
-            self.db.Position.YOffset = pos.YOffset
-            NRSKNUI:ApplyFramePosition(self.frame, self.db.Position, self.db)
-        end,
-        guiPath = "RerollKeystone",
-    })
+    EM:Register(self, 'RerollKeystone', self.frame, 'RerollKeystone')
 end
 
 function RK:OnDisable()
