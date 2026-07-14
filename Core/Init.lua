@@ -70,6 +70,7 @@ NRSKNUI.AuctionHouseFilter = NRSKNUI:NewModule('AuctionHouseFilter', 'AceEvent-3
 NRSKNUI.Automation = NRSKNUI:NewModule('Automation', 'AceEvent-3.0')
 NRSKNUI.Tweaks = NRSKNUI:NewModule('Tweaks', 'AceEvent-3.0', 'AceHook-3.0')
 NRSKNUI.XPBar = NRSKNUI:NewModule("XPBar", "AceEvent-3.0")
+NRSKNUI.CopyAnything = NRSKNUI:NewModule("CopyAnything", "AceEvent-3.0")
 
 -- Class Util Modules
 NRSKNUI.BurningRush = NRSKNUI:NewModule('BurningRush', 'AceEvent-3.0')

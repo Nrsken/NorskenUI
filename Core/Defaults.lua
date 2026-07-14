@@ -824,7 +824,7 @@ local Defaults = {
             CopyAnything = {
                 Enabled = true, -- Master toggle
                 key = "C",      -- Copy keybind
-                mod = "ctrl",   -- ctrl, shift, alt
+                modifier = "ctrl",   -- ctrl, shift, alt
             },
 
             CursorCircle = {

@@ -1,141 +1,145 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
+---@class CopyAnything
+local CopyAnything = NRSKNUI:GetModule('CopyAnything')
 
----@class CopyAnything: AceModule, AceEvent-3.0
-local CopyAnything = NRSKNUI:NewModule("CopyAnything", "AceEvent-3.0")
-
-local IsControlKeyDown = IsControlKeyDown
-local IsShiftKeyDown = IsShiftKeyDown
-local IsAltKeyDown = IsAltKeyDown
+local IsControlKeyDown, IsShiftKeyDown, IsAltKeyDown = IsControlKeyDown, IsShiftKeyDown, IsAltKeyDown
+local GetMacroIndexByName, GetMacroSpell, GetMacroItem = GetMacroIndexByName, GetMacroSpell, GetMacroItem
+local tonumber, tostring = tonumber, tostring
 local select = select
-local strsplit = strsplit
 local strupper = strupper
 local issecretvalue = issecretvalue
-local GetMacroIndexByName = GetMacroIndexByName
-local GetMacroSpell = GetMacroSpell
-local GetMacroItem = GetMacroItem
-local tonumber = tonumber
-local tostring = tostring
 local CreateFrame = CreateFrame
 local type = type
 local InCombatLockdown = InCombatLockdown
-local C_AddOns = C_AddOns
 local GetTime = GetTime
-
-local lastCopyTime = 0
 local GetMouseFoci = GetMouseFoci
 local format = string.format
 
-function CopyAnything:UpdateDB() self.db = NRSKNUI.db.profile.Miscellaneous.CopyAnything end
+local GetActionText = C_ActionBar and C_ActionBar.GetActionText
+local IsAddOnLoaded = C_AddOns and C_AddOns.IsAddOnLoaded
+local GetSpellInfo = C_Spell and C_Spell.GetSpellInfo
+local GetItemIDForItemInfo = C_Item and C_Item.GetItemIDForItemInfo
+local GetItemInfo = C_Item and C_Item.GetItemInfo
+
+local lastCopyTime = 0
+
+function CopyAnything:UpdateDB()
+    self.db = NRSKNUI.db.profile.Miscellaneous.CopyAnything
+end
 
 function CopyAnything:OnInitialize()
     self:UpdateDB()
     self:SetEnabledState(false)
 end
 
-local function CheckModifiers(mod)
-    if not mod then return true end
+local function CheckModifiers(modifier)
+    if not modifier then return true end
 
-    if type(mod) == "string" then
+    if type(modifier) == 'string' then
         local t = {}
-        mod = mod:lower()
+        modifier = modifier:lower()
 
-        if mod:find("ctrl") then t.ctrl = true end
-        if mod:find("shift") then t.shift = true end
-        if mod:find("alt") then t.alt = true end
+        if modifier:find('ctrl') then t.ctrl = true end
+        if modifier:find('shift') then t.shift = true end
+        if modifier:find('alt') then t.alt = true end
 
-        mod = t
+        modifier = t
     end
 
-    if mod.shift and not IsShiftKeyDown() then return false end
-    if mod.ctrl and not IsControlKeyDown() then return false end
-    if mod.alt and not IsAltKeyDown() then return false end
+    if modifier.shift and not IsShiftKeyDown() then return false end
+    if modifier.ctrl and not IsControlKeyDown() then return false end
+    if modifier.alt and not IsAltKeyDown() then return false end
 
     return true
 end
 
-local function GetNPCIDFromGUID(guid)
-    if not guid then return end
-    return select(6, strsplit("-", guid))
+function CopyAnything:CreateKeyboardFrame()
+    if not self.frame then
+        self.frame = CreateFrame('Frame', 'NRSKNUI_CopyFrame')
+        self.frame:SetScript('OnKeyDown', function(frame, key)
+            if InCombatLockdown() then return end
+            frame:SetPropagateKeyboardInput(not self:TryCopy(key))
+        end)
+    end
+    self.frame:EnableKeyboard(true)
 end
 
 function CopyAnything:TryCopy(key)
-    if C_ChallengeMode.IsChallengeModeActive() or InCombatLockdown() then return false end
-    local db = self.db
-    if not db or not db.key or not db.mod then return false end
-    if key ~= strupper(db.key) then return false end
-    if not CheckModifiers(db.mod) then return false end
+    if NRSKNUI:IsFullyRestricted() then return false end
+    if not self.db or not self.db.key or not self.db.modifier then return false end
+    if key ~= strupper(self.db.key) then return false end
+    if not CheckModifiers(self.db.modifier) then return false end
 
     local now = GetTime()
     if now - lastCopyTime < 0.1 then return true end
 
     local copyId, copyName
 
-    -- Spell
+    -- SpellID
     if not issecretvalue(GameTooltip:GetSpell()) then
-        local spellName, spellId = GameTooltip:GetSpell()
-        if spellId then
-            copyId = spellId
-            copyName = spellName
-        end
-    end
+        local spellData = GameTooltip:GetSpell()
 
-    -- Item
-    if not issecretvalue(GameTooltip:GetItem()) then
-        if not copyId then
-            local itemName, _, itemId = GameTooltip:GetItem()
-            if itemId then
-                copyId = itemId
-                copyName = itemName
+        if spellData then
+            if spellData.spellID then
+                copyId = spellData.spellID
+                copyName = spellData.spellName
             end
         end
     end
 
-    -- Unit / NPC / Player
-    if not issecretvalue(GameTooltip:GetUnit()) then
-        if not copyId then
-            local unitName, _, unitGUID = GameTooltip:GetUnit()
-            local npcId = GetNPCIDFromGUID(unitGUID)
+    -- ItemID
+    if not issecretvalue(GameTooltip:GetItem()) then
+        local itemData = GameTooltip:GetItem()
 
-            if npcId then
-                copyId = npcId
-                copyName = unitName
-            elseif unitName then
-                copyId = unitName
-                copyName = "Player Name"
+        if not copyId and itemData then
+            local itemID = GetItemIDForItemInfo(itemData.ItemLink)
+            if itemID then
+                copyId = itemID
+                copyName = itemData.itemName
+            end
+        end
+    end
+
+    -- Copy player names, other units are secret most of the time.
+    if not issecretvalue(GameTooltip:GetUnit()) then
+        local unitData = GameTooltip:GetUnit()
+
+        if not copyId and unitData then
+            if unitData.name then
+                copyId = unitData.name
+                copyName = 'Player Name'
             end
         end
     end
 
     -- Aura / Other tooltip data
     if not issecretvalue(GameTooltip:GetTooltipData()) then
-        if not copyId then
-            local data = GameTooltip:GetTooltipData()
-            if data then
-                if GameTooltip:IsTooltipType(7) then -- Aura
-                    local aura = C_Spell.GetSpellInfo(data.id)
-                    if aura then
-                        copyId = data.id
-                        copyName = aura.name
-                    end
-                else
-                    copyId = data.id
-                    copyName = "Other"
+        local tooltipData = GameTooltip:GetTooltipData()
+
+        if not copyId and tooltipData then
+            if GameTooltip:IsTooltipType(7) then -- Aura
+                local spellInfo = GetSpellInfo(tooltipData.id)
+                if spellInfo then
+                    copyId = tooltipData.id
+                    copyName = spellInfo.name
                 end
+            else
+                copyId = tooltipData.id
+                copyName = 'Other'
             end
         end
     end
 
     -- ElvUI SpellBook Tooltip
-    local addonName = "ElvUI"
-    if C_AddOns.IsAddOnLoaded(addonName) then
-        if not issecretvalue(ElvUI_SpellBookTooltip) then
-            if not copyId and ElvUI_SpellBookTooltip then
-                local data = ElvUI_SpellBookTooltip:GetTooltipData()
-                if data and ElvUI_SpellBookTooltip:IsTooltipType(1) then
-                    copyId = data.id
-                    copyName = ElvUI_SpellBookTooltip.TextLeft1:GetText()
-                end
+    if IsAddOnLoaded('ElvUI') and not issecretvalue(ElvUI_SpellBookTooltip) then
+        local E = ElvUI_SpellBookTooltip
+        local elvuiData = E:GetTooltipData()
+
+        if not copyId and elvuiData then
+            if elvuiData and E:IsTooltipType(1) then
+                copyId = elvuiData.id
+                copyName = E.TextLeft1:GetText()
             end
         end
     end
@@ -144,25 +148,28 @@ function CopyAnything:TryCopy(key)
     if not issecretvalue(GameTooltip:IsTooltipType()) then
         if not copyId and GameTooltip:IsTooltipType(25) then
             local info = GameTooltip:GetPrimaryTooltipInfo()
+
             if info and info.getterArgs then
-                local actionSlot = info.getterArgs[1]
-                local macroName = C_ActionBar.GetActionText(actionSlot)
+                local actionID = info.getterArgs[1]
+                local macroName = GetActionText(actionID)
 
                 if macroName then
                     local macroSlot = GetMacroIndexByName(macroName)
-                    local spellId = GetMacroSpell(macroSlot)
-                    local _, itemLink = GetMacroItem(macroSlot)
+                    local id = GetMacroSpell(macroSlot)
+                    local itemLink = select(2, GetMacroItem(macroSlot))
 
-                    if spellId then
-                        local spellInfo = C_Spell.GetSpellInfo(spellId)
+                    -- Check if the macro has a spell or item associated with it
+                    if id then
+                        local spellInfo = GetSpellInfo(id)
                         if spellInfo then
-                            copyId = spellId
+                            copyId = id
                             copyName = spellInfo.name
                         end
+                        -- If the macro has an item link, extract the item ID and name
                     elseif itemLink then
-                        local itemId = tonumber(itemLink:match("item:(%d+)"))
+                        local itemId = tonumber(itemLink:match('item:(%d+)'))
                         if itemId then
-                            local itemName = C_Item.GetItemInfo(itemId)
+                            local itemName = GetItemInfo(itemId)
                             if itemName then
                                 copyId = itemId
                                 copyName = itemName
@@ -173,19 +180,20 @@ function CopyAnything:TryCopy(key)
             end
         end
     end
-    -- NUI Color Picker
+
+    -- NUI Color Picker, shows the RGBA (0-1) of the colorpicker under mousecursor.
     if not copyId then
         local frames = GetMouseFoci()
         local focus = frames and frames[1]
         if focus and focus.isNUIColorPicker and focus.colorPickerRow then
             local r, g, b, a = focus.colorPickerRow:GetColor()
             local function fmtNum(n)
-                local s = format("%.2f", n)
-                s = s:gsub("%.?0+$", "")
+                local s = format('%.2f', n)
+                s = s:gsub('%.?0+$', '')
                 return s
             end
-            copyId = fmtNum(r) .. ", " .. fmtNum(g) .. ", " .. fmtNum(b) .. ", " .. fmtNum(a)
-            copyName = "Color"
+            copyId = fmtNum(r) .. ', ' .. fmtNum(g) .. ', ' .. fmtNum(b) .. ', ' .. fmtNum(a)
+            copyName = 'Color'
         end
     end
 
@@ -197,31 +205,35 @@ function CopyAnything:TryCopy(key)
     return false
 end
 
-function CopyAnything:ApplySettings() CopyAnything:UpdateDB() end
+function CopyAnything:PLAYER_REGEN_DISABLED()
+    if self.frame then
+        self.frame:EnableKeyboard(false)
+    end
+end
+
+function CopyAnything:PLAYER_REGEN_ENABLED()
+    if self.db.Enabled then
+        self:CreateKeyboardFrame()
+    end
+end
+
+function CopyAnything:ApplySettings()
+    CopyAnything:UpdateDB()
+end
 
 function CopyAnything:OnEnable()
     if not self.db.Enabled then return end
 
-    self:RegisterEvent("PLAYER_REGEN_DISABLED", function() if self.frame then self.frame:EnableKeyboard(false) end end)
-    self:RegisterEvent("PLAYER_REGEN_ENABLED", function() if self.db.Enabled then self:CreateKeyboardFrame() end end)
+    self:RegisterEvent('PLAYER_REGEN_DISABLED')
+    self:RegisterEvent('PLAYER_REGEN_ENABLED')
 
     if InCombatLockdown() then return end -- Dont create frame in combat, it will block the keyboard input until combat ends
     self:CreateKeyboardFrame()
 end
 
-function CopyAnything:CreateKeyboardFrame()
-    if not self.frame then
-        self.frame = CreateFrame("Frame", "NRSKNUI_CopyFrame")
-        self.frame:SetScript("OnKeyDown", function(frame, key)
-            if InCombatLockdown() then return end
-            frame:SetPropagateKeyboardInput(not self:TryCopy(key))
-        end)
-    end
-    self.frame:EnableKeyboard(true)
-end
-
 function CopyAnything:OnDisable()
-    self:UnregisterAllEvents()
     if not self.frame then return end
-    if not InCombatLockdown() then self.frame:EnableKeyboard(false) end
+    if not InCombatLockdown() then
+        self.frame:EnableKeyboard(false)
+    end
 end
