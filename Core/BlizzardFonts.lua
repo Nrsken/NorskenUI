@@ -178,9 +178,10 @@ function NRSKNUI:ApplyBlizzardFonts()
     self:SetFont(_G.NumberFontNormal, true)         -- Stacks, timewarped badge e.g
     self:SetFont(_G.NumberFontNormalLarge, true)    -- Large number text
     self:SetFont(_G.NumberFontSmallWhiteLeft, true) -- Some journey text
+
     -- Map Fonts --
-    self:SetFont(_G.WorldMapTextFont, true)         -- World map zone names, quest titles, etc.
-    self:SetFont(_G.SubZoneTextFont, true)          -- Subzone text, e.g. "The Great Sea"
+    self:SetFont(_G.WorldMapTextFont, true) -- World map zone names, quest titles, etc.
+    self:SetFont(_G.SubZoneTextFont, true)  -- Subzone text, e.g. "The Great Sea"
 
     -- Game Fonts --
     self:SetFont(_G.Game10Font_o1, true)            -- Some number text?

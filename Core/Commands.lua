@@ -142,4 +142,8 @@ function NRSKNUI:SetupSlashCommands()
         Walk(frame, 0)
         if found == 0 then print("  (none found)") end
     end
+
+    -- Powerful macro:
+    -- /frame
+    -- /fontlist or /texlist
 end
