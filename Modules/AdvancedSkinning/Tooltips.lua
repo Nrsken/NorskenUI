@@ -291,7 +291,7 @@ end
 local function SetupSkinning(tooltip)
     if tooltip:IsForbidden() then return end
     if not tooltip.NineSlice or tooltip.IsEmbedded then return end -- Not skinnable
-    if NRSKNUI:HasBackdrop(tooltip) then return end
+    if tooltip:HasBackdrop() then return end
 
     -- Hide original border & background and create our own
     tooltip:Banish('NineSlice')

@@ -5,7 +5,8 @@
     <Script file="Defaults.lua" />
     <Script file="Main.lua" />
     <Script file="PixelPerfect.lua" />
-    <Script file="API.lua" />
+    <Script file="InjectAPI.lua" />
+    <Script file="GlobalAPI.lua" />
     <Script file="Secret.lua" />
     <Script file="MediaCore.lua" />
     <Script file="FontCore.lua" />
@@ -15,7 +16,7 @@
     <Script file="Enums.lua" />
     <Script file="Curves.lua" />
     <Script file="Animations.lua" />
-    <Script file="Globals.lua" />
+    <Script file="PreviewManager.lua" />
     <Script file="EditMode.lua" />
     <Script file="Commands.lua" />
     <Script file="ProfileManager.lua" />

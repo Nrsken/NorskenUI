@@ -1,6 +1,8 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 
+-- Injection API for adding methods to frame metatables.
+
 local next = next
 local pairs = pairs
 local type = type
@@ -18,7 +20,7 @@ local insert = table.insert
 
 local _G = _G
 
--- Exposed Injection API so that other modules can inject methods onto frame metatables.
+---Exposed Injection API so that other modules can inject methods onto frame metatables.
 ---@param object table A representative instance whose type metatable receives the methods
 ---@param methods table<string, function> name -> function pairs to inject
 function NRSKNUI:InjectAPI(object, methods)
@@ -174,7 +176,7 @@ hideFrame:Hide()
 ---Hide objects safely and reparent them to a hidden frame
 ---@param object Frame|string The frame (or its global name) to hide.
 ---@param ... string? Optional keys to traverse the frame's children, e.g. 'Inset'.
-function NRSKNUI:Banish(object, ...)
+local function Banish(object, ...)
     if type(object) == 'string' then
         object = _G[object]
     end
@@ -213,13 +215,8 @@ function NRSKNUI:Banish(object, ...)
         object:SetParent(hideFrame)
     end
 end
-
 -- Expose frame so it can be accessed
 NRSKNUI.HiddenFrame = hideFrame
-
-local function Banish(object, ...)
-    NRSKNUI:Banish(object, ...)
-end
 
 -- Texture utility --
 
@@ -289,7 +286,7 @@ end
 ---@param stripType string? Selector: nil, 'Keyed', 'Kill', 'Layer', 'Atlas', 'ClearHide', 'Alpha'.
 ---@param a string|string[]|boolean? For 'Layer'/'Atlas': draw layer / atlas name(s), single or list. For 'Keyed': banish (kill) flag.
 ---@param b boolean? For 'Keyed': alphaZero — set alpha 0 instead of clearing. Ignored by other modes.
-function NRSKNUI:StripTextures(object, stripType, a, b)
+local function StripTextures(object, stripType, a, b)
     -- Resolve a global name to its frame.
     if type(object) == 'string' then
         object = _G[object]
@@ -322,7 +319,7 @@ function NRSKNUI:StripTextures(object, stripType, a, b)
 
             if child and child.StripTextures then
                 -- 'Keyed' never normalizes a arg aka banish, so forward it as-is.
-                self:StripTextures(child, 'Keyed', a, b)
+                StripTextures(child, 'Keyed', a, b)
             end
         end
     end
@@ -335,10 +332,6 @@ function NRSKNUI:StripTextures(object, stripType, a, b)
             StripRegion(region, stripType, matcher, b)
         end
     end
-end
-
-local function StripTextures(object, stripType, a, b)
-    NRSKNUI:StripTextures(object, stripType, a, b)
 end
 
 -- Backdrop utility --
@@ -408,7 +401,7 @@ end
 local CreateTextureMixin = CreateFrame('Frame').CreateTexture
 
 ---@param frame Frame
-function NRSKNUI:CreateBackdrop(frame)
+local function CreateBackdrop(frame)
     ---@cast frame Frame & PublicBackdropMixin
     Mixin(frame, PublicBackdropMixin)
 
@@ -448,19 +441,8 @@ function NRSKNUI:CreateBackdrop(frame)
     frame:SetBorderColor(0, 0, 0, 1)
 end
 
----Check if we already added a backdrop to the frame
----@param frame Frame
----@return boolean
-function NRSKNUI:HasBackdrop(frame)
-    return not not frame.BackDropBorders
-end
-
-local function CreateBackdrop(frame)
-    NRSKNUI:CreateBackdrop(frame)
-end
-
 local function HasBackdrop(frame)
-    return NRSKNUI:HasBackdrop(frame)
+    return not not frame.BackDropBorders
 end
 
 -- Border utility --
@@ -609,19 +591,6 @@ local function StyleButton(button, noHover, noPushed, noChecked)
 end
 
 -- Positioning utility --
-
----Get justification based on anchor point
----@param anchorPoint string
----@return string
-function NRSKNUI:GetJustifyFromAnchor(anchorPoint)
-    if not anchorPoint then return "CENTER" end
-    if anchorPoint == "RIGHT" or anchorPoint == "TOPRIGHT" or anchorPoint == "BOTTOMRIGHT" then
-        return "RIGHT"
-    elseif anchorPoint == "LEFT" or anchorPoint == "TOPLEFT" or anchorPoint == "BOTTOMLEFT" then
-        return "LEFT"
-    end
-    return "CENTER"
-end
 
 -- ApplyPosition injected onto the frame widget types.
 local function ApplyPosition(self, Config, setParent)

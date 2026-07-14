@@ -8,6 +8,11 @@ local LDB = NRSKNUI.Libs.LDB
 local LDBIcon = NRSKNUI.Libs.LDBIcon
 local LDS = NRSKNUI.Libs.LDS
 
+---Print message with class colored addon name prefix
+function NRSKNUI:Print(msg)
+    print(self:ColorTextByTheme("Norsken") .. "UI:|r " .. msg)
+end
+
 -- OnInitialize: Called when the addon is initialized
 function NRSKNUI:OnInitialize()
     self.MyGUID = UnitGUID('player') -- Player GUID is not reliably available at file-scope load time
