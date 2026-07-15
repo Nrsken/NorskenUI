@@ -36,7 +36,6 @@ function PotionReady:CreateAlertFrame()
     frame:SetSize(300, 40)
 
     frame.text = frame:CreateFontString(nil, 'OVERLAY')
-    frame.text:SetAllPoints(frame)
 
     -- Finalize the frame and register it with Anchors.
     self.alertFrame = frame
@@ -55,7 +54,7 @@ function PotionReady:ApplySettings()
 
     local w = self.alertFrame.text:GetStringWidth()
     local h = self.alertFrame.text:GetStringHeight()
-    self.alertFrame:SetSize(w + 4, h + 4)
+    self.alertFrame:SetPixelSize(w + 4, h + 4)
 end
 
 function PotionReady:UpdateCooldownState()
