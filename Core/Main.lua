@@ -3,6 +3,7 @@ local NRSKNUI = select(2, ...)
 local Theme = NRSKNUI.Theme
 
 local UnitGUID = UnitGUID
+local InCombatLockdown = InCombatLockdown
 
 local LDB = NRSKNUI.Libs.LDB
 local LDBIcon = NRSKNUI.Libs.LDBIcon
@@ -76,6 +77,11 @@ local function SetupMinimapIcon()
 end
 
 local function OnPlayerEnteringWorld()
+    if InCombatLockdown() then
+        NRSKNUI:DeferUntilUnrestricted(0, OnPlayerEnteringWorld)
+        return
+    end
+
     -- Automatically refresh all AceAddon modules
     for _, module in NRSKNUI:IterateModules() do
         if module:IsEnabled() and module.ApplySettings then
