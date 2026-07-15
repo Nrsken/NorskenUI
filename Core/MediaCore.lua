@@ -265,20 +265,23 @@ function NRSKNUI:GetEffectiveFont(moduleDB)
 end
 
 ---@param moduleDB table?
+---@param override string? -- per-element texture name; used only when the global bar is not in effect
 ---@return string
-function NRSKNUI:GetEffectiveStatusBar(moduleDB)
+function NRSKNUI:GetEffectiveStatusBar(moduleDB, override)
     local global = self.db and self.db.profile and self.db.profile.globalMedia
     if global and global.Enabled and global.profileBar.Enabled then
         if moduleDB and moduleDB.UseGlobalBar == false then
-            return moduleDB.StatusBarTexture or moduleDB.statusBar or 'NorskenUI'
+            return override or moduleDB.StatusBarTexture or moduleDB.statusBar or 'NorskenUI'
         end
         return global.profileBar.statusBar or 'NorskenUI'
     end
-    return moduleDB and (moduleDB.StatusBarTexture or moduleDB.statusBar) or 'NorskenUI'
+    return override or (moduleDB and (moduleDB.StatusBarTexture or moduleDB.statusBar)) or 'NorskenUI'
 end
 
-function NRSKNUI:GetBarTexture(moduleDB)
-    return self:GetStatusbarPath(self:GetEffectiveStatusBar(moduleDB))
+---@param moduleDB table?
+---@param override string? -- per-element texture name; falls back to the module texture when nil
+function NRSKNUI:GetBarTexture(moduleDB, override)
+    return self:GetStatusbarPath(self:GetEffectiveStatusBar(moduleDB, override))
 end
 
 function NRSKNUI:GetFontName(moduleDB)

@@ -138,7 +138,7 @@ function Frame:StripTextures(stripType, a, b) end
 ---Build a pixel-perfect backdrop (bg + 4 border edges) and mix in the backdrop API.
 ---
 ---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#createbackdrop)
-function Frame:CreateBackdrop() end
+function Frame:CreateBackdrop(noBorders) end
 
 ---Return true if a NorskenUI backdrop was already added.
 ---
@@ -204,7 +204,7 @@ function Button:StripTextures(stripType, a, b) end
 ---Build a pixel-perfect backdrop (bg + 4 border edges) and mix in the backdrop API.
 ---
 ---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#createbackdrop)
-function Button:CreateBackdrop() end
+function Button:CreateBackdrop(noBorders) end
 
 ---Return true if a NorskenUI backdrop was already added.
 ---
@@ -257,7 +257,7 @@ function StatusBar:StripTextures(stripType, a, b) end
 ---Build a pixel-perfect backdrop (bg + 4 border edges) and mix in the backdrop API.
 ---
 ---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#createbackdrop)
-function StatusBar:CreateBackdrop() end
+function StatusBar:CreateBackdrop(noBorders) end
 
 ---Return true if a NorskenUI backdrop was already added.
 ---

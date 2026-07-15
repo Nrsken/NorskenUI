@@ -346,7 +346,7 @@ local function SetFontJustify(self, source, parent, offsetX, offsetY, skip)
     end
 
     self:ClearAllPoints()
-    self:SetPoint(anchor, parent or self:GetParent(), anchor, offsetX or 0, offsetY or 0)
+    self:SetPixelPoint(anchor, parent or self:GetParent(), anchor, offsetX or 0, offsetY or 0)
     self:SetJustifyH(GetTextJustifyHFromAnchor(anchor)) -- LEFT, CENTER, RIGHT
     self:SetJustifyV(GetTextJustifyVFromAnchor(anchor)) -- TOP, MIDDLE, BOTTOM
 

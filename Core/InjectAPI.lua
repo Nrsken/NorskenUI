@@ -401,48 +401,52 @@ end
 local CreateTextureMixin = CreateFrame('Frame').CreateTexture
 
 ---@param frame Frame
-local function CreateBackdrop(frame)
+---@param noBorders boolean? Sometime a manual border is needed, so skip creating the default borders if true.
+local function CreateBackdrop(frame, noBorders)
     ---@cast frame Frame & PublicBackdropMixin
     Mixin(frame, PublicBackdropMixin)
 
-    frame.BackDropBorders = {}
-
     local BG = CreateTextureMixin(frame, nil, 'BACKGROUND')
-    BG:SetPoint('TOPLEFT', frame, 'TOPLEFT', 1, -1)
-    BG:SetPoint('BOTTOMRIGHT', frame, 'BOTTOMRIGHT', -1, 1)
+    BG:SetPixelPoint('TOPLEFT', frame, 'TOPLEFT', 1, -1)
+    BG:SetPixelPoint('BOTTOMRIGHT', frame, 'BOTTOMRIGHT', -1, 1)
     frame.backdropBackground = BG
     BG:SetPixelSnap()
 
+    frame:SetBackgroundColor(0, 0, 0, 0.8)
+
+    if noBorders then return end
+
+    frame.BackDropBorders = {}
+
     local LB = CreateTextureMixin(frame, nil, 'BORDER')
-    LB:SetPoint('TOPLEFT', frame, 1, -1)
-    LB:SetPoint('BOTTOMLEFT', frame, 1, 1)
+    LB:SetPixelPoint('TOPLEFT', frame, 1, -1)
+    LB:SetPixelPoint('BOTTOMLEFT', frame, 1, 1)
     insert(frame.BackDropBorders, LB)
     LB:SetPixelSnap()
 
     local TB = CreateTextureMixin(frame, nil, 'BORDER')
-    TB:SetPoint('TOPLEFT', frame, 1, -1)
-    TB:SetPoint('TOPRIGHT', frame, -1, -1)
+    TB:SetPixelPoint('TOPLEFT', frame, 1, -1)
+    TB:SetPixelPoint('TOPRIGHT', frame, -1, -1)
     insert(frame.BackDropBorders, TB)
     TB:SetPixelSnap()
 
     local RB = CreateTextureMixin(frame, nil, 'BORDER')
-    RB:SetPoint('TOPRIGHT', frame, -1, -1)
-    RB:SetPoint('BOTTOMRIGHT', frame, -1, 1)
+    RB:SetPixelPoint('TOPRIGHT', frame, -1, -1)
+    RB:SetPixelPoint('BOTTOMRIGHT', frame, -1, 1)
     insert(frame.BackDropBorders, RB)
     RB:SetPixelSnap()
 
     local BB = CreateTextureMixin(frame, nil, 'BORDER')
-    BB:SetPoint('BOTTOMLEFT', frame, 1, 1)
-    BB:SetPoint('BOTTOMRIGHT', frame, -1, 1)
+    BB:SetPixelPoint('BOTTOMLEFT', frame, 1, 1)
+    BB:SetPixelPoint('BOTTOMRIGHT', frame, -1, 1)
     insert(frame.BackDropBorders, BB)
     BB:SetPixelSnap()
 
-    frame:SetBackgroundColor(0, 0, 0, 0.8)
     frame:SetBorderColor(0, 0, 0, 1)
 end
 
 local function HasBackdrop(frame)
-    return not not frame.BackDropBorders
+    return (not not frame.BackDropBorders) or (not not frame.backdropBackground)
 end
 
 -- Border utility --
@@ -521,34 +525,34 @@ local function AddBorders(frame)
 
     -- Top border
     local TB = CreateTextureMixin(frame, nil, 'OVERLAY')
-    TB:SetHeight(1)
-    TB:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
-    TB:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
-    SetPixelSnap(TB)
+    TB:SetPixelHeight(1)
+    TB:SetPixelPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
+    TB:SetPixelPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
+    TB:SetPixelSnap()
     insert(frame.Borders, TB)
 
     -- Left border
     local LB = CreateTextureMixin(frame, nil, 'OVERLAY')
-    LB:SetWidth(1)
-    LB:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
-    LB:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 0, 0)
-    SetPixelSnap(LB)
+    LB:SetPixelWidth(1)
+    LB:SetPixelPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
+    LB:SetPixelPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 0, 0)
+    LB:SetPixelSnap()
     insert(frame.Borders, LB)
 
     -- Bottom border
     local BB = CreateTextureMixin(frame, nil, 'OVERLAY')
-    BB:SetHeight(1)
-    BB:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 0, 0)
-    BB:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
-    SetPixelSnap(BB)
+    BB:SetPixelHeight(1)
+    BB:SetPixelPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 0, 0)
+    BB:SetPixelPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
+    BB:SetPixelSnap()
     insert(frame.Borders, BB)
 
     -- Right border
     local RB = CreateTextureMixin(frame, nil, 'OVERLAY')
-    RB:SetWidth(1)
-    RB:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
-    RB:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
-    SetPixelSnap(RB)
+    RB:SetPixelWidth(1)
+    RB:SetPixelPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
+    RB:SetPixelPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
+    RB:SetPixelSnap()
     insert(frame.Borders, RB)
 
     frame:SetBorderColor(0, 0, 0, 1)
