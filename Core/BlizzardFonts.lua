@@ -217,6 +217,8 @@ function NRSKNUI:ApplyBlizzardFonts(force)
     if not force and sig == lastSignature then return end
     lastSignature = sig
 
+    self:SetFont(_G.WorldMapFrameHomeButtonText, true) -- 'World' Button on the world map, has it's font set via SetFont so does not have a fontObject.
+
     -- Number Fonts --
     self:SetFont(_G.Number12Font, true)             -- Crafting order duration dropdown text
     self:SetFont(_G.Number12Font_o1, true)          -- Some number text?
@@ -334,7 +336,7 @@ function NRSKNUI:ApplyBlizzardFonts(force)
     self:SetFont(_G.UserScaledFontGameNormalSmall, true)
     self:SetFont(_G.UserScaledFontGameHighlightSmall, true) -- 'Name' text
     self:SetFont(_G.UserScaledFontGameHighlight, true)      -- 'Zone' text
-    self:SetFont(_G.UserScaledFontSystem15Shadow, true)      -- 'Friends List X/Y' text
+    self:SetFont(_G.UserScaledFontSystem15Shadow, true)     -- 'Friends List X/Y' text
     self:SetFont(_G.FriendsFont_UserText, true)
 
     -- Blizzard Options Fonts --
