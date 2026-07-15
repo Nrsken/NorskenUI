@@ -1,8 +1,7 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class CombatTimer: AceModule, AceEvent-3.0
+---@class CombatTimer
 local CombatTimer = NRSKNUI:GetModule('CombatTimer')
-
 local EM = NRSKNUI.EditMode
 
 local CreateFrame = CreateFrame
@@ -10,8 +9,6 @@ local GetTime = GetTime
 local unpack = unpack
 local math_floor, math_max = math.floor, math.max
 local string_format = string.format
-
-
 
 local IsEncounterInProgress = C_InstanceEncounter and C_InstanceEncounter.IsEncounterInProgress
 
@@ -45,21 +42,18 @@ function CombatTimer:CreateFrame()
     if self.frame then return end
 
     local frame = CreateFrame('Frame', 'NRSKNUI_CombatTimerFrame', UIParent)
-    frame:SetSize(100, 25)
+    frame:SetPixelSize(100, 25)
     frame:SetFrameLevel(100)
     frame:EnableMouse(false)
     frame:SetMouseClickEnabled(false)
-
     frame:CreateBackdrop()
 
     frame.text = frame:CreateFontString(nil, 'OVERLAY')
-    frame.text:SetAllPoints(frame)
 
     -- Install the ticker once, SetTicking flips its run mode instead of re-attaching a closure.
     self.onUpdate = function(_, elapsed) self:OnUpdate(elapsed) end
     if frame.SetOnUpdateMode then
         local disabledEnum = Enum and Enum.OnUpdateMode.Disabled
-        local runWhenVisibleEnum = Enum and Enum.OnUpdateMode.RunWhenVisible
         frame:SetScript('OnUpdate', self.onUpdate)
         frame:SetOnUpdateMode(disabledEnum)
     end
