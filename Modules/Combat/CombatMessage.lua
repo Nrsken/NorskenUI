@@ -155,7 +155,9 @@ function CM:CreateContainer()
     self.container = container
 
     -- Coalesced one-shot layout, arm with container:ScheduleUpdate(), auto-disarms after firing.
-    container:SetScheduledUpdate(function() self:ArrangeMessages() end)
+    if container.SetScheduledUpdate then
+        container:SetScheduledUpdate(function() self:ArrangeMessages() end)
+    end
 end
 
 function CM:GetMessageFrame(msgType)
@@ -400,7 +402,9 @@ function CM:ApplySettings()
             end
         end
 
-        self.container:ScheduleUpdate()
+        if self.container.ScheduleUpdate then
+            self.container:ScheduleUpdate()
+        end
         self:CheckNoTarget()
     end
 end
@@ -436,7 +440,9 @@ function CM:UpdatePreview()
             end
         end
     end
-    self.container:ScheduleUpdate()
+    if self.container.ScheduleUpdate then
+        self.container:ScheduleUpdate()
+    end
 end
 
 function CM:HidePreview()

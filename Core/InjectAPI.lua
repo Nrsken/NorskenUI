@@ -670,33 +670,43 @@ end
 -- Blizzard's dirty pattern: install a handler once, then arm it. Repeated arms before the next frame
 -- collapse into a single run, and the engine auto-disarms (resets to Disabled) right before firing.
 
-local RunOnce = Enum and Enum.OnUpdateMode.RunOnce
-local RunWhenVisibleOnce = Enum and Enum.OnUpdateMode.RunWhenVisibleOnce
-local OnUpdateDisabled = Enum and Enum.OnUpdateMode.Disabled
+local function TemporaryOnUpdate()
+    local patchNum = GetBuildInfo()
+    if patchNum ~= '12.1.0' then return end
+    local RunOnce = Enum and Enum.OnUpdateMode.RunOnce
+    local RunWhenVisibleOnce = Enum and Enum.OnUpdateMode.RunWhenVisibleOnce
+    local OnUpdateDisabled = Enum and Enum.OnUpdateMode.Disabled
 
-local function RunScheduledUpdate(frame)
-    local callback = frame._scheduledUpdate
-    if callback then callback(frame) end
-end
-
----Install a coalesced one-shot handler, pair with ScheduleUpdate to run it once on the next frame.
----Overwrites any existing OnUpdate script on the frame.
----@param frame Frame
----@param callback fun(frame: Frame)
----@param whenVisible? boolean only run while the frame is shown; omit to run regardless of visibility
-local function SetScheduledUpdate(frame, callback, whenVisible)
-    frame._scheduledUpdate = callback
-    frame._scheduledMode = whenVisible and RunWhenVisibleOnce or RunOnce
-    frame:SetScript('OnUpdate', RunScheduledUpdate)
-    frame:SetOnUpdateMode(OnUpdateDisabled)
-end
-
----Arm the handler set by SetScheduledUpdate to run once on the next frame, repeated calls coalesce.
----@param frame Frame
-local function ScheduleUpdate(frame)
-    if frame._scheduledMode then
-        frame:SetOnUpdateMode(frame._scheduledMode)
+    local function RunScheduledUpdate(frame)
+        local callback = frame._scheduledUpdate
+        if callback then callback(frame) end
     end
+
+    ---Install a coalesced one-shot handler, pair with ScheduleUpdate to run it once on the next frame.
+    ---Overwrites any existing OnUpdate script on the frame.
+    ---@param frame Frame
+    ---@param callback fun(frame: Frame)
+    ---@param whenVisible? boolean only run while the frame is shown; omit to run regardless of visibility
+    local function SetScheduledUpdate(frame, callback, whenVisible)
+        frame._scheduledUpdate = callback
+        frame._scheduledMode = whenVisible and RunWhenVisibleOnce or RunOnce
+        frame:SetScript('OnUpdate', RunScheduledUpdate)
+        frame:SetOnUpdateMode(OnUpdateDisabled)
+    end
+
+    ---Arm the handler set by SetScheduledUpdate to run once on the next frame, repeated calls coalesce.
+    ---@param frame Frame
+    local function ScheduleUpdate(frame)
+        if frame._scheduledMode then
+            frame:SetOnUpdateMode(frame._scheduledMode)
+        end
+    end
+
+    local injectMethods = {
+        SetScheduledUpdate = SetScheduledUpdate,
+        ScheduleUpdate = ScheduleUpdate,
+    }
+    NRSKNUI:InjectAPI(CreateFrame('Frame'), injectMethods)
 end
 
 do
@@ -720,8 +730,6 @@ do
         SetPixelSnap = SetPixelSnap,
         StyleButton = StyleButton,
         ApplyOnUpdate = ApplyOnUpdate,
-        SetScheduledUpdate = SetScheduledUpdate,
-        ScheduleUpdate = ScheduleUpdate,
     }
 
     -- Small wrapper to call the NRSKNUI:InjectAPI method, so we don't have to pass the methods
@@ -749,4 +757,5 @@ do
     end
 
     InjectAPI(CreateFrame('ScrollFrame'))
+    TemporaryOnUpdate()
 end
