@@ -6,7 +6,7 @@ local Defaults = {
     global = {
         UseGlobalProfile = false,  -- Switch to global profile
         GlobalProfile = "Default", -- Name of global profile to use
-
+        XPTable = {},              -- Table i can store xp per level data for math.
         -- Theme settings
         -- Mode: "preset", "class", or "custom"
         -- All theme presets are defined in AddonTheme.lua
@@ -777,23 +777,24 @@ local Defaults = {
                     },
                 },
             },
-
             XPBar = {
+                -- General Settings
                 Enabled = true,
                 HideBlizzardBar = true,
                 hideWhenMax = true,
-                width = 477,
-                height = 26,
+                -- Font settings
                 UseGlobalFont = true,
                 FontFace = "Expressway",
                 FontOutline = "SOFTOUTLINE",
                 FontSize = 14,
+                TextColor = { 1, 1, 1, 1 },
                 FontShadow = {
                     Enabled = false,
                     Color = { 0, 0, 0, 1 },
                     OffsetX = 1,
                     OffsetY = -1,
                 },
+                -- Frame settings
                 Strata = "HIGH",
                 anchorFrameType = "UIPARENT", -- Anchor frame type
                 ParentFrame = "UIParent",     -- Parent frame name
@@ -803,28 +804,33 @@ local Defaults = {
                     XOffset = 0,              -- X offset
                     YOffset = -1,
                 },
+                width = 477,
+                height = 26,
+                -- Texture settings
+                UseGlobalBar = true,
+                StatusBarTexture = "NorskenUI", -- Progress bar texture (LSM name)
+                RestedTexture = "NorskenUI",    -- Rested bar texture (LSM name)
+                QuestTexture = "NorskenUI",     -- Quest bar texture (LSM name)
                 -- Statusbar coloring
                 ColorMode = "theme",
-                StatusColor = { 1, 1, 1, 1 },
-                UseGlobalBar = true,
-                StatusBarTexture = "NorskenUI", -- LSM statusbar texture name
-
+                StatusColor = { 0.58, 0, 0.55, 1 },
+                -- Quest coloring
+                ColorModeQuest = "custom",
+                QuestColor = { 1, 0.82, 0.12, 1 },
+                QuestShow = true,
                 -- Rested Coloring
                 ColorModeRested = "theme",
-                RestedColor = { 1, 0.5, 0, 0.25 },
-
+                RestedColor = { 0, 0.39, 0.88, 0.25 },
+                RestedShow = true,
                 -- Backdrop
-                BackdropColor = { 0, 0, 0, 0.8 },
-                BackdropBorderColor = { 0, 0, 0, 1 },
-
-                -- Text Coloring
-                TextColor = { 1, 1, 1, 1 },
+                BackgroundColor = { 0, 0, 0, 0.8 },
+                BorderColor = { 0, 0, 0, 1 },
             },
 
             CopyAnything = {
-                Enabled = true, -- Master toggle
-                key = "C",      -- Copy keybind
-                modifier = "ctrl",   -- ctrl, shift, alt
+                Enabled = true,    -- Master toggle
+                key = "C",         -- Copy keybind
+                modifier = "ctrl", -- ctrl, shift, alt
             },
 
             CursorCircle = {
@@ -2172,6 +2178,18 @@ local Defaults = {
                     YOffset = -200,
                 },
             },
+        },
+    },
+    char = {
+        XPBar = {
+            XPLast = 0,
+            XPGained = 0,
+            XPMax = 0,
+            SessionAccumulationTime = 0,
+            LevelAccumulationTime = 0,
+            TotalAccumulationTime = 0,
+            StartTime = 0,
+            StartTimeLevel = 0,
         },
     },
 }
