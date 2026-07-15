@@ -121,6 +121,58 @@ returns the size per string (or `nil` to leave it).
 
 ---
 
+## SetFontStyle
+
+```lua
+fontString:SetFontStyle(source?, size?, outline?, shadow?, skip?, setOwner?)
+```
+
+Style any `FontString`, `Font`, or `EditBox` in one call. Injected onto all three metatables
+(see `Core/FontCore.lua`). Resolves the font **face**, **size**, **outline**, and **shadow**,
+builds/reuses a cached font object (with per-alphabet CJK substitution and the shadow-clear fix),
+and points the object at it via `SetFontObject`. The object is registered so
+`NRSKNUI:RefreshFontStyles` re-applies it on a profile or global-font change.
+
+### `source`
+
+| value | meaning |
+|-------|---------|
+| **table** (DB block) | Reads `FontFace`/`Font`, `FontSize`, `FontOutline`, `FontShadow`. Honors the global font (`globalMedia.profileFont`) unless the block sets `UseGlobalFont = false`. |
+| **string** | An explicit LSM font name or literal font path. |
+| `nil` | Falls back to the profile's global font (or the addon default). |
+
+### Other params
+
+| param | effect |
+|-------|--------|
+| `size` | Explicit size, **or** an override on top of a DB block's `FontSize`. Falls back to the default size when `nil`/non-positive. |
+| `outline` | Explicit outline flags (`'OUTLINE'`, `'THICKOUTLINE,MONOCHROME'`, `'SLUG'`, `'NONE'`, …), or an override over the block's `FontOutline`. Resolved via `NRSKNUI:ResolveFlags`. |
+| `shadow` | Explicit shadow block (`{ Enabled, Color, OffsetX, OffsetY }`), or an override over the block's `FontShadow`. |
+| `skip` | **Internal.** Set during `RefreshFontStyles` so the re-apply pass doesn't re-register the object mid-loop. |
+| `setOwner` | When the string is a `Button`/`CheckButton` label, also points the owner's normal/highlight/disabled font objects at ours so every state matches. |
+
+Returns `true` when applied, `false` if the target has no `SetFontObject`.
+
+---
+
+## SetFontJustify
+
+```lua
+fontString:SetFontJustify(source, parent?, offsetX?, offsetY?, skip?)
+```
+
+Anchor a `FontString` to its config anchor and align **both** axes from that same point, then
+register it so `NRSKNUI:RefreshFontStyles` re-applies it. This **must** run
+after the font pass — `SetFontObject` (via `SetFontStyle`) resets `JustifyH`/`JustifyV`, so the
+alignment would otherwise revert on a profile change.
+
+`source` is either a DB block carrying `Position.AnchorFrom` or a plain anchor string. `AnchorFrom`
+encodes both axes: `TOPRIGHT` → point `TOPRIGHT`, H `RIGHT`, V `TOP`. The X offset is flipped when
+the anchor is on the right side. `parent` defaults to `self:GetParent()`, offsets default to `0`,
+and `skip` is the same internal re-apply flag as `SetFontStyle`. Returns `true` when applied.
+
+---
+
 ## SetZoom (Texture)
 
 ```lua

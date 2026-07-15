@@ -200,6 +200,8 @@ local function ValidateFontsRecursive(tbl, defaults)
     end
 end
 
+---Walk the active profile and swap any font key whose value is no longer a registered
+---LSM font for the matching default (or the addon default), so a removed font can't leave a broken face behind.
 function NRSKNUI:ValidateProfileFonts()
     if not self.db or not self.db.profile then return end
     local defaults = self.db.defaults and self.db.defaults.profile
@@ -280,10 +282,14 @@ end
 
 ---@param moduleDB table?
 ---@param override string? -- per-element texture name; falls back to the module texture when nil
+---@return string path resolved statusbar texture path
 function NRSKNUI:GetBarTexture(moduleDB, override)
     return self:GetStatusbarPath(self:GetEffectiveStatusBar(moduleDB, override))
 end
 
+---Resolve the effective font for a module (global-aware) straight to a usable font path.
+---@param moduleDB table?
+---@return string path resolved font file path
 function NRSKNUI:GetFontName(moduleDB)
     return self:GetFontPath(self:GetEffectiveFont(moduleDB))
 end

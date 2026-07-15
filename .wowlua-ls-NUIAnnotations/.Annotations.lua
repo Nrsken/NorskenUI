@@ -2,72 +2,6 @@
 
 -- Annotations for NorskenUI addon
 
----@class NRSKNUI.AceHook
----@field Hook fun(self: NRSKNUI.AceHook, obj: any, method?: any, handler?: any, secure?: boolean)
----@field RawHook fun(self: NRSKNUI.AceHook, obj: any, method?: any, handler?: any, secure?: boolean)
----@field SecureHook fun(self: NRSKNUI.AceHook, obj: any, method?: any, handler?: any)
----@field HookScript fun(self: NRSKNUI.AceHook, frame: Frame, script: string, handler?: any)
----@field RawHookScript fun(self: NRSKNUI.AceHook, frame: Frame, script: string, handler?: any)
----@field SecureHookScript fun(self: NRSKNUI.AceHook, frame: Frame, script: string, handler?: any)
----@field Unhook fun(self: NRSKNUI.AceHook, obj: any, method?: string)
----@field UnhookAll fun(self: NRSKNUI.AceHook)
----@field IsHooked fun(self: NRSKNUI.AceHook, obj: any, method?: string): boolean
-
----AceDB-3.0 database object (fields created dynamically by AceDB, so declared here for the language server).
----@class NRSKNUI.AceDB
----@field profile table Active profile settings
----@field global table Account-wide settings
----@field char table Character-specific settings
----@field profiles table<string, table> All stored profiles
----@field defaults table|nil Registered defaults
----@field RegisterCallback fun(target: table, eventName: string, callback: function|string) CallbackHandler registration (dot-call)
----@field UnregisterCallback fun(target: table, eventName: string)
----@field CheckDualSpecState fun(db: NRSKNUI.AceDB)|nil Added by LibDualSpec-1.0
----@field SetProfile fun(self: NRSKNUI.AceDB, name: string)
----@field GetCurrentProfile fun(self: NRSKNUI.AceDB): string
----@field GetProfiles fun(self: NRSKNUI.AceDB, tbl?: table): string[], number
----@field CopyProfile fun(self: NRSKNUI.AceDB, name: string, silent?: boolean)
----@field DeleteProfile fun(self: NRSKNUI.AceDB, name: string, silent?: boolean)
----@field ResetProfile fun(self: NRSKNUI.AceDB, noChildren?: boolean, noCallbacks?: boolean)
----@field ResetDB fun(self: NRSKNUI.AceDB, defaultProfile?: string): NRSKNUI.AceDB
----@field RegisterDefaults fun(self: NRSKNUI.AceDB, defaults: table)
----@field RegisterNamespace fun(self: NRSKNUI.AceDB, name: string, defaults?: table): NRSKNUI.AceDB
----@field GetNamespace fun(self: NRSKNUI.AceDB, name: string, silent?: boolean): NRSKNUI.AceDB|nil
----@field anchorFrameType string e.g 'UIPARENT'
----@field ParentFrame string e.g 'UIParent'
-
----Base class for anything returned by NRSKNUI:NewModule(...).
----Covers the AceAddon module API plus the AceEvent/AceHook/AceTimer methods
----modules commonly embed, and the custom fields NUI attaches (db, frame).
----@class NRSKNUI.Module
----@field db NRSKNUI.AceDB Per-module namespaced DB (set during init)
----@field frame Frame? Primary display frame, if the module owns one
----@field enabledState boolean
---- AceAddon module methods
----@field GetName fun(self: NRSKNUI.Module): string
----@field IsEnabled fun(self: NRSKNUI.Module): boolean
----@field Enable fun(self: NRSKNUI.Module)
----@field Disable fun(self: NRSKNUI.Module)
----@field SetEnabledState fun(self: NRSKNUI.Module, state: boolean)
---- Lifecycle callbacks (define these on the module itself)
----@field OnInitialize fun(self: NRSKNUI.Module)?
----@field OnEnable fun(self: NRSKNUI.Module)?
----@field OnDisable fun(self: NRSKNUI.Module)?
---- AceEvent-3.0
----@field RegisterEvent fun(self: NRSKNUI.Module, event: string, callback?: string|fun(...), arg?: any)
----@field UnregisterEvent fun(self: NRSKNUI.Module, event: string)
----@field RegisterMessage fun(self: NRSKNUI.Module, message: string, callback?: string|fun(...), arg?: any)
----@field UnregisterMessage fun(self: NRSKNUI.Module, message: string)
----@field SendMessage fun(self: NRSKNUI.Module, message: string, ...: any)
---- AceTimer-3.0
----@field ScheduleTimer fun(self: NRSKNUI.Module, callback: string|fun(), delay: number, ...: any): table
----@field ScheduleRepeatingTimer fun(self: NRSKNUI.Module, callback: string|fun(), delay: number, ...: any): table
----@field CancelTimer fun(self: NRSKNUI.Module, id: table, silent?: boolean): boolean
---- AceHook-3.0
----@field Hook fun(self: NRSKNUI.Module, obj: any, method?: any, handler?: any, secure?: boolean)
----@field HookScript fun(self: NRSKNUI.Module, frame: Frame, script: string, handler?: any)
----@field Unhook fun(self: NRSKNUI.Module, obj: any, method?: string)
-
 ---@class SkinEntry
 ---@field addonName string?
 ---@field key string
@@ -90,20 +24,62 @@
 ---@field HighlightRight Texture?
 ---@field ToggleCollapseButton Button?
 
----@class FontString ---@diagnostic disable-line: class-shadows-builtin
----@field SetFontStyle fun(self: FontString, source?: string|table, size: number?, outline: string?, shadow: table?, skip: boolean?, setOwner: boolean?)
----@field SetFontJustify fun(self: FontString, source: table|string, parent: Frame?, offsetX: number?, offsetY: number?, skip: boolean?)
-
+-- Font styling API injected onto FontString / Font / EditBox metatables (see Core/FontCore.lua).
 ---@class Font ---@diagnostic disable-line: class-shadows-builtin
----@field SetFontStyle fun(self: Font, source?: string|table, size: number?, outline: string?, shadow: table?, skip: boolean?, setOwner: boolean?)
----@field SetFontJustify fun(self: Font, source: table|string, parent: Frame?, offsetX: number?, offsetY: number?, skip: boolean?)
+local Font
 
 ---@class EditBox ---@diagnostic disable-line: class-shadows-builtin
----@field SetFontStyle fun(self: EditBox, source?: string|table, size: number?, outline: string?, shadow: table?, skip: boolean?, setOwner: boolean?)
+local EditBox
 
--- NorskenUI injected widget API. Full docs: Docs/API.md
--- Each method links to its section via the [Documentation] line so the editor hover
--- shows a clickable link, like the built-in WoW API annotations.
+---Style a FontString / Font / EditBox in one call. Resolves the font face (DB block, explicit LSM
+---name/path, or the global font when `source` is nil), size, outline, and shadow, then registers the
+---object so `NRSKNUI:RefreshFontStyles` re-applies it on a profile or global-font change.
+---
+---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#setfontstyle)
+---@param source? string|table DB block, explicit LSM name / path, or nil for the global font
+---@param size? number explicit size, or a size override when `source` is a DB block
+---@param outline? string explicit outline, or an outline override when `source` is a DB block
+---@param shadow? table explicit shadow, or a shadow override when `source` is a DB block
+---@param skip? boolean internal: set during RefreshFontStyles to avoid re-registering
+---@param setOwner? boolean point an owning Button/CheckButton's state font objects at ours
+---@return boolean applied
+function Font:SetFontStyle(source, size, outline, shadow, skip, setOwner) end
+
+---Anchor a string to its config anchor and align both axes from that same point, then register it so
+---`NRSKNUI:RefreshFontStyles` re-applies it — must run after the font pass since SetFontObject resets
+---justify. AnchorFrom encodes both axes: TOPRIGHT -> point TOPRIGHT, H RIGHT, V TOP.
+---
+---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#setfontjustify)
+---@param source table|string DB block with a Position.AnchorFrom, or a string anchor
+---@param parent? Frame anchor parent, defaults to self:GetParent()
+---@param offsetX? number
+---@param offsetY? number
+---@param skip? boolean internal: set during RefreshFontStyles to avoid re-registering
+---@return boolean applied
+function Font:SetFontJustify(source, parent, offsetX, offsetY, skip) end
+
+---Style a FontString / Font / EditBox in one call. See `Font:SetFontStyle`.
+---
+---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#setfontstyle)
+---@param source? string|table DB block, explicit LSM name / path, or nil for the global font
+---@param size? number explicit size, or a size override when `source` is a DB block
+---@param outline? string explicit outline, or an outline override when `source` is a DB block
+---@param shadow? table explicit shadow, or a shadow override when `source` is a DB block
+---@param skip? boolean internal: set during RefreshFontStyles to avoid re-registering
+---@param setOwner? boolean point an owning Button/CheckButton's state font objects at ours
+---@return boolean applied
+function EditBox:SetFontStyle(source, size, outline, shadow, skip, setOwner) end
+
+---Anchor a string to its config anchor and align both axes. See `Font:SetFontJustify`.
+---
+---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#setfontjustify)
+---@param source table|string DB block with a Position.AnchorFrom, or a string anchor
+---@param parent? Frame anchor parent, defaults to self:GetParent()
+---@param offsetX? number
+---@param offsetY? number
+---@param skip? boolean internal: set during RefreshFontStyles to avoid re-registering
+---@return boolean applied
+function EditBox:SetFontJustify(source, parent, offsetX, offsetY, skip) end
 
 ---@class Frame ---@diagnostic disable-line: class-shadows-builtin
 ---@field SetBackgroundColor fun(self: Frame, r: number, g: number, b: number, a: number?)
@@ -314,6 +290,29 @@ function Texture:SetZoom(zoom) end
 ---@field SetPixelOutside fun(self: FontString, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor outset from a frame's corners (defaults 1px)
 ---@field SetPixelSnap fun(self: FontString) Disable Blizzard's grid snapping / texel bias on this object
 local FontString
+
+---Style this FontString in one call (font face, size, outline, shadow). See `Font:SetFontStyle`.
+---
+---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#setfontstyle)
+---@param source? string|table DB block, explicit LSM name / path, or nil for the global font
+---@param size? number explicit size, or a size override when `source` is a DB block
+---@param outline? string explicit outline, or an outline override when `source` is a DB block
+---@param shadow? table explicit shadow, or a shadow override when `source` is a DB block
+---@param skip? boolean internal: set during RefreshFontStyles to avoid re-registering
+---@param setOwner? boolean point an owning Button/CheckButton's state font objects at ours
+---@return boolean applied
+function FontString:SetFontStyle(source, size, outline, shadow, skip, setOwner) end
+
+---Anchor this FontString to its config anchor and align both axes. See `Font:SetFontJustify`.
+---
+---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#setfontjustify)
+---@param source table|string DB block with a Position.AnchorFrom, or a string anchor
+---@param parent? Frame anchor parent, defaults to self:GetParent()
+---@param offsetX? number
+---@param offsetY? number
+---@param skip? boolean internal: set during RefreshFontStyles to avoid re-registering
+---@return boolean applied
+function FontString:SetFontJustify(source, parent, offsetX, offsetY, skip) end
 
 ---@class _G
 ---@field StaticPopup1Button1 Button

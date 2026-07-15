@@ -5,12 +5,14 @@ local NRSKNUI = select(2, ...)
 
 local IsAddonLoaded = C_AddOns and C_AddOns.IsAddOnLoaded
 
----Check if ElvUI is loaded use ElvUI skinning is enabled
+---Check if ElvUI is loaded and ElvUI skinning is enabled, so a module should skip its own load.
+---@return boolean
 function NRSKNUI:ShouldNotLoadModule()
     return IsAddonLoaded("ElvUI") and NRSKNUI.db.profile.UseElvUI.Enabled
 end
 
 ---Check if Blizzard Edit Mode is currently active
+---@return boolean
 function NRSKNUI:IsEditModeActive()
     return EditModeManagerFrame and EditModeManagerFrame:IsShown()
 end
@@ -30,6 +32,7 @@ end
 
 ---Check if a specific class is present in the current group.
 ---@param classFilenameToCheck 'WARRIOR'|'HUNTER'|'ROGUE'|'MAGE'|'PRIEST'|'WARLOCK'|'DRUID'|'SHAMAN'|'PALADIN'|'DEATHKNIGHT'|'MONK'|'DEMONHUNTER'
+---@return boolean
 function NRSKNUI:IsClassInGroup(classFilenameToCheck)
     local numMembers = GetNumGroupMembers()
     local prefix = (IsInRaid() and 'raid') or 'party'
