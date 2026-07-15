@@ -491,10 +491,10 @@ function GUIFrame:CreateHeader(parent)
     })
 
     CreateHeaderButton({
-        size = 22,
-        xOffset = -152,
+        size = 24,
+        xOffset = -157,
         -- Placeholder texture until a dedicated Fonts icon is picked.
-        texture = "Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\fill.png",
+        texture = "Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\fonts.png",
         onClick = function() GUIFrame:OpenPage("FontsPage") end,
         toolTip = "Open Font Settings Page"
     })
