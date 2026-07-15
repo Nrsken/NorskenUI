@@ -15,6 +15,7 @@
 ---@class Tweaks : NRSKNUI.Module, NRSKNUI.AceEvent, NRSKNUI.AceHook
 ---@class XPBar : NRSKNUI.Module, NRSKNUI.AceEvent
 ---@class CopyAnything : NRSKNUI.Module, NRSKNUI.AceEvent
+---@class Recuperate : NRSKNUI.Module, NRSKNUI.AceEvent
 
 -- Typed accessors. Overloads dispatch on the literal module name.
 
@@ -35,6 +36,7 @@ local NRSKNUI
 ---@overload fun(self: NRSKNUI, name: "Tweaks", silent?: boolean): Tweaks
 ---@overload fun(self: NRSKNUI, name: "XPBar", silent?: boolean): XPBar
 ---@overload fun(self: NRSKNUI, name: "CopyAnything", silent?: boolean): CopyAnything
+---@overload fun(self: NRSKNUI, name: "Recuperate", silent?: boolean): Recuperate
 ---@param name string
 ---@param silent? boolean
 ---@return NRSKNUI.Module
@@ -54,6 +56,7 @@ function NRSKNUI:GetModule(name, silent) end
 ---@overload fun(self: NRSKNUI, name: "Tweaks", ...: string): Tweaks
 ---@overload fun(self: NRSKNUI, name: "XPBar", ...: string): XPBar
 ---@overload fun(self: NRSKNUI, name: "CopyAnything", ...: string): CopyAnything
+---@overload fun(self: NRSKNUI, name: "Recuperate", ...: string): Recuperate
 ---@param name string
 ---@param ... string
 ---@return NRSKNUI.Module
