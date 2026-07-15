@@ -72,6 +72,7 @@ NRSKNUI.Tweaks = NRSKNUI:NewModule('Tweaks', 'AceEvent-3.0', 'AceHook-3.0')
 NRSKNUI.XPBar = NRSKNUI:NewModule('XPBar', 'AceEvent-3.0')
 NRSKNUI.CopyAnything = NRSKNUI:NewModule('CopyAnything', 'AceEvent-3.0')
 NRSKNUI.Recuperate = NRSKNUI:NewModule('Recuperate', 'AceEvent-3.0')
+NRSKNUI.MiscVars = NRSKNUI:NewModule("MiscVars", "AceEvent-3.0")
 
 -- Class Util Modules
 NRSKNUI.BurningRush = NRSKNUI:NewModule('BurningRush', 'AceEvent-3.0')
