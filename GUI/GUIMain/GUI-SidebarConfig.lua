@@ -59,7 +59,7 @@ GUIFrame.SidebarConfig = {
                 { id = "CopyAnything",       text = "Copy Anything" },
                 { id = "CooldownStrings",    text = "CDM Profile Strings" },
                 { id = "XPBar",              text = "XP Bar" },
-                { id = "Durability",         text = "Durability Util" },
+                { id = "Durability",         text = "Durability Low Warning" },
                 { id = "AuctionHouseFilter", text = "AH Current Expansion Filter" },
                 { id = "Recuperate",         text = "Recuperate Button" },
                 { id = "CharacterPanel",     text = "Character Panel Improvements" },

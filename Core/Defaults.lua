@@ -732,49 +732,29 @@ local Defaults = {
                     YOffset = -427,           -- Y offset
                 },
             },
-
             Durability = {
+                -- General Settings
                 Enabled = true,
+                ShowPercent = 30,
+                CombatShowPercent = 0,
+                -- Font settings
                 UseGlobalFont = true,
                 FontFace = "Expressway",
-                FontOutline = "SOFTOUTLINE",
-
-                WarningText = {
-                    Enabled = true,
-                    ShowPercent = 30,
-                    CombatShowPercent = 0,
-                    WarningColor = { 1, 0.537, 0.2, 1 },
-                    FontSize = 18,
-                    WarningText = "REPAIR NOW",
-                    -- Position settings
-                    Strata = "HIGH",              -- Frame strata
-                    anchorFrameType = "UIPARENT", -- Anchor frame type
-                    ParentFrame = "UIParent",     -- Parent frame name
-                    Position = {                  -- Position settings
-                        AnchorFrom = "CENTER",    -- Anchor point from
-                        AnchorTo = "CENTER",      -- Anchor point to
-                        XOffset = 0,              -- X offset
-                        YOffset = 105,            -- Y offset
-                    },
-                },
-
-                Text = {
-                    Enabled = true,
-                    UseStatusColor = true,
-                    Color = { 1, 1, 1, 1 },
-                    FontSize = 12,
-                    DurColor = { 1, 1, 1, 1 },
-                    DurText = "Dur: ",
-                    -- Position settings
-                    Strata = "HIGH",                 -- Frame strata
-                    anchorFrameType = "SELECTFRAME", -- Anchor frame type
-                    ParentFrame = "Minimap",         -- Parent frame name
-                    Position = {                     -- Position settings
-                        AnchorFrom = "BOTTOMLEFT",   -- Anchor point from
-                        AnchorTo = "BOTTOMLEFT",     -- Anchor point to
-                        XOffset = 1,                 -- X offset
-                        YOffset = 18,                -- Y offset
-                    },
+                FontOutline = "OUTLINE",
+                FontSize = 18,
+                TextBroken = "GEAR BROKEN",
+                TextColorBroken = { 1, 0, 0, 1 },
+                TextLow = "REPAIR NOW",
+                TextColorLow = { 1, 0.537, 0.2, 1 },
+                -- Frame settings
+                Strata = "HIGH",
+                anchorFrameType = "UIPARENT",
+                ParentFrame = "UIParent",
+                Position = {
+                    AnchorFrom = "CENTER",
+                    AnchorTo = "CENTER",
+                    XOffset = 0,
+                    YOffset = 105,
                 },
             },
             XPBar = {
@@ -785,7 +765,7 @@ local Defaults = {
                 -- Font settings
                 UseGlobalFont = true,
                 FontFace = "Expressway",
-                FontOutline = "SOFTOUTLINE",
+                FontOutline = "OUTLINE",
                 FontSize = 14,
                 TextColor = { 1, 1, 1, 1 },
                 FontShadow = {
@@ -796,21 +776,21 @@ local Defaults = {
                 },
                 -- Frame settings
                 Strata = "HIGH",
-                anchorFrameType = "UIPARENT", -- Anchor frame type
-                ParentFrame = "UIParent",     -- Parent frame name
-                Position = {                  -- Position settings
-                    AnchorFrom = "TOP",       -- Anchor point from
-                    AnchorTo = "TOP",         -- Anchor point to
-                    XOffset = 0,              -- X offset
+                anchorFrameType = "UIPARENT",
+                ParentFrame = "UIParent",
+                Position = {
+                    AnchorFrom = "TOP",
+                    AnchorTo = "TOP",
+                    XOffset = 0,
                     YOffset = -1,
                 },
                 width = 477,
                 height = 26,
                 -- Texture settings
                 UseGlobalBar = true,
-                StatusBarTexture = "NorskenUI", -- Progress bar texture (LSM name)
-                RestedTexture = "NorskenUI",    -- Rested bar texture (LSM name)
-                QuestTexture = "NorskenUI",     -- Quest bar texture (LSM name)
+                StatusBarTexture = "NorskenUI",
+                RestedTexture = "NorskenUI",
+                QuestTexture = "NorskenUI",
                 -- Statusbar coloring
                 ColorMode = "theme",
                 StatusColor = { 0.58, 0, 0.55, 1 },
@@ -826,13 +806,11 @@ local Defaults = {
                 BackgroundColor = { 0, 0, 0, 0.8 },
                 BorderColor = { 0, 0, 0, 1 },
             },
-
             CopyAnything = {
-                Enabled = true,    -- Master toggle
-                key = "C",         -- Copy keybind
-                modifier = "ctrl", -- ctrl, shift, alt
+                Enabled = true,
+                key = "C",
+                modifier = "ctrl", -- 'ctrl' | 'shift' | 'alt'
             },
-
             CursorCircle = {
                 Enabled = true,            -- Enable cursor circle
                 Size = 40,                 -- Circle size

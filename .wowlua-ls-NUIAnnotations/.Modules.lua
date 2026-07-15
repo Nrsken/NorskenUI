@@ -17,6 +17,7 @@
 ---@class CopyAnything : NRSKNUI.Module, NRSKNUI.AceEvent
 ---@class Recuperate : NRSKNUI.Module, NRSKNUI.AceEvent
 ---@class MiscVars : NRSKNUI.Module, NRSKNUI.AceEvent
+---@class Durability : NRSKNUI.Module, NRSKNUI.AceEvent
 
 -- Typed accessors. Overloads dispatch on the literal module name.
 
@@ -39,6 +40,7 @@ local NRSKNUI
 ---@overload fun(self: NRSKNUI, name: "CopyAnything", silent?: boolean): CopyAnything
 ---@overload fun(self: NRSKNUI, name: "Recuperate", silent?: boolean): Recuperate
 ---@overload fun(self: NRSKNUI, name: "MiscVars", silent?: boolean): MiscVars
+---@overload fun(self: NRSKNUI, name: "Durability", silent?: boolean): Durability
 ---@param name string
 ---@param silent? boolean
 ---@return NRSKNUI.Module
@@ -60,6 +62,7 @@ function NRSKNUI:GetModule(name, silent) end
 ---@overload fun(self: NRSKNUI, name: "CopyAnything", ...: string): CopyAnything
 ---@overload fun(self: NRSKNUI, name: "Recuperate", ...: string): Recuperate
 ---@overload fun(self: NRSKNUI, name: "MiscVars", ...: string): MiscVars
+---@overload fun(self: NRSKNUI, name: "Durability", ...: string): Durability
 ---@param name string
 ---@param ... string
 ---@return NRSKNUI.Module
