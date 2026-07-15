@@ -3,6 +3,13 @@ local NRSKNUI = select(2, ...)
 
 -- Global API functions
 
+local GetNumGroupMembers = GetNumGroupMembers
+local IsInRaid = IsInRaid
+local select = select
+local UnitClass = UnitClass
+
+local EditModeManagerFrame = EditModeManagerFrame
+
 local IsAddonLoaded = C_AddOns and C_AddOns.IsAddOnLoaded
 
 ---Check if ElvUI is loaded and ElvUI skinning is enabled, so a module should skip its own load.

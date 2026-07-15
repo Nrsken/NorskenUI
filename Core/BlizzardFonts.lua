@@ -329,10 +329,12 @@ function NRSKNUI:ApplyBlizzardFonts(force)
     self:SetFont(_G.FriendsFont_Small, true)                -- 'Tell your friends what you're doing' text
     self:SetFont(_G.FriendsFont_Normal, true)               -- 'Blizzard services are unavailable' text
     self:SetFont(_G.FriendsFont_Large, true)                -- 'Blizzard services are unavailable' text
+    self:SetFont(_G.UserScaledFontGameDisable, true)        -- 12.1.0 New friendlist editbox text
     self:SetFont(_G.UserScaledFontGameDisableSmall, true)   -- 'Search Zones, Guilds, Classes, Races, Levels' text
     self:SetFont(_G.UserScaledFontGameNormalSmall, true)
     self:SetFont(_G.UserScaledFontGameHighlightSmall, true) -- 'Name' text
     self:SetFont(_G.UserScaledFontGameHighlight, true)      -- 'Zone' text
+    self:SetFont(_G.UserScaledFontSystem15Shadow, true)      -- 'Friends List X/Y' text
     self:SetFont(_G.FriendsFont_UserText, true)
 
     -- Blizzard Options Fonts --
