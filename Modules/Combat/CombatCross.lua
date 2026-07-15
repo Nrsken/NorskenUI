@@ -1,220 +1,330 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
+---@class CombatCross
+local CombatCross = NRSKNUI:GetModule('CombatCross')
 
----@class CombatCross: AceModule, AceEvent-3.0
-local CC = NRSKNUI:NewModule("CombatCross", "AceEvent-3.0")
-
-local select = select
-local CreateFrame = CreateFrame
-local InCombatLockdown = InCombatLockdown
-local GetSpecialization = GetSpecialization
 local GetSpecializationInfo = GetSpecializationInfo
-local C_Spell = C_Spell
-local UnitExists = UnitExists
+local GetSpecialization = GetSpecialization
+local InCombatLockdown = InCombatLockdown
+local CreateFrame = CreateFrame
+local unpack = unpack
 
-local FONT_SIZE_MULTIPLIER = 2
-local RANGE_UPDATE_THROTTLE = 0.1
+local EnableSpellRangeCheck = C_Spell and C_Spell.EnableSpellRangeCheck
+local IsSpellInRange = C_Spell and C_Spell.IsSpellInRange
+local SpellHasRange = C_Spell and C_Spell.SpellHasRange
 
-function CC:UpdateDB()
+local DOT_TEXTURE = 'Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\whiteCircle.png'
+
+function CombatCross:UpdateDB()
     self.db = NRSKNUI.db.profile.CombatCross
 end
 
-function CC:OnInitialize()
+function CombatCross:OnInitialize()
     self:UpdateDB()
     self:SetEnabledState(false)
 end
 
-function CC:ResolveRangeAbility()
-    local specIndex = GetSpecialization()
-    local specID = specIndex and select(1, GetSpecializationInfo(specIndex))
+-- Line creation helper.
+local function CreateLines(pointFrom, frame, width, height)
+    local lineFrame = CreateFrame('Frame', nil, frame)
+    lineFrame:SetPixelSize(width, height)
+    lineFrame:SetPixelPoint(pointFrom, frame, 'CENTER')
+    lineFrame:SetFrameLevel(frame:GetFrameLevel() + 1)
+    lineFrame:AddBorders()
 
+    lineFrame.texture = lineFrame:CreateTexture(nil, 'OVERLAY')
+    lineFrame.texture:SetTexture(NRSKNUI.WhiteTexture)
+    lineFrame.texture:SetPixelInside()
+    lineFrame.texture:SetPixelSnap()
+
+    return lineFrame
+end
+
+function CombatCross:CreateFrame()
+    if self.coreFrame then return end
+
+    -- Core base frame, all lines and dot are children of this.
+    local coreFrame = CreateFrame('Frame', 'NRSKNUI_CombatCrossCoreFrame', UIParent)
+    coreFrame:SetPixelSize(40)
+    coreFrame:SetFrameStrata('HIGH')
+    coreFrame:SetFrameLevel(100)
+
+    -- Cross lines
+    coreFrame.textureUp = CreateLines('BOTTOM', coreFrame, self.db.CrossThickness, self.db.CrossLength)
+    coreFrame.textureDown = CreateLines('TOP', coreFrame, self.db.CrossThickness, self.db.CrossLength)
+    coreFrame.textureLeft = CreateLines('RIGHT', coreFrame, self.db.CrossLength, self.db.CrossThickness)
+    coreFrame.textureRight = CreateLines('LEFT', coreFrame, self.db.CrossLength, self.db.CrossThickness)
+
+    -- Dot backdrop that acts like a border.
+    coreFrame.dotBG = coreFrame:CreateTexture(nil, 'ARTWORK')
+    coreFrame.dotBG:SetPixelSize(self.db.CenterDotSize + 2)
+    coreFrame.dotBG:SetTexture(DOT_TEXTURE)
+    coreFrame.dotBG:SetPixelPoint('CENTER', coreFrame, 'CENTER')
+    coreFrame.dotBG:SetPixelSnap()
+    coreFrame.dotBG:SetVertexColor(0, 0, 0)
+
+    -- Dot texture
+    coreFrame.dot = coreFrame:CreateTexture(nil, 'OVERLAY')
+    coreFrame.dot:SetTexture(DOT_TEXTURE)
+    coreFrame.dot:SetPixelPoint('CENTER', coreFrame, 'CENTER')
+    coreFrame.dot:SetPixelSnap()
+
+    self.coreFrame = coreFrame
+    coreFrame:Hide()
+end
+
+-- Paint all 4 cross lines and dot the same color.
+function CombatCross:SetColor(r, g, b, a)
+    if not self.coreFrame then return end
+
+    self.coreFrame.textureUp.texture:SetColorTexture(r, g, b, a)
+    self.coreFrame.textureDown.texture:SetColorTexture(r, g, b, a)
+    self.coreFrame.textureLeft.texture:SetColorTexture(r, g, b, a)
+    self.coreFrame.textureRight.texture:SetColorTexture(r, g, b, a)
+
+    self.coreFrame.dot:SetVertexColor(r, g, b, a)
+end
+
+-- The cross lines normal color.
+function CombatCross:SetBaseColor()
+    self:SetColor(unpack(CombatCross.BaseColor))
+end
+
+function CombatCross:ApplySettings()
+    if not self.coreFrame then return end
+
+    -- Cache the base color for use when range coloring is disabled or in-range.
+    local r, g, b, a = NRSKNUI:GetAccentColor(self.db.ColorMode, self.db.Color)
+    CombatCross.BaseColor = { r, g, b, a }
+
+    -- Position
+    self.coreFrame:ApplyPosition(self.db)
+
+    -- Gap, one time offset so that 0 gap really is no gap.
+    local gap = self.db.CrossGap - 2
+    self.coreFrame.textureUp:SetPixelPoint('BOTTOM', self.coreFrame, 'CENTER', 0, gap)
+    self.coreFrame.textureDown:SetPixelPoint('TOP', self.coreFrame, 'CENTER', 0, -gap)
+    self.coreFrame.textureLeft:SetPixelPoint('RIGHT', self.coreFrame, 'CENTER', -gap, 0)
+    self.coreFrame.textureRight:SetPixelPoint('LEFT', self.coreFrame, 'CENTER', gap, 0)
+
+    -- Thickness and length
+    self.coreFrame.textureUp:SetPixelSize(self.db.CrossThickness, self.db.CrossLength)
+    self.coreFrame.textureDown:SetPixelSize(self.db.CrossThickness, self.db.CrossLength)
+    self.coreFrame.textureLeft:SetPixelSize(self.db.CrossLength, self.db.CrossThickness)
+    self.coreFrame.textureRight:SetPixelSize(self.db.CrossLength, self.db.CrossThickness)
+
+    -- Outline
+    self.coreFrame.textureUp:SetBorderShown(self.db.Outline)
+    self.coreFrame.textureDown:SetBorderShown(self.db.Outline)
+    self.coreFrame.textureLeft:SetBorderShown(self.db.Outline)
+    self.coreFrame.textureRight:SetBorderShown(self.db.Outline)
+
+    -- Style mode, cross lines or center dot
+    local dotMode = self.db.Mode == 'dot'
+    self.coreFrame.textureUp:SetShown(not dotMode)
+    self.coreFrame.textureDown:SetShown(not dotMode)
+    self.coreFrame.textureLeft:SetShown(not dotMode)
+    self.coreFrame.textureRight:SetShown(not dotMode)
+
+    self.coreFrame.dotBG:SetPixelSize(self.db.CenterDotSize + 2)
+    self.coreFrame.dot:SetPixelSize(self.db.CenterDotSize)
+    self.coreFrame.dot:SetShown(dotMode)
+    self.coreFrame.dotBG:SetShown(dotMode and self.db.Outline)
+
+    -- Base color, then let the range system repaint over it if it applies.
+    self:SetBaseColor()
+    self:ResolveRangeAbility()
+    self:SyncRangeCheck()
+end
+
+-- Resolve the spell we range-check against for the current spec.
+function CombatCross:ResolveRangeAbility()
+    local specIndex = GetSpecialization()
+    local specID = specIndex and GetSpecializationInfo(specIndex)
+
+    -- Determine the ability we use for range checking, based on spec data from Core\Constants.lua.
     if specID and NRSKNUI.MELEE_RANGE_ABILITIES[specID] then
         self.rangeAbility = NRSKNUI.MELEE_RANGE_ABILITIES[specID]
-        self.specType = "melee"
+        self.specType = 'melee'
     elseif specID and NRSKNUI.RANGED_RANGE_ABILITIES[specID] then
         self.rangeAbility = NRSKNUI.RANGED_RANGE_ABILITIES[specID]
-        self.specType = "ranged"
+        self.specType = 'ranged'
     else
         self.rangeAbility = nil
         self.specType = nil
     end
 end
 
-function CC:UpdateRangeColor()
-    if not self.text then return end
-
-    if not UnitExists("target") then
-        if self.lastInRange == false then self:ResetColor() end
-        return
-    end
-    if not self.rangeAbility then return end
-    local inRange = C_Spell.IsSpellInRange(self.rangeAbility, "target")
-    if inRange == nil then
-        if self.lastInRange ~= nil then self:ResetColor() end
-        return
+-- Whether range coloring should currently be running.
+function CombatCross:ShouldCheckRange()
+    -- Not in combat.
+    if not self.inCombat then
+        return false
     end
 
-    local nowInRange = (inRange == 1 or inRange == true)
+    -- We don't have a valid ability to check against.
+    if not self.rangeAbility then
+        return false
+    end
+
+    local meleeCheck = self.specType == 'melee' and self.db.RangeColorMeleeEnabled
+    local rangedCheck = self.specType == 'ranged' and self.db.RangeColorRangedEnabled
+    local enabled = meleeCheck or rangedCheck
+
+    -- The user has disabled range coloring for this spec type.
+    if not enabled then
+        return false
+    end
+
+    return SpellHasRange(self.rangeAbility) == true
+end
+
+-- Apply a color for the given range state.
+-- checksRange is false when there is no valid target for the spell to test.
+function CombatCross:ApplyRangeColor(inRange, checksRange)
+    if not checksRange then
+        if self.lastInRange ~= nil then
+            self.lastInRange = nil
+            self:SetBaseColor()
+        end
+        return
+    end
+
+    local nowInRange = inRange == true
     if nowInRange == self.lastInRange then return end
     self.lastInRange = nowInRange
 
     if nowInRange then
-        local r, g, b, a = self:GetColor()
-        self.text:SetTextColor(r, g, b, a)
+        self:SetBaseColor()
     else
         local c = self.db.OutOfRangeColor
-        self.text:SetTextColor(c[1], c[2], c[3], c[4])
+        self:SetColor(c[1], c[2], c[3], c[4])
     end
 end
 
-function CC:ShouldRunRangeUpdate()
-    if not self.combatActive or not self.rangeAbility then return false end
-    return (self.specType == "melee" and self.db.RangeColorMeleeEnabled)
-        or (self.specType == "ranged" and self.db.RangeColorRangedEnabled)
+function CombatCross:StartRangeCheck()
+    if self.rangeCheckActive then return end
+
+    self.rangeCheckActive = true
+    self.rangeCheckSpellID = self.rangeAbility
+    EnableSpellRangeCheck(self.rangeCheckSpellID, true)
+    self:RegisterEvent('SPELL_RANGE_CHECK_UPDATE')
+
+    -- Seed the initial color from the current state.
+    self.lastInRange = nil
+    local inRange = IsSpellInRange(self.rangeCheckSpellID)
+    self:ApplyRangeColor(inRange == true, inRange ~= nil)
 end
 
-function CC:UpdateOnUpdateState()
-    if not self.frame then return end
+function CombatCross:StopRangeCheck()
+    if not self.rangeCheckActive then return end
 
-    if self:ShouldRunRangeUpdate() then
-        if not self.onUpdateActive then
-            self.onUpdateActive = true
-            self.rangeElapsed = 0
-            self.frame:SetScript("OnUpdate", function(_, elapsed) self:OnUpdate(elapsed) end)
-        end
-    elseif self.onUpdateActive then
-        self.onUpdateActive = false
-        self.frame:SetScript("OnUpdate", nil)
-        self:ResetColor()
+    self.rangeCheckActive = false
+    if self.rangeCheckSpellID then
+        EnableSpellRangeCheck(self.rangeCheckSpellID, false)
+    end
+    self.rangeCheckSpellID = nil
+    self:UnregisterEvent('SPELL_RANGE_CHECK_UPDATE')
+    self.lastInRange = nil
+    self:SetBaseColor()
+end
+
+-- Start/stop/restart the range check to match the current spec + settings.
+function CombatCross:SyncRangeCheck()
+    if not self:ShouldCheckRange() then
+        self:StopRangeCheck()
+        return
+    end
+
+    -- (Re)start when idle or the resolved ability changed because of a spec swap.
+    if not self.rangeCheckActive or self.rangeCheckSpellID ~= self.rangeAbility then
+        self:StopRangeCheck()
+        self:StartRangeCheck()
+        return
+    end
+
+    -- Already watching the right spell, just refresh the color.
+    self.lastInRange = nil
+    local inRange = IsSpellInRange(self.rangeCheckSpellID)
+    self:ApplyRangeColor(inRange == true, inRange ~= nil)
+end
+
+function CombatCross:SPELL_RANGE_CHECK_UPDATE(_, spellID, inRange, checksRange)
+    if spellID ~= self.rangeCheckSpellID then return end
+    self:ApplyRangeColor(inRange, checksRange)
+end
+
+-- Update the range ability when the player changes spec, then sync the range check to match the new spec.
+function CombatCross:PLAYER_SPECIALIZATION_CHANGED()
+    self:ResolveRangeAbility()
+    self:SyncRangeCheck()
+end
+
+-- Cross is visible while previewing or in combat.
+function CombatCross:UpdateVisibility()
+    if not self.coreFrame then return end
+
+    if self.isPreview or self.inCombat then
+        self.coreFrame:Show()
+    else
+        self.coreFrame:Hide()
     end
 end
 
-function CC:OnUpdate(elapsed)
-    self.rangeElapsed = self.rangeElapsed + elapsed
-    if self.rangeElapsed < RANGE_UPDATE_THROTTLE then return end
-    self.rangeElapsed = 0
-
-    self:UpdateRangeColor()
+function CombatCross:PLAYER_REGEN_DISABLED()
+    self.inCombat = true
+    self:UpdateVisibility()
+    self:SyncRangeCheck()
 end
 
-function CC:OnEnable()
+function CombatCross:PLAYER_REGEN_ENABLED()
+    self.inCombat = false
+    self:UpdateVisibility()
+    self:StopRangeCheck()
+end
+
+function CombatCross:OnEnable()
+    if not self.db.Enabled then return end
+
     self:CreateFrame()
+
+    -- Grab initial combat state, we will use self.inCombat as a replacement for InCombatLockdown() since its return is slower than player regen events.
+    self.inCombat = InCombatLockdown()
+    -- Grab preview state
+    self.isPreview = (NRSKNUI.PreviewManager and NRSKNUI.PreviewManager:IsPreviewActive()) or false
+
     self:ApplySettings()
-    self:ResolveRangeAbility()
+    self:UpdateVisibility()
 
-    self:RegisterEvent("PLAYER_REGEN_DISABLED", "OnEnterCombat")
-    self:RegisterEvent("PLAYER_REGEN_ENABLED", "OnExitCombat")
-    self:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED", "OnSpecChanged")
+    -- Reg events
+    self:RegisterEvent('PLAYER_SPECIALIZATION_CHANGED')
+    self:RegisterEvent('PLAYER_ENTERING_WORLD', 'SyncRangeCheck')
+    self:RegisterEvent('PLAYER_REGEN_DISABLED')
+    self:RegisterEvent('PLAYER_REGEN_ENABLED')
 end
 
-function CC:OnDisable()
-    self:UnregisterAllEvents()
-    if self.frame then
-        self.frame:SetScript("OnUpdate", nil)
-        self.frame:Hide()
+function CombatCross:OnDisable()
+    self.isPreview = false
+    self.inCombat = false
+    self:StopRangeCheck()
+    if self.coreFrame then
+        self.coreFrame:Hide()
     end
-    self.rangeAbility = nil
-    self.specType = nil
-    self.lastInRange = nil
-    self.onUpdateActive = false
 end
 
-function CC:OnSpecChanged()
-    self:ResolveRangeAbility()
-    self.lastInRange = nil
-    self:UpdateOnUpdateState()
-end
-
-function CC:GetColor()
-    return NRSKNUI:GetAccentColor(self.db.ColorMode, self.db.Color)
-end
-
-function CC:ResetColor()
-    if not self.text then return end
-    local r, g, b, a = self:GetColor()
-    self.text:SetTextColor(r, g, b, a)
-    self.lastInRange = nil
-end
-
-function CC:CreateFrame()
-    if self.frame then return end
-
-    self.frame = CreateFrame("Frame", "NRSKNUI_CombatCrossFrame", UIParent)
-    self.frame:SetSize(30, 30)
-    self.frame:SetPoint("CENTER")
-    self.frame:SetFrameStrata("HIGH")
-    self.frame:SetFrameLevel(100)
-    self.frame:Hide()
-
-    self.text = self.frame:CreateFontString(nil, "OVERLAY")
-    self.text:SetPoint("CENTER")
-    self.text:SetFontStyle("Expressway", self.db.Thickness * FONT_SIZE_MULTIPLIER, self.db.Outline and "OUTLINE" or "NONE")
-    self.text:SetText("+")
-end
-
-function CC:ApplySettings()
-    if not self.frame or not self.text then return end
-
-    self.frame:ApplyPosition(self.db)
-    self.text:SetFontStyle("Expressway", self.db.Thickness * FONT_SIZE_MULTIPLIER, self.db.Outline and "OUTLINE" or "NONE")
-
-    self:ResetColor()
-end
-
-function CC:Show(isPreview)
-    if not self.frame then
+function CombatCross:ShowPreview()
+    if not self.coreFrame then
         self:CreateFrame()
         self:ApplySettings()
     end
 
-    if isPreview then
-        self.previewActive = true
-    else
-        self.combatActive = true
-    end
-
-    if not self.frame:IsShown() then
-        self.frame:SetAlpha(1)
-        self.frame:Show()
-    end
+    self.isPreview = true
+    self:UpdateVisibility()
 end
 
-function CC:Hide(isPreview)
-    if not self.frame then return end
+function CombatCross:HidePreview()
+    if not self.coreFrame then return end
 
-    if isPreview then
-        self.previewActive = false
-    else
-        self.combatActive = false
-        self:ResetColor()
-    end
-
-    if not self.previewActive and not self.combatActive then
-        self.frame:Hide()
-    end
-end
-
-function CC:ShowPreview()
-    if InCombatLockdown() then return end
-    self:Show(true)
-end
-
-function CC:HidePreview()
-    if InCombatLockdown() then return end
-    self:Hide(true)
-end
-
-function CC:OnEnterCombat()
-    self:Show(false)
-    self:UpdateOnUpdateState()
-end
-
-function CC:OnExitCombat()
-    self:Hide(false)
-    self:UpdateOnUpdateState()
-end
-
-function CC:Refresh()
-    self:ApplySettings()
-    self:UpdateOnUpdateState()
+    self.isPreview = false
+    self:UpdateVisibility()
 end

@@ -339,26 +339,33 @@ local Defaults = {
                 FontSize = 18,
             },
         },
-
-        -- Combat Cross Settings
         CombatCross = {
-            Enabled = true,                   -- Enable/disable combat cross
-            Strata = "HIGH",                  -- Frame strata
-            anchorFrameType = "UIPARENT",     -- Anchor frame type (SCREEN, UIPARENT, SELECTFRAME)
-            ParentFrame = "UIParent",         -- Parent frame name (when SELECTFRAME)
-            Position = {                      -- Position settings
-                AnchorFrom = "CENTER",        -- Anchor point from
-                AnchorTo = "CENTER",          -- Anchor point to
-                XOffset = 0,                  -- X offset
-                YOffset = -10,                -- Y offset
+            -- General Settings
+            Enabled = true,
+            CrossGap = 0,
+            CrossThickness = 5,
+            CrossLength = 18,
+            Outline = true,
+            -- Style Settings
+            Mode = "cross", -- "cross"| "dot"
+            CenterDotSize = 20,
+            -- Color Settings
+            ColorMode = "custom",
+            Color = { 0, 1, 0.169, 1 },
+            -- Frame Settings
+            Strata = "HIGH",
+            anchorFrameType = "UIPARENT",
+            ParentFrame = "UIParent",
+            Position = {
+                AnchorFrom = "CENTER",
+                AnchorTo = "CENTER",
+                XOffset = 0,
+                YOffset = -10,
             },
-            ColorMode = "custom",             -- Color mode: "class" | "custom" | "theme"
-            Color = { 0, 1, 0.169, 1 },       -- Cross color (used when ColorMode = "custom")
-            Thickness = 22,                   -- Cross thickness (font size)
-            Outline = true,                   -- Outline enabled
-            RangeColorMeleeEnabled = false,   -- Color cross when out of melee range
-            RangeColorRangedEnabled = false,  -- Color cross when out of ranged casting range
-            OutOfRangeColor = { 1, 0, 0, 1 }, -- Color used when out of range
+            -- Range Indicator Settings
+            RangeColorMeleeEnabled = true,
+            RangeColorRangedEnabled = true,
+            OutOfRangeColor = { 1, 0, 0, 1 },
         },
 
         -- Battle Res Tracker Settings

@@ -18,6 +18,7 @@
 ---@class Recuperate : NRSKNUI.Module, NRSKNUI.AceEvent
 ---@class MiscVars : NRSKNUI.Module, NRSKNUI.AceEvent
 ---@class Durability : NRSKNUI.Module, NRSKNUI.AceEvent
+---@class CombatCross : NRSKNUI.Module, NRSKNUI.AceEvent
 
 -- Typed accessors. Overloads dispatch on the literal module name.
 
@@ -41,6 +42,7 @@ local NRSKNUI
 ---@overload fun(self: NRSKNUI, name: "Recuperate", silent?: boolean): Recuperate
 ---@overload fun(self: NRSKNUI, name: "MiscVars", silent?: boolean): MiscVars
 ---@overload fun(self: NRSKNUI, name: "Durability", silent?: boolean): Durability
+---@overload fun(self: NRSKNUI, name: "CombatCross", silent?: boolean): CombatCross
 ---@param name string
 ---@param silent? boolean
 ---@return NRSKNUI.Module
@@ -63,6 +65,7 @@ function NRSKNUI:GetModule(name, silent) end
 ---@overload fun(self: NRSKNUI, name: "Recuperate", ...: string): Recuperate
 ---@overload fun(self: NRSKNUI, name: "MiscVars", ...: string): MiscVars
 ---@overload fun(self: NRSKNUI, name: "Durability", ...: string): Durability
+---@overload fun(self: NRSKNUI, name: "CombatCross", ...: string): CombatCross
 ---@param name string
 ---@param ... string
 ---@return NRSKNUI.Module
