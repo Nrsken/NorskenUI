@@ -38,7 +38,7 @@ NRSKNUI.ClassColorHex = {
 ---Get the player's class color as an RGBA table.
 ---@return RGBA
 function NRSKNUI:GetPlayerClassColor()
-    local class = self.myclass
+    local class = self.MyClass
     if class and RAID_CLASS_COLORS[class] then
         local c = RAID_CLASS_COLORS[class]
         return { c.r, c.g, c.b, 1 }
@@ -70,7 +70,7 @@ function NRSKNUI:GetClassColorHex(classToken)
         if hex then return hex end
     end
     -- Fallback to player class
-    return self.ClassColorHex[self.myclass] or "FFFFFF"
+    return self.ClassColorHex[self.MyClass] or "FFFFFF"
 end
 
 ---Get the RAID_CLASS_COLORS entry for a class token, falling back to the player's class.
@@ -83,7 +83,7 @@ function NRSKNUI:GetClassColorRaw(classToken)
         if color then return color end
     end
     -- Fallback to player class
-    return RAID_CLASS_COLORS[self.myclass]
+    return RAID_CLASS_COLORS[self.MyClass]
 end
 
 ---Wrap text in a class color escape code.

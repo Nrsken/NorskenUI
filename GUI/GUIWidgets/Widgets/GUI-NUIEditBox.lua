@@ -54,6 +54,7 @@ function GUIFrame:CreateEditBox(parent, labelText, config)
     local value = tostring(config.value or "")
     local callback = config.callback
     local autoFocus = config.autoFocus
+    local tooltip = config.tooltip
 
     local rowHeight = 34
     local row = CreateFrame("Frame", nil, parent)
@@ -118,6 +119,28 @@ function GUIFrame:CreateEditBox(parent, labelText, config)
     end)
 
     Mixin(row, NUIEditBoxMixin)
+
+    -- Tooltip support
+    if tooltip then
+        local tooltipText = type(tooltip) == "table" and tooltip.text or tooltip
+
+        local function SetupTooltip(frame)
+            local oldEnter = frame:GetScript("OnEnter")
+            local oldLeave = frame:GetScript("OnLeave")
+            frame:SetScript("OnEnter", function(self, ...)
+                if oldEnter then oldEnter(self, ...) end
+                GameTooltip:SetOwner(row, "ANCHOR_CURSOR_RIGHT", 30, 0)
+                GameTooltip:SetText(labelText or "", Theme.accent[1], Theme.accent[2], Theme.accent[3], 1, false)
+                GameTooltip:AddLine(tooltipText, Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3], false)
+                GameTooltip:Show()
+            end)
+            frame:SetScript("OnLeave", function(self, ...)
+                if oldLeave then oldLeave(self, ...) end
+                GameTooltip:Hide()
+            end)
+        end
+        SetupTooltip(editBox)
+    end
 
     return row
 end

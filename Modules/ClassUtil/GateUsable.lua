@@ -30,7 +30,7 @@ end
 -- Check if the player is a warlock or if there is a warlock in the group/raid.
 function Gateway:CheckGroupForWarlock()
     -- Player is a warlock.
-    if NRSKNUI.myclass == 'WARLOCK' then
+    if NRSKNUI.MyClass == 'WARLOCK' then
         self.hasWarlockInGroup = true
         return true
     end

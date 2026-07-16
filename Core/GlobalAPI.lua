@@ -7,6 +7,8 @@ local GetNumGroupMembers = GetNumGroupMembers
 local IsInRaid = IsInRaid
 local select = select
 local UnitClass = UnitClass
+local UnitGUID = UnitGUID
+local UnitTokenFromGUID = UnitTokenFromGUID
 
 local EditModeManagerFrame = EditModeManagerFrame
 
@@ -15,7 +17,7 @@ local IsAddonLoaded = C_AddOns and C_AddOns.IsAddOnLoaded
 ---Check if ElvUI is loaded and ElvUI skinning is enabled, so a module should skip its own load.
 ---@return boolean
 function NRSKNUI:ShouldNotLoadModule()
-    return IsAddonLoaded("ElvUI") and NRSKNUI.db.profile.UseElvUI.Enabled
+    return IsAddonLoaded('ElvUI') and NRSKNUI.db.profile.UseElvUI.Enabled
 end
 
 ---Check if Blizzard Edit Mode is currently active
@@ -28,13 +30,13 @@ end
 ---@param anchorPoint string
 ---@return string
 function NRSKNUI:GetJustifyFromAnchor(anchorPoint)
-    if not anchorPoint then return "CENTER" end
-    if anchorPoint == "RIGHT" or anchorPoint == "TOPRIGHT" or anchorPoint == "BOTTOMRIGHT" then
-        return "RIGHT"
-    elseif anchorPoint == "LEFT" or anchorPoint == "TOPLEFT" or anchorPoint == "BOTTOMLEFT" then
-        return "LEFT"
+    if not anchorPoint then return 'CENTER' end
+    if anchorPoint == 'RIGHT' or anchorPoint == 'TOPRIGHT' or anchorPoint == 'BOTTOMRIGHT' then
+        return 'RIGHT'
+    elseif anchorPoint == 'LEFT' or anchorPoint == 'TOPLEFT' or anchorPoint == 'BOTTOMLEFT' then
+        return 'LEFT'
     end
-    return "CENTER"
+    return 'CENTER'
 end
 
 ---Check if a specific class is present in the current group.
@@ -52,4 +54,34 @@ function NRSKNUI:IsClassInGroup(classFilenameToCheck)
         end
     end
     return false
+end
+
+---Safely get a unit token from a GUID.
+---@param GUID string
+---@return string|nil unitToken
+function NRSKNUI:SafeGetUnitFromGUID(GUID)
+    if not self:IsSafeValue(GUID) then return nil end -- GUID is nil or secret.
+    if self.MyGUID == GUID then return 'player' end   -- GUID is the player.
+
+    -- Check if UnitTokenFromGUID is available.
+    if UnitTokenFromGUID then
+        local Unit = UnitTokenFromGUID(GUID)
+        if Unit then
+            return Unit
+        end
+    end
+
+    -- Iterate through the group to find a matching GUID.
+    local numMembers = GetNumGroupMembers()
+    local prefix = ((IsInRaid() and 'raid') or 'party')
+    local maxCheck = ((IsInRaid() and numMembers) or (numMembers - 1))
+    for i = 1, maxCheck do
+        local Unit = prefix .. i
+        if UnitGUID(Unit) == GUID then
+            return Unit
+        end
+    end
+
+    -- All checks failed, return nil.
+    return nil
 end

@@ -20,7 +20,7 @@ NRSKNUI.Locale = GetLocale()
 NRSKNUI.AddOnName = GetAddOnMetadata(addonName, 'Title')
 NRSKNUI.Version = GetAddOnMetadata(addonName, 'Version')
 NRSKNUI.Author = GetAddOnMetadata(addonName, 'Author')
-NRSKNUI.myclass = select(2, UnitClass('player'))
+NRSKNUI.MyClass = select(2, UnitClass('player'))
 
 NRSKNUI.ClearTexture = 0
 NRSKNUI.WhiteTexture = 'Interface\\Buttons\\WHITE8X8'
@@ -93,3 +93,4 @@ NRSKNUI.CombatTimer = NRSKNUI:NewModule('CombatTimer', 'AceEvent-3.0')
 NRSKNUI.PotionReady = NRSKNUI:NewModule('PotionReady', 'AceEvent-3.0')
 NRSKNUI.RangeChecker = NRSKNUI:NewModule('RangeChecker', 'AceEvent-3.0')
 NRSKNUI.CombatCross = NRSKNUI:NewModule('CombatCross', 'AceEvent-3.0')
+NRSKNUI.CombatMessage = NRSKNUI:NewModule('CombatMessage', 'AceEvent-3.0', 'AceTimer-3.0')

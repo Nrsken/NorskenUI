@@ -277,29 +277,41 @@ local Defaults = {
 
         -- Combat Message Settings
         CombatMessage = {
-            Enabled = true,               -- Enable/disable combat messages
-            Strata = "HIGH",              -- Frame strata
-            anchorFrameType = "UIPARENT", -- Anchor frame type (SCREEN, UIPARENT, SELECTFRAME)
-            ParentFrame = "UIParent",     -- Parent frame name (when SELECTFRAME)
-            UseGlobalFont = true,         -- Use global font settings
-            FontFace = "Expressway",      -- Font face
-            FontSize = 16,                -- Font size
-            FontOutline = "SOFTOUTLINE",  -- Font outline: NONE, OUTLINE, THICKOUTLINE, SOFTOUTLINE, SLUG, SLUG,OUTLINE
-            FontShadow = {                -- Font shadow settings (disabled for SOFTOUTLINE/SLUG variants)
-                Enabled = false,          -- Enable font shadow
-                Color = { 0, 0, 0, 0 },   -- Shadow color
-                OffsetX = 0,              -- Shadow X offset
-                OffsetY = 0,              -- Shadow Y offset
+            -- General Settings
+            Enabled = true,
+            Duration = 2.5,
+            -- Config for DynamicGroup
+            Config = {
+                Spacing = 0,
+                Grow = "DOWN",
+                Align = "CENTER",
+                RowSpacing = 0,
+                GridType = "RD",
+                GridWidth = 5,
+                UseLimit = false,
+                Limit = 5,
             },
-            Position = {                  -- Position settings
-                AnchorFrom = "CENTER",    -- Anchor point from
-                AnchorTo = "CENTER",      -- Anchor point to
-                XOffset = 0,              -- X offset
-                YOffset = 205,            -- Y offset
+            -- Frame Settings
+            Strata = "HIGH",
+            anchorFrameType = "UIPARENT",
+            ParentFrame = "UIParent",
+            Position = {
+                AnchorFrom = "CENTER",
+                AnchorTo = "CENTER",
+                XOffset = 0,
+                YOffset = 205,
             },
-            Spacing = 0,                  -- Vertical spacing between messages
-            Grow = "DOWN",                -- Grow direction: DOWN or UP
-            Duration = 2.5,               -- How long messages are shown (seconds)
+            -- Font settings
+            UseGlobalFont = true,
+            FontFace = "Expressway",
+            FontSize = 16,
+            FontOutline = "OUTLINE",
+            FontShadow = {
+                Enabled = false,
+                Color = { 0, 0, 0, 0 },
+                OffsetX = 0,
+                OffsetY = 0,
+            },
             -- Enter Combat Message
             EnterCombat = {
                 Enabled = true,
@@ -314,29 +326,25 @@ local Defaults = {
                 Color = { 0.788, 1, 0.627, 1 },
                 FontSize = 16,
             },
-            -- No Target Warning (persistent while in combat with no target)
+            -- No Target Warning
             NoTarget = {
                 Enabled = true,
                 Text = "NO TARGET",
                 Color = { 1, 0.4, 0, 1 },
                 FontSize = 18,
             },
-            -- Focus Target Died
-            FocusDeath = {
-                Enabled = true,
-                Text = "FOCUS DIED",
-                Color = { 1, 0.3, 0.3, 1 },
-                FontSize = 18,
-            },
             -- Party/Raid Death Announcement
             PartyDeath = {
                 Enabled = true,
-                UseClassColor = true,
-                TextFormat = "%name died",
-                TextColor = { 1, 1, 1, 1 },
-                CombatOnly = true,
-                LoadCondition = "ANYGROUP",
+                Text = "{rt8} %name Died {rt8}",
+                Color = { 1, 1, 1, 1 },
                 FontSize = 18,
+                LoadCondition = "ANYGROUP",
+                UseClassColor = true,
+                -- Per-role alert sounds
+                SoundTank = "None",
+                SoundHealer = "None",
+                SoundDamager = "None",
             },
         },
         CombatCross = {

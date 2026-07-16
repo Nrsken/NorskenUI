@@ -1,508 +1,327 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
-
----@class CombatMessage: AceModule, AceEvent-3.0
-local CM = NRSKNUI:NewModule("CombatMessage", "AceEvent-3.0")
+---@class CombatMessage
+local CombatMessage = NRSKNUI:GetModule('CombatMessage')
 local EM = NRSKNUI.EditMode
+local LSM = NRSKNUI.Libs.LSM
 
 local CreateFrame = CreateFrame
-local UnitExists, UnitIsDead, UnitIsDeadOrGhost = UnitExists, UnitIsDead, UnitIsDeadOrGhost
+local unpack = unpack
+local ipairs = ipairs
+local select = select
+local UnitClass = UnitClass
+local UnitExists = UnitExists
+local UnitIsDeadOrGhost = UnitIsDeadOrGhost
+local UnitGroupRolesAssigned = UnitGroupRolesAssigned
 local InCombatLockdown = InCombatLockdown
-local ipairs, pairs = ipairs, pairs
-local UnitInParty, UnitInRaid = UnitInParty, UnitInRaid
-local IsInRaid, IsInGroup, GetNumGroupMembers = IsInRaid, IsInGroup, GetNumGroupMembers
-local UnitClass, UnitIsUnit = UnitClass, UnitIsUnit
-local UnitTokenFromGUID, UnitGUID = UnitTokenFromGUID, UnitGUID
-local C_ClassColor = C_ClassColor
-local C_Timer = C_Timer
+local IsInGroup = IsInGroup
+local IsInRaid = IsInRaid
 local GetTime = GetTime
-local max = math.max
+local gmatch = string.gmatch
 local gsub = string.gsub
+local strlower = string.lower
 
-CM.messageFrames = {}
+local UNKNOWN = UNKNOWN
 
-local function ProcessRaidTargetIcons(text)
-    if not text then return text end
-    return gsub(text, "{rt(%d)}", function(num)
-        return "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_" .. num .. ":0|t"
-    end)
-end
-CM.activeMessages = {}
+-- Throttle, cap party death announcements to avoid raid-wipe spam.
+local THROTTLE_LIMIT = 4
+local THROTTLE_WINDOW = 10
 
-local MESSAGE_TYPES = {
-    "enterCombat",
-    "exitCombat",
-    "noTarget",
-    "partyDeath",
-    "focusDeath",
+local messageTypes = {
+    { key = 'enterCombat', order = 4, dbKey = 'EnterCombat' },
+    { key = 'exitCombat',  order = 3, dbKey = 'ExitCombat' },
+    { key = 'noTarget',    order = 2, dbKey = 'NoTarget' },
+    { key = 'partyDeath',  order = 1, dbKey = 'PartyDeath' },
 }
 
-local function GetUnitFromGUID(guid)
-    if not guid then return nil end
-    if NRSKNUI:IsSecretValue(guid) then return nil end
-
-    if UnitTokenFromGUID then
-        local token = UnitTokenFromGUID(guid)
-        if token then return token end
-    end
-
-    if UnitGUID("player") == guid then return "player" end
-
-    if IsInRaid() then
-        for i = 1, 40 do
-            local u = "raid" .. i
-            if UnitGUID(u) == guid then return u end
-        end
-    elseif IsInGroup() then
-        for i = 1, 4 do
-            local u = "party" .. i
-            if UnitGUID(u) == guid then return u end
-        end
-    end
-
-    return nil
-end
-
-local GROW_ANCHORS = {
-    DOWN = { childPoint = "TOP", containerAnchor = "TOP", yDir = -1 },
-    UP = { childPoint = "BOTTOM", containerAnchor = "BOTTOM", yDir = 1 },
-}
-
-local function IsLoadConditionMet(loadCondition)
-    if not loadCondition or loadCondition == "ALWAYS" then return true end
-    local groupSize = GetNumGroupMembers()
-    local inRaid = IsInRaid()
-    local inGroup = groupSize > 0
-
-    if loadCondition == "ANYGROUP" then
-        return inGroup
-    elseif loadCondition == "PARTY" then
-        return inGroup and not inRaid
-    elseif loadCondition == "RAID" then
-        return inRaid
-    elseif loadCondition == "NOGROUP" then
-        return not inGroup
-    end
-
-    return true
-end
-
-local function FormatDeathMessage(format, name, nameColor, textColor)
-    local textHex = NRSKNUI:RGBAToHex(textColor[1], textColor[2], textColor[3])
-    local textStart = "|cFF" .. textHex
-    local textEnd = "|r"
-
-    local coloredName
-    if nameColor.WrapTextInColorCode then
-        coloredName = nameColor:WrapTextInColorCode(name)
-    else
-        local nameHex = NRSKNUI:RGBAToHex(nameColor[1], nameColor[2], nameColor[3])
-        coloredName = "|cFF" .. nameHex .. name .. "|r"
-    end
-
-    local before, after = format:match("^(.-)%%name(.*)$")
-    if before then
-        return textStart .. before .. textEnd .. coloredName .. textStart .. after .. textEnd
-    else
-        return textStart .. format .. textEnd
-    end
-end
-
-function CM:UpdateDB()
+function CombatMessage:UpdateDB()
     self.db = NRSKNUI.db.profile.CombatMessage
 end
 
-function CM:OnInitialize()
+function CombatMessage:OnInitialize()
     self:UpdateDB()
     self:SetEnabledState(false)
 end
 
-local function GetDbKey(msgType)
-    return msgType and (msgType:sub(1, 1):upper() .. msgType:sub(2))
-end
+-- Replace {rtN} raidmarkers with their texture escape.
+local function ProcessRaidTargetIcons(text)
+    local ICON_LIST = _G.ICON_LIST
+    local ICON_TAG_LIST = _G.ICON_TAG_LIST
+    if not ICON_LIST or not ICON_TAG_LIST then return text end
 
-local function GetMessageConfig(db, msgType)
-    local key = GetDbKey(msgType)
-    local cfg = key and db[key]
-    if not cfg then return false, "", { 1, 1, 1, 1 } end
-    return cfg.Enabled, cfg.Text or "", cfg.Color or { 1, 1, 1, 1 }
-end
-
-local function FormatPartyDeathMessage(db, unitID, fallbackName)
-    local name = NRSKNUI:GetSafeUnitName(unitID) or fallbackName
-    if not name then return nil end
-
-    local _, classFilename = UnitClass(unitID)
-
-    local nameColor = { 1, 1, 1, 1 }
-    if db.PartyDeath.UseClassColor and classFilename and not NRSKNUI:IsSecretValue(classFilename) then
-        local classColor = C_ClassColor.GetClassColor(classFilename)
-        if classColor then nameColor = classColor end
+    for tag in gmatch(text, '%b{}') do
+        local term = strlower(gsub(tag, '[{}]', ''))
+        local index = ICON_TAG_LIST[term]
+        if index and ICON_LIST[index] then
+            text = gsub(text, tag, ICON_LIST[index] .. '0|t')
+        end
     end
-
-    local format = db.PartyDeath.TextFormat or "%name DIED"
-    return FormatDeathMessage(format, name, nameColor, db.PartyDeath.TextColor)
+    return text
 end
 
-function CM:CreateContainer()
-    if self.container then return end
+-- Build the party death string for a unit with %name substitution and raid icons.
+function CombatMessage:FormatPartyDeath(unit)
+    local mdb = self.db.PartyDeath
+    local name = NRSKNUI:GetSafeUnitName(unit) or UNKNOWN
 
-    local container = CreateFrame("Frame", "NRSKNUI_CombatMessageContainer", UIParent)
-    container:SetSize(100, 20)
-    container:SetFrameLevel(100)
-    container:ApplyPosition(self.db)
-
-    self.container = container
-
-    -- Coalesced one-shot layout, arm with container:ScheduleUpdate(), auto-disarms after firing.
-    if container.SetScheduledUpdate then
-        container:SetScheduledUpdate(function() self:ArrangeMessages() end)
-    end
-end
-
-function CM:GetMessageFrame(msgType)
-    if self.messageFrames[msgType] then return self.messageFrames[msgType] end
-
-    local frame = CreateFrame("Frame", nil, self.container)
-    frame:SetSize(200, 20)
-    frame:Hide()
-
-    local text = frame:CreateFontString(nil, "OVERLAY")
-    text:SetPoint("CENTER")
-    text:SetJustifyH("CENTER")
-    text:SetJustifyV("MIDDLE")
-
-    frame.text = text
-    frame.msgType = msgType
-    frame.generation = 0
-    frame.width = 200
-    frame.height = 20
-
-    self.messageFrames[msgType] = frame
-    self:UpdateFrameFont(frame, msgType)
-
-    return frame
-end
-
-function CM:UpdateFrameFont(frame, msgType)
-    local key = GetDbKey(msgType)
-    local fontSize = (key and self.db[key] and self.db[key].FontSize) or self.db.FontSize
-    frame.text:SetFontStyle(self.db, fontSize)
-end
-
-function CM:SetMessageContent(frame, msgText, color, msgType)
-    if msgType then
-        self:UpdateFrameFont(frame, msgType)
-    end
-    frame.text:SetText("")
-    frame.text:SetText(ProcessRaidTargetIcons(msgText))
-    frame.text:SetTextColor(color[1], color[2], color[3], color[4])
-
-    if frame.text._nrsknSoftOutline then
-        frame.text._nrsknSoftOutline:_ApplyOffsets()
-    end
-
-    local textWidth = frame.text:GetStringWidth()
-    local textHeight = frame.text:GetStringHeight()
-
-    local width = max(textWidth + 10, 100)
-    local height = max(textHeight, 12)
-    frame.width = width
-    frame.height = height
-    frame:SetSize(width, height)
-end
-
-function CM:ArrangeMessages()
-    if not self.container then return end
-
-    local grow = GROW_ANCHORS[self.db.Grow] or GROW_ANCHORS.DOWN
-    local spacing = self.db.Spacing
-    local yDir = grow.yDir
-
-    local visibleFrames = {}
-    for _, msgType in ipairs(MESSAGE_TYPES) do
-        local frame = self.messageFrames[msgType]
-        if frame and frame:IsShown() then
-            visibleFrames[#visibleFrames + 1] = frame
+    if mdb.UseClassColor then
+        local classToken = select(2, UnitClass(unit))
+        if NRSKNUI:IsSafeValue(classToken) then
+            name = NRSKNUI:ColorTextByClass(name, classToken)
         end
     end
 
-    local yOffset = 0
-    local maxWidth = 0
-    local totalHeight = 0
+    local text = gsub(mdb.Text, '%%name', name)
+    text = ProcessRaidTargetIcons(text)
+    return text, mdb.Color
+end
 
-    for i, frame in ipairs(visibleFrames) do
-        frame:ClearAllPoints()
-        frame:SetPoint(grow.childPoint, self.container, grow.containerAnchor, 0, yOffset * yDir)
-        yOffset = yOffset + frame.height + spacing
+function CombatMessage:CreateGroup()
+    if self.parentGroup then return end
 
-        if frame.width > maxWidth then maxWidth = frame.width end
-        totalHeight = totalHeight + frame.height
-        if i < #visibleFrames then totalHeight = totalHeight + spacing end
+    local parentGroup = NRSKNUI:CreateDynamicGroup(nil, UIParent)
+    self.parentGroup = parentGroup
+
+    for _, msgType in ipairs(messageTypes) do
+        local child = CreateFrame('Frame', nil, parentGroup)
+
+        local text = child:CreateFontString(nil, 'OVERLAY')
+        parentGroup:AttachChild(child, msgType.key, msgType.order)
+        parentGroup:ActivateChild(msgType.key)
+        parentGroup[msgType.key] = text
     end
 
-    if #visibleFrames > 0 then
-        self.container:SetSize(max(maxWidth, 100), totalHeight)
+    EM:Register(self, 'CombatMessages', parentGroup, 'combatMessage')
+end
+
+function CombatMessage:ApplySettings()
+    if not self.parentGroup then return end
+
+    self.parentGroup:SetConfig(self.db.Config)
+    self.parentGroup:UpdateGroupPosition(self.db, self.db.Config.Grow)
+
+    for _, msgType in ipairs(messageTypes) do
+        local mdb = self.db[msgType.dbKey]
+        local text = self.parentGroup[msgType.key]
+        local child = text:GetParent()
+
+        text:SetPixelPoint(self.db.Config.Align)
+        text:SetFontStyle(self.db, mdb.FontSize)
+
+        if msgType.key == 'partyDeath' then
+            local sample, color = self:FormatPartyDeath('player')
+            text:SetText(sample)
+            text:SetTextColor(unpack(color))
+            child:SetPixelSize(text:GetStringWidth(), text:GetStringHeight())
+            self.parentGroup:NotifyChildResized(child)
+        else
+            text:SetText(mdb.Text)
+            text:SetTextColor(unpack(mdb.Color))
+            child:SetPixelSize(text:GetStringWidth(), text:GetStringHeight())
+            self.parentGroup:NotifyChildResized(child)
+        end
+
+        if self.isPreview and mdb.Enabled then
+            self.parentGroup:ActivateChild(msgType.key)
+        else
+            self.parentGroup:DeactivateChild(msgType.key)
+        end
+    end
+    self.parentGroup:ForceLayout()
+end
+
+-- Make use of AceTimer to handle scheduling the hide of messages.
+function CombatMessage:FlashMessage(key)
+    if not self.parentGroup then return end
+    self.parentGroup:ActivateChild(key)
+
+    if self.hideTimers[key] then
+        self:CancelTimer(self.hideTimers[key])
+    end
+    self.hideTimers[key] = self:ScheduleTimer('HideMessage', self.db.Duration, key)
+end
+
+function CombatMessage:HideMessage(key)
+    self.hideTimers[key] = nil
+    if self.parentGroup then
+        self.parentGroup:DeactivateChild(key)
+    end
+end
+
+-- Show the party death message for a unit, and schedule it to hide after the configured duration.
+function CombatMessage:ShowPartyDeathText(text, color)
+    if not self.parentGroup then return end
+
+    local fontString = self.parentGroup['partyDeath']
+    local child = fontString:GetParent()
+
+    fontString:SetText(text)
+    fontString:SetTextColor(unpack(color))
+    child:SetPixelSize(fontString:GetStringWidth(), fontString:GetStringHeight())
+    self.parentGroup:NotifyChildResized(child)
+    self:FlashMessage('partyDeath')
+end
+
+-- Play the alert sound for the dead unit's role, falling back to the damager sound.
+function CombatMessage:PlayPartyDeathSound(unit)
+    local mdb = self.db.PartyDeath
+
+    local role = UnitGroupRolesAssigned(unit)
+    if not NRSKNUI:IsSafeValue(role) then role = nil end
+
+    local soundName
+    if role == 'TANK' then
+        soundName = mdb.SoundTank
+    elseif role == 'HEALER' then
+        soundName = mdb.SoundHealer
     else
-        self.container:SetSize(100, 20)
+        soundName = mdb.SoundDamager
     end
+
+    if not soundName or soundName == 'None' then return end
+    NRSKNUI:PlaySound(LSM:Fetch('sound', soundName))
 end
 
-function CM:ShowFlashMessage(msgType, customText, customColor)
-    if not self.db.Enabled then return end
+-- Rolling window throttle so raid wipes don't spam the message.
+function CombatMessage:PassPartyDeathThrottle()
+    local now = GetTime()
+    local throttle = self.deathThrottle
+    if now - throttle.windowStart > THROTTLE_WINDOW then
+        throttle.windowStart = now
+        throttle.count = 0
+    end
+    if throttle.count >= THROTTLE_LIMIT then return false end
+    throttle.count = throttle.count + 1
+    return true
+end
+
+-- Whether the party death message should run given the current group state.
+function CombatMessage:IsPartyDeathLoadConditionMet()
+    local condition = self.db.PartyDeath.LoadCondition
+    if condition == 'ALWAYS' then return true end
+    if condition == 'ANYGROUP' then return IsInGroup() end
+    if condition == 'PARTY' then return IsInGroup() and not IsInRaid() end
+    if condition == 'RAID' then return IsInRaid() end
+    return true
+end
+
+function CombatMessage:CheckTargetStatus()
+    if not self.parentGroup then return end
     if self.isPreview then return end
+    if not self.db.NoTarget.Enabled then return end
 
-    local enabled, msgText, color = GetMessageConfig(self.db, msgType)
-    if not enabled then return end
-
-    local frame = self:GetMessageFrame(msgType)
-    if not frame then return end
-
-    frame.generation = frame.generation + 1
-    local myGeneration = frame.generation
-
-    self:SetMessageContent(frame, customText or msgText, customColor or color, msgType)
-
-    frame:SetAlpha(1)
-    frame:Show()
-    self.activeMessages[msgType] = true
-    self:ArrangeMessages()
-
-    C_Timer.After(self.db.Duration, function()
-        if frame.generation == myGeneration and not self.isPreview then
-            frame:Hide()
-            self.activeMessages[msgType] = nil
-            self:ArrangeMessages()
+    -- If the player is not in combat or is dead, deactivate the noTarget message and return early.
+    if not self.inCombat or UnitIsDeadOrGhost('player') then
+        if self.parentGroup:IsChildActive('noTarget') then
+            self.parentGroup:DeactivateChild('noTarget')
         end
-    end)
-end
-
-function CM:ShowPersistentMessage(msgType)
-    if not self.db.Enabled then return end
-    if self.isPreview then return end
-
-    local enabled, msgText, color = GetMessageConfig(self.db, msgType)
-    if not enabled then return end
-
-    local frame = self:GetMessageFrame(msgType)
-    if not frame then return end
-
-    self:SetMessageContent(frame, msgText, color, msgType)
-
-    frame:SetAlpha(1)
-    frame:Show()
-    self.activeMessages[msgType] = true
-    self:ArrangeMessages()
-end
-
-function CM:HidePersistentMessage(msgType)
-    local frame = self.messageFrames[msgType]
-    if frame then
-        frame:Hide()
-        self.activeMessages[msgType] = nil
-        self:ArrangeMessages()
-    end
-end
-
-function CM:CheckNoTarget()
-    if not self.db.Enabled then return end
-    if self.isPreview then return end
-
-    local noTargetEnabled = self.db.NoTarget.Enabled
-
-    if UnitIsDeadOrGhost("player") then
-        self:HidePersistentMessage("noTarget")
         return
     end
 
-    if self.inCombat and noTargetEnabled then
-        self.noTargetCheckGeneration = (self.noTargetCheckGeneration or 0) + 1
-        local myGeneration = self.noTargetCheckGeneration
-
-        C_Timer.After(0.1, function()
-            if self.noTargetCheckGeneration ~= myGeneration then return end
-            if not self.inCombat then return end
-            if UnitIsDeadOrGhost("player") then
-                self:HidePersistentMessage("noTarget")
-                return
-            end
-            if not UnitExists("target") then
-                self:ShowPersistentMessage("noTarget")
-            else
-                self:HidePersistentMessage("noTarget")
-            end
-        end)
+    -- Check if the player has a target and activate/deactivate the noTarget message accordingly.
+    local hasTarget = UnitExists('target')
+    if hasTarget then
+        if self.parentGroup:IsChildActive('noTarget') then
+            self.parentGroup:DeactivateChild('noTarget')
+        end
     else
-        self:HidePersistentMessage("noTarget")
+        if not self.parentGroup:IsChildActive('noTarget') then
+            self.parentGroup:ActivateChild('noTarget')
+        end
     end
 end
 
-function CM:CheckFocusDeath(deadGUID)
-    if not self.db.FocusDeath.Enabled then return end
-
-    local focusGUID = UnitGUID("focus")
-    if not focusGUID then return end
-    if NRSKNUI:IsSecretValue(focusGUID) then return end
-    if NRSKNUI:IsSecretValue(deadGUID) then return end
-    if focusGUID ~= deadGUID then return end
-
-    self:ShowFlashMessage("focusDeath")
-end
-
-function CM:OnUnitDied(_, deadGUID)
-    if not self.db.Enabled then return end
+function CombatMessage:UNIT_DIED(_, destGUID)
     if self.isPreview then return end
+    local mdb = self.db.PartyDeath
+    if not mdb.Enabled then return end
+    if not self.inCombat then return end
+    if not self:IsPartyDeathLoadConditionMet() then return end
 
-    self:CheckFocusDeath(deadGUID)
+    local unit = NRSKNUI:SafeGetUnitFromGUID(destGUID)
+    if not unit then return end
 
-    if not self.db.PartyDeath.Enabled then return end
-    if not IsLoadConditionMet(self.db.PartyDeath.LoadCondition) then return end
-    if self.db.PartyDeath.CombatOnly and not self.inCombat then return end
+    local isGroupUnit = unit:match('^party%d') or unit:match('^raid%d')
+    if not isGroupUnit then return end
 
-    local now = GetTime()
-    if now > self.deathThrottle.resetTime then
-        self.deathThrottle.count = 0
-        self.deathThrottle.resetTime = now + 10
-    end
+    if not self:PassPartyDeathThrottle() then return end
 
-    if self.deathThrottle.count >= 4 then return end
-
-    local unitID = GetUnitFromGUID(deadGUID)
-    if not unitID then return end
-    if NRSKNUI:IsSecretValue(unitID) then return end
-    if UnitIsUnit(unitID, "player") then return end
-
-    local isDead = UnitIsDead(unitID)
-    if NRSKNUI:IsSecretValue(isDead) then isDead = true end
-    if not isDead then return end
-
-    if not UnitInParty(unitID) and not UnitInRaid(unitID) then return end
-
-    self.deathThrottle.count = self.deathThrottle.count + 1
-
-    local msgText = FormatPartyDeathMessage(self.db, unitID)
-    if not msgText then return end
-
-    self:ShowFlashMessage("partyDeath", msgText, { 1, 1, 1, 1 })
+    local text, color = self:FormatPartyDeath(unit)
+    self:ShowPartyDeathText(text, color)
+    self:PlayPartyDeathSound(unit)
 end
 
-function CM:ApplySettings()
-    if not self.container then return end
-    self.container:ApplyPosition(self.db)
-    for msgType, frame in pairs(self.messageFrames) do self:UpdateFrameFont(frame, msgType) end
+function CombatMessage:PLAYER_REGEN_DISABLED()
+    self.inCombat = true
 
-    if self.isPreview then
-        self:UpdatePreview()
-    else
-        for _, msgType in ipairs(MESSAGE_TYPES) do
-            local frame = self.messageFrames[msgType]
-            if frame and frame:IsShown() then
-                local _, msgText, msgColor = GetMessageConfig(self.db, msgType)
-                self:SetMessageContent(frame, msgText, msgColor, msgType)
-            end
+    if not self.isPreview and self.db.EnterCombat.Enabled then
+        if self.parentGroup:IsChildActive('exitCombat') then
+            self.parentGroup:DeactivateChild('exitCombat')
         end
 
-        if self.container.ScheduleUpdate then
-            self.container:ScheduleUpdate()
+        self:FlashMessage('enterCombat')
+    end
+
+    self:CheckTargetStatus()
+end
+
+function CombatMessage:PLAYER_REGEN_ENABLED()
+    self.inCombat = false
+
+    if not self.isPreview and self.db.ExitCombat.Enabled then
+        if self.parentGroup:IsChildActive('enterCombat') then
+            self.parentGroup:DeactivateChild('enterCombat')
         end
-        self:CheckNoTarget()
-    end
-end
 
-function CM:ShowPreview()
-    if not self.container then self:CreateContainer() end
-
-    self.isPreview = true
-    self:UpdatePreview()
-end
-
-function CM:UpdatePreview()
-    if not self.isPreview then return end
-
-    for _, msgType in ipairs(MESSAGE_TYPES) do
-        local frame = self:GetMessageFrame(msgType)
-        if frame then
-            local enabled, msgText, msgColor = GetMessageConfig(self.db, msgType)
-
-            if msgType == "partyDeath" and enabled then
-                msgText = FormatPartyDeathMessage(self.db, "player", "Player")
-                msgColor = { 1, 1, 1, 1 }
-            end
-
-            if enabled then
-                self:SetMessageContent(frame, msgText, msgColor, msgType)
-                frame:SetAlpha(1)
-                frame:Show()
-                self.activeMessages[msgType] = true
-            else
-                frame:Hide()
-                self.activeMessages[msgType] = nil
-            end
-        end
-    end
-    if self.container.ScheduleUpdate then
-        self.container:ScheduleUpdate()
-    end
-end
-
-function CM:HidePreview()
-    if not self.isPreview then return end
-
-    self.isPreview = false
-
-    for msgType, frame in pairs(self.messageFrames) do
-        frame:Hide()
-        self.activeMessages[msgType] = nil
+        self:FlashMessage('exitCombat')
     end
 
-    self:ArrangeMessages()
-
-    if self.inCombat then self:CheckNoTarget() end
+    self:CheckTargetStatus()
 end
 
-function CM:OnEnable()
+function CombatMessage:OnEnable()
     if not self.db.Enabled then return end
 
-    self.inCombat = false
-    self.isPreview = false
-    self.noTargetCheckGeneration = 0
-    self.deathThrottle = { count = 0, resetTime = 0 }
-
-    self:CreateContainer()
-
-    for _, msgType in ipairs(MESSAGE_TYPES) do self:GetMessageFrame(msgType) end
-
-    C_Timer.After(0.5, function() self:ApplySettings() end)
-
-    self:RegisterEvent("PLAYER_REGEN_DISABLED", function()
-        self.inCombat = true
-        self:ShowFlashMessage("enterCombat")
-        self:CheckNoTarget()
-    end)
-    self:RegisterEvent("PLAYER_REGEN_ENABLED", function()
-        self.inCombat = false
-        self.noTargetCheckGeneration = (self.noTargetCheckGeneration or 0) + 1
-        self:HidePersistentMessage("noTarget")
-        self:ShowFlashMessage("exitCombat")
-    end)
-    self:RegisterEvent("PLAYER_TARGET_CHANGED", "CheckNoTarget")
-    self:RegisterEvent("PLAYER_DEAD", function()
-        self.noTargetCheckGeneration = (self.noTargetCheckGeneration or 0) + 1
-        self:HidePersistentMessage("noTarget")
-    end)
-    self:RegisterEvent("UNIT_DIED", "OnUnitDied")
+    self:CreateGroup()
 
     self.inCombat = InCombatLockdown()
-    if self.inCombat then self:CheckNoTarget() end
+    self.isPreview = (NRSKNUI.PreviewManager and NRSKNUI.PreviewManager:IsPreviewActive()) or false
+    self.deathThrottle = { windowStart = 0, count = 0 }
+    self.hideTimers = {}
 
-    EM:Register(self, 'CombatMessages', self.container, 'combatMessage')
+    self:ApplySettings()
+    self:CheckTargetStatus()
+
+    self:RegisterEvent('UNIT_DIED')
+    self:RegisterEvent('PLAYER_REGEN_DISABLED')
+    self:RegisterEvent('PLAYER_REGEN_ENABLED')
+    self:RegisterEvent("PLAYER_TARGET_CHANGED", 'CheckTargetStatus')
+    self:RegisterEvent("PLAYER_DEAD", 'CheckTargetStatus')
 end
 
-function CM:OnDisable()
-    for _, frame in pairs(self.messageFrames) do frame:Hide() end
-    self.activeMessages = {}
+function CombatMessage:OnDisable()
     self.isPreview = false
     self.inCombat = false
-    self.noTargetCheckGeneration = 0
-    self:UnregisterAllEvents()
+    if self.parentGroup then
+        for _, msgType in ipairs(messageTypes) do
+            self.parentGroup:DeactivateChild(msgType.key)
+        end
+    end
+end
+
+function CombatMessage:ShowPreview()
+    if not self.parentGroup then
+        self:CreateGroup()
+    end
+
+    self.isPreview = true
+    self:ApplySettings()
+end
+
+function CombatMessage:HidePreview()
+    if not self.parentGroup then return end
+
+    self.isPreview = false
+    self:ApplySettings()
+    self:CheckTargetStatus()
 end

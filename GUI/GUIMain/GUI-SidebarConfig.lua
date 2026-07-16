@@ -25,7 +25,7 @@ GUIFrame.SidebarConfig = {
                 { id = "combatTimer",   text = "Combat Timer" },
                 { id = "combatCross",   text = "Combat Cross" },
                 { id = "battleRes",     text = "Combat Res" },
-                { id = "combatMessage", text = "Combat Texts" },
+                { id = "combatMessage", text = "Combat Messages" },
                 { id = "cursorCircle",  text = "Cursor Circle" },
                 { id = "FocusCastbar",  text = "Focus Castbar" },
                 { id = "RangeChecker",  text = "Range Checker Text" },

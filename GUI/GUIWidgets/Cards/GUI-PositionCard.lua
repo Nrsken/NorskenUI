@@ -189,6 +189,7 @@ end
 ---@param config NUIPositionCardConfig
 ---@return NUICard card
 ---@return number newYOffset
+---@return NUIWidget[] positionWidgets
 function GUIFrame:CreatePositionCard(scrollChild, yOffset, config)
     config = config or {}
     local title = config.title or "Position Settings"
@@ -523,5 +524,5 @@ function GUIFrame:CreatePositionCard(scrollChild, yOffset, config)
         end
     end
 
-    return card, card:GetNextOffset()
+    return card, card:GetNextOffset(), widgets
 end
