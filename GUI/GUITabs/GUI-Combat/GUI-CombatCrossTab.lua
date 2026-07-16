@@ -120,8 +120,20 @@ GUIFrame:RegisterContent('combatCross', function(scrollChild, yOffset)
             ApplySettings()
         end
     })
-    row2b:AddWidget(gapSlider, 1)
+    row2b:AddWidget(gapSlider, 0.5)
     manager:Register(gapSlider, 'all', 'crossMode')
+
+    -- Cross center dot checkbox
+    local crossCenterDot = GUIFrame:CreateCheckbox(row2b, 'Center Dot', {
+        tooltip = 'Because of pixel alignment, I recommend using even numbers (2,4,6 etc.) for thickness when using the center dot.',
+        value = db.CrossCenterDotEnabled,
+        callback = function(checked)
+            db.CrossCenterDotEnabled = checked
+            ApplySettings()
+        end
+    })
+    row2b:AddWidget(crossCenterDot, 0.5)
+    manager:Register(crossCenterDot, 'all', 'crossMode')
     card2:AddRow(row2b, Theme.rowHeight)
 
     local sep3 = GUIFrame:CreateSeparator(card2.content)

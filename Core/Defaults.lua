@@ -348,6 +348,7 @@ local Defaults = {
             Outline = true,
             -- Style Settings
             Mode = "cross", -- "cross"| "dot"
+            CrossCenterDotEnabled = true,
             CenterDotSize = 20,
             -- Color Settings
             ColorMode = "custom",

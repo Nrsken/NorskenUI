@@ -55,6 +55,9 @@ function CombatCross:CreateFrame()
     coreFrame.textureLeft = CreateLines('RIGHT', coreFrame, self.db.CrossLength, self.db.CrossThickness)
     coreFrame.textureRight = CreateLines('LEFT', coreFrame, self.db.CrossLength, self.db.CrossThickness)
 
+    -- Cross middle dot
+    coreFrame.textureCrossDot = CreateLines('CENTER', coreFrame, self.db.CrossThickness, self.db.CrossThickness)
+
     -- Dot backdrop that acts like a border.
     coreFrame.dotBG = coreFrame:CreateTexture(nil, 'ARTWORK')
     coreFrame.dotBG:SetPixelSize(self.db.CenterDotSize + 2)
@@ -81,6 +84,7 @@ function CombatCross:SetColor(r, g, b, a)
     self.coreFrame.textureDown.texture:SetColorTexture(r, g, b, a)
     self.coreFrame.textureLeft.texture:SetColorTexture(r, g, b, a)
     self.coreFrame.textureRight.texture:SetColorTexture(r, g, b, a)
+    self.coreFrame.textureCrossDot.texture:SetColorTexture(r, g, b, a)
 
     self.coreFrame.dot:SetVertexColor(r, g, b, a)
 end
@@ -112,12 +116,14 @@ function CombatCross:ApplySettings()
     self.coreFrame.textureDown:SetPixelSize(self.db.CrossThickness, self.db.CrossLength)
     self.coreFrame.textureLeft:SetPixelSize(self.db.CrossLength, self.db.CrossThickness)
     self.coreFrame.textureRight:SetPixelSize(self.db.CrossLength, self.db.CrossThickness)
+    self.coreFrame.textureCrossDot:SetPixelSize(self.db.CrossThickness, self.db.CrossThickness)
 
     -- Outline
     self.coreFrame.textureUp:SetBorderShown(self.db.Outline)
     self.coreFrame.textureDown:SetBorderShown(self.db.Outline)
     self.coreFrame.textureLeft:SetBorderShown(self.db.Outline)
     self.coreFrame.textureRight:SetBorderShown(self.db.Outline)
+    self.coreFrame.textureCrossDot:SetBorderShown(self.db.Outline)
 
     -- Style mode, cross lines or center dot
     local dotMode = self.db.Mode == 'dot'
@@ -125,6 +131,7 @@ function CombatCross:ApplySettings()
     self.coreFrame.textureDown:SetShown(not dotMode)
     self.coreFrame.textureLeft:SetShown(not dotMode)
     self.coreFrame.textureRight:SetShown(not dotMode)
+    self.coreFrame.textureCrossDot:SetShown(not dotMode and self.db.CrossCenterDotEnabled)
 
     self.coreFrame.dotBG:SetPixelSize(self.db.CenterDotSize + 2)
     self.coreFrame.dot:SetPixelSize(self.db.CenterDotSize)
