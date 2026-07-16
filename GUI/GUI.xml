@@ -31,6 +31,7 @@
     <Script file="GUIWidgets\Cards\GUI-ItemBrowserCard.lua" />
     <Script file="GUIWidgets\Cards\GUI-TextFormatCard.lua" />
     <Script file="GUIWidgets\Cards\GUI-LoadConditionsCard.lua" />
+    <Script file="GUIWidgets\Cards\GUI-DynamicGroupCard.lua" />
 
     <!-- GUI Home Page -->
     <Script file="GUIMain\GUI-HomePage.lua" />
