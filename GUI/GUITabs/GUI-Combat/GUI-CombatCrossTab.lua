@@ -23,6 +23,11 @@ GUIFrame:RegisterContent('combatCross', function(scrollChild, yOffset)
     manager:SetCondition('crossMode', function() return db.Mode == 'cross' end)
     manager:SetCondition('dotMode', function() return db.Mode == 'dot' end)
     manager:SetCondition('diamondMode', function() return db.Mode == 'diamond' end)
+    local function RefreshGUI()
+        C_Timer.After(0.25, function()
+            GUIFrame:RefreshContent()
+        end)
+    end
 
     -- Card 1: Enable
     local card1 = GUIFrame:CreateCard(scrollChild, 'Combat Cross', yOffset)
@@ -60,6 +65,7 @@ GUIFrame:RegisterContent('combatCross', function(scrollChild, yOffset)
             db.Mode = key
             ApplySettings()
             UpdateAllWidgetStates()
+            RefreshGUI()
         end
     })
     row2mode:AddWidget(modeDropdown, 0.5)
@@ -77,104 +83,110 @@ GUIFrame:RegisterContent('combatCross', function(scrollChild, yOffset)
     manager:Register(outlineCheck, 'all')
     card2:AddRow(row2mode, Theme.rowHeight)
 
-    local sep2 = GUIFrame:CreateSeparator(card2.content)
-    card2:AddRow(sep2, Theme.rowHeightSeparator)
+    if db.Mode == 'cross' then
+        local sep2 = GUIFrame:CreateSeparator(card2.content)
+        card2:AddRow(sep2, Theme.rowHeightSeparator)
 
-    -- Thickness slider
-    local row2a = GUIFrame:CreateRow(card2.content, Theme.rowHeight)
-    local thicknessSlider = GUIFrame:CreateSlider(row2a, 'Thickness', {
-        min = 3,
-        max = 20,
-        step = 1,
-        value = db.CrossThickness,
-        callback = function(val)
-            db.CrossThickness = val
-            ApplySettings()
-        end
-    })
-    row2a:AddWidget(thicknessSlider, 0.5)
-    manager:Register(thicknessSlider, 'all', 'crossMode')
+        -- Thickness slider
+        local row2a = GUIFrame:CreateRow(card2.content, Theme.rowHeight)
+        local thicknessSlider = GUIFrame:CreateSlider(row2a, 'Thickness', {
+            min = 3,
+            max = 20,
+            step = 1,
+            value = db.CrossThickness,
+            callback = function(val)
+                db.CrossThickness = val
+                ApplySettings()
+            end
+        })
+        row2a:AddWidget(thicknessSlider, 0.5)
+        manager:Register(thicknessSlider, 'all', 'crossMode')
 
-    -- Length slider
-    local lengthSlider = GUIFrame:CreateSlider(row2a, 'Length', {
-        min = 4,
-        max = 80,
-        step = 1,
-        value = db.CrossLength,
-        callback = function(val)
-            db.CrossLength = val
-            ApplySettings()
-        end
-    })
-    row2a:AddWidget(lengthSlider, 0.5)
-    manager:Register(lengthSlider, 'all', 'crossMode')
-    card2:AddRow(row2a, Theme.rowHeight)
+        -- Length slider
+        local lengthSlider = GUIFrame:CreateSlider(row2a, 'Length', {
+            min = 4,
+            max = 80,
+            step = 1,
+            value = db.CrossLength,
+            callback = function(val)
+                db.CrossLength = val
+                ApplySettings()
+            end
+        })
+        row2a:AddWidget(lengthSlider, 0.5)
+        manager:Register(lengthSlider, 'all', 'crossMode')
+        card2:AddRow(row2a, Theme.rowHeight)
 
-    -- Gap slider
-    local row2b = GUIFrame:CreateRow(card2.content, Theme.rowHeight)
-    local gapSlider = GUIFrame:CreateSlider(row2b, 'Center Gap', {
-        min = 0,
-        max = 40,
-        step = 1,
-        value = db.CrossGap,
-        callback = function(val)
-            db.CrossGap = val
-            ApplySettings()
-        end
-    })
-    row2b:AddWidget(gapSlider, 0.5)
-    manager:Register(gapSlider, 'all', 'crossMode')
+        -- Gap slider
+        local row2b = GUIFrame:CreateRow(card2.content, Theme.rowHeightLast)
+        local gapSlider = GUIFrame:CreateSlider(row2b, 'Center Gap', {
+            min = 0,
+            max = 40,
+            step = 1,
+            value = db.CrossGap,
+            callback = function(val)
+                db.CrossGap = val
+                ApplySettings()
+            end
+        })
+        row2b:AddWidget(gapSlider, 0.5)
+        manager:Register(gapSlider, 'all', 'crossMode')
 
-    -- Cross center dot checkbox
-    local crossCenterDot = GUIFrame:CreateCheckbox(row2b, 'Center Dot', {
-        tooltip = 'Because of pixel alignment, I recommend using even numbers (2,4,6 etc.) for thickness when using the center dot.',
-        value = db.CrossCenterDotEnabled,
-        callback = function(checked)
-            db.CrossCenterDotEnabled = checked
-            ApplySettings()
-        end
-    })
-    row2b:AddWidget(crossCenterDot, 0.5)
-    manager:Register(crossCenterDot, 'all', 'crossMode')
-    card2:AddRow(row2b, Theme.rowHeight)
+        -- Cross center dot checkbox
+        local crossCenterDot = GUIFrame:CreateCheckbox(row2b, 'Center Dot', {
+            tooltip = 'Because of pixel alignment, I recommend using even numbers (2,4,6 etc.) for thickness when using the center dot.',
+            value = db.CrossCenterDotEnabled,
+            callback = function(checked)
+                db.CrossCenterDotEnabled = checked
+                ApplySettings()
+            end
+        })
+        row2b:AddWidget(crossCenterDot, 0.5)
+        manager:Register(crossCenterDot, 'all', 'crossMode')
+        card2:AddRow(row2b, Theme.rowHeightLast, 0)
+    end
 
-    local sep3 = GUIFrame:CreateSeparator(card2.content)
-    card2:AddRow(sep3, Theme.rowHeightSeparator)
+    if db.Mode == 'dot' then
+        local sep3 = GUIFrame:CreateSeparator(card2.content)
+        card2:AddRow(sep3, Theme.rowHeightSeparator)
 
-    -- Dot size
-    local row2c = GUIFrame:CreateRow(card2.content, Theme.rowHeight)
-    local dotSizeSlider = GUIFrame:CreateSlider(row2c, 'Dot Size', {
-        min = 4,
-        max = 50,
-        step = 1,
-        value = db.CenterDotSize,
-        callback = function(val)
-            db.CenterDotSize = val
-            ApplySettings()
-        end
-    })
-    row2c:AddWidget(dotSizeSlider, 0.5)
-    manager:Register(dotSizeSlider, 'all', 'dotMode')
-    card2:AddRow(row2c, Theme.rowHeight)
+        -- Dot size
+        local row2c = GUIFrame:CreateRow(card2.content, Theme.rowHeightLast)
+        local dotSizeSlider = GUIFrame:CreateSlider(row2c, 'Dot Size', {
+            min = 4,
+            max = 50,
+            step = 1,
+            value = db.CenterDotSize,
+            callback = function(val)
+                db.CenterDotSize = val
+                ApplySettings()
+            end
+        })
+        row2c:AddWidget(dotSizeSlider, 1)
+        manager:Register(dotSizeSlider, 'all', 'dotMode')
+        card2:AddRow(row2c, Theme.rowHeightLast, 0)
+    end
 
-    local sep4 = GUIFrame:CreateSeparator(card2.content)
-    card2:AddRow(sep4, Theme.rowHeightSeparator)
+    if db.Mode == 'diamond' then
+        local sep4 = GUIFrame:CreateSeparator(card2.content)
+        card2:AddRow(sep4, Theme.rowHeightSeparator)
 
-    -- Diamond size
-    local row2d = GUIFrame:CreateRow(card2.content, Theme.rowHeightLast)
-    local diamondSizeSlider = GUIFrame:CreateSlider(row2d, 'Diamond Size', {
-        min = 4,
-        max = 50,
-        step = 1,
-        value = db.DiamondSize,
-        callback = function(val)
-            db.DiamondSize = val
-            ApplySettings()
-        end
-    })
-    row2d:AddWidget(diamondSizeSlider, 0.5)
-    manager:Register(diamondSizeSlider, 'all', 'diamondMode')
-    card2:AddRow(row2d, Theme.rowHeightLast, 0)
+        -- Diamond size
+        local row2d = GUIFrame:CreateRow(card2.content, Theme.rowHeightLast)
+        local diamondSizeSlider = GUIFrame:CreateSlider(row2d, 'Diamond Size', {
+            min = 4,
+            max = 50,
+            step = 1,
+            value = db.DiamondSize,
+            callback = function(val)
+                db.DiamondSize = val
+                ApplySettings()
+            end
+        })
+        row2d:AddWidget(diamondSizeSlider, 1)
+        manager:Register(diamondSizeSlider, 'all', 'diamondMode')
+        card2:AddRow(row2d, Theme.rowHeightLast, 0)
+    end
 
     yOffset = card2:GetNextOffset()
 
