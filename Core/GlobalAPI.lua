@@ -15,6 +15,7 @@ local type = type
 local EditModeManagerFrame = EditModeManagerFrame
 
 local IsAddonLoaded = C_AddOns and C_AddOns.IsAddOnLoaded
+local GetSpellCooldown = C_Spell and C_Spell.GetSpellCooldown
 
 ---Check if ElvUI is loaded and ElvUI skinning is enabled, so a module should skip its own load.
 ---@return boolean
@@ -107,4 +108,15 @@ function NRSKNUI:GetSafeText(fontString)
     if not self:IsSafeValue(text) then return nil end
 
     return text
+end
+
+---Get spell cooldown information for a given spell ID.
+---@param spellID number
+---@return SpellCooldownInfo|nil
+function NRSKNUI:GetSpellCooldownInfo(spellID)
+    local info = GetSpellCooldown(spellID)
+    if info then
+        return info
+    end
+    return nil
 end

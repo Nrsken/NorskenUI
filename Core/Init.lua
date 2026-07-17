@@ -29,24 +29,24 @@ NRSKNUI.SelectedColor = { 0.8, 0.8, 0.8, 0.25 }
 NRSKNUI.BlackBgColor = { 0, 0, 0, 0.8 }
 -- Supported separator types.
 NRSKNUI.Separators = {
-    ["||"] = "|",
-    ["-"] = "-",
-    ["/"] = "/",
-    [" "] = "Space",
-    ["•"] = "•",
-    [">"] = ">",
-    [">>"] = ">>",
-    ["»"] = "»",
+    ['||'] = '|',
+    ['-'] = '-',
+    ['/'] = '/',
+    [' '] = 'Space',
+    ['•'] = '•',
+    ['>'] = '>',
+    ['>>'] = '>>',
+    ['»'] = '»',
 }
 -- Time display formats.
 NRSKNUI.TimeFormats = {
-    ["MM:SS"]  = "01:30",
-    ["M:SS"]   = "1:30",
-    ["MmSs"]   = "01m 30s",
-    ["MmSs_c"] = "1m 30s",
-    ["Ss"]     = "90s",
-    ["S"]      = "90",
-    ["Smart"]  = "1m / 30s",
+    ['MM:SS']  = '01:30',
+    ['M:SS']   = '1:30',
+    ['MmSs']   = '01m 30s',
+    ['MmSs_c'] = '1m 30s',
+    ['Ss']     = '90s',
+    ['S']      = '90',
+    ['Smart']  = '1m / 30s',
 }
 
 do
@@ -119,4 +119,5 @@ NRSKNUI.PotionReady = NRSKNUI:NewModule('PotionReady', 'AceEvent-3.0')
 NRSKNUI.RangeChecker = NRSKNUI:NewModule('RangeChecker', 'AceEvent-3.0')
 NRSKNUI.CombatCross = NRSKNUI:NewModule('CombatCross', 'AceEvent-3.0')
 NRSKNUI.CombatMessage = NRSKNUI:NewModule('CombatMessage', 'AceEvent-3.0', 'AceTimer-3.0')
-NRSKNUI.CombatRes = NRSKNUI:NewModule("CombatRes", "AceEvent-3.0", "AceTimer-3.0")
+NRSKNUI.CombatRes = NRSKNUI:NewModule('CombatRes', 'AceEvent-3.0', 'AceTimer-3.0')
+NRSKNUI.CombatCursor = NRSKNUI:NewModule('CursorCircle', 'AceEvent-3.0')

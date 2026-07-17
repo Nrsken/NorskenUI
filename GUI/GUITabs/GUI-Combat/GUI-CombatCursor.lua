@@ -1,33 +1,42 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
+---@class CursorCircle
+local CursorCircle = NRSKNUI:GetModule('CursorCircle')
 local GUIFrame = NRSKNUI.GUIFrame
 local Theme = NRSKNUI.Theme
 
 local table_insert = table.insert
 local CreateFrame = CreateFrame
 local ipairs = ipairs
+local math_min = math.min
+
+local buttonSize = 51
 
 local function CreateTextureSelector(parent, textures, currentTexture, getColorFunc, onSelect)
-    local container = CreateFrame("Frame", nil, parent)
-    container:SetHeight(60 + Theme.paddingMedium)
+    local container = CreateFrame('Frame', nil, parent)
 
     local buttons = {}
-    local buttonSize = 60
+    local spacing = Theme.paddingMedium
+
+    -- Keep our own height so AddWidget doesn't stretch us to the row height
+    container.explicitHeight = true
+    container:SetPixelHeight(buttonSize)
 
     for _, texData in ipairs(textures) do
-        local btn = CreateFrame("Button", nil, container, "BackdropTemplate")
-        btn:SetSize(buttonSize, buttonSize)
+        local btn = CreateFrame('Button', nil, container, 'BackdropTemplate')
+        btn:SetPixelSize(buttonSize, buttonSize)
         btn:SetBackdrop({
-            bgFile = "Interface\\BUTTONS\\WHITE8X8",
-            edgeFile = "Interface\\BUTTONS\\WHITE8X8",
+            bgFile = 'Interface\\BUTTONS\\WHITE8X8',
+            edgeFile = 'Interface\\BUTTONS\\WHITE8X8',
             edgeSize = 1,
         })
         btn:SetBackdropColor(Theme.bgDark[1], Theme.bgDark[2], Theme.bgDark[3], 1)
 
-        local tex = btn:CreateTexture(nil, "ARTWORK")
-        tex:SetPoint("TOPLEFT", 8, -8)
-        tex:SetPoint("BOTTOMRIGHT", -8, 8)
+        local tex = btn:CreateTexture(nil, 'ARTWORK')
+        tex:SetPixelPoint('TOPLEFT', 8, -8)
+        tex:SetPixelPoint('BOTTOMRIGHT', -8, 8)
         tex:SetTexture(texData.path)
+        tex:SetPixelSnap()
         btn.tex = tex
         btn.textureKey = texData.key
 
@@ -56,18 +65,18 @@ local function CreateTextureSelector(parent, textures, currentTexture, getColorF
         end
         btn.UpdateVisuals = UpdateVisuals
 
-        btn:SetScript("OnEnter", function(self)
+        btn:SetScript('OnEnter', function(self)
             self.hover = true
             UpdateVisuals()
         end)
 
-        btn:SetScript("OnLeave", function(self)
+        btn:SetScript('OnLeave', function(self)
             self.hover = false
             UpdateVisuals()
             GameTooltip:Hide()
         end)
 
-        btn:SetScript("OnClick", function(self)
+        btn:SetScript('OnClick', function(self)
             if self.disabled then return end
             currentTexture = self.textureKey
             for _, b in ipairs(buttons) do b.UpdateVisuals() end
@@ -78,13 +87,24 @@ local function CreateTextureSelector(parent, textures, currentTexture, getColorF
         table_insert(buttons, btn)
     end
 
-    for i, btn in ipairs(buttons) do
-        if i == 1 then
-            btn:SetPoint("LEFT", container, "LEFT", 0, 0)
-        else
-            btn:SetPoint("LEFT", buttons[i - 1], "RIGHT", Theme.paddingMedium, 0)
+    local function LayoutButtons(width)
+        local count = #buttons
+        if count == 0 or not width or width <= 0 then return end
+        local size = math_min(buttonSize, (width - (count - 1) * spacing) / count)
+        if size < 1 then size = 1 end
+        for i, btn in ipairs(buttons) do
+            btn:SetPixelSize(size, size)
+            btn:ClearAllPoints()
+            if i == 1 then
+                btn:SetPixelPoint('LEFT', container, 'LEFT', 0, -Theme.paddingSmall)
+            else
+                btn:SetPixelPoint('LEFT', buttons[i - 1], 'RIGHT', spacing, 0)
+            end
         end
     end
+
+    container:SetScript('OnSizeChanged', function(_, width) LayoutButtons(width) end)
+    LayoutButtons(container:GetWidth())
 
     function container:SetEnabled(enabled)
         for _, btn in ipairs(buttons) do
@@ -107,105 +127,48 @@ local function CreateTextureSelector(parent, textures, currentTexture, getColorF
     return container
 end
 
-GUIFrame:RegisterContent("cursorCircle", function(scrollChild, yOffset)
-    ---@type CursorCircle?
-    local CC = NRSKNUI:GetModule("CursorCircle", true)
+GUIFrame:RegisterContent('cursorCircle', function(scrollChild, yOffset)
     local db = NRSKNUI.db and NRSKNUI.db.profile.Miscellaneous.CursorCircle
-    if not db or not CC then return GUIFrame:ShowDBError(scrollChild, yOffset) end
-
-    local manager = GUIFrame:CreateWidgetStateManager()
-    local postUpdateCallbacks = {}
-
-    local colorModeWidgets = {}
-    local throttleWidgets = {}
-    local gcdWidgets = {}
-    local gcdSeparateWidgets = {}
-    local gcdRingColorModeWidgets = {}
-    local gcdSwipeColorModeWidgets = {}
-    local textureSelector = nil
-    local gcdTextureSelector = nil
-    local TEXTURE_ROW_HEIGHT = 65
+    if not db then return GUIFrame:ShowDBError(scrollChild, yOffset) end
 
     local gcd = db.GCD
+    local textureSelector, gcdTextureSelector
+    local buttonRowHeight = buttonSize + Theme.paddingSmall + 1
 
+    local manager = GUIFrame:CreateWidgetStateManager()
     local function ApplySettings()
-        if CC and CC.ApplySettings then CC:ApplySettings() end
+        CursorCircle:ApplySettings()
         if textureSelector then textureSelector:RefreshColors() end
         if gcdTextureSelector then gcdTextureSelector:RefreshColors() end
     end
+    local function UpdateAllWidgetStates() manager:UpdateAll(db.Enabled) end
 
-    local function GetEffectiveColor()
-        return NRSKNUI:GetAccentColor(db.ColorMode, db.Color)
-    end
+    manager:SetCondition('colorMode', function() return db.ColorMode == 'custom' end)
+    manager:SetCondition('gcdEnabled', function() return gcd.Mode ~= 'disabled' end)
+    manager:SetCondition('gcdSeparate', function() return gcd.Mode == 'separate' end)
+    manager:SetCondition('gcdSwipeCustom', function() return gcd.SwipeColorMode == 'custom' end)
+    manager:SetCondition('gcdRingCustom', function() return gcd.RingColorMode == 'custom' end)
 
-    local function GetGCDEffectiveColor()
-        return NRSKNUI:GetAccentColor(gcd.RingColorMode, gcd.RingColor)
-    end
-
-    local function UpdateConditionalStates()
-        local isCustomColor = db.ColorMode == "custom"
-        for _, widget in ipairs(colorModeWidgets) do
-            if widget.SetEnabled then widget:SetEnabled(isCustomColor) end
-        end
-
-        local throttleEnabled = db.UseUpdateInterval
-        for _, widget in ipairs(throttleWidgets) do
-            if widget.SetEnabled then widget:SetEnabled(throttleEnabled) end
-        end
-
-        local gcdEnabled = gcd.Mode ~= "disabled"
-        local isSeparateMode = gcd.Mode == "separate"
-
-        for _, widget in ipairs(gcdWidgets) do
-            if widget.SetEnabled then widget:SetEnabled(gcdEnabled) end
-        end
-
-        for _, widget in ipairs(gcdSeparateWidgets) do
-            if widget.SetEnabled then widget:SetEnabled(gcdEnabled and isSeparateMode) end
-        end
-
-        if gcdTextureSelector then
-            gcdTextureSelector:SetEnabled(gcdEnabled and isSeparateMode)
-        end
-
-        local isGCDRingCustomColor = gcd.RingColorMode == "custom"
-        for _, widget in ipairs(gcdRingColorModeWidgets) do
-            if widget.SetEnabled then widget:SetEnabled(gcdEnabled and isSeparateMode and isGCDRingCustomColor) end
-        end
-
-        local isGCDSwipeCustomColor = gcd.SwipeColorMode == "custom"
-        for _, widget in ipairs(gcdSwipeColorModeWidgets) do
-            if widget.SetEnabled then widget:SetEnabled(gcdEnabled and isGCDSwipeCustomColor) end
-        end
-    end
-
-    local function UpdateAllWidgetStates()
-        manager:UpdateAll(db.Enabled)
-        if textureSelector then textureSelector:SetEnabled(db.Enabled) end
-        if db.Enabled then
-            for _, callback in ipairs(postUpdateCallbacks) do callback() end
-        else
-            if gcdTextureSelector then gcdTextureSelector:SetEnabled(false) end
-        end
-    end
-
-    table_insert(postUpdateCallbacks, UpdateConditionalStates)
+    local function GetEffectiveColor() return NRSKNUI:GetAccentColor(db.ColorMode, db.Color) end
+    local function GetGCDEffectiveColor() return NRSKNUI:GetAccentColor(gcd.RingColorMode, gcd.RingColor) end
 
     -- Card 1: Enable
-    local card1 = GUIFrame:CreateCard(scrollChild, "Cursor Circle", yOffset)
+    local card1 = GUIFrame:CreateCard(scrollChild, 'Cursor Circle', yOffset)
 
     local row1 = GUIFrame:CreateRow(card1.content, Theme.rowHeightLast)
-    local enableCheck = GUIFrame:CreateCheckbox(row1, "Enable Cursor Circle", {
+    local enableCheck = GUIFrame:CreateCheckbox(row1, 'Enable Cursor Circle', {
         value = db.Enabled,
         callback = function(checked)
             db.Enabled = checked
-            if CC then
-                if checked then NRSKNUI:EnableModule("CursorCircle") else NRSKNUI:DisableModule("CursorCircle") end
+            if checked then
+                NRSKNUI:EnableModule('CursorCircle')
+            else
+                NRSKNUI:DisableModule('CursorCircle')
             end
             UpdateAllWidgetStates()
         end,
         msgPopup = true,
-        msgText = "Cursor Circle",
+        msgText = 'Cursor Circle',
     })
     row1:AddWidget(enableCheck, 1)
     card1:AddRow(row1, Theme.rowHeightLast, 0)
@@ -213,24 +176,24 @@ GUIFrame:RegisterContent("cursorCircle", function(scrollChild, yOffset)
     yOffset = card1:GetNextOffset()
 
     -- Card 2: General Settings
-    local card2 = GUIFrame:CreateCard(scrollChild, "General Settings", yOffset)
-    manager:Register(card2, "all")
+    local card2 = GUIFrame:CreateCard(scrollChild, 'General Settings', yOffset)
+    manager:Register(card2, 'all')
 
-    local row2a = GUIFrame:CreateRow(card2.content, Theme.rowHeight)
-    local gcdModeDropdown = GUIFrame:CreateDropdown(row2a, "GCD Mode", {
-        options = CC.GCDModeOptions,
+    local row2a = GUIFrame:CreateRow(card2.content, Theme.rowHeightLast)
+    local gcdModeDropdown = GUIFrame:CreateDropdown(row2a, 'GCD Mode', {
+        options = CursorCircle.GCDModeOptions,
         value = gcd.Mode,
         callback = function(key)
             gcd.Mode = key
             ApplySettings()
-            UpdateConditionalStates()
+            UpdateAllWidgetStates()
         end
     })
     row2a:AddWidget(gcdModeDropdown, 0.5)
-    manager:Register(gcdModeDropdown, "all")
+    manager:Register(gcdModeDropdown, 'all')
 
-    local visModeDropdown = GUIFrame:CreateDropdown(row2a, "Visibility", {
-        options = CC.VisibilityModeOptions,
+    local visModeDropdown = GUIFrame:CreateDropdown(row2a, 'Visibility', {
+        options = CursorCircle.VisibilityModeOptions,
         value = db.VisibilityMode,
         callback = function(key)
             db.VisibilityMode = key
@@ -238,53 +201,24 @@ GUIFrame:RegisterContent("cursorCircle", function(scrollChild, yOffset)
         end
     })
     row2a:AddWidget(visModeDropdown, 0.5)
-    manager:Register(visModeDropdown, "all")
-    card2:AddRow(row2a, Theme.rowHeight)
-
-    local row2b = GUIFrame:CreateRow(card2.content, Theme.rowHeightLast)
-    local throttleCheck = GUIFrame:CreateCheckbox(row2b, "Limit Update Rate", {
-        value = db.UseUpdateInterval,
-        callback = function(checked)
-            db.UseUpdateInterval = checked
-            UpdateConditionalStates()
-        end
-    })
-    row2b:AddWidget(throttleCheck, 0.5)
-    manager:Register(throttleCheck, "all")
-
-    local intervalSlider = GUIFrame:CreateSlider(row2b, "Interval (sec)", {
-        min = 0.01,
-        max = 0.1,
-        step = 0.001,
-        value = db.UpdateInterval,
-        callback = function(val) db.UpdateInterval = val end
-    })
-    row2b:AddWidget(intervalSlider, 0.5)
-    manager:Register(intervalSlider, "all")
-    table_insert(throttleWidgets, intervalSlider)
-    card2:AddRow(row2b, Theme.rowHeightLast, 0)
+    manager:Register(visModeDropdown, 'all')
+    card2:AddRow(row2a, Theme.rowHeightLast, 0)
 
     yOffset = card2:GetNextOffset()
 
     -- Card 3: Main Ring Settings
-    local card3 = GUIFrame:CreateCard(scrollChild, "Main Ring Settings", yOffset)
-    manager:Register(card3, "all")
+    local card3 = GUIFrame:CreateCard(scrollChild, 'Main Ring Settings', yOffset)
+    manager:Register(card3, 'all')
 
-    local row3a = GUIFrame:CreateRow(card3.content, TEXTURE_ROW_HEIGHT)
-    textureSelector = CreateTextureSelector(row3a, CC.Textures, db.Texture, GetEffectiveColor, function(key)
+    local row3a = GUIFrame:CreateRow(card3.content, buttonRowHeight)
+    textureSelector = CreateTextureSelector(row3a, CursorCircle.Textures, db.Texture, GetEffectiveColor, function(key)
         db.Texture = key
         ApplySettings()
     end)
-    textureSelector:SetPoint("TOPLEFT", row3a, "TOPLEFT", 0, 0)
-    textureSelector:SetPoint("TOPRIGHT", row3a, "TOPRIGHT", 0, 0)
-    textureSelector:SetEnabled(db.Enabled)
-    card3:AddRow(row3a, TEXTURE_ROW_HEIGHT)
+    row3a:AddWidget(textureSelector, 0.5)
+    manager:Register(textureSelector, 'all')
 
-    local sep3 = GUIFrame:CreateSeparator(card3.content)
-    card3:AddRow(sep3, Theme.rowHeightSeparator)
-
-    local row3b = GUIFrame:CreateRow(card3.content, Theme.rowHeight)
-    local sizeSlider = GUIFrame:CreateSlider(row3b, "Size", {
+    local sizeSlider = GUIFrame:CreateSlider(row3a, 'Size', {
         min = 20,
         max = 150,
         step = 1,
@@ -294,24 +228,27 @@ GUIFrame:RegisterContent("cursorCircle", function(scrollChild, yOffset)
             ApplySettings()
         end
     })
-    row3b:AddWidget(sizeSlider, 1)
-    manager:Register(sizeSlider, "all")
-    card3:AddRow(row3b, Theme.rowHeight)
+    row3a:AddWidget(sizeSlider, 0.5, nil, nil, -15)
+    manager:Register(sizeSlider, 'all')
+    card3:AddRow(row3a, buttonRowHeight)
+
+    local sep3main = GUIFrame:CreateSeparator(card3.content)
+    card3:AddRow(sep3main, Theme.rowHeightSeparator)
 
     local row3c = GUIFrame:CreateRow(card3.content, Theme.rowHeightLast)
-    local colorModeDropdown = GUIFrame:CreateDropdown(row3c, "Color Mode", {
+    local colorModeDropdown = GUIFrame:CreateDropdown(row3c, 'Color Mode', {
         options = NRSKNUI.ColorModeOptions,
         value = db.ColorMode,
         callback = function(key)
             db.ColorMode = key
             ApplySettings()
-            UpdateConditionalStates()
+            UpdateAllWidgetStates()
         end
     })
     row3c:AddWidget(colorModeDropdown, 0.5)
-    manager:Register(colorModeDropdown, "all")
+    manager:Register(colorModeDropdown, 'all')
 
-    local colorPicker = GUIFrame:CreateColorPicker(row3c, "Custom Color", {
+    local colorPicker = GUIFrame:CreateColorPicker(row3c, 'Custom Color', {
         color = db.Color,
         callback = function(r, g, b, a)
             db.Color = { r, g, b, a }
@@ -319,32 +256,29 @@ GUIFrame:RegisterContent("cursorCircle", function(scrollChild, yOffset)
         end
     })
     row3c:AddWidget(colorPicker, 0.5)
-    manager:Register(colorPicker, "all")
-    table_insert(colorModeWidgets, colorPicker)
+    manager:Register(colorPicker, 'all', 'colorMode')
     card3:AddRow(row3c, Theme.rowHeightLast, 0)
 
     yOffset = card3:GetNextOffset()
 
     -- Card 4: GCD Settings
-    local card4 = GUIFrame:CreateCard(scrollChild, "GCD Settings", yOffset)
-    manager:Register(card4, "all")
-    table_insert(gcdWidgets, card4)
+    local card4 = GUIFrame:CreateCard(scrollChild, 'GCD Settings', yOffset)
+    manager:Register(card4, 'all', 'gcdEnabled')
 
     local row4a = GUIFrame:CreateRow(card4.content, Theme.rowHeight)
-    local gcdSwipeColorModeDropdown = GUIFrame:CreateDropdown(row4a, "Swipe Color Mode", {
+    local gcdSwipeColorModeDropdown = GUIFrame:CreateDropdown(row4a, 'Swipe Color Mode', {
         options = NRSKNUI.ColorModeOptions,
         value = gcd.SwipeColorMode,
         callback = function(key)
             gcd.SwipeColorMode = key
             ApplySettings()
-            UpdateConditionalStates()
+            UpdateAllWidgetStates()
         end
     })
     row4a:AddWidget(gcdSwipeColorModeDropdown, 0.5)
-    manager:Register(gcdSwipeColorModeDropdown, "all")
-    table_insert(gcdWidgets, gcdSwipeColorModeDropdown)
+    manager:Register(gcdSwipeColorModeDropdown, 'all', 'gcdEnabled')
 
-    local gcdSwipeColorPicker = GUIFrame:CreateColorPicker(row4a, "Custom Color", {
+    local gcdSwipeColorPicker = GUIFrame:CreateColorPicker(row4a, 'Custom Color', {
         color = gcd.SwipeColor,
         callback = function(r, g, b, a)
             gcd.SwipeColor = { r, g, b, a }
@@ -352,53 +286,45 @@ GUIFrame:RegisterContent("cursorCircle", function(scrollChild, yOffset)
         end
     })
     row4a:AddWidget(gcdSwipeColorPicker, 0.5)
-    manager:Register(gcdSwipeColorPicker, "all")
-    table_insert(gcdWidgets, gcdSwipeColorPicker)
-    table_insert(gcdSwipeColorModeWidgets, gcdSwipeColorPicker)
+    manager:Register(gcdSwipeColorPicker, 'all', 'gcdEnabled', 'gcdSwipeCustom')
     card4:AddRow(row4a, Theme.rowHeight)
 
     local row4b = GUIFrame:CreateRow(card4.content, Theme.rowHeight)
-    local reverseCheck = GUIFrame:CreateCheckbox(row4b, "Reverse Swipe", {
+    local reverseCheck = GUIFrame:CreateCheckbox(row4b, 'Reverse Swipe', {
         value = gcd.Reverse,
         callback = function(checked)
             gcd.Reverse = checked
             ApplySettings()
         end
     })
-    row4b:AddWidget(reverseCheck, 0.5)
-    manager:Register(reverseCheck, "all")
-    table_insert(gcdWidgets, reverseCheck)
+    row4b:AddWidget(reverseCheck, 1)
+    manager:Register(reverseCheck, 'all', 'gcdEnabled')
+    card4:AddRow(row4b, Theme.rowHeight)
 
-    local hideOOCCheck = GUIFrame:CreateCheckbox(row4b, "Only In Combat", {
+    local row4ba = GUIFrame:CreateRow(card4.content, Theme.rowHeight)
+    local hideOOCCheck = GUIFrame:CreateCheckbox(row4ba, 'Only In Combat', {
         value = gcd.HideOutOfCombat,
         callback = function(checked)
             gcd.HideOutOfCombat = checked
             ApplySettings()
         end
     })
-    row4b:AddWidget(hideOOCCheck, 0.5)
-    manager:Register(hideOOCCheck, "all")
-    table_insert(gcdWidgets, hideOOCCheck)
-    card4:AddRow(row4b, Theme.rowHeight)
+    row4ba:AddWidget(hideOOCCheck, 1)
+    manager:Register(hideOOCCheck, 'all', 'gcdEnabled')
+    card4:AddRow(row4ba, Theme.rowHeight)
 
     local sep4a = GUIFrame:CreateSeparator(card4.content)
-    card4:AddRow(sep4a, Theme.rowHeightSeparator)
+    card4:AddRow(sep4a, Theme.rowHeightSeparator - 3)
 
-    local row4c = GUIFrame:CreateRow(card4.content, TEXTURE_ROW_HEIGHT)
-    gcdTextureSelector = CreateTextureSelector(row4c, CC.Textures, gcd.Texture, GetGCDEffectiveColor, function(key)
+    local row4c = GUIFrame:CreateRow(card4.content, buttonRowHeight)
+    gcdTextureSelector = CreateTextureSelector(row4c, CursorCircle.Textures, gcd.Texture, GetGCDEffectiveColor, function(key)
         gcd.Texture = key
         ApplySettings()
     end)
-    gcdTextureSelector:SetPoint("TOPLEFT", row4c, "TOPLEFT", 0, 0)
-    gcdTextureSelector:SetPoint("TOPRIGHT", row4c, "TOPRIGHT", 0, 0)
-    table_insert(gcdSeparateWidgets, gcdTextureSelector)
-    card4:AddRow(row4c, TEXTURE_ROW_HEIGHT + Theme.paddingSmall)
+    row4c:AddWidget(gcdTextureSelector, 0.5)
+    manager:Register(gcdTextureSelector, 'all', 'gcdSeparate')
 
-    local sep4b = GUIFrame:CreateSeparator(card4.content)
-    card4:AddRow(sep4b, Theme.rowHeightSeparator)
-
-    local row4d = GUIFrame:CreateRow(card4.content, Theme.rowHeight)
-    local gcdSizeSlider = GUIFrame:CreateSlider(row4d, "Ring Size", {
+    local gcdSizeSlider = GUIFrame:CreateSlider(row4c, 'Ring Size', {
         min = 10,
         max = 150,
         step = 1,
@@ -408,41 +334,35 @@ GUIFrame:RegisterContent("cursorCircle", function(scrollChild, yOffset)
             ApplySettings()
         end
     })
-    row4d:AddWidget(gcdSizeSlider, 1)
-    manager:Register(gcdSizeSlider, "all")
-    table_insert(gcdWidgets, gcdSizeSlider)
-    table_insert(gcdSeparateWidgets, gcdSizeSlider)
-    card4:AddRow(row4d, Theme.rowHeight)
+    row4c:AddWidget(gcdSizeSlider, 0.5, nil, nil, -15)
+    manager:Register(gcdSizeSlider, 'all', 'gcdSeparate')
+    card4:AddRow(row4c, buttonRowHeight)
+
+    local sep3gcd = GUIFrame:CreateSeparator(card4.content)
+    card4:AddRow(sep3gcd, Theme.rowHeightSeparator)
 
     local row4e = GUIFrame:CreateRow(card4.content, Theme.rowHeightLast)
-    local gcdRingColorModeDropdown = GUIFrame:CreateDropdown(row4e, "Ring Color Mode", {
+    local gcdRingColorModeDropdown = GUIFrame:CreateDropdown(row4e, 'Ring Color Mode', {
         options = NRSKNUI.ColorModeOptions,
         value = gcd.RingColorMode,
         callback = function(key)
             gcd.RingColorMode = key
             ApplySettings()
-            if gcdTextureSelector then gcdTextureSelector:RefreshColors() end
-            UpdateConditionalStates()
+            UpdateAllWidgetStates()
         end
     })
     row4e:AddWidget(gcdRingColorModeDropdown, 0.5)
-    manager:Register(gcdRingColorModeDropdown, "all")
-    table_insert(gcdWidgets, gcdRingColorModeDropdown)
-    table_insert(gcdSeparateWidgets, gcdRingColorModeDropdown)
+    manager:Register(gcdRingColorModeDropdown, 'all', 'gcdSeparate')
 
-    local gcdRingColorPicker = GUIFrame:CreateColorPicker(row4e, "Custom Color", {
+    local gcdRingColorPicker = GUIFrame:CreateColorPicker(row4e, 'Custom Color', {
         color = gcd.RingColor,
         callback = function(r, g, b, a)
             gcd.RingColor = { r, g, b, a }
             ApplySettings()
-            if gcdTextureSelector then gcdTextureSelector:RefreshColors() end
         end
     })
     row4e:AddWidget(gcdRingColorPicker, 0.5)
-    manager:Register(gcdRingColorPicker, "all")
-    table_insert(gcdWidgets, gcdRingColorPicker)
-    table_insert(gcdSeparateWidgets, gcdRingColorPicker)
-    table_insert(gcdRingColorModeWidgets, gcdRingColorPicker)
+    manager:Register(gcdRingColorPicker, 'all', 'gcdSeparate', 'gcdRingCustom')
     card4:AddRow(row4e, Theme.rowHeightLast, 0)
 
     yOffset = card4:GetNextOffset()

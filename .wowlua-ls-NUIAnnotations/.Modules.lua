@@ -22,6 +22,7 @@
 ---@class CombatMessage : NRSKNUI.Module, NRSKNUI.AceEvent, NRSKNUI.AceTimer
 ---@class CombatRes : NRSKNUI.Module, NRSKNUI.AceEvent, NRSKNUI.AceTimer
 ---@class Restricted : NRSKNUI.Module, NRSKNUI.AceEvent
+---@class CursorCircle : NRSKNUI.Module, NRSKNUI.AceEvent
 
 -- Typed accessors. Overloads dispatch on the literal module name.
 
@@ -49,6 +50,7 @@ local NRSKNUI
 ---@overload fun(self: NRSKNUI, name: "CombatMessage", silent?: boolean): CombatMessage
 ---@overload fun(self: NRSKNUI, name: "CombatRes", silent?: boolean): CombatRes
 ---@overload fun(self: NRSKNUI, name: "Restricted", silent?: boolean): Restricted
+---@overload fun(self: NRSKNUI, name: "CursorCircle", silent?: boolean): CursorCircle
 ---@param name string
 ---@param silent? boolean
 ---@return NRSKNUI.Module
@@ -75,6 +77,7 @@ function NRSKNUI:GetModule(name, silent) end
 ---@overload fun(self: NRSKNUI, name: "CombatMessage", ...: string): CombatMessage
 ---@overload fun(self: NRSKNUI, name: "CombatRes", ...: string): CombatRes
 ---@overload fun(self: NRSKNUI, name: "Restricted", ...: string): Restricted
+---@overload fun(self: NRSKNUI, name: "CursorCircle", ...: string): CursorCircle
 ---@param name string
 ---@param ... string
 ---@return NRSKNUI.Module

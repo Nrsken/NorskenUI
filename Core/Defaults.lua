@@ -834,15 +834,17 @@ local Defaults = {
                 key = "C",
                 modifier = "ctrl", -- 'ctrl' | 'shift' | 'alt'
             },
+            -- Cursor Circle Settings
             CursorCircle = {
-                Enabled = true,            -- Enable cursor circle
-                Size = 40,                 -- Circle size
-                Texture = "Circle 3",      -- Selected texture
-                Color = { 1, 1, 1, 1 },    -- Circle color (RGBA) - used when ColorMode = "custom"
-                ColorMode = "theme",       -- Color mode: "class" | "custom" | "theme"
-                VisibilityMode = "always", -- Visibility mode: "always" | "mouseDown"
-                UseUpdateInterval = false, -- Use throttled updates (saves CPU but less smooth)
-                UpdateInterval = 0.016,    -- Update interval in seconds (0.016 = ~60 FPS, lower = smoother but higher CPU)
+                -- General Settings
+                Enabled = true,
+                Size = 40,
+                VisibilityMode = "always",
+                Texture = "Circle 3",
+                -- Color Settings
+                Color = { 1, 1, 1, 1 },
+                ColorMode = "theme",
+                -- GCD Settings
                 GCD = {
                     Mode = "integrated",
                     Size = 25,
