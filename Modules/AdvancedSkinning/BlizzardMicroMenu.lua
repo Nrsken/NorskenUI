@@ -46,47 +46,12 @@ function MM:OnEnable()
     if NRSKNUI:ShouldNotLoadModule() then return end
     if not self.db.Enabled then return end
 
-    C_Timer.After(0.5, function()
-        if InCombatLockdown() then
-            NRSKNUI:DeferUntilUnrestricted(0, function() MM:InitializeMicroBar() end)
-            return
-        end
-        MM:InitializeMicroBar()
+    NRSKNUI:RunWhenSafe(function()
+        self:CreateMicroBar()
+        self:ReparentButtons()
+        self:SetupMouseover()
+        self:UpdateMicroBar()
     end)
-end
-
-function MM:InitializeMicroBar()
-    if InCombatLockdown() then
-        NRSKNUI:DeferUntilUnrestricted(0, function() MM:InitializeMicroBar() end)
-        return
-    end
-
-    self:CreateMicroBar()
-    self:ReparentButtons()
-    self:SetupMouseover()
-    self:UpdateMicroBar()
-
-    NRSKNUI.EditMode:RegisterElement({
-        key = "MicroBarModule",
-        displayName = "Microbar",
-        frame = self.microBar,
-        getPosition = function()
-            return self.db.Position
-        end,
-        setPosition = function(pos)
-            self.db.Position.AnchorFrom = pos.AnchorFrom
-            self.db.Position.AnchorTo = pos.AnchorTo
-            self.db.Position.XOffset = pos.XOffset
-            self.db.Position.YOffset = pos.YOffset
-
-            self.microBar:ClearAllPoints()
-            self.microBar:SetPoint(pos.AnchorFrom, MM:GetParentFrame(), pos.AnchorTo, pos.XOffset, pos.YOffset)
-        end,
-        getParentFrame = function()
-            return MM:GetParentFrame()
-        end,
-        guiPath = "MicroMenu",
-    })
 end
 
 function MM:GetParentFrame()
@@ -100,7 +65,7 @@ function MM:GetParentFrame()
 end
 
 function MM:CreateMicroBar()
-    if microBar then return end
+    if self.microBar then return end
 
     microBar = CreateFrame("Frame", "NRSKNUI_MicroBar", UIParent)
     microBar:SetSize(250, 40)
@@ -121,6 +86,8 @@ function MM:CreateMicroBar()
     backdrop:SetBorderColor(unpack(self.db.BackdropBorderColor))
     backdrop:SetBorderParent(borderFrame)
     microBar.borderFrame = borderFrame
+
+    NRSKNUI.EditMode:Register(self, 'TooltipAnchor', self.microBar, 'MicroMenu')
 
     self:ApplySettings()
 end

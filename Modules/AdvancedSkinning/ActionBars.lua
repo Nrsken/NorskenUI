@@ -1304,29 +1304,18 @@ function ACB:OnEnable()
     if not self.db.Enabled then return end
     RunEdgeRelativeMigration(self.db)
 
-    -- If in combat, defer entire initialization to keep Blizzard bars functional
-    if InCombatLockdown() then
-        NRSKNUI:DeferUntilUnrestricted(0, function()
-            ACB:OnEnable()
+    NRSKNUI:RunWhenSafe(function()
+        self:BuildConfigTable()
+
+        -- Delay skinning until after Blizzard's initial setup to ensure all elements exist
+        C_Timer.After(0.5, function()
+            self:InitializeBars()
         end)
-        return
-    end
-
-    self:BuildConfigTable()
-
-    -- Delay skinning until after Blizzard's initial setup to avoid taint issues and ensure all elements exist
-    C_Timer.After(0.5, function()
-        self:InitializeBars()
     end)
 end
 
 -- Separated initialization for deferred execution
 function ACB:InitializeBars()
-    if InCombatLockdown() then
-        NRSKNUI:DeferUntilUnrestricted(0, function() ACB:InitializeBars() end)
-        return
-    end
-
     self:HideBlizzardBars()
 
     for _, cfg in ipairs(configTable) do

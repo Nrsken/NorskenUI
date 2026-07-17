@@ -9,6 +9,8 @@ local select = select
 local UnitClass = UnitClass
 local UnitGUID = UnitGUID
 local UnitTokenFromGUID = UnitTokenFromGUID
+local GetUnitName = GetUnitName
+local type = type
 
 local EditModeManagerFrame = EditModeManagerFrame
 
@@ -89,7 +91,7 @@ end
 -- Get unit name safely, returns nil if unit or name is secret
 function NRSKNUI:GetSafeUnitName(unit)
     if not self:IsSafeValue(unit) then return nil end -- unit is nil or secret.
-    if type(unit) ~= "string" then return nil end -- unit is not a string.
+    if type(unit) ~= "string" then return nil end     -- unit is not a string.
 
     local name = GetUnitName(unit, false)
     if not self:IsSafeValue(name) then return nil end

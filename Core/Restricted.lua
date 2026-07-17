@@ -12,6 +12,7 @@ local canaccessvalue = canaccessvalue
 local scrubsecretvalues = scrubsecretvalues
 local securecallfunction = securecallfunction
 local InCombatLockdown = InCombatLockdown
+local UnitAffectingCombat = UnitAffectingCombat
 
 local ShouldUnitIdentityBeSecret = C_Secrets and C_Secrets.ShouldUnitIdentityBeSecret
 local CanCompareUnitTokens = C_Secrets and C_Secrets.CanCompareUnitTokens
@@ -120,7 +121,7 @@ local combatQueue = {}
 ---@param fn function
 function NRSKNUI:RunWhenSafe(fn)
     if not fn then return end
-    if InCombatLockdown() then
+    if InCombatLockdown() or UnitAffectingCombat('Player') then
         combatQueue[#combatQueue + 1] = fn
     else
         fn()
@@ -229,7 +230,7 @@ function Restricted:OnEnable()
         active[name] = GetAddOnRestrictionState(i) ~= RestrictionInactive
     end
 
-    active.Combat = active.Combat or InCombatLockdown()
+    active.Combat = active.Combat or InCombatLockdown() or UnitAffectingCombat('Player')
     Recompute()
 
     self:RegisterEvent('ADDON_RESTRICTION_STATE_CHANGED')

@@ -1,9 +1,7 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
-local Theme = NRSKNUI.Theme
 
 local UnitGUID = UnitGUID
-local InCombatLockdown = InCombatLockdown
 
 local LDB = NRSKNUI.Libs.LDB
 local LDBIcon = NRSKNUI.Libs.LDBIcon
@@ -49,13 +47,14 @@ function NRSKNUI:OnInitialize()
 end
 
 local function SetupMinimapIcon()
+    local Theme = NRSKNUI.Theme
     local MyLDB = LDB:NewDataObject("NorskenUI", {
         type = "launcher",
         text = "NorskenUI",
         icon = "Interface\\AddOns\\NorskenUI\\Media\\Logo\\logocookingsPT1128x128OTBRED.png",
-        iconR = 1,
-        iconG = 1,
-        iconB = 1,
+        iconR = Theme.accent[1],
+        iconG = Theme.accent[2],
+        iconB = Theme.accent[3],
         OnClick = function(_, button)
             if button == "LeftButton" then
                 if NRSKNUI.GUIFrame then
@@ -77,17 +76,15 @@ local function SetupMinimapIcon()
 end
 
 local function OnPlayerEnteringWorld()
-    if InCombatLockdown() then
-        NRSKNUI:DeferUntilUnrestricted(0, OnPlayerEnteringWorld)
-        return
-    end
-
-    -- Automatically refresh all AceAddon modules
-    for _, module in NRSKNUI:IterateModules() do
-        if module:IsEnabled() and module.ApplySettings then
-            module:ApplySettings()
+    NRSKNUI:RunWhenSafe(function()
+        -- Automatically refresh all AceAddon modules
+        for _, module in NRSKNUI:IterateModules() do
+            if module:IsEnabled() and module.ApplySettings then
+                print("Refreshing module: " .. module:GetName())
+                module:ApplySettings()
+            end
         end
-    end
+    end)
 end
 
 -- OnEnable: Called when the addon is enabled
@@ -101,7 +98,10 @@ function NRSKNUI:OnEnable()
         self.db.global.GUIState.GUIFrameLayoutVersion = currentVersion
     end
 
-    SetupMinimapIcon()
+    -- Delay setting up the minimap icon so that AddonTheme.lua can load first.
+    C_Timer.After(1, function()
+        SetupMinimapIcon()
+    end)
 
     self:RefreshTheme()
     self:SetupSlashCommands()
