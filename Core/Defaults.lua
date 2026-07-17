@@ -355,9 +355,10 @@ local Defaults = {
             CrossLength = 18,
             Outline = true,
             -- Style Settings
-            Mode = "cross", -- "cross"| "dot"
+            Mode = "cross", -- "cross"| "dot" | "diamond"
             CrossCenterDotEnabled = true,
             CenterDotSize = 20,
+            DiamondSize = 32,
             -- Color Settings
             ColorMode = "custom",
             Color = { 0, 1, 0.169, 1 },

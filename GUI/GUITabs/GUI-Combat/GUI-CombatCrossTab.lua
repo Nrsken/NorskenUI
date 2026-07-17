@@ -6,8 +6,9 @@ local GUIFrame = NRSKNUI.GUIFrame
 local Theme = NRSKNUI.Theme
 
 local ModeOptions = {
-    { value = 'cross', text = 'Cross' },
-    { value = 'dot',   text = 'Dot' },
+    { value = 'cross',   text = 'Cross' },
+    { value = 'dot',     text = 'Dot' },
+    { value = 'diamond', text = 'Diamond' },
 }
 
 GUIFrame:RegisterContent('combatCross', function(scrollChild, yOffset)
@@ -21,6 +22,7 @@ GUIFrame:RegisterContent('combatCross', function(scrollChild, yOffset)
     manager:SetCondition('rangeColor', function() return db.RangeColorMeleeEnabled or db.RangeColorRangedEnabled end)
     manager:SetCondition('crossMode', function() return db.Mode == 'cross' end)
     manager:SetCondition('dotMode', function() return db.Mode == 'dot' end)
+    manager:SetCondition('diamondMode', function() return db.Mode == 'diamond' end)
 
     -- Card 1: Enable
     local card1 = GUIFrame:CreateCard(scrollChild, 'Combat Cross', yOffset)
@@ -139,8 +141,8 @@ GUIFrame:RegisterContent('combatCross', function(scrollChild, yOffset)
     local sep3 = GUIFrame:CreateSeparator(card2.content)
     card2:AddRow(sep3, Theme.rowHeightSeparator)
 
-    -- Dot size (dot mode only)
-    local row2c = GUIFrame:CreateRow(card2.content, Theme.rowHeightLast)
+    -- Dot size
+    local row2c = GUIFrame:CreateRow(card2.content, Theme.rowHeight)
     local dotSizeSlider = GUIFrame:CreateSlider(row2c, 'Dot Size', {
         min = 4,
         max = 50,
@@ -153,7 +155,26 @@ GUIFrame:RegisterContent('combatCross', function(scrollChild, yOffset)
     })
     row2c:AddWidget(dotSizeSlider, 0.5)
     manager:Register(dotSizeSlider, 'all', 'dotMode')
-    card2:AddRow(row2c, Theme.rowHeightLast, 0)
+    card2:AddRow(row2c, Theme.rowHeight)
+
+    local sep4 = GUIFrame:CreateSeparator(card2.content)
+    card2:AddRow(sep4, Theme.rowHeightSeparator)
+
+    -- Diamond size
+    local row2d = GUIFrame:CreateRow(card2.content, Theme.rowHeightLast)
+    local diamondSizeSlider = GUIFrame:CreateSlider(row2d, 'Diamond Size', {
+        min = 4,
+        max = 50,
+        step = 1,
+        value = db.DiamondSize,
+        callback = function(val)
+            db.DiamondSize = val
+            ApplySettings()
+        end
+    })
+    row2d:AddWidget(diamondSizeSlider, 0.5)
+    manager:Register(diamondSizeSlider, 'all', 'diamondMode')
+    card2:AddRow(row2d, Theme.rowHeightLast, 0)
 
     yOffset = card2:GetNextOffset()
 

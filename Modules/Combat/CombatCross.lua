@@ -14,6 +14,7 @@ local IsSpellInRange = C_Spell and C_Spell.IsSpellInRange
 local SpellHasRange = C_Spell and C_Spell.SpellHasRange
 
 local DOT_TEXTURE = 'Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\whiteCircle.png'
+local DIAMON_ATLAS = 'progress-bar-diamond-pip-mask'
 
 function CombatCross:UpdateDB()
     self.db = NRSKNUI.db.profile.CombatCross
@@ -60,7 +61,6 @@ function CombatCross:CreateFrame()
 
     -- Dot backdrop that acts like a border.
     coreFrame.dotBG = coreFrame:CreateTexture(nil, 'ARTWORK')
-    coreFrame.dotBG:SetPixelSize(self.db.CenterDotSize + 2)
     coreFrame.dotBG:SetTexture(DOT_TEXTURE)
     coreFrame.dotBG:SetPixelPoint('CENTER', coreFrame, 'CENTER')
     coreFrame.dotBG:SetPixelSnap()
@@ -72,6 +72,19 @@ function CombatCross:CreateFrame()
     coreFrame.dot:SetPixelPoint('CENTER', coreFrame, 'CENTER')
     coreFrame.dot:SetPixelSnap()
 
+    -- Diamond backdrop that acts like a border.
+    coreFrame.diamondBG = coreFrame:CreateTexture(nil, 'ARTWORK')
+    coreFrame.diamondBG:SetAtlas(DIAMON_ATLAS)
+    coreFrame.diamondBG:SetPixelPoint('CENTER', coreFrame, 'CENTER')
+    coreFrame.diamondBG:SetPixelSnap()
+    coreFrame.diamondBG:SetVertexColor(0, 0, 0)
+
+    -- Diamond texture
+    coreFrame.diamond = coreFrame:CreateTexture(nil, 'OVERLAY')
+    coreFrame.diamond:SetAtlas(DIAMON_ATLAS)
+    coreFrame.diamond:SetPixelPoint('CENTER', coreFrame, 'CENTER')
+    coreFrame.diamond:SetPixelSnap()
+
     self.coreFrame = coreFrame
     coreFrame:Hide()
 end
@@ -80,13 +93,18 @@ end
 function CombatCross:SetColor(r, g, b, a)
     if not self.coreFrame then return end
 
+    -- Cross coloring
     self.coreFrame.textureUp.texture:SetColorTexture(r, g, b, a)
     self.coreFrame.textureDown.texture:SetColorTexture(r, g, b, a)
     self.coreFrame.textureLeft.texture:SetColorTexture(r, g, b, a)
     self.coreFrame.textureRight.texture:SetColorTexture(r, g, b, a)
     self.coreFrame.textureCrossDot.texture:SetColorTexture(r, g, b, a)
 
+    -- Dot coloring
     self.coreFrame.dot:SetVertexColor(r, g, b, a)
+
+    -- Diamond coloring
+    self.coreFrame.diamond:SetVertexColor(r, g, b, a)
 end
 
 -- The cross lines normal color.
@@ -125,18 +143,32 @@ function CombatCross:ApplySettings()
     self.coreFrame.textureRight:SetBorderShown(self.db.Outline)
     self.coreFrame.textureCrossDot:SetBorderShown(self.db.Outline)
 
-    -- Style mode, cross lines or center dot
+    -- Modes
     local dotMode = self.db.Mode == 'dot'
-    self.coreFrame.textureUp:SetShown(not dotMode)
-    self.coreFrame.textureDown:SetShown(not dotMode)
-    self.coreFrame.textureLeft:SetShown(not dotMode)
-    self.coreFrame.textureRight:SetShown(not dotMode)
-    self.coreFrame.textureCrossDot:SetShown(not dotMode and self.db.CrossCenterDotEnabled)
+    local diamondMode = self.db.Mode == 'diamond'
+    local crossMode = self.db.Mode == 'cross'
 
+    -- Cross
+    self.coreFrame.textureUp:SetShown(crossMode)
+    self.coreFrame.textureDown:SetShown(crossMode)
+    self.coreFrame.textureLeft:SetShown(crossMode)
+    self.coreFrame.textureRight:SetShown(crossMode)
+    self.coreFrame.textureCrossDot:SetShown(crossMode and self.db.CrossCenterDotEnabled)
+
+    -- Dot
     self.coreFrame.dotBG:SetPixelSize(self.db.CenterDotSize + 2)
     self.coreFrame.dot:SetPixelSize(self.db.CenterDotSize)
     self.coreFrame.dot:SetShown(dotMode)
     self.coreFrame.dotBG:SetShown(dotMode and self.db.Outline)
+
+    -- Diamond, slight adjustmest since original texture is square and we want it to be a diamond shape.
+    local diamondWidth = self.db.DiamondSize - 2
+    local diamondHeight = self.db.DiamondSize + 4
+    local diamondHeightBG, diamondWidthBG = diamondHeight + 4, diamondWidth + 4
+    self.coreFrame.diamondBG:SetPixelSize(diamondWidthBG, diamondHeightBG)
+    self.coreFrame.diamond:SetPixelSize(diamondWidth, diamondHeight)
+    self.coreFrame.diamond:SetShown(diamondMode)
+    self.coreFrame.diamondBG:SetShown(diamondMode and self.db.Outline)
 
     -- Base color, then let the range system repaint over it if it applies.
     self:SetBaseColor()
