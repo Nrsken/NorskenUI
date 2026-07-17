@@ -1,270 +1,268 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
+---@class CombatRes
+local CombatRes = NRSKNUI:GetModule('CombatRes', true)
 local GUIFrame = NRSKNUI.GUIFrame
 local Theme = NRSKNUI.Theme
 
-local ipairs = ipairs
-local table_insert = table.insert
-
-GUIFrame:RegisterContent("battleRes", function(scrollChild, yOffset)
+GUIFrame:RegisterContent('battleRes', function(scrollChild, yOffset)
     local db = NRSKNUI.db and NRSKNUI.db.profile.BattleRes
     if not db then return GUIFrame:ShowDBError(scrollChild, yOffset) end
 
-    ---@type CombatRes?
-    local CR = NRSKNUI:GetModule("CombatRes", true)
     local manager = GUIFrame:CreateWidgetStateManager()
-    local postUpdateCallbacks = {}
-    local backdropSubWidgets = {}
-
-    local function ApplySettings()
-        if CR and CR.ApplySettings then CR:ApplySettings() end
-    end
-
-    local function UpdateBackdropState()
-        local backdropEnabled = db.Backdrop.Enabled
-        for _, widget in ipairs(backdropSubWidgets) do
-            if widget.SetEnabled then widget:SetEnabled(backdropEnabled) end
-        end
-    end
-
-    local function UpdateAllWidgetStates()
-        manager:UpdateAll(db.Enabled)
-        if db.Enabled then
-            for _, callback in ipairs(postUpdateCallbacks) do
-                callback()
-            end
-        end
-    end
+    local function ApplySettings() CombatRes:ApplySettings() end
+    local function UpdateAllWidgetStates() manager:UpdateAll(db.Enabled) end
+    manager:SetCondition('Backdrop', function() return db.BackdropEnabled end)
 
     -- Card 1: Enable
-    local card1 = GUIFrame:CreateCard(scrollChild, "Battle Res Tracker", yOffset)
+    local card1 = GUIFrame:CreateCard(scrollChild, 'Battle Res Tracker', yOffset)
 
+    -- Enable toggle
     local row1 = GUIFrame:CreateRow(card1.content, Theme.rowHeightLast)
-    local enableCheck = GUIFrame:CreateCheckbox(row1, "Enable Combat Res Tracker", {
+    local enableCheck = GUIFrame:CreateCheckbox(row1, 'Enable Combat Res Tracker', {
         value = db.Enabled,
         callback = function(checked)
             db.Enabled = checked
-            if CR then
-                if checked then NRSKNUI:EnableModule("CombatRes") else NRSKNUI:DisableModule("CombatRes") end
+            if checked then
+                NRSKNUI:EnableModule('CombatRes')
+            else
+                NRSKNUI:DisableModule('CombatRes')
             end
             UpdateAllWidgetStates()
         end,
         msgPopup = true,
-        msgText = "Combat Res Tracker",
+        msgText = 'Combat Res Tracker',
     })
     row1:AddWidget(enableCheck, 1)
     card1:AddRow(row1, Theme.rowHeightLast, 0)
 
     yOffset = card1:GetNextOffset()
 
-    -- Card 2: Text Settings
-    local card2 = GUIFrame:CreateCard(scrollChild, "Text Settings", yOffset)
-    manager:Register(card2, "all")
+    -- Card 2: Text Format
+    local card2 = GUIFrame:CreateCard(scrollChild, 'Text Format', yOffset)
+    manager:Register(card2, 'all')
 
+    -- Format input edit box
     local row2a = GUIFrame:CreateRow(card2.content, Theme.rowHeight)
-    local sepInput = GUIFrame:CreateEditBox(row2a, "Separator", {
-        value = db.Separator,
+    local formatInput = GUIFrame:CreateEditBox(row2a, 'Format', {
+        value = db.TextFormat,
         callback = function(val)
-            db.Separator = val
+            db.TextFormat = val
             ApplySettings()
         end
     })
-    row2a:AddWidget(sepInput, 0.5)
-    manager:Register(sepInput, "all")
-
-    local sepChargeInput = GUIFrame:CreateEditBox(row2a, "Charge Separator", {
-        value = db.SeparatorCharges,
-        callback = function(val)
-            db.SeparatorCharges = val
-            ApplySettings()
-        end
-    })
-    row2a:AddWidget(sepChargeInput, 0.5)
-    manager:Register(sepChargeInput, "all")
+    row2a:AddWidget(formatInput, 1)
+    manager:Register(formatInput, 'all')
     card2:AddRow(row2a, Theme.rowHeight)
 
-    local row2b = GUIFrame:CreateRow(card2.content, Theme.rowHeight)
-    local spacingSlider = GUIFrame:CreateSlider(row2b, "Text Spacing", {
-        min = 0,
-        max = 20,
-        step = 1,
-        value = db.TextSpacing,
-        callback = function(val)
-            db.TextSpacing = val
-            ApplySettings()
-        end
-    })
-    row2b:AddWidget(spacingSlider, 0.5)
-    manager:Register(spacingSlider, "all")
-
-    local growthDropdown = GUIFrame:CreateDropdown(row2b, "Growth Direction", {
-        options = {
-            { key = "LEFT",  text = "Left" },
-            { key = "RIGHT", text = "Right" },
+    -- Info text
+    local tokenHeight = 70
+    local tokenLegend = GUIFrame:CreateText(card2.content, NRSKNUI:ColorTextByTheme('Available Tokens'), {
+        text = {
+            db.TextCharge .. '  —  Battle res charges',
+            db.TextSeparator .. '  —  Separator (chosen below)',
+            db.TextTimer .. '  —  Cooldown timer',
         },
-        value = db.GrowthDirection,
+        bgMode = 'hide',
+        height = tokenHeight,
+    })
+    manager:Register(tokenLegend, 'all')
+    card2:AddRow(tokenLegend, tokenHeight)
+
+    -- Separator type dropdown
+    local row2b = GUIFrame:CreateRow(card2.content, Theme.rowHeightLast)
+    local separatorDropdown = GUIFrame:CreateDropdown(row2b, 'Separator', {
+        options = NRSKNUI.Separators,
+        value = db.Separator,
         callback = function(key)
-            db.GrowthDirection = key
+            db.Separator = key
             ApplySettings()
         end
     })
-    row2b:AddWidget(growthDropdown, 0.5)
-    manager:Register(growthDropdown, "all")
-    card2:AddRow(row2b, Theme.rowHeight)
+    row2b:AddWidget(separatorDropdown, 0.5)
+    manager:Register(separatorDropdown, 'all')
 
-    local sep2 = GUIFrame:CreateSeparator(card2.content)
-    card2:AddRow(sep2, Theme.rowHeightSeparator)
-
-    local row2c = GUIFrame:CreateRow(card2.content, Theme.rowHeight)
-    local sepColor = GUIFrame:CreateColorPicker(row2c, "Separator", {
-        color = db.SeparatorColor,
-        callback = function(r, g, b, a)
-            db.SeparatorColor = { r, g, b, a }
+    -- Time format dropdown
+    local timeFormatDropdown = GUIFrame:CreateDropdown(row2b, 'Timer Format', {
+        options = NRSKNUI.TimeFormats,
+        value = db.TimeFormat,
+        callback = function(key)
+            db.TimeFormat = key
             ApplySettings()
         end
     })
-    row2c:AddWidget(sepColor, 0.5)
-    manager:Register(sepColor, "all")
-
-    local timerColor = GUIFrame:CreateColorPicker(row2c, "Timer", {
-        color = db.TimerColor,
-        callback = function(r, g, b, a)
-            db.TimerColor = { r, g, b, a }
-            ApplySettings()
-        end
-    })
-    row2c:AddWidget(timerColor, 0.5)
-    manager:Register(timerColor, "all")
-    card2:AddRow(row2c, Theme.rowHeight)
-
-    local row2d = GUIFrame:CreateRow(card2.content, Theme.rowHeightLast)
-    local chargeAvailColor = GUIFrame:CreateColorPicker(row2d, "Charges Available", {
-        color = db.ChargeAvailableColor,
-        callback = function(r, g, b, a)
-            db.ChargeAvailableColor = { r, g, b, a }
-            ApplySettings()
-        end
-    })
-    row2d:AddWidget(chargeAvailColor, 0.5)
-    manager:Register(chargeAvailColor, "all")
-
-    local chargeUnavailColor = GUIFrame:CreateColorPicker(row2d, "Charges Unavailable", {
-        color = db.ChargeUnavailableColor,
-        callback = function(r, g, b, a)
-            db.ChargeUnavailableColor = { r, g, b, a }
-            ApplySettings()
-        end
-    })
-    row2d:AddWidget(chargeUnavailColor, 0.5)
-    manager:Register(chargeUnavailColor, "all")
-    card2:AddRow(row2d, Theme.rowHeightLast, 0)
+    row2b:AddWidget(timeFormatDropdown, 0.5)
+    manager:Register(timeFormatDropdown, 'all')
+    card2:AddRow(row2b, Theme.rowHeightLast, 0)
 
     yOffset = card2:GetNextOffset()
 
-    -- Card 3: Backdrop
-    local card3 = GUIFrame:CreateCard(scrollChild, "Backdrop", yOffset)
-    manager:Register(card3, "all")
-    table_insert(postUpdateCallbacks, UpdateBackdropState)
+    -- Card 3: Colors
+    local card3 = GUIFrame:CreateCard(scrollChild, 'Colors', yOffset)
+    manager:Register(card3, 'all')
 
+    -- Charge available color picker
     local row3a = GUIFrame:CreateRow(card3.content, Theme.rowHeight)
-    local backdropCheck = GUIFrame:CreateCheckbox(row3a, "Enable Backdrop", {
-        value = db.Backdrop.Enabled,
-        callback = function(checked)
-            db.Backdrop.Enabled = checked
+    local chargeAvailColor = GUIFrame:CreateColorPicker(row3a, 'Charges Available', {
+        color = db.ColorChargeAvailable,
+        callback = function(r, g, b, a)
+            db.ColorChargeAvailable = { r, g, b, a }
             ApplySettings()
-            UpdateBackdropState()
         end
     })
-    row3a:AddWidget(backdropCheck, 1)
-    manager:Register(backdropCheck, "all")
+    row3a:AddWidget(chargeAvailColor, 0.5)
+    manager:Register(chargeAvailColor, 'all')
+
+    -- Charge unavailable color picker
+    local chargeUnavailColor = GUIFrame:CreateColorPicker(row3a, 'Charges Unavailable', {
+        color = db.ColorChargeUnavailable,
+        callback = function(r, g, b, a)
+            db.ColorChargeUnavailable = { r, g, b, a }
+            ApplySettings()
+        end
+    })
+    row3a:AddWidget(chargeUnavailColor, 0.5)
+    manager:Register(chargeUnavailColor, 'all')
     card3:AddRow(row3a, Theme.rowHeight)
 
-    local separator = GUIFrame:CreateSeparator(card3.content)
-    card3:AddRow(separator, Theme.rowHeightSeparator)
-
-    local row3ab = GUIFrame:CreateRow(card3.content, Theme.rowHeight)
-    local bgColor = GUIFrame:CreateColorPicker(row3ab, "Background Color", {
-        color = db.Backdrop.Color,
-        callback = function(r, g, b, a)
-            db.Backdrop.Color = { r, g, b, a }
-            ApplySettings()
-        end
-    })
-    row3ab:AddWidget(bgColor, 1)
-    manager:Register(bgColor, "all")
-    table_insert(backdropSubWidgets, bgColor)
-    card3:AddRow(row3ab, Theme.rowHeight)
-
+    -- Charge timer color picker
     local row3b = GUIFrame:CreateRow(card3.content, Theme.rowHeight)
-    local frameWidthSlider = GUIFrame:CreateSlider(row3b, "Background Width", {
-        min = 50,
-        max = 300,
-        step = 1,
-        value = db.Backdrop.FrameWidth,
-        callback = function(val)
-            db.Backdrop.FrameWidth = val
+    local timerColor = GUIFrame:CreateColorPicker(row3b, 'Timer', {
+        color = db.ColorTimer,
+        callback = function(r, g, b, a)
+            db.ColorTimer = { r, g, b, a }
             ApplySettings()
         end
     })
-    row3b:AddWidget(frameWidthSlider, 0.5)
-    manager:Register(frameWidthSlider, "all")
-    table_insert(backdropSubWidgets, frameWidthSlider)
+    row3b:AddWidget(timerColor, 0.5)
+    manager:Register(timerColor, 'all')
 
-    local frameHeightSlider = GUIFrame:CreateSlider(row3b, "Background Height", {
-        min = 16,
-        max = 100,
-        step = 1,
-        value = db.Backdrop.FrameHeight,
-        callback = function(val)
-            db.Backdrop.FrameHeight = val
+    -- Separator color picker
+    local sepColor = GUIFrame:CreateColorPicker(row3b, 'Separator', {
+        color = db.ColorSeparator,
+        callback = function(r, g, b, a)
+            db.ColorSeparator = { r, g, b, a }
             ApplySettings()
         end
     })
-    row3b:AddWidget(frameHeightSlider, 0.5)
-    manager:Register(frameHeightSlider, "all")
-    table_insert(backdropSubWidgets, frameHeightSlider)
+    row3b:AddWidget(sepColor, 0.5)
+    manager:Register(sepColor, 'all')
     card3:AddRow(row3b, Theme.rowHeight)
 
-    local separator2 = GUIFrame:CreateSeparator(card3.content)
-    card3:AddRow(separator2, Theme.rowHeightSeparator)
-
-    local row3bc = GUIFrame:CreateRow(card3.content, Theme.rowHeightLast)
-    local borderColor = GUIFrame:CreateColorPicker(row3bc, "Border Color", {
-        color = db.Backdrop.BorderColor,
+    -- Format text color picker
+    local row3c = GUIFrame:CreateRow(card3.content, Theme.rowHeightLast)
+    local formatColor = GUIFrame:CreateColorPicker(row3c, 'Format Text', {
+        color = db.ColorFormat,
         callback = function(r, g, b, a)
-            db.Backdrop.BorderColor = { r, g, b, a }
+            db.ColorFormat = { r, g, b, a }
             ApplySettings()
         end
     })
-    row3bc:AddWidget(borderColor, 1)
-    manager:Register(borderColor, "all")
-    table_insert(backdropSubWidgets, borderColor)
-    card3:AddRow(row3bc, Theme.rowHeightLast, 0)
+    row3c:AddWidget(formatColor, 1)
+    manager:Register(formatColor, 'all')
+    card3:AddRow(row3c, Theme.rowHeightLast, 0)
 
     yOffset = card3:GetNextOffset()
 
-    -- Card 4: Font Settings
+    -- Card 4: Backdrop
+    local card4 = GUIFrame:CreateCard(scrollChild, 'Backdrop', yOffset)
+    manager:Register(card4, 'all')
+
+    -- Enable backdrop toggle
+    local row4a = GUIFrame:CreateRow(card4.content, Theme.rowHeight)
+    local backdropCheck = GUIFrame:CreateCheckbox(row4a, 'Enable Backdrop', {
+        value = db.BackdropEnabled,
+        callback = function(checked)
+            db.BackdropEnabled = checked
+            ApplySettings()
+            UpdateAllWidgetStates()
+        end
+    })
+    row4a:AddWidget(backdropCheck, 1)
+    manager:Register(backdropCheck, 'all')
+    card4:AddRow(row4a, Theme.rowHeight)
+
+    -- Separator
+    local sep4 = GUIFrame:CreateSeparator(card4.content)
+    card4:AddRow(sep4, Theme.rowHeightSeparator)
+
+    -- Background color picker
+    local row4b = GUIFrame:CreateRow(card4.content, Theme.rowHeight)
+    local bgColor = GUIFrame:CreateColorPicker(row4b, 'Background Color', {
+        color = db.BackgroundColor,
+        callback = function(r, g, b, a)
+            db.BackgroundColor = { r, g, b, a }
+            ApplySettings()
+        end
+    })
+    row4b:AddWidget(bgColor, 0.5)
+    manager:Register(bgColor, 'all', 'Backdrop')
+
+    -- Border color picker
+    local borderColor = GUIFrame:CreateColorPicker(row4b, 'Border Color', {
+        color = db.BorderColor,
+        callback = function(r, g, b, a)
+            db.BorderColor = { r, g, b, a }
+            ApplySettings()
+        end
+    })
+    row4b:AddWidget(borderColor, 0.5)
+    manager:Register(borderColor, 'all', 'Backdrop')
+    card4:AddRow(row4b, Theme.rowHeight)
+
+    -- Padding X slider
+    local row4c = GUIFrame:CreateRow(card4.content, Theme.rowHeightLast)
+    local padXSlider = GUIFrame:CreateSlider(row4c, 'Padding X', {
+        min = 0,
+        max = 40,
+        step = 1,
+        value = db.BackdropWidth,
+        callback = function(val)
+            db.BackdropWidth = val
+            ApplySettings()
+        end
+    })
+    row4c:AddWidget(padXSlider, 0.5)
+    manager:Register(padXSlider, 'all', 'Backdrop')
+
+    -- Padding Y slider
+    local padYSlider = GUIFrame:CreateSlider(row4c, 'Padding Y', {
+        min = 0,
+        max = 40,
+        step = 1,
+        value = db.BackdropHeight,
+        callback = function(val)
+            db.BackdropHeight = val
+            ApplySettings()
+        end
+    })
+    row4c:AddWidget(padYSlider, 0.5)
+    manager:Register(padYSlider, 'all', 'Backdrop')
+    card4:AddRow(row4c, Theme.rowHeightLast, 0)
+
+    yOffset = card4:GetNextOffset()
+
+    -- Card 5: Font Settings
     local fontCard, fontOffset, fontWidgets = GUIFrame:CreateFontSettingsCard(scrollChild, yOffset, {
         db = db,
         includeSoftOutline = true,
         onChangeCallback = ApplySettings,
         globalOverride = {},
     })
-    manager:Register(fontCard, "all")
-    manager:RegisterGroup(fontWidgets, "all")
-    if fontCard.UpdateShadowState then table_insert(postUpdateCallbacks, fontCard.UpdateShadowState) end
+    manager:Register(fontCard, 'all')
+    manager:RegisterGroup(fontWidgets, 'all')
 
     yOffset = fontOffset
 
-    -- Card 5: Position
-    local posCard, posOffset = GUIFrame:CreatePositionCard(scrollChild, yOffset, {
+    -- Card 6: Position
+    local posCard, posOffset, positionWidgets = GUIFrame:CreatePositionCard(scrollChild, yOffset, {
         db = db,
         showAnchorFrameType = true,
         showStrata = true,
         onChangeCallback = ApplySettings,
     })
-    manager:Register(posCard, "all")
-    if posCard.positionWidgets then manager:RegisterGroup(posCard.positionWidgets, "all") end
+    manager:Register(posCard, 'all')
+    manager:RegisterGroup(positionWidgets, 'all')
 
     yOffset = posOffset
 

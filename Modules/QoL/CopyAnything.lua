@@ -227,8 +227,7 @@ function CopyAnything:OnEnable()
     self:RegisterEvent('PLAYER_REGEN_DISABLED')
     self:RegisterEvent('PLAYER_REGEN_ENABLED')
 
-    if InCombatLockdown() then return end -- Dont create frame in combat, it will block the keyboard input until combat ends
-    self:CreateKeyboardFrame()
+    NRSKNUI:RunWhenSafe(function() self:CreateKeyboardFrame() end)
 end
 
 function CopyAnything:OnDisable()

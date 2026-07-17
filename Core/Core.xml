@@ -2,12 +2,13 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
 
     <Script file="Init.lua" />
+    <Script file="Restricted.lua" />
     <Script file="Defaults.lua" />
     <Script file="Main.lua" />
     <Script file="PixelPerfect.lua" />
     <Script file="InjectAPI.lua" />
     <Script file="GlobalAPI.lua" />
-    <Script file="Secret.lua" />
+    <Script file="Formatting.lua" />
     <Script file="MediaCore.lua" />
     <Script file="FontCore.lua" />
     <Script file="BlizzardFonts.lua" />

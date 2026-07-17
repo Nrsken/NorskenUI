@@ -85,3 +85,24 @@ function NRSKNUI:SafeGetUnitFromGUID(GUID)
     -- All checks failed, return nil.
     return nil
 end
+
+-- Get unit name safely, returns nil if unit or name is secret
+function NRSKNUI:GetSafeUnitName(unit)
+    if not self:IsSafeValue(unit) then return nil end -- unit is nil or secret.
+    if type(unit) ~= "string" then return nil end -- unit is not a string.
+
+    local name = GetUnitName(unit, false)
+    if not self:IsSafeValue(name) then return nil end
+
+    return name:gsub("%s?%(%*%)", "")
+end
+
+-- Safely get text from a FontString, returns nil if secret
+function NRSKNUI:GetSafeText(fontString)
+    if not fontString or not fontString.GetText then return nil end
+
+    local text = fontString:GetText()
+    if not self:IsSafeValue(text) then return nil end
+
+    return text
+end

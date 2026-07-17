@@ -55,8 +55,13 @@ GUI:RegisterContent('combatTimer', function(scrollChild, yOffset)
     row2a:AddWidget(combatOnlyCheck, 0.5)
     manager:Register(combatOnlyCheck, 'all')
 
+    -- Same time formats as CombatRes, plus a sub-second option unique to the timer.
+    local formatOptions = {}
+    for key, preview in pairs(NRSKNUI.TimeFormats) do formatOptions[key] = preview end
+    formatOptions['MM:SS.f'] = '01:30.5'
+
     local formatDropdown = GUI:CreateDropdown(row2a, 'Format', {
-        options = { ['MM:SS'] = 'MM:SS', ['MM:SS:MS'] = 'MM:SS:MS' },
+        options = formatOptions,
         value = db.Format,
         callback = function(key)
             db.Format = key

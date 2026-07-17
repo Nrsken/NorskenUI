@@ -238,8 +238,8 @@ local Defaults = {
             BackdropEnabled = false,             -- Enable/disable backdrop
             BackgroundColor = { 0, 0, 0, 0.8 },
             BorderColor = { 0, 0, 0, 1 },
-            BackdropWidth = 8,
-            BackdropHeight = 5,
+            BackdropWidth = 4,
+            BackdropHeight = 4,
             PrintEnd = false,
         },
 
@@ -377,10 +377,24 @@ local Defaults = {
             RangeColorRangedEnabled = true,
             OutOfRangeColor = { 1, 0, 0, 1 },
         },
-
         -- Battle Res Tracker Settings
         BattleRes = {
+            -- General Settings
             Enabled = true,
+            -- Text Settings
+            TextSeparator = "%sep",
+            TextCharge = "%s",
+            TextTimer = "%p",
+            TextFormat = "CR: %s %sep %p",
+            Separator = "||",
+            TimeFormat = "MM:SS",
+            -- Color Settings
+            ColorSeparator = { 1, 1, 1, 1 },
+            ColorChargeAvailable = { 0.3, 1, 0.3, 1 },
+            ColorChargeUnavailable = { 1, 0.3, 0.3, 1 },
+            ColorTimer = { 1, 1, 1, 1 },
+            ColorFormat = { 1, 1, 1, 1 },
+            -- Frame Settings
             Strata = "HIGH",
             anchorFrameType = "UIPARENT",
             ParentFrame = "UIParent",
@@ -390,31 +404,23 @@ local Defaults = {
                 XOffset = 814,
                 YOffset = -465,
             },
+            -- Font Settings
             UseGlobalFont = true,
             FontFace = "Expressway",
             FontSize = 18,
-            FontOutline = "SOFTOUTLINE",
+            FontOutline = "OUTLINE",
             FontShadow = {
                 Enabled = false,
                 Color = { 0, 0, 0, 1 },
                 OffsetX = 1,
                 OffsetY = -1,
             },
-            TextSpacing = 4,
-            GrowthDirection = "RIGHT",
-            Separator = "|",
-            SeparatorCharges = "CR:",
-            SeparatorColor = { 1, 1, 1, 1 },
-            TimerColor = { 1, 1, 1, 1 },
-            ChargeAvailableColor = { 0.3, 1, 0.3, 1 },
-            ChargeUnavailableColor = { 1, 0.3, 0.3, 1 },
-            Backdrop = {
-                Enabled = true,
-                Color = { 0, 0, 0, 0.8 },
-                BorderColor = { 0, 0, 0, 1 },
-                FrameWidth = 112,
-                FrameHeight = 27,
-            },
+            -- Backdrop Settings
+            BackdropEnabled = true,
+            BackgroundColor = { 0, 0, 0, 0.8 },
+            BorderColor = { 0, 0, 0, 1 },
+            BackdropWidth = 4,
+            BackdropHeight = 4,
         },
 
         -- Burning Rush Tracker (Warlock)

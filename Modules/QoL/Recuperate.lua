@@ -106,54 +106,32 @@ end
 function Recuperate:OnEnable()
     if not self.db.Enabled then return end
 
-    -- Defer button creation until out of combat, otherwise it will throw a taint error.
-    if InCombatLockdown() then
-        NRSKNUI:DeferUntilUnrestricted(0, function()
-            Recuperate:OnEnable()
-        end)
-        return
-    end
+    -- Dealing with a secure button, so don't do anything until combat is over.
+    NRSKNUI:RunWhenSafe(function()
+        self:CreateButton()
+        self:ApplySettings()
+        self:UpdateAlpha()
 
-    self:CreateButton()
-    self:ApplySettings()
-    self:UpdateAlpha()
-
-    -- Reigster events.
-    self:RegisterEvent('PLAYER_ENTERING_WORLD', 'UpdateAlpha')
-    self:RegisterEvent('PLAYER_REGEN_ENABLED', 'UpdateAlpha')
-    self:RegisterEvent('GROUP_ROSTER_UPDATE', 'UpdateAlpha')
-    self:RegisterEvent('UNIT_HEALTH')
-    self:RegisterEvent('PLAYER_DEAD', 'UpdateAlpha')
-    self:RegisterEvent('PLAYER_UNGHOST', 'UpdateAlpha')
+        -- Reigster events.
+        self:RegisterEvent('PLAYER_ENTERING_WORLD', 'UpdateAlpha')
+        self:RegisterEvent('PLAYER_REGEN_ENABLED', 'UpdateAlpha')
+        self:RegisterEvent('GROUP_ROSTER_UPDATE', 'UpdateAlpha')
+        self:RegisterEvent('UNIT_HEALTH')
+        self:RegisterEvent('PLAYER_DEAD', 'UpdateAlpha')
+        self:RegisterEvent('PLAYER_UNGHOST', 'UpdateAlpha')
+    end)
 end
 
 function Recuperate:OnDisable()
     if self.button then
-        if InCombatLockdown() then
-            NRSKNUI:DeferUntilUnrestricted(0, function()
-                if Recuperate.button then
-                    UnregisterStateDriver(Recuperate.button, 'visibility')
-                    Recuperate.button:Hide()
-                end
-            end)
-        else
-            UnregisterStateDriver(self.button, 'visibility')
-            self.button:Hide()
-        end
+        UnregisterStateDriver(self.button, 'visibility')
+        self.button:Hide()
     end
     self.isPreview = false
 end
 
 function Recuperate:ShowPreview()
-    if InCombatLockdown() then
-        NRSKNUI:DeferUntilUnrestricted(0, function()
-            Recuperate:ShowPreview()
-        end)
-        return
-    end
-
     if not self.button then return end
-
     self.isPreview = true
     UnregisterStateDriver(self.button, 'visibility')
     self.button:SetAlpha(1)
@@ -165,17 +143,13 @@ function Recuperate:HidePreview()
     self.isPreview = false
     if not self.button then return end
 
-    if InCombatLockdown() then
-        NRSKNUI:DeferUntilUnrestricted(0, function()
-            Recuperate:HidePreview()
-        end)
-        return
-    end
-
-    if self.db.Enabled then
-        RegisterStateDriver(self.button, 'visibility', self:GetVisibilityString())
-        self:UpdateAlpha()
-    else
-        self.button:Hide()
-    end
+    -- Run when safe in case GUI is auto closed because the player entered combat.
+    NRSKNUI:RunWhenSafe(function()
+        if self.db.Enabled then
+            RegisterStateDriver(self.button, 'visibility', self:GetVisibilityString())
+            self:UpdateAlpha()
+        else
+            self.button:Hide()
+        end
+    end)
 end

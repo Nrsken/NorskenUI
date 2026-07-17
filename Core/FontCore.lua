@@ -384,6 +384,26 @@ do
     end)
 end
 
+---Widest possible digit for the current font, used to pre-size a string to avoid width jitter when digits change.
+---@param self FontString
+---@return string digit
+local function GetWidestDigit(self)
+    local prev = self:GetText()
+    local widest, best = '0', -1
+    for i = 0, 9 do
+        local ch = string.char(48 + i)
+        self:SetText(ch)
+        local w = self:GetStringWidth()
+        if w > best then
+            best, widest = w, ch
+        end
+    end
+    if prev then
+        self:SetText(prev)
+    end
+    return widest
+end
+
 -- Publish onto both metatables.
 do
     -- FontString and Font are distinct types, so a FontString we create and a named Blizzard Font object, e.g. InvoiceTextFontNormal, need the method injected separately.
@@ -391,8 +411,12 @@ do
         SetFontStyle = SetFontStyle,
         SetFontJustify = SetFontJustify,
     }
-    NRSKNUI:InjectAPI(CreateFrame('Frame'):CreateFontString(), methods)
+    local fontString = CreateFrame('Frame'):CreateFontString()
+    NRSKNUI:InjectAPI(fontString, methods)
     NRSKNUI:InjectAPI(_G.GameFontNormal, methods)
+
+    -- GetWidestDigit is a FontString-only metric (Font/EditBox have no GetStringWidth).
+    NRSKNUI:InjectAPI(fontString, { GetWidestDigit = GetWidestDigit })
 
     -- EditBox has SetFontObject too, but it is not a FontString, so it needs its own proxy to get the methods.
     local editBoxProxy = CreateFrame('EditBox', nil, NRSKNUI.HiddenFrame)

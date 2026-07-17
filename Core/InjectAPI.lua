@@ -649,8 +649,8 @@ end
 -- OnUpdate Utility --
 
 ---@param frame Frame
----@param throttle number
----@param callback fun(frame: Frame)
+---@param throttle? number Omit together with callback to clear the OnUpdate handler
+---@param callback? fun(frame: Frame)
 local function ApplyOnUpdate(frame, throttle, callback)
     if throttle and callback then
         local total = 0
@@ -709,10 +709,32 @@ local function TemporaryOnUpdate()
     NRSKNUI:InjectAPI(CreateFrame('Frame'), injectMethods)
 end
 
+---Size a backdrop to fit a FontString's widest possible text.
+---@param self Frame
+---@param fontString FontString The string region measured and, on resize, temporarily clobbered.
+---@param text string The exact (possibly colored) text about to be displayed.
+---@param padX number Horizontal padding added to each side.
+---@param padY number Vertical padding added to each side.
+---@return boolean resized True when the backdrop was resized this call (caller must re-apply text).
+local function FitBackdropToText(self, fontString, text, padX, padY)
+    -- Strip color escapes and mask digits: two values with the same skeleton keep one width.
+    local bare = text:gsub('|c%x%x%x%x%x%x%x%x', ''):gsub('|r', '')
+    local key = (bare:gsub('%d', '#'))
+    if key == self.NUIBackdropShape then return false end
+    self.NUIBackdropShape = key
+
+    -- Widest glyph in every digit slot is a true upper bound for this shape, so it can't overflow.
+    local worst = (bare:gsub('%d', fontString:GetWidestDigit()))
+    fontString:SetText(worst)
+    self:SetPixelSize(fontString:GetStringWidth() + padX * 2, fontString:GetStringHeight() + padY * 2)
+    return true
+end
+
 do
     -- Inject methods in this file.
     local injectMethods = {
         CreateBackdrop = CreateBackdrop,
+        FitBackdropToText = FitBackdropToText,
         AddBorders = AddBorders,
         HasBackdrop = HasBackdrop,
         HasBorder = HasBorder,

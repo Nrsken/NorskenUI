@@ -97,10 +97,11 @@ function EditBox:SetFontJustify(source, parent, offsetX, offsetY, skip) end
 ---@field SetBorderLayer fun(self: Frame, layer: string, sublevel?: number) Set the draw layer of all 4 edges (e.g. 'ARTWORK', 'OVERLAY')
 ---@field SetBorderParent fun(self: Frame, parent: Frame, sublevel?: number) Reparent all 4 edges to a new parent (e.g. the frame's texture)
 ---@field SetBorderShown fun(self: Frame, shown: boolean) Show/hide all 4 edges
----@field ApplyOnUpdate fun(self: Frame, throttle: number, callback: fun(self: Frame, elapsed: number)) Add a callback to run on the frame's OnUpdate script (multiple callbacks can be added)
+---@field ApplyOnUpdate fun(self: Frame, throttle?: number, callback?: fun(self: Frame, elapsed: number)) Add a callback to run on the frame's OnUpdate script (multiple callbacks can be added)
 ---@field SetScheduledUpdate fun(self: Frame, callback: fun(self: Frame), whenVisible?: boolean) Install a coalesced one-shot handler; arm it with ScheduleUpdate
 ---@field ScheduleUpdate fun(self: Frame) Arm the SetScheduledUpdate handler to run once next frame; repeated calls coalesce
 ---@field SetOnUpdateMode fun(self: Frame, mode: number) Set the OnUpdateMode (Enum.OnUpdateMode) for this frame; see docs for details
+---@field FitBackdropToText fun(self: Frame, fontString: FontString, text: string, padX: number, padY: number): boolean Size the backdrop to the widest string sharing text's digit shape; returns true if it resized
 local Frame
 
 ---Strip textures/atlases in a controlled way. `'Keyed'` recurses keyed children then clears own regions.
@@ -163,7 +164,7 @@ function Frame:StyleChildFontStrings(source, getSize, outline, shadow, skip, set
 ---@field SetBorderLayer fun(self: Button, layer: string, sublevel?: number) Set the draw layer of all 4 edges (e.g. 'ARTWORK', 'OVERLAY')
 ---@field SetBorderParent fun(self: Button, parent: Frame) Reparent all 4 edges to a new parent (e.g. the frame's texture)
 ---@field SetBorderShown fun(self: Button, shown: boolean) Show/hide all 4 edges
----@field ApplyOnUpdate fun(self: Button, throttle: number, callback: fun(self: Button, elapsed: number)) Add a callback to run on the frame's OnUpdate script (multiple callbacks can be added)
+---@field ApplyOnUpdate fun(self: Button, throttle?: number, callback?: fun(self: Button, elapsed: number)) Add a callback to run on the frame's OnUpdate script (multiple callbacks can be added)
 ---@field SetScheduledUpdate fun(self: Button, callback: fun(self: Button), whenVisible?: boolean) Install a coalesced one-shot handler; arm it with ScheduleUpdate
 ---@field ScheduleUpdate fun(self: Button) Arm the SetScheduledUpdate handler to run once next frame; repeated calls coalesce
 ---@field RegisterCallback fun(self: table, event: string, callback: fun(btn: any), owner: table)
@@ -217,7 +218,7 @@ function Button:ApplyPosition(Config, setParent) end
 ---@field SetBorderLayer fun(self: StatusBar, layer: string, sublevel?: number) Set the draw layer of all 4 edges (e.g. 'ARTWORK', 'OVERLAY')
 ---@field SetBorderParent fun(self: StatusBar, parent: Frame) Reparent all 4 edges to a new parent (e.g. the frame's texture)
 ---@field SetBorderShown fun(self: StatusBar, shown: boolean) Show/hide all 4 edges
----@field ApplyOnUpdate fun(self: StatusBar, throttle: number, callback: fun(self: StatusBar, elapsed: number)) Add a callback to run on the frame's OnUpdate script (multiple callbacks can be added)
+---@field ApplyOnUpdate fun(self: StatusBar, throttle?: number, callback?: fun(self: StatusBar, elapsed: number)) Add a callback to run on the frame's OnUpdate script (multiple callbacks can be added)
 ---@field SetScheduledUpdate fun(self: StatusBar, callback: fun(self: StatusBar), whenVisible?: boolean) Install a coalesced one-shot handler; arm it with ScheduleUpdate
 ---@field ScheduleUpdate fun(self: StatusBar) Arm the SetScheduledUpdate handler to run once next frame; repeated calls coalesce
 local StatusBar
@@ -313,6 +314,11 @@ function FontString:SetFontStyle(source, size, outline, shadow, skip, setOwner) 
 ---@param skip? boolean internal: set during RefreshFontStyles to avoid re-registering
 ---@return boolean applied
 function FontString:SetFontJustify(source, parent, offsetX, offsetY, skip) end
+
+---Widest decimal digit glyph in this string's current font (proportional fonts vary).
+---Reserve space for changing numbers with this instead of assuming "0" is widest.
+---@return string digit
+function FontString:GetWidestDigit() end
 
 ---@class _G
 ---@field StaticPopup1Button1 Button

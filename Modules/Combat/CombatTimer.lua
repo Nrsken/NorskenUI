@@ -7,8 +7,6 @@ local EM = NRSKNUI.EditMode
 local CreateFrame = CreateFrame
 local GetTime = GetTime
 local unpack = unpack
-local math_floor, math_max = math.floor, math.max
-local string_format = string.format
 
 local IsEncounterInProgress = C_InstanceEncounter and C_InstanceEncounter.IsEncounterInProgress
 
@@ -20,22 +18,6 @@ function CombatTimer:OnInitialize()
     self:UpdateDB()
     self.lastCombatDuration = 0
     self:SetEnabledState(false)
-end
-
----@param totalSeconds number
----@param format string
----@return string
-local function FormatTime(totalSeconds, format)
-    local mins = math_floor(totalSeconds / 60)
-    local secs = math_floor(totalSeconds % 60)
-
-    if format == 'MM:SS:MS' then
-        local frac = totalSeconds - math_floor(totalSeconds)
-        local ms = math_floor(frac * 10)
-        return string_format('%02d:%02d:%d', mins, secs, ms)
-    end
-
-    return string_format('%02d:%02d', mins, secs)
 end
 
 function CombatTimer:CreateFrame()
@@ -82,12 +64,8 @@ function CombatTimer:ApplySettings()
     self.frame.text:SetFontStyle(self.db)
     self.frame.text:SetFontJustify(self.db, nil, 4)
 
-    self.refreshRate = (self.db.Format == 'MM:SS:MS' and 0.1) or 0.25
-
-    local refText = (self.db.Format == 'MM:SS:MS' and '00:00:0') or '00:00'
-    self.frame.text:SetText(refText)
-
-    self:UpdateState()
+    -- Only the sub-second format needs the faster tick.
+    self.refreshRate = (self.db.Format == 'MM:SS.f' and 0.1) or 0.25
 
     if self.db.BackdropEnabled then
         self.frame:UpdateBackdropFromDB(self.db)
@@ -96,19 +74,21 @@ function CombatTimer:ApplySettings()
         self.frame:ToggleBackdrop(false)
     end
 
-    local w = math_floor(self.frame.text:GetStringWidth() + self.db.BackdropWidth)
-    local h = math_floor(self.frame.text:GetStringHeight() + self.db.BackdropHeight)
-    self.frame:SetSize(math_max(w, 40), math_max(h, 20))
+    -- Mark for a resize on the next update, since the backdrop may have changed.
+    self.frame.NUIBackdropShape = nil
+    self:UpdateState()
 end
 
 function CombatTimer:TextOnUpdate()
     if not self.frame then return end
 
     local totalTime = (self.running and (GetTime() - self.startTime)) or self.lastCombatDuration
-    local status = FormatTime(totalTime, self.db.Format)
+    local status = NRSKNUI:FormatTime(totalTime, self.db.Format)
 
-    -- If the text has changed, update it.
-    if status ~= self.lastDisplayedText then
+    -- Keep the backdrop fitted to the current shape, a resize clobbers the fontstring.
+    local resized = self.frame:FitBackdropToText(self.frame.text, status, self.db.BackdropWidth, self.db.BackdropHeight)
+
+    if resized or status ~= self.lastDisplayedText then
         self.frame.text:SetText(status)
         self.lastDisplayedText = status
     end
@@ -181,7 +161,7 @@ function CombatTimer:StopTimer(isEncounterEvent)
     end
 
     if self.db.PrintEnd then
-        NRSKNUI:Print('Combat lasted ' .. FormatTime(self.lastCombatDuration, self.db.Format))
+        NRSKNUI:Print('Combat lasted ' .. NRSKNUI:FormatTime(self.lastCombatDuration, self.db.Format))
     end
 
     self:UpdateState()

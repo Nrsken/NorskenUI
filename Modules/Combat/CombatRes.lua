@@ -1,273 +1,238 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
-
----@class CombatRes : NRSKNUI.Module
-local CR = NRSKNUI:NewModule("CombatRes", "AceEvent-3.0")
+---@class CombatRes
+local CombatRes = NRSKNUI:GetModule("CombatRes")
 local EM = NRSKNUI.EditMode
 
 local CreateFrame = CreateFrame
-local UIParent = UIParent
-local C_Spell = C_Spell
 local GetTime = GetTime
-local floor = math.floor
-local format = string.format
+local CreateColor = CreateColor
 local tostring = tostring
+local WrapTextInColorCode = WrapTextInColorCode
 
-local SPELL_ID = 20484
-local UPDATE_INTERVAL = 0.1
+local UIParent = UIParent
 
-function CR:UpdateDB()
+local GetSpellCharges = C_Spell and C_Spell.GetSpellCharges
+
+local BATTLE_RES_SPELL = 20484
+local UPDATE_INTERVAL = 0.25
+local PREVIEW_CHARGES, PREVIEW_REMAINING = 2, 90
+
+function CombatRes:UpdateDB()
     self.db = NRSKNUI.db.profile.BattleRes
 end
 
-function CR:OnInitialize()
+function CombatRes:OnInitialize()
     self:UpdateDB()
     self:SetEnabledState(false)
 end
 
-function CR:UpdateAnchors()
-    if not self.frame or not self.frame.content then return end
-
-    local db = self.db
-    local textSpacing = db.TextSpacing
-    local growthDirection = db.GrowthDirection
-    local padding = 4
-
-    self.frame.content:ClearAllPoints()
-    self.frame.separator:ClearAllPoints()
-    self.frame.charge:ClearAllPoints()
-    self.frame.timerText:ClearAllPoints()
-    if self.frame.CRText then self.frame.CRText:ClearAllPoints() end
-
-    if growthDirection == "RIGHT" then
-        self.frame.content:SetPoint("LEFT", self.frame, "LEFT", padding, 0)
-
-        if self.frame.CRText then
-            self.frame.CRText:SetPoint("LEFT", self.frame.content, "LEFT", 0, 0)
-            self.frame.charge:SetPoint("LEFT", self.frame.CRText, "RIGHT", textSpacing, 0)
-        else
-            self.frame.charge:SetPoint("LEFT", self.frame.content, "LEFT", 0, 0)
-        end
-
-        self.frame.separator:SetPoint("LEFT", self.frame.charge, "RIGHT", textSpacing, 0)
-        self.frame.timerText:SetPoint("LEFT", self.frame.separator, "RIGHT", textSpacing, 0)
-        self.frame.timerText:SetJustifyH("LEFT")
-    elseif growthDirection == "LEFT" then
-        self.frame.content:SetPoint("RIGHT", self.frame, "RIGHT", -padding, 0)
-        self.frame.timerText:SetPoint("RIGHT", self.frame.content, "RIGHT", -textSpacing, 0)
-        self.frame.separator:SetPoint("RIGHT", self.frame.timerText, "LEFT", -textSpacing, 0)
-
-        if self.frame.CRText then
-            self.frame.charge:SetPoint("RIGHT", self.frame.separator, "LEFT", -textSpacing, 0)
-            self.frame.CRText:SetPoint("RIGHT", self.frame.charge, "LEFT", -textSpacing, 0)
-        else
-            self.frame.charge:SetPoint("RIGHT", self.frame.separator, "LEFT", 0, 0)
-        end
-
-        self.frame.timerText:SetJustifyH("RIGHT")
+-- Cache/refresh a ColorMixin from a {r,g,b,a} db table so segments can use WrapTextInColorCode.
+---@param existing ColorMixin|nil
+---@param t colorRGBA|nil
+---@return ColorMixin
+local function RefreshColor(existing, t)
+    t = t or { 1, 1, 1, 1 }
+    if existing then
+        existing:SetRGBA(t[1], t[2], t[3], t[4] or 1)
+        return existing
     end
+    return CreateColor(t[1], t[2], t[3], t[4] or 1)
 end
 
-function CR:CreateFrame()
-    if self.frame then return end
+-- Strip a single leading "%" so a db token ("%s") becomes the placeholder the parser matches ("s").
+---@param token string
+---@return string|nil
+local function TokenKey(token)
+    if not token then return nil end
+    return (token:gsub("^%%", ""))
+end
 
+function CombatRes:CreateFrame()
+    if self.coreFrame then return end
+
+    local coreFrame = CreateFrame("Frame", "NRSKNUI_CombatResFrame", UIParent)
+    coreFrame:SetPixelSize(100, 25)
+    coreFrame:SetFrameLevel(100)
+    coreFrame:EnableMouse(false)
+    coreFrame:SetMouseClickEnabled(false)
+    coreFrame:CreateBackdrop()
+
+    coreFrame.text = coreFrame:CreateFontString(nil, 'OVERLAY')
+
+    -- Finalize the frame and register it with Anchors.
+    ---@type Frame
+    self.coreFrame = coreFrame
+    EM:Register(self, 'CombatRes', self.coreFrame, 'BattleRes')
+    self.coreFrame:Hide()
+end
+
+---Map the tokens to their colored values, then let the shared parser assemble the string.
+---@param chargeCount number
+---@param timeText string
+---@param hasCharges boolean
+---@return string
+function CombatRes:ResolveText(chargeCount, timeText, hasCharges)
     local db = self.db
+    local chargeColor = hasCharges and self.colChargeAvail or self.colChargeUnavail
+    local timerText = self.colTimer
+    local sepText = self.colSep
 
-    local frame = CreateFrame("Frame", "NRSKNUI_BattleResFrame", UIParent, BackdropTemplateMixin and "BackdropTemplate")
-    frame:SetSize(100, 26)
-    frame:SetFrameStrata(db.Strata)
-    frame:SetBackdrop({
-        bgFile = "Interface\\Buttons\\WHITE8X8",
-        edgeFile = "Interface\\Buttons\\WHITE8X8",
-        tile = false,
-        tileSize = 0,
-        edgeSize = 1,
-        insets = { left = 0, right = 0, top = 0, bottom = 0 }
-    })
-    frame:Hide()
+    local replacements = {
+        [self.tokCharge] = chargeColor:WrapTextInColorCode(tostring(chargeCount)),
+        [self.tokTimer]  = timerText:WrapTextInColorCode(timeText),
+        [self.tokSep]    = sepText:WrapTextInColorCode(db.Separator or ""),
+    }
 
-    frame.content = CreateFrame("Frame", nil, frame)
-    frame.content:SetSize(1, 24)
-
-    frame.timerText = frame.content:CreateFontString(nil, "OVERLAY")
-    frame.timerText:SetFontStyle(db)
-    frame.timerText:SetTextColor(1, 1, 1, 1)
-
-    frame.separator = frame.content:CreateFontString(nil, "OVERLAY")
-    frame.separator:SetFontStyle(db)
-    frame.separator:SetText(db.Separator)
-    frame.separator:SetTextColor(1, 1, 1, 1)
-
-    frame.charge = frame.content:CreateFontString(nil, "OVERLAY")
-    frame.charge:SetFontStyle(db)
-    frame.charge:SetTextColor(1, 1, 1, 1)
-
-    frame.CRText = frame.content:CreateFontString(nil, "OVERLAY")
-    frame.CRText:SetFontStyle(db)
-    frame.CRText:SetText("CR:")
-    frame.CRText:SetTextColor(1, 1, 1, 1)
-
-    self.frame = frame
+    return NRSKNUI:FormatTokens(db.TextFormat, replacements, self.WrapFormat)
 end
 
-function CR:ApplyTextSettings()
-    if not self.frame then return end
-
-    local db = self.db
-    local sc = db.SeparatorColor
-    local tc = db.TimerColor
-
-    self.frame.separator:SetText(db.Separator)
-    self.frame.separator:SetTextColor(sc[1], sc[2], sc[3], sc[4])
-    self.frame.separator:SetFontStyle(db)
-
-    self.frame.charge:SetFontStyle(db)
-
-    self.frame.CRText:SetText(db.SeparatorCharges)
-    self.frame.CRText:SetTextColor(sc[1], sc[2], sc[3], sc[4])
-    self.frame.CRText:SetFontStyle(db)
-
-    self.frame.timerText:SetTextColor(tc[1], tc[2], tc[3], tc[4])
-    self.frame.timerText:SetFontStyle(db)
-
-    self:UpdateAnchors()
-    self:ApplyBackdropSettings()
+-- Seconds until the next charge comes off cooldown (0 when fully charged).
+---@return number
+function CombatRes:GetRemaining()
+    local info = self.chargeInfo
+    if not info or not info.cooldownStartTime then return 0 end
+    local remaining = (info.cooldownStartTime + info.cooldownDuration) - GetTime()
+    if remaining < 0 then remaining = 0 end
+    return remaining
 end
 
-function CR:ApplyBackdropSettings()
-    if not self.frame then return end
-
-    local backdrop = self.db.Backdrop
-    self.frame:SetSize(backdrop.FrameWidth, backdrop.FrameHeight)
-
-    if backdrop.Enabled then
-        local bgColor = backdrop.Color
-        local borderColor = backdrop.BorderColor
-        self.frame:SetBackdropColor(bgColor[1], bgColor[2], bgColor[3], bgColor[4])
-        self.frame:SetBackdropBorderColor(borderColor[1], borderColor[2], borderColor[3], borderColor[4])
-    else
-        self.frame:SetBackdropColor(0, 0, 0, 0)
-        self.frame:SetBackdropBorderColor(0, 0, 0, 0)
-    end
-end
-
-function CR:UpdateCharges()
-    local frame = self.frame
+-- Resolve current state, push the string, and size the frame to fit.
+function CombatRes:Render()
+    local frame = self.coreFrame
     if not frame then return end
 
-    local chargeTable = C_Spell.GetSpellCharges(SPELL_ID)
+    local info = self.chargeInfo
+    local chargeCount, hasCharges, remaining
 
-    if not chargeTable or not chargeTable.currentCharges then
-        if self.isPreview then
-            frame:Show()
-            frame.timerText:SetText("02:00")
-            frame.charge:SetText("2")
-            local ac = self.db.ChargeAvailableColor
-            frame.charge:SetTextColor(ac[1], ac[2], ac[3], ac[4])
-        else
-            frame:Hide()
-        end
-        self.chargeTable = nil
-        return
-    end
-
-    self.chargeTable = chargeTable
-    frame:Show()
-
-    local curCharges = chargeTable.currentCharges
-    local hasCharges = curCharges > 0
-
-    frame.charge:SetText(tostring(curCharges))
-
-    local color = hasCharges and self.db.ChargeAvailableColor or self.db.ChargeUnavailableColor
-    frame.charge:SetTextColor(color[1], color[2], color[3], color[4])
-end
-
-function CR:UpdateTimer()
-    local frame = self.frame
-    if not frame or not frame:IsShown() then return end
-
-    local chargeTable = self.chargeTable
-    if not chargeTable then return end
-
-    local currentCd = chargeTable.cooldownStartTime + chargeTable.cooldownDuration - GetTime()
-
-    local timerText
-    if currentCd > 0 then
-        if currentCd >= 3600 then
-            timerText = format("%d:%02d", floor(currentCd / 3600), floor((currentCd % 3600) / 60))
-        else
-            timerText = format("%02d:%02d", floor(currentCd / 60), floor(currentCd % 60))
-        end
+    if info and info.currentCharges and (info.maxCharges or 0) > 0 then
+        chargeCount = info.currentCharges
+        hasCharges = chargeCount > 0
+        remaining = self:GetRemaining()
+    elseif self.isPreview then
+        chargeCount, hasCharges, remaining = PREVIEW_CHARGES, true, PREVIEW_REMAINING
     else
-        timerText = "00:00"
-    end
-
-    if timerText ~= self.lastTimerText then
-        self.lastTimerText = timerText
-        frame.timerText:SetText(timerText)
-    end
-end
-
-function CR:OnUpdate(elapsed)
-    self.lastUpdate = self.lastUpdate + elapsed
-    if self.lastUpdate < UPDATE_INTERVAL then return end
-    self.lastUpdate = 0
-    self:UpdateTimer()
-end
-
-function CR:ApplySettings()
-    if not self.frame then self:CreateFrame() end
-
-    self.frame:ApplyPosition(self.db)
-    self:ApplyTextSettings()
-
-    if not self.db.Enabled and not self.isPreview then
-        self.frame:Hide()
+        frame:Hide()
         return
     end
-    self:UpdateCharges()
+
+    -- This will happen like never but w/e, we add it.
+    local zeroValues = {
+        ['0s']      = true,
+        ['0']       = true,
+        ['0:00']    = true,
+        ['00:00']   = true,
+        ['00m 00s'] = true,
+    }
+
+    local timeText = NRSKNUI:FormatTime(remaining, self.db.TimeFormat)
+    if zeroValues[timeText] then
+        timeText = 'Max'
+    end
+
+    local text = self:ResolveText(chargeCount, timeText, hasCharges)
+
+    -- Re-fit the backdrop only when the string's shape changes, never per tick.
+    if frame:FitBackdropToText(frame.text, text, self.db.BackdropWidth, self.db.BackdropHeight) then
+        self.lastText = nil -- the helper clobbers the fontstring, so force the re-apply below
+    end
+
+    if text ~= self.lastText then
+        self.lastText = text
+        frame.text:SetText(text)
+    end
+
+    frame:Show()
 end
 
-function CR:ShowPreview()
-    if not self.frame then self:CreateFrame() end
-    self.isPreview = true
-    self:ApplySettings()
+function CombatRes:UpdateCharges()
+    self.chargeInfo = GetSpellCharges(BATTLE_RES_SPELL)
+    self:Render()
 end
 
-function CR:HidePreview()
-    self.isPreview = false
-    if not self.db.Enabled and self.frame then self.frame:Hide() end
-    self:UpdateCharges()
+-- Schedule a delayed charge update with AceTimer, charge info is slightly behind the events.
+function CombatRes:ScheduleChargeUpdate()
+    if self.chargeTimer then self:CancelTimer(self.chargeTimer) end
+    self.chargeTimer = self:ScheduleTimer("UpdateCharges", UPDATE_INTERVAL)
 end
 
-function CR:OnEnable()
-    self.lastUpdate = 0
-    self.lastTimerText = ""
-    self.lastChargeText = ""
-    self.lastChargeColor = nil
+function CombatRes:ApplySettings()
+    if not self.coreFrame then return end
+    local db = self.db
+
+    -- Token placeholders and segment colors used by ResolveText.
+    self.tokCharge = TokenKey(db.TextCharge)
+    self.tokTimer = TokenKey(db.TextTimer)
+    self.tokSep = TokenKey(db.TextSeparator)
+
+    -- Update colors
+    self.colFormat = RefreshColor(self.colFormat, db.ColorFormat)
+    self.WrapFormat = self.WrapFormat or function(text) return self.colFormat:WrapTextInColorCode(text) end
+    self.colSep = RefreshColor(self.colSep, db.ColorSeparator)
+    self.colTimer = RefreshColor(self.colTimer, db.ColorTimer)
+    self.colChargeAvail = RefreshColor(self.colChargeAvail, db.ColorChargeAvailable)
+    self.colChargeUnavail = RefreshColor(self.colChargeUnavail, db.ColorChargeUnavailable)
+
+    -- Update position
+    self.coreFrame:ApplyPosition(db)
+
+    -- Update backdrop settings
+    if db.BackdropEnabled then
+        self.coreFrame:UpdateBackdropFromDB(db)
+        self.coreFrame:ToggleBackdrop(true)
+    else
+        self.coreFrame:ToggleBackdrop(false)
+    end
+
+    -- Update font settings
+    self.coreFrame.text:SetFontStyle(db)
+    self.coreFrame.text:SetFontJustify(db, nil, self.db.Position.AnchorFrom == 'CENTER' and 0 or 4)
+
+    -- Mark for a resize on the next update, since the backdrop may have changed.
+    self.coreFrame.NUIBackdropShape = nil
+    self.coreFrame:FitBackdropToText(self.coreFrame.text,
+        self:ResolveText(PREVIEW_CHARGES, NRSKNUI:FormatTime(PREVIEW_REMAINING, db.TimeFormat), true),
+        db.BackdropWidth, db.BackdropHeight)
+    self.lastText = nil
+    self:Render()
+end
+
+function CombatRes:OnEnable()
+    if not self.db.Enabled then return end
+
+    self.lastText = nil
     self.isPreview = false
 
     self:CreateFrame()
-    self.db.PreviewMode = false
+    self:ApplySettings()
 
-    C_Timer.After(0.5, function() self:ApplySettings() end)
+    self.coreFrame:ApplyOnUpdate(UPDATE_INTERVAL, function() self:Render() end)
+    self:RegisterEvent("SPELL_UPDATE_CHARGES", "ScheduleChargeUpdate")
+    self:RegisterEvent("CHALLENGE_MODE_START", "ScheduleChargeUpdate")
+    self:RegisterEvent("PLAYER_ENTERING_WORLD", "ScheduleChargeUpdate")
 
-    self.frame:SetScript("OnUpdate", function(_, elapsed) self:OnUpdate(elapsed) end)
-
-    local function DelayedUpdate() C_Timer.After(0.2, function() self:UpdateCharges() end) end
-    self:RegisterEvent("SPELL_UPDATE_CHARGES", DelayedUpdate)
-    self:RegisterEvent("CHALLENGE_MODE_START", DelayedUpdate)
-    self:RegisterEvent("PLAYER_ENTERING_WORLD", DelayedUpdate)
-
-    EM:Register(self, 'CombatRes', self.frame, 'battleRes')
+    self:UpdateCharges()
 end
 
-function CR:OnDisable()
-    if self.frame then
-        self.frame:SetScript("OnUpdate", nil)
-        self.frame:Hide()
+function CombatRes:OnDisable()
+    if self.coreFrame then
+        self.coreFrame:ApplyOnUpdate()
+        self.coreFrame:Hide()
     end
     self.isPreview = false
-    self:UnregisterAllEvents()
+end
+
+function CombatRes:ShowPreview()
+    if not self.coreFrame then
+        self:CreateFrame()
+        self:ApplySettings()
+    end
+    self.isPreview = true
+    self:Render()
+    self.coreFrame:Show()
+end
+
+function CombatRes:HidePreview()
+    self.isPreview = false
+    self:UpdateCharges()
 end

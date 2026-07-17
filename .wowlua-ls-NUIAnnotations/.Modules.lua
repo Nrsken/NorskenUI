@@ -20,6 +20,8 @@
 ---@class Durability : NRSKNUI.Module, NRSKNUI.AceEvent
 ---@class CombatCross : NRSKNUI.Module, NRSKNUI.AceEvent
 ---@class CombatMessage : NRSKNUI.Module, NRSKNUI.AceEvent, NRSKNUI.AceTimer
+---@class CombatRes : NRSKNUI.Module, NRSKNUI.AceEvent, NRSKNUI.AceTimer
+---@class Restricted : NRSKNUI.Module, NRSKNUI.AceEvent
 
 -- Typed accessors. Overloads dispatch on the literal module name.
 
@@ -45,6 +47,8 @@ local NRSKNUI
 ---@overload fun(self: NRSKNUI, name: "Durability", silent?: boolean): Durability
 ---@overload fun(self: NRSKNUI, name: "CombatCross", silent?: boolean): CombatCross
 ---@overload fun(self: NRSKNUI, name: "CombatMessage", silent?: boolean): CombatMessage
+---@overload fun(self: NRSKNUI, name: "CombatRes", silent?: boolean): CombatRes
+---@overload fun(self: NRSKNUI, name: "Restricted", silent?: boolean): Restricted
 ---@param name string
 ---@param silent? boolean
 ---@return NRSKNUI.Module
@@ -69,6 +73,8 @@ function NRSKNUI:GetModule(name, silent) end
 ---@overload fun(self: NRSKNUI, name: "Durability", ...: string): Durability
 ---@overload fun(self: NRSKNUI, name: "CombatCross", ...: string): CombatCross
 ---@overload fun(self: NRSKNUI, name: "CombatMessage", ...: string): CombatMessage
+---@overload fun(self: NRSKNUI, name: "CombatRes", ...: string): CombatRes
+---@overload fun(self: NRSKNUI, name: "Restricted", ...: string): Restricted
 ---@param name string
 ---@param ... string
 ---@return NRSKNUI.Module

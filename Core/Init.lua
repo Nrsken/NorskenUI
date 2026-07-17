@@ -15,20 +15,42 @@ local AceAddon = _G.LibStub('AceAddon-3.0')
 AceAddon:NewAddon(NRSKNUI, addonName, 'AceEvent-3.0', 'AceTimer-3.0', 'AceHook-3.0')
 _G.NorskenUI = NRSKNUI
 
--- Setup addon variables
+-- Setup addon constants
 NRSKNUI.Locale = GetLocale()
 NRSKNUI.AddOnName = GetAddOnMetadata(addonName, 'Title')
 NRSKNUI.Version = GetAddOnMetadata(addonName, 'Version')
 NRSKNUI.Author = GetAddOnMetadata(addonName, 'Author')
 NRSKNUI.MyClass = select(2, UnitClass('player'))
-
+-- Texture and color constants
 NRSKNUI.ClearTexture = 0
 NRSKNUI.WhiteTexture = 'Interface\\Buttons\\WHITE8X8'
 NRSKNUI.HighlightColor = { 1, 1, 1, 0.25 }
 NRSKNUI.SelectedColor = { 0.8, 0.8, 0.8, 0.25 }
 NRSKNUI.BlackBgColor = { 0, 0, 0, 0.8 }
+-- Supported separator types.
+NRSKNUI.Separators = {
+    ["||"] = "|",
+    ["-"] = "-",
+    ["/"] = "/",
+    [" "] = "Space",
+    ["•"] = "•",
+    [">"] = ">",
+    [">>"] = ">>",
+    ["»"] = "»",
+}
+-- Time display formats.
+NRSKNUI.TimeFormats = {
+    ["MM:SS"]  = "01:30",
+    ["M:SS"]   = "1:30",
+    ["MmSs"]   = "01m 30s",
+    ["MmSs_c"] = "1m 30s",
+    ["Ss"]     = "90s",
+    ["S"]      = "90",
+    ["Smart"]  = "1m / 30s",
+}
 
 do
+    -- Convert GitHub version string to a more user-friendly format for display in the GUI.
     if NRSKNUI.Version == '@project-version@' then
         NRSKNUI.Version = 'Development Version'
     end
@@ -65,6 +87,9 @@ do
     LS.RegisterPlayerSpecChange(NRSKNUI, UpdateSpec)
 end
 
+-- RestrictedActions module
+NRSKNUI.Restricted = NRSKNUI:NewModule('Restricted', 'AceEvent-3.0')
+
 -- Quality of Life Modules
 NRSKNUI.AuctionHouseFilter = NRSKNUI:NewModule('AuctionHouseFilter', 'AceEvent-3.0')
 NRSKNUI.Automation = NRSKNUI:NewModule('Automation', 'AceEvent-3.0')
@@ -94,3 +119,4 @@ NRSKNUI.PotionReady = NRSKNUI:NewModule('PotionReady', 'AceEvent-3.0')
 NRSKNUI.RangeChecker = NRSKNUI:NewModule('RangeChecker', 'AceEvent-3.0')
 NRSKNUI.CombatCross = NRSKNUI:NewModule('CombatCross', 'AceEvent-3.0')
 NRSKNUI.CombatMessage = NRSKNUI:NewModule('CombatMessage', 'AceEvent-3.0', 'AceTimer-3.0')
+NRSKNUI.CombatRes = NRSKNUI:NewModule("CombatRes", "AceEvent-3.0", "AceTimer-3.0")
