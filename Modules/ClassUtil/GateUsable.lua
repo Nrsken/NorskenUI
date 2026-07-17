@@ -1,7 +1,7 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 ---@class Gateway: AceModule, AceEvent-3.0
-local Gateway = NRSKNUI:GetModule('Gateway', 'AceEvent-3.0')
+local Gateway = NRSKNUI:GetModule('Gateway')
 
 local EM = NRSKNUI.EditMode
 

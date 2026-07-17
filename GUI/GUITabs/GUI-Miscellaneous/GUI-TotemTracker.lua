@@ -3,7 +3,6 @@ local NRSKNUI = select(2, ...)
 local GUIFrame = NRSKNUI.GUIFrame
 local Theme = NRSKNUI.Theme
 
-local InCombatLockdown = InCombatLockdown
 local GetMacroIndexByName = GetMacroIndexByName
 local GetNumMacros = GetNumMacros
 local CreateMacro = CreateMacro
@@ -86,7 +85,7 @@ GUIFrame:RegisterContent("TotemTracker", function(scrollChild, yOffset)
     local createBtn = GUIFrame:CreateButton(btnRow, "Create Macro", {
         height = 30,
         callback = function()
-            if InCombatLockdown() then
+            if NRSKNUI:InCombat() then
                 NRSKNUI:Print("Cannot create macros during combat.")
                 return
             end

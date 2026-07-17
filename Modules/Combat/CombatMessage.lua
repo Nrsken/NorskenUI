@@ -13,7 +13,6 @@ local UnitClass = UnitClass
 local UnitExists = UnitExists
 local UnitIsDeadOrGhost = UnitIsDeadOrGhost
 local UnitGroupRolesAssigned = UnitGroupRolesAssigned
-local InCombatLockdown = InCombatLockdown
 local IsInGroup = IsInGroup
 local IsInRaid = IsInRaid
 local GetTime = GetTime
@@ -211,7 +210,7 @@ function CombatMessage:CheckTargetStatus()
     if not self.db.NoTarget.Enabled then return end
 
     -- If the player is not in combat or is dead, deactivate the noTarget message and return early.
-    if not self.inCombat or UnitIsDeadOrGhost('player') then
+    if not NRSKNUI:InCombat() or UnitIsDeadOrGhost('player') then
         if self.parentGroup:IsChildActive('noTarget') then
             self.parentGroup:DeactivateChild('noTarget')
         end
@@ -235,7 +234,7 @@ function CombatMessage:UNIT_DIED(_, destGUID)
     if self.isPreview then return end
     local mdb = self.db.PartyDeath
     if not mdb.Enabled then return end
-    if not self.inCombat then return end
+    if not NRSKNUI:InCombat() then return end
     if not self:IsPartyDeathLoadConditionMet() then return end
 
     local unit = NRSKNUI:SafeGetUnitFromGUID(destGUID)
@@ -252,8 +251,6 @@ function CombatMessage:UNIT_DIED(_, destGUID)
 end
 
 function CombatMessage:PLAYER_REGEN_DISABLED()
-    self.inCombat = true
-
     if not self.isPreview and self.db.EnterCombat.Enabled then
         if self.parentGroup:IsChildActive('exitCombat') then
             self.parentGroup:DeactivateChild('exitCombat')
@@ -266,8 +263,6 @@ function CombatMessage:PLAYER_REGEN_DISABLED()
 end
 
 function CombatMessage:PLAYER_REGEN_ENABLED()
-    self.inCombat = false
-
     if not self.isPreview and self.db.ExitCombat.Enabled then
         if self.parentGroup:IsChildActive('enterCombat') then
             self.parentGroup:DeactivateChild('enterCombat')
@@ -284,7 +279,6 @@ function CombatMessage:OnEnable()
 
     self:CreateGroup()
 
-    self.inCombat = InCombatLockdown()
     self.isPreview = (NRSKNUI.PreviewManager and NRSKNUI.PreviewManager:IsPreviewActive()) or false
     self.deathThrottle = { windowStart = 0, count = 0 }
     self.hideTimers = {}
@@ -301,7 +295,6 @@ end
 
 function CombatMessage:OnDisable()
     self.isPreview = false
-    self.inCombat = false
     if self.parentGroup then
         for _, msgType in ipairs(messageTypes) do
             self.parentGroup:DeactivateChild(msgType.key)

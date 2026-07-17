@@ -70,12 +70,9 @@ local function CheckCombat(config)
     local wantsOutOfCombat = config.OutOfCombat == true
 
     if not wantsInCombat and not wantsOutOfCombat then return true end
-
-    local inCombat = UnitAffectingCombat("player")
-
     if wantsInCombat and wantsOutOfCombat then return true end
-    if wantsInCombat and not inCombat then return false end
-    if wantsOutOfCombat and inCombat then return false end
+    if wantsInCombat and not NRSKNUI:InCombat() then return false end
+    if wantsOutOfCombat and NRSKNUI:InCombat() then return false end
 
     return true
 end

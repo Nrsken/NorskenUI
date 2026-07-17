@@ -11,7 +11,6 @@ local ACB = NRSKNUI:NewModule("ActionBars", "AceEvent-3.0")
 local CreateFrame = CreateFrame
 local ipairs = ipairs
 local pairs = pairs
-local InCombatLockdown = InCombatLockdown
 local PetHasActionBar = PetHasActionBar
 local GetNumShapeshiftForms = GetNumShapeshiftForms
 local GetCursorPosition = GetCursorPosition
@@ -730,7 +729,7 @@ end
 
 -- Set flyout direction on a button
 local function SetButtonFlyoutDirection(button, direction)
-    if not button or InCombatLockdown() then return end
+    if not button or NRSKNUI:InCombat() then return end
     button:SetAttribute("flyoutDirection", direction)
 end
 
@@ -982,7 +981,7 @@ local function SetupMouseoverScript(container)
         if container._hasPetOrStance ~= nil and not container._hasPetOrStance then return end
 
         local dur = container._fadeInDur or 0.3
-        if InCombatLockdown() then
+        if NRSKNUI:InCombat() then
             dur = 0.1 -- Force a faster fade in combat, make more sense to me since you want info faster
         end
         CombatSafeFade(container, 1, dur)
@@ -1678,7 +1677,7 @@ end
 
 -- Update flyout direction for a specific bar
 function ACB:UpdateBarFlyoutDirection(barKey)
-    if InCombatLockdown() then return end
+    if NRSKNUI:InCombat() then return end
 
     local barDB, container = GetBarData(barKey)
     if not barDB or not container then return end
@@ -1836,39 +1835,35 @@ end
 -- Apply all settings, standard module interface
 function ACB:ApplySettings()
     if NRSKNUI:ShouldNotLoadModule() then return end
-    C_Timer.After(0.1, function()
-        if InCombatLockdown() then
-            NRSKNUI:DeferUntilUnrestricted(0, function()
-                ACB:ApplySettings()
-            end)
-            return
-        end
-        self:HideBlizzardBars()
+    NRSKNUI:RunWhenSafe(function()
+        C_Timer.After(0.1, function()
+            self:HideBlizzardBars()
 
-        -- Rebuild config with new profile settings
-        self:BuildConfigTable()
+            -- Rebuild config with new profile settings
+            self:BuildConfigTable()
 
-        -- Update existing containers and handle enabled state
-        for barKey, _ in pairs(BAR_FRAME_MAP) do
-            local barDB = self.db.Bars and self.db.Bars[barKey]
-            local container = _G["NRSKNUI_" .. barKey .. "_Container"]
+            -- Update existing containers and handle enabled state
+            for barKey, _ in pairs(BAR_FRAME_MAP) do
+                local barDB = self.db.Bars and self.db.Bars[barKey]
+                local container = _G["NRSKNUI_" .. barKey .. "_Container"]
 
-            if container then
-                -- For pet/stance bars (which use alpha-based visibility), trigger their visibility update
-                if container._updatePetVisibility then
-                    container._updatePetVisibility()
-                elseif barDB and barDB.Enabled then
-                    -- Regular bars: show/hide based on enabled state
-                    container:Show()
-                else
-                    container:Hide()
+                if container then
+                    -- For pet/stance bars (which use alpha-based visibility), trigger their visibility update
+                    if container._updatePetVisibility then
+                        container._updatePetVisibility()
+                    elseif barDB and barDB.Enabled then
+                        -- Regular bars: show/hide based on enabled state
+                        container:Show()
+                    else
+                        container:Hide()
+                    end
                 end
             end
-        end
 
-        self:UpdateSettings("all")
-        self:UpdateAllBackdropColors()
-        self:RefreshBackdropConfigs()
+            self:UpdateSettings("all")
+            self:UpdateAllBackdropColors()
+            self:RefreshBackdropConfigs()
+        end)
     end)
 end
 

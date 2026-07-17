@@ -37,7 +37,6 @@ local pairs = pairs
 local ipairs = ipairs
 local ReloadUI = ReloadUI
 local CreateColor = CreateColor
-local InCombatLockdown = InCombatLockdown
 local _G = _G
 local C_AddOns = C_AddOns
 
@@ -1126,7 +1125,7 @@ function GUIFrame:Show()
     if self._isShowing then return end
     self._isShowing = true
 
-    if InCombatLockdown() then
+    if NRSKNUI:InCombat() then
         NRSKNUI:Print("Options will open after combat ends.")
         self.reopenAfterCombat = true
         self._isShowing = false

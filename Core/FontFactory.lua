@@ -6,7 +6,6 @@ local setmetatable = setmetatable
 local hooksecurefunc = hooksecurefunc
 local UIFrameFade, UIFrameFadeIn, UIFrameFadeOut = UIFrameFade, UIFrameFadeIn, UIFrameFadeOut
 local issecretvalue = issecretvalue
-local InCombatLockdown = InCombatLockdown
 
 -- STANDARD_TEXT_FONT is locale-correct (ARKai_T on zhCN, 2002 on koKR, etc) a hardcoded FRIZQT__ fallback renders CJK text as boxes on those clients.
 local FALLBACK_FONT = STANDARD_TEXT_FONT or (GameFontNormal and GameFontNormal:GetFont()) or "Fonts\\FRIZQT__.TTF"
@@ -92,11 +91,9 @@ local function SetupFadeHooks()
     end
 end
 
-if InCombatLockdown() then
-    NRSKNUI:DeferUntilUnrestricted(0, SetupFadeHooks)
-else
+NRSKNUI:RunWhenSafe(function()
     SetupFadeHooks()
-end
+end)
 
 function SoftOutline:_ForEach(fn)
     if not self.shadows then return end

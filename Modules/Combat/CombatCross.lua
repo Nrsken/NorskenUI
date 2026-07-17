@@ -5,7 +5,6 @@ local CombatCross = NRSKNUI:GetModule('CombatCross')
 
 local GetSpecializationInfo = GetSpecializationInfo
 local GetSpecialization = GetSpecialization
-local InCombatLockdown = InCombatLockdown
 local CreateFrame = CreateFrame
 local unpack = unpack
 
@@ -196,10 +195,7 @@ end
 
 -- Whether range coloring should currently be running.
 function CombatCross:ShouldCheckRange()
-    -- Not in combat.
-    if not self.inCombat then
-        return false
-    end
+    if not NRSKNUI:InCombat() then return false end
 
     -- We don't have a valid ability to check against.
     if not self.rangeAbility then
@@ -303,7 +299,7 @@ end
 function CombatCross:UpdateVisibility()
     if not self.coreFrame then return end
 
-    if self.isPreview or self.inCombat then
+    if self.isPreview or NRSKNUI:InCombat() then
         self.coreFrame:Show()
     else
         self.coreFrame:Hide()
@@ -311,13 +307,11 @@ function CombatCross:UpdateVisibility()
 end
 
 function CombatCross:PLAYER_REGEN_DISABLED()
-    self.inCombat = true
     self:UpdateVisibility()
     self:SyncRangeCheck()
 end
 
 function CombatCross:PLAYER_REGEN_ENABLED()
-    self.inCombat = false
     self:UpdateVisibility()
     self:StopRangeCheck()
 end
@@ -327,8 +321,6 @@ function CombatCross:OnEnable()
 
     self:CreateFrame()
 
-    -- Grab initial combat state, we will use self.inCombat as a replacement for InCombatLockdown() since its return is slower than player regen events.
-    self.inCombat = InCombatLockdown()
     -- Grab preview state
     self.isPreview = (NRSKNUI.PreviewManager and NRSKNUI.PreviewManager:IsPreviewActive()) or false
 
@@ -344,7 +336,6 @@ end
 
 function CombatCross:OnDisable()
     self.isPreview = false
-    self.inCombat = false
     self:StopRangeCheck()
     if self.coreFrame then
         self.coreFrame:Hide()

@@ -9,7 +9,6 @@ local hooksecurefunc = hooksecurefunc
 local ipairs = ipairs
 local CreateFrame = CreateFrame
 local unpack = unpack
-local InCombatLockdown = InCombatLockdown
 local IsMouseButtonDown = IsMouseButtonDown
 local HideUIPanel = HideUIPanel
 local ShowUIPanel = ShowUIPanel
@@ -65,12 +64,6 @@ function Map:OnEnable()
     self:RegisterEvent('PLAYER_ENTERING_WORLD')
 
     EM:Register(self, 'Minimap', _G.Minimap, 'Minimap')
-end
-
-function Map:PLAYER_REGEN_ENABLED()
-    self:UnregisterEvent('PLAYER_REGEN_ENABLED')
-    pendingCombatUpdate = false
-    self:ApplySettings()
 end
 
 function Map:PLAYER_ENTERING_WORLD()
@@ -145,7 +138,7 @@ function Map:ApplyButtonReg()
     clickOverlay:SetPropagateMouseMotion(true)
     clickOverlay:SetScript('OnMouseUp', function(_, button)
         if button == 'MiddleButton' then -- Middle-click: open calendar
-            if InCombatLockdown() then
+            if NRSKNUI:InCombat() then
                 NRSKNUI:Print('Cannot open calendar in combat.')
             else
                 if not IsAddOnLoaded('Blizzard_Calendar') then LoadAddOn('Blizzard_Calendar') end
@@ -454,21 +447,14 @@ end
 function Map:ApplySettings(opts)
     if NRSKNUI:ShouldNotLoadModule() then return end
     if not self.db.Enabled then return end
-
-    if InCombatLockdown() then
-        if not pendingCombatUpdate then
-            pendingCombatUpdate = true
-            self:RegisterEvent('PLAYER_REGEN_ENABLED')
-        end
-        return
-    end
-
-    self:ApplyLayout(opts)
-    self:UpdateMinimapBorder()
-    self:UpdateMailBtn()
-    self:UpdateInstanceBtn()
-    self:UpdateQueueBtn()
-    self:UpdateLandingPageBtn()
-    self:UpdateBugSackButton()
-    self:UpdateAddonCompartment()
+    NRSKNUI:RunWhenSafe(function()
+        self:ApplyLayout(opts)
+        self:UpdateMinimapBorder()
+        self:UpdateMailBtn()
+        self:UpdateInstanceBtn()
+        self:UpdateQueueBtn()
+        self:UpdateLandingPageBtn()
+        self:UpdateBugSackButton()
+        self:UpdateAddonCompartment()
+    end)
 end

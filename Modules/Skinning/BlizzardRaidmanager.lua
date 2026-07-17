@@ -5,7 +5,6 @@ local NRSKNUI = select(2, ...)
 local BRMG = NRSKNUI:NewModule("BlizzardRM", "AceEvent-3.0")
 
 local hooksecurefunc = hooksecurefunc
-local InCombatLockdown = InCombatLockdown
 
 function BRMG:UpdateDB()
     self.db = NRSKNUI.db.profile.BlizzardRM
@@ -21,7 +20,7 @@ local function FadeIn()
     if CompactRaidFrameManager._isMouseOver then return end
     CompactRaidFrameManager._isMouseOver = true
     local dur = BRMG.db.FadeInDuration
-    if InCombatLockdown() then dur = 0.1 end
+    if NRSKNUI:InCombat() then dur = 0.1 end
     --NRSKNUI:CombatSafeFade(CompactRaidFrameManager, 1, dur)
 end
 

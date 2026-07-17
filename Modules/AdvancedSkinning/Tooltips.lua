@@ -6,7 +6,6 @@ local EM = NRSKNUI.EditMode
 
 local EnumerateFrames = EnumerateFrames
 local hooksecurefunc = hooksecurefunc
-local InCombatLockdown = InCombatLockdown
 local IsShiftKeyDown, IsControlKeyDown, IsAltKeyDown = IsShiftKeyDown, IsControlKeyDown, IsAltKeyDown
 local UnitExists = UnitExists
 local UnitTokenFromGUID = UnitTokenFromGUID
@@ -109,7 +108,7 @@ end
 local function ShouldHideInCombat(group)
     local db = Tooltips.db
     if not db.HideInCombat or not db.HideInCombatTypes[group] then return false end
-    if not InCombatLockdown() then return false end
+    if not NRSKNUI:InCombat() then return false end
 
     return not ((db.Mod == 'SHIFT' and IsShiftKeyDown()) or (db.Mod == 'CTRL' and IsControlKeyDown()) or (db.Mod == 'ALT' and IsAltKeyDown()))
 end
@@ -157,7 +156,7 @@ end
 ---@param down number
 local function OnModifierChanged(_, key, down)
     if key:sub(2) ~= Tooltips.db.Mod then return end
-    if not Tooltips.db.HideInCombat or not InCombatLockdown() then return end
+    if not Tooltips.db.HideInCombat or not NRSKNUI:InCombat() then return end
     if GameTooltip:IsForbidden() then return end
 
     if down == 1 then
@@ -447,7 +446,7 @@ end
 ---@param tooltip Tooltip
 ---@param data TooltipData
 local function AddMountLine(tooltip, data)
-    if not Tooltips.db.ShowMountInfo or not GetMountFromSpell or InCombatLockdown() then return end
+    if not Tooltips.db.ShowMountInfo or not GetMountFromSpell or NRSKNUI:InCombat() then return end
     if NRSKNUI:IsRestricted() then return end
 
     local unit = GetPlayerUnit(data)

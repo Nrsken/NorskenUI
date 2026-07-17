@@ -14,7 +14,6 @@ local _G = _G
 local ipairs = ipairs
 local pairs = pairs
 local hooksecurefunc = hooksecurefunc
-local InCombatLockdown = InCombatLockdown
 local IsCombatLog = IsCombatLog
 local IsBuiltinChatWindow = IsBuiltinChatWindow
 local IsShiftKeyDown = IsShiftKeyDown
@@ -2035,7 +2034,7 @@ end
 
 local hyperlinkHoveredFrame
 function CHAT:OnHyperlinkEnter(frame, refString)
-    if InCombatLockdown() then return end
+    if NRSKNUI:InCombat() then return end
     local linkToken = strmatch(refString, "^([^:]+)")
     if HYPERLINK_TYPES[linkToken] then
         GameTooltip:SetOwner(frame, "ANCHOR_CURSOR")
@@ -2240,65 +2239,58 @@ end
 function CHAT:PositionChat(chat)
     if not chat or not self.panel then return end
     if self.isPositioning then return end
+    NRSKNUI:RunWhenSafe(function()
+        self.isPositioning = true
+        self.ChatWindow = self:GetPanelAnchoredChat()
 
-    if InCombatLockdown() then
-        self:RegisterEvent("PLAYER_REGEN_ENABLED", function()
-            self:UnregisterEvent("PLAYER_REGEN_ENABLED")
-            self:PositionChat(chat)
-        end)
-        return
-    end
+        local docker = _G.GeneralDockManager.primary
+        if chat == docker then
+            local chatParent = (chat == self.ChatWindow) and self.panel or UIParent
+            _G.GeneralDockManager:SetParent(chatParent)
+        end
 
-    self.isPositioning = true
-    self.ChatWindow = self:GetPanelAnchoredChat()
+        self:UpdateChatTab(chat)
 
-    local docker = _G.GeneralDockManager.primary
-    if chat == docker then
-        local chatParent = (chat == self.ChatWindow) and self.panel or UIParent
-        _G.GeneralDockManager:SetParent(chatParent)
-    end
+        if chat:IsMovable() then chat:SetUserPlaced(true) end
 
-    self:UpdateChatTab(chat)
+        if chat.FontStringContainer then
+            chat.FontStringContainer:ClearAllPoints()
+            chat.FontStringContainer:SetPoint("TOPLEFT", chat, "TOPLEFT", -3, 3)
+            chat.FontStringContainer:SetPoint("BOTTOMRIGHT", chat, "BOTTOMRIGHT", 3, -3)
+        end
 
-    if chat:IsMovable() then chat:SetUserPlaced(true) end
+        local db = self.db
+        local panelWidth = db.Width or PANEL_WIDTH
+        local panelHeight = db.Height or PANEL_HEIGHT
 
-    if chat.FontStringContainer then
-        chat.FontStringContainer:ClearAllPoints()
-        chat.FontStringContainer:SetPoint("TOPLEFT", chat, "TOPLEFT", -3, 3)
-        chat.FontStringContainer:SetPoint("BOTTOMRIGHT", chat, "BOTTOMRIGHT", 3, -3)
-    end
+        local logOffset = 0
+        if IsCombatLog and IsCombatLog(chat) then
+            local tabBackdropHeight = self.tabBackdrop and self.tabBackdrop:IsShown() and self.tabBackdrop:GetHeight() or
+                TAB_HEIGHT
+            logOffset = tabBackdropHeight + 4
+        end
 
-    local db = self.db
-    local panelWidth = db.Width or PANEL_WIDTH
-    local panelHeight = db.Height or PANEL_HEIGHT
+        if chat == self.ChatWindow then
+            chat:SetParent(self.panel)
+            chat:ClearAllPoints()
+            chat:SetPoint("BOTTOMLEFT", self.panel, "BOTTOMLEFT", H_PADDING, PADDING)
+            chat:SetSize(panelWidth - (H_PADDING * 2), panelHeight - BASE_OFFSET - logOffset)
 
-    local logOffset = 0
-    if IsCombatLog and IsCombatLog(chat) then
-        local tabBackdropHeight = self.tabBackdrop and self.tabBackdrop:IsShown() and self.tabBackdrop:GetHeight() or
-            TAB_HEIGHT
-        logOffset = tabBackdropHeight + 4
-    end
+            local tab = self:GetTab(chat)
+            if tab and not chat.isDocked then tab:SetParent(self.panel) end
 
-    if chat == self.ChatWindow then
-        chat:SetParent(self.panel)
-        chat:ClearAllPoints()
-        chat:SetPoint("BOTTOMLEFT", self.panel, "BOTTOMLEFT", H_PADDING, PADDING)
-        chat:SetSize(panelWidth - (H_PADDING * 2), panelHeight - BASE_OFFSET - logOffset)
+            self:SetBackgroundVisible(chat.Background, false)
+        else
+            self:SetBackgroundVisible(chat.Background, self:IsFloating(chat, docker))
+        end
 
-        local tab = self:GetTab(chat)
-        if tab and not chat.isDocked then tab:SetParent(self.panel) end
+        if chat.EditModeResizeButton then
+            chat.EditModeResizeButton:SetFrameStrata("HIGH")
+            chat.EditModeResizeButton:SetFrameLevel(6)
+        end
 
-        self:SetBackgroundVisible(chat.Background, false)
-    else
-        self:SetBackgroundVisible(chat.Background, self:IsFloating(chat, docker))
-    end
-
-    if chat.EditModeResizeButton then
-        chat.EditModeResizeButton:SetFrameStrata("HIGH")
-        chat.EditModeResizeButton:SetFrameLevel(6)
-    end
-
-    self.isPositioning = false
+        self.isPositioning = false
+    end)
 end
 
 function CHAT:StyleCombatLog()
@@ -2496,7 +2488,7 @@ function CHAT:EnsureBlizzEditModeLockText(selection)
 end
 
 function CHAT:SetBlizzEditModeLockText(frame, shown)
-    if InCombatLockdown() then return end
+    if NRSKNUI:InCombat() then return end
 
     local selection = frame.Selection
     if not selection then return end
@@ -2528,7 +2520,7 @@ function CHAT:SetBlizzEditModeLockText(frame, shown)
 end
 
 function CHAT:SetupBlizzEditModeLockHandlers(frame)
-    if InCombatLockdown() then return end
+    if NRSKNUI:InCombat() then return end
 
     local selection = frame.Selection
     if not selection then return end
@@ -2552,7 +2544,7 @@ end
 
 function CHAT:LockChatInBlizzEditMode(chat)
     if not chat then return end
-    if InCombatLockdown() then return end
+    if NRSKNUI:InCombat() then return end
 
     local selection = chat.Selection
     if selection then

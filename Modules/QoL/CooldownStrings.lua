@@ -11,7 +11,6 @@ local pairs = pairs
 local ipairs = ipairs
 local pcall = pcall
 local table_insert = table.insert
-local InCombatLockdown = InCombatLockdown
 local GetSpecialization = GetSpecialization
 local GetSpecializationInfo = GetSpecializationInfo
 local GetSpecializationInfoByID = GetSpecializationInfoByID
@@ -45,7 +44,7 @@ function CS.GetSpecInfoByID(specID)
 end
 
 function CS.ApplyProfileToCDM(profileString, profileKey, callbacks)
-    if InCombatLockdown() then
+    if NRSKNUI:InCombat() then
         NRSKNUI:Print("Cannot apply CDM profile while in combat.")
         return false
     end

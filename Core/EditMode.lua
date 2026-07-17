@@ -3,7 +3,6 @@ local NRSKNUI = select(2, ...)
 local Theme = NRSKNUI.Theme
 
 local CreateFrame = CreateFrame
-local InCombatLockdown = InCombatLockdown
 local pairs = pairs
 local ipairs = ipairs
 local GetCursorPosition = GetCursorPosition
@@ -174,7 +173,7 @@ end
 dragUpdateFrame:SetScript("OnUpdate", UpdateDragPosition)
 
 local function OnDragStart(overlay)
-    if InCombatLockdown() then return end
+    if NRSKNUI:InCombat() then return end
 
     local element = overlay.element
     local targetFrame = EditMode:GetElementFrame(element)
@@ -475,7 +474,7 @@ end
 
 function EditMode:Enter()
     if self.isActive then return end
-    if InCombatLockdown() then
+    if NRSKNUI:InCombat() then
         NRSKNUI:Print("Cannot enter edit mode during combat.")
         return
     end

@@ -9,7 +9,6 @@ local UnitIsDeadOrGhost = UnitIsDeadOrGhost
 local CreateFrame = CreateFrame
 local RegisterStateDriver = RegisterStateDriver
 local UnregisterStateDriver = UnregisterStateDriver
-local InCombatLockdown = InCombatLockdown
 
 local GetSpellInfo = C_Spell and C_Spell.GetSpellInfo
 

@@ -11,7 +11,6 @@ local strupper = strupper
 local issecretvalue = issecretvalue
 local CreateFrame = CreateFrame
 local type = type
-local InCombatLockdown = InCombatLockdown
 local GetTime = GetTime
 local GetMouseFoci = GetMouseFoci
 local format = string.format
@@ -58,7 +57,7 @@ function CopyAnything:CreateKeyboardFrame()
     if not self.frame then
         self.frame = CreateFrame('Frame', 'NRSKNUI_CopyFrame')
         self.frame:SetScript('OnKeyDown', function(frame, key)
-            if InCombatLockdown() then return end
+            if NRSKNUI:InCombat() then return end
             frame:SetPropagateKeyboardInput(not self:TryCopy(key))
         end)
     end
@@ -223,16 +222,16 @@ end
 
 function CopyAnything:OnEnable()
     if not self.db.Enabled then return end
-
-    self:RegisterEvent('PLAYER_REGEN_DISABLED')
-    self:RegisterEvent('PLAYER_REGEN_ENABLED')
-
-    NRSKNUI:RunWhenSafe(function() self:CreateKeyboardFrame() end)
+    NRSKNUI:RunWhenSafe(function()
+        self:CreateKeyboardFrame()
+        self:RegisterEvent('PLAYER_REGEN_DISABLED')
+        self:RegisterEvent('PLAYER_REGEN_ENABLED')
+    end)
 end
 
 function CopyAnything:OnDisable()
     if not self.frame then return end
-    if not InCombatLockdown() then
+    if not NRSKNUI:InCombat() then
         self.frame:EnableKeyboard(false)
     end
 end

@@ -6,7 +6,6 @@ local CC = NRSKNUI:NewModule("CursorCircle", "AceEvent-3.0")
 
 local CreateFrame = CreateFrame
 local GetCursorPosition = GetCursorPosition
-local InCombatLockdown = InCombatLockdown
 local IsMouseButtonDown = IsMouseButtonDown
 local ipairs = ipairs
 local C_Spell = C_Spell
@@ -273,7 +272,7 @@ function CC:UpdateGCDVisibility()
     local gcd = db.GCD
 
     local shouldShow = db.Enabled
-    if gcd.HideOutOfCombat and not InCombatLockdown() then
+    if gcd.HideOutOfCombat and not NRSKNUI:InCombat() then
         shouldShow = false
     end
 
@@ -296,7 +295,7 @@ function CC:UpdateGCDCooldown()
         return
     end
 
-    if gcd.HideOutOfCombat and not InCombatLockdown() then
+    if gcd.HideOutOfCombat and not NRSKNUI:InCombat() then
         if self.frame and self.frame.gcdCooldown then self.frame.gcdCooldown:Hide() end
         if self.gcdFrame then self.gcdFrame:Hide() end
         return

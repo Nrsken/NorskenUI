@@ -5,7 +5,6 @@ local Durability = NRSKNUI:GetModule('Durability')
 local EM = NRSKNUI.EditMode
 
 local GetInventoryItemDurability = GetInventoryItemDurability
-local InCombatLockdown = InCombatLockdown
 local CreateFrame = CreateFrame
 local math_floor = math.floor
 local ipairs = ipairs
@@ -82,7 +81,7 @@ function Durability:OnEvent()
     if self.isPreview then return end
 
     local durability = GetLowestDurability()
-    local threshold = (InCombatLockdown() and self.db.CombatShowPercent) or self.db.ShowPercent
+    local threshold = (NRSKNUI:InCombat() and self.db.CombatShowPercent) or self.db.ShowPercent
 
     -- Gear is broken, show broken text and color
     if durability == 0 then

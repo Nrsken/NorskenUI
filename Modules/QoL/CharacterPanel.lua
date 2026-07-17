@@ -31,7 +31,6 @@ local LE_ITEM_CLASS_ITEM_ENHANCEMENT = Enum.ItemClass.ItemEnhancement or 8
 local SocketInventoryItem = SocketInventoryItem
 local AcceptSockets = AcceptSockets
 local CloseSocketInfo = CloseSocketInfo
-local InCombatLockdown = InCombatLockdown
 local ClearCursor = ClearCursor
 local HideUIPanel = HideUIPanel
 local UseContainerItem = C_Container.UseContainerItem
@@ -717,7 +716,7 @@ function CHAR:CreateSocketButton(index)
     end)
 
     btn:SetScript("OnClick", function(button)
-        if InCombatLockdown() then
+        if NRSKNUI:InCombat() then
             NRSKNUI:Print("Cannot socket during combat")
             return
         end
@@ -861,7 +860,7 @@ function CHAR:CreateGemButton(index)
     end)
 
     btn:SetScript("OnClick", function(button)
-        if InCombatLockdown() then
+        if NRSKNUI:InCombat() then
             NRSKNUI:Print("Cannot socket during combat")
             return
         end
@@ -878,7 +877,7 @@ function CHAR:CreateGemButton(index)
             CHAR:HideGemPopup()
             CHAR:HideSlotHighlight()
             C_Timer.After(0.1, function()
-                if InCombatLockdown() then return end
+                if NRSKNUI:InCombat() then return end
                 CHAR:RefreshSocketButtons()
             end)
         end
@@ -1404,7 +1403,7 @@ function CHAR:CreateEnchantButton_Popup(index)
     end)
 
     btn:SetScript("OnClick", function(button)
-        if InCombatLockdown() then
+        if NRSKNUI:InCombat() then
             NRSKNUI:Print("Cannot enchant during combat")
             return
         end

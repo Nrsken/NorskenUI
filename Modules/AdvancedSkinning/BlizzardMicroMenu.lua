@@ -7,7 +7,6 @@ local MM = NRSKNUI:NewModule("MicroMenu", "AceEvent-3.0")
 local UIFrameFadeOut = UIFrameFadeOut
 local UIFrameFadeIn = UIFrameFadeIn
 local CreateFrame = CreateFrame
-local InCombatLockdown = InCombatLockdown
 local ipairs = ipairs
 local unpack = unpack
 local _G = _G
@@ -93,73 +92,67 @@ function MM:CreateMicroBar()
 end
 
 function MM:ReparentButtons()
-    if InCombatLockdown() then
-        NRSKNUI:DeferUntilUnrestricted(0, function() MM:ReparentButtons() end)
-        return
-    end
-
-    for _, name in ipairs(microButtons) do
-        local button = _G[name]
-        if button then
-            button:SetParent(microBar)
+    NRSKNUI:RunWhenSafe(function()
+        for _, name in ipairs(microButtons) do
+            local button = _G[name]
+            if button then
+                button:SetParent(microBar)
+            end
         end
-    end
+    end)
 end
 
 function MM:UpdateMicroBar()
     if not microBar then return end
-    if InCombatLockdown() then
-        NRSKNUI:DeferUntilUnrestricted(0, function() MM:UpdateMicroBar() end)
-        return
-    end
+    NRSKNUI:RunWhenSafe(function()
+        local visibleButtons = {}
+        local buttonPerRow = 15
 
-    local visibleButtons = {}
-    local buttonPerRow = 15
+        for _, name in ipairs(microButtons) do
+            local button = _G[name]
+            if button and button:IsShown() then
+                table.insert(visibleButtons, button)
 
-    for _, name in ipairs(microButtons) do
-        local button = _G[name]
-        if button and button:IsShown() then
-            table.insert(visibleButtons, button)
-
-            if button.Background then
-                button.Background:SetTexture(nil)
-                button.Background:Hide()
-            end
-            if button.PushedBackground then
-                button.PushedBackground:SetTexture(nil)
-                button.PushedBackground:Hide()
+                if button.Background then
+                    button.Background:SetTexture(nil)
+                    button.Background:Hide()
+                end
+                if button.PushedBackground then
+                    button.PushedBackground:SetTexture(nil)
+                    button.PushedBackground:Hide()
+                end
             end
         end
-    end
 
-    local numButtons = #visibleButtons
-    if numButtons == 0 then
-        microBar:SetSize(100, 40)
-        return
-    end
-
-    local cols = math.min(numButtons, buttonPerRow)
-    local rows = math.ceil(numButtons / buttonPerRow)
-    local width = (self.db.ButtonWidth * cols) + (self.db.ButtonSpacing * math.max(0, cols - 1)) + (self.db.BackdropSpacing * 2)
-    local height = (self.db.ButtonHeight * rows) + (self.db.ButtonSpacing * math.max(0, rows - 1)) + (self.db.BackdropSpacing * 2)
-    microBar:SetSize(width, height)
-
-    for i, button in ipairs(visibleButtons) do
-        button:ClearAllPoints()
-        button:SetSize(self.db.ButtonWidth, self.db.ButtonHeight)
-
-        local col = (i - 1) % buttonPerRow
-        if i == 1 then
-            button:SetPoint("TOPLEFT", microBar, "TOPLEFT", self.db.BackdropSpacing, -self.db.BackdropSpacing)
-        elseif col == 0 then
-            button:SetPoint("TOPLEFT", visibleButtons[i - buttonPerRow], "BOTTOMLEFT", 0, -self.db.ButtonSpacing)
-        else
-            button:SetPoint("LEFT", visibleButtons[i - 1], "RIGHT", self.db.ButtonSpacing, 0)
+        local numButtons = #visibleButtons
+        if numButtons == 0 then
+            microBar:SetSize(100, 40)
+            return
         end
-    end
 
-    MainMenuMicroButton.MainMenuBarPerformanceBar:SetAlpha(0)
-    MainMenuMicroButton.MainMenuBarPerformanceBar:SetScale(0.0001)
+        local cols = math.min(numButtons, buttonPerRow)
+        local rows = math.ceil(numButtons / buttonPerRow)
+        local width = (self.db.ButtonWidth * cols) + (self.db.ButtonSpacing * math.max(0, cols - 1)) + (self.db.BackdropSpacing * 2)
+        local height = (self.db.ButtonHeight * rows) + (self.db.ButtonSpacing * math.max(0, rows - 1)) + (self.db.BackdropSpacing * 2)
+        microBar:SetSize(width, height)
+
+        for i, button in ipairs(visibleButtons) do
+            button:ClearAllPoints()
+            button:SetSize(self.db.ButtonWidth, self.db.ButtonHeight)
+
+            local col = (i - 1) % buttonPerRow
+            if i == 1 then
+                button:SetPoint("TOPLEFT", microBar, "TOPLEFT", self.db.BackdropSpacing, -self.db.BackdropSpacing)
+            elseif col == 0 then
+                button:SetPoint("TOPLEFT", visibleButtons[i - buttonPerRow], "BOTTOMLEFT", 0, -self.db.ButtonSpacing)
+            else
+                button:SetPoint("LEFT", visibleButtons[i - 1], "RIGHT", self.db.ButtonSpacing, 0)
+            end
+        end
+
+        MainMenuMicroButton.MainMenuBarPerformanceBar:SetAlpha(0)
+        MainMenuMicroButton.MainMenuBarPerformanceBar:SetScale(0.0001)
+    end)
 end
 
 local mouseoverElapsed = 0
@@ -230,7 +223,7 @@ function MM:OnDisable()
         microBar:SetScript("OnUpdate", nil)
     end
 
-    if not InCombatLockdown() then
+    if not NRSKNUI:InCombat() then
         for _, name in ipairs(microButtons) do
             local button = _G[name]
             if button then

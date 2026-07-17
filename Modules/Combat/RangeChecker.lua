@@ -8,7 +8,6 @@ local EM = NRSKNUI.EditMode
 local CreateFrame = CreateFrame
 local UnitExists = UnitExists
 local UnitIsUnit = UnitIsUnit
-local InCombatLockdown = InCombatLockdown
 local unpack = unpack
 local tostring = tostring
 
@@ -80,7 +79,7 @@ function RangeChecker:ShouldShow()
     if self.isPreview then return true end
     if not UnitExists('target') then return false end
     if UnitIsUnit('target', 'player') then return false end
-    if self.db.CombatOnly and not InCombatLockdown() then return false end
+    if self.db.CombatOnly and not NRSKNUI:InCombat() then return false end
     return true
 end
 

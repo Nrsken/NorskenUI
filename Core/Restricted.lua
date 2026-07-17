@@ -121,7 +121,7 @@ local combatQueue = {}
 ---@param fn function
 function NRSKNUI:RunWhenSafe(fn)
     if not fn then return end
-    if InCombatLockdown() or UnitAffectingCombat('Player') then
+    if NRSKNUI:InCombat() then
         combatQueue[#combatQueue + 1] = fn
     else
         fn()
@@ -133,6 +133,12 @@ end
 local active = {}
 local restrictionState = 0
 local pending = {}
+
+---Check combat state, including the active.Combat flag which is set by PLAYER_REGEN_DISABLED/ENABLED events.
+---@return boolean
+function NRSKNUI:InCombat()
+    return active.Combat or InCombatLockdown() or UnitAffectingCombat('Player')
+end
 
 ---Current restriction state (0 none, 1 partial, 2 full).
 ---@return integer

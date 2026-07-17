@@ -9,7 +9,6 @@ local ipairs = ipairs
 local GetTotemInfo = GetTotemInfo
 local GetTime = GetTime
 local GetTotemDuration = GetTotemDuration
-local InCombatLockdown = InCombatLockdown
 
 local UIParent = UIParent
 local MAX_TOTEMS = MAX_TOTEMS
@@ -33,21 +32,17 @@ end
 
 function TT:CreateDestroyButtons()
     if destroyButtons[1] then return end
-
-    if InCombatLockdown() then
-        NRSKNUI:DeferUntilUnrestricted(0, function() TT:CreateDestroyButtons() end)
-        return
-    end
-
-    for slot = 1, MAX_TOTEMS do
-        local btn = CreateFrame("Button", "NRSKNUI_DestroyTotem" .. slot, UIParent, "SecureActionButtonTemplate")
-        btn:SetAttribute("type", "destroytotem")
-        btn:SetAttribute("typerelease", "destroytotem")
-        btn:SetAttribute("totem-slot", slot)
-        btn:SetAttribute("pressAndHoldAction", 1)
-        btn:RegisterForClicks("AnyUp", "AnyDown")
-        destroyButtons[slot] = btn
-    end
+    NRSKNUI:RunWhenSafe(function()
+        for slot = 1, MAX_TOTEMS do
+            local btn = CreateFrame("Button", "NRSKNUI_DestroyTotem" .. slot, UIParent, "SecureActionButtonTemplate")
+            btn:SetAttribute("type", "destroytotem")
+            btn:SetAttribute("typerelease", "destroytotem")
+            btn:SetAttribute("totem-slot", slot)
+            btn:SetAttribute("pressAndHoldAction", 1)
+            btn:RegisterForClicks("AnyUp", "AnyDown")
+            destroyButtons[slot] = btn
+        end
+    end)
 end
 
 function TT:OnInitialize()
