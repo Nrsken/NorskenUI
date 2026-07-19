@@ -14,3 +14,5 @@
 ---@field HidingBarAddon HidingBarAddon
 ---@field BugSack BugSack
 ---@field BugGrabber BugGrabber
+---@field NorskenUI NRSKNUI
+---@field NorskenUF NorskenUF

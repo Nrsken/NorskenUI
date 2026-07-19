@@ -62,7 +62,7 @@ function CombatTimer:ApplySettings()
 
     self.frame:ApplyPosition(self.db)
     self.frame.text:SetFontStyle(self.db)
-    self.frame.text:SetFontJustify(self.db, nil, 4)
+    self.frame.text:SetFontJustify(self.db, nil, 4, 0, nil, nil, true)
 
     -- Only the sub-second format needs the faster tick.
     self.refreshRate = (self.db.Format == 'MM:SS.f' and 0.1) or 0.25

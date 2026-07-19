@@ -7,6 +7,7 @@ local _G = _G
 local GetLocale = GetLocale
 local select = select
 local UnitClass = UnitClass
+local assert = assert
 
 local GetAddOnMetadata = C_AddOns and C_AddOns.GetAddOnMetadata
 
@@ -14,6 +15,11 @@ local GetAddOnMetadata = C_AddOns and C_AddOns.GetAddOnMetadata
 local AceAddon = _G.LibStub('AceAddon-3.0')
 AceAddon:NewAddon(NRSKNUI, addonName, 'AceEvent-3.0', 'AceTimer-3.0', 'AceHook-3.0')
 _G.NorskenUI = NRSKNUI
+
+-- Setup oUF library
+NRSKNUI.oUF = _G.NorskenUF
+NRSKNUI.oUFPrefix = GetAddOnMetadata(addonName, 'X-oUF')
+assert(NRSKNUI.oUF, 'oUF library not found!')
 
 -- Setup addon constants
 NRSKNUI.Locale = GetLocale()
@@ -87,8 +93,11 @@ do
     LS.RegisterPlayerSpecChange(NRSKNUI, UpdateSpec)
 end
 
--- RestrictedActions module
+-- RestrictedActions Module
 NRSKNUI.Restricted = NRSKNUI:NewModule('Restricted', 'AceEvent-3.0')
+
+-- UnitFrames Module
+NRSKNUI.UnitFrames = NRSKNUI:NewModule('UnitFrames', 'AceTimer-3.0', 'AceEvent-3.0', 'AceHook-3.0')
 
 -- Quality of Life Modules
 NRSKNUI.AuctionHouseFilter = NRSKNUI:NewModule('AuctionHouseFilter', 'AceEvent-3.0')

@@ -13,7 +13,8 @@
             "BugSack"
         ],
         "write": [
-            "NorskenUI"
+            "NorskenUI",
+            "NorskenUF"
         ]
     },
     "hint": {

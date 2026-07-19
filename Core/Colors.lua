@@ -5,14 +5,14 @@ local Theme = NRSKNUI.Theme
 -- Module with a bunch of color utilities
 
 local math_floor = math.floor
-local string_format = string.format
+local format = string.format
 local type = type
 local tonumber = tonumber
 local CreateColor = CreateColor
 local select = select
 local unpack = unpack
 local modf = math.modf
-local RAID_CLASS_COLORS = RAID_CLASS_COLORS
+local next = next
 
 ---An { r, g, b, a? } color array with 0-1 components.
 ---@alias RGBA number[]
@@ -38,11 +38,8 @@ NRSKNUI.ClassColorHex = {
 ---Get the player's class color as an RGBA table.
 ---@return RGBA
 function NRSKNUI:GetPlayerClassColor()
-    local class = self.MyClass
-    if class and RAID_CLASS_COLORS[class] then
-        local c = RAID_CLASS_COLORS[class]
-        return { c.r, c.g, c.b, 1 }
-    end
+    local c = self.Colors.class[self.MyClass]
+    if c then return { c.r, c.g, c.b, 1 } end
     return { 1, 1, 1, 1 }
 end
 
@@ -53,37 +50,27 @@ function NRSKNUI:GetClassColor(classToken)
     if not classToken then
         return self:GetPlayerClassColor()
     end
-    if RAID_CLASS_COLORS[classToken] then
-        local c = RAID_CLASS_COLORS[classToken]
-        return { c.r, c.g, c.b, 1 }
-    end
+    local c = self.Colors.class[classToken]
+    if c then return { c.r, c.g, c.b, 1 } end
     return { 1, 1, 1, 1 }
+end
+
+---Get the class-color ColorMixin for a class token, falling back to the player's class.
+---@param classToken? string
+---@return ColorMixin
+function NRSKNUI:GetClassColorRaw(classToken)
+    if type(classToken) == "string" and self.Colors.class[classToken] then
+        return self.Colors.class[classToken]
+    end
+    return self.Colors.class[self.MyClass]
 end
 
 ---Get a class color hex code ("RRGGBB") for text coloring, falling back to the player's class.
 ---@param classToken? string
 ---@return string hex
 function NRSKNUI:GetClassColorHex(classToken)
-    -- Validate classToken is a string before using as table key
-    if type(classToken) == "string" then
-        local hex = self.ClassColorHex[classToken]
-        if hex then return hex end
-    end
-    -- Fallback to player class
-    return self.ClassColorHex[self.MyClass] or "FFFFFF"
-end
-
----Get the RAID_CLASS_COLORS entry for a class token, falling back to the player's class.
----@param classToken? string
----@return ColorMixin
-function NRSKNUI:GetClassColorRaw(classToken)
-    -- Validate classToken is a string before using as table key
-    if type(classToken) == "string" then
-        local color = RAID_CLASS_COLORS[classToken]
-        if color then return color end
-    end
-    -- Fallback to player class
-    return RAID_CLASS_COLORS[self.MyClass]
+    local c = self:GetClassColorRaw(classToken)
+    return c and self:RGBAToHex(c.r, c.g, c.b) or "FFFFFF"
 end
 
 ---Wrap text in a class color escape code.
@@ -104,7 +91,7 @@ function NRSKNUI:RGBAToHex(r, g, b)
     r = math_floor((r or 1) * 255 + 0.5)
     g = math_floor((g or 1) * 255 + 0.5)
     b = math_floor((b or 1) * 255 + 0.5)
-    return string_format("%02X%02X%02X", r, g, b)
+    return format("%02X%02X%02X", r, g, b)
 end
 
 ---Get the theme accent color as an "RRGGBB" hex string.
@@ -219,141 +206,44 @@ end
 ---@return string
 function NRSKNUI:ColorText(text, color)
     local r, g, b, a = unpack(color)
-    return string.format(
-        "|c%02X%02X%02X%02X%s|r",
-        (a or 1) * 255,
-        r * 255,
-        g * 255,
-        b * 255,
-        text
-    )
+    return format("|c%02X%02X%02X%02X%s|r", (a or 1) * 255, r * 255, g * 255, b * 255, text)
 end
 
-local DispelType = NRSKNUI.Enum.DispelType
-
----@type table<NRSKNUI.DispelType, ColorMixin>
-local defaultDispelColors = {
-    [DispelType.None] = _G.DEBUFF_TYPE_NONE_COLOR,
-    [DispelType.Magic] = _G.DEBUFF_TYPE_MAGIC_COLOR,
-    [DispelType.Curse] = _G.DEBUFF_TYPE_CURSE_COLOR,
-    [DispelType.Disease] = _G.DEBUFF_TYPE_DISEASE_COLOR,
-    [DispelType.Poison] = _G.DEBUFF_TYPE_POISON_COLOR,
-    [DispelType.Bleed] = _G.DEBUFF_TYPE_BLEED_COLOR,
-    [DispelType.Enrage] = NRSKNUI:CreateColor(243, 95, 245),
+NRSKNUI.Colors = {
+    class = {},
+    reaction = {},
+    power = {},
+    status = {},
 }
 
----@type { dispel: table<NRSKNUI.DispelType, ColorMixin> }
-local colors = {
-    dispel = {},
-}
+---Custom color palette (db.profile.Colors), pushed into oUF.colors and NRSKNUI.Colors.
+function NRSKNUI:LoadCustomColors()
+    local db = self.db and self.db.profile.Colors
+    if not db then return end
 
-for k, v in pairs(defaultDispelColors) do
-    colors.dispel[k] = v
-end
+    local oUF = self.oUF
+    local palette = self.Colors
 
-NRSKNUI.colors = colors
-
-local dispelColorCurve
-local dispelColorGeneration = 0
-local curveGeneration = -1
-
----Get a step ColorCurve mapping dispel type index to color, rebuilt when colors change.
-function NRSKNUI:GetDispelColorCurve()
-    if dispelColorCurve and curveGeneration == dispelColorGeneration then
-        return dispelColorCurve
+    for powerType, c in next, db.Power do
+        local col = oUF:CreateColor(c[1], c[2], c[3])
+        oUF.colors.power[powerType] = col
+        palette.power[powerType] = col
     end
 
-    if not dispelColorCurve then
-        dispelColorCurve = C_CurveUtil.CreateColorCurve()
-        dispelColorCurve:SetType(Enum.LuaCurveType.Step)
-    else
-        dispelColorCurve:ClearPoints()
+    for index, c in next, db.Reaction do
+        local col = oUF:CreateColor(c[1], c[2], c[3])
+        oUF.colors.reaction[index] = col
+        palette.reaction[index] = col
     end
 
-    for _, dispelIndex in next, DispelType do
-        local color = colors.dispel[dispelIndex]
-        if color then
-            dispelColorCurve:AddPoint(dispelIndex, color --[[@as colorRGBA]])
-        end
+    for token, c in next, db.Class do
+        local col = oUF:CreateColor(c[1], c[2], c[3])
+        oUF.colors.class[token] = col
+        palette.class[token] = col
     end
 
-    curveGeneration = dispelColorGeneration
-    return dispelColorCurve
-end
-
----Get the configured color for a dispel type as an RGBA table.
----@param dispelType NRSKNUI.DispelType
----@return RGBA
-function NRSKNUI:GetDispelColor(dispelType)
-    local color = colors.dispel[dispelType]
-    if color then
-        return { color:GetRGBA() } --[[@as RGBA]]
-    end
-    local fallback = colors.dispel[DispelType.None]
-    if fallback then
-        return { fallback:GetRGBA() } --[[@as RGBA]]
-    end
-    return { 0.8, 0, 0, 1 }
-end
-
----Get the default color for a dispel type as an RGBA table.
----@param dispelType NRSKNUI.DispelType
----@return RGBA
-function NRSKNUI:GetDefaultDispelColor(dispelType)
-    local color = defaultDispelColors[dispelType]
-    if color then
-        return { color:GetRGBA() } --[[@as RGBA]]
-    end
-    return { 0.8, 0, 0, 1 }
-end
-
----@type table<string, NRSKNUI.DispelType>
-local dispelTypeNameToIndex = {
-    None = DispelType.None,
-    Magic = DispelType.Magic,
-    Curse = DispelType.Curse,
-    Disease = DispelType.Disease,
-    Poison = DispelType.Poison,
-    Bleed = DispelType.Bleed,
-    Enrage = DispelType.Enrage,
-}
-NRSKNUI.DispelTypeNameToIndex = dispelTypeNameToIndex
-
----Set a custom dispel color, or reset it to the default when r/g/b are omitted.
----@param dispelTypeName string One of "None", "Magic", "Curse", "Disease", "Poison", "Bleed", "Enrage"
----@param r? number
----@param g? number
----@param b? number
----@param a? number
-function NRSKNUI:SetDispelColor(dispelTypeName, r, g, b, a)
-    local index = dispelTypeNameToIndex[dispelTypeName]
-    if not index then return end
-
-    if r and g and b then
-        colors.dispel[index] = self:CreateColor(r, g, b, a or 1)
-    else
-        colors.dispel[index] = defaultDispelColors[index]
-    end
-    dispelColorGeneration = dispelColorGeneration + 1
-end
-
----Load custom dispel colors from the saved profile, resetting missing entries to defaults.
-function NRSKNUI:LoadDispelColorsFromDB()
-    local db = self.db.profile.Skinning.DebuffTracking
-    if not db or not db.DispelColors then return end
-
-    for name, index in pairs(dispelTypeNameToIndex) do
-        local customColor = db.DispelColors[name]
-        if customColor and type(customColor) == "table" and customColor[1] then
-            colors.dispel[index] = self:CreateColor(customColor[1], customColor[2], customColor[3], customColor[4] or 1)
-        else
-            colors.dispel[index] = defaultDispelColors[index]
-        end
-    end
-    dispelColorGeneration = dispelColorGeneration + 1
-end
-
----@return number generation Increments whenever dispel colors change
-function NRSKNUI:GetDispelColorGeneration()
-    return dispelColorGeneration
+    -- Status colors are consumed directly (RGBA) by the health handler, mirror to oUF too.
+    palette.status = db.Status
+    oUF.colors.tapped = oUF:CreateColor(db.Status.Tapped[1], db.Status.Tapped[2], db.Status.Tapped[3])
+    oUF.colors.disconnected = oUF:CreateColor(db.Status.Disconnected[1], db.Status.Disconnected[2], db.Status.Disconnected[3])
 end

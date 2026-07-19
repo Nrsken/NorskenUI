@@ -158,7 +158,7 @@ Returns `true` when applied, `false` if the target has no `SetFontObject`.
 ## SetFontJustify
 
 ```lua
-fontString:SetFontJustify(source, parent?, offsetX?, offsetY?, skip?)
+fontString:SetFontJustify(source, parent?, offsetX?, offsetY?, skip?, flip?)
 ```
 
 Anchor a `FontString` to its config anchor and align **both** axes from that same point, then
@@ -167,8 +167,8 @@ after the font pass — `SetFontObject` (via `SetFontStyle`) resets `JustifyH`/`
 alignment would otherwise revert on a profile change.
 
 `source` is either a DB block carrying `Position.AnchorFrom` or a plain anchor string. `AnchorFrom`
-encodes both axes: `TOPRIGHT` → point `TOPRIGHT`, H `RIGHT`, V `TOP`. The X offset is flipped when
-the anchor is on the right side. `parent` defaults to `self:GetParent()`, offsets default to `0`,
+encodes both axes: `TOPRIGHT` → point `TOPRIGHT`, H `RIGHT`, V `TOP`. `flip` Makes the X offset flipped when
+the anchor is on the right side, useful on texts with backdrops and need to have a slight inset. `parent` defaults to `self:GetParent()`, offsets default to `0`,
 and `skip` is the same internal re-apply flag as `SetFontStyle`. Returns `true` when applied.
 
 ---

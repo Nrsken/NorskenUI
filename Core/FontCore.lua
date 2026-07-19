@@ -146,8 +146,7 @@ local function ApplyObjectShadow(obj, shadow)
     end
 
     -- ** Blizzy bug **
-    -- Always write both branches (color + offset) so toggling a shadow off on a
-    -- reused object actually clears a previously-set shadow instead of leaving it stale.
+    -- Always write both branches (color + offset) so toggling a shadow off on a reused object actually clears a previously-set shadow instead of leaving it stale.
     if obj.GetFontObjectForAlphabet then
         for i = 1, #ALPHABETS do
             local member = obj:GetFontObjectForAlphabet(ALPHABETS[i])
@@ -197,8 +196,7 @@ local function AcquireFontObject(fontPath, size, style, sig, shadow)
         if CreateFontFamily then
             obj = CreateFontFamily(name, BuildFontMembers(fontPath, size, style))
         else
-            -- Fallback if CreateFontFamily is unavailable: a plain font object still
-            -- delivers the shadow fix, just without per-alphabet CJK substitution.
+            -- Fallback if CreateFontFamily is unavailable: a plain font object still delivers the shadow fix, just without per-alphabet CJK substitution.
             obj = CreateFont(name)
             obj:SetFont(fontPath, size, style)
         end
@@ -233,6 +231,7 @@ local function SetFontStyle(self, source, size, outline, shadow, skip, setOwner)
         }
     end
 
+    -- 'source' can be a custom LSM path, a DB block or nil to use the global font.
     local font
     if type(source) == 'table' then
         local db = source
@@ -308,18 +307,17 @@ local function GetTextJustifyVFromAnchor(anchorPoint)
     return 'MIDDLE'
 end
 
----Anchor a string to its Position.AnchorFrom and align both axes from that same point,
----then register it so RefreshFontStyles re-applies it — SetFontObject (via SetFontStyle)
----resets justify, so this MUST run after the font pass or the alignment reverts on a
----profile change. AnchorFrom encodes both axes: TOPRIGHT -> point TOPRIGHT, H RIGHT, V TOP.
+---Set the anchor, offsets and justification of a FontString in one call.
 ---@param self table FontString
 ---@param source table|string DB block with a Position.AnchorFrom or a string anchor
 ---@param parent table? anchor parent, defaults to self:GetParent()
 ---@param offsetX number?
 ---@param offsetY number?
 ---@param skip boolean? internal: set during RefreshFontStyles to avoid re-registering
+---@param bound table? optional second edge { relTo, point, relPoint, offsetX, offsetY }
+---@param flip boolean? true to flip the X offset when the anchor is on the right side of the parent
 ---@return boolean
-local function SetFontJustify(self, source, parent, offsetX, offsetY, skip)
+local function SetFontJustify(self, source, parent, offsetX, offsetY, skip, bound, flip)
     if not self or not self.SetJustifyH or not source then return false end
 
     if not skip then
@@ -328,9 +326,12 @@ local function SetFontJustify(self, source, parent, offsetX, offsetY, skip)
             parent = parent,
             offsetX = offsetX,
             offsetY = offsetY,
+            bound = bound,
+            flip = flip,
         }
     end
 
+    -- Source can be a DB block with a Position.AnchorFrom or a string anchor.
     local anchor
     if type(source) == 'string' then
         anchor = source
@@ -338,15 +339,24 @@ local function SetFontJustify(self, source, parent, offsetX, offsetY, skip)
         anchor = (source.Position and source.Position.AnchorFrom) or 'CENTER'
     end
 
-    -- Flip the X offset when the anchor is on the right side of the parent.
-    if anchor == 'LEFT' then
-        offsetX = offsetX
-    elseif anchor == 'RIGHT' then
-        offsetX = -offsetX
+    -- Flip the X offset value depending on the anchor side, useful for texts that have backdrop and need to be offset inward from the edge of the frame.
+    -- See 'Modules\Combat\CombatTimer.lua' for example usage.
+    if flip then
+        if anchor == 'LEFT' then
+            offsetX = offsetX
+        elseif anchor == 'RIGHT' then
+            offsetX = -offsetX
+        end
     end
 
     self:ClearAllPoints()
     self:SetPixelPoint(anchor, parent or self:GetParent(), anchor, offsetX or 0, offsetY or 0)
+
+    -- A second point bounds the opposite edge to another widget, so the string gets a fixed width and truncates (text...) instead of overrunning it.
+    if bound and bound.relTo then
+        self:SetPixelPoint(bound.point, bound.relTo, bound.relPoint, bound.offsetX or 0, bound.offsetY or 0)
+    end
+
     self:SetJustifyH(GetTextJustifyHFromAnchor(anchor)) -- LEFT, CENTER, RIGHT
     self:SetJustifyV(GetTextJustifyVFromAnchor(anchor)) -- TOP, MIDDLE, BOTTOM
 
@@ -361,7 +371,7 @@ function NRSKNUI:RefreshFontStyles()
     end
     -- Justify runs after the font pass, SetFontObject resets JustifyH/V, so re-applying here restores the anchor-based alignment the font swap just wiped.
     for fs, data in pairs(self.StyledJustify) do
-        SetFontJustify(fs, data.source, data.parent, data.offsetX, data.offsetY, true)
+        SetFontJustify(fs, data.source, data.parent, data.offsetX, data.offsetY, true, data.bound)
     end
 end
 

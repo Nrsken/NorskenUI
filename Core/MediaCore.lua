@@ -77,6 +77,9 @@ RegisterLSMMedia('font', 'Quazii.TTF', true, westAndRU)
 
 -- Statusbar reg
 RegisterLSMMedia('statusbar', 'NorskenUI.blp', true)
+RegisterLSMMedia('statusbar', 'Stripes.blp', true)      -- WA Assets: https://github.com/WeakAuras/WeakAuras2/blob/main/WeakAuras/Media/Textures/Statusbar_Stripes.blp
+RegisterLSMMedia('statusbar', 'StripesThin.blp', true)  -- WA Assets: https://github.com/WeakAuras/WeakAuras2/blob/main/WeakAuras/Media/Textures/Statusbar_Stripes_Thin.blp
+RegisterLSMMedia('statusbar', 'StripesThick.blp', true) -- WA Assets: https://github.com/WeakAuras/WeakAuras2/blob/main/WeakAuras/Media/Textures/Statusbar_Stripes_Thick.blp
 
 -- Sound reg
 RegisterLSMMedia('sound', 'Whisper.ogg', '|cffe51039NorskenWhisper|r')

@@ -186,7 +186,7 @@ function CombatRes:ApplySettings()
 
     -- Update font settings
     self.coreFrame.text:SetFontStyle(db)
-    self.coreFrame.text:SetFontJustify(db, nil, self.db.Position.AnchorFrom == 'CENTER' and 0 or 4)
+    self.coreFrame.text:SetFontJustify(db, nil, self.db.Position.AnchorFrom == 'CENTER' and 0 or 4, 0, nil, nil, true)
 
     -- Mark for a resize on the next update, since the backdrop may have changed.
     self.coreFrame.NUIBackdropShape = nil

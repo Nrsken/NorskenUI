@@ -55,8 +55,10 @@ function Font:SetFontStyle(source, size, outline, shadow, skip, setOwner) end
 ---@param offsetX? number
 ---@param offsetY? number
 ---@param skip? boolean internal: set during RefreshFontStyles to avoid re-registering
+---@param bound? table optional second edge { relTo, point, relPoint, offsetX, offsetY } so the string gets a fixed width and truncates
+---@param flip? boolean true to flip the X offset when the anchor is on the right side of the parent
 ---@return boolean applied
-function Font:SetFontJustify(source, parent, offsetX, offsetY, skip) end
+function Font:SetFontJustify(source, parent, offsetX, offsetY, skip, bound, flip) end
 
 ---Style a FontString / Font / EditBox in one call. See `Font:SetFontStyle`.
 ---
@@ -78,8 +80,10 @@ function EditBox:SetFontStyle(source, size, outline, shadow, skip, setOwner) end
 ---@param offsetX? number
 ---@param offsetY? number
 ---@param skip? boolean internal: set during RefreshFontStyles to avoid re-registering
+---@param bound? table optional second edge { relTo, point, relPoint, offsetX, offsetY } so the string gets a fixed width and truncates
+---@param flip? boolean true to flip the X offset when the anchor is on the right side of the parent
 ---@return boolean applied
-function EditBox:SetFontJustify(source, parent, offsetX, offsetY, skip) end
+function EditBox:SetFontJustify(source, parent, offsetX, offsetY, skip, bound, flip) end
 
 ---@class Frame ---@diagnostic disable-line: class-shadows-builtin
 ---@field SetBackgroundColor fun(self: Frame, r: number, g: number, b: number, a: number?)
@@ -312,8 +316,10 @@ function FontString:SetFontStyle(source, size, outline, shadow, skip, setOwner) 
 ---@param offsetX? number
 ---@param offsetY? number
 ---@param skip? boolean internal: set during RefreshFontStyles to avoid re-registering
+---@param bound? table optional second edge { relTo, point, relPoint, offsetX, offsetY } so the string gets a fixed width and truncates
+---@param flip? boolean true to flip the X offset when the anchor is on the right side of the parent
 ---@return boolean applied
-function FontString:SetFontJustify(source, parent, offsetX, offsetY, skip) end
+function FontString:SetFontJustify(source, parent, offsetX, offsetY, skip, bound, flip) end
 
 ---Widest decimal digit glyph in this string's current font (proportional fonts vary).
 ---Reserve space for changing numbers with this instead of assuming "0" is widest.

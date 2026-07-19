@@ -1,11 +1,7 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 
-local next = next
-local CreateColor = CreateColor
-
 local CreateCurve = C_CurveUtil and C_CurveUtil.CreateCurve
-local CreateColorCurve = C_CurveUtil and C_CurveUtil.CreateColorCurve
 
 local Step = Enum.LuaCurveType.Step
 
@@ -37,39 +33,14 @@ HealthMissingAlpha:AddPoint(0, 1)
 HealthMissingAlpha:AddPoint(0.999, 1)
 HealthMissingAlpha:AddPoint(1, 0)
 
--- TODO Check if this is still needed with new aura container system.
--- Dispel type alpha curves, for showing/hiding dispel icons based on aura dispel type.
--- Each curve returns alpha 1 for its dispel type, 0 for all others.
-local DispelType = NRSKNUI.Enum.DispelType
-local transparent = CreateColor(1, 1, 1, 0)
-local visible = CreateColor(1, 1, 1, 1)
-
-local function CreateDispelAlphaCurve(targetDispelType)
-    local curve = CreateColorCurve()
-    curve:SetType(Step)
-    for _, dispelIndex in next, DispelType do
-        curve:AddPoint(dispelIndex, dispelIndex == targetDispelType and visible or transparent)
-    end
-    return curve
-end
-
 ---@class NRSKNUI.Curves
 ---@field DurationDecimals CurveObject
 ---@field ActionDesaturation CurveObject
 ---@field ActionAlpha CurveObject
 ---@field HealthMissingAlpha CurveObject
----@field DispelAlpha table<string, ColorCurveObject>
 NRSKNUI.curves = {
     DurationDecimals = DurationDecimals,
     HealthMissingAlpha = HealthMissingAlpha,
     ActionDesaturation = ActionDesaturation,
     ActionAlpha = ActionAlpha,
-    DispelAlpha = {
-        Magic = CreateDispelAlphaCurve(DispelType.Magic),
-        Curse = CreateDispelAlphaCurve(DispelType.Curse),
-        Disease = CreateDispelAlphaCurve(DispelType.Disease),
-        Poison = CreateDispelAlphaCurve(DispelType.Poison),
-        Enrage = CreateDispelAlphaCurve(DispelType.Enrage),
-        Bleed = CreateDispelAlphaCurve(DispelType.Bleed),
-    },
 }

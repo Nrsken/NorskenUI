@@ -31,9 +31,13 @@ function NRSKNUI:OnInitialize()
         self.db:SetProfile(profileName)
     end
 
+    -- Load custom colors from the profile
+    self:LoadCustomColors()
+
     -- Profile change callbacks (registered after the global-profile switch above,
     -- so that switch does not trigger a full module refresh during init)
     local function OnProfileRefresh()
+        self:LoadCustomColors()
         self:ValidateProfileFonts()
         self:ApplyBlizzardFonts(true)
         self.ProfileManager:RefreshAllModules()

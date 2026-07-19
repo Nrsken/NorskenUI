@@ -47,6 +47,56 @@ local Defaults = {
         },
     },
     profile = {
+        -- Shared color palette, pushed into oUF.colors + NRSKNUI.Colors by NRSKNUI:LoadCustomColors().
+        -- Mainly consumed by UnitFrames, but any module can read NRSKNUI.db.profile.Colors.
+        Colors = {
+            -- Original power colors from blizzard's PowerBarColor table.
+            Power = {
+                [0] = { 0, 0, 1 },                 -- Mana
+                [1] = { 1, 0, 0 },                 -- Rage
+                [2] = { 1, 0.5, 0.25 },            -- Focus
+                [3] = { 1, 1, 0 },                 -- Energy
+                [6] = { 0, 0.82, 1 },              -- Runic Power
+                [8] = { 0.3, 0.52, 0.9 },          -- Lunar / Astral Power
+                [11] = { 0, 0.5, 1 },              -- Maelstrom
+                [13] = { 0.4, 0, 0.8 },            -- Insanity
+                [17] = { 0.788, 0.259, 0.992 },    -- Fury
+                [18] = { 1, 0.61176470588235, 0 }, -- Pain
+            },
+            -- Original reaction colors from blizzard's FACTION_BAR_COLORS table.
+            Reaction = {
+                [1] = { 0.80000007152557, 0.30196079611778, 0.21960785984993 }, -- Hated
+                [2] = { 0.80000007152557, 0.30196079611778, 0.21960785984993 }, -- Hostile
+                [3] = { 0.74901962280273, 0.27058824896812, 0 },                -- Unfriendly
+                [4] = { 0.90196084976196, 0.70196080207825, 0 },                -- Neutral
+                [5] = { 0, 0.60000002384186, 0.10196079313755 },                -- Friendly
+                [6] = { 0, 0.60000002384186, 0.10196079313755 },                -- Honored
+                [7] = { 0, 0.60000002384186, 0.10196079313755 },                -- Revered
+                [8] = { 0, 0.60000002384186, 0.10196079313755 },                -- Exalted
+            },
+            -- Original class colors from blizzard.
+            Class = {
+                DEATHKNIGHT = { 0.76862752437592, 0.11764706671238, 0.22745099663734 },
+                DEMONHUNTER = { 0.63921570777893, 0.18823531270027, 0.78823536634445 },
+                DRUID = { 1, 0.48627454042435, 0.039215687662363 },
+                EVOKER = { 0.20000001788139, 0.57647061347961, 0.49803924560547 },
+                HUNTER = { 0.66666668653488, 0.82745105028152, 0.44705885648727 },
+                MAGE = { 0.24705883860588, 0.78039222955704, 0.9215686917305 },
+                MONK = { 0, 1, 0.59607845544815 },
+                PALADIN = { 0.95686280727386, 0.54901963472366, 0.7294117808342 },
+                PRIEST = { 1, 1, 1 },
+                ROGUE = { 1, 0.95686280727386, 0.4078431725502 },
+                SHAMAN = { 0, 0.43921571969986, 0.8666667342186 },
+                WARLOCK = { 0.52941179275513, 0.53333336114883, 0.93333339691162 },
+                WARRIOR = { 0.77647066116333, 0.60784316062927, 0.42745101451874 },
+            },
+            -- Custom status colors for various unit states
+            Status = {
+                Tapped = { 0.6, 0.6, 0.6, 1 },
+                Disconnected = { 0.5, 0.5, 0.5, 1 },
+                Dead = { 0.58, 0, 0.09, 1 },
+            },
+        },
         globalMedia = {
             Enabled = true,
             profileFont = { Enabled = true, FontFace = "Expressway", },
@@ -2179,6 +2229,351 @@ local Defaults = {
                     AnchorTo = "CENTER",
                     XOffset = 0,
                     YOffset = -200,
+                },
+            },
+        },
+        UnitFrames = {
+            Enabled = true,
+            General = {
+                UseGlobalBar = true,
+                statusBar = "NorskenUI",
+                UseGlobalFont = true,
+                FontFace = "Expressway",
+                Smooth = true,
+            },
+            TagSettings = {
+                Separator = "»",
+            },
+            Units = {
+                ["**"] = {
+                    Enabled = true,
+                    Width = 220,
+                    Height = 42,
+                    anchorFrameType = "UIPARENT",
+                    ParentFrame = "UIParent",
+                    Strata = "MEDIUM",
+                    Position = { AnchorFrom = "CENTER", AnchorTo = "CENTER", XOffset = 0, YOffset = 0 },
+                    Backdrop = {
+                        Enabled = true,
+                        BackgroundColor = { 0, 0, 0, 0.8 },
+                        BorderColor = { 0, 0, 0, 1 },
+                    },
+                    Health = {
+                        Enabled = true,
+                        StatusBarTexture = nil,
+                        ColorByClass = false,
+                        Smooth = false,
+                        Inverse = false,
+                        Foreground = { 0, 0, 0, 0.8 },
+                        Background = { 0.5, 0.5, 0.5, 1 },
+                    },
+                    Power = {
+                        Enabled = true,
+                        Height = 8,
+                        StatusBarTexture = nil,
+                        ColorByPower = true,
+                        Smooth = true,
+                    },
+                    Tags = {
+                        TagOne = {
+                            Enabled = true,
+                            Tag = "[nrsknuf:smartcolor][nrsknuf:name<$|r]",
+                            UseGlobalFont = true,
+                            FontFace = "Expressway",
+                            FontSize = 12,
+                            FontOutline = "OUTLINE",
+                            Color = { 1, 1, 1 },
+                            BoundTo = "",
+                            Position = { AnchorFrom = "TOPLEFT", AnchorTo = "TOPLEFT", XOffset = 4, YOffset = -6 },
+                        },
+                        TagTwo = {
+                            Enabled = true,
+                            Tag = "[nrsknuf:curhp:perhp]",
+                            UseGlobalFont = true,
+                            FontFace = "Expressway",
+                            FontSize = 12,
+                            FontOutline = "OUTLINE",
+                            Color = { 1, 1, 1 },
+                            BoundTo = "",
+                            Position = { AnchorFrom = "BOTTOMLEFT", AnchorTo = "BOTTOMLEFT", XOffset = 4, YOffset = 6 },
+                        },
+                        TagThree = {
+                            Enabled = true,
+                            --Tag = "[nrsknuf:perpower:color]",
+                            Tag = "[powercolor][perpp]",
+                            UseGlobalFont = true,
+                            FontFace = "Expressway",
+                            FontSize = 12,
+                            FontOutline = "OUTLINE",
+                            Color = { 1, 1, 1 },
+                            BoundTo = "",
+                            Position = { AnchorFrom = "BOTTOMRIGHT", AnchorTo = "BOTTOMRIGHT", XOffset = -4, YOffset = 6 },
+                        },
+                        TagFour = {
+                            Enabled = false,
+                            Tag = "",
+                            UseGlobalFont = true,
+                            FontFace = "Expressway",
+                            FontSize = 12,
+                            FontOutline = "OUTLINE",
+                            Color = { 1, 1, 1 },
+                            BoundTo = "",
+                            Position = { AnchorFrom = "CENTER", AnchorTo = "CENTER", XOffset = 0, YOffset = 0 },
+                        },
+                        TagFive = {
+                            Enabled = false,
+                            Tag = "",
+                            UseGlobalFont = true,
+                            FontFace = "Expressway",
+                            FontSize = 12,
+                            FontOutline = "OUTLINE",
+                            Color = { 1, 1, 1 },
+                            BoundTo = "",
+                            Position = { AnchorFrom = "CENTER", AnchorTo = "CENTER", XOffset = 0, YOffset = 0 },
+                        },
+                    },
+                    Indicators = {
+                        IndicatorOne = {
+                            Enabled = false,
+                            Tag = "",
+                            UseGlobalFont = true,
+                            FontFace = "Expressway",
+                            FontSize = 16,
+                            FontOutline = "NONE",
+                            Position = { AnchorFrom = "TOPLEFT", AnchorTo = "TOPLEFT", XOffset = -4, YOffset = 16 },
+                        },
+                        IndicatorTwo = {
+                            Enabled = false,
+                            Tag = "",
+                            UseGlobalFont = true,
+                            FontFace = "Expressway",
+                            FontSize = 16,
+                            FontOutline = "NONE",
+                            Position = { AnchorFrom = "TOPRIGHT", AnchorTo = "TOPRIGHT", XOffset = -2, YOffset = 20 },
+                        },
+                        IndicatorThree = {
+                            Enabled = false,
+                            Tag = "",
+                            UseGlobalFont = true,
+                            FontFace = "Expressway",
+                            FontSize = 16,
+                            FontOutline = "NONE",
+                            Position = { AnchorFrom = "BOTTOMLEFT", AnchorTo = "BOTTOMLEFT", XOffset = 2, YOffset = 2 },
+                        },
+                        IndicatorFour = {
+                            Enabled = false,
+                            Tag = "",
+                            UseGlobalFont = true,
+                            FontFace = "Expressway",
+                            FontSize = 16,
+                            FontOutline = "NONE",
+                            Position = { AnchorFrom = "TOPRIGHT", AnchorTo = "TOPRIGHT", XOffset = -4, YOffset = 0 },
+                        },
+                    },
+                    Castbar = {
+                        Enabled = true,
+                        Height = 24,
+                        StatusBarTexture = nil,
+                        ShowIcon = true,
+                        ShowSpellName = true,
+                        ShowTime = true,
+                        TimeToHold = 0.5,
+                        ColorByClass = true,
+                        Color = { 0.35, 0.55, 0.85, 1 },              -- interruptible / normal
+                        NonInterruptibleColor = { 0.7, 0.6, 0.2, 1 }, -- shielded cast
+                        FailColor = { 0.8, 0.25, 0.2, 1 },            -- interrupted / failed
+                        Background = { 0, 0, 0, 0.8 },
+                        Position = { AnchorFrom = "TOPLEFT", AnchorTo = "BOTTOMLEFT", XOffset = 0, YOffset = -10 },
+                    },
+                },
+                player = {
+                    Tags = {
+                        TagThree = {
+                            Enabled = false,
+                        },
+                    },
+
+                    Indicators = {
+                        IndicatorOne = {
+                            Enabled = true,
+                            Tag = "[nrsknuf:resting]",
+                        },
+                        IndicatorThree = {
+                            Enabled = true,
+                            Tag = "[nrsknuf:summon]",
+                        },
+                    },
+                    Position = {
+                        AnchorFrom = "CENTER",
+                        AnchorTo = "CENTER",
+                        XOffset = -260,
+                        YOffset = -200
+                    },
+                },
+                target = {
+                    Indicators = {
+                        IndicatorThree = {
+                            Enabled = true,
+                            Tag = "[nrsknuf:summon]",
+                        },
+                        IndicatorFour = {
+                            Enabled = true,
+                            Tag = "[nrsknuf:quest]",
+                        },
+                    },
+
+                    Position = {
+                        AnchorFrom = "CENTER",
+                        AnchorTo = "CENTER",
+                        XOffset = 260,
+                        YOffset = -200
+                    },
+                },
+                targettarget = {
+                    Width = 110,
+                    Height = 22,
+                    Power = {
+                        Enabled = false,
+                    },
+                    Castbar = {
+                        Enabled = false,
+                    },
+                    Tags = {
+                        TagOne = {
+                            BoundTo = "frame",
+                            Position = {
+                                AnchorFrom = "LEFT",
+                                AnchorTo = "LEFT",
+                                XOffset = 4,
+                                YOffset = 0
+                            }
+                        },
+                        TagTwo = {
+                            Enabled = false
+                        },
+                        TagThree = {
+                            Enabled = false
+                        },
+
+                    },
+                    anchorFrameType = "SELECTFRAME",
+                    ParentFrame = "NUF_Target",
+                    Position = {
+                        AnchorFrom = "LEFT",
+                        AnchorTo = "RIGHT",
+                        XOffset = 1,
+                        YOffset = 10
+                    },
+                },
+                focus = {
+                    Position = {
+                        AnchorFrom = "CENTER",
+                        AnchorTo = "CENTER",
+                        XOffset = 560,
+                        YOffset = -130
+                    }
+                },
+                focustarget = {
+                    Width = 110,
+                    Height = 22,
+                    Power = {
+                        Enabled = false,
+                    },
+                    Castbar = {
+                        Enabled = false,
+                    },
+                    Tags = {
+                        TagOne = {
+                            BoundTo = "frame",
+                            Position = {
+                                AnchorFrom = "LEFT",
+                                AnchorTo = "LEFT",
+                                XOffset = 4,
+                                YOffset = 0
+                            }
+                        },
+                        TagTwo = {
+                            Enabled = false,
+                        },
+                        TagThree = {
+                            Enabled = false
+                        },
+                    },
+                    anchorFrameType = "SELECTFRAME",
+                    ParentFrame = "NUF_Focus",
+                    Position = {
+                        AnchorFrom = "LEFT",
+                        AnchorTo = "RIGHT",
+                        XOffset = 1,
+                        YOffset = 10
+                    }
+                },
+                pet = {
+                    Width = 110,
+                    Height = 22,
+                    anchorFrameType = "SELECTFRAME",
+                    ParentFrame = "NUF_Player",
+                    Position = {
+                        AnchorFrom = "TOPLEFT",
+                        AnchorTo = "BOTTOMLEFT",
+                        XOffset = 0,
+                        YOffset = -20
+                    },
+                    Tags = {
+                        TagOne = {
+                            BoundTo = "frame",
+                            Position = {
+                                AnchorFrom = "LEFT",
+                                AnchorTo = "LEFT",
+                                XOffset = 4,
+                                YOffset = 0
+                            }
+                        },
+                        TagTwo = {
+                            Enabled = false
+                        },
+                        TagThree = {
+                            Enabled = false
+                        },
+                    },
+                    Power = {
+                        Enabled = false,
+                    },
+                },
+                pettarget = {
+                    Width = 109,
+                    Height = 22,
+                    Power = {
+                        Enabled = false,
+                    },
+                    Castbar = {
+                        Enabled = false,
+                    },
+                    Tags = {
+                        TagOne = {
+                            BoundTo = "frame",
+                            Position = {
+                                AnchorFrom = "LEFT",
+                                AnchorTo = "LEFT",
+                                XOffset = 4,
+                                YOffset = 0
+                            }
+                        },
+                        TagTwo = {
+                            Enabled = false
+                        },
+                        TagThree = {
+                            Enabled = false
+                        },
+                    },
+                    anchorFrameType = "SELECTFRAME",
+                    ParentFrame = "NUF_Pet",
+                    Position = {
+                        AnchorFrom = "LEFT",
+                        AnchorTo = "RIGHT",
+                        XOffset = 1,
+                        YOffset = 0
+                    },
                 },
             },
         },

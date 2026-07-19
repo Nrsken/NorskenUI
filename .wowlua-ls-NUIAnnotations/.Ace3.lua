@@ -22,6 +22,7 @@
 ---@field GetNamespace fun(self: NRSKNUI.AceDB, name: string, silent?: boolean): NRSKNUI.AceDB|nil
 ---@field anchorFrameType string e.g 'UIPARENT'
 ---@field ParentFrame string e.g 'UIParent'
+---@field Units table<string, table> Per-unit archetype DB tables (e.g. Units.player, Units.target, Units.party, etc.)
 
 ---Base class for anything returned by NRSKNUI:NewModule(...).
 ---Covers the AceAddon module API plus the AceEvent/AceHook/AceTimer methods
