@@ -10,7 +10,10 @@
             "NorskenUIDB",
             "BugGrabber",
             "HidingBarAddon",
-            "BugSack"
+            "BugSack",
+            "_FRAME",
+            "_ENG",
+            "_G"
         ],
         "write": [
             "NorskenUI",
