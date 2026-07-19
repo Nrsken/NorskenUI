@@ -75,10 +75,17 @@ end
 ---@param unit string
 ---@param uDB table
 function UF:ApplyElementStates(frame, unit, uDB)
+    -- Handle power element
     SetElement(frame, 'Power', frame.Power, uDB.Power.Enabled)
     if frame.powerBackground then frame.powerBackground:SetShown(uDB.Power.Enabled) end
     if frame.powerBorderFrame then frame.powerBorderFrame:SetShown(uDB.Power.Enabled) end
+
+    -- Handle castbar element
     SetElement(frame, 'Castbar', frame.Castbar, uDB.Castbar.Enabled)
+
+    -- Handle RaidTargetIndicator and LeaderIndicator elements
+    SetElement(frame, 'RaidTargetIndicator', frame.RaidTargetIndicator, uDB.RaidIcon.Enabled)
+    SetElement(frame, 'LeaderIndicator', frame.LeaderIndicator, uDB.LeaderIndicator.Enabled)
 end
 
 ---Apply the whole DB to one frame: geometry, backdrop, every element and then one ForceUpdate.

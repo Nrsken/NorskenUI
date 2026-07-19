@@ -65,9 +65,14 @@ end
 
 -- Color Tags --
 
--- Smart color tag - colors by class, reaction or status.
+-- Smart color tag - colors by class, reaction or status OR when using classcoloring for health, return white.
 Tags.Events['nrsknuf:smartcolor'] = 'UNIT_FACTION UNIT_CONNECTION UNIT_NAME_UPDATE PLAYER_FLAGS_CHANGED PARTY_MEMBER_ENABLE PARTY_MEMBER_DISABLE'
 Tags.Methods['nrsknuf:smartcolor'] = function(unit)
+	local health = _FRAME and _FRAME.Health
+	if health and health.nuiColorByClass then
+		return '|cffffffff'
+	end
+
 	local reaction = UnitReaction(unit, 'player')
 	if UnitIsTapDenied(unit) or not UnitIsConnected(unit) then
 		return '|cff999999'
@@ -109,7 +114,7 @@ end
 
 -- Indicator Tags --
 
--- Resting glow. IsResting is player-state (unitless), so only place it on the player frame.
+-- Resting texture, IsResting is player-state (unitless), so only place it on the player frame.
 Tags.Events['nrsknuf:resting'] = 'PLAYER_UPDATE_RESTING'
 Tags.Methods['nrsknuf:resting'] = function()
 	if IsResting() then

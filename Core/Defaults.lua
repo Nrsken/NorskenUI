@@ -2266,6 +2266,16 @@ local Defaults = {
                         Inverse = false,
                         Foreground = { 0, 0, 0, 0.8 },
                         Background = { 0.5, 0.5, 0.5, 1 },
+                        HealAbsorb = {
+                            UseGlobalBar = false,
+                            StatusBarTexture = "StripesThick",
+                            Color = { 0.4, 0, 0.8, 0.5 },
+                        },
+                        DamageAbsorb = {
+                            UseGlobalBar = false,
+                            StatusBarTexture = "StripesThick",
+                            Color = { 0, 0.39, 0.88, 0.81 },
+                        },
                     },
                     Power = {
                         Enabled = true,
@@ -2385,6 +2395,26 @@ local Defaults = {
                         Background = { 0, 0, 0, 0.8 },
                         Position = { AnchorFrom = "TOPLEFT", AnchorTo = "BOTTOMLEFT", XOffset = 0, YOffset = -10 },
                     },
+                    RaidIcon = {
+                        Enabled = true,
+                        Size = 24,
+                        Position = {
+                            AnchorFrom = "CENTER",
+                            AnchorTo = "TOP",
+                            XOffset = 0,
+                            YOffset = 0
+                        },
+                    },
+                    LeaderIndicator = {
+                        Enabled = false,
+                        Size = 14,
+                        Position = {
+                            AnchorFrom = "BOTTOMLEFT",
+                            AnchorTo = "TOPLEFT",
+                            XOffset = 0,
+                            YOffset = -2
+                        },
+                    },
                 },
                 player = {
                     Tags = {
@@ -2409,6 +2439,9 @@ local Defaults = {
                         XOffset = -260,
                         YOffset = -200
                     },
+                    LeaderIndicator = {
+                        Enabled = true,
+                    },
                 },
                 target = {
                     Indicators = {
@@ -2427,6 +2460,9 @@ local Defaults = {
                         AnchorTo = "CENTER",
                         XOffset = 260,
                         YOffset = -200
+                    },
+                    LeaderIndicator = {
+                        Enabled = true,
                     },
                 },
                 targettarget = {
@@ -2471,7 +2507,19 @@ local Defaults = {
                         AnchorTo = "CENTER",
                         XOffset = 560,
                         YOffset = -130
-                    }
+                    },
+                    Power = {
+                        Enabled = false,
+                    },
+                    Castbar = {
+                        Enabled = true,
+                        Position = {
+                            AnchorFrom = "TOPLEFT",
+                            AnchorTo = "BOTTOMLEFT",
+                            XOffset = 0,
+                            YOffset = -1,
+                        },
+                    },
                 },
                 focustarget = {
                     Width = 110,

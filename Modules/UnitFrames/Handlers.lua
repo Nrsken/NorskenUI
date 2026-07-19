@@ -33,6 +33,14 @@ function UF.PostUpdateHealth(element, unit, cur, max, lossPerc)
         healthBackground:SetStatusBarColor(bg[1], bg[2], bg[3], bg[4])
     end
 
+    -- Overabsorb handling
+    local over = element.OverDamageAbsorb
+    local damage = element.DamageAbsorb
+    if over and damage then
+        over:SetMinMaxValues(damage:GetMinMaxValues())
+        over:SetValue(damage:GetValue())
+    end
+
     PrimeSmoothing(element)
 end
 
