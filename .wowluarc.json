@@ -13,7 +13,8 @@
             "BugSack",
             "_FRAME",
             "_ENG",
-            "_G"
+            "_G",
+            "SCMAPI"
         ],
         "write": [
             "NorskenUI",

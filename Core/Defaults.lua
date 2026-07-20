@@ -94,7 +94,7 @@ local Defaults = {
             Status = {
                 Tapped = { 0.6, 0.6, 0.6, 1 },
                 Disconnected = { 0.5, 0.5, 0.5, 1 },
-                Dead = { 0.58, 0, 0.09, 1 },
+                Dead = { 0.35, 0, 0.05, 1 },
             },
         },
         globalMedia = {
@@ -2240,6 +2240,11 @@ local Defaults = {
                 UseGlobalFont = true,
                 FontFace = "Expressway",
                 Smooth = true,
+                Range = {
+                    Enabled = true,
+                    InsideAlpha = 1,
+                    OutsideAlpha = 0.6,
+                },
             },
             TagSettings = {
                 Separator = "»",
@@ -2266,6 +2271,8 @@ local Defaults = {
                         Inverse = false,
                         Foreground = { 0, 0, 0, 0.8 },
                         Background = { 0.5, 0.5, 0.5, 1 },
+                        BackgroundWhenColorByClass = { 0, 0, 0, 0.8 },
+                        ForegroundAlphaWhenColorByClass = 1,
                         HealAbsorb = {
                             UseGlobalBar = false,
                             StatusBarTexture = "StripesThick",
@@ -2287,7 +2294,7 @@ local Defaults = {
                     Tags = {
                         TagOne = {
                             Enabled = true,
-                            Tag = "[nrsknuf:smartcolor][nrsknuf:name<$|r]",
+                            Tag = "[nrsknuf:unit:smartcolor][nrsknuf:name<$|r]",
                             UseGlobalFont = true,
                             FontFace = "Expressway",
                             FontSize = 12,
@@ -2309,8 +2316,7 @@ local Defaults = {
                         },
                         TagThree = {
                             Enabled = true,
-                            --Tag = "[nrsknuf:perpower:color]",
-                            Tag = "[powercolor][perpp]",
+                            Tag = "[nrsknuf:perpower:smartcolor]",
                             UseGlobalFont = true,
                             FontFace = "Expressway",
                             FontSize = 12,
@@ -2433,14 +2439,22 @@ local Defaults = {
                             Tag = "[nrsknuf:summon]",
                         },
                     },
+                    anchorFrameType = "SELECTFRAME",
+                    ParentFrame = "NRSKNUF_CDMAnchor",
                     Position = {
-                        AnchorFrom = "CENTER",
-                        AnchorTo = "CENTER",
-                        XOffset = -260,
-                        YOffset = -200
+                        AnchorFrom = "RIGHT",
+                        AnchorTo = "LEFT",
+                        XOffset = -30,
+                        YOffset = 0
                     },
                     LeaderIndicator = {
                         Enabled = true,
+                    },
+                    Power = {
+                        Enabled = false,
+                    },
+                    Castbar = {
+                        Enabled = false,
                     },
                 },
                 target = {
@@ -2454,15 +2468,27 @@ local Defaults = {
                             Tag = "[nrsknuf:quest]",
                         },
                     },
-
+                    anchorFrameType = "SELECTFRAME",
+                    ParentFrame = "NRSKNUF_CDMAnchor",
                     Position = {
-                        AnchorFrom = "CENTER",
-                        AnchorTo = "CENTER",
-                        XOffset = 260,
-                        YOffset = -200
+                        AnchorFrom = "LEFT",
+                        AnchorTo = "RIGHT",
+                        XOffset = 30,
+                        YOffset = 0
                     },
                     LeaderIndicator = {
                         Enabled = true,
+                    },
+                    Power = {
+                        Enabled = false,
+                    },
+                    Castbar = {
+                        Position = {
+                            AnchorFrom = "TOPLEFT",
+                            AnchorTo = "BOTTOMLEFT",
+                            XOffset = 0,
+                            YOffset = -1,
+                        },
                     },
                 },
                 targettarget = {

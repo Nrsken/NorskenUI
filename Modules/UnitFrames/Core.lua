@@ -112,7 +112,7 @@ function UF:ConfigureFrame(frame, unit)
     frame:UpdateAllElements('ForceUpdate')
 end
 
----Generate a global name for a unit frame, e.g. "NUF_Player" or "NUF_TargetTarget".
+---Generate a global name for a unit frame, e.g. 'NUF_Player' or 'NUF_TargetTarget'.
 ---@param unit string
 ---@return string
 local function GlobalName(unit)
@@ -142,6 +142,20 @@ end
 
 function UF:OnEnable()
     self:UpdateDB()
+    self:CreateCDMAnchor()
+
+    -- List of unit frames that we tell SCM that we created, so SCM can find them easily by typing 'NUF' in the anchor search box.
+    self.NRSKNUFAnchors = {
+        ["Player"] = "NUF_Player",
+        ["Target"] = "NUF_Target",
+        ["Pet"] = "NUF_Pet",
+        ["Focus"] = "NUF_Focus",
+        ["Focus Target"] = "NUF_FocusTarget",
+        ["Target of Target"] = "NUF_TargetTarget",
+    }
+    if SCMAPI and SCMAPI.RegisterAnchorParents then
+        SCMAPI.RegisterAnchorParents("NorskenUI", self.NRSKNUFAnchors)
+    end
 
     self.TagSeparator = self.db.TagSettings.Separator
     self.styleName = NRSKNUI.oUFPrefix .. 'Solo'

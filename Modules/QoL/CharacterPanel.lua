@@ -54,15 +54,15 @@ local SLOT_FRAMES = {
     [17] = "CharacterSecondaryHandSlot",
 }
 
--- Season Configuration: S1 Midnight
+-- Season Configuration: S2 Midnight
 local SEASON = {
     -- PvP arena ilvls
-    conquestIlvl = 289,
-    honorIlvl = 276,
+    conquestIlvl = 344,
+    honorIlvl = 331,
     -- Crafted ilvls
     craftedVoidforged = 295,
-    craftedMyth = 285,
-    craftedHero = 272,
+    craftedMyth = 331,
+    craftedHero = 318,
 }
 
 local TIER_COLORS = {

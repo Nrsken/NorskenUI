@@ -1,14 +1,17 @@
-<Ui xmlns="http://www.blizzard.com/wow/ui/"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
+<Ui xmlns='http://www.blizzard.com/wow/ui/'
+    xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd'>
 
-    <Script file="UnitDB.lua" />
-    <Script file="Handlers.lua" />
-    <Script file="TagTypes.lua" />
-    <Script file="Elements\Health.lua" />
-    <Script file="Elements\Power.lua" />
-    <Script file="Elements\Tags.lua" />
-    <Script file="Elements\Indicators.lua" />
-    <Script file="Elements\Castbar.lua" />
-    <Script file="Style.lua" />
-    <Script file="Core.lua" />
+    <Script file='UnitDB.lua' />
+    <Script file='RangeData.lua' />
+    <Script file='Handlers.lua' />
+    <Script file='TagTypes.lua' />
+    <Script file='CDMAnchoring.lua' />
+    <Script file='Elements\Health.lua' />
+    <Script file='Elements\Power.lua' />
+    <Script file='Elements\Tags.lua' />
+    <Script file='Elements\Indicators.lua' />
+    <Script file='Elements\Castbar.lua' />
+    <Script file='Elements\Range.lua' />
+    <Script file='Style.lua' />
+    <Script file='Core.lua' />
 </Ui>

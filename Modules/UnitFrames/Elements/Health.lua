@@ -116,6 +116,7 @@ UF.Elements.Health = {
         healthBackground:SetReverseFill(not (hDB.Inverse or false))
 
         -- oUF flags pick the hue, PostUpdateHealthColor enforces the alpha.
+        healthBar.ForegroundAlphaWhenColorByClass = hDB.ForegroundAlphaWhenColorByClass
         healthBar.nuiForeground = hDB.Foreground
         healthBar.nuiColorByClass = hDB.ColorByClass
         healthBar.colorClass = hDB.ColorByClass
@@ -124,7 +125,7 @@ UF.Elements.Health = {
 
         -- Background coloring
         healthBackground:SetStatusBarColor(hDB.Background[1], hDB.Background[2], hDB.Background[3], hDB.Background[4])
-        healthBar.nuiBackground = hDB.Background
+        healthBar.nuiBackground = hDB.ColorByClass and hDB.BackgroundWhenColorByClass or hDB.Background
 
         -- Absorb bars
         local HealAbsorb = healthBar.HealAbsorb

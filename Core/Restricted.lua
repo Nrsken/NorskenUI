@@ -112,6 +112,16 @@ function NRSKNUI:CanCompareUnits(unit1, unit2)
     return CanCompareUnitTokens(unit1, unit2)
 end
 
+---Safely get a value if it is not secret and can be accessed, otherwise return nil.
+---@param value any
+---@return any|nil
+function NRSKNUI:SafeValue(value)
+    if self:CanAccessValue(value) then
+        return value
+    end
+    return nil
+end
+
 -- Combat Queue --
 
 local combatQueue = {}

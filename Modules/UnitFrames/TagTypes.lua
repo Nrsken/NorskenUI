@@ -41,33 +41,31 @@ local DEAD = DEAD
 
 -- Power Tags --
 
--- Unit power percentage tag (e.g. '0' - '100')
-Tags.Events['nrsknuf:perpower'] = 'UNIT_POWER_FREQUENT UNIT_POWER_UPDATE UNIT_MAXPOWER'
-Tags.Methods['nrsknuf:perpower'] = function(unit)
-	if not unit or not UnitExists(unit) then return "" end
-	local unitPower = UnitPower(unit)
-	if unitPower then
-		local powerPercent = UnitPowerPercent(unit, nil, true, CurveConstants.ScaleTo100)
-		return format("%.f", powerPercent)
-	end
-end
-
--- Unit power percentage tag (e.g. '0' - '100') colored by power type.
-Tags.Events['nrsknuf:perpower:color'] = 'UNIT_POWER_FREQUENT UNIT_POWER_UPDATE UNIT_MAXPOWER'
-Tags.Methods['nrsknuf:perpower:color'] = function(unit)
+-- Unit power percentage tag (e.g. '0' - '100') colored by power type OR when using classcoloring for health, colored white.
+Tags.Events['nrsknuf:perpower:smartcolor'] = 'UNIT_POWER_FREQUENT UNIT_POWER_UPDATE UNIT_MAXPOWER'
+Tags.Methods['nrsknuf:perpower:smartcolor'] = function(unit)
 	if not unit or not UnitExists(unit) then return "" end
 	local unitPower = UnitPower(unit)
 	local powerType = UnitPowerType(unit)
+    local health = _FRAME and _FRAME.Health
+
+    local color
+	if health and health.nuiColorByClass then
+		color = '|cffffffff'
+	else
+		color = NRSKNUI.Colors.power[powerType] and Hex(NRSKNUI.Colors.power[powerType])
+	end
+	
 	if unitPower then
-		return Hex(NRSKNUI.Colors.power[powerType]) .. format("%.f", UnitPowerPercent(unit, nil, true, CurveConstants.ScaleTo100)) .. "|r"
+		return color .. format("%.f", UnitPowerPercent(unit, nil, true, CurveConstants.ScaleTo100)) .. "|r"
 	end
 end
 
 -- Color Tags --
 
 -- Smart color tag - colors by class, reaction or status OR when using classcoloring for health, return white.
-Tags.Events['nrsknuf:smartcolor'] = 'UNIT_FACTION UNIT_CONNECTION UNIT_NAME_UPDATE PLAYER_FLAGS_CHANGED PARTY_MEMBER_ENABLE PARTY_MEMBER_DISABLE'
-Tags.Methods['nrsknuf:smartcolor'] = function(unit)
+Tags.Events['nrsknuf:unit:smartcolor'] = 'UNIT_FACTION UNIT_CONNECTION UNIT_NAME_UPDATE PLAYER_FLAGS_CHANGED PARTY_MEMBER_ENABLE PARTY_MEMBER_DISABLE'
+Tags.Methods['nrsknuf:unit:smartcolor'] = function(unit)
 	local health = _FRAME and _FRAME.Health
 	if health and health.nuiColorByClass then
 		return '|cffffffff'
