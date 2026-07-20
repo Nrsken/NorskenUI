@@ -402,13 +402,16 @@ local CreateTextureMixin = CreateFrame('Frame').CreateTexture
 
 ---@param frame Frame
 ---@param noBorders boolean? Sometime a manual border is needed, so skip creating the default borders if true.
-local function CreateBackdrop(frame, noBorders)
+---@param inset number? Optional inset for the background texture, defaults to 1.
+local function CreateBackdrop(frame, noBorders, inset)
     ---@cast frame Frame & PublicBackdropMixin
     Mixin(frame, PublicBackdropMixin)
 
+    local insetBG = inset or 1
+
     local BG = CreateTextureMixin(frame, nil, 'BACKGROUND')
-    BG:SetPixelPoint('TOPLEFT', frame, 'TOPLEFT', 1, -1)
-    BG:SetPixelPoint('BOTTOMRIGHT', frame, 'BOTTOMRIGHT', -1, 1)
+    BG:SetPixelPoint('TOPLEFT', frame, 'TOPLEFT', insetBG, -insetBG)
+    BG:SetPixelPoint('BOTTOMRIGHT', frame, 'BOTTOMRIGHT', -insetBG, insetBG)
     frame.backdropBackground = BG
     BG:SetPixelSnap()
 
@@ -447,6 +450,13 @@ end
 
 local function HasBackdrop(frame)
     return (not not frame.BackDropBorders) or (not not frame.backdropBackground)
+end
+
+---Expose the CreateBackdrop function so it can be used by AuraContainer stuff.
+---@param frame Frame
+---@param noBorders boolean?
+function NRSKNUI:CreateBackdrop(frame, noBorders, inset)
+    return CreateBackdrop(frame, noBorders, inset)
 end
 
 -- Border utility --

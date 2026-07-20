@@ -18,6 +18,7 @@
     <Script file="Curves.lua" />
     <Script file="Animations.lua" />
     <Script file="DynamicGroup.lua" />
+    <Script file="AuraContainer.lua" />
     <Script file="PreviewManager.lua" />
     <Script file="EditMode.lua" />
     <Script file="Commands.lua" />

@@ -6,6 +6,9 @@ local string_format = string.format
 local tostring = tostring
 local tconcat = table.concat
 
+local enumUp = Enum.NumericRuleFormatRounding.Up
+local enumNearest = Enum.NumericRuleFormatRounding.Nearest
+
 local TOKEN_NORMAL, TOKEN_PERCENT, TOKEN_PLACEHOLDER = 0, 1, 2
 
 ---Format a duration in seconds into one of the NRSKNUI.TimeFormats styles.
@@ -141,4 +144,62 @@ function NRSKNUI:FormatTokens(formatStr, replacements, wrapLiteral)
     FlushLiteral(len + 1)
 
     return tconcat(result)
+end
+
+-- Aura duration text --
+
+local auraDurationFormatter
+
+---Formatter for aura duration text, tenths + red under 3s, whole seconds under a minute, then m / h.
+---@return table formatter A NumericFormatter usable as SetDurationText's `formatter` option.
+function NRSKNUI:GetAuraDurationFormatter()
+    if auraDurationFormatter then return auraDurationFormatter end
+
+    auraDurationFormatter = C_StringUtil.CreateNumericRuleFormatter()
+    auraDurationFormatter:SetBreakpoints({
+        {
+            threshold = 0,
+            format = '|cffff4d4d%0.1f|r',
+            components = {
+                {
+                    step = 0.1,
+                    rounding = enumUp,
+                },
+            },
+        },
+        {
+            threshold = 3,
+            format = '%d',
+            components = {
+                {
+                    step = 1,
+                    rounding = enumUp
+                },
+            }
+        },
+        {
+            threshold = 60,
+            format = '%dm',
+            components = {
+                {
+                    div = 60,
+                    step = 1,
+                    rounding = enumNearest
+                },
+            }
+        },
+        {
+            threshold = 3600,
+            format = '%dh',
+            components = {
+                {
+                    div = 3600,
+                    step = 1,
+                    rounding = enumNearest
+                }
+            }
+        },
+    })
+
+    return auraDurationFormatter
 end

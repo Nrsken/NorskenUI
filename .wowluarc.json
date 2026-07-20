@@ -14,7 +14,11 @@
             "_FRAME",
             "_ENG",
             "_G",
-            "SCMAPI"
+            "SCMAPI",
+            "AuraButtonBorderStyle",
+            "AuraContainerSortMethod",
+            "AuraContainerSortDirection",
+            "AuraContainerItemEnchantmentSlot"
         ],
         "write": [
             "NorskenUI",
