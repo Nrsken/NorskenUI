@@ -122,6 +122,9 @@ NRSKNUI.Skinning = NRSKNUI:NewModule('Skinning', 'AceEvent-3.0')
 -- Class Util Modules
 NRSKNUI.Gateway = NRSKNUI:NewModule('Gateway', 'AceEvent-3.0')
 
+-- Player Auras
+NRSKNUI.PlayerAuras = NRSKNUI:NewModule('PlayerAuras', 'AceEvent-3.0')
+
 -- Combat Modules
 NRSKNUI.CombatTimer = NRSKNUI:NewModule('CombatTimer', 'AceEvent-3.0')
 NRSKNUI.PotionReady = NRSKNUI:NewModule('PotionReady', 'AceEvent-3.0')

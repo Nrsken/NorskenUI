@@ -21,6 +21,7 @@ Core/Core.xml
 
 # Load modules
 Modules/UnitFrames/UnitFrames.xml
+Modules/Auras/Auras.xml
 Modules/Combat/Combat.xml
 Modules/ClassUtil/ClassUtil.xml
 Modules/QoL/QoL.xml

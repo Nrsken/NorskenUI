@@ -24,6 +24,7 @@
 ---@class Restricted : NRSKNUI.Module, NRSKNUI.AceEvent
 ---@class CursorCircle : NRSKNUI.Module, NRSKNUI.AceEvent
 ---@class UnitFrames : NRSKNUI.Module, NRSKNUI.AceEvent, NRSKNUI.AceTimer, NRSKNUI.AceHook
+---@class PlayerAuras : NRSKNUI.Module, NRSKNUI.AceEvent, NRSKNUI.AceTimer, NRSKNUI.AceHook
 
 -- Typed accessors. Overloads dispatch on the literal module name.
 
@@ -53,6 +54,7 @@ local NRSKNUI
 ---@overload fun(self: NRSKNUI, name: "Restricted", silent?: boolean): Restricted
 ---@overload fun(self: NRSKNUI, name: "CursorCircle", silent?: boolean): CursorCircle
 ---@overload fun(self: NRSKNUI, name: "UnitFrames", silent?: boolean): UnitFrames
+---@overload fun(self: NRSKNUI, name: "PlayerAuras", silent?: boolean): PlayerAuras
 ---@param name string
 ---@param silent? boolean
 ---@return NRSKNUI.Module
@@ -81,6 +83,7 @@ function NRSKNUI:GetModule(name, silent) end
 ---@overload fun(self: NRSKNUI, name: "Restricted", ...: string): Restricted
 ---@overload fun(self: NRSKNUI, name: "CursorCircle", ...: string): CursorCircle
 ---@overload fun(self: NRSKNUI, name: "UnitFrames", ...: string): UnitFrames
+---@overload fun(self: NRSKNUI, name: "PlayerAuras", ...: string): PlayerAuras
 ---@param name string
 ---@param ... string
 ---@return NRSKNUI.Module
