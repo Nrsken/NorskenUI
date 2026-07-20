@@ -83,7 +83,7 @@ function DBG:CreateBackdrop(index)
     local detailsWindow = _G["Details_WindowFrame" .. index]
 
     local backdrop = CreateFrame("Frame", "NRSKNUI_DetailsBg" .. index, UIParent)
-    backdrop:CreateBackdrop()
+    backdrop:CreateBackdrop(nil, 0)
     backdrop:SetBackgroundColor(unpack(bgDB.BackgroundColor))
     backdrop:SetBorderColor(unpack(bgDB.BorderColor))
     backdrop:SetFrameLevel(1)

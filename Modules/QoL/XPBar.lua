@@ -185,7 +185,7 @@ function XPBar:ApplySettings()
     end
     self.coreFrame.leftText:SetFontJustify('LEFT', self.coreFrame, 4, 0)
     self.coreFrame.centerText:SetFontJustify('CENTER', self.coreFrame, 0, 0)
-    self.coreFrame.rightText:SetFontJustify('RIGHT', self.coreFrame, 4, 0)
+    self.coreFrame.rightText:SetFontJustify('RIGHT', self.coreFrame, -4, 0)
 
     self:Update()
 end

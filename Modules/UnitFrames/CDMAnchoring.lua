@@ -21,16 +21,6 @@ local function GetCDMFrames()
     return _G["EssentialCooldownViewer"], _G["UtilityCooldownViewer"]
 end
 
-local function HookCDMFrame(frame, anchor)
-    if not frame or frame.nuiCDMHooked then return end
-    frame.nuiCDMHooked = true
-
-    local function refresh() UpdateCDMAnchorSize(anchor) end
-    frame:HookScript("OnSizeChanged", refresh)
-    frame:HookScript("OnShow", refresh)
-    frame:HookScript("OnHide", refresh)
-end
-
 -- Making sure values are safe to access before using them, just in case because i dont trust WoW API :)
 local function UpdateCDMAnchorSize(anchor)
     local essential, utility = GetCDMFrames()
@@ -41,7 +31,7 @@ local function UpdateCDMAnchorSize(anchor)
     if not width or not height then return end
 
     if utility then
-        HookCDMFrame(utility, anchor) -- Picks up lazy spawns + all future resizes.
+        UF:HookCDMFrame(utility, anchor) -- Picks up lazy spawns + all future resizes.
         if NRSKNUI:SafeValue(utility:IsShown()) then
             local utilWidth = NRSKNUI:SafeValue(utility:GetWidth())
             if utilWidth then width = max(width, utilWidth) end
@@ -50,6 +40,16 @@ local function UpdateCDMAnchorSize(anchor)
 
     anchor:SetWidth(width)
     anchor:SetHeight(height)
+end
+
+function UF:HookCDMFrame(frame, anchor)
+    if not frame or frame.nuiCDMHooked then return end
+    frame.nuiCDMHooked = true
+
+    local function refresh() UpdateCDMAnchorSize(anchor) end
+    frame:HookScript("OnSizeChanged", refresh)
+    frame:HookScript("OnShow", refresh)
+    frame:HookScript("OnHide", refresh)
 end
 
 -- Re-evaluate the anchor span on CDM layout changes.
@@ -72,7 +72,7 @@ function UF:CreateCDMAnchor()
     anchor:ClearAllPoints()
     anchor:SetPoint("CENTER", essential, "CENTER", 0, 0)
 
-    HookCDMFrame(essential, anchor)
+    UF:HookCDMFrame(essential, anchor)
     UF:RegisterEvent("PLAYER_ENTERING_WORLD", "CDMLayoutEvent")
     UF:RegisterEvent("ACTIVE_PLAYER_SPECIALIZATION_CHANGED", "CDMLayoutEvent")
     UF:RegisterEvent("TRAIT_CONFIG_UPDATED", "CDMLayoutEvent")
