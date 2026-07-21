@@ -49,7 +49,7 @@ function NRSKNUI:SkinAuraButton(container, options, button)
     local height = options.height or options.size or container.height or container.size or width
     button:SetSize(width, height)
     button:EnableMouse(not (options.disableMouse or container.disableMouse))
-    NRSKNUI:CreateBackdrop(button)
+    NRSKNUI:CreateBackdrop(button, nil, 0)
 
     -- Optional border tint, e.g. weapon-enchant buttons use this to mark themselves.
     local borderColor = options.borderColor or container.borderColor
@@ -59,7 +59,7 @@ function NRSKNUI:SkinAuraButton(container, options, button)
 
     -- Icon, trimmed and inset inside the 1px backdrop border.
     local icon = button:CreateTexture(nil, 'ARTWORK')
-    icon:SetPixelInside(button, 2, 2)
+    icon:SetPixelInside(button, 1, 1)
     icon:SetZoom()
     button.Icon = icon
     button:SetIcon(icon)
@@ -105,7 +105,7 @@ function NRSKNUI:SkinAuraButton(container, options, button)
         local count = textParent:CreateFontString(nil, 'OVERLAY')
         count:SetFontStyle(fontDB, fontSize, fontOutline, nil, true)
         count:SetJustifyH('RIGHT')
-        count:SetPoint('BOTTOMRIGHT', button, 'BOTTOMRIGHT', -1, 1)
+        count:SetPoint('BOTTOMRIGHT', button, 'BOTTOMRIGHT', -1, 2)
         button.Count = count
         button:SetApplicationCount(count)
     end
@@ -211,6 +211,7 @@ Returns the created slot frame.
 --]]
 ---@param filter string
 ---@param options table?
+---@return table? slot
 function ContainerMixin:AddSlot(filter, options)
     options = options or {}
 
@@ -241,6 +242,7 @@ Returns the created enchant frame.
 --]]
 ---@param slot number
 ---@param options table?
+---@return table? enchant
 function ContainerMixin:AddItemEnchant(slot, options)
     options = options or {}
 

@@ -125,3 +125,12 @@ function PlayerAuras:OnDisable()
         host:Hide()
     end
 end
+
+function PlayerAuras:ShowPreview()
+    if not self.db.Enabled then return end
+    C_UnitAuras.SwitchAuraDataProvider()
+end
+
+function PlayerAuras:HidePreview()
+    C_UnitAuras.ResetAuraDataProvider()
+end
