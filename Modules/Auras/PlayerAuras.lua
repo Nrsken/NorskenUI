@@ -126,11 +126,14 @@ function PlayerAuras:OnDisable()
     end
 end
 
+-- Previews, calling the aura data provider API's while in Blizzard Edit Mode can cause some errors so return early if that's the case.
+
 function PlayerAuras:ShowPreview()
-    if not self.db.Enabled then return end
+    if not self.db.Enabled or NRSKNUI:IsEditModeActive() then return end
     C_UnitAuras.SwitchAuraDataProvider()
 end
 
 function PlayerAuras:HidePreview()
+    if NRSKNUI:IsEditModeActive() then return end
     C_UnitAuras.ResetAuraDataProvider()
 end
