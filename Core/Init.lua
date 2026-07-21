@@ -124,6 +124,7 @@ NRSKNUI.Gateway = NRSKNUI:NewModule('Gateway', 'AceEvent-3.0')
 
 -- Player Auras
 NRSKNUI.PlayerAuras = NRSKNUI:NewModule('PlayerAuras', 'AceEvent-3.0')
+NRSKNUI.AdvancedDebuffs = NRSKNUI:NewModule('AdvancedDebuffs', 'AceEvent-3.0')
 
 -- Combat Modules
 NRSKNUI.CombatTimer = NRSKNUI:NewModule('CombatTimer', 'AceEvent-3.0')

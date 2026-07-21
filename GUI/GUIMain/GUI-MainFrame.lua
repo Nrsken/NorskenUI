@@ -471,15 +471,7 @@ function GUIFrame:CreateHeader(parent)
 
     CreateHeaderButton({
         size = 22,
-        xOffset = -104,
-        texture = "Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\globe-earth.png",
-        onClick = function() GUIFrame:OpenPage("GlobalPage") end,
-        toolTip = "Open Global Settings Page"
-    })
-
-    CreateHeaderButton({
-        size = 22,
-        xOffset = -128,
+        xOffset = -100,
         texture = "Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\anchor.png",
         onClick = function()
             if NRSKNUI.EditMode then
@@ -487,15 +479,6 @@ function GUIFrame:CreateHeader(parent)
             end
         end,
         toolTip = "Open Anchors"
-    })
-
-    CreateHeaderButton({
-        size = 24,
-        xOffset = -157,
-        -- Placeholder texture until a dedicated Fonts icon is picked.
-        texture = "Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\fonts.png",
-        onClick = function() GUIFrame:OpenPage("FontsPage") end,
-        toolTip = "Open Font Settings Page"
     })
 
     -- Shortcut Menu Button

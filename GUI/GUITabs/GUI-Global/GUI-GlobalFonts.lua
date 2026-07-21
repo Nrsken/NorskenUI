@@ -43,7 +43,7 @@ local SPECIAL_META = {
     NameFont     = { note = "Unit names in the world. Requires a relog to fully apply or revert.", noOutline = true },
 }
 
-GUIFrame:RegisterPanel("FontsPage", function(container)
+GUIFrame:RegisterPanel("global_fonts", function(container)
     local media = NRSKNUI.db and NRSKNUI.db.profile.globalMedia
     if not media then return nil end
 
@@ -52,23 +52,9 @@ GUIFrame:RegisterPanel("FontsPage", function(container)
     local specials = blizzDB.Specials
 
     local mod = NRSKNUI:GetModule("BlizzardMessages", true)
-
-    local function RefreshContent()
-        C_Timer.After(0.05, function()
-            GUIFrame:RefreshContent()
-        end)
-    end
-
+    local function RefreshContent() C_Timer.After(0.05, function() GUIFrame:RefreshContent() end) end
     local manager = GUIFrame:CreateWidgetStateManager()
     local function UpdateAllWidgetStates() manager:UpdateAll(media.Enabled) end
-
-    local function ApplyToAllModules()
-        for _, module in NRSKNUI:IterateModules() do
-            if module:IsEnabled() and module.ApplySettings then
-                module:ApplySettings()
-            end
-        end
-    end
 
     local function GetSidebarItems()
         local items = {}
@@ -145,7 +131,7 @@ GUIFrame:RegisterPanel("FontsPage", function(container)
             callback = function(checked)
                 fontDB.Enabled = checked
                 UpdateAllWidgetStates()
-                ApplyToAllModules()
+                NRSKNUI:ApplyToAllModules()
                 NRSKNUI:RefreshFontStyles()
             end,
             msgPopup = true,
@@ -165,7 +151,7 @@ GUIFrame:RegisterPanel("FontsPage", function(container)
             value = fontDB.FontFace,
             callback = function(key)
                 fontDB.FontFace = key
-                ApplyToAllModules()
+                NRSKNUI:ApplyToAllModules()
                 NRSKNUI:RefreshFontStyles()
                 NRSKNUI:ApplyBlizzardFonts()
             end,

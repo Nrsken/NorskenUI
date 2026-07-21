@@ -45,6 +45,27 @@ local Defaults = {
             selectedTab = nil,          -- Currently selected tab in content
             minimized = false,          -- Is frame minimized
         },
+
+        -- Account-wide named aura filters, compiled by Core/AuraFilters.lua into
+        -- (filterString, candidateFilters) and referenced by name from any aura module.
+        AuraFilters = {
+            ['Boss & Priority'] = {
+                name = 'Boss & Priority',
+                type = 'HARMFUL',
+                candidates = { isBossOrRoleAura = true, isPriorityAura = true },
+                useGlobalBlocklist = true,
+            },
+            ['Dispellable'] = {
+                name = 'Dispellable',
+                type = 'HARMFUL',
+                tokens = { DISPELLABLE = true },
+                useGlobalBlocklist = true,
+            },
+        },
+
+        -- Account-wide spell blocklist (excludeSpellIDs source). Only non-secret spell IDs work.
+        -- Keyed by spellId, value = { label, enabled }. Merged into every filter unless opted out.
+        AuraBlocklist = {},
     },
     profile = {
         -- Shared color palette, pushed into oUF.colors + NRSKNUI.Colors by NRSKNUI:LoadCustomColors().
@@ -723,7 +744,9 @@ local Defaults = {
                 ShowEdge = false,
                 ShowBorder = false,
                 ShowWeaponEnchants = true,
-                EnchantGap = 1,
+                Gap = 0,
+                GapX = 0,
+                GapY = 0,
                 UseGlobalFont = true,
                 FontFace = "Expressway",
                 FontSize = 12,
@@ -771,6 +794,42 @@ local Defaults = {
                     XOffset = -13,
                     YOffset = -120,
                 },
+            },
+        },
+
+        AdvancedDebuffs = {
+            Enabled = true,
+            Filter = 'Boss & Priority', -- name into db.global.AuraFilters (nil = all harmful)
+            Size = 50,
+            PerRow = 10,
+            Max = 10,
+            SpacingX = 1,
+            SpacingY = 1,
+            GrowthX = "LEFT",
+            GrowthY = "UP",
+            ShowCount = true,
+            ShowDuration = true,
+            ShowSwipe = false,
+            ReverseSwipe = true,
+            ShowEdge = false,
+            ShowBorder = true,
+            UseGlobalFont = true,
+            FontFace = "Expressway",
+            FontSize = 12,
+            FontOutline = "OUTLINE",
+            FontShadow = {
+                Enabled = false,
+                Color = { 0, 0, 0, 1 },
+                OffsetX = 1,
+                YOffset = -1,
+            },
+            anchorFrameType = "SELECTFRAME",
+            ParentFrame = "NUF_Player",
+            Position = {
+                AnchorFrom = "BOTTOMRIGHT",
+                AnchorTo = "TOPRIGHT",
+                XOffset = 0,
+                YOffset = 120
             },
         },
 

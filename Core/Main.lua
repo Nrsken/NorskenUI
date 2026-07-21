@@ -38,7 +38,6 @@ function NRSKNUI:OnInitialize()
     -- so that switch does not trigger a full module refresh during init)
     local function OnProfileRefresh()
         self:LoadCustomColors()
-        self:ValidateProfileFonts()
         self:ApplyBlizzardFonts(true)
         self.ProfileManager:RefreshAllModules()
     end
@@ -48,6 +47,16 @@ function NRSKNUI:OnInitialize()
 
     self:ApplyGlobalFontVars()
     self:UpdateMult()
+end
+
+function NRSKNUI:ApplyToAllModules()
+    self:RunWhenSafe(function()
+        for _, module in self:IterateModules() do
+            if module:IsEnabled() and module.ApplySettings then
+                module:ApplySettings()
+            end
+        end
+    end)
 end
 
 local function SetupMinimapIcon()
@@ -80,14 +89,7 @@ local function SetupMinimapIcon()
 end
 
 local function OnPlayerEnteringWorld()
-    NRSKNUI:RunWhenSafe(function()
-        -- Automatically refresh all AceAddon modules
-        for _, module in NRSKNUI:IterateModules() do
-            if module:IsEnabled() and module.ApplySettings then
-                module:ApplySettings()
-            end
-        end
-    end)
+    NRSKNUI:ApplyToAllModules()
 end
 
 -- OnEnable: Called when the addon is enabled

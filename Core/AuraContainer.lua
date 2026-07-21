@@ -54,7 +54,11 @@ function NRSKNUI:SkinAuraButton(container, options, button)
     -- Optional border tint, e.g. weapon-enchant buttons use this to mark themselves.
     local borderColor = options.borderColor or container.borderColor
     if borderColor then
-        button:SetBorderColor(borderColor[1], borderColor[2], borderColor[3], borderColor[4] or 1)
+        local enchantBorder = button:CreateTexture(nil, 'OVERLAY')
+        enchantBorder:SetTexture('Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\AuraOverlay.png') -- Use our own border texture.
+        enchantBorder:SetPixelSnap()
+        enchantBorder:SetPixelInside(button)
+        enchantBorder:SetVertexColor(borderColor[1], borderColor[2], borderColor[3], borderColor[4] or 1)
     end
 
     -- Icon, trimmed and inset inside the 1px backdrop border.
@@ -105,7 +109,7 @@ function NRSKNUI:SkinAuraButton(container, options, button)
         local count = textParent:CreateFontString(nil, 'OVERLAY')
         count:SetFontStyle(fontDB, fontSize, fontOutline, nil, true)
         count:SetJustifyH('RIGHT')
-        count:SetPoint('BOTTOMRIGHT', button, 'BOTTOMRIGHT', -1, 2)
+        count:SetPoint('BOTTOMRIGHT', button, 'BOTTOMRIGHT', -1, 1)
         button.Count = count
         button:SetApplicationCount(count)
     end
@@ -131,6 +135,7 @@ function NRSKNUI:SkinAuraButton(container, options, button)
     if showBuffBorder or showDebuffBorder then
         local border = button:CreateTexture(nil, 'OVERLAY')
         border:SetTexture('Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\AuraOverlay.png') -- Use our own border texture.
+        border:SetPixelSnap()
         border:SetPixelInside(button)
         button.Border = border
         button:SetAuraBorder(border, {
@@ -195,6 +200,60 @@ function ContainerMixin:AddGroup(filter, options)
     self:AddAuraGroup(key, filter, options)
 
     return key
+end
+
+--[[
+
+? container:AddFilteredGroup(filterName[, options])
+
+Register a group of auras using a named filter from db.global.AuraFilters (this can be called multiple times).
+
+* filterName - key into db.global.AuraFilters (may be nil)
+* options    - optional per-group options (candidateFilters is filled in from the filter)
+
+Returns the generated group key.
+--]]
+---@param filterName string?
+---@param options table?
+---@return string
+function ContainerMixin:AddFilteredGroup(filterName, options)
+    options = options or {}
+
+    local filterString, candidateFilters = NRSKNUI:GetAuraFilter(filterName)
+    options.candidateFilters = candidateFilters
+
+    local key = self:AddGroup(filterString or 'HARMFUL', options)
+
+    self.__filterBindings = self.__filterBindings or {}
+    self.__filterBindings[key] = filterName
+
+    return key
+end
+
+--[[
+
+? container:ReapplyFilters()
+
+Reapply the filter strings for every group registered through :AddFilteredGroup.
+
+--]]
+---@return boolean applied true if every binding was fully applied live
+function ContainerMixin:ReapplyFilters()
+    if not self.__filterBindings then return true end
+
+    local applied = true
+    for key, filterName in pairs(self.__filterBindings) do
+        local filterString, candidateFilters = NRSKNUI:GetAuraFilter(filterName)
+
+        if self.SetAuraGroupFilterString then
+            self:SetAuraGroupFilterString(key, filterString or 'HARMFUL')
+        else
+            applied = false -- parse-string change (e.g. token edit) needs a rebuild on this client
+        end
+
+        self:SetAuraGroupCandidateFilters(key, candidateFilters)
+    end
+    return applied
 end
 
 --[[
@@ -273,6 +332,7 @@ Drive it by calling container:SetUnit(unit), once a group/slot exists the contai
 *   .growthY       - 'UP' or 'DOWN' (default UP)
 *   .padding / .paddingLeft/Right/Top/Bottom - layout padding (number?)
 *   .size/.width/.height, .spacing/.spacingX/.spacingY, .gap/.gapX/.gapY, .num - button/layout defaults
+*   .enchantPlacement - CustomAuraContainerItemEnchantmentPlacement (Before/AfterAuraGroups) (number?)
 *   .showCount/.showDuration/.showBuffBorder/.showDebuffBorder - default button widget toggles
 *   .fontDB/.fontSize/.fontOutline - default button font
 

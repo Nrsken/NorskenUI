@@ -35,7 +35,6 @@
 
     <!-- GUI Home Page -->
     <Script file="GUIMain\GUI-HomePage.lua" />
-    <Script file="GUIMain\GUI-GlobalPage.lua" />
     <Script file="GUIMain\GUI-SidebarConfig.lua" />
     <Script file="GUIMain\GUI-NUIScrollbar.lua" />
     <Script file="GUIMain\GUI-ContentAreas.lua" />
@@ -45,11 +44,14 @@
     <!-- GUI Theme Page -->
     <Script file="GUITabs\GUI-ThemePage.lua" />
 
-    <!-- GUI Fonts Page -->
-    <Script file="GUITabs\GUI-FontsPage.lua" />
-
     <!-- GUI Profiles Tab -->
     <Script file="GUITabs\GUI-ProfilesTab.lua" />
+
+    <!-- GUI Global Tab -->
+    <Script file="GUITabs\GUI-Global\GUI-GlobalUIScale.lua" />
+    <Script file="GUITabs\GUI-Global\GUI-GlobalColors.lua" />
+    <Script file="GUITabs\GUI-Global\GUI-GlobalTexture.lua" />
+    <Script file="GUITabs\GUI-Global\GUI-GlobalFonts.lua" />
 
     <!-- GUI Combat Tabs -->
     <Script file="GUITabs\GUI-Combat\GUI-CombatTimerTab.lua" />
@@ -62,6 +64,9 @@
     <Script file="GUITabs\GUI-Combat\GUI-RangeChecker.lua" />
     <Script file="GUITabs\GUI-Combat\GUI-FocusCastbar.lua" />
     <Script file="GUITabs\GUI-Combat\GUI-PotionReady.lua" />
+
+    <!-- GUI Auras Tabs -->
+    <Script file="GUITabs\GUI-Auras\GUI-AdvancedDebuffs.lua" />
 
     <!-- GUI QoL Tabs -->
     <Script file="GUITabs\GUI-QoL\GUI-AutomationTab.lua" />

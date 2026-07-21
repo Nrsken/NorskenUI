@@ -17,6 +17,28 @@ GUIFrame.SidebarConfig = {
             }
         },
         {
+            id = "global_section",
+            type = "header",
+            text = "Global Settings",
+            defaultExpanded = false,
+            items = {
+                { id = "global_aurafilters", text = "Aura Filters" },
+                { id = "global_uiscale",     text = "UI Scale" },
+                { id = "global_colors",      text = "Colors" },
+                { id = "global_fonts",       text = "Fonts" },
+                { id = "global_textures",    text = "Textures" },
+            }
+        },
+        {
+            id = "auras",
+            type = "header",
+            text = "Auras",
+            defaultExpanded = false,
+            items = {
+                { id = "advancedDebuffs", text = "Advanced Debuffs" },
+            }
+        },
+        {
             id = "combat_section",
             type = "header",
             text = "Combat Util",

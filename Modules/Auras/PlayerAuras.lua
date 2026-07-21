@@ -9,8 +9,14 @@ local pairs = pairs
 
 -- kind -> { filter, moverKey, displayName }
 local KINDS = {
-    Buffs = { filter = 'HELPFUL', moverKey = 'PlayerBuffs', displayName = 'Player Buffs' },
-    Debuffs = { filter = 'HARMFUL', moverKey = 'PlayerDebuffs', displayName = 'Player Debuffs' },
+    Buffs = {
+        moverKey = 'PlayerBuffs',
+        displayName = 'Player Buffs',
+    },
+    Debuffs = {
+        moverKey = 'PlayerDebuffs',
+        displayName = 'Player Debuffs',
+    },
 }
 
 function PlayerAuras:UpdateDB()
@@ -65,7 +71,9 @@ function PlayerAuras:BuildContainer(kind)
         size = cfg.Size,
         spacingX = cfg.SpacingX,
         spacingY = cfg.SpacingY,
-        gap = weaponEnchants and (cfg.EnchantGap or 4) or nil,
+        gap = weaponEnchants and (cfg.Gap or 4) or nil,
+        gapX = cfg.GapX,
+        gapY = cfg.GapY,
         num = cfg.Max,
         showCount = cfg.ShowCount,
         showDuration = cfg.ShowDuration,
@@ -82,11 +90,31 @@ function PlayerAuras:BuildContainer(kind)
 
     container:ClearAllPoints()
     container:SetPoint(corner, host, corner)
-    container:AddGroup(KINDS[kind].filter)
+
+    if kind == 'Buffs' then
+        container:AddGroup('HELPFUL', {
+            candidateFilters = {
+            }
+        })
+    else
+        container:AddGroup('HARMFUL', {
+            candidateFilters = {
+            }
+        })
+    end
 
     if weaponEnchants then
         container:AddItemEnchant(AuraContainerItemEnchantmentSlot.MainHand)
         container:AddItemEnchant(AuraContainerItemEnchantmentSlot.OffHand)
+
+        -- Item enchants form their own flow group, elementSpacing is enchant-to-enchant, gap is the seam to aura groups.
+        container:SetItemEnchantmentLayout({
+            elementSpacingX = cfg.SpacingX,
+            elementSpacingY = cfg.SpacingY,
+            gapX = cfg.GapX,
+            gapY = cfg.GapY,
+            placement = CustomAuraContainerItemEnchantmentPlacement.BeforeAuraGroups,
+        })
     end
 
     container:SetUnit('player')

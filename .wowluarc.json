@@ -18,7 +18,8 @@
             "AuraButtonBorderStyle",
             "AuraContainerSortMethod",
             "AuraContainerSortDirection",
-            "AuraContainerItemEnchantmentSlot"
+            "AuraContainerItemEnchantmentSlot",
+            "CustomAuraContainerItemEnchantmentPlacement"
         ],
         "write": [
             "NorskenUI",
