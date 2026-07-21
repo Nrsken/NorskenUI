@@ -52,8 +52,8 @@ end
 
 -- Get font settings
 function UIW:GetFontSettings()
-    local fontPath = NRSKNUI:GetFontPath(NRSKNUI:GetEffectiveFont(self.db))
-    local outline = NRSKNUI:GetFontOutline(self.db.FontOutline)
+    local fontPath = NRSKNUI:GetFont(self.db)
+    local outline = 'OUTLINE'
     return fontPath, outline
 end
 

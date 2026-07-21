@@ -575,7 +575,7 @@ local function RenderSoundsTab(scrollChild, db, manager)
         callback = function()
             local soundName = ws.WhisperSound
             if soundName and soundName ~= "None" and LSM then
-                NRSKNUI:PlaySound(LSM:Fetch("sound", soundName))
+                NRSKNUI:PlaySafeSound(soundName)
             end
         end,
     })
@@ -601,7 +601,7 @@ local function RenderSoundsTab(scrollChild, db, manager)
         callback = function()
             local soundName = ws.BNetWhisperSound
             if soundName and soundName ~= "None" and LSM then
-                NRSKNUI:PlaySound(LSM:Fetch("sound", soundName))
+                NRSKNUI:PlaySafeSound(soundName)
             end
         end,
     })

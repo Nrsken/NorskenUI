@@ -210,7 +210,7 @@ function DC:ConfigureBar(bar)
     bar.castBar:SetPoint("RIGHT", bar, "RIGHT", -1, 0)
     bar.castBar:SetPoint("TOP", bar, "TOP", 0, -1)
     bar.castBar:SetPoint("BOTTOM", bar, "BOTTOM", 0, 1)
-    bar.castBar:SetStatusBarTexture(NRSKNUI:GetStatusbarPath(NRSKNUI:GetEffectiveStatusBar(barDb)))
+    bar.castBar:SetStatusBarTexture(NRSKNUI:GetStatusbar(barDb))
 
     bar.spark:SetSize(12, height)
     bar.spark:ClearAllPoints()

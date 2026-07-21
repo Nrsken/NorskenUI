@@ -143,8 +143,7 @@ CHAT.originalStates = {}
 
 function CHAT:UpdateDB()
     self.db = NRSKNUI.db.profile.Skinning.Chatv2
-    local effectiveFont = NRSKNUI:GetEffectiveFont(self.db)
-    cachedFontPath = LSM and LSM:Fetch("font", effectiveFont) or STANDARD_TEXT_FONT
+    cachedFontPath = NRSKNUI:GetFont(self.db)
     local customColor = self.db.TabTextColor
     if customColor then
         cachedTabAccentColor.r = customColor.r or 1
@@ -164,8 +163,7 @@ end
 
 function CHAT:PlayWhisperSound(soundName)
     if not soundName or soundName == "None" then return end
-    local file = LSM:Fetch("sound", soundName)
-    NRSKNUI:PlaySound(file)
+    NRSKNUI:PlaySafeSound(soundName)
 end
 
 function CHAT:RegisterWhisperSounds()

@@ -178,7 +178,7 @@ function CombatMessage:PlayPartyDeathSound(unit)
     end
 
     if not soundName or soundName == 'None' then return end
-    NRSKNUI:PlaySound(LSM:Fetch('sound', soundName))
+    NRSKNUI:PlaySafeSound(soundName)
 end
 
 -- Rolling window throttle so raid wipes don't spam the message.

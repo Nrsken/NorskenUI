@@ -58,7 +58,7 @@ end
 function XPBar:CreateBar()
     if self.coreFrame then return end
     local width, height = self.db.width, self.db.height
-    local sTex = NRSKNUI:GetBarTexture(self.db)
+    local sTex = NRSKNUI:GetStatusbar(self.db)
 
     -- Create the main frame for the Experience Bar
     local coreFrame = CreateFrame('Frame', 'NRSKNUI_XPBar', UIParent)
@@ -137,9 +137,9 @@ function XPBar:ApplySettings()
 
     -- Make settings locals so it looks cleaner and not so noisy.
     local width, height = self.db.width, self.db.height
-    local pTex = NRSKNUI:GetBarTexture(self.db)
-    local rTex = NRSKNUI:GetBarTexture(self.db, self.db.RestedTexture)
-    local qTex = NRSKNUI:GetBarTexture(self.db, self.db.QuestTexture)
+    local pTex = NRSKNUI:GetStatusbar(self.db)
+    local rTex = NRSKNUI:GetStatusbar(self.db, self.db.RestedTexture)
+    local qTex = NRSKNUI:GetStatusbar(self.db, self.db.QuestTexture)
     local pR, pG, pB, pA = NRSKNUI:GetAccentColor(self.db.ColorMode, self.db.StatusColor)
     local qR, qG, qB, qA = NRSKNUI:GetAccentColor(self.db.ColorModeQuest, self.db.QuestColor)
     local rR, rG, rB, rA = NRSKNUI:GetAccentColor(self.db.ColorModeRested, self.db.RestedColor)

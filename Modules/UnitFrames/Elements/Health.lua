@@ -98,7 +98,7 @@ UF.Elements.Health = {
         LeaderIndicator:SetPixelPoint(uDB.LeaderIndicator.Position.AnchorFrom, frame, uDB.LeaderIndicator.Position.AnchorTo, uDB.LeaderIndicator.Position.XOffset, uDB.LeaderIndicator.Position.YOffset)
 
         -- Set the texture for both the foreground and background bars.
-        local texture = NRSKNUI:GetBarTexture(general, hDB.StatusBarTexture)
+        local texture = NRSKNUI:GetStatusbar(general, hDB.StatusBarTexture)
         healthBar:SetStatusBarTexture(texture)
         healthBackground:SetStatusBarTexture(texture)
 
@@ -138,10 +138,10 @@ UF.Elements.Health = {
         local dmgColor = hDB.DamageAbsorb.Color
 
         -- Each absorb resolves its own global-or-override texture, independent of the main bar toggle.
-        local shield = NRSKNUI:GetBarTexture(hDB.DamageAbsorb)
+        local shield = NRSKNUI:GetStatusbar(hDB.DamageAbsorb)
 
         -- Heal absorb bar config
-        HealAbsorb:SetStatusBarTexture(NRSKNUI:GetBarTexture(hDB.HealAbsorb))
+        HealAbsorb:SetStatusBarTexture(NRSKNUI:GetStatusbar(hDB.HealAbsorb))
         HealAbsorb:SetStatusBarColor(healColor[1], healColor[2], healColor[3], healColor[4])
         HealAbsorb:ClearAllPoints()
         HealAbsorb:SetPixelPoint('TOP')

@@ -172,7 +172,7 @@ function NRSKNUI:SetFont(obj, outlineMode, noSlug, spec)
 
     local orig = StoreOriginalFontData(obj)
     if not orig then return end -- unrealized or tainted, skip so we never index a nil capture
-    local path = self:ResolveFontPath(spec and spec.FontFace or font)
+    local path = self:ResolveMediaPath('font', spec and spec.FontFace or font)
 
     local name = obj:GetName()
     local size, flags, slug, hideShadow = ResolveStyle(name, orig, blizDB, outlineMode, noSlug, spec)
@@ -213,7 +213,7 @@ function NRSKNUI:ApplyBlizzardFonts(force)
 
     -- Skip the full pass when nothing that shapes it changed.
     local cfg = db.blizzardFonts
-    local sig = self:ResolveFontPath(db.profileFont.FontFace) .. '|' .. tostring(cfg.Outline) .. '|' .. tostring(cfg.Slug) .. '|' .. tostring(cfg.HideShadow)
+    local sig = self:ResolveMediaPath('font', db.profileFont.FontFace) .. '|' .. tostring(cfg.Outline) .. '|' .. tostring(cfg.Slug) .. '|' .. tostring(cfg.HideShadow)
     if not force and sig == lastSignature then return end
     lastSignature = sig
 
@@ -375,7 +375,7 @@ function NRSKNUI:ApplyGlobalFontVars()
             local sdb = specials[entry.key]
 
             if sdb and sdb.Enabled then
-                _G[entry.globalVar] = self:ResolveFontPath(sdb.FontFace or media.profileFont.FontFace)
+                _G[entry.globalVar] = self:ResolveMediaPath('font', sdb.FontFace or media.profileFont.FontFace)
             end
         end
     end

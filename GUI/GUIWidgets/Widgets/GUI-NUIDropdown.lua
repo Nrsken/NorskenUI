@@ -64,7 +64,7 @@ function NUIDropdownMixin:SetValue(value, silent)
     end
 
     if self._isFontPreview then
-        local fontPath = NRSKNUI:GetFontPath(value)
+        local fontPath = NRSKNUI:ResolveMediaPath("font",value)
         SafeApplyPreviewFont(self._selectedText, fontPath, FONT_PREVIEW_SIZE)
     end
 
@@ -625,7 +625,7 @@ function GUIFrame:CreateDropdown(parent, labelText, config)
         end
 
         if row._isFontPreview then
-            local fontPath = NRSKNUI:GetFontPath(value)
+            local fontPath = NRSKNUI:ResolveMediaPath("font",value)
             SafeApplyPreviewFont(row._selectedText, fontPath, FONT_PREVIEW_SIZE)
         end
 
@@ -650,7 +650,7 @@ function GUIFrame:CreateDropdown(parent, labelText, config)
             btn._text:SetText(displayText or key)
 
             if row._isFontPreview then
-                local fontPath = NRSKNUI:GetFontPath(key)
+                local fontPath = NRSKNUI:ResolveMediaPath("font",key)
                 SafeApplyPreviewFont(btn._text, fontPath, FONT_PREVIEW_SIZE)
             end
 
@@ -861,7 +861,7 @@ function GUIFrame:CreateDropdown(parent, labelText, config)
                 optionColor.b or optionColor[3], 1)
         end
         if row._isFontPreview then
-            local fontPath = NRSKNUI:GetFontPath(selected)
+            local fontPath = NRSKNUI:ResolveMediaPath("font",selected)
             SafeApplyPreviewFont(row._selectedText, fontPath, FONT_PREVIEW_SIZE)
         end
     elseif selected ~= nil then
@@ -873,7 +873,7 @@ function GUIFrame:CreateDropdown(parent, labelText, config)
                 optionColor.b or optionColor[3], 1)
         end
         if row._isFontPreview then
-            local fontPath = NRSKNUI:GetFontPath(selected)
+            local fontPath = NRSKNUI:ResolveMediaPath("font",selected)
             SafeApplyPreviewFont(row._selectedText, fontPath, FONT_PREVIEW_SIZE)
         end
     else

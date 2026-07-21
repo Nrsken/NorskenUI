@@ -275,7 +275,7 @@ function ACB:StyleButtonText(button, barKey)
     local name = button.Name
     local count = button.Count
     local cooldown = button.cooldown
-    local fontpath = NRSKNUI:GetFontPath(NRSKNUI:GetEffectiveFont(self.db))
+    local fontpath = NRSKNUI:GetFont(self.db)
 
     -- Get font sizes, text positions, and visibility for this bar
     local fontSizes = self:GetFontSizes(barKey)

@@ -272,7 +272,7 @@ GUIFrame:RegisterContent('combatMessage', function(scrollChild, yOffset)
             callback = function()
                 local soundName = db.PartyDeath[role.dbKey]
                 if soundName and soundName ~= 'None' and LSM then
-                    NRSKNUI:PlaySound(LSM:Fetch('sound', soundName))
+                    NRSKNUI:PlaySafeSound(soundName)
                 end
             end,
         })

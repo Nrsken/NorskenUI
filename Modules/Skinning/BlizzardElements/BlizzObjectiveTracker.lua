@@ -127,9 +127,8 @@ local function ApplyLabelFont(label)
     local fontDB = BOT.db.ObjectiveTracker
     if not fontDB or not fontDB.FontStyling then return end
 
-    local fontName = NRSKNUI:GetEffectiveFont(BOT.db)
-    local fontPath = NRSKNUI:GetFontPath(fontName)
-    local outline = NRSKNUI:GetFontOutline(BOT.db.FontOutline) or ""
+    local fontPath = NRSKNUI:GetFont(BOT.db)
+    local outline = 'OUTLINE'
 
     label:SetFont(fontPath, fontDB.QuestTextSize or 12, outline)
 
@@ -402,9 +401,8 @@ function BOT:StyleFonts()
     local fontDB = self.db.ObjectiveTracker
     if not fontDB or not fontDB.Enabled or not fontDB.FontStyling then return end
 
-    local fontName = NRSKNUI:GetEffectiveFont(self.db)
-    local fontPath = NRSKNUI:GetFontPath(fontName)
-    local outline = NRSKNUI:GetFontOutline(self.db.FontOutline) or ""
+    local fontPath = NRSKNUI:GetFont(self.db)
+    local outline = 'OUTLINE'
 
     local function ApplyFont(fontObject, size)
         if not fontObject then return end

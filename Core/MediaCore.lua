@@ -1,7 +1,7 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
+local LSM = NRSKNUI.Libs.LSM
 
-local pairs = pairs
 local type = type
 local pcall = pcall
 local next = next
@@ -12,17 +12,16 @@ local PlaySoundFile = PlaySoundFile
 local GetFileID = C_UIFileAsset and C_UIFileAsset.GetFileID
 local IsKnownFile = C_UIFileAsset and C_UIFileAsset.IsKnownFile
 
-local LSM = NRSKNUI.Libs.LSM
-
--- Locale masks: LSM rejects font registrations on koKR/zhCN/zhTW/ruRU clients unless the
--- mask includes their locale bit and Fetch then falls back to the locale default game font.
+-- Locale masks: LSM rejects font registrations on koKR/zhCN/zhTW/ruRU clients unless the mask includes their locale bit and Fetch then falls back to the locale default game font.
 local westAndRU = LSM.LOCALE_BIT_western + LSM.LOCALE_BIT_ruRU
-
--- STANDARD_TEXT_FONT is locale-correct (ARKai_T on zhCN, 2002 on koKR, etc) a hardcoded
--- FRIZQT__ fallback renders CJK text as boxes on those clients.
+-- STANDARD_TEXT_FONT is locale-correct (ARKai_T on zhCN, 2002 on koKR, etc) a hardcoded FRIZQT__ fallback renders CJK text as boxes on those clients.
 local FALLBACK_FONT = STANDARD_TEXT_FONT or (GameFontNormal and GameFontNormal:GetFont()) or 'Fonts\\FRIZQT__.TTF'
 local FALLBACK_SIZE = 12
 local DEFAULT_FONT_NAME = 'Expressway'
+local fallbackPaths = {
+    font = FALLBACK_FONT,
+    statusbar = [[Interface\TargetingFrame\UI-StatusBar]],
+}
 
 NRSKNUI.Media = {
     Fonts = {},
@@ -84,55 +83,34 @@ RegisterLSMMedia('statusbar', 'StripesThick.blp', true) -- WA Assets: https://gi
 -- Sound reg
 RegisterLSMMedia('sound', 'Whisper.ogg', '|cffe51039NorskenWhisper|r')
 
----@param font string? LSM name or literal path
----@return string path
-local function ResolveFontPath(font)
-    if font and font ~= '' then
-        if LSM:IsValid('font', font) then
-            local path = LSM:Fetch('font', font, true) -- noDefault: nil when unregistered
-            if path and (not IsKnownFile or IsKnownFile(path)) then
-                return path
-            end
-        elseif IsKnownFile and IsKnownFile(font) then
-            return font -- already a real file path
-        end
-    end
-    return FALLBACK_FONT
-end
 
----@param font string? LSM name or literal path
----@return string path
-function NRSKNUI:ResolveFontPath(font)
-    return ResolveFontPath(font)
-end
+-- Font preloader using new C_UIFileAsset API --
 
--- Applies late loading LSM fonts.
-local lastResolvedPath
-local function ReapplyIfFontChanged()
-    if not lastResolvedPath then return end
-    local db = NRSKNUI.db
-    local profileFont = db and db.profile.globalMedia.profileFont
-    if not profileFont then return end
-
-    local path = ResolveFontPath(profileFont.FontFace)
-    if path == lastResolvedPath then return end
-    lastResolvedPath = path
-
-    NRSKNUI:DeferUntilUnrestricted(0, function()
-        NRSKNUI:ApplyBlizzardFonts()
-        NRSKNUI:RefreshFontStyles()
-    end)
-end
-
--- Font preloader using new C_UIFileAsset API
 do
+    -- Applies late loading LSM fonts.
+    local lastResolvedPath
+    local function ReapplyIfFontChanged()
+        if not lastResolvedPath then return end
+        local profileFont = NRSKNUI.db and NRSKNUI.db.profile.globalMedia.profileFont
+        if not profileFont then return end
+
+        local path = NRSKNUI:ResolveMediaPath('font', profileFont.FontFace)
+        if path == lastResolvedPath then return end
+        lastResolvedPath = path
+
+        NRSKNUI:DeferUntilUnrestricted(0, function()
+            NRSKNUI:ApplyBlizzardFonts()
+            NRSKNUI:RefreshFontStyles()
+        end)
+    end
+
     -- Hidden frame that we yeet outside the screen, we will add fontstrings to this later.
     local preloadFrame = CreateFrame('Frame')
     preloadFrame:SetPoint('TOP', UIParent, 'BOTTOM', 0, -99999)
     preloadFrame:SetSize(200, 200)
 
+    -- Preload fonts and cache them to avoid reloading the same font multiple times.
     local preloadedFonts = {}
-
     local function PreloadFontAndCache(Path)
         local fileID = GetFileID(Path)
         if not fileID or preloadedFonts[fileID] then return end
@@ -151,8 +129,7 @@ do
         PreloadFontAndCache(Path)
     end
 
-    -- Preload fonts that other addons add, and re-apply if the registration just made
-    -- the configured font resolvable.
+    -- Preload fonts that other addons add and re-apply if the registration just made the configured font resolvable.
     hooksecurefunc(LSM, 'Register', function(_, Type, _, Path)
         if not Type or type(Type) ~= 'string' then return end
 
@@ -163,136 +140,68 @@ do
     end)
 end
 
-do
-    local loginFrame = CreateFrame('Frame')
-    loginFrame:RegisterEvent('PLAYER_LOGIN')
-    loginFrame:SetScript('OnEvent', function(self)
-        self:UnregisterAllEvents()
-        NRSKNUI:ValidateProfileFonts()
+-- Media Utilities --
 
-        -- Seed the late-registration baseline with the now-validated configured face.
-        local db = NRSKNUI.db
-        local profileFont = db and db.profile.globalMedia.profileFont
-        if profileFont then
-            lastResolvedPath = ResolveFontPath(profileFont.FontFace)
-        end
-    end)
-end
-
-local function IsFontKey(key)
-    if type(key) ~= 'string' then return false end
-    return key == 'Font' or key:lower():match('fontface$') ~= nil
-end
-
-local function ValidateFontsRecursive(tbl, defaults)
-    if type(tbl) ~= 'table' then return end
-
-    for key, value in pairs(tbl) do
-        if IsFontKey(key) and type(value) == 'string' then
-            if not LSM:IsValid('font', value) then
-                local defaultVal = defaults and defaults[key] or DEFAULT_FONT_NAME
-                if not LSM:IsValid('font', defaultVal) then
-                    defaultVal = DEFAULT_FONT_NAME
-                end
-                tbl[key] = defaultVal
+---Resolve an LSM media name (or literal file path) to a usable file path.
+---@param mediaType string 'font' | 'statusbar' | 'sound'
+---@param name string|number|nil LSM name, literal path, or fileID
+---@return string|number|nil path per-type fallback when unresolved (nil for sounds)
+function NRSKNUI:ResolveMediaPath(mediaType, name)
+    if name and name ~= '' then
+        if LSM:IsValid(mediaType, name) then
+            local path = LSM:Fetch(mediaType, name, true) -- noDefault: nil when unregistered
+            if path and (not IsKnownFile or IsKnownFile(path)) then
+                return path
             end
-        elseif type(value) == 'table' then
-            local subDefaults = defaults and defaults[key]
-            ValidateFontsRecursive(value, subDefaults)
+        elseif IsKnownFile and IsKnownFile(name) then
+            return name -- already a real file path
         end
     end
+    return fallbackPaths[mediaType]
 end
 
----Walk the active profile and swap any font key whose value is no longer a registered
----LSM font for the matching default (or the addon default), so a removed font can't leave a broken face behind.
-function NRSKNUI:ValidateProfileFonts()
-    if not self.db or not self.db.profile then return end
-    local defaults = self.db.defaults and self.db.defaults.profile
-    ValidateFontsRecursive(self.db.profile, defaults)
-end
-
----@param mediaType string
----@param name string
----@param fallback string
----@return string
-function NRSKNUI:GetMediaPath(mediaType, name, fallback)
-    if name then
-        local path = LSM:Fetch(mediaType, name)
-        if path and IsKnownFile(path) then return path end
-    end
-    return fallback
-end
-
----@param fontName string
----@return string
-function NRSKNUI:GetFontPath(fontName)
-    return self:GetMediaPath('font', fontName, FALLBACK_FONT)
-end
-
----@param barName string
----@return string
-function NRSKNUI:GetStatusbarPath(barName)
-    return self:GetMediaPath('statusbar', barName, 'Interface\\TargetingFrame\\UI-StatusBar')
-end
-
----@param path string|number
----@return boolean
-function NRSKNUI:IsSoundValid(path)
-    if not path or path == '' or path == 'None' then return false end
-    return IsKnownFile(path)
-end
-
----@param path string|number
----@param channel string?
-function NRSKNUI:PlaySound(path, channel)
-    if not self:IsSoundValid(path) then return end
-    PlaySoundFile(path, channel or 'Master')
-end
-
----@param outline string?
----@return string
-function NRSKNUI:GetFontOutline(outline)
-    if not outline or outline == 'NONE' or outline == 'SOFTOUTLINE' or outline == '' then return '' end
-    return outline
-end
-
+---Resolve a module's effective font straight to a usable font path.
 ---@param moduleDB table?
----@return string
-function NRSKNUI:GetEffectiveFont(moduleDB)
+---@return string path
+function NRSKNUI:GetFont(moduleDB)
     local global = self.db and self.db.profile and self.db.profile.globalMedia
+    local name
     if global and global.Enabled and global.profileFont.Enabled then
         if moduleDB and moduleDB.UseGlobalFont == false then
-            return moduleDB.FontFace or moduleDB.Font or moduleDB.fontFace or DEFAULT_FONT_NAME
+            name = moduleDB.FontFace or moduleDB.Font or moduleDB.fontFace or DEFAULT_FONT_NAME
+        else
+            name = global.profileFont.FontFace or DEFAULT_FONT_NAME
         end
-        return global.profileFont.FontFace or DEFAULT_FONT_NAME
+    else
+        name = moduleDB and (moduleDB.FontFace or moduleDB.Font or moduleDB.fontFace) or DEFAULT_FONT_NAME
     end
-    return moduleDB and (moduleDB.FontFace or moduleDB.Font or moduleDB.fontFace) or DEFAULT_FONT_NAME
+    return self:ResolveMediaPath('font', name) or FALLBACK_FONT --[[@as string]]
 end
 
+---Resolve a module's effective statusbar straight to a usable texture path.
 ---@param moduleDB table?
----@param override string? -- per-element texture name; used only when the global bar is not in effect
----@return string
-function NRSKNUI:GetEffectiveStatusBar(moduleDB, override)
+---@param override string? per-element texture name, falls back to the module texture when nil.
+---@return string path
+function NRSKNUI:GetStatusbar(moduleDB, override)
     local global = self.db and self.db.profile and self.db.profile.globalMedia
+    local name
     if global and global.Enabled and global.profileBar.Enabled then
         if moduleDB and moduleDB.UseGlobalBar == false then
-            return override or moduleDB.StatusBarTexture or moduleDB.statusBar or 'NorskenUI'
+            name = override or moduleDB.StatusBarTexture or moduleDB.statusBar or 'NorskenUI'
+        else
+            name = global.profileBar.statusBar or 'NorskenUI'
         end
-        return global.profileBar.statusBar or 'NorskenUI'
+    else
+        name = override or (moduleDB and (moduleDB.StatusBarTexture or moduleDB.statusBar)) or 'NorskenUI'
     end
-    return override or (moduleDB and (moduleDB.StatusBarTexture or moduleDB.statusBar)) or 'NorskenUI'
+    return self:ResolveMediaPath('statusbar', name) or fallbackPaths.statusbar --[[@as string]]
 end
 
----@param moduleDB table?
----@param override string? -- per-element texture name; falls back to the module texture when nil
----@return string path resolved statusbar texture path
-function NRSKNUI:GetBarTexture(moduleDB, override)
-    return self:GetStatusbarPath(self:GetEffectiveStatusBar(moduleDB, override))
-end
+---@param name string|number LSM sound name, literal path, or fileID
+---@param channel string?
+function NRSKNUI:PlaySafeSound(name, channel)
+    local resolved = self:ResolveMediaPath('sound', name)
+    if not resolved then return end
 
----Resolve the effective font for a module (global-aware) straight to a usable font path.
----@param moduleDB table?
----@return string path resolved font file path
-function NRSKNUI:GetFontName(moduleDB)
-    return self:GetFontPath(self:GetEffectiveFont(moduleDB))
+    PlaySoundFile(resolved, channel or 'Master')
 end

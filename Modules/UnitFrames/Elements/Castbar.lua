@@ -131,7 +131,7 @@ UF.Elements.Castbar = {
         castBar:ClearAllPoints()
         castBar:SetPixelPoint('TOPLEFT', container, 'TOPLEFT', barLeftInset, -1)
         castBar:SetPixelPoint('BOTTOMRIGHT', container, 'BOTTOMRIGHT', -1, 1)
-        castBar:SetStatusBarTexture(NRSKNUI:GetBarTexture(general, cDB.StatusBarTexture))
+        castBar:SetStatusBarTexture(NRSKNUI:GetStatusbar(general, cDB.StatusBarTexture))
         castBar.smoothing = Enum.StatusBarInterpolation.Immediate -- Easing would lag the cast progress.
         castBar.timeToHold = cDB.TimeToHold
 

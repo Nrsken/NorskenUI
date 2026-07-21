@@ -452,7 +452,7 @@ function DT:CreateBarFrame(dungeonKey, triggerId, trigger)
     frame.bar = CreateFrame("StatusBar", nil, frame.barContainer)
     frame.bar:SetPoint("TOPLEFT", 1, -1)
     frame.bar:SetPoint("BOTTOMRIGHT", -1, 1)
-    frame.bar:SetStatusBarTexture(NRSKNUI:GetStatusbarPath(NRSKNUI:GetEffectiveStatusBar(config.displaySettings)))
+    frame.bar:SetStatusBarTexture(NRSKNUI:GetStatusbar(config.displaySettings))
     frame.bar:SetStatusBarColor(unpack(config.barColor))
     frame.bar:SetMinMaxValues(0, 1)
     frame.bar:SetValue(1)
@@ -646,7 +646,7 @@ function DT:ShowTriggerDisplay(dungeonKey, triggerId, trigger, barData)
 
     if shouldShowNow then
         if not frame:IsShown() and not barData.isPreview then
-            NRSKNUI:PlaySound(NRSKNUI.Libs.LSM:Fetch("sound", config.actionOnShowSound))
+            NRSKNUI:PlaySafeSound(config.actionOnShowSound)
         end
         frame:Show()
         self:PositionAllBars()
@@ -663,7 +663,7 @@ function DT:HideTriggerDisplay(frameKey)
     local frame = self.triggerFrames[frameKey]
     if frame then
         if frame:IsShown() and frame.config and not (frame.barData and frame.barData.isPreview) then
-            NRSKNUI:PlaySound(NRSKNUI.Libs.LSM:Fetch("sound", frame.config.actionOnHideSound))
+            NRSKNUI:PlaySafeSound(frame.config.actionOnHideSound)
         end
         frame:Hide()
         frame.barData = nil
@@ -817,8 +817,7 @@ function DT:DoScheduledScan(fireTime)
                     local shouldShow = self:CheckRemainingTime(config, remaining)
                     if shouldShow and not frame:IsShown() then
                         if not barData.isPreview then
-                            NRSKNUI:PlaySound(NRSKNUI.Libs.LSM:Fetch("sound",
-                                config.actionOnShowSound))
+                            NRSKNUI:PlaySafeSound(config.actionOnShowSound)
                         end
                         frame:Show()
                         self.positionDirty = true
@@ -1007,7 +1006,7 @@ function DT:UpdateFrameVisuals()
 
     local barDisplay = self.db.BarDisplay
     local textDisplay = self.db.TextDisplay
-    local texturePath = NRSKNUI:GetStatusbarPath(NRSKNUI:GetEffectiveStatusBar(barDisplay))
+    local texturePath = NRSKNUI:GetStatusbar(barDisplay)
 
     for _, frame in pairs(self.triggerFrames) do
         if frame and frame:IsShown() then

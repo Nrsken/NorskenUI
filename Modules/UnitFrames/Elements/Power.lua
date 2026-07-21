@@ -41,7 +41,7 @@ UF.Elements.Power = {
         local pDB = uDB.Power
 
         -- Set power bar texture and sizing
-        powerBar:SetStatusBarTexture(NRSKNUI:GetBarTexture(general, pDB.StatusBarTexture))
+        powerBar:SetStatusBarTexture(NRSKNUI:GetStatusbar(general, pDB.StatusBarTexture))
         powerBar:ClearAllPoints()
         powerBar:SetPixelPoint('BOTTOMLEFT', frame, 'BOTTOMLEFT', 0, -pDB.Height - 1)
         powerBar:SetPixelPoint('BOTTOMRIGHT', frame, 'BOTTOMRIGHT', 0, -pDB.Height - 1)

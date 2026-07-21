@@ -68,7 +68,7 @@ GUIFrame:RegisterContent("whisperSounds", function(scrollChild, yOffset)
         callback = function()
             local soundName = db.WhisperSound
             if soundName and soundName ~= "None" and LSM then
-                NRSKNUI:PlaySound(LSM:Fetch("sound", soundName))
+                NRSKNUI:PlaySafeSound(soundName)
             end
         end,
     })
@@ -94,7 +94,7 @@ GUIFrame:RegisterContent("whisperSounds", function(scrollChild, yOffset)
         callback = function()
             local soundName = db.BNetWhisperSound
             if soundName and soundName ~= "None" and LSM then
-                NRSKNUI:PlaySound(LSM:Fetch("sound", soundName))
+                NRSKNUI:PlaySafeSound(soundName)
             end
         end,
     })

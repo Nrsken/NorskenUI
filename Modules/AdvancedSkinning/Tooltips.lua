@@ -243,7 +243,7 @@ local function StyleStatusBar(tooltip)
         tooltip.StatusBar:SetPoint('BOTTOMLEFT', tooltip, 'BOTTOMLEFT', 2, 2)
         tooltip.StatusBar:SetPoint('BOTTOMRIGHT', tooltip, 'BOTTOMRIGHT', -2, 2)
         tooltip.StatusBar:SetHeight(3)
-        tooltip.StatusBar:SetStatusBarTexture(NRSKNUI:GetBarTexture(Tooltips.db))
+        tooltip.StatusBar:SetStatusBarTexture(NRSKNUI:GetStatusbar(Tooltips.db))
     else
         tooltip.StatusBar:Hide()
         tooltip.StatusBar:SetAlpha(0)
