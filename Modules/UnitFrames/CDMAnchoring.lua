@@ -13,12 +13,12 @@ local IsAddOnLoaded = C_AddOns and C_AddOns.IsAddOnLoaded
 
 -- Resolve CDM addon used and return their anchor frames.
 local function GetCDMFrames()
-    if IsAddOnLoaded("SkironCooldownManager") then
-        return _G["SCM_GroupAnchor_1"], _G["SCM_GroupAnchor_2"]
-    elseif IsAddOnLoaded("Coolinator") then
-        return _G["CoolinatorPrimaryGroupAnchor"], nil
+    if IsAddOnLoaded('SkironCooldownManager') then
+        return _G['SCM_GroupAnchor_1'], _G['SCM_GroupAnchor_2']
+    elseif IsAddOnLoaded('Coolinator') then
+        return _G['CoolinatorPrimaryGroupAnchor'], nil
     end
-    return _G["EssentialCooldownViewer"], _G["UtilityCooldownViewer"]
+    return _G['EssentialCooldownViewer'], _G['UtilityCooldownViewer']
 end
 
 -- Making sure values are safe to access before using them, just in case because i dont trust WoW API :)
@@ -38,8 +38,10 @@ local function UpdateCDMAnchorSize(anchor)
         end
     end
 
-    anchor:SetWidth(width)
-    anchor:SetHeight(height)
+    anchor:SetPixelWidth(width)
+    anchor:SetPixelHeight(height)
+    anchor:ClearAllPoints()
+    anchor:SetGridPoint('CENTER', essential, 'CENTER', 0, 0) -- Without this we would need to use .1 offsets to avoid scuffed pixels.
 end
 
 function UF:HookCDMFrame(frame, anchor)
@@ -47,9 +49,9 @@ function UF:HookCDMFrame(frame, anchor)
     frame.nuiCDMHooked = true
 
     local function refresh() UpdateCDMAnchorSize(anchor) end
-    frame:HookScript("OnSizeChanged", refresh)
-    frame:HookScript("OnShow", refresh)
-    frame:HookScript("OnHide", refresh)
+    frame:HookScript('OnSizeChanged', refresh)
+    frame:HookScript('OnShow', refresh)
+    frame:HookScript('OnHide', refresh)
 end
 
 -- Re-evaluate the anchor span on CDM layout changes.
@@ -67,15 +69,15 @@ function UF:CreateCDMAnchor()
     local essential, utility = GetCDMFrames()
     if not (essential and NRSKNUI:SafeValue(essential:IsShown())) then return end
 
-    local anchor = _G["NRSKNUF_CDMAnchor"] or CreateFrame("Frame", "NRSKNUF_CDMAnchor", UIParent)
+    local anchor = _G['NRSKNUF_CDMAnchor'] or CreateFrame('Frame', 'NRSKNUF_CDMAnchor', UIParent)
     UF.CDMAnchor = anchor
     anchor:ClearAllPoints()
-    anchor:SetPoint("CENTER", essential, "CENTER", 0, 0)
+    anchor:SetPixelPoint('CENTER', essential, 'CENTER', 0, 0)
 
     UF:HookCDMFrame(essential, anchor)
-    UF:RegisterEvent("PLAYER_ENTERING_WORLD", "CDMLayoutEvent")
-    UF:RegisterEvent("ACTIVE_PLAYER_SPECIALIZATION_CHANGED", "CDMLayoutEvent")
-    UF:RegisterEvent("TRAIT_CONFIG_UPDATED", "CDMLayoutEvent")
-    UF:RegisterEvent("EDIT_MODE_LAYOUTS_UPDATED", "CDMLayoutEvent")
+    UF:RegisterEvent('PLAYER_ENTERING_WORLD', 'CDMLayoutEvent')
+    UF:RegisterEvent('ACTIVE_PLAYER_SPECIALIZATION_CHANGED', 'CDMLayoutEvent')
+    UF:RegisterEvent('TRAIT_CONFIG_UPDATED', 'CDMLayoutEvent')
+    UF:RegisterEvent('EDIT_MODE_LAYOUTS_UPDATED', 'CDMLayoutEvent')
     UpdateCDMAnchorSize(anchor)
 end

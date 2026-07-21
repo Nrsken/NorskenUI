@@ -167,6 +167,59 @@ local function SetPixelOutside(object, anchor, xOffset, yOffset, anchor2)
     AnchorPixelBox(object, anchor, xOffset, yOffset, anchor2, true)
 end
 
+-- Fractional position of each anchor point within a frame.
+-- x and y, where 0 = left/bottom, 1 = right/top.
+local POINT_FRACTION = {
+    TOPLEFT     = { 0, 1 },
+    TOP         = { 0.5, 1 },
+    TOPRIGHT    = { 1, 1 },
+    LEFT        = { 0, 0.5 },
+    CENTER      = { 0.5, 0.5 },
+    RIGHT       = { 1, 0.5 },
+    BOTTOMLEFT  = { 0, 0 },
+    BOTTOM      = { 0.5, 0 },
+    BOTTOMRIGHT = { 1, 0 },
+}
+
+---Sets the point of a frame to the nearest pixel grid, snapping the resulting edges onto the pixel grid.
+---@param object Frame
+---@param point string
+---@param relativeTo Frame|string? Anchor frame or its global name. Defaults to the object's parent.
+---@param relativePoint string? Point on the anchor frame. Defaults to `point`.
+---@param offsetX number? Defaults to 0.
+---@param offsetY number? Defaults to 0.
+local function SetGridPoint(object, point, relativeTo, relativePoint, offsetX, offsetY)
+    if type(relativeTo) == 'string' then relativeTo = _G[relativeTo] end
+    relativeTo = relativeTo or object:GetParent()
+    relativePoint = relativePoint or point
+    offsetX = offsetX or 0
+    offsetY = offsetY or 0
+
+    local objF = POINT_FRACTION[point]
+    local relF = POINT_FRACTION[relativePoint]
+
+    local relLeft = objF and relF and NRSKNUI:SafeValue(relativeTo:GetLeft())
+    local relBottom = relLeft and NRSKNUI:SafeValue(relativeTo:GetBottom())
+    local relW = relBottom and NRSKNUI:SafeValue(relativeTo:GetWidth())
+    local relH = relW and NRSKNUI:SafeValue(relativeTo:GetHeight())
+
+    -- Unknown point or secret/unlaid-out geometry, fall back to a plain offset-rounded placement.
+    if not relH then
+        SetPixelPoint(object, point, relativeTo, relativePoint, offsetX, offsetY)
+        return
+    end
+
+    -- Where the object's bottom-left lands with this anchor, derived from the relative frame's geometry.
+    local objLeft = relLeft + relF[1] * relW - objF[1] * object:GetWidth() + offsetX
+    local objBottom = relBottom + relF[2] * relH - objF[2] * object:GetHeight() + offsetY
+
+    -- Correction pulling that edge onto the nearest grid line.
+    local mult = NRSKNUI.Mult
+    local dx = floor(objLeft / mult + 0.5) * mult - objLeft
+    local dy = floor(objBottom / mult + 0.5) * mult - objBottom
+    object:SetPoint(point, relativeTo, relativePoint, offsetX + dx, offsetY + dy)
+end
+
 -- Hide object utility --
 
 -- Hidden dummy frame we anchor stuff we want to hide to
@@ -757,6 +810,7 @@ do
         SetPixelWidth = SetPixelWidth,
         SetPixelHeight = SetPixelHeight,
         SetPixelPoint = SetPixelPoint,
+        SetGridPoint = SetGridPoint,
         SetPixelInside = SetPixelInside,
         SetPixelOutside = SetPixelOutside,
         SetPixelSnap = SetPixelSnap,

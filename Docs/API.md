@@ -217,6 +217,23 @@ frame and anchor-point strings pass through untouched. When `arg2` is omitted it
 defaults to the frame's parent. Handles both the long form
 (`point, relativeTo, relativePoint, x, y`) and the short form (`point, x, y`).
 
+### SetGridPoint
+
+```lua
+frame:SetGridPoint(point, relativeTo?, relativePoint?, offsetX?, offsetY?)
+```
+
+Like `SetPoint`, but snaps the **resulting position** onto the pixel grid instead of the
+offset. `SetPixelPoint` rounds the offset you pass, which does nothing when the frame you
+anchor to is itself off-grid (e.g. a Blizzard frame whose centre lands on a half-pixel) —
+the fractional origin is inherited and thin fills bleed 1px sideways. `SetGridPoint`
+derives where the frame's bottom-left will land from `relativeTo`'s geometry and applies a
+sub-pixel correction so the edges sit on whole device pixels. `relativeTo` accepts a frame
+or global name (defaults to the parent), `relativePoint` defaults to `point`, offsets
+default to `0`. Assumes `frame` and `relativeTo` share an effective scale (both under
+`UIParent`); if the anchor's geometry is secret/not yet laid out it falls back to
+`SetPixelPoint`. Does **not** clear existing points — call `ClearAllPoints` first if needed.
+
 ### SetPixelInside / SetPixelOutside
 
 ```lua
