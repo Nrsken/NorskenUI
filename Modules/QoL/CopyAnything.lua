@@ -77,25 +77,23 @@ function CopyAnything:TryCopy(key)
 
     -- SpellID
     if not issecretvalue(GameTooltip:GetSpell()) then
-        local spellData = GameTooltip:GetSpell()
+        local spellName, spellID = GameTooltip:GetSpell()
 
-        if spellData then
-            if spellData.spellID then
-                copyId = spellData.spellID
-                copyName = spellData.spellName
-            end
+        if spellID then
+            copyId = spellID
+            copyName = spellName
         end
     end
 
     -- ItemID
     if not issecretvalue(GameTooltip:GetItem()) then
-        local itemData = GameTooltip:GetItem()
+        local itemName, ItemLink = GameTooltip:GetItem()
 
-        if not copyId and itemData then
-            local itemID = GetItemIDForItemInfo(itemData.ItemLink)
+        if not copyId and ItemLink then
+            local itemID = GetItemIDForItemInfo(ItemLink)
             if itemID then
                 copyId = itemID
-                copyName = itemData.itemName
+                copyName = itemName
             end
         end
     end
