@@ -528,6 +528,14 @@ function GroupMixin:SetConfig(config)
     MarkDirty(self, true)
 end
 
+---Set the maximum number of active children to position. Pass nil to remove the limit.
+---@param limit? number
+function GroupMixin:SetLimit(limit)
+    self._config.UseLimit = limit ~= nil
+    self._config.Limit = limit
+    MarkDirty(self)
+end
+
 ---Force an immediate layout pass, bypassing any scheduled update.
 function GroupMixin:ForceLayout()
     self._needSort = true

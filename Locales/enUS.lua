@@ -114,7 +114,7 @@ L['Profile Settings'] = true
 L['Global Settings'] = true
 L['Combat Util'] = true
 L['Quality of Life'] = true
-L['Class Util'] = true
+L['Class Utility'] = true
 L['CVars'] = true
 
 -- Global Page / UI Scale

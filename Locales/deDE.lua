@@ -115,7 +115,7 @@ L['Profile Settings'] = "Profileinstellungen"
 L['Global Settings'] = "Globale Einstellungen"
 L['Combat Util'] = "Kampf-Werkzeuge"
 L['Quality of Life'] = "Komfortfunktionen"
-L['Class Util'] = "Klassen-Werkzeuge"
+L['Class Utility'] = "Klassen-Werkzeuge"
 L['CVars'] = "CVars"
 
 -- Global Page / UI Scale

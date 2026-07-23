@@ -3,7 +3,6 @@ local NRSKNUI = select(2, ...)
 ---@class CombatMessage
 local CombatMessage = NRSKNUI:GetModule('CombatMessage')
 local EM = NRSKNUI.EditMode
-local LSM = NRSKNUI.Libs.LSM
 
 local CreateFrame = CreateFrame
 local unpack = unpack

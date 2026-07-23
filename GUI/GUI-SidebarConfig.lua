@@ -74,7 +74,7 @@ GUIFrame.SidebarConfig = {
         {
             id = 'class_section',
             type = 'header',
-            text = L['Class Util'],
+            text = L['Class Utility'],
             defaultExpanded = false,
             items = {
                 { id = 'petTexts', text = L['Pet Status Texts'] },

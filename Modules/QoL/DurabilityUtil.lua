@@ -71,9 +71,7 @@ function Durability:ApplySettings()
     self.coreFrame.text:SetFontJustify('CENTER', self.coreFrame, 0, 0)
     self.coreFrame.text:SetText(self.db.TextLow)
 
-    local w = math_floor(self.coreFrame.text:GetStringWidth() + 180)
-    local h = math_floor(self.coreFrame.text:GetStringHeight() + 28)
-    self.coreFrame:SetPixelSize(w, h)
+    self.coreFrame:SetPixelSize(self.coreFrame.text:GetStringWidth(), self.coreFrame.text:GetStringHeight())
     self.coreFrame:ApplyPosition(self.db)
 end
 

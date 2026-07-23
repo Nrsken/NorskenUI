@@ -153,3 +153,23 @@ NRSKNUI.GEM_SOCKET_TYPES = {
 }
 
 NRSKNUI.SOCKETABLE_SLOTS = { 1, 2, 5, 6, 9, 10, 11, 12, 13, 14, 15 }
+
+-- A nil specId means every spec of the class has a pet, a number restricts it to that one spec.
+NRSKNUI.PET_CLASSES = {
+    HUNTER = {
+        summonSpellId = 883,
+        specId = nil
+    },
+    WARLOCK = {
+        summonSpellId = 688,
+        specId = nil,
+    },
+    DEATHKNIGHT = {
+        summonSpellId = 46584,
+        specId = 252
+    },
+    MAGE = {
+        summonSpellId = 31687,
+        specId = 64
+    },
+}

@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@type PetTexts?
+---@class PetTexts
 local PetTexts = NRSKNUI:GetModule('PetTexts', true)
 local L = NRSKNUI.Libs.AL
 local GUI = NRSKNUI.GUI
@@ -9,7 +9,7 @@ local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
 
 local function ApplySettings()
-    if PetTexts then PetTexts:ApplySettings() end
+    PetTexts:ApplySettings()
 end
 
 -- General Settings Tab.
@@ -70,7 +70,7 @@ local function BuildGeneralSettingsTab(page, db)
         end,
     })
 
-    local passiveRow = stateCard:Row(rowHL, 0)
+    local passiveRow = stateCard:Row(rowH)
     passiveRow:EditBox(L['Pet Passive Text'], {
         width = 0.5,
         value = db.PetPassive,
@@ -84,6 +84,24 @@ local function BuildGeneralSettingsTab(page, db)
         value = db.PassiveColor,
         callback = function(r, g, b, a)
             db.PassiveColor = { r, g, b, a }
+            ApplySettings()
+        end,
+    })
+
+    local wrongRow = stateCard:Row(rowHL, 0)
+    wrongRow:EditBox(L['Demo Warlock Wrong Pet Text'], {
+        width = 0.5,
+        value = db.PetWrong,
+        callback = function(val)
+            db.PetWrong = val
+            ApplySettings()
+        end,
+    })
+    wrongRow:ColorPicker(L['Wrong Color'], {
+        width = 0.5,
+        value = db.WrongColor,
+        callback = function(r, g, b, a)
+            db.WrongColor = { r, g, b, a }
             ApplySettings()
         end,
     })

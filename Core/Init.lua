@@ -135,8 +135,9 @@ NRSKNUI.Minimap = NRSKNUI:NewModule('Minimap', 'AceEvent-3.0')
 -- Skinning Modules
 NRSKNUI.Skinning = NRSKNUI:NewModule('Skinning', 'AceEvent-3.0')
 
--- Class Util Modules
+-- Class Utility Modules
 NRSKNUI.Gateway = NRSKNUI:NewModule('Gateway', 'AceEvent-3.0')
+NRSKNUI.PetTexts = NRSKNUI:NewModule('PetTexts', 'AceEvent-3.0')
 
 -- Player Auras
 NRSKNUI.PlayerAuras = NRSKNUI:NewModule('PlayerAuras', 'AceEvent-3.0')

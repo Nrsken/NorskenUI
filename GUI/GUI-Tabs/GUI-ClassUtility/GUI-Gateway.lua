@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@type Gateway?
+---@class Gateway
 local Gateway = NRSKNUI:GetModule('Gateway', true)
 local L = NRSKNUI.Libs.AL
 local GUI = NRSKNUI.GUI
@@ -8,7 +8,7 @@ local Theme = NRSKNUI.Theme
 local rowHL = Theme.rowHeightLast
 
 local function ApplySettings()
-    if Gateway then Gateway:ApplySettings() end
+    Gateway:ApplySettings()
 end
 
 -- General Settings Tab.
