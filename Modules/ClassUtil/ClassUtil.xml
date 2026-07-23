@@ -1,8 +1,0 @@
-<Ui xmlns="http://www.blizzard.com/wow/ui/"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
-
-    <Script file="GateUsable.lua"/>
-    <Script file="PetTexts.lua"/>
-    <Script file="TotemTracker.lua"/>
-    <Script file="SpellAlert.lua" />
-</Ui>

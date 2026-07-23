@@ -6,11 +6,7 @@
     <Script file="CopyAnything.lua"/>
     <Script file="XPBar.lua"/>
     <Script file="DurabilityUtil.lua"/>
-    <Script file="CooldownStrings.lua"/>
     <Script file="MiscVars.lua"/>
     <Script file="AuctionHouseFilter.lua"/>
     <Script file="Recuperate.lua"/>
-    <Script file="CharacterPanel.lua"/>
-    <Script file="MissingItems.lua"/>
-    <Script file="DetailsBackdrop.lua" />
 </Ui>

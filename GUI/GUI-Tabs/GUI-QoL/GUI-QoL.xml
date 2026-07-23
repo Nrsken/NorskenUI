@@ -1,0 +1,12 @@
+<Ui xmlns='http://www.blizzard.com/wow/ui/'
+    xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd'>
+
+    <Script file='GUI-XPBar.lua'/>
+    <Script file='GUI-MiscVars.lua'/>
+    <Script file='GUI-AuctionHouseFilter.lua'/>
+    <Script file='GUI-CopyAnything.lua'/>
+    <Script file='GUI-Automation.lua'/>
+    <Script file='GUI-Recuperate.lua'/>
+    <Script file='GUI-Tweaks.lua'/>
+    <Script file='GUI-DurabilityUtil.lua'/>
+</Ui>

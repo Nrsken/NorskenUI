@@ -9,7 +9,7 @@ local Defaults = {
         XPTable = {},              -- Table i can store xp per level data for math.
         -- Theme settings
         -- Mode: "preset", "class", or "custom"
-        -- All theme presets are defined in AddonTheme.lua
+        -- All theme presets are defined in Libs/LibKaji-1.0/Theme.lua
         Theme = {
             mode           = "preset", -- Theme mode: preset, class, or custom
             selectedPreset = "NUI v2", -- Selected preset theme name
@@ -41,9 +41,7 @@ local Defaults = {
                 width = nil,            -- Frame width
                 height = nil,           -- Frame height
             },
-            selectedGroupId = nil,      -- Currently selected sidebar item
-            selectedTab = nil,          -- Currently selected tab in content
-            minimized = false,          -- Is frame minimized
+            sidebarExpanded = nil,      -- Expanded sidebar groups
         },
 
         -- Account-wide named aura filters, compiled by Core/AuraFilters.lua into
@@ -277,8 +275,8 @@ local Defaults = {
         },
         -- Minimap Icon Settings
         Minimap = {
-            hide = false,        -- Show/hide minimap icon
-            LoginMessage = true, -- Show login chat message
+            hide = true,        -- Show/hide minimap icon
+            hideMessage = true, -- Show login chat message
         },
         -- Combat Timer Settings
         CombatTimer = {

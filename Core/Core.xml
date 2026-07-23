@@ -13,10 +13,8 @@
     <Script file="FontCore.lua" />
     <Script file="BlizzardFonts.lua" />
     <Script file="FontFactory.lua" />
-    <Script file="AddonTheme.lua" />
     <Script file="Enums.lua" />
     <Script file="Curves.lua" />
-    <Script file="Animations.lua" />
     <Script file="DynamicGroup.lua" />
     <Script file="AuraContainer.lua" />
     <Script file="AuraFilters.lua" />
@@ -24,7 +22,7 @@
     <Script file="EditMode.lua" />
     <Script file="Commands.lua" />
     <Script file="ProfileManager.lua" />
-    <Script file="NUI-Dialog.lua" />
+    <Script file="Dialog.lua" />
     <Script file="Colors.lua" />
     <Script file="Constants.lua" />
     <Script file="LoadConditions.lua" />

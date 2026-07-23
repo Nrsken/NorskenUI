@@ -7,6 +7,7 @@ local _G = _G
 local GetLocale = GetLocale
 local select = select
 local UnitClass = UnitClass
+local UnitFullName = UnitFullName
 local assert = assert
 
 local GetAddOnMetadata = C_AddOns and C_AddOns.GetAddOnMetadata
@@ -27,12 +28,14 @@ NRSKNUI.AddOnName = GetAddOnMetadata(addonName, 'Title')
 NRSKNUI.Version = GetAddOnMetadata(addonName, 'Version')
 NRSKNUI.Author = GetAddOnMetadata(addonName, 'Author')
 NRSKNUI.MyClass = select(2, UnitClass('player'))
+NRSKNUI.MyName, NRSKNUI.MyRealm = UnitFullName('player')
 -- Texture and color constants
 NRSKNUI.ClearTexture = 0
 NRSKNUI.WhiteTexture = 'Interface\\Buttons\\WHITE8X8'
 NRSKNUI.HighlightColor = { 1, 1, 1, 0.25 }
 NRSKNUI.SelectedColor = { 0.8, 0.8, 0.8, 0.25 }
 NRSKNUI.BlackBgColor = { 0, 0, 0, 0.8 }
+NRSKNUI.GlobalZoom = 0.3
 -- Supported separator types.
 NRSKNUI.Separators = {
     ['||'] = '|',
@@ -55,13 +58,6 @@ NRSKNUI.TimeFormats = {
     ['Smart']  = '1m / 30s',
 }
 
-do
-    -- Convert GitHub version string to a more user-friendly format for display in the GUI.
-    if NRSKNUI.Version == '@project-version@' then
-        NRSKNUI.Version = 'Development Version'
-    end
-end
-
 -- Setup libraries
 NRSKNUI.Libs = {
     AceDB = _G.LibStub('AceDB-3.0'),
@@ -70,14 +66,20 @@ NRSKNUI.Libs = {
     LS = _G.LibStub('LibSpecialization'),
     LRC = _G.LibStub('LibRangeCheck-3.0'),
     AS = _G.LibStub('AceSerializer-3.0'),
-    AL = _G.LibStub('AceLocale-3.0'),
+    AL = _G.LibStub('AceLocale-3.0'):GetLocale('NorskenUI'),
     LD = _G.LibStub('LibDeflate'),
     LDB = _G.LibStub('LibDataBroker-1.1'),
     LDBIcon = _G.LibStub('LibDBIcon-1.0'),
     LDS = _G.LibStub('LibDualSpec-1.0'),
+    KAJI = _G.LibStub('LibKaji-1.0'),
 }
 
 do
+    -- Convert GitHub version string to a more user-friendly format for display in the GUI.
+    if NRSKNUI.Version == '@project-version@' then
+        NRSKNUI.Version = 'Development Version'
+    end
+
     -- Get player data via LibSpecialization and let the Lib handle changes.
     local LS = NRSKNUI.Libs.LS
     NRSKNUI.MySpec = {
@@ -91,6 +93,20 @@ do
     end
     NRSKNUI:RegisterEvent('PLAYER_LOGIN', UpdateSpec) -- Update initial spec info on login
     LS.RegisterPlayerSpecChange(NRSKNUI, UpdateSpec)
+
+    -- Setup KAJI GUI & Utilities for NorskenUI
+    local KAJI = NRSKNUI.Libs.KAJI
+    NRSKNUI.GUI = KAJI:New({
+        store = function()
+            if not (NRSKNUI.db and NRSKNUI.db.global) then return nil end
+            NRSKNUI.db.global.Theme = NRSKNUI.db.global.Theme or {}
+            return NRSKNUI.db.global.Theme
+        end,
+        classColorProvider = function()
+            return NRSKNUI:GetPlayerClassColor()
+        end,
+    })
+    NRSKNUI.Theme = NRSKNUI.GUI:GetTheme()
 end
 
 -- RestrictedActions Module

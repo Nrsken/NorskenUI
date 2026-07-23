@@ -327,6 +327,11 @@ function CombatCross:OnEnable()
     self:ApplySettings()
     self:UpdateVisibility()
 
+    self.themeSub = NRSKNUI.GUI:OnThemeChanged(function()
+        if self.db.ColorMode ~= "theme" then return end
+        self:ApplySettings()
+    end)
+
     -- Reg events
     self:RegisterEvent('PLAYER_SPECIALIZATION_CHANGED')
     self:RegisterEvent('PLAYER_ENTERING_WORLD', 'SyncRangeCheck')
@@ -339,6 +344,10 @@ function CombatCross:OnDisable()
     self:StopRangeCheck()
     if self.coreFrame then
         self.coreFrame:Hide()
+        if self.themeSub then
+            self.themeSub()
+            self.themeSub = nil
+        end
     end
 end
 

@@ -1,0 +1,12 @@
+<Ui xmlns='http://www.blizzard.com/wow/ui/'
+    xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd'>
+
+    <Script file='GUI-CombatTimer.lua' />
+    <Script file='GUI-CombatCross.lua' />
+    <Script file='GUI-CombatRes.lua' />
+    <Script file='GUI-CombatMessage.lua' />
+    <Script file='GUI-CursorCircle.lua' />
+    <Script file='GUI-FocusCastbar.lua' />
+    <Script file='GUI-RangeChecker.lua' />
+    <Script file='GUI-PotionReady.lua' />
+</Ui>

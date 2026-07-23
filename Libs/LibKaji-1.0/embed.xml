@@ -1,0 +1,46 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
+
+    <!-- Consumer must load LibStub and (optionally) LibSharedMedia-3.0 before this. -->
+    <Script file="LibKaji-1.0.lua" />
+    <Script file="Pixel.lua" />
+    <Script file="Theme.lua" />
+    <Script file="Util.lua" />
+    <Script file="Dialog.lua" />
+    <Script file="Animations.lua" />
+
+    <!-- Layout + state infra -->
+    <Script file="StateManager.lua" />
+    <Script file="CardStack.lua" />
+    <Script file="Card.lua" />
+    <Script file="Page.lua" />
+
+    <!-- Window shell -->
+    <Script file="Scrollbar.lua" />
+    <Script file="ContentArea.lua" />
+    <Script file="Sidebar.lua" />
+    <Script file="MiniSidebar.lua" />
+    <Script file="Search.lua" />
+    <Script file="Window.lua" />
+
+    <!-- Widgets -->
+    <Script file="Widgets\Separator.lua" />
+    <Script file="Widgets\Checkbox.lua" />
+    <Script file="Widgets\Slider.lua" />
+    <Script file="Widgets\ColorPicker.lua" />
+    <Script file="Widgets\Dropdown.lua" />
+    <Script file="Widgets\EditBox.lua" />
+    <Script file="Widgets\MultiLineEditBox.lua" />
+    <Script file="Widgets\Button.lua" />
+    <Script file="Widgets\Text.lua" />
+    <Script file="Widgets\Icon.lua" />
+
+    <!-- Premade cards -->
+    <Script file="Widgets\PositionCard.lua" />
+    <Script file="Widgets\TextFormatCard.lua" />
+    <Script file="Widgets\FontSettingsCard.lua" />
+    <Script file="Widgets\DynamicGroupCard.lua" />
+    <Script file="Widgets\GlowSettingsCard.lua" />
+    <Script file="Widgets\LoadConditionsCard.lua" />
+
+</Ui>

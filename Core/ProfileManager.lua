@@ -429,7 +429,7 @@ function ProfileManager:RefreshAllModules()
     if NRSKNUI.PreviewManager then NRSKNUI.PreviewManager:StopAllPreviews() end
 
     -- Refresh theme FIRST so modules get current theme colors during ApplySettings
-    if NRSKNUI.RefreshTheme then NRSKNUI:RefreshTheme() end
+    if NRSKNUI.GUI then NRSKNUI.GUI:ApplyTheme() end
 
     -- Refresh module DB's and apply settings
     for _, module in NRSKNUI:IterateModules() do

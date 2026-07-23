@@ -3,6 +3,7 @@ local NRSKNUI = select(2, ...)
 ---@class XPBar
 local XPBar = NRSKNUI:GetModule('XPBar')
 local EM = NRSKNUI.EditMode
+local kajiGUI = NRSKNUI.GUI
 
 local CreateFrame = CreateFrame
 local UnitLevel = UnitLevel
@@ -500,6 +501,16 @@ function XPBar:OnEnable()
         MainStatusTrackingBarContainer:SetAlpha(0)
     end
 
+    self.themeSub = kajiGUI:OnThemeChanged(function()
+        if self.db.ColorMode ~= "theme" and
+            self.db.ColorModeQuest ~= "theme" and
+            self.db.ColorModeRested ~= "theme" then
+            return
+        end
+
+        self:ApplySettings()
+    end)
+
     -- Player is already max level, there is no XP to track, so skip building the bar and registering events entirely.
     if UnitLevel('player') >= GetMaxLevelForPlayerExpansion() then return end
 
@@ -520,6 +531,10 @@ function XPBar:OnDisable()
     self.previewActive = false
     if self.coreFrame then
         self.coreFrame:Hide()
+        if self.themeSub then
+            self.themeSub()
+            self.themeSub = nil
+        end
     end
 end
 

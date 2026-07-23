@@ -278,6 +278,11 @@ function CursorCircle:OnEnable()
     self.inCombat = NRSKNUI:InCombat() -- Get initial combat state.
     self:ApplySettings()
 
+    self.themeSub = NRSKNUI.GUI:OnThemeChanged(function()
+        if self.db.ColorMode ~= "theme" then return end
+        self:ApplySettings()
+    end)
+
     self:RegisterEvent('PLAYER_REGEN_DISABLED', 'OnCombatChanged')
     self:RegisterEvent('PLAYER_REGEN_ENABLED', 'OnCombatChanged')
     self:RegisterEvent('SPELL_UPDATE_COOLDOWN', 'UpdateGCDCooldown')
@@ -288,5 +293,9 @@ end
 function CursorCircle:OnDisable()
     if self.follower then
         self.follower:Hide()
+        if self.themeSub then
+            self.themeSub()
+            self.themeSub = nil
+        end
     end
 end

@@ -18,13 +18,56 @@ local pinnedSizes = {
 }
 
 -- Special fonts that can be styled independently of the master blizzardFonts settings.
+-- Runtime fields: objects/globalVar (application path), lodAddon, relog.
+-- GUI fields: sizeRange, position, hideLabel, preview (BlizzardMessages method), note, noOutline.
 NRSKNUI.SpecialFonts = {
-    { key = 'ZoneText',     label = 'Zone Text',     objects = { 'ZoneTextFont', 'WorldMapTextFont' } },
-    { key = 'SubZoneText',  label = 'Sub Zone Text', objects = { 'SubZoneTextFont' } },
-    { key = 'PvPZoneText',  label = 'PvP Zone Text', objects = { 'PVPArenaTextString', 'PVPInfoTextString' } },
-    { key = 'ErrorText',    label = 'Error Text',    objects = { 'ErrorFont' } },
-    { key = 'ActionStatus', label = 'Action Status', objects = { 'ActionStatus.Text' } },
-    { key = 'ChatBubbles',  label = 'Chat Bubbles',  objects = { 'ChatBubbleFont' } },
+    {
+        key = 'ZoneText',
+        label = 'Zone Text',
+        objects = { 'ZoneTextFont', 'WorldMapTextFont' },
+        sizeRange = { 8, 100 },
+        position = true,
+        hideLabel = 'Hide Zone Texts',
+        preview = 'PreviewZone',
+    },
+    {
+        key = 'SubZoneText',
+        label = 'Sub Zone Text',
+        objects = { 'SubZoneTextFont' },
+        sizeRange = { 8, 100 },
+        preview = 'PreviewZone',
+    },
+    {
+        key = 'PvPZoneText',
+        label = 'PvP Zone Text',
+        objects = { 'PVPArenaTextString', 'PVPInfoTextString' },
+        sizeRange = { 8, 100 },
+        preview = 'PreviewZone',
+    },
+    {
+        key = 'ErrorText',
+        label = 'Error Text',
+        objects = { 'ErrorFont' },
+        sizeRange = { 8, 24 },
+        position = true,
+        hideLabel = 'Hide Error Messages',
+        preview = 'PreviewUIErrors',
+    },
+    {
+        key = 'ActionStatus',
+        label = 'Action Status',
+        objects = { 'ActionStatus.Text' },
+        sizeRange = { 8, 24 },
+        position = true,
+        hideLabel = 'Hide Action Status',
+        preview = 'PreviewActionStatus',
+    },
+    {
+        key = 'ChatBubbles',
+        label = 'Chat Bubbles',
+        objects = { 'ChatBubbleFont' },
+        sizeRange = { 6, 18 },
+    },
     {
         key = 'Nameplates',
         label = 'Nameplates',
@@ -35,10 +78,31 @@ NRSKNUI.SpecialFonts = {
             'SystemFont_LargeNamePlateFixed',
             'SystemFont_NamePlateCastBar',
         },
+        note = 'Applies to nameplate names and castbar text. Sizes stay native.',
     },
-    { key = 'CombatText', label = 'Combat Text',    objects = { 'CombatTextFont' }, lodAddon = 'Blizzard_CombatText' },
-    { key = 'CombatFont', label = 'Combat Font',    globalVar = 'DAMAGE_TEXT_FONT', relog = true },
-    { key = 'NameFont',   label = 'Unit Name Font', globalVar = 'UNIT_NAME_FONT',   relog = true },
+    {
+        key = 'CombatText',
+        label = 'Combat Text',
+        objects = { 'CombatTextFont' },
+        lodAddon = 'Blizzard_CombatText',
+        note = 'Scrolling combat text (requires the Blizzard combat text feature).',
+    },
+    {
+        key = 'CombatFont',
+        label = 'Combat Font',
+        globalVar = 'DAMAGE_TEXT_FONT',
+        relog = true,
+        noOutline = true,
+        note = 'Floating damage text. Requires a relog to fully apply or revert.',
+    },
+    {
+        key = 'NameFont',
+        label = 'Unit Name Font',
+        globalVar = 'UNIT_NAME_FONT',
+        relog = true,
+        noOutline = true,
+        note = 'Unit names in the world. Requires a relog to fully apply or revert.',
+    },
 }
 
 ---Assign a family name to a font size, we use this to categorize fonts and apply consistent sizing.

@@ -253,7 +253,7 @@ local function SetFontStyle(self, source, size, outline, shadow, skip, setOwner)
         font = source
     end
 
-    local fontPath = NRSKNUI:ResolveMediaPath('font', font or GetGlobalFontName())
+    local fontPath = NRSKNUI:ResolveMediaPath('font', font or GetGlobalFontName()) --[[@as string]]
     size = (type(size) == 'number' and size > 0) and size or DEFAULT_SIZE
     local style, slug = NRSKNUI:ResolveFlags(outline)
     local obj = AcquireFontObject(fontPath, size, style, ShadowSignature(shadow), shadow)

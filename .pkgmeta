@@ -5,12 +5,12 @@ curse-id: 1460316
 wago-id: 96ELgPNg
 
 externals:
-    Libs/AceAddon-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceAddon-3.0
-    Libs/AceDB-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceDB-3.0
-    Libs/AceEvent-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceEvent-3.0
-    Libs/AceSerializer-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceSerializer-3.0
-    Libs/AceHook-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceHook-3.0
-    Libs/AceTimer-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceTimer-3.0
+    Libs/Ace3/AceAddon-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceAddon-3.0
+    Libs/Ace3/AceDB-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceDB-3.0
+    Libs/Ace3/AceEvent-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceEvent-3.0
+    Libs/Ace3/AceSerializer-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceSerializer-3.0
+    Libs/Ace3/AceHook-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceHook-3.0
+    Libs/Ace3/AceTimer-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceTimer-3.0
     Libs/LibSharedMedia-3.0: https://repos.curseforge.com/wow/libsharedmedia-3-0/trunk/LibSharedMedia-3.0
     Libs/LibStub: https://repos.curseforge.com/wow/libstub/trunk
     Libs/CallbackHandler-1.0: https://repos.curseforge.com/wow/callbackhandler/trunk/CallbackHandler-1.0
@@ -52,6 +52,6 @@ ignore:
     - release.sh
     - .gitignore
     - .gitattributes
-    - .wowlua-ls-NUIAnnotations/
+    - .Types/
     - .wowluarc.json
     - Docs/

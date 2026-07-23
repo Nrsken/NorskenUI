@@ -1,5 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
+local Pixel = NRSKNUI.Libs.KAJI.Pixel
 
 local GetPhysicalScreenSize = GetPhysicalScreenSize
 local GetScreenWidth = GetScreenWidth
@@ -26,20 +27,15 @@ function NRSKNUI:SetScaleValue(custom)
     self:SetUIScale()
 end
 
----Returns the best pixel size for the current resolution.
+---Returns the best pixel size for the current resolution. See LibKaji Pixel.lua for the math.
 ---@return number
 function NRSKNUI:GetBestPixelSize()
-    if self.PerfectPixel > 1.15 then
-        return 1.15
-    elseif self.PerfectPixel < 0.4 then
-        return 0.4
-    end
-    return self.PerfectPixel
+    return Pixel.GetBestPixelSize()
 end
 
 ---Updates the multiplier for scaling UI elements based on the current resolution and perfect pixel size.
 function NRSKNUI:UpdateMult()
-    self.Mult = self.PerfectPixel / self:GetBestPixelSize()
+    self.Mult = Pixel.GetMult()
 end
 
 ---Sets the UI scale based on the user's settings.

@@ -1,6 +1,7 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 local Theme = NRSKNUI.Theme
+local Animations = NRSKNUI.Libs.KAJI.Animations
 
 local CreateFrame = CreateFrame
 local pairs = pairs
@@ -421,7 +422,7 @@ function EditMode:CreateOverlayFrame(element)
     overlay.element = element
     overlay.didDrag = false
 
-    overlay.animateBorder = NRSKNUI.Animations:CreateHoverColorAnimator(
+    overlay.animateBorder = Animations:CreateHoverColorAnimator(
         overlay,
         function(r, g, b, a) overlay:SetBackdropBorderColor(r, g, b, a) end,
         Theme.accent,

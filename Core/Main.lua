@@ -6,6 +6,7 @@ local UnitGUID = UnitGUID
 local LDB = NRSKNUI.Libs.LDB
 local LDBIcon = NRSKNUI.Libs.LDBIcon
 local LDS = NRSKNUI.Libs.LDS
+local GUI = NRSKNUI.GUI
 
 ---Print message with class colored addon name prefix
 function NRSKNUI:Print(msg)
@@ -59,6 +60,14 @@ function NRSKNUI:ApplyToAllModules()
     end)
 end
 
+function NRSKNUI:ToggleModule(moduleName, enabled)
+    if enabled then
+        self:EnableModule(moduleName)
+    else
+        self:DisableModule(moduleName)
+    end
+end
+
 local function SetupMinimapIcon()
     local Theme = NRSKNUI.Theme
     local MyLDB = LDB:NewDataObject("NorskenUI", {
@@ -108,7 +117,13 @@ function NRSKNUI:OnEnable()
         SetupMinimapIcon()
     end)
 
-    self:RefreshTheme()
+    GUI:ApplyTheme()
+    GUI:OnThemeChanged(function() -- None AceModules go into here.
+        if self.EditMode and self.EditMode:IsActive() then
+            self.EditMode:RefreshOverlays()
+        end
+    end)
+
     self:SetupSlashCommands()
     self:SetUIScale()
     self:ApplyBlizzardFonts()
@@ -116,7 +131,7 @@ function NRSKNUI:OnEnable()
     --self:TestEnv()
 
     -- Show login message if enabled
-    if self.db.profile.Minimap.LoginMessage ~= false then
+    if self.db.profile.Minimap.hideMessage ~= true then
         self:Print(self:ColorTextByTheme("/nui") .. " to open the configuration window.")
     end
 

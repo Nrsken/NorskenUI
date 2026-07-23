@@ -108,6 +108,14 @@ MiscVars.DEFS = {
         default = false,
         category = 'dev',
     },
+    {
+        key = 'tooltipShowAuraSpellIDs',
+        label = 'Show Aura Spell IDs in Tooltip',
+        description = 'Show the spell IDs of auras in the tooltip.',
+        type = 'boolean',
+        default = false,
+        category = 'dev',
+    }
 }
 
 ---@type table

@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
-local Theme = NRSKNUI.Theme
+local L = NRSKNUI.Libs.AL
 
 -- Module with a bunch of color utilities
 
@@ -97,18 +97,14 @@ end
 ---Get the theme accent color as an "RRGGBB" hex string.
 ---@return string hex
 function NRSKNUI:GetThemeColorHex()
-    if Theme and Theme.accent then
-        return self:RGBAToHex(Theme.accent[1], Theme.accent[2], Theme.accent[3])
-    end
-    return "e51039"
+    return self.GUI:RGBAToHex(self.GUI:Color("accent"))
 end
 
 ---Wrap text in the theme accent color escape code.
 ---@param text string
 ---@return string
 function NRSKNUI:ColorTextByTheme(text)
-    local hex = self:GetThemeColorHex()
-    return "|cFF" .. hex .. text .. "|r"
+    return self.GUI:ColorText(text)
 end
 
 ---Get accent color components based on mode.
@@ -122,10 +118,7 @@ function NRSKNUI:GetAccentColor(colorMode, customColor)
         local classColor = self:GetPlayerClassColor()
         return classColor[1], classColor[2], classColor[3], classColor[4]
     elseif colorMode == "theme" then
-        if Theme and Theme.accent then
-            return Theme.accent[1], Theme.accent[2], Theme.accent[3], Theme.accent[4] or 1
-        end
-        return 1, 0.82, 0, 1
+        return self.GUI:Color("accent")
     else
         -- Validate custom color
         if customColor and type(customColor) == "table" and #customColor >= 3 then
@@ -170,9 +163,9 @@ end
 -- Color mode options for dropdowns in the GUI
 ---@type { key: "class"|"custom"|"theme", text: string }[]
 NRSKNUI.ColorModeOptions = {
-    { key = "class",  text = "Class Color" },
-    { key = "custom", text = "Custom Color" },
-    { key = "theme",  text = "Theme Color" },
+    { key = "class",  text = L['Class Color'] },
+    { key = "custom", text = L['Custom Color'] },
+    { key = "theme",  text = L['Theme Color'] },
 }
 
 ---Blend between RGB triplets based on the Min/Max ratio.
