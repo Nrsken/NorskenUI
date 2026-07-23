@@ -24,6 +24,7 @@ Modules/UnitFrames/UnitFrames.xml
 Modules/Auras/Auras.xml
 Modules/Combat/Combat.xml
 Modules/QoL/QoL.xml
+Modules/Skinning/Skinning.xml
 
 # Load GUI Core File
 GUI/GUI-Core.lua

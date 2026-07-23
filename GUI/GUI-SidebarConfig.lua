@@ -62,6 +62,16 @@ GUIFrame.SidebarConfig = {
             }
         },
         {
+            id = 'skinning_section',
+            type = 'header',
+            text = L['Skinning'],
+            defaultExpanded = false,
+            items = {
+                { id = 'tooltip', text = L['Tooltips'] },
+                { id = 'minimap', text = L['Minimap'] },
+            }
+        },
+        {
             id = 'class_section',
             type = 'header',
             text = L['Class Util'],

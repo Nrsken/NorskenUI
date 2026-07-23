@@ -408,3 +408,150 @@ L['Export failed: %s'] = true
 L['Imported profile: %s'] = true
 L['Import failed: %s'] = true
 L['Profile manager is not available.'] = true
+
+-- Modifier Keys (shared)
+L['Shift'] = true
+L['Ctrl'] = true
+L['Alt'] = true
+L['Cmd'] = true
+
+-- Skinning Sidebar
+L['Skinning'] = true
+L['Tooltips'] = true
+L['Minimap'] = true
+
+-- Tooltips Skinning
+L['Tooltip Skinning'] = true
+L['Enable Tooltip Skinning'] = true
+L['Hide Threat Line'] = true
+L['Hides the current threat line on tooltips for units that you are in combat with.'] = true
+L['Show Mount'] = true
+L['Shows the mount a player is currently riding on their tooltip when holding shift.'] = true
+L['Item Quality Borders'] = true
+L['Color tooltip borders by item quality, falls back to the border color for everything else.'] = true
+L['StatusBar Settings'] = true
+L['Show StatusBar'] = true
+L['Toggles health statusbar on unit tooltips.'] = true
+L['Combat Visibility'] = true
+L['Hide Tooltips in Combat'] = true
+L['Hides the selected tooltip types during combat. Hold the override key to temporarily show them.'] = true
+L['Override Key'] = true
+L['Units'] = true
+L['Items'] = true
+L['Includes toys and equipment sets.'] = true
+L['Spells'] = true
+L['Includes mounts, macros and flyouts.'] = true
+L['Auras'] = true
+L['Header Text'] = true
+L['Normal Text'] = true
+L['Small Text'] = true
+
+-- Minimap Skinning
+L['Enable Minimap'] = true
+L['Mouse Middle-click: Opens calendar.'] = true
+L['Mouse Right-click: Opens tracking menu.'] = true
+L['Minimap Settings'] = true
+L['Minimap Size'] = true
+L['Minimap Scale'] = true
+L['Border Size'] = true
+L['Anchorpoint'] = true
+L['Indicators'] = true
+L['Buttons'] = true
+L['Mail Icon Settings'] = true
+L['Show Mail Icon'] = true
+L['Instance Difficulty Settings'] = true
+L['Show Instance Difficulty'] = true
+L['Queue Icon Settings'] = true
+L['Show Queue Icon'] = true
+L['BugSack Settings'] = true
+L['Toggle BugSack Frame'] = true
+L['BugSack Size'] = true
+L['Landing Page Button Settings'] = true
+L['Show Landing Page Button'] = true
+L['AddOn Compartment Settings'] = true
+L['Show AddOn Compartment'] = true
+
+-- QoL: Copy Anything
+L['Copy Anything'] = true
+L['Enable Copy Anything'] = true
+L['Functionality Info'] = true
+L['Copies SpellID, ItemID, AuraID, MacroID and Unitnames on mouseover'] = true
+L['Limited functionality in certain environments because of secret values.'] = true
+L['Keybind Settings'] = true
+L['Copy Modifier Key(s)'] = true
+L['Ctrl + Shift'] = true
+L['Ctrl + Alt'] = true
+L['Ctrl + Shift + Alt'] = true
+L['Copy Keybind, Single Letter Only'] = true
+
+-- QoL: Tweaks
+L['Tweaks'] = true
+L['Enable Tweaks'] = true
+L['Hide Misc Elements'] = true
+L['Hide Talking Head Frame'] = true
+L['Hide Boss Banner'] = true
+L['Misc Tweaks'] = true
+L['Confirm Popups with Enter'] = true
+
+-- QoL: Recuperate Button
+L['Recuperate Button'] = true
+L['Enable Recuperate Button'] = true
+L['Because of restrictions i cannot fully hide the button when loaded and at '] = true
+L['|cffFFFFFFfull health|r'] = true
+L['|cffFFFFFFnot in combat.|r'] = true
+L['This means that the button is invisible but is still clickable.'] = true
+L['Load in Raid'] = true
+L['Load in Party'] = true
+L['Button Size'] = true
+
+-- QoL: Automation
+L['Automation'] = true
+L['Enable Automation'] = true
+L['Override Behaviour'] = true
+L['Hold to Skip'] = true
+L['Hold to Enable'] = true
+L['Override Info'] = true
+L['Automation features that has override support are marked with '] = true
+L['Cinematics & Dialogs'] = true
+L['Auto Skip Cinematics & Movies'] = true
+L['Auto Hide Spammy Tutorial Helptips'] = true
+L['Merchant'] = true
+L['Merchant Automation'] = true
+L['Auto Sell Junk/Grey Items '] = true
+L['Auto Repair Gear '] = true
+L['Use Guild Funds for Repair'] = true
+L['Group Finder'] = true
+L['Auto Accept Group Finder Role Check'] = true
+L['Role based on selected roles in the Group Finder.'] = true
+L['Convenience'] = true
+L['Auto-Fill DELETE Text'] = true
+L['Auto Loot'] = true
+L['Fast Loot'] = true
+L['Quests'] = true
+L['Automatically complete and turn in quests when there is no reward choice.'] = true
+L['Automatically accept and complete the weekly |cffffffffBonus Roll|r quest from Decimus.'] = true
+L['Auto Bonus Roll Mode'] = true
+L['Gold'] = true
+L['Marl'] = true
+L['Crest'] = true
+
+-- QoL: Auction House Filter
+L['Auction House Filter'] = true
+L['Enable Auction House Filter'] = true
+L['Blizzard Auction House'] = true
+L['Current Expansion Only'] = true
+L['Auto Focus Search Bar'] = true
+L['Crafting Orders'] = true
+L['Auctionator, '] = true
+L['|cff00FF00Loaded|r'] = true
+L['|cffFF0000Not Loaded|r'] = true
+
+-- QoL: Durability Util
+L['Durability Util'] = true
+L['Enable Durability Low Warning'] = true
+L['Durability Low Warning'] = true
+L['Low Threshold Text'] = true
+L['Low Threshold Color'] = true
+L['Broken Text'] = true
+L['Broken Color'] = true
+L['Threshold %'] = true

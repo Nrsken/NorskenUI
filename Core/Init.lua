@@ -142,7 +142,7 @@ NRSKNUI.Gateway = NRSKNUI:NewModule('Gateway', 'AceEvent-3.0')
 NRSKNUI.PlayerAuras = NRSKNUI:NewModule('PlayerAuras', 'AceEvent-3.0')
 NRSKNUI.AdvancedDebuffs = NRSKNUI:NewModule('AdvancedDebuffs', 'AceEvent-3.0')
 
--- Combat Modules
+-- Combat Modules   
 NRSKNUI.CombatTimer = NRSKNUI:NewModule('CombatTimer', 'AceEvent-3.0')
 NRSKNUI.PotionReady = NRSKNUI:NewModule('PotionReady', 'AceEvent-3.0')
 NRSKNUI.RangeChecker = NRSKNUI:NewModule('RangeChecker', 'AceEvent-3.0')
