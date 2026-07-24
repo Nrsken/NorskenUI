@@ -48,12 +48,16 @@ local window = GUI:CreateGUIWindow({
     state = {
         load = function()
             local data = NRSKNUI.db and NRSKNUI.db.global and NRSKNUI.db.global.GUIState
-            if data then data.currentPage = nil end
+            if data then
+                data.currentPage = nil
+                data.sidebarExpanded = nil
+            end
             return data
         end,
         save = function(data)
             if NRSKNUI.db and NRSKNUI.db.global then
                 data.currentPage = nil
+                data.sidebarExpanded = nil
                 NRSKNUI.db.global.GUIState = data
             end
         end,

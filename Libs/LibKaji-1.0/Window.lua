@@ -310,8 +310,13 @@ function WindowMixin:SetSidebar(config, opts)
         isDisabled = opts.isDisabled,
         onSelect = function(id, searchResult)
             self._currentId = id
-            self.content:ShowPage(id)
-            if searchResult and searchResult.isWidget then self.content:ScrollToLabel(searchResult.text) end
+            if searchResult and searchResult.isWidget then
+                -- Open on the tab / sidebar item that owns the matched widget, then scroll to it.
+                self.content:ShowPage(id, { tabId = searchResult.tabId, itemKey = searchResult.itemKey })
+                self.content:ScrollToLabel(searchResult.text)
+            else
+                self.content:ShowPage(id)
+            end
             sidebar:EnsureExpandedFor(id)
             self:SavePosition()
         end,

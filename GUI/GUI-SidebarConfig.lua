@@ -30,6 +30,11 @@ GUIFrame.SidebarConfig = {
             text = L['Global Settings'],
         },
         {
+            id = 'globalFonts',
+            type = 'item',
+            text = L['Font Settings'],
+        },
+        {
             id = 'unitframes_section',
             type = 'header',
             text = L['Unit Frames'],

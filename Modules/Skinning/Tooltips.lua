@@ -25,6 +25,7 @@ local next = next
 local UnitNameFromGUID = UnitNameFromGUID
 local CreateFrame = CreateFrame
 local format = string.format
+local CreateColor = CreateColor
 
 local TooltipContainer = GameTooltipDefaultContainer
 local GameTooltip = GameTooltip
@@ -47,6 +48,8 @@ local GetCoinTextureString = C_CurrencyInfo and C_CurrencyInfo.GetCoinTextureStr
 
 local preCall = TooltipDataProcessor and TooltipDataProcessor.AddLinePreCall
 local postCall = TooltipDataProcessor and TooltipDataProcessor.AddTooltipPostCall
+
+local SetCVar = C_CVar and C_CVar.SetCVar
 
 local itemEnum = Enum.TooltipDataType.Item
 local unitEnum = Enum.TooltipDataType.Unit
@@ -103,6 +106,13 @@ function Tooltips:OnInitialize()
     self:SetEnabledState(false)
 end
 
+-- True while the configured override modifier is held.
+---@return boolean
+local function IsModDown()
+    local mod = Tooltips.db.Mod
+    return (mod == 'SHIFT' and IsShiftKeyDown()) or (mod == 'CTRL' and IsControlKeyDown()) or (mod == 'ALT' and IsAltKeyDown())
+end
+
 ---@param group string
 ---@return boolean
 local function ShouldHideInCombat(group)
@@ -110,7 +120,7 @@ local function ShouldHideInCombat(group)
     if not db.HideInCombat or not db.HideInCombatTypes[group] then return false end
     if not NRSKNUI:InCombat() then return false end
 
-    return not ((db.Mod == 'SHIFT' and IsShiftKeyDown()) or (db.Mod == 'CTRL' and IsControlKeyDown()) or (db.Mod == 'ALT' and IsAltKeyDown()))
+    return not IsModDown()
 end
 
 -- Hides an already-shown tooltip when combat starts or the override key is released, tooltips opened during combat are handled by the post calls.
@@ -156,6 +166,19 @@ end
 ---@param down number
 local function OnModifierChanged(_, key, down)
     if key:sub(2) ~= Tooltips.db.Mod then return end
+
+    -- New CVar for showing spell IDs on aura container tooltips, while holding the override key.
+    if Tooltips.db.ShowAuraContainerSpellID then
+        SetCVar('tooltipShowAuraSpellIDs', down == 1 and 1 or 0)
+    end
+
+    -- Rebuild the hovered unit tooltip so the mount line appears/disappears with the modifier, out of combat only.
+    if Tooltips.db.ShowMountInfo and not NRSKNUI:InCombat() and not GameTooltip:IsForbidden() then
+        if GameTooltip:IsShown() and GameTooltip:IsTooltipType(unitEnum) and UnitExists('mouseover') then
+            GameTooltip:SetUnit('mouseover')
+        end
+    end
+
     if not Tooltips.db.HideInCombat or not NRSKNUI:InCombat() then return end
     if GameTooltip:IsForbidden() then return end
 
@@ -460,7 +483,7 @@ local function AddMountLine(tooltip, data)
         -- GetMountFromSpell returns a sentinel instead of nil for non-mounts, so validate through the journal.
         local mountID = aura.spellId and GetMountFromSpell(aura.spellId)
         local mountName = mountID and GetMountInfoByID(mountID)
-        if mountName and IsShiftKeyDown() then
+        if mountName and IsModDown() then
             tooltip:AddDoubleLine(MOUNT .. ':', mountName, nil, nil, nil, WHITE_FONT_COLOR:GetRGB())
             return
         end
@@ -592,17 +615,19 @@ function Tooltips:OnEnable()
     if not self.db.Enabled then return end
 
     -- Need to run this early during PLAYER_LOGIN.
-    AuraContainerInbound.SetTooltipBackdrop({
-        backdropInfo = {
-            bgFile   = [[Interface\Buttons\WHITE8X8]],
-            edgeFile = [[Interface\Buttons\WHITE8X8]],
-            edgeSize = 1,
-            insets   = { left = 1, right = 1, top = 1, bottom = 1 },
-        },
-        centerColor = CreateColor(0, 0, 0, 0.8),
-        borderColor = CreateColor(0, 0, 0, 1),
-        anchorOffsets = { left = 0, right = 0, top = 0, bottom = 0 },
-    })
+    if self.db.SkinAuraContainer then
+        AuraContainerInbound.SetTooltipBackdrop({
+            backdropInfo = {
+                bgFile   = [[Interface\Buttons\WHITE8X8]],
+                edgeFile = [[Interface\Buttons\WHITE8X8]],
+                edgeSize = 1,
+                insets   = { left = 1, right = 1, top = 1, bottom = 1 },
+            },
+            centerColor = CreateColor(0, 0, 0, 0.8),
+            borderColor = CreateColor(0, 0, 0, 1),
+            anchorOffsets = { left = 0, right = 0, top = 0, bottom = 0 },
+        })
+    end
 
     -- One-time setup, everything re-appliable runs through ApplySettings.
     SkinQueueStatus()

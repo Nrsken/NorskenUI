@@ -64,10 +64,11 @@ function FCB:CreateFrame()
     local height = db.Height
 
     local frame = CreateFrame("Frame", "NRSKNUI_FocusCastbarFrame", UIParent)
-    frame:SetSize(db.Width, height)
+    frame:SetPixelSize(db.Width, height)
     frame:SetPoint(db.Position.AnchorFrom, UIParent, db.Position.AnchorTo, db.Position.XOffset, db.Position.YOffset)
     frame:SetFrameLevel(100)
-    frame:CreateBackdrop()
+    frame:CreateBackdrop(true)
+    frame:AddBorders()
     frame:SetBackgroundColor(unpack(db.BackdropColor))
     frame:SetBorderColor(unpack(db.BorderColor))
     frame:SetFrameStrata(db.Strata)
@@ -164,7 +165,7 @@ function FCB:ApplySettings()
 
     local db = self.db
 
-    self.frame:SetSize(db.Width, db.Height)
+    self.frame:SetPixelSize(db.Width, db.Height)
     self.frame:SetBackgroundColor(db.BackdropColor[1], db.BackdropColor[2], db.BackdropColor[3], db.BackdropColor[4])
     self.frame:SetBorderColor(db.BorderColor[1], db.BorderColor[2], db.BorderColor[3], db.BorderColor[4])
     self.frame:SetFrameStrata(db.Strata)

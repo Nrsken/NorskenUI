@@ -6,6 +6,7 @@ local EM = NRSKNUI.EditMode
 
 local CreateFrame = CreateFrame
 local pairs = pairs
+local RunNextFrame = RunNextFrame
 
 -- kind -> { filter, moverKey, displayName }
 local KINDS = {
@@ -105,13 +106,15 @@ function PlayerAuras:BuildContainer(kind)
     end
 
     if weaponEnchants then
-        container:AddItemEnchant(AuraContainerItemEnchantmentSlot.MainHand)
-        container:AddItemEnchant(AuraContainerItemEnchantmentSlot.OffHand)
+        RunNextFrame(function() -- Need delay slightly, enchant info isn't ready.
+            container:AddItemEnchant(AuraContainerItemEnchantmentSlot.MainHand)
+            container:AddItemEnchant(AuraContainerItemEnchantmentSlot.OffHand)
 
-        -- Item enchants form their own flow group, elementSpacing is enchant-to-enchant, groupSpacing is the seam to aura groups.
-        container:SetItemEnchantLayout({
-            placement = CustomAuraContainerItemEnchantmentPlacement.BeforeAuraGroups,
-        })
+            -- Item enchants form their own flow group, elementSpacing is enchant-to-enchant, groupSpacing is the seam to aura groups.
+            container:SetItemEnchantLayout({
+                placement = CustomAuraContainerItemEnchantmentPlacement.BeforeAuraGroups,
+            })
+        end)
     end
 
     container:SetUnit('player')

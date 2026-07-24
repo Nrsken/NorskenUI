@@ -472,15 +472,9 @@ function NRSKNUI:ApplySpecialFonts()
     end
 end
 
-do
-    -- CombatTextFont only exists once the LoD Blizzard_CombatText addon loads.
-    local watcher = CreateFrame('Frame')
-    watcher:RegisterEvent('ADDON_LOADED')
-    watcher:SetScript('OnEvent', function(frame, _, addon)
-        if addon ~= 'Blizzard_CombatText' then return end
-        frame:UnregisterAllEvents()
-        if NRSKNUI.db then
-            NRSKNUI:ApplySpecialFonts()
-        end
-    end)
-end
+-- CombatTextFont only exists once the LoD Blizzard_CombatText addon loads (fires immediately if already loaded).
+EventUtil.ContinueOnAddOnLoaded('Blizzard_CombatText', function()
+    if NRSKNUI.db then
+        NRSKNUI:ApplySpecialFonts()
+    end
+end)

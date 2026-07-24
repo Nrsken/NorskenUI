@@ -187,29 +187,16 @@ local function BuildGlobalTexturesTab(page, db)
     })
 end
 
--- Tab builds only run for the selected tab, so the search harvest sees none of
--- their widgets; the font terms and special-font labels are backfilled here.
-local fontsSearch = {
-    L['Use Global Font'], L['Style Blizzard Fonts'], L['Outline'], L['Use Slug Rendering'],
-    L['Hide Shadows'], L['Small Size'], L['Medium Size'], L['Large Size'], L['Huge Size'], L['Font Size'],
-}
-for _, item in ipairs(NRSKNUI.GlobalFontsTab.items) do
-    fontsSearch[#fontsSearch + 1] = item.text
-end
-
 GUI:RegisterPage('globalPage', {
     mode = 'tabs',
-    search = fontsSearch,
+    search = {},
     tabs = {
-        { id = 'fonts',    text = L['Font Settings'],    sidebar = { items = NRSKNUI.GlobalFontsTab.items } },
         { id = 'colors',   text = L['Color Settings'] },
         { id = 'uiscale',  text = L['UI Scale Settings'] },
         { id = 'textures', text = L['Global Texture'] },
     },
     build = function(page, tabId, itemKey)
-        if tabId == 'fonts' then
-            NRSKNUI.GlobalFontsTab.Build(page, itemKey)
-        elseif tabId == 'colors' then
+        if tabId == 'colors' then
             BuildGlobalColorsTab(page, NRSKNUI.db.profile.Colors)
         elseif tabId == 'uiscale' then
             BuildGlobalUIScaleTab(page, NRSKNUI.db.global.UIScale)

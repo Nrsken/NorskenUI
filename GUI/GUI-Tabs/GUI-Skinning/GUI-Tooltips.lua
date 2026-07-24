@@ -39,11 +39,54 @@ local function BuildGeneralSettingsTab(page, db)
         end,
     })
 
+    enableCard:Separator()
+
+    local inforRowHeight = 90
+    local overrideKeyRow = enableCard:Row(inforRowHeight, 0)
+    overrideKeyRow:Text(NRSKNUI:ColorTextByTheme(L['Override Key']), {
+        text = L['This key is used to temporarily show: '] .. '\n' ..
+            NRSKNUI:ColorTextByTheme('  • ') .. L['Tooltips in combat'] .. '\n' ..
+            NRSKNUI:ColorTextByTheme('  • ') .. L['Mount tooltips on mounted players'] .. '\n' ..
+            NRSKNUI:ColorTextByTheme('  • ') .. L['Aura container spell IDs while holding the key.'],
+        width = 0.5,
+        tooltip = L['The key that must be held down to temporarily show tooltips while in combat.'],
+        height = inforRowHeight,
+    })
+    overrideKeyRow:Dropdown(L['Override Key'], {
+        width = 0.5,
+        options = modOptions,
+        conditions = { 'combatHide' },
+        value = db.Mod,
+        callback = function(key) db.Mod = key end,
+    })
+
     -- Card 2: General
     local generalCard = page:Card(L['General Settings'], 'all')
-    local generalRow = generalCard:Row(rowHL, 0)
-    generalRow:Checkbox(L['Hide Threat Line'], {
-        width = 0.5,
+    local auraContainerRow = generalCard:Row(rowH)
+    auraContainerRow:Checkbox(L['Skin Aura Container Tooltips'], {
+        width = 1,
+        value = db.SkinAuraContainer,
+        callback = function(checked)
+            db.SkinAuraContainer = checked
+            NRSKNUI:CreateReloadPrompt('Changing the aura container skin requires a reload to take full effect.')
+        end,
+    })
+
+    local auraContainerSpellIDRow = generalCard:Row(rowH)
+    auraContainerSpellIDRow:Checkbox(L['Show Spell ID On Aura Container Tooltips'], {
+        width = 1,
+        value = db.ShowAuraContainerSpellID,
+        tooltip = L['Show Spell ID On Aura Container Tooltips when holding the override key.'],
+        callback = function(checked)
+            db.ShowAuraContainerSpellID = checked
+        end,
+    })
+
+    generalCard:Separator()
+
+    local threatLineRow = generalCard:Row(rowH)
+    threatLineRow:Checkbox(L['Hide Threat Line'], {
+        width = 1,
         value = db.HideThreatLine,
         tooltip = L['Hides the current threat line on tooltips for units that you are in combat with.'],
         callback = function(checked)
@@ -51,8 +94,10 @@ local function BuildGeneralSettingsTab(page, db)
             ApplySettings()
         end,
     })
-    generalRow:Checkbox(L['Show Mount'], {
-        width = 0.5,
+
+    local mountRow = generalCard:Row(rowHL, 0)
+    mountRow:Checkbox(L['Show Mount'], {
+        width = 1,
         value = db.ShowMountInfo,
         tooltip = L['Shows the mount a player is currently riding on their tooltip when holding shift.'],
         callback = function(checked)
@@ -142,20 +187,13 @@ local function BuildCombatSettingsTab(page, db)
     local combatCard = page:Card(L['Combat Visibility'], 'all')
     local toggleRow = combatCard:Row(rowH)
     toggleRow:Checkbox(L['Hide Tooltips in Combat'], {
-        width = 0.5,
+        width = 1,
         value = db.HideInCombat,
         tooltip = L['Hides the selected tooltip types during combat. Hold the override key to temporarily show them.'],
         callback = function(checked)
             db.HideInCombat = checked
             page:Refresh()
         end,
-    })
-    toggleRow:Dropdown(L['Override Key'], {
-        width = 0.5,
-        options = modOptions,
-        conditions = { 'combatHide' },
-        value = db.Mod,
-        callback = function(key) db.Mod = key end,
     })
 
     combatCard:Separator()

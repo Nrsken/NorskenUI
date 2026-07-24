@@ -322,3 +322,19 @@ function InstanceMixin:CreateFontSettingsCard(scrollChild, yOffset, config)
 
     return card, card:GetNextOffset(), widgets
 end
+
+-- Labels this card can surface, for the frameless search harvester (see Search.lua).
+lib.premadeCardSearch = lib.premadeCardSearch or {}
+function lib.premadeCardSearch.FontSettingsCard(config)
+    config = config or {}
+    local labels = { config.title or "Font Settings", "Font", "Outline", "Font Shadow", "Shadow Color", "Shadow X", "Shadow Y" }
+    if config.globalOverride then labels[#labels + 1] = config.globalOverride.label or "Use Global Font" end
+    if not config.hideFontSize then
+        if config.fontSizes and #config.fontSizes > 0 then
+            for _, size in ipairs(config.fontSizes) do labels[#labels + 1] = size.label or "Size" end
+        else
+            labels[#labels + 1] = "Font Size"
+        end
+    end
+    return labels
+end

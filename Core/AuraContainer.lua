@@ -76,7 +76,11 @@ function NRSKNUI:SkinAuraButton(container, options, button)
     local cooldown
     if not (options.disableCooldown or container.disableCooldown) then
         cooldown = CreateFrame('Cooldown', nil, button, 'CooldownFrameTemplate')
-        cooldown:SetAllPoints(icon)
+        if not borderColor then
+            cooldown:SetAllPoints(icon)
+        else
+            cooldown:SetPixelInside(icon, 1, 1)
+        end
         cooldown:SetDrawEdge(showEdge)
         cooldown:SetDrawBling(false)
         cooldown:SetDrawSwipe(showSwipe)
@@ -156,7 +160,6 @@ function NRSKNUI:SkinAuraButton(container, options, button)
     if hideTooltipInCombat then
         button:SetHideTooltipInCombat(true)
     end
-
 
     -- Right-click cancelaura.
     local cancelButton = options.cancelButton or container.cancelButton

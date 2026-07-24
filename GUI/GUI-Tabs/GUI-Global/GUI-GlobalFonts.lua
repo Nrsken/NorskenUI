@@ -1,6 +1,7 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 local L = NRSKNUI.Libs.AL
+local GUI = NRSKNUI.GUI
 local Theme = NRSKNUI.Theme
 local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
@@ -313,15 +314,20 @@ local function BuildSpecialView(page, entry)
     end
 end
 
-local items = { { key = 'Global', text = L['Global'] } }
+local items = { { key = 'globalFonts', text = L['Global Fonts'] } }
 for _, entry in ipairs(NRSKNUI.SpecialFonts) do
     items[#items + 1] = { key = entry.key, text = entry.label }
 end
 
-NRSKNUI.GlobalFontsTab = {
-    items = items,
-    Build = function(page, itemKey)
-        if not itemKey or itemKey == 'Global' then
+GUI:RegisterPage('globalFonts', {
+    mode = 'clean',
+    search = {
+        L['Use Global Font'], L['Style Blizzard Fonts'], L['Outline'], L['Use Slug Rendering'],
+        L['Hide Shadows'], L['Small Size'], L['Medium Size'], L['Large Size'], L['Huge Size'], L['Font Size'],
+    },
+    sidebar = { items = items },
+    build = function(page, _, itemKey)
+        if not itemKey or itemKey == 'globalFonts' then
             BuildGlobalView(page)
             return
         end
@@ -332,4 +338,4 @@ NRSKNUI.GlobalFontsTab = {
             end
         end
     end,
-}
+})

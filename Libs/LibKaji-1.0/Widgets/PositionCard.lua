@@ -450,3 +450,14 @@ function InstanceMixin:CreatePositionCard(scrollChild, yOffset, config)
 
     return card, card:GetNextOffset(), widgets
 end
+
+-- Labels this card can surface, for the frameless search harvester (see Search.lua).
+lib.premadeCardSearch = lib.premadeCardSearch or {}
+function lib.premadeCardSearch.PositionCard(config)
+    config = config or {}
+    return {
+        config.title or "Position Settings",
+        "Configure For", "Split Positioning", "Anchored To", "Frame", "Select Frame",
+        "Anchor From", "To Frame's", "To Screen's", "X Offset", "Y Offset", "Strata",
+    }
+end

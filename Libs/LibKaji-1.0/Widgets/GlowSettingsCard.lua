@@ -352,3 +352,15 @@ function InstanceMixin:CreateGlowSettingsCard(scrollChild, yOffset, config)
 
     return card, card:GetNextOffset(), widgets
 end
+
+-- Labels this card can surface, for the frameless search harvester (see Search.lua).
+lib.premadeCardSearch = lib.premadeCardSearch or {}
+function lib.premadeCardSearch.GlowSettingsCard(config)
+    config = config or {}
+    return {
+        config.title or "Glow Settings",
+        "Enable Glow", "When to Glow", "Type", "Speed", "Color",
+        "Lines", "Length", "Thickness", "Border",
+        "Particles", "Scale", "Start Animation", "Duration",
+    }
+end

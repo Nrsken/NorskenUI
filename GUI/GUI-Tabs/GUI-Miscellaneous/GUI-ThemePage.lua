@@ -74,7 +74,7 @@ local function BuildPresetCard(page)
     card:Separator()
 
     local preset = GUI:GetPreset(GUI:GetSelectedPreset())
-    local swatchRow = card:Row(24, 0)
+    local swatchRow = card:Row(28)
     for _, key in ipairs(PREVIEW_KEYS) do
         local color = preset[key]
         local swatch = swatchRow:Icon({ width = 1 / #PREVIEW_KEYS, size = 24 })

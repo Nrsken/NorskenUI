@@ -127,3 +127,10 @@ function InstanceMixin:CreateTextFormatCard(scrollChild, yOffset, config)
 
     return card, card:GetNextOffset(), widgets
 end
+
+-- Labels this card can surface, for the frameless search harvester (see Search.lua).
+lib.premadeCardSearch = lib.premadeCardSearch or {}
+function lib.premadeCardSearch.TextFormatCard(config)
+    config = config or {}
+    return { config.title or "Text Format", "Format", "Align", "X Offset", "Y Offset" }
+end

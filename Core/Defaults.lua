@@ -2007,6 +2007,8 @@ local Defaults = {
                 HideThreatLine = true,
                 ShowItemQualityBorder = true,
                 ShowMountInfo = true,
+                SkinAuraContainer = true,
+                ShowAuraContainerSpellID = true,
                 -- Hide in combat settings
                 HideInCombat = true,
                 Mod = "SHIFT", -- "SHIFT", "CTRL" or "ALT"

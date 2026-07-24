@@ -87,6 +87,7 @@ local DEFAULT_THEME = {
     -- Widget textures (consumers override to match their look)
     checkTexture            = MEDIA .. "ok-iconBlack.tga",
     crossTexture            = MEDIA .. "cross-small.png",
+    crossCustomTexture      = MEDIA .. "NorskenCustomCross.png",
     stepperTexture          = MEDIA .. "collapse.tga",
     colorSwatchTexture      = MEDIA .. "NUIcolorPickerBG.png",
     resizeHandleTexture     = MEDIA .. "NorskenCustomResizeHandle23px.png",

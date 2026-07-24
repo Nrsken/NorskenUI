@@ -24,19 +24,16 @@ local strfind, strlower = string.find, string.lower
 
 -- Collector: mirrors the fluent surface, records labels, builds nothing --
 
--- A permissive stub so any stray method call / chained widget access during a dry build is harmless.
-local function MakeStub()
-    local stub = {}
-    setmetatable(stub, { __index = function() return function() return stub end end })
-    return stub
-end
-
 local WIDGET_METHODS = { "Checkbox", "Slider", "Dropdown", "Button", "ColorPicker", "EditBox", "MultiLineEditBox", "Text" }
 
-local function MakeRow(labels)
+-- `ctx` tags each harvested label with the { tabId, itemKey } it was built under, so a widget
+-- result can navigate straight to the tab / sidebar item that owns it.
+local function MakeRow(labels, ctx)
     local row = {}
     local function record(_, label)
-        if type(label) == "string" and label ~= "" then labels[#labels + 1] = label end
+        if type(label) == "string" and label ~= "" then
+            labels[#labels + 1] = { text = label, tabId = ctx.tabId, itemKey = ctx.itemKey }
+        end
         return row
     end
     for _, m in ipairs(WIDGET_METHODS) do row[m] = record end
@@ -45,9 +42,9 @@ local function MakeRow(labels)
     return row
 end
 
-local function MakeCard(labels)
+local function MakeCard(labels, ctx)
     local card = {}
-    card.Row = function() return MakeRow(labels) end
+    card.Row = function() return MakeRow(labels, ctx) end
     card.Separator = function(self) return self end
     card.Rebuild = function(self, fn)
         if type(fn) == "function" then safecall(fn, self) end
@@ -57,21 +54,95 @@ local function MakeCard(labels)
     return card
 end
 
-local function MakePage(labels)
+local function MakePage(labels, ctx)
     local page = {}
-    page.Card = function() return MakeCard(labels) end
-    page.PositionCard = function() return MakeStub() end
+    page.Card = function() return MakeCard(labels, ctx) end
     page.SetEnabled = function(self) return self end
     page.SetCondition = function(self) return self end
     page.Refresh = function(self) return self end
     page.Finish = function() return 0 end
+
+    -- Premade cards (Page:FontSettingsCard, :PositionCard, ...) build their widgets through the real
+    -- frame API rather than this collector, so a dry build records nothing for them. Each registers
+    -- the labels it can surface in lib.premadeCardSearch; record those under the current context.
+    for name, provider in pairs(lib.premadeCardSearch or {}) do
+        page[name] = function(_, config)
+            local list = select(2, safecall(provider, config)) or {}
+            for _, label in ipairs(list) do
+                if type(label) == "string" and label ~= "" then
+                    labels[#labels + 1] = { text = label, tabId = ctx.tabId, itemKey = ctx.itemKey }
+                end
+            end
+            return MakeCard(labels, ctx)
+        end
+    end
+
     setmetatable(page, { __index = function() return function() return page end end })
     return page
 end
 
+-- Resolves a sidebar's item list (a table or a `fun():table`), matching ContentArea's SetConfig.
+local function ResolveItems(sd)
+    local items = sd and sd.items
+    if type(items) == "function" then items = select(2, safecall(items)) end
+    return items or {}
+end
+
+-- Resolves a tabs descriptor's tab list, which a sidebar-outer page derives from the selected item.
+local function ResolveTabs(descriptor, itemKey, item)
+    local tabs = descriptor.tabs
+    if type(tabs) == "function" then tabs = select(2, safecall(tabs, itemKey, item)) end
+    return tabs or {}
+end
+
+-- Runs `build` against the frameless collector once per tab / sidebar-item combination the real
+-- content host would render, so every reachable widget label is harvested and tagged. Mirrors the
+-- layout branching in ContentArea (clean / tabs / per-tab sidebar / sidebar-outer).
+local function HarvestBuild(descriptor, raw)
+    local build = descriptor.build
+    if not build then return end
+    local mode = descriptor.mode or "clean"
+    local sidebar = descriptor.sidebar
+
+    local function run(tabId, itemKey, item)
+        local page = MakePage(raw, { tabId = tabId, itemKey = itemKey })
+        safecall(build, page, tabId, itemKey, item)
+    end
+
+    if mode == "tabs" then
+        if sidebar then
+            -- Sidebar-outer: the selected item decides which tabs exist.
+            for _, item in ipairs(ResolveItems(sidebar)) do
+                for _, tab in ipairs(ResolveTabs(descriptor, item.key, item)) do
+                    if not tab.disabled then run(tab.id, item.key, item) end
+                end
+            end
+        else
+            for _, tab in ipairs(descriptor.tabs or {}) do
+                if not tab.disabled then
+                    if tab.sidebar then
+                        for _, item in ipairs(ResolveItems(tab.sidebar)) do
+                            run(tab.id, item.key, item)
+                        end
+                    else
+                        run(tab.id)
+                    end
+                end
+            end
+        end
+    elseif sidebar then
+        -- Clean page with a page-level sidebar: each item drives its own build.
+        for _, item in ipairs(ResolveItems(sidebar)) do
+            run(nil, item.key, item)
+        end
+    else
+        run()
+    end
+end
+
 ---Returns the cached searchable labels for a page id, harvesting them on first use.
 ---@param pageId string
----@return string[]
+---@return table[] entries { text, tabId?, itemKey? }
 function InstanceMixin:HarvestSearchLabels(pageId)
     self._searchLabels = self._searchLabels or {}
     local cached = self._searchLabels[pageId]
@@ -81,20 +152,20 @@ function InstanceMixin:HarvestSearchLabels(pageId)
     local raw = {}
     if descriptor then
         if descriptor.search then
-            for _, term in ipairs(descriptor.search) do raw[#raw + 1] = term end
+            for _, term in ipairs(descriptor.search) do raw[#raw + 1] = { text = term } end
         end
         if not descriptor.noHarvest and descriptor.build then
-            safecall(descriptor.build, MakePage(raw))
+            HarvestBuild(descriptor, raw)
         end
     end
 
-    -- De-duplicate (a `search` term may repeat a harvested label, e.g. a conditional widget
-    -- visible in the current state).
+    -- De-duplicate by label text (a `search` term may repeat a harvested label, e.g. a
+    -- conditional widget visible in the current state). Keeps the first occurrence's tab context.
     local labels, seen = {}, {}
-    for _, term in ipairs(raw) do
-        local key = strlower(term)
+    for _, entry in ipairs(raw) do
+        local key = strlower(entry.text)
         if not seen[key] then
-            seen[key] = true; labels[#labels + 1] = term
+            seen[key] = true; labels[#labels + 1] = entry
         end
     end
     self._searchLabels[pageId] = labels
@@ -137,10 +208,10 @@ function InstanceMixin:Search(text, config)
     -- Widget label matches per page.
     local widgetMatches = {}
     for pageId in pairs(pageInfo) do
-        for _, label in ipairs(self:HarvestSearchLabels(pageId)) do
-            if strfind(strlower(label), q, 1, true) then
+        for _, entry in ipairs(self:HarvestSearchLabels(pageId)) do
+            if strfind(strlower(entry.text), q, 1, true) then
                 widgetMatches[pageId] = widgetMatches[pageId] or {}
-                widgetMatches[pageId][#widgetMatches[pageId] + 1] = label
+                widgetMatches[pageId][#widgetMatches[pageId] + 1] = entry
             end
         end
     end
@@ -153,8 +224,8 @@ function InstanceMixin:Search(text, config)
         local info = pageInfo[pageId]
         results[#results + 1] = { id = pageId, text = info.text, sectionText = info.sectionText, sectionId = info.sectionId, isPage = true }
         if widgetMatches[pageId] then
-            for _, label in ipairs(widgetMatches[pageId]) do
-                results[#results + 1] = { id = pageId, text = label, sectionText = info.sectionText, sectionId = info.sectionId, isWidget = true }
+            for _, entry in ipairs(widgetMatches[pageId]) do
+                results[#results + 1] = { id = pageId, text = entry.text, sectionText = info.sectionText, sectionId = info.sectionId, isWidget = true, tabId = entry.tabId, itemKey = entry.itemKey }
             end
         end
     end
@@ -187,8 +258,8 @@ function InstanceMixin:CreateSearchBox(parent, opts)
     box:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1 })
 
     local inner = CreateFrame("Frame", nil, box)
-    pixel.SetPixelPoint(inner, "TOPLEFT", box, "TOPLEFT", 4, -5)
-    pixel.SetPixelPoint(inner, "BOTTOMRIGHT", box, "BOTTOMRIGHT", -4, 5)
+    pixel.SetPixelPoint(inner, "TOPLEFT", box, "TOPLEFT", 2, -4)
+    pixel.SetPixelPoint(inner, "BOTTOMRIGHT", box, "BOTTOMRIGHT", -2, 3)
 
     local clear = CreateFrame("Button", nil, inner)
     pixel.SetPixelSize(clear, 14, 14)
@@ -196,7 +267,7 @@ function InstanceMixin:CreateSearchBox(parent, opts)
     clear:Hide()
     local clearIcon = clear:CreateTexture(nil, "ARTWORK")
     clearIcon:SetAllPoints()
-    clearIcon:SetTexture(theme.crossTexture)
+    clearIcon:SetTexture(theme.crossCustomTexture)
 
     local edit = CreateFrame("EditBox", nil, inner)
     pixel.SetPixelPoint(edit, "TOPLEFT", inner, "TOPLEFT", 6, 0)
@@ -216,9 +287,13 @@ function InstanceMixin:CreateSearchBox(parent, opts)
     end
 
     local function Restyle()
-        box:SetBackdropColor(theme.bgDark[1], theme.bgDark[2], theme.bgDark[3], theme.bgDark[4])
+        box:SetBackdropColor(theme.bgMedium[1], theme.bgMedium[2], theme.bgMedium[3], theme.bgMedium[4])
         box:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
-        edit:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], edit:HasFocus() and 1 or 0.6)
+        if edit:HasFocus() then
+            edit:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
+        else
+            edit:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 0.6)
+        end
         ClearIconColor()
     end
     Restyle()
@@ -247,7 +322,7 @@ function InstanceMixin:CreateSearchBox(parent, opts)
     end)
     edit:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
     edit:SetScript("OnEditFocusGained", function(self)
-        self:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
+        self:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
         if self:GetText() == PLACEHOLDER then self:SetText("") end
     end)
     edit:SetScript("OnEditFocusLost", function(self)

@@ -273,3 +273,14 @@ function InstanceMixin:CreateDynamicGroupCard(scrollChild, yOffset, config)
 
     return card, card:GetNextOffset(), widgets
 end
+
+-- Labels this card can surface, for the frameless search harvester (see Search.lua).
+lib.premadeCardSearch = lib.premadeCardSearch or {}
+function lib.premadeCardSearch.DynamicGroupCard(config)
+    config = config or {}
+    return {
+        config.title or "Dynamic Group",
+        "Grow Direction", "Grid Fill", "Alignment", "Spacing", "Row Spacing",
+        "Grid Width", "Use Limit", "Limit",
+    }
+end

@@ -548,14 +548,17 @@ function InstanceMixin:CreateContentHost(parent, opts)
         return nil
     end
 
-    -- Picks the item to select: the remembered one if still present, else the declared default, else the first.
-    local function ResolveInitialItem(items, remembered, default)
-        local first, def
+    -- Picks the item to select: a search-targeted one if present, else the remembered one, else the
+    -- declared default, else the first.
+    local function ResolveInitialItem(items, preferred, remembered, default)
+        local first, rem, def
         for _, data in ipairs(items or {}) do
-            if data.key == remembered then return data.key, data end
+            if preferred ~= nil and data.key == preferred then return data.key, data end
+            if data.key == remembered then rem = rem or data end
             if data.key == default then def = data end
             first = first or data
         end
+        if rem then return rem.key, rem end
         if def then return def.key, def end
         if first then return first.key, first end
     end
@@ -563,6 +566,10 @@ function InstanceMixin:CreateContentHost(parent, opts)
     -- Shows the content for a page (clean: tabId nil) or one of its tabs, attaching the
     -- mini sidebar when the descriptor/tab declares one.
     local function ShowContent(descriptor, tabId)
+        -- One-shot search target: consumed here (the terminal builder for clean / per-tab layouts)
+        -- so later user-driven tab clicks that reach ShowContent don't reuse a stale selection.
+        local target = host._pendingTarget
+        host._pendingTarget = nil
         host._currentTab = tabId
         local sd = ResolveSidebar(descriptor, tabId)
         local stripFrame = tabId and tabStrip and tabStrip.frame or nil
@@ -579,7 +586,7 @@ function InstanceMixin:CreateContentHost(parent, opts)
             else
                 AnchorScrollBeside(ms.frame)
             end
-            local key, item = ResolveInitialItem(items, host._itemMemory[ItemMemoryKey()], sd.default)
+            local key, item = ResolveInitialItem(items, target and target.itemKey, host._itemMemory[ItemMemoryKey()], sd.default)
             ms:SetSelected(key)
             host._currentItem, host._currentItemData = key, item
             BuildPage(descriptor, tabId, key, item)
@@ -622,21 +629,27 @@ function InstanceMixin:CreateContentHost(parent, opts)
         return tabStrip
     end
 
-    -- Picks the tab to open: the remembered one for this page if still valid, else the first enabled tab.
-    local function ResolveInitialTab(tabs, remembered)
-        local first
+    -- Picks the tab to open: a search-targeted one if valid, else the remembered one for this page,
+    -- else the first enabled tab.
+    local function ResolveInitialTab(tabs, preferred, remembered)
+        local first, rem
         for _, t in ipairs(tabs) do
             if not t.disabled then
-                if t.id == remembered then return remembered end
+                if preferred ~= nil and t.id == preferred then return t.id end
+                if t.id == remembered then rem = rem or t.id end
                 first = first or t.id
             end
         end
-        return first
+        return rem or first
     end
 
     -- Sidebar-outer: rebuild the strip for the selected item, keeping the current tab when the
     -- new item still offers it. Selecting a tab fires onSelect, which builds the page.
     function ApplyTabsForItem(descriptor, itemKey, item)
+        -- Consume the one-shot search target's tab here: this is the last step of a sidebar-outer
+        -- show, and a later user item click also routes through here (with no target).
+        local target = host._pendingTarget
+        host._pendingTarget = nil
         local strip = EnsureTabStrip()
         strip.frame:Show()
         local tabs = ResolveTabs(descriptor, itemKey, item)
@@ -644,7 +657,7 @@ function InstanceMixin:CreateContentHost(parent, opts)
         strip:SetTabs(tabs)
         AnchorScrollBelow(strip.frame)
 
-        local initial = ResolveInitialTab(tabs, host._currentTab or host._tabMemory[TabMemoryKey()])
+        local initial = ResolveInitialTab(tabs, target and target.tabId, host._currentTab or host._tabMemory[TabMemoryKey()])
         if initial then
             strip:Select(initial)
         else
@@ -654,6 +667,7 @@ function InstanceMixin:CreateContentHost(parent, opts)
     end
 
     local function ShowSidebarOuter(descriptor)
+        local target = host._pendingTarget -- ApplyTabsForItem clears it; read the item here first.
         local sd = descriptor.sidebar
         local ms = EnsureMiniSidebar()
         local items = ms:SetConfig(sd)
@@ -661,7 +675,7 @@ function InstanceMixin:CreateContentHost(parent, opts)
         sidebarInset = sd.width or 192
         AnchorMiniSidebar()
 
-        local key, item = ResolveInitialItem(items, host._itemMemory[ItemMemoryKey()], sd.default)
+        local key, item = ResolveInitialItem(items, target and target.itemKey, host._itemMemory[ItemMemoryKey()], sd.default)
         ms:SetSelected(key)
         host._currentItem, host._currentItemData = key, item
         host._currentTab = host._tabMemory[TabMemoryKey()]
@@ -677,7 +691,9 @@ function InstanceMixin:CreateContentHost(parent, opts)
         local strip = EnsureTabStrip()
         strip.frame:Show()
         local tabs = descriptor.tabs or {}
-        local initial = ResolveInitialTab(tabs, host._tabMemory[TabMemoryKey()])
+        -- Peek the search target's tab (ShowContent, fired by strip:Select below, clears it).
+        local target = host._pendingTarget
+        local initial = ResolveInitialTab(tabs, target and target.tabId, host._tabMemory[TabMemoryKey()])
         -- Apply the initial tab's sidebar inset before SetTabs measures the strip,
         -- so the first layout already packs against the narrowed width.
         local sd = initial and ResolveSidebar(descriptor, initial) or nil
@@ -688,12 +704,15 @@ function InstanceMixin:CreateContentHost(parent, opts)
 
     ---Builds and shows the page registered under id.
     ---@param id string
-    function host:ShowPage(id)
+    ---@param target? table { tabId?, itemKey? } a search result's context, so the shown page opens
+    --- on the tab / sidebar item that owns the matched widget. Consumed once by the initial show.
+    function host:ShowPage(id, target)
         local descriptor = gui._pages and gui._pages[id]
         ClearScrollChild(scrollChild)
         host.page = nil
         host.currentId = id
         host._descriptor = descriptor
+        host._pendingTarget = target
 
         local mode = descriptor and (descriptor.mode or "clean")
         if mode == "tabs" then
@@ -705,6 +724,7 @@ function InstanceMixin:CreateContentHost(parent, opts)
         if descriptor then
             ShowContent(descriptor, nil)
         else
+            host._pendingTarget = nil
             host._currentTab = nil
             if miniSidebar then miniSidebar.frame:Hide() end
             sidebarInset = 0

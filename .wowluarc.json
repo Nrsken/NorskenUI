@@ -19,7 +19,8 @@
             "AuraContainerSortMethod",
             "AuraContainerSortDirection",
             "AuraContainerItemEnchantmentSlot",
-            "CustomAuraContainerItemEnchantmentPlacement"
+            "CustomAuraContainerItemEnchantmentPlacement",
+            "AuraContainerInbound"
         ],
         "write": [
             "NorskenUI",

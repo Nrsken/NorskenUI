@@ -279,3 +279,14 @@ function InstanceMixin:CreateLoadConditionsCard(scrollChild, yOffset, config)
 
     return card, card:GetNextOffset(), widgets
 end
+
+-- Labels this card can surface, for the frameless search harvester (see Search.lua).
+lib.premadeCardSearch = lib.premadeCardSearch or {}
+function lib.premadeCardSearch.LoadConditionsCard(config)
+    config = config or {}
+    local labels = { config.title or "Load Conditions", "Enable", "Category" }
+    for _, set in ipairs({ INSTANCE_TYPES, GROUP_TYPES, COMBAT_OPTIONS, ROLE_TYPES, POSITION_TYPES }) do
+        for _, entry in ipairs(set) do labels[#labels + 1] = entry.label end
+    end
+    return labels
+end
