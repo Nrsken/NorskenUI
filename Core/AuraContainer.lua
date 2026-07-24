@@ -120,9 +120,14 @@ function NRSKNUI:SkinAuraButton(container, options, button)
         time:SetJustifyH('CENTER')
         time:SetPoint('CENTER', button, 'CENTER', 0, 0)
         button.Time = time
+        local colorCurve = options.durationColorCurve or container.durationColorCurve
         button:SetDurationText(time, {
-            formatter = options.durationFormatter or container.durationFormatter or NRSKNUI:GetAuraDurationFormatter(),
-            textColorCurve = options.durationColorCurve or container.durationColorCurve,
+            textFormatter = options.durationFormatter or container.durationFormatter or NRSKNUI:GetAuraDurationFormatter(),
+            -- textColor carries the curve now, and both of its fields are non-nilable.
+            textColor = colorCurve and {
+                curve = colorCurve,
+                property = Enum.DurationTextBindingProperty.RemainingDuration,
+            } or nil,
         })
     end
 
@@ -157,6 +162,29 @@ function NRSKNUI:SkinAuraButton(container, options, button)
     end
 end
 
+---Pad a group/enchant layout table with the container's element-wide spacing defaults.
+---The native flow layout is axis-relative rather than X/Y: elementSpacing/groupSpacing run along
+---the primary axis, lineSpacing/groupLineSpacing along the cross axis.
+---@param container table
+---@param layout table?
+---@return table
+local function ResolveLayout(container, layout)
+    layout = layout or {}
+
+    local vertical = container.__axis == AnchorUtil.FlowLayoutAxis.Vertical
+    local spacingPrimary = vertical and (container.spacingY or container.spacing) or (container.spacingX or container.spacing)
+    local spacingCross = vertical and (container.spacingX or container.spacing) or (container.spacingY or container.spacing)
+    local gapPrimary = vertical and (container.gapY or container.gap) or (container.gapX or container.gap)
+    local gapCross = vertical and (container.gapX or container.gap) or (container.gapY or container.gap)
+
+    layout.elementSpacing = layout.elementSpacing or spacingPrimary
+    layout.lineSpacing = layout.lineSpacing or spacingCross
+    layout.groupSpacing = layout.groupSpacing or gapPrimary
+    layout.groupLineSpacing = layout.groupLineSpacing or gapCross
+
+    return layout
+end
+
 -- Convenience mixin applied to every container created through frame:CreateAuraContainer.
 -- This mirrors oUF's element API so unit-frame and standalone code read the same.
 local ContainerMixin = {}
@@ -181,12 +209,7 @@ function ContainerMixin:AddGroup(filter, options)
 
     options.maxFrameCount = options.maxFrameCount or options.num or self.num
 
-    local layout = options.layout or {}
-    layout.elementSpacingX = layout.elementSpacingX or self.spacingX or self.spacing
-    layout.elementSpacingY = layout.elementSpacingY or self.spacingY or self.spacing
-    layout.gapX = layout.gapX or self.gapX or self.gap
-    layout.gapY = layout.gapY or self.gapY or self.gap
-    options.layout = layout
+    options.layout = ResolveLayout(self, options.layout)
 
     options.sortMethod = options.sortMethod or self.sortMethod or AuraContainerSortMethod.ExpirationOnly
     options.sortDirection = options.sortDirection or self.sortDirection or AuraContainerSortDirection.Normal
@@ -318,6 +341,20 @@ end
 
 --[[
 
+? container:SetItemEnchantLayout([options])
+
+Set the flow layout for the item-enchant group, padded with the container's spacing defaults.
+
+* options - optional layout overrides (.placement, .elementSpacing, .groupSpacing, .layoutIndex, ...)
+
+--]]
+---@param options table?
+function ContainerMixin:SetItemEnchantLayout(options)
+    self:SetItemEnchantmentLayout(ResolveLayout(self, options))
+end
+
+--[[
+
 ? frame:CreateAuraContainer([config])
 
 Create a native aura container parented to this frame and return it with the NorskenUI convenience API (:AddGroup / :AddSlot) mixed in.
@@ -326,7 +363,8 @@ Aura containers cannot be created in combat, so callers must invoke this out of 
 Drive it by calling container:SetUnit(unit), once a group/slot exists the container self-registers for UNIT_AURA and updates itself.
 
 * config
-*   .maxWidth      - row wrap width; defaults to infinite (number?)
+*   .axis          - AnchorUtil.FlowLayoutAxis; defaults to Horizontal (rows) (number?)
+*   .maxWidth      - wrap size along the primary axis (width on Horizontal, height on Vertical); defaults to infinite (number?)
 *   .initialAnchor - layout anchor point; defaults to 'TOPLEFT' (string?)
 *   .growthX       - 'LEFT' or 'RIGHT' (default RIGHT)
 *   .growthY       - 'UP' or 'DOWN' (default UP)
@@ -345,10 +383,12 @@ local function CreateAuraContainer(self, config)
     local pad = config.padding or 0
     local container = CreateFrame('AuraContainer', nil, self, 'CustomAuraContainerTemplate')
 
-    container:SetAuraLayoutRowWidth(config.maxWidth)
-    container:SetAuraLayoutAnchorPoint(config.initialAnchor or 'TOPLEFT')
-    container:SetAuraLayoutGrowthDirection(GrowthDir(config.growthX, 'LEFT'), GrowthDir(config.growthY, 'DOWN'))
-    container:SetAuraLayoutPadding(config.paddingLeft or pad, config.paddingRight or pad, config.paddingTop or pad, config.paddingBottom or pad)
+    container.__axis = config.axis or AnchorUtil.FlowLayoutAxis.Horizontal
+    container:SetFlowLayoutAxis(container.__axis)
+    container:SetFlowLayoutAnchorPoint(config.initialAnchor or 'TOPLEFT')
+    container:SetFlowLayoutGrowthDirection(GrowthDir(config.growthX, 'LEFT'), GrowthDir(config.growthY, 'DOWN'))
+    container:SetFlowLayoutPadding(config.paddingLeft or pad, config.paddingRight or pad, config.paddingTop or pad, config.paddingBottom or pad)
+    container:SetFlowLayoutMaximumLineSize(config.maxWidth) -- nil means unbounded
 
     -- Carry element-wide skin/layout defaults so AddGroup/AddSlot and the skin can read them.
     container.size = config.size

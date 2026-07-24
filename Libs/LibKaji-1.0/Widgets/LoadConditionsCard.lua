@@ -7,10 +7,10 @@
 
 ## Examples
 
-?   page:LoadConditionsCard({
-?       db = db.LoadConditions,
-?       onChangeCallback = Apply,
-?   })
+    page:LoadConditionsCard({
+        db = db.LoadConditions,
+        onChangeCallback = Apply,
+    })
 
 --]]
 

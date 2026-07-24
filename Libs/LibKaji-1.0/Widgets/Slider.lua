@@ -5,15 +5,15 @@
 
 ## Examples
 
-?   row:AddWidget(GUI:CreateSlider(row, 'Thickness', {
-?       min = 3,
-?       max = 20,
-?       step = 1,
-?       value = db.Thickness,
-?       callback = function(v)
-?           db.Thickness = v
-?       end,
-?   }))
+    row:AddWidget(GUI:CreateSlider(row, 'Thickness', {
+        min = 3,
+        max = 20,
+        step = 1,
+        value = db.Thickness,
+        callback = function(v)
+            db.Thickness = v
+        end,
+    }))
 
 --]]
 
@@ -70,11 +70,9 @@ function InstanceMixin:CreateSlider(parent, labelText, config)
     local cvarTooltip = config.cvartooltip
     local callbackOnRelease = config.callbackOnRelease
 
-    -- Create the row frame
     local row = CreateFrame("Frame", nil, parent)
     pixel.SetPixelHeight(row, 36)
 
-    -- Create the label
     local label = row:CreateFontString(nil, "OVERLAY")
     pixel.SetPixelPoint(label, "TOPLEFT", row, "TOPLEFT", 0, 1)
     label:SetJustifyH("LEFT")
@@ -83,7 +81,6 @@ function InstanceMixin:CreateSlider(parent, labelText, config)
     label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
     row.label = label
 
-    -- Create the slider background
     local sliderBG = CreateFrame("Frame", nil, row, "BackdropTemplate")
     pixel.SetPixelHeight(sliderBG, 8)
     pixel.SetPixelPoint(sliderBG, "TOPLEFT", row, "TOPLEFT", 68, -22)
@@ -93,7 +90,6 @@ function InstanceMixin:CreateSlider(parent, labelText, config)
     sliderBG:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
     sliderBG:EnableMouse(false)
 
-    -- Create the main slider
     local slider = CreateFrame("Slider", nil, row, "BackdropTemplate")
     pixel.SetPixelHeight(slider, 8)
     pixel.SetPixelPoint(slider, "TOPLEFT", row, "TOPLEFT", 77, -22)
@@ -108,7 +104,6 @@ function InstanceMixin:CreateSlider(parent, labelText, config)
     slider:SetBackdropColor(0, 0, 0, 0)
     slider:SetBackdropBorderColor(0, 0, 0, 0)
 
-    -- Create the fill texture for the slider
     local fill = slider:CreateTexture(nil, "ARTWORK")
     pixel.SetPixelHeight(fill, 6)
     pixel.SetPixelPoint(fill, "LEFT", sliderBG, "LEFT", 1, 0)
@@ -117,21 +112,18 @@ function InstanceMixin:CreateSlider(parent, labelText, config)
 
     local THUMB_WIDTH, THUMB_HEIGHT = 19, 12
 
-    -- Create the thumb frame background for the slider
     local thumbFrameBG = CreateFrame("Frame", nil, slider, "BackdropTemplate")
     pixel.SetPixelSize(thumbFrameBG, THUMB_WIDTH, THUMB_HEIGHT)
     thumbFrameBG:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1 })
     thumbFrameBG:SetBackdropColor(theme.bgLight[1], theme.bgLight[2], theme.bgLight[3], 1)
     thumbFrameBG:SetBackdropBorderColor(0, 0, 0, 1)
 
-    -- Create the thumb frame and texture for the slider
     local thumbFrame = CreateFrame("Frame", nil, slider, "BackdropTemplate")
     pixel.SetPixelSize(thumbFrame, THUMB_WIDTH, THUMB_HEIGHT)
     thumbFrame:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1 })
     thumbFrame:SetBackdropColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 0.6)
     thumbFrame:SetBackdropBorderColor(0, 0, 0, 1)
 
-    -- Create the thumb texture for the slider
     local thumb = slider:CreateTexture(nil, "ARTWORK")
     thumb:SetColorTexture(0, 0, 0, 0)
     slider:SetThumbTexture(thumb)
@@ -161,7 +153,6 @@ function InstanceMixin:CreateSlider(parent, labelText, config)
         theme.animDuration
     )
 
-    -- Animate the thumb color based on hover and drag state
     local function AnimateThumbColor(toHover, toDrag)
         if toDrag then
             animateThumb(theme.accent[1], theme.accent[2], theme.accent[3], 1)
@@ -173,8 +164,6 @@ function InstanceMixin:CreateSlider(parent, labelText, config)
     end
 
     local stepperSize = 20
-
-    -- Create the left and right stepper buttons for the slider
 
     local leftStepper = CreateFrame("Button", nil, row)
     pixel.SetPixelSize(leftStepper, stepperSize, stepperSize)
@@ -235,7 +224,6 @@ function InstanceMixin:CreateSlider(parent, labelText, config)
     row.leftStepper = leftStepper
     row.rightStepper = rightStepper
 
-    -- Create the value container for the slider
     local valueContainer = CreateFrame("Frame", nil, slider, "BackdropTemplate")
     pixel.SetPixelSize(valueContainer, 48, 24)
     pixel.SetPixelPoint(valueContainer, "RIGHT", leftStepper, "LEFT", 0, 0)
@@ -252,7 +240,6 @@ function InstanceMixin:CreateSlider(parent, labelText, config)
         theme.animDuration
     )
 
-    -- Create the editable value box for the slider
     local valueEdit = CreateFrame("EditBox", nil, valueContainer)
     pixel.SetPixelPoint(valueEdit, "TOPLEFT", 0, 0)
     pixel.SetPixelPoint(valueEdit, "BOTTOMRIGHT", 0, 0)
@@ -265,7 +252,6 @@ function InstanceMixin:CreateSlider(parent, labelText, config)
 
     local isUpdating = false
 
-    -- Function to update the fill width and value edit text based on the slider value
     local function UpdateFill()
         local val = slider:GetValue()
         local minVal, maxVal = slider:GetMinMaxValues()
@@ -283,14 +269,12 @@ function InstanceMixin:CreateSlider(parent, labelText, config)
     local lastUpdate = 0
     local curDrag = false
 
-    -- Function to fire the callback and update the nudge frame info if edit mode is active
     local function FireCallback(val)
         safecall(callback, val)
         local editMode = gui.services.editMode
         if editMode and editMode.isActive then editMode:UpdateNudgeFrameInfo() end
     end
 
-    -- Set up the slider's OnValueChanged script to update the fill, thumb position and fire the callback
     slider:SetScript("OnValueChanged", function(_, val)
         UpdateFill()
         UpdateThumbPosition()
@@ -317,7 +301,6 @@ function InstanceMixin:CreateSlider(parent, labelText, config)
         end
     end)
 
-    -- Function to commit the text from the value edit box to the slider value, clamping it within min/max values
     local function CommitText(editBox)
         local num = tonumber(editBox:GetText())
         if num then
@@ -333,7 +316,6 @@ function InstanceMixin:CreateSlider(parent, labelText, config)
         end
     end
 
-    -- Set up the value edit box scripts for handling user input and focus events
     valueEdit:SetScript("OnEscapePressed", function(editBox)
         editBox:ClearFocus()
         UpdateFill()
@@ -383,7 +365,6 @@ function InstanceMixin:CreateSlider(parent, labelText, config)
 
     C_Timer.After(0, UpdateFill)
 
-    -- Define methods for the row to set/get value, set min/max values and enable/disable the slider
     function row:SetValue(val) slider:SetValue(val) end
 
     function row:GetValue() return slider:GetValue() end
@@ -393,7 +374,6 @@ function InstanceMixin:CreateSlider(parent, labelText, config)
         UpdateFill()
     end
 
-    -- Set the enabled state of the slider and its components
     function row:SetEnabled(enabled)
         row:SetAlpha(enabled and 1 or 0.4)
         slider:EnableMouse(enabled)
@@ -405,7 +385,6 @@ function InstanceMixin:CreateSlider(parent, labelText, config)
 
     row.slider = slider
 
-    -- Set up tooltip for the slider and its components if provided
     if tooltip then
         local tooltipText = type(tooltip) == "table" and tooltip.text or tooltip
         local tooltipDefault = type(tooltip) == "table" and tooltip.default

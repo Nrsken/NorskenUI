@@ -6,15 +6,15 @@
 
 ## Examples
 
-?   row:Text('About', {
-?       text = 'This module does a thing.'
-?   })
+    row:Text('About', {
+        text = 'This module does a thing.'
+    })
 
-?   row:Text('Notes', {
-?       text = { 'First point', 'Second point' },
-?       height = 60,
-?       bgMode = 'show',
-?   })
+    row:Text('Notes', {
+        text = { 'First point', 'Second point' },
+        height = 60,
+        bgMode = 'show',
+    })
 
 --]]
 
@@ -50,11 +50,9 @@ function InstanceMixin:CreateText(parent, titleText, config)
     local rowHeight = config.height or 34
     local bgMode = config.bgMode
 
-    -- Create the row frame
     local row = CreateFrame("Frame", nil, parent)
     pixel.SetPixelHeight(row, rowHeight)
 
-    -- Create the container (optional background/border)
     local container = CreateFrame("Frame", nil, row, "BackdropTemplate")
     pixel.SetPixelHeight(container, rowHeight)
     pixel.SetPixelPoint(container, "TOPLEFT", row, "TOPLEFT", 0, 0)
@@ -73,7 +71,6 @@ function InstanceMixin:CreateText(parent, titleText, config)
     end
     row.container = container
 
-    -- Create the title
     local title = container:CreateFontString(nil, "OVERLAY")
     pixel.SetPixelPoint(title, "TOPLEFT", container, "TOPLEFT", 1, -1)
     pixel.SetPixelPoint(title, "TOPRIGHT", container, "TOPRIGHT", -1, -1)
@@ -85,7 +82,6 @@ function InstanceMixin:CreateText(parent, titleText, config)
 
     local totSpacer = title:GetStringHeight() + 2
 
-    -- Create the body
     local label = container:CreateFontString(nil, "OVERLAY")
     pixel.SetPixelPoint(label, "TOPLEFT", container, "TOPLEFT", 0, -totSpacer)
     pixel.SetPixelPoint(label, "BOTTOMRIGHT", container, "BOTTOMRIGHT", 0, 0)

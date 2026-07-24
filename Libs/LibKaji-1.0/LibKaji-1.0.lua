@@ -1,8 +1,27 @@
 --[[
-##LibKaji-1.0 by Norsken
+# LibKaji-1.0
 
-* LibKaji-1.0 is a GUI/Utility library for WoW addons, providing a framework for creating windows, buttons and other GUI widgets with consistent theming and behavior.
-* The library also exposes a set of pixel-snapping utilities.
+* A GUI/utility library for WoW addons by Norsken: windows, sidebars, pages, cards and widgets with consistent theming and behavior.
+* Also exposes a standalone set of pixel-snapping utilities (`lib.Pixel`), usable without the GUI.
+* Every consumer gets its own instance, so two addons embedding the library never share theme or state.
+
+## Example
+
+    local GUI = LibStub('LibKaji-1.0'):New({
+        store = function() return MyAddonDB.theme end,
+        classColorProvider = function() return MyAddon:GetClassColor() end
+    })
+
+    local window = GUI:CreateGUIWindow({ name = 'MyAddonGUI', defaultPage = 'general' })
+
+    GUI:RegisterPage('general', {
+        build = function(page)
+            page:Card('Options', 'all'):Row(40):Checkbox('Enable', {
+                value = db.Enabled,
+                callback = function(v) db.Enabled = v end
+            })
+        end
+    })
 
 --]]
 

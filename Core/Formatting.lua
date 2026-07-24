@@ -151,7 +151,7 @@ end
 local auraDurationFormatter
 
 ---Formatter for aura duration text, tenths + red under 3s, whole seconds under a minute, then m / h.
----@return table formatter A NumericFormatter usable as SetDurationText's `formatter` option.
+---@return table formatter A NumericFormatter usable as SetDurationText's `textFormatter` option.
 function NRSKNUI:GetAuraDurationFormatter()
     if auraDurationFormatter then return auraDurationFormatter end
 

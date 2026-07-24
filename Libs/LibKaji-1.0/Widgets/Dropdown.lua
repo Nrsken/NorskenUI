@@ -12,21 +12,21 @@
 
 ## Example
 
-?   row:Dropdown('Style', {
-?       value = db.Mode,
-?       options = ModeOptions,
-?       callback = function(v)
-?           db.Mode = v
-?       end
-?   })
-?
-?   row:Dropdown('Font', {
-?       media = 'font',
-?       value = db.Font,
-?       callback = function(v)
-?           db.Font = v
-?       end
-?   })
+    row:Dropdown('Style', {
+        value = db.Mode,
+        options = ModeOptions,
+        callback = function(v)
+            db.Mode = v
+        end
+    })
+
+    row:Dropdown('Font', {
+        media = 'font',
+        value = db.Font,
+        callback = function(v)
+            db.Font = v
+        end
+    })
 
 --]]
 
@@ -99,7 +99,6 @@ end)
 
 -- Item button pool --
 
--- Creates or reuses a button for an item in the dropdown list.
 local function AcquireItemButton(gui, parent)
     local pool = gui._dropdownPool
     local btn = tremove(pool)
@@ -112,17 +111,14 @@ local function AcquireItemButton(gui, parent)
         return btn
     end
 
-    -- Create a new button if none are available in the pool.
     btn = CreateFrame("Button", nil, parent)
     pixel.SetPixelHeight(btn, ITEM_HEIGHT)
 
-    -- Create a background texture for the button to indicate hover state.
     local previewBar = btn:CreateTexture(nil, "BACKGROUND", nil, -2)
     previewBar:SetAllPoints()
     previewBar:Hide()
     btn._previewBar = previewBar
 
-    -- Create a hover background texture that fades in/out on mouse enter/leave.
     local hoverBg = btn:CreateTexture(nil, "BACKGROUND")
     hoverBg:SetAllPoints()
     hoverBg:SetColorTexture(1, 1, 1, 0.05)
@@ -130,7 +126,6 @@ local function AcquireItemButton(gui, parent)
     btn._hoverBg = hoverBg
     btn._hoverTarget = 0
 
-    -- Set up an OnUpdate script to animate the hover background's alpha towards the target value.
     btn:SetScript("OnUpdate", function(self, elapsed)
         local current = self._hoverBg:GetAlpha()
         if abs(current - self._hoverTarget) > 0.01 then
@@ -143,7 +138,6 @@ local function AcquireItemButton(gui, parent)
         end
     end)
 
-    -- Create a font string for the button's text label.
     local btnText = btn:CreateFontString(nil, "OVERLAY")
     pixel.SetPixelPoint(btnText, "LEFT", btn, "LEFT", 8, 0)
     pixel.SetPixelPoint(btnText, "RIGHT", btn, "RIGHT", -24, 0)
@@ -151,7 +145,6 @@ local function AcquireItemButton(gui, parent)
     gui:ApplyFont(btnText, "normal")
     btn._text = btnText
 
-    -- Create an indicator font string (e.g., a dot) to show selection or other status.
     local indicator = btn:CreateFontString(nil, "OVERLAY")
     pixel.SetPixelPoint(indicator, "RIGHT", btn, "RIGHT", -8, 0)
     gui:ApplyFont(indicator, "large")
@@ -162,7 +155,6 @@ local function AcquireItemButton(gui, parent)
     return btn
 end
 
--- Releases an item button back to the pool for reuse.
 local function ReleaseItemButton(gui, btn)
     btn:Hide()
     btn:SetParent(nil)
@@ -305,7 +297,6 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
     local selected = config.value
     local searchable = config.searchable == true
 
-    -- Create the main row frame that contains the label and dropdown button.
     local row = CreateFrame("Frame", nil, parent)
     pixel.SetPixelHeight(row, 34)
     row.gui = gui
@@ -313,7 +304,6 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
     row._isFontPreview = isFontPreview
     row._isStatusbarPreview = isStatusbarPreview
 
-    -- Create the label font string for the dropdown.
     local label = row:CreateFontString(nil, "OVERLAY")
     pixel.SetPixelPoint(label, "TOPLEFT", row, "TOPLEFT", 0, 1)
     label:SetJustifyH("LEFT")
@@ -322,7 +312,6 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
     label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
     row.label = label
 
-    -- Create the dropdown button that shows the selected value and opens the dropdown list on click.
     local dropdownButton = CreateFrame("Button", nil, row, "BackdropTemplate")
     pixel.SetPixelHeight(dropdownButton, DROPDOWN_HEIGHT)
     pixel.SetPixelPoint(dropdownButton, "TOPLEFT", row, "TOPLEFT", 0, -14)
@@ -339,7 +328,6 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
     pixel.SetPixelSnap(selectedBar)
     selectedBar:Hide()
 
-    -- Create the font string that displays the selected value.
     local selectedText = dropdownButton:CreateFontString(nil, "OVERLAY")
     pixel.SetPixelPoint(selectedText, "LEFT", dropdownButton, "LEFT", theme.paddingSmall, 0)
     pixel.SetPixelPoint(selectedText, "RIGHT", dropdownButton, "RIGHT", -24, 0)
@@ -349,7 +337,6 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
     dropdownButton.selectedText = selectedText
     row._selectedText = selectedText
 
-    -- Create the arrow texture that indicates the dropdown can be expanded.
     local arrow = dropdownButton:CreateTexture(nil, "ARTWORK")
     pixel.SetPixelSize(arrow, ARROW_SIZE, ARROW_SIZE)
     pixel.SetPixelPoint(arrow, "RIGHT", dropdownButton, "RIGHT", -theme.paddingSmall, 0)
@@ -372,7 +359,6 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
     local searchText = ""
     local firstVisibleKey = nil
 
-    -- Applies the preview (font face / statusbar bar) + color to the selected display.
     local function ApplySelected(value)
         if row._normalizedOptions[value] then
             selectedText:SetText(row._normalizedOptions[value])
@@ -399,7 +385,6 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
     end
     row._applySelected = ApplySelected
 
-    -- Create the dropdown list frame that contains the scrollable list of options.
     local dropdownList = CreateFrame("Frame", nil, row, "BackdropTemplate")
     pixel.SetPixelHeight(dropdownList, 1)
     dropdownList:SetBackdrop(STANDARD_BACKDROP)
@@ -409,19 +394,16 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
     dropdownList:SetClipsChildren(true)
     dropdownList:Hide()
 
-    -- Create a scroll frame inside the dropdown list to allow scrolling through options if they exceed the maximum height.
     local scrollFrame = CreateFrame("ScrollFrame", nil, dropdownList)
     pixel.SetPixelPoint(scrollFrame, "TOPLEFT", dropdownList, "TOPLEFT", 0, searchable and -(SEARCH_BOX_HEIGHT + SEARCH_PADDING) or 0)
     pixel.SetPixelPoint(scrollFrame, "BOTTOMRIGHT", dropdownList, "BOTTOMRIGHT", 0, 0)
 
-    -- Create a scroll child frame that will contain the actual option buttons inside the scroll frame.
     local scrollChild = CreateFrame("Frame", nil, scrollFrame)
     scrollFrame:SetScrollChild(scrollChild)
 
     local searchContainer, searchEditBox, emptyLabel
     local scrollbar, thumb, thumbBorder
 
-    -- Creates the search box and its associated edit box for filtering options in the dropdown.
     local function EnsureScrollbar()
         if scrollbar then return end
         scrollbar = CreateFrame("Slider", nil, dropdownList, "BackdropTemplate")
@@ -467,11 +449,9 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
         thumb:HookScript("OnHide", function() thumbBorder:Hide() end)
     end
 
-    -- Create animation groups for the dropdown list and arrow rotation.
     local animGroup = dropdownList:CreateAnimationGroup()
     animGroup:CreateAnimation("Animation"):SetDuration(theme.animDuration)
 
-    -- Create an animation group for the arrow rotation when opening/closing the dropdown.
     local arrowAnimGroup = arrow:CreateAnimationGroup()
     local arrowRotation = arrowAnimGroup:CreateAnimation("Rotation")
     arrowRotation:SetDuration(theme.animDuration)
@@ -479,12 +459,10 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
     arrowRotation:SetSmoothing("IN_OUT")
     arrowAnimGroup:SetScript("OnFinished", function() arrow:SetRotation(row._isOpen and 0 or -pi / 2) end)
 
-    -- Create a hover color animator for the dropdown button's border when hovered.
     local SetBorderHover = Animations:CreateHoverColorAnimator(dropdownButton,
         function(r, g, b, a) dropdownButton:SetBackdropBorderColor(r, g, b, a) end,
         theme.border, theme.accent, theme.animDuration)
 
-    -- Create a hover color animator for the dropdown button's background when hovered.
     local function CloseDropdown(instant)
         if scrollHold then return end
         if not row._isOpen then return end
@@ -518,7 +496,6 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
     end
     row._closeDropdown = CloseDropdown
 
-    -- Updates the scroll frame and scrollbar based on the content height and whether a scrollbar is needed.
     local function UpdateScroll()
         local contentHeight = scrollChild:GetHeight()
         local scrollFrameHeight = scrollFrame:GetHeight()
@@ -548,7 +525,6 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
     end
     row._updateScroll = UpdateScroll
 
-    -- Animate the dropdown list height during open/close animations using a smoothstep function for a more natural easing effect.
     animGroup:SetScript("OnUpdate", function(anim)
         local progress = anim:GetProgress() or 0
         local smooth = progress * progress * (3 - 2 * progress)
@@ -557,8 +533,7 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
         if row._isOpen and newHeight < targetHeight then dropdownList:SetClipsChildren(false) end
     end)
 
-    -- Close dropdown and fire the callback after the close animation finishes.
-    -- If the dropdown is closed instantly, the callback fires immediately and causes the dropdown to be rebuilt mid-close, which is bad :).
+    -- Callback is deferred to here: firing it instantly lets it rebuild the dropdown mid-close.
     animGroup:SetScript("OnFinished", function()
         pixel.SetPixelHeight(dropdownList, targetHeight)
         if not row._isOpen then
@@ -577,8 +552,6 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
         end
     end)
 
-    -- Build a filtered list of keys based on the search text and store them in `filteredKeys`.
-    -- The first visible key is also tracked for potential auto-selection.
     local function BuildFilteredKeys()
         wipe(filteredKeys)
         firstVisibleKey = nil
@@ -602,7 +575,6 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
         end
     end
 
-    -- Applies the selection, closes and defers the callback until the close finishes.
     local function SelectValue(value)
         row._currentValue = value
         ApplySelected(value)
@@ -611,7 +583,6 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
         CloseDropdown()
     end
 
-    -- Creates the item buttons for the dropdown list based on the filtered keys and sets up their appearance, color and event handlers.
     local function CreateItemButtons()
         for _, btn in ipairs(row._itemButtons) do ReleaseItemButton(gui, btn) end
         wipe(row._itemButtons)
@@ -686,7 +657,6 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
     end
     row._createItemButtons = CreateItemButtons
 
-    -- If the dropdown is searchable, create a search box at the top of the dropdown list for filtering options.
     if searchable then
         searchContainer = CreateFrame("Frame", nil, dropdownList, "BackdropTemplate")
         pixel.SetPixelHeight(searchContainer, SEARCH_BOX_HEIGHT)
@@ -734,7 +704,6 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
         emptyLabel:Hide()
     end
 
-    -- Enable mouse wheel scrolling for the scroll frame and update the scrollbar value accordingly.
     scrollFrame:EnableMouseWheel(true)
     scrollFrame:SetScript("OnMouseWheel", function(_, delta)
         if scrollbar and scrollbar:IsShown() then
@@ -743,8 +712,6 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
         end
     end)
 
-    -- Toggle the dropdown open/closed when the dropdown button is clicked.
-    -- If the dropdown is already open, it will close it. Otherwise, it will open it and set up the necessary UI elements and animations.
     local function ToggleDropdown()
         if row._isOpen then
             CloseDropdown()
@@ -816,7 +783,6 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
         end
     end
 
-    -- Set up event handlers for the dropdown button to toggle the dropdown list and handle hover states.
     dropdownButton:SetScript("OnClick", ToggleDropdown)
     dropdownButton:SetScript("OnEnter", function()
         SetBorderHover(true)
@@ -839,7 +805,6 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
         selectedText:SetText("Select...")
     end
 
-    -- Set up event handlers for when the dropdown list or button is hidden, to reset states and clear search text if applicable.
     dropdownList:SetScript("OnHide", function()
         row._isOpen = false
         if searchable then

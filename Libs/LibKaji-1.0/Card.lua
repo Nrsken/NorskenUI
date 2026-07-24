@@ -6,10 +6,10 @@
 
 ## Example
 
-?   local card = GUI:CreateCard(scrollChild, 'Appearance', 0)
-?   local row = GUI:CreateRow(card.content, 40)
-?   row:AddWidget(slider, 0.5)
-?   card:AddRow(row, 40)
+    local card = GUI:CreateCard(scrollChild, 'Appearance', 0)
+    local row = GUI:CreateRow(card.content, 40)
+    row:AddWidget(slider, 0.5)
+    card:AddRow(row, 40)
 
 --]]
 

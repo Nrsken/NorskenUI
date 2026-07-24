@@ -8,10 +8,10 @@
 
 ## Examples
 
-?   page:FontSettingsCard({
-?       db = db,
-?       onChangeCallback = Apply
-?   })
+    page:FontSettingsCard({
+        db = db,
+        onChangeCallback = Apply
+    })
 
 --]]
 

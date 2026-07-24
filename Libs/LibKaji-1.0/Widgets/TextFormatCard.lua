@@ -6,10 +6,10 @@
 
 ## Examples
 
-?   page:TextFormatCard({
-?       db = db,
-?       onChangeCallback = Apply
-?   })
+    page:TextFormatCard({
+        db = db,
+        onChangeCallback = Apply
+    })
 
 --]]
 

@@ -30,6 +30,16 @@ GUIFrame.SidebarConfig = {
             text = L['Global Settings'],
         },
         {
+            id = 'unitframes_section',
+            type = 'header',
+            text = L['Unit Frames'],
+            defaultExpanded = false,
+            items = {
+                { id = 'unitFramesGeneral', text = L['General'] },
+                { id = 'unitFramesUnits',   text = L['Units'] },
+            }
+        },
+        {
             id = 'combat_section',
             type = 'header',
             text = L['Combat Util'],

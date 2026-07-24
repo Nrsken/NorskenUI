@@ -7,12 +7,12 @@
 
 ## Examples
 
-?   page:GlowSettingsCard({
-?       title = "Important Spell Glow",
-?       db = db.ImportantGlow,
-?       glowTypes = { "pixel", "autocast" },
-?       onChangeCallback = Apply,
-?   })
+    page:GlowSettingsCard({
+        title = "Important Spell Glow",
+        db = db.ImportantGlow,
+        glowTypes = { "pixel", "autocast" },
+        onChangeCallback = Apply,
+    })
 
 --]]
 

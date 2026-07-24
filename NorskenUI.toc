@@ -33,11 +33,11 @@ GUI/GUI-SidebarConfig.lua
 
 # Load GUI Tab Files
 GUI/GUI-Tabs/GUI-Global/GUI-Global.xml
+GUI/GUI-Tabs/GUI-UnitFrames/GUI-UnitFrames.xml
 GUI/GUI-Tabs/GUI-Combat/GUI-Combat.xml
 GUI/GUI-Tabs/GUI-Auras/GUI-Auras.xml
 GUI/GUI-Tabs/GUI-ClassUtility/GUI-ClassUtility.xml
 GUI/GUI-Tabs/GUI-QoL/GUI-QoL.xml
-GUI/GUI-Tabs/GUI-SkinningAdvanced/GUI-SkinningAdvanced.xml
 GUI/GUI-Tabs/GUI-Skinning/GUI-Skinning.xml
 GUI/GUI-Tabs/GUI-Dungeons/GUI-Dungeons.xml
 GUI/GUI-Tabs/GUI-Miscellaneous/GUI-Miscellaneous.xml

@@ -107,12 +107,8 @@ function PlayerAuras:BuildContainer(kind)
         container:AddItemEnchant(AuraContainerItemEnchantmentSlot.MainHand)
         container:AddItemEnchant(AuraContainerItemEnchantmentSlot.OffHand)
 
-        -- Item enchants form their own flow group, elementSpacing is enchant-to-enchant, gap is the seam to aura groups.
-        container:SetItemEnchantmentLayout({
-            elementSpacingX = cfg.SpacingX,
-            elementSpacingY = cfg.SpacingY,
-            gapX = cfg.GapX,
-            gapY = cfg.GapY,
+        -- Item enchants form their own flow group, elementSpacing is enchant-to-enchant, groupSpacing is the seam to aura groups.
+        container:SetItemEnchantLayout({
             placement = CustomAuraContainerItemEnchantmentPlacement.BeforeAuraGroups,
         })
     end

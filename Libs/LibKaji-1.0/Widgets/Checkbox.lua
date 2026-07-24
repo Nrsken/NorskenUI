@@ -5,12 +5,12 @@
 
 ## Example
 
-?   row:AddWidget(GUI:CreateCheckbox(row, 'Enable', {
-?       value = db.Enabled,
-?       callback = function(checked)
-?           db.Enabled = checked
-?       end,
-?   }))
+    row:AddWidget(GUI:CreateCheckbox(row, 'Enable', {
+        value = db.Enabled,
+        callback = function(checked)
+            db.Enabled = checked
+        end,
+    }))
 
 --]]
 
@@ -74,11 +74,9 @@ function InstanceMixin:CreateCheckbox(parent, labelText, config)
     local tooltip = config.tooltip
     local cvarTooltip = config.cvartooltip
 
-    -- Create the row frame that will contain the label and toggle.
     local row = CreateFrame("Frame", nil, parent)
     pixel.SetPixelHeight(row, 36)
 
-    -- Create the label for the checkbox.
     local label = row:CreateFontString(nil, "OVERLAY")
     pixel.SetPixelPoint(label, "TOPLEFT", row, "TOPLEFT", 0, 1)
     label:SetJustifyH("LEFT")
@@ -88,7 +86,6 @@ function InstanceMixin:CreateCheckbox(parent, labelText, config)
     label:SetShadowColor(0, 0, 0, 0)
     row.label = label
 
-    -- Create the toggle frame.
     local toggle = CreateFrame("Frame", nil, row, "BackdropTemplate")
     pixel.SetPixelSize(toggle, TOGGLE_WIDTH, TOGGLE_HEIGHT)
     pixel.SetPixelPoint(toggle, "TOPLEFT", row, "TOPLEFT", 0, -14)
@@ -100,7 +97,6 @@ function InstanceMixin:CreateCheckbox(parent, labelText, config)
     toggle:SetBackdropColor(theme.bgMedium[1], theme.bgMedium[2], theme.bgMedium[3], 1)
     toggle:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
 
-    -- Create the knob that slides left and right to indicate the toggle state.
     local knob = CreateFrame("Frame", nil, toggle, "BackdropTemplate")
     pixel.SetPixelSize(knob, KNOB_SIZE, KNOB_SIZE)
     pixel.SetPixelPoint(knob, "LEFT", toggle, "LEFT", OFF_POSITION, 0)
@@ -113,13 +109,11 @@ function InstanceMixin:CreateCheckbox(parent, labelText, config)
     knob:SetBackdropColor(0, 0, 0, 1)
     knob:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
 
-    -- Create the textures for the knob.
     local knobTexture = knob:CreateTexture(nil, "ARTWORK")
     knobTexture:SetAllPoints()
     knobTexture:SetColorTexture(theme.accent[1], theme.accent[2], theme.accent[3], 0.6)
     pixel.SetPixelSnap(knobTexture)
 
-    -- Checkmark texture for the "on" state.
     local checkmark = knob:CreateTexture(nil, "OVERLAY")
     pixel.SetPixelSize(checkmark, KNOB_SIZE, KNOB_SIZE)
     pixel.SetPixelPoint(checkmark, "CENTER", knob, "CENTER", 0, 0)
@@ -128,7 +122,6 @@ function InstanceMixin:CreateCheckbox(parent, labelText, config)
     pixel.SetPixelSnap(checkmark)
     checkmark:Hide()
 
-    -- Crossmark texture for the "off" state.
     local crossmark = knob:CreateTexture(nil, "OVERLAY")
     pixel.SetPixelSize(crossmark, KNOB_CROSS, KNOB_CROSS)
     pixel.SetPixelPoint(crossmark, "CENTER", knob, "CENTER", 0, 0)
@@ -137,13 +130,12 @@ function InstanceMixin:CreateCheckbox(parent, labelText, config)
     pixel.SetPixelSnap(crossmark)
     crossmark:Hide()
 
-    -- Create an animation group for the knob sliding animation.
     local animGroup = knob:CreateAnimationGroup()
     local slideAnim = animGroup:CreateAnimation("Translation")
     slideAnim:SetDuration(ANIMATION_DURATION)
     slideAnim:SetSmoothing("OUT")
 
-    -- Color animators for the toggle background and knob. They are separate so they can be animated independently.
+    -- Background and knob tween separately so each can animate on its own.
     local animateBg, syncBg = Animations:CreateColorAnimator(toggle,
         function(r, g, b)
             toggle:SetBackdropColor(r, g, b, 1)
@@ -164,7 +156,6 @@ function InstanceMixin:CreateCheckbox(parent, labelText, config)
         return animGroup:IsPlaying()
     end
 
-    -- Update the visibility of the checkmark and crossmark based on the current state.
     local function UpdateIcons()
         if state then
             checkmark:Show()
@@ -177,7 +168,6 @@ function InstanceMixin:CreateCheckbox(parent, labelText, config)
         end
     end
 
-    -- Update the colors of the toggle background and knob based on the current state.
     local function UpdateColors(toState, instant)
         UpdateIcons()
 
@@ -200,7 +190,6 @@ function InstanceMixin:CreateCheckbox(parent, labelText, config)
         end
     end
 
-    -- Animate the toggle to the specified state, optionally instantly without animation.
     local function AnimateToState(toState, instant)
         if isAnimating and not instant then return end
 
@@ -238,7 +227,6 @@ function InstanceMixin:CreateCheckbox(parent, labelText, config)
 
     AnimateToState(state, true)
 
-    -- Create a button overlay to handle clicks and mouse events for the toggle.
     local button = CreateFrame("Button", nil, toggle)
     button:SetAllPoints(toggle)
     button:RegisterForClicks("LeftButtonUp")
@@ -264,7 +252,6 @@ function InstanceMixin:CreateCheckbox(parent, labelText, config)
         end
     end)
 
-    -- Handle mouse enter and leave events to change the knob color for visual feedback.
     button:SetScript("OnEnter", function()
         local baseA = state and 1 or 0.6
         local hr, hg, hb = theme.accent[1] * 1.2, theme.accent[2] * 1.2, theme.accent[3] * 1.2
@@ -277,7 +264,6 @@ function InstanceMixin:CreateCheckbox(parent, labelText, config)
         syncKnob(theme.accent[1], theme.accent[2], theme.accent[3], a)
     end)
 
-    -- Set the value of the toggle, optionally instantly without animation.
     toggle.SetValue = function(_, value, instant)
         if value ~= state then
             AnimateToState(value, instant)
@@ -289,12 +275,10 @@ function InstanceMixin:CreateCheckbox(parent, labelText, config)
         end
     end
 
-    -- Get the current value of the toggle.
     toggle.GetValue = function()
         return state
     end
 
-    -- Set the enabled state of the checkbox, affecting its appearance and interactivity.
     function row:SetEnabled(enabled)
         toggle:SetAlpha(enabled and 1 or 0.5)
         label:SetAlpha(enabled and 1 or 0.5)
@@ -303,7 +287,6 @@ function InstanceMixin:CreateCheckbox(parent, labelText, config)
 
     row.toggle = toggle
 
-    -- Setup tooltip if provided in the config.
     if tooltip then
         local tooltipText = type(tooltip) == "table" and tooltip.text or tooltip
         local tooltipDefault = type(tooltip) == "table" and tooltip.default

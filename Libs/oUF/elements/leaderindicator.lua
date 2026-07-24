@@ -59,17 +59,18 @@ local function Update(self, event)
 		isLeader = UnitLeadsAnyGroup(unit)
 	end
 
-	if(isLeader) then
-		if(isInLFGInstance) then
-			element:SetAtlas('UI-HUD-UnitFrame-Player-Group-GuideIcon', element.useAtlasSize)
-		else
-			element:SetAtlas('UI-HUD-UnitFrame-Player-Group-LeaderIcon', element.useAtlasSize)
-		end
-
-		element:Show()
+	-- NorskenUI: UnitIsGroupLeader/UnitLeadsAnyGroup return a secret boolean once the unit's
+	-- identity is restricted, so it cannot be branched on. isInLFGInstance is never secret, so
+	-- pick the atlas from that and drive visibility through SetAlphaFromBoolean, which accepts
+	-- secrets from tainted code.
+	if(isInLFGInstance) then
+		element:SetAtlas('UI-HUD-UnitFrame-Player-Group-GuideIcon', element.useAtlasSize)
 	else
-		element:Hide()
+		element:SetAtlas('UI-HUD-UnitFrame-Player-Group-LeaderIcon', element.useAtlasSize)
 	end
+
+	element:SetAlphaFromBoolean(isLeader, 1, 0)
+	element:Show()
 
 	--[[ Callback: LeaderIndicator:PostUpdate(isLeader)
 	Called after the element has been updated.

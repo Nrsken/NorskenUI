@@ -66,6 +66,18 @@ function UF.PostUpdatePower(element)
     PrimeSmoothing(element)
 end
 
+---Applies the flat power colour. oUF still runs its own colour pass with every flag off, so the
+---custom colour has to be re-applied here rather than once in Configure.
+---@param element oUF.Power
+function UF.PostUpdatePowerColor(element)
+    if element.nuiColorByPower then return end
+
+    local color = element.nuiColor
+    if color then
+        element:SetStatusBarColor(color[1], color[2], color[3], color[4])
+    end
+end
+
 -- Active spell set per relationship, filtered to spells actually in the spellbook.
 local activeSpells = {
     enemy = {},
@@ -130,14 +142,17 @@ end
 
 ---Friendly units: UnitInRange first, then friendly spells.
 local function FriendlyRangeCheck(unit, frame)
-    if UnitIsPlayer(unit) and UnitPhaseReason(unit) then
+    -- UnitPhaseReason and UnitInRaid return secrets once the unit's identity is restricted.
+    local secret = NRSKNUI:IsSecretUnit(unit)
+
+    if not secret and UnitIsPlayer(unit) and UnitPhaseReason(unit) then
         return false
     end
 
     local inRange, wasChecked = UnitInRange(unit)
     if NRSKNUI:IsSecretValue(wasChecked) then
         -- Group members hand the secret result to SetAlphaFromBoolean via the stash.
-        if UnitInParty(unit) or UnitInRaid(unit) then
+        if UnitInParty(unit) or (not secret and UnitInRaid(unit)) then
             frame.RangeIsInRange = inRange
             frame.RangeWasChecked = wasChecked
             return

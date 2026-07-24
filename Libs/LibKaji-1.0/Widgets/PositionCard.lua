@@ -6,11 +6,11 @@
 
 ## Examples
 
-?   page:PositionCard({
-?       db = db,
-?       showStrata = true,
-?       onChangeCallback = Apply
-?   })
+    page:PositionCard({
+        db = db,
+        showStrata = true,
+        onChangeCallback = Apply
+    })
 
 --]]
 
@@ -267,7 +267,6 @@ function InstanceMixin:CreatePositionCard(scrollChild, yOffset, config)
         if card._onAfterRebuild then card._onAfterRebuild(widgets) end
     end
 
-    -- Build the initial content of the card
     BuildContent = function()
         local currentType = getValue(keys.anchorFrameType, defaults.anchorFrameType or "SCREEN")
         selfPointWidget, anchorPointWidget, xSlider, ySlider = nil, nil, nil, nil

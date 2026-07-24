@@ -28,6 +28,7 @@ UF.Elements.Power = {
         powerBar:SetFrameLevel(frame:GetFrameLevel() + 2)
         powerBar:SetPixelSnap()
         powerBar.PostUpdate = UF.PostUpdatePower
+        powerBar.PostUpdateColor = UF.PostUpdatePowerColor
 
         frame.Power = powerBar
     end,
@@ -55,8 +56,24 @@ UF.Elements.Power = {
 
         --TODO: Keep looking for a better solution to the inital empty -> fill slide in effect.
         -- Only smoothing for the player's power bar.
-        powerBar.nuiSmoothing = ((general.Smooth and pDB.Smooth and unit == 'player') and Interpolation.ExponentialEaseOut) or Interpolation.Immediate
+        local smooth = pDB.UseGlobalSmooth and general.Smooth or (not pDB.UseGlobalSmooth and pDB.Smooth)
+        powerBar.nuiSmoothing = ((smooth and unit == 'player') and Interpolation.ExponentialEaseOut) or Interpolation.Immediate
         powerBar.smoothing = Interpolation.Immediate
-        powerBar.colorPower = pDB.ColorByPower
+
+        -- Power type colouring, or a flat colour that PostUpdatePowerColor re-applies over oUF's pick.
+        local colorByPower, color
+        if pDB.UseGlobalColors then
+            colorByPower = general.ColorByPower
+            color = general.Colors.Power
+        else
+            colorByPower = pDB.ColorByPower
+            color = pDB.Color
+        end
+
+        powerBar.colorPower = colorByPower
+        powerBar.colorClass = false
+        powerBar.colorReaction = false
+        powerBar.nuiColor = color
+        powerBar.nuiColorByPower = colorByPower
     end,
 }

@@ -8,10 +8,10 @@
 
 ## Examples
 
-?   page:DynamicGroupCard({
-?       db = db,
-?       onChangeCallback = Apply
-?   })
+    page:DynamicGroupCard({
+        db = db,
+        onChangeCallback = Apply
+    })
 
 --]]
 

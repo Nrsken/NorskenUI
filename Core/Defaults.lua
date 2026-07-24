@@ -2375,17 +2375,56 @@ local Defaults = {
             General = {
                 UseGlobalBar = true,
                 statusBar = "NorskenUI",
+                BackgroundTexture = "", -- "" = match the foreground texture
                 UseGlobalFont = true,
                 FontFace = "Expressway",
+                FontOutline = "OUTLINE",
                 Smooth = true,
                 Range = {
                     Enabled = true,
                     InsideAlpha = 1,
                     OutsideAlpha = 0.6,
                 },
+                ColorByClass = false,
+                ColorByPower = true,
+                CastbarColorByClass = true,
+                ForegroundAlphaWhenColorByClass = 1,
+                Colors = {
+                    Foreground = { 0, 0, 0, 0.8 },
+                    Background = { 0.5, 0.5, 0.5, 1 },
+                    BackgroundWhenColorByClass = { 0, 0, 0, 0.8 },
+                    Power = { 0.3, 0.5, 0.8, 1 },
+                    Castbar = { 0.35, 0.55, 0.85, 1 },
+                    CastbarNonInterruptible = { 0.7, 0.6, 0.2, 1 },
+                    CastbarFail = { 0.8, 0.25, 0.2, 1 },
+                    CastbarBackground = { 0, 0, 0, 0.8 },
+                },
+                SafeZone = {
+                    Enabled = true,
+                    Color = { 0.8, 0.1, 0.1, 0.35 },
+                },
+                HealAbsorb = {
+                    Enabled = true,
+                    UseGlobalBar = false,
+                    StatusBarTexture = "StripesThick",
+                    Color = { 0.4, 0, 0.8, 0.5 },
+                },
+                DamageAbsorb = {
+                    Enabled = true,
+                    UseGlobalBar = false,
+                    StatusBarTexture = "StripesThick",
+                    Color = { 0, 0.39, 0.88, 0.81 },
+                },
+                Highlight = {
+                    Enabled = false,
+                    UseGlobalBar = false,
+                    StatusBarTexture = "NorskenUI",
+                    Color = { 1, 1, 1, 0.1 },
+                },
             },
             TagSettings = {
                 Separator = "»",
+                UpdateInterval = 0.5,
             },
             Units = {
                 ["**"] = {
@@ -2396,15 +2435,13 @@ local Defaults = {
                     ParentFrame = "UIParent",
                     Strata = "MEDIUM",
                     Position = { AnchorFrom = "CENTER", AnchorTo = "CENTER", XOffset = 0, YOffset = 0 },
-                    Backdrop = {
-                        Enabled = true,
-                        BackgroundColor = { 0, 0, 0, 0.8 },
-                        BorderColor = { 0, 0, 0, 1 },
-                    },
                     Health = {
                         Enabled = true,
                         StatusBarTexture = nil,
+                        BackgroundTexture = "", -- "" = follow General.BackgroundTexture
+                        UseGlobalColors = true,
                         ColorByClass = false,
+                        UseGlobalSmooth = true,
                         Smooth = false,
                         Inverse = false,
                         Foreground = { 0, 0, 0, 0.8 },
@@ -2412,11 +2449,15 @@ local Defaults = {
                         BackgroundWhenColorByClass = { 0, 0, 0, 0.8 },
                         ForegroundAlphaWhenColorByClass = 1,
                         HealAbsorb = {
+                            UseGlobal = true,
+                            Enabled = true,
                             UseGlobalBar = false,
                             StatusBarTexture = "StripesThick",
                             Color = { 0.4, 0, 0.8, 0.5 },
                         },
                         DamageAbsorb = {
+                            UseGlobal = true,
+                            Enabled = true,
                             UseGlobalBar = false,
                             StatusBarTexture = "StripesThick",
                             Color = { 0, 0.39, 0.88, 0.81 },
@@ -2426,7 +2467,10 @@ local Defaults = {
                         Enabled = true,
                         Height = 8,
                         StatusBarTexture = nil,
+                        UseGlobalColors = true,
                         ColorByPower = true,
+                        Color = { 0.3, 0.5, 0.8, 1 },
+                        UseGlobalSmooth = true,
                         Smooth = true,
                     },
                     Tags = {
@@ -2487,41 +2531,45 @@ local Defaults = {
                         },
                     },
                     Indicators = {
-                        IndicatorOne = {
+                        Resting = {
                             Enabled = false,
-                            Tag = "",
-                            UseGlobalFont = true,
-                            FontFace = "Expressway",
-                            FontSize = 16,
-                            FontOutline = "NONE",
+                            Size = 20,
                             Position = { AnchorFrom = "TOPLEFT", AnchorTo = "TOPLEFT", XOffset = -4, YOffset = 16 },
                         },
-                        IndicatorTwo = {
+                        Combat = {
                             Enabled = false,
-                            Tag = "",
-                            UseGlobalFont = true,
-                            FontFace = "Expressway",
-                            FontSize = 16,
-                            FontOutline = "NONE",
-                            Position = { AnchorFrom = "TOPRIGHT", AnchorTo = "TOPRIGHT", XOffset = -2, YOffset = 20 },
+                            Size = 20,
+                            Position = { AnchorFrom = "TOPRIGHT", AnchorTo = "TOPRIGHT", XOffset = 4, YOffset = 16 },
                         },
-                        IndicatorThree = {
+                        ReadyCheck = {
                             Enabled = false,
-                            Tag = "",
-                            UseGlobalFont = true,
-                            FontFace = "Expressway",
-                            FontSize = 16,
-                            FontOutline = "NONE",
+                            Size = 20,
+                            Position = { AnchorFrom = "CENTER", AnchorTo = "CENTER", XOffset = 0, YOffset = 0 },
+                        },
+                        Summon = {
+                            Enabled = false,
+                            Size = 24,
                             Position = { AnchorFrom = "BOTTOMLEFT", AnchorTo = "BOTTOMLEFT", XOffset = 2, YOffset = 2 },
                         },
-                        IndicatorFour = {
+                        Resurrect = {
                             Enabled = false,
-                            Tag = "",
-                            UseGlobalFont = true,
-                            FontFace = "Expressway",
-                            FontSize = 16,
-                            FontOutline = "NONE",
+                            Size = 24,
+                            Position = { AnchorFrom = "CENTER", AnchorTo = "CENTER", XOffset = 0, YOffset = 0 },
+                        },
+                        Quest = {
+                            Enabled = false,
+                            Size = 16,
                             Position = { AnchorFrom = "TOPRIGHT", AnchorTo = "TOPRIGHT", XOffset = -4, YOffset = 0 },
+                        },
+                        PvP = {
+                            Enabled = false,
+                            Size = 24,
+                            Position = { AnchorFrom = "TOPLEFT", AnchorTo = "TOPLEFT", XOffset = -8, YOffset = 8 },
+                        },
+                        Phase = {
+                            Enabled = false,
+                            Size = 20,
+                            Position = { AnchorFrom = "CENTER", AnchorTo = "CENTER", XOffset = 0, YOffset = 0 },
                         },
                     },
                     Castbar = {
@@ -2532,11 +2580,17 @@ local Defaults = {
                         ShowSpellName = true,
                         ShowTime = true,
                         TimeToHold = 0.5,
+                        UseGlobalColors = true,
                         ColorByClass = true,
                         Color = { 0.35, 0.55, 0.85, 1 },              -- interruptible / normal
                         NonInterruptibleColor = { 0.7, 0.6, 0.2, 1 }, -- shielded cast
                         FailColor = { 0.8, 0.25, 0.2, 1 },            -- interrupted / failed
                         Background = { 0, 0, 0, 0.8 },
+                        SafeZone = {
+                            UseGlobal = true, -- own override: the safe zone is a feature toggle, not a colour
+                            Enabled = true,
+                            Color = { 0.8, 0.1, 0.1, 0.35 },
+                        },
                         Position = { AnchorFrom = "TOPLEFT", AnchorTo = "BOTTOMLEFT", XOffset = 0, YOffset = -10 },
                     },
                     RaidIcon = {
@@ -2568,13 +2622,11 @@ local Defaults = {
                     },
 
                     Indicators = {
-                        IndicatorOne = {
+                        Resting = {
                             Enabled = true,
-                            Tag = "[nrsknuf:resting]",
                         },
-                        IndicatorThree = {
+                        Summon = {
                             Enabled = true,
-                            Tag = "[nrsknuf:summon]",
                         },
                     },
                     anchorFrameType = "SELECTFRAME",
@@ -2597,13 +2649,11 @@ local Defaults = {
                 },
                 target = {
                     Indicators = {
-                        IndicatorThree = {
+                        Summon = {
                             Enabled = true,
-                            Tag = "[nrsknuf:summon]",
                         },
-                        IndicatorFour = {
+                        Quest = {
                             Enabled = true,
-                            Tag = "[nrsknuf:quest]",
                         },
                     },
                     anchorFrameType = "SELECTFRAME",

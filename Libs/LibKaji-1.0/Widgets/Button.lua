@@ -5,16 +5,16 @@
 
 ## Examples
 
-?   row:Button('Apply', {
-?       callback = function()
-?           Apply()
-?       end
-?   })
-?   GUI:CreateButton(parent, 'Select', {
-?       width = 110,
-?       image = iconID,
-?       callback = fn
-?   })
+    row:Button('Apply', {
+        callback = function()
+            Apply()
+        end
+    })
+    GUI:CreateButton(parent, 'Select', {
+        width = 110,
+        image = iconID,
+        callback = fn
+    })
 
 --]]
 
@@ -105,7 +105,6 @@ function InstanceMixin:CreateButton(parent, buttonText, config)
     local bgColor = config.bgColor or theme.bgMedium
     local yOffset = config.yOffset or 0
 
-    -- Create the button frame with a backdrop template.
     local button = CreateFrame("Button", nil, parent, "BackdropTemplate")
     button.gui = gui
     pixel.SetPixelHeight(button, height)
@@ -118,7 +117,6 @@ function InstanceMixin:CreateButton(parent, buttonText, config)
     button:SetBackdropColor(bgColor[1], bgColor[2], bgColor[3], 1)
     button:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
 
-    -- Create an animator for the border color on hover.
     local animateBorder = Animations:CreateHoverColorAnimator(button,
         function(r, g, b, a)
             button:SetBackdropBorderColor(r, g, b, a)
@@ -130,7 +128,6 @@ function InstanceMixin:CreateButton(parent, buttonText, config)
     local contentWidth = 0
     local iconWidget
 
-    -- Create the icon texture if an image is provided.
     if image then
         iconWidget = button:CreateTexture(nil, "ARTWORK")
         pixel.SetPixelSize(iconWidget, imageSize, imageSize)
@@ -138,19 +135,16 @@ function InstanceMixin:CreateButton(parent, buttonText, config)
         contentWidth = contentWidth + imageSize
     end
 
-    -- Create the text font string for the button label.
     local textWidget = button:CreateFontString(nil, "OVERLAY")
     gui:ApplyFont(textWidget, "normal")
     textWidget:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
     textWidget:SetText(text)
     contentWidth = contentWidth + textWidget:GetStringWidth()
 
-    -- Adjust content width if both icon and text are present to add spacing.
     if image and text and text ~= "" then
         contentWidth = contentWidth + 6
     end
 
-    -- Position the icon and text within the button based on their presence.
     if iconWidget then
         local iconSpan = (text ~= "") and contentWidth or imageSize
         local function AlignIcon()
@@ -168,7 +162,6 @@ function InstanceMixin:CreateButton(parent, buttonText, config)
         pixel.SetPixelPoint(textWidget, "CENTER")
     end
 
-    -- Set up scripts for mouse events to handle hover, click and tooltip display.
     button:SetScript("OnEnter", function(btn)
         animateBorder(true)
         if btn._tooltip then

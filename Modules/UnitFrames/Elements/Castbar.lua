@@ -84,9 +84,11 @@ UF.Elements.Castbar = {
         castBar.Spark = spark
 
         -- Safe zone texture for latency, player only, oUF handles positioning.
+        -- Kept on nuiSafeZone as well: disabling it clears the element field oUF reads.
         local safeZone = castBar:CreateTexture(nil, 'ARTWORK', nil, 1)
         safeZone:SetColorTexture(0.8, 0.1, 0.1, 0.35)
         castBar.SafeZone = safeZone
+        castBar.nuiSafeZone = safeZone
 
         -- Cast name text
         local text = castBar:CreateFontString(nil, 'OVERLAY')
@@ -107,12 +109,31 @@ UF.Elements.Castbar = {
         local cDB = uDB.Castbar
         local pos = cDB.Position
 
+        -- The whole colour set comes from General unless the unit overrides it.
+        local classColor, color, shieldColor, failColor, background
+        if cDB.UseGlobalColors then
+            classColor = general.CastbarColorByClass
+            color = general.Colors.Castbar
+            shieldColor = general.Colors.CastbarNonInterruptible
+            failColor = general.Colors.CastbarFail
+            background = general.Colors.CastbarBackground
+        else
+            classColor = cDB.ColorByClass
+            color = cDB.Color
+            shieldColor = cDB.NonInterruptibleColor
+            failColor = cDB.FailColor
+            background = cDB.Background
+        end
+
+        -- The safe zone carries its own override: it toggles a feature, not just a colour.
+        local safeZoneDB = cDB.SafeZone.UseGlobal and general.SafeZone or cDB.SafeZone
+
         -- Position and size the container.
         container:ClearAllPoints()
         container:SetPixelPoint('TOPLEFT', frame, 'BOTTOMLEFT', pos.XOffset, pos.YOffset)
         container:SetPixelPoint('TOPRIGHT', frame, 'BOTTOMRIGHT', pos.XOffset, pos.YOffset)
         container:SetPixelHeight(cDB.Height)
-        container:SetBackgroundColor(cDB.Background[1], cDB.Background[2], cDB.Background[3], cDB.Background[4])
+        container:SetBackgroundColor(background[1], background[2], background[3], background[4])
 
         -- Icon sits in the container's left square, the bar starts just right of it.
         local barLeftInset = 1
@@ -136,10 +157,17 @@ UF.Elements.Castbar = {
         castBar.timeToHold = cDB.TimeToHold
 
         -- Cast colours read by the PostCast handlers.
-        castBar.nuiColorByClass = cDB.ColorByClass
-        castBar.nuiColor = NRSKNUI:CreateColor(cDB.Color[1], cDB.Color[2], cDB.Color[3], cDB.Color[4])
-        castBar.nuiShieldColor = NRSKNUI:CreateColor(cDB.NonInterruptibleColor[1], cDB.NonInterruptibleColor[2], cDB.NonInterruptibleColor[3], cDB.NonInterruptibleColor[4])
-        castBar.nuiFailColor = NRSKNUI:CreateColor(cDB.FailColor[1], cDB.FailColor[2], cDB.FailColor[3], cDB.FailColor[4])
+        castBar.nuiColorByClass = classColor
+        castBar.nuiColor = NRSKNUI:CreateColor(color[1], color[2], color[3], color[4])
+        castBar.nuiShieldColor = NRSKNUI:CreateColor(shieldColor[1], shieldColor[2], shieldColor[3], shieldColor[4])
+        castBar.nuiFailColor = NRSKNUI:CreateColor(failColor[1], failColor[2], failColor[3], failColor[4])
+
+        -- Latency safe zone, player only (oUF positions it on cast start and skips a nil field).
+        local safeZone = castBar.nuiSafeZone
+        local safeZoneColor = safeZoneDB.Color
+        safeZone:SetColorTexture(safeZoneColor[1], safeZoneColor[2], safeZoneColor[3], safeZoneColor[4])
+        safeZone:SetShown(safeZoneDB.Enabled)
+        castBar.SafeZone = safeZoneDB.Enabled and safeZone or nil
 
         -- Spark sits on the right edge of the bar, 2px wide and as tall as the bar minus 2px.
         local spark = castBar.Spark
@@ -150,14 +178,14 @@ UF.Elements.Castbar = {
 
         -- Cast name text sits inside the bar with a 4px inset.
         local text = castBar.Text
-        text:SetFontStyle(general, 11, 'OUTLINE') --TODO: Hook up to db font settings
+        text:SetFontStyle(general, 11, general.FontOutline)
         text:ClearAllPoints()
         text:SetPixelPoint('LEFT', castBar, 'LEFT', 4, 0)
         text:SetShown(cDB.ShowSpellName)
 
         -- Cast time text sits inside the bar with a 4px inset.
         local time = castBar.Time
-        time:SetFontStyle(general, 11, 'OUTLINE') --TODO: Hook up to db font settings
+        time:SetFontStyle(general, 11, general.FontOutline)
         time:ClearAllPoints()
         time:SetPixelPoint('RIGHT', castBar, 'RIGHT', -4, 0)
         time:SetShown(cDB.ShowTime)

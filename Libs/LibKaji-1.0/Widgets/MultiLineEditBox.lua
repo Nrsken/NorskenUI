@@ -6,13 +6,13 @@
 
 ## Examples
 
-?   row:MultiLineEditBox('Custom code', {
-?       value = db.Code,
-?       height = 120,
-?       callback = function(text)
-?           db.Code = text
-?       end
-?   })
+    row:MultiLineEditBox('Custom code', {
+        value = db.Code,
+        height = 120,
+        callback = function(text)
+            db.Code = text
+        end
+    })
 
 --]]
 
@@ -82,7 +82,6 @@ function InstanceMixin:CreateMultiLineEditBox(parent, labelText, config)
     local row = CreateFrame("Frame", nil, parent)
     pixel.SetPixelHeight(row, rowHeight)
 
-    -- Label
     local label = row:CreateFontString(nil, "OVERLAY")
     pixel.SetPixelPoint(label, "TOPLEFT", row, "TOPLEFT", 0, 1)
     label:SetJustifyH("LEFT")
@@ -91,7 +90,6 @@ function InstanceMixin:CreateMultiLineEditBox(parent, labelText, config)
     label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
     row.label = label
 
-    -- Container
     local container = CreateFrame("Frame", nil, row, "BackdropTemplate")
     pixel.SetPixelHeight(container, containerHeight)
     pixel.SetPixelPoint(container, "TOPLEFT", row, "TOPLEFT", 0, -14)
@@ -108,7 +106,6 @@ function InstanceMixin:CreateMultiLineEditBox(parent, labelText, config)
         theme.animDuration
     )
 
-    -- Scroll frame + scrollbar
     local scrollFrame = CreateFrame("ScrollFrame", nil, container)
     pixel.SetPixelPoint(scrollFrame, "TOPLEFT", container, "TOPLEFT", 6, -6)
     pixel.SetPixelPoint(scrollFrame, "BOTTOMRIGHT", container, "BOTTOMRIGHT", -18, 6)
@@ -122,7 +119,6 @@ function InstanceMixin:CreateMultiLineEditBox(parent, labelText, config)
     })
     row.scrollbar = scrollbar
 
-    -- Edit box
     local editBox = CreateFrame("EditBox", nil, scrollFrame)
     editBox:SetMultiLine(true)
     editBox:SetAutoFocus(false)

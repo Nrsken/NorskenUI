@@ -6,8 +6,8 @@
 
 ## Examples
 
-?   row:Icon({ texture = 134400, size = 28 })
-?   row:Icon({ itemID = 210796 })
+    row:Icon({ texture = 134400, size = 28 })
+    row:Icon({ itemID = 210796 })
 
 --]]
 
@@ -69,7 +69,6 @@ function InstanceMixin:CreateIcon(parent, config)
     local container = CreateFrame("Frame", nil, parent)
     pixel.SetPixelSize(container, size, size)
 
-    -- Icon texture
     local iconTexture = container:CreateTexture(nil, "ARTWORK")
     pixel.SetPixelPoint(iconTexture, "TOPLEFT", 1, -1)
     pixel.SetPixelPoint(iconTexture, "BOTTOMRIGHT", -1, 1)
@@ -81,7 +80,6 @@ function InstanceMixin:CreateIcon(parent, config)
     ZoomTexture(iconTexture)
     container.icon = iconTexture
 
-    -- Border
     if showBorder then
         local border = CreateFrame("Frame", nil, container, "BackdropTemplate")
         border:SetAllPoints()
@@ -90,7 +88,6 @@ function InstanceMixin:CreateIcon(parent, config)
         container.border = border
     end
 
-    -- Quality overlay
     if showQuality and itemID then
         local qualityFrame = CreateFrame("Frame", nil, container)
         qualityFrame:SetFrameLevel(container:GetFrameLevel() + 10)

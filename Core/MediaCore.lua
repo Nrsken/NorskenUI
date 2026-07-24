@@ -180,19 +180,25 @@ end
 
 ---Resolve a module's effective statusbar straight to a usable texture path.
 ---@param moduleDB table?
----@param override string? per-element texture name, falls back to the module texture when nil.
+---@param override string? per-element texture name, wins outright when set.
 ---@return string path
 function NRSKNUI:GetStatusbar(moduleDB, override)
+    -- A per-element override is an explicit pick, so it beats the global bar too. Without this
+    -- the global texture silently swallowed every element override (global media is on by default).
+    if override then
+        return self:ResolveMediaPath('statusbar', override) or fallbackPaths.statusbar --[[@as string]]
+    end
+
     local global = self.db and self.db.profile and self.db.profile.globalMedia
     local name
     if global and global.Enabled and global.profileBar.Enabled then
         if moduleDB and moduleDB.UseGlobalBar == false then
-            name = override or moduleDB.StatusBarTexture or moduleDB.statusBar or 'NorskenUI'
+            name = moduleDB.StatusBarTexture or moduleDB.statusBar or 'NorskenUI'
         else
             name = global.profileBar.statusBar or 'NorskenUI'
         end
     else
-        name = override or (moduleDB and (moduleDB.StatusBarTexture or moduleDB.statusBar)) or 'NorskenUI'
+        name = (moduleDB and (moduleDB.StatusBarTexture or moduleDB.statusBar)) or 'NorskenUI'
     end
     return self:ResolveMediaPath('statusbar', name) or fallbackPaths.statusbar --[[@as string]]
 end

@@ -5,19 +5,19 @@
 
 ## Example
 
-?   GUI:FlashMessage('Combat Cross')
-?   GUI:FlashMessage('Saved', {
-?       duration = 1,
-?       y = 300
-?   })
+    GUI:FlashMessage('Combat Cross')
+    GUI:FlashMessage('Saved', {
+        duration = 1,
+        y = 300
+    })
 
-?   GUI:Prompt({
-?       title = 'Reload Required',
-?       text = 'Reload your UI now?',
-?       onAccept = ReloadUI,
-?   })
+    GUI:Prompt({
+        title = 'Reload Required',
+        text = 'Reload your UI now?',
+        onAccept = ReloadUI,
+    })
 
-?   GUI:CopyDialog('Export', exportString, 'CTRL-C to copy')
+    GUI:CopyDialog('Export', exportString, 'CTRL-C to copy')
 
 --]]
 
@@ -25,7 +25,6 @@ local lib = LibStub and LibStub("LibKaji-1.0", true)
 if not lib then return end
 local InstanceMixin = lib.InstanceMixin
 local pixel = lib.Pixel
-
 
 local CreateFrame = CreateFrame
 local UIFrameFadeIn = UIFrameFadeIn
@@ -83,10 +82,12 @@ function InstanceMixin:FlashMessage(text, opts)
     return container
 end
 
---[[ Modal prompts -------------------------------------------------------------
-A centered, movable dialog with a header, optional edit box or message body and
-Accept/Cancel buttons. When an edit box is supplied without an onAccept handler
-it becomes a copy dialog (CTRL-C to copy, no buttons). ]]
+-- Modal prompts --
+
+--[[
+* A centered, movable dialog with a header, optional edit box or message body and Accept/Cancel buttons.
+* An edit box supplied without an onAccept handler becomes a copy dialog: CTRL-C to copy, no buttons.
+--]]
 
 local BUTTON_WIDTH = 100
 local BUTTON_HEIGHT = 26

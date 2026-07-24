@@ -3,9 +3,9 @@
 
 * Pixel-perfect geometry for the library and its consumers.
 * Owns the perfect-pixel math (physical height -> multiplier) and a set of frame helpers that
-  snap sizes/points onto the physical pixel grid, so borders and 1px lines stay crisp at any resolution.
+* snap sizes/points onto the physical pixel grid, so borders and 1px lines stay crisp at any resolution.
 * Fully self-contained: no dependency on the consuming addon. The math tracks resolution/scale changes
-  on its own via UI_SCALE_CHANGED / DISPLAY_SIZE_CHANGED.
+* on its own via UI_SCALE_CHANGED / DISPLAY_SIZE_CHANGED.
 
 ## Consuming
 * `lib.Pixel`        - function table (object-first): ToPixelGrid, SetPixel*, SetGridPoint, GetMult, ...

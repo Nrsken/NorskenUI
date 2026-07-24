@@ -135,7 +135,6 @@ local function BuildFooter(window)
     pixel.SetPixelPoint(topBorder, "TOPLEFT", footer, "TOPLEFT", 0, 0)
     pixel.SetPixelPoint(topBorder, "TOPRIGHT", footer, "TOPRIGHT", 0, 0)
 
-    -- Resize handle.
     local handle = CreateFrame("Button", nil, footer)
     pixel.SetPixelSize(handle, 23, 23)
     pixel.SetPixelPoint(handle, "BOTTOMRIGHT", footer, "BOTTOMRIGHT", -2, 2)
@@ -189,7 +188,6 @@ local function BuildFooter(window)
 
     window.footer = footer
 end
-
 
 -- Public window methods --
 

@@ -43,7 +43,6 @@ function InstanceMixin:CreateSidebar(parent, opts)
     local isDisabled = opts.isDisabled or function(e) return e.disabled end
     local pad = theme.paddingSmall
 
-    -- Panel frame
     local frame = CreateFrame("Frame", nil, parent, "BackdropTemplate")
     frame:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8" })
 
@@ -85,7 +84,6 @@ function InstanceMixin:CreateSidebar(parent, opts)
     scrollFrame:HookScript("OnShow", function() UpdateScrollbar() end)
     frame:HookScript("OnSizeChanged", UpdateScrollChildWidth)
 
-    -- Sidebar object
     local sidebar = {
         frame = frame,
         scrollFrame = scrollFrame,
@@ -100,7 +98,7 @@ function InstanceMixin:CreateSidebar(parent, opts)
     local headerPool, itemPool = {}, {}
     local activeHeaders, activeItems = {}, {}
 
-    -- Header
+    -- Header --
     local function CreateHeader()
         local header = CreateFrame("Button", nil, scrollChild)
         pixel.SetPixelHeight(header, HEADER_HEIGHT)
@@ -202,7 +200,7 @@ function InstanceMixin:CreateSidebar(parent, opts)
         return h
     end
 
-    -- Leaf item (child of a section)
+    -- Item --
     local function CreateItem()
         local item = CreateFrame("Button", nil, scrollChild)
         pixel.SetPixelHeight(item, ITEM_HEIGHT)
@@ -287,7 +285,7 @@ function InstanceMixin:CreateSidebar(parent, opts)
         wipe(activeHeaders); wipe(activeItems)
     end
 
-    -- Visual application
+    -- Visual state --
     local function ApplyItemState(item)
         if item.disabled then
             item.label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 0.35)
@@ -366,7 +364,7 @@ function InstanceMixin:CreateSidebar(parent, opts)
         activeHeaders[#activeHeaders + 1] = header
     end
 
-    -- Rendering
+    -- Rendering --
     local function RenderTree()
         local y = pad
         if not sidebar.config then
@@ -520,7 +518,6 @@ function InstanceMixin:CreateSidebar(parent, opts)
         end
     end
 
-    -- Static chrome restyle
     local function RestyleChrome()
         frame:SetBackdropColor(theme.bgMedium[1], theme.bgMedium[2], theme.bgMedium[3], theme.bgMedium[4])
         rightBorder:SetColorTexture(theme.border[1], theme.border[2], theme.border[3], theme.border[4])

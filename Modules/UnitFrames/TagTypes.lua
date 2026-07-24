@@ -71,15 +71,22 @@ Tags.Methods['nrsknuf:unit:smartcolor'] = function(unit)
 		return '|cffffffff'
 	end
 
+	-- UnitClass and UnitIsPVP return secrets once the unit's identity is restricted. A secret
+	-- cannot be used as a table key or branched on, and a tag must return a plain string
+	-- regardless: oUF does `f(unit) or ''` on the result, which would error on a secret.
+	local secret = NRSKNUI:IsSecretUnit(unit)
+
 	local reaction = UnitReaction(unit, 'player')
 	if UnitIsTapDenied(unit) or not UnitIsConnected(unit) then
 		return '|cff999999'
 	elseif UnitIsPlayer(unit) or UnitTreatAsPlayerForDisplay(unit) then
+		if secret then return '|cffffffff' end
+
 		local _, classToken = UnitClass(unit)
 		return NRSKNUI.Colors.class[classToken] and Hex(NRSKNUI.Colors.class[classToken])
 	elseif not UnitIsPlayer(unit) and reaction then
 		return NRSKNUI.Colors.reaction[reaction] and Hex(NRSKNUI.Colors.reaction[reaction])
-	elseif UnitFactionGroup(unit) and UnitIsEnemy(unit, 'player') and UnitIsPVP(unit) then
+	elseif not secret and UnitFactionGroup(unit) and UnitIsEnemy(unit, 'player') and UnitIsPVP(unit) then
 		return '|cffff0000'
 	else
 		return '|cffffffff'

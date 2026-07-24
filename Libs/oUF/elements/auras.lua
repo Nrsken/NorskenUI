@@ -14,13 +14,16 @@ groups and slots for each element.
 
 ## Options (for buttons)
 
+> Note: these options can be set on either the element or within the options table for groups and slots
+
 .size                   - Aura button size. Defaults to 16 (number?)
 .width                  - Aura button width. Takes priority over `size` (number?)
 .height                 - Aura button height. Takes priority over `size` (number?)
-.showBuffBorder         - Show Border texture when it's a buff (boolean?)
-.showDebuffBorder       - Show Border texture when it's a debuff (boolean?)
-.showBorderSymbol       - Show dispel type symbol on the Border texture. Not applicable if the border style is not Atlas (boolean?)
-.borderStyle            - Which style to use for the border (AuraButtonBorderStyle?)
+.showBuffBorder         - Show dispel border texture when it's a buff (boolean?)
+.showDebuffBorder       - Show dispel border texture when it's a debuff (boolean?)
+.showDefaultBorder      - Whether to show the border even when there's no dispel type (boolean?)
+.showBorderIcon         - Show dispel type icon on the border texture. Not applicable if the border style is not Atlas (boolean?)
+.borderStyle            - Which style to use for the border, one of Enum.CustomAuraButtonBorderStyle (number?)
 .showCount              - Show Count fontstring representing aura applications (boolean?)
 .countFormatter         - Formatter used to adjust the text displayed on the Count fontstring ([NumericFormatter](https://warcraft.wiki.gg/wiki/ScriptObject_NumericFormatter)?)
 .showDuration           - Show Duration fontstring representing time remaining of the aura (boolean?)
@@ -37,11 +40,15 @@ groups and slots for each element.
 
 ## Options (for groups and slots)
 
+> Note: these options must be set within the options table for groups or slots
+
 .spacing  - Spacing between each button. Defaults to 0 (number)
 .spacingX - Horizontal spacing between each button. Takes priority over `spacing` (number)
 .spacingY - Vertical spacing between each button. Takes priority over `spacing` (number)
 
 ## Options (for groups only)
+
+> Note: these options must be set within the options table for groups
 
 .num  - Number of auras to display. Defaults to an infinite number (number)
 .gap  - Gap between each aura group. Defaults to 0 (number)
@@ -49,6 +56,8 @@ groups and slots for each element.
 .gapY - Vertical gap between each button. Takes priority over `gap` (number)
 
 ## Options (for slots only)
+
+> Note: these options must be set within the options table for slots
 
 .maxCols - Maximum number of aura button columns before wrapping to a new row. Defaults to element width divided by aura button size (number)
 
@@ -60,24 +69,23 @@ groups and slots for each element.
 
   -- Position and size
   Container:SetPoint('TOP', self, 'BOTTOM')
-  Container:SetSize(120, 30)
 
   -- Enable some sub-widgets
   Container.showCount = true
   Container.showBuffBorder = true
-  Container.showDebuffBorder = true
 
   -- Register a group using a filter and some options
   Container:AddGroup('HELPFUL', {
     maxFrameCount = 20, -- overrides Container.num
-    initializeFrame = PostCreateAuraButton,
+    initializeFrame = PostCreateAuraButton, -- overrides CreateButton override
+    showDebuffBorder = true, -- group-specific option for its buttons
   })
 
   -- Register another group using a different filter and no options
   Container:AddGroup('HARMFUL')
 
   -- Register a slot with a filter to only include Mark of the Wild
-  local Slot = Container:AddSlot('HELPFUL', {
+  Container:AddSlot('HELPFUL', {
     candidateFilters = {
       includeSpellIDs = {
         [1126] = true,
@@ -95,30 +103,30 @@ local GetOrCreateAuraContainer = Private.GetOrCreateAuraContainer
 
 local STATE = {}
 
-local function SetSlotPosition(element, button, index)
-	local width = element.width or element.size or 16
-	local height = element.height or element.size or 16
-	local sizeX = width + (element.spacingX or element.spacing or 0)
-	local sizeY = height + (element.spacingY or element.spacing or 0)
-	local anchor = element.initialAnchor or 'TOPLEFT'
-	local growthX = (element.growthX == 'LEFT' and -1) or 1
-	local growthY = (element.growthY == 'DOWN' and -1) or 1
-	local cols = element.maxCols or math.floor(element:GetAuraLayoutRowWidth() / sizeX + 0.5)
+local function SetSlotPosition(element, button, options)
+	local width = options.width or options.size or element.width or element.size or 16
+	local height = options.height or options.size or element.height or element.size or 16
+	local sizeX = width + (options.spacingX or options.spacing or element.spacingX or element.spacing or 0)
+	local sizeY = height + (options.spacingY or options.spacing or element.spacingY or element.spacing or 0)
+	local anchor = options.initialAnchor or element.initialAnchor or 'TOPLEFT'
+	local growthX = (options.growthX or element.growthX == 'LEFT' and -1) or 1
+	local growthY = (options.growthY or element.growthY == 'DOWN' and -1) or 1
+	local cols = options.maxCols or element.maxCols or math.floor(element:GetAuraLayoutRowWidth() / sizeX + 0.5)
 
-	local col = (index - 1) % cols
-	local row = math.floor((index - 1) / cols)
+	local col = (options.slotIndex - 1) % cols
+	local row = math.floor((options.slotIndex - 1) / cols)
 
 	button:ClearAllPoints()
 	button:SetPoint(anchor, element, anchor, col * sizeX * growthX, row * sizeY * growthY)
 end
 
 local function CreateButton(element, options, button)
-	local width = element.width or element.size or 16
-	local height = element.height or element.size or 16
+	local width = options.width or options.size or element.width or element.size or 16
+	local height = options.height or options.size or element.height or element.size or 16
 	button:SetSize(width, height)
-	button:EnableMouse(not element.disableMouse)
+	button:EnableMouse(not (options.disableMouse or element.disableMouse))
 
-	if(not element.disableCooldown) then
+	if(not (options.disableCooldown or element.disableCooldown)) then
 		local cd = CreateFrame('Cooldown', '$parentCooldown', button, 'CooldownFrameTemplate')
 		cd:SetAllPoints()
 		button.Cooldown = cd
@@ -131,8 +139,8 @@ local function CreateButton(element, options, button)
 	button:SetIcon(icon)
 
 	local textParent
-	if(element.showCount or element.showDuration) then
-		if(element.disableCooldown) then
+	if((options.showCount or element.showCount) or (options.showDuration or element.showDuration)) then
+		if(options.disableCooldown or element.disableCooldown) then
 			textParent = button
 		else
 			-- raise frame level to render text above cooldown
@@ -142,56 +150,58 @@ local function CreateButton(element, options, button)
 		end
 	end
 
-	if(element.showCount) then
+	if(options.showCount or element.showCount) then
 		local count = textParent:CreateFontString(nil, 'OVERLAY', 'NumberFontNormal')
 		count:SetPoint('BOTTOMRIGHT', -1, 0)
 		button.Count = count
 		button:SetApplicationCount(count, {
-			formatter = element.countFormatter,
+			formatter = options.countFormatter or element.countFormatter,
 		})
 	end
 
-	if(element.showBuffBorder or element.showDebuffBorder) then
+	if((options.showBuffBorder or element.showBuffBorder) or (options.showDebuffBorder or element.showDebuffBorder)) then
 		local border = button:CreateTexture(nil, 'OVERLAY')
 		border:SetAllPoints()
 		button.Border = border
 		button:SetAuraBorder(border, {
-			showIcon = element.showBorderSymbol,
-			showWhenHarmful = element.showDebuffBorder,
-			showWhenHelpful = element.showBuffBorder,
-			style = element.borderStyle,
+			style = options.borderStyle or element.borderStyle,
+			showIcon = options.showBorderIcon or element.showBorderIcon,
+			showWhenHarmful = options.showDebuffBorder or element.showDebuffBorder,
+			showWhenHelpful = options.showBuffBorder or element.showBuffBorder,
+			showWithoutDispelType = options.showDefaultBorder or element.showDefaultBorder,
+			customDispelColorMap = element.__owner.colors.dispel,
 		})
 	end
 
-	if(element.showDuration) then
+	if(options.showDuration or element.showDuration) then
 		local time = textParent:CreateFontString(nil, 'OVERLAY', 'NumberFontNormal')
 		time:SetPoint('TOPLEFT', 1, 0) -- TBD
 		button.Time = time
 		button:SetDurationText(time, {
-			formatter = element.durationFormatter,
-			textFormat = element.durationFormat,
-			textColorCurve = element.durationColorCurve,
-			timeModifier = element.durationModifier,
-			updateInterval = element.durationUpdateInterval,
-			expiredText = element.durationExpiredText or '',
-			zeroDurationText = element.durationZeroText or '',
+			formatter = options.durationFormatter or element.durationFormatter,
+			textFormat = options.durationFormat or element.durationFormat,
+			textColorCurve = options.durationColorCurve or element.durationColorCurve,
+			timeModifier = options.durationModifier or element.durationModifier,
+			updateInterval = options.durationUpdateInterval or element.durationUpdateInterval,
+			expiredText = options.durationExpiredText or element.durationExpiredText or '',
+			zeroDurationText = options.durationZeroText or element.durationZeroText or '',
 		})
 	end
 
-	if(element.cancelButton) then
-		button:SetCancelAuraButtons(element.cancelButton)
+	if(options.cancelButton or element.cancelButton) then
+		button:SetCancelAuraButtons(options.cancelButton or element.cancelButton)
 	end
 
 	if(options.slotIndex) then
-		--[[ Override: Auras:SetSlotPosition(button, index)
+		--[[ Override: Auras:SetSlotPosition(button, options)
 		Used to anchor aura slots.  
 		Called when new aura buttons have been created.
 
-		* self   - the element used to represent the aura buttons (AuraContainer)
-		* button - the aura button (AuraButton)
-		* index  - the index of the aura button
+		* self    - the element used to represent the aura buttons (AuraContainer)
+		* button  - the aura button (AuraButton)
+		* options - the aura group/slot options passed through to CreateButton (table)
 		--]]
-		(element.SetSlotPosition or SetSlotPosition) (element, button, options.slotIndex)
+		(options.SetSlotPosition or element.SetSlotPosition or SetSlotPosition) (element, button, options)
 	end
 
 	--[[ Callback: Auras:PostCreateButton(button)
@@ -214,9 +224,11 @@ This can be defined multiple times.
 
 ## Notes
 
-Many of the options will fall back to element-wide options unless specified.  
-The groupKey is an arbitrary string used to identify the aura group after creation, and is derived
-from the frame's inherited name, suffixed by a growing integer.
+* Many of the options will fall back to element-wide options unless specified.
+* All of the button-specific options can be set in the group options to override the
+element-provided values
+* The groupKey is an arbitrary string used to identify the aura group after creation, and is derived
+from the element's inherited name, suffixed by a growing integer.
 
 ## Returns
 
@@ -262,11 +274,12 @@ function elementMixin:AddGroup(filter, options)
 	end
 
 	-- keep track of how many groups we've created, for key generation purposes
-	local frame = self:GetParent()
+	local frame = self.__owner
 	local index = (STATE[frame].groupIndex or 0) + 1
 	STATE[frame].groupIndex = index
 
-	local key = self:GetDebugName() .. 'Group' .. index
+	local key = 'Group' .. index
+	STATE[frame].containerGroups[self][key] = filter -- TODO: need to hook the method too
 	self:AddAuraGroup(key, filter, options)
 
 	return key
@@ -282,11 +295,13 @@ This can be defined multiple times.
 
 ## Notes
 
-Many of the options will fall back to element-wide options unless specified.  
-Slots will be automatically positioned with each other, this can be overridden with ClearAllPoints
-and SetPoint.  
-The slotKey is an arbitrary string used to identify the aura group after creation, and is derived
-from the frame's inherited name, suffixed by a growing integer.
+* Many of the options will fall back to element-wide options unless specified.
+* All of the button-specific options can be set in the group options to override the
+element-provided values
+* Slots will be automatically positioned with each other, this can be overridden with ClearAllPoints
+and SetPoint.
+* The slotKey is an arbitrary string used to identify the aura slot after creation, and is derived
+from the element's inherited name, suffixed by a growing integer.
 
 ## Returns
 
@@ -308,17 +323,31 @@ function elementMixin:AddSlot(filter, options)
 	end
 
 	-- keep track of how many groups we've created, for key generation purposes
-	local frame = self:GetParent()
+	local frame = self.__owner
 	local index = (STATE[frame].slotIndex or 0) + 1
 	STATE[frame].slotIndex = index
 
 	-- need to inject index into options so we can position the slot on creation
 	options.slotIndex = index
 
-	local key = self:GetDebugName() .. 'Slot' .. index
+	local key = 'Slot' .. index
+	STATE[frame].containerSlots[self][key] = filter -- TODO: need to hook the method too
 	self:AddAuraSlot(key, filter, options)
 
 	return key
+end
+
+--[[ Auras: auras:ForceUpdate()
+Forcefully update all auras within groups and slots on the element.
+--]]
+function elementMixin:ForceUpdate()
+	self:UpdateAllAuras()
+end
+
+local function hookFilterChange(tbl, container, key, filter)
+	if filter ~= 'HELPFUL|HARMFUL' then -- noone should need to do this
+		STATE[container.__owner][tbl][container][key] = filter
+	end
 end
 
 --[[ Auras: frame:CreateAuras([options])
@@ -347,16 +376,35 @@ methods on the element.
 
 * auras - the element used to represent the aura buttons (AuraContainer)
 --]]
-oUF:RegisterMetaFunction('CreateAuras', function(self, options)
+local function Create(self, options)
 	local element = GetOrCreateAuraContainer(self)
 	if(not element) then
 		return
 	end
 
-	-- hook for UAE, for unit specific changes through HandleUnit, vehicle support, nameplates and
-	-- headers shuffling units, etc
-	if(not STATE[self]) then STATE[self] = {containers = {}} end
+	element.__owner = self
+
+	-- keep a local state of each container created for each frame
+	if(not STATE[self]) then
+		STATE[self] = {
+			-- we need to keep track of containers in order for UAE to update them
+			containers = {},
+			-- we also need to keep track of each individual group and slot for each container
+			containerGroups = {},
+			containerSlots = {},
+		}
+	end
+
+	-- inject this container into the state table
 	table.insert(STATE[self].containers, element)
+
+	-- inject this container into each group/slot state table
+	STATE[self].containerGroups[element] = {}
+	STATE[self].containerSlots[element] = {}
+
+	-- hook filter methods so we can keep the aformentioned tables updated with the current filters
+	hooksecurefunc(element, 'SetAuraGroupFilterString', GenerateClosure(hookFilterChange, 'containerGroups'))
+	hooksecurefunc(element, 'SetAuraSlotFilterString', GenerateClosure(hookFilterChange, 'containerSlots'))
 
 	-- element-wide options we'll just set directly from options
 	element:SetAuraLayoutRowWidth(options.maxWidth or self:GetWidth())
@@ -378,21 +426,59 @@ oUF:RegisterMetaFunction('CreateAuras', function(self, options)
 	end
 
 	return Mixin(element, elementMixin)
-end)
+end
 
---[[ Auras: frame:UpdateAllAuras()
-Used to update all auras on a frame.
-
-* self - the unit frame from which to update the auras
---]]
-oUF:RegisterMetaFunction('UpdateAllAuras', function(self)
+local function Update(self)
 	if(STATE[self] and STATE[self].containers) then
 		for _, container in next, STATE[self].containers do
 			if container:GetUnit() ~= self.unit then
-				container:SetUnit(self.unit)
+				container:SetUnit(self.unit) -- triggers a full update
+			else
+				container:ForceUpdate()
 			end
-
-			container:UpdateAllAuras()
 		end
 	end
-end)
+end
+
+local function Enable(self)
+	if(STATE[self] and STATE[self].containers) then
+		for _, container in next, STATE[self].containers do
+			-- when enabling a container we have to also reset the filters for each group and slot
+			-- to their last known state
+			for groupKey, filter in next, STATE[self].containerGroups[container] do
+				container:SetAuraGroupFilterString(groupKey, filter)
+			end
+
+			for slotKey, filter in next, STATE[self].containerSlots[container] do
+				container:SetAuraSlotFilterString(slotKey, filter)
+			end
+
+			container:SetEnabled(true) -- triggers a full update
+		end
+	end
+
+	return true
+end
+
+local function Disable(self)
+	if(STATE[self] and STATE[self].containers) then
+		for _, container in next, STATE[self].containers do
+			container:SetEnabled(false)
+
+			-- disabling a container does not "reset" the groups and slots within, so we have to
+			-- temporarily disable them ourselves. there are however no methods to simply disable groups
+			-- and slots. the best workaround is to set invalid/conflicting filters that would always
+			-- result in no aura buttons
+
+			for groupKey in next, STATE[self].containerGroups[container] do
+				container:SetAuraGroupFilterString(groupKey, 'HELPFUL|HARMFUL')
+			end
+
+			for slotKey in next, STATE[self].containerSlots[container] do
+				container:SetAuraSlotFilterString(slotKey, 'HELPFUL|HARMFUL')
+			end
+		end
+	end
+end
+
+oUF:AddMetaElement('Auras', Create, Update, Enable, Disable)

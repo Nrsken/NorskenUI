@@ -86,6 +86,11 @@ function UF:ApplyElementStates(frame, unit, uDB)
     -- Handle RaidTargetIndicator and LeaderIndicator elements
     SetElement(frame, 'RaidTargetIndicator', frame.RaidTargetIndicator, uDB.RaidIcon.Enabled)
     SetElement(frame, 'LeaderIndicator', frame.LeaderIndicator, uDB.LeaderIndicator.Enabled)
+
+    -- Handle the native indicator elements
+    for _, def in ipairs(UF.IndicatorDefs) do
+        SetElement(frame, def.element, frame[def.element], uDB.Indicators[def.key].Enabled)
+    end
 end
 
 ---Apply the whole DB to one frame: geometry, backdrop, every element and then one ForceUpdate.
@@ -107,6 +112,12 @@ function UF:ConfigureFrame(frame, unit)
     -- oUF auto-enables elements on spawn, so ApplyElementStates is only needed for later DB changes.
     if frame.nuiBuilt then
         self:ApplyElementStates(frame, unit, uDB)
+        if uDB.Enabled then
+            RegisterUnitWatch(frame)
+        else
+            UnregisterUnitWatch(frame)
+            frame:Hide()
+        end
     end
 
     frame:UpdateAllElements('ForceUpdate')
@@ -134,8 +145,20 @@ function UF:SpawnUnits()
             if EM and EM.Register then
                 EM:Register(self, 'UnitFrame_' .. unit, frame, nil, { db = UF.GetUnitDB(unit) })
             end
+
+            -- oUF auto-enables every constructed element during Spawn, and the PLAYER_ENTERING_WORLD
+            -- ApplySettings can land before this deferred spawn, so the disabled ones are backed out
+            -- here. The repaint settles the status-driven elements SetElement force-shows.
+            self:ApplyElementStates(frame, unit, UF.GetUnitDB(unit))
+            frame:UpdateAllElements('ForceUpdate')
         else
             RegisterUnitWatch(frame)
+        end
+
+        -- oUF:Spawn registers the unit watch itself, so disabled units back it out here.
+        if not UF.GetUnitDB(unit).Enabled then
+            UnregisterUnitWatch(frame)
+            frame:Hide()
         end
     end
 end

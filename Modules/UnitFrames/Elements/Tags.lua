@@ -69,9 +69,20 @@ UF.Elements.Tags = {
         for _, name in ipairs(SLOTS) do
             if not slots[name] then
                 local fs = container:CreateFontString(nil, 'OVERLAY')
-                if EVENTLESS[unit] then fs.frequentUpdates = 0.5 end
                 fs:SetWordWrap(false)
                 slots[name] = fs
+            end
+            -- oUF binds the timer at Tag() time, so an interval change forces a re-tag below.
+            if EVENTLESS[unit] then
+                local fs = slots[name]
+                local interval = UF.db.TagSettings.UpdateInterval
+                if fs.frequentUpdates ~= interval then
+                    fs.frequentUpdates = interval
+                    if fs.nuiTag then
+                        frame:Untag(fs)
+                        fs.nuiTag = nil
+                    end
+                end
             end
         end
 
@@ -92,7 +103,12 @@ UF.Elements.Tags = {
                     end
                 end
 
-                fs:SetFontStyle(slotDB)
+                -- Font chain: slot -> UnitFrames General -> global media. Passing `general` as the
+                -- source is what makes the General font tab reach the tags at all; the slot only
+                -- supplies the face and outline once it opts out of the shared font.
+                local useGlobal = slotDB.UseGlobalFont
+                fs:SetFontStyle(useGlobal and general or slotDB, slotDB.FontSize,
+                    useGlobal and general.FontOutline or slotDB.FontOutline)
                 fs:SetFontJustify(slotDB, container, slotDB.Position.XOffset, slotDB.Position.YOffset, nil, bound)
 
                 local c = slotDB.Color

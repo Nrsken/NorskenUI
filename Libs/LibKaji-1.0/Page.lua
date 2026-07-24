@@ -7,24 +7,24 @@
 
 ## Example
 
-?   local page = GUI:CreatePage(scrollChild, yOffset, { enabled = function() return db.Enabled end })
-?   page:SetCondition('custom', function() return db.Mode == 'custom' end)
-?
-?   local AppearancePage = page:Card('Appearance', 'all')
-?   AppearancePage:Rebuild(function(card)
-?       local row = card:Row(40)
-?       row:Dropdown('Style', {
-?           width = 0.5,
-?           options = opts,
-?           value = db.Mode,
-?           callback = function(v)
-?               db.Mode = v
-?               card:Rebuild()
-?           end,
-?       })
-?   end)
-?
-?   return page:Finish()
+    local page = GUI:CreatePage(scrollChild, yOffset, { enabled = function() return db.Enabled end })
+    page:SetCondition('custom', function() return db.Mode == 'custom' end)
+
+    local AppearancePage = page:Card('Appearance', 'all')
+    AppearancePage:Rebuild(function(card)
+        local row = card:Row(40)
+        row:Dropdown('Style', {
+            width = 0.5,
+            options = opts,
+            value = db.Mode,
+            callback = function(v)
+                db.Mode = v
+                card:Rebuild()
+            end,
+        })
+    end)
+
+    return page:Finish()
 
 --]]
 

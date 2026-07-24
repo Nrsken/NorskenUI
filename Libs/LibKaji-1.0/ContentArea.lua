@@ -6,14 +6,19 @@
 * A descriptor's `mode` selects the layout:
 *     clean -> a single scrollable fluent page (build(page))
 *     tabs  -> a sub-tab strip over per-tab pages (build(page, tabId))
-* A `sidebar` field adds a left item list (MiniSidebar) beside the scroll region, orthogonal to mode:
-* page-level in clean mode, or on a tab entry in tabs mode.
+* A `sidebar` field adds a full-height left item list (MiniSidebar) beside the scroll region, orthogonal to mode:
 *     sidebar = { items: table|fun():table, width?, buttons?, renderItem?, default? }
 * All layouts share the uniform contract build(page, tabId, itemKey, item) — trailing args are nil
 * when no tab strip / sidebar is active, so plain pages just declare build(page).
 *
 * tabs descriptor: { mode='tabs', tabs = { {id, text, disabled?, sidebar?}, ... }, build = fun(page, tabId, ...) }
 * The strip wraps to multiple justified rows when the tabs overflow the content width (see CreateTabStrip).
+*
+* Where the sidebar sits decides which axis drives the other:
+*     tab-outer    -> `sidebar` on a tab entry: the selected tab decides the item list.
+*     sidebar-outer-> `sidebar` page-level alongside mode='tabs': the item list is fixed and the
+*                     selected item decides the tabs. Pass `tabs = fun(itemKey, item) -> tabs[]`
+*                     to vary them per item; a static table works too.
 
 --]]
 
@@ -73,12 +78,14 @@ local function ClearScrollChild(scrollChild)
     pixel.SetPixelHeight(scrollChild, 1)
 end
 
-local TAB_ROW_HEIGHT = 29      -- height of one row of tabs
-local TAB_STRIP_TOP = 0        -- gap above the first row
-local TAB_HPAD = 14            -- horizontal padding on each side of a tab label
-local TAB_UNDERLINE = 2        -- selected-tab underline thickness
-local UNDERLINE_INSET = 6      -- underline is shorter than the tab by this on each side
-local JUSTIFY_THRESHOLD = 0.75 -- a lone row under this fill ratio stays left-packed instead of justified
+local TAB_ROW_HEIGHT = 29 -- height of one row of tabs
+local TAB_STRIP_TOP = 0   -- gap above the first row
+local TAB_HPAD = 14       -- horizontal padding on each side of a tab label
+local TAB_GAP = 2         -- gap between the bordered tab buttons (and below them, before the next row)
+local TAB_INSET = 4       -- padding between the strip's edges and the tab buttons
+local TAB_UNDERLINE = 2   -- selected-tab underline thickness
+local UNDERLINE_INSET = 1 -- underline is shorter than the tab by this on each side
+local TAB_BACKDROP = { bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1 }
 
 -- Scratch tables reused across a single BuildTabs pass.
 local widths, rowwidths, rowends = {}, {}, {}
@@ -86,16 +93,37 @@ local widths, rowwidths, rowends = {}, {}, {}
 ---Creates a tab strip that wraps to multiple justified rows when the tabs overflow the content width.
 ---@param gui KajiGUIInstance
 ---@param parent Frame the strip pins to the top of this frame; its height grows with the row count
----@param opts table { onSelect: fun(tabId) }
+---@param opts table { onSelect: fun(tabId), rightReserve?: number }
 ---@return table strip
 local function CreateTabStrip(gui, parent, opts)
     local theme = gui.theme
     local onSelect = opts.onSelect
+    -- Space kept clear on the right (the scroll region's scrollbar). Reserved unconditionally so
+    -- the tabs don't jump when switching between tabs that scroll and tabs that don't.
+    local rightReserve = opts.rightReserve or 0
 
     local frame = CreateFrame("Frame", nil, parent)
     pixel.SetPixelPoint(frame, "TOPLEFT", parent, "TOPLEFT", 0, 0)
-    pixel.SetPixelPoint(frame, "TOPRIGHT", parent, "TOPRIGHT", 0, 0)
-    pixel.SetPixelHeight(frame, TAB_STRIP_TOP + TAB_ROW_HEIGHT)
+    pixel.SetPixelHeight(frame, TAB_STRIP_TOP + TAB_INSET * 2 + TAB_ROW_HEIGHT)
+
+    -- Authoritative width, never measured (AceGUI's `frame.width or frame:GetWidth()` pattern):
+    -- a frame re-anchored this tick still reports its old rect, which is what let rows lay out
+    -- against the pre-sidebar width and spill past the right edge. The strip is sized explicitly
+    -- from the long-lived parent instead, so the value is correct the instant the inset changes.
+    local leftInset, stripWidth = 0, 0
+    local function ApplyWidth()
+        stripWidth = mmax(0, (parent:GetWidth() or 0) - leftInset)
+        pixel.SetPixelWidth(frame, stripWidth)
+    end
+    ApplyWidth()
+
+    -- Pushes the strip right of a full-height mini sidebar; 0 restores the full width.
+    local function SetLeftInset(inset)
+        leftInset = inset
+        frame:ClearAllPoints()
+        pixel.SetPixelPoint(frame, "TOPLEFT", parent, "TOPLEFT", inset, 0)
+        ApplyWidth()
+    end
 
     -- Boundary line between the strip and the content below it.
     local baseline = frame:CreateTexture(nil, "BORDER")
@@ -105,25 +133,58 @@ local function CreateTabStrip(gui, parent, opts)
 
     local strip = { frame = frame, selected = nil }
     local pool, active = {}, {}
+    local currentRows = 0 -- forces the first layout to size the strip
+
+    ---Re-anchors the strip beside a mini sidebar (or back to the full width) and reflows.
+    ---@param inset number
+    function strip:SetLeftInset(inset)
+        if inset == leftInset then return end
+        SetLeftInset(inset)
+        self:Layout()
+    end
+
+    -- Label widths only change with the text or the font, so they are measured on those events
+    -- rather than per resize tick: a cold-font measurement mid-drag would resize tabs under the cursor.
+    local function MeasureTabs()
+        for _, tab in ipairs(active) do
+            tab.naturalWidth = tab.label:GetStringWidth() + TAB_HPAD * 2
+        end
+    end
 
     local function ApplyTabState(tab)
         if tab.disabled then
             tab.label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 0.35)
+            tab.selectedBg:Hide()
             tab.underline:Hide()
+            tab:SetBackdropColor(theme.bgMedium[1], theme.bgMedium[2], theme.bgMedium[3], 1)
+            tab:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
         elseif tab.value == strip.selected then
             tab.label:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
+            tab.selectedBg:SetColorTexture(theme.accent[1], theme.accent[2], theme.accent[3], 0.08)
+            tab.selectedBg:Show()
             tab.underline:SetColorTexture(theme.accent[1], theme.accent[2], theme.accent[3], 1)
             tab.underline:Show()
+            tab:SetBackdropColor(theme.bgMedium[1], theme.bgMedium[2], theme.bgMedium[3], 1)
+            tab:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
         else
             tab.label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
+            tab.selectedBg:Hide()
             tab.underline:Hide()
+            tab:SetBackdropColor(theme.bgMedium[1], theme.bgMedium[2], theme.bgMedium[3], 1)
+            tab:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
         end
     end
 
     local function CreateTab()
-        local tab = CreateFrame("Button", nil, frame)
-        pixel.SetPixelHeight(tab, TAB_ROW_HEIGHT)
+        local tab = CreateFrame("Button", nil, frame, "BackdropTemplate")
+        pixel.SetPixelHeight(tab, TAB_ROW_HEIGHT - TAB_GAP)
+        tab:SetBackdrop(TAB_BACKDROP)
         tab:RegisterForClicks("LeftButtonUp")
+
+        local selectedBg = tab:CreateTexture(nil, "BACKGROUND", nil, 1)
+        selectedBg:SetAllPoints()
+        selectedBg:Hide()
+        tab.selectedBg = selectedBg
 
         local label = tab:CreateFontString(nil, "OVERLAY")
         pixel.SetPixelPoint(label, "CENTER", tab, "CENTER", 0, 0)
@@ -133,14 +194,15 @@ local function CreateTabStrip(gui, parent, opts)
 
         local underline = tab:CreateTexture(nil, "OVERLAY")
         pixel.SetPixelHeight(underline, TAB_UNDERLINE)
-        pixel.SetPixelPoint(underline, "BOTTOMLEFT", tab, "BOTTOMLEFT", UNDERLINE_INSET, 0)
-        pixel.SetPixelPoint(underline, "BOTTOMRIGHT", tab, "BOTTOMRIGHT", -UNDERLINE_INSET, 0)
+        pixel.SetPixelPoint(underline, "BOTTOMLEFT", tab, "BOTTOMLEFT", UNDERLINE_INSET, theme.borderSize)
+        pixel.SetPixelPoint(underline, "BOTTOMRIGHT", tab, "BOTTOMRIGHT", -UNDERLINE_INSET, theme.borderSize)
         underline:Hide()
         tab.underline = underline
 
         tab:SetScript("OnEnter", function(self)
             if self.disabled or self.value == strip.selected then return end
             self.label:SetTextColor(theme.textPrimary[1], theme.textPrimary[2], theme.textPrimary[3], 1)
+            self:SetBackdropBorderColor(theme.accent[1], theme.accent[2], theme.accent[3], 0.6)
             self.underline:SetColorTexture(theme.accent[1], theme.accent[2], theme.accent[3], 0.3)
             self.underline:Show()
         end)
@@ -179,22 +241,28 @@ local function CreateTabStrip(gui, parent, opts)
 
     -- Greedy line-wrap into justified rows. Runs on tab change and on width change.
     function strip:Layout()
-        local width = frame:GetWidth()
-        if not width or width <= 0 or #active == 0 then return end
+        -- Tabs are laid out inside the insets, so that is the width they get to fill.
+        local width = stripWidth - TAB_INSET * 2 - rightReserve
+        if width <= 0 or #active == 0 then return end
 
         wipe(widths); wipe(rowwidths); wipe(rowends)
-        for i, tab in ipairs(active) do widths[i] = tab.naturalWidth end
+        for i, tab in ipairs(active) do
+            widths[i] = mmin(tab.naturalWidth, width)
+        end
 
         -- Pass 1: pack tabs into rows, opening a new row when the next tab won't fit.
+        -- Row widths include the gaps between the bordered buttons.
         local numrows, used = 1, 0
         for i = 1, #active do
-            if used ~= 0 and (width - used - widths[i]) < 0 then
+            local packed = widths[i] + (used == 0 and 0 or TAB_GAP)
+            if used ~= 0 and (width - used - packed) < 0 then
                 rowwidths[numrows] = used
                 rowends[numrows] = i - 1
                 numrows = numrows + 1
-                used = 0
+                used = widths[i]
+            else
+                used = used + packed
             end
-            used = used + widths[i]
         end
         rowwidths[numrows] = used
         rowends[numrows] = #active
@@ -203,7 +271,7 @@ local function CreateTabStrip(gui, parent, opts)
         -- if that row has spare tabs and the last row has room (generalizes AceGUI's fix).
         if numrows > 1 and (rowends[numrows] - rowends[numrows - 1]) == 1 then
             local prevCount = rowends[numrows - 1] - (rowends[numrows - 2] or 0)
-            local moved = widths[rowends[numrows - 1]]
+            local moved = widths[rowends[numrows - 1]] + TAB_GAP
             if prevCount > 2 and (rowwidths[numrows] + moved) <= width then
                 rowends[numrows - 1] = rowends[numrows - 1] - 1
                 rowwidths[numrows] = rowwidths[numrows] + moved
@@ -215,23 +283,38 @@ local function CreateTabStrip(gui, parent, opts)
         local starttab = 1
         for row, endtab in ipairs(rowends) do
             local count = endtab - starttab + 1
-            local justify = not (numrows == 1 and rowwidths[row] < width * JUSTIFY_THRESHOLD)
-            local extra = justify and mmax(0, (width - rowwidths[row]) / count) or 0
-            local y = -(TAB_STRIP_TOP + (row - 1) * TAB_ROW_HEIGHT)
+            -- Every row is justified to the full width, however few tabs it holds.
+            local extra = mmax(0, (width - rowwidths[row]) / count)
+            -- A row that can't fit (one oversized tab, or a mid-layout width change) shrinks
+            -- its tabs proportionally instead of spilling past the frame.
+            local shrink = 1
+            if rowwidths[row] > width then
+                local gaps = (count - 1) * TAB_GAP
+                shrink = mmax(0.1, (width - gaps) / (rowwidths[row] - gaps))
+            end
+            -- Every tab anchors to the strip at a running offset that accumulates *unrounded*
+            -- widths (how KajiGUIRow lays a row out). Chaining each tab off the previous one's
+            -- resolved rect instead makes pixel-grid rounding compound down the row and drag
+            -- resizes visibly stutter.
+            local y = -(TAB_STRIP_TOP + TAB_INSET + (row - 1) * TAB_ROW_HEIGHT)
+            local x = TAB_INSET
             for i = starttab, endtab do
                 local tab = active[i]
+                local tabWidth = widths[i] * shrink + extra
                 tab:ClearAllPoints()
-                pixel.SetPixelWidth(tab, widths[i] + extra)
-                if i == starttab then
-                    pixel.SetPixelPoint(tab, "TOPLEFT", frame, "TOPLEFT", 0, y)
-                else
-                    pixel.SetPixelPoint(tab, "TOPLEFT", active[i - 1], "TOPRIGHT", 0, 0)
-                end
+                pixel.SetPixelPoint(tab, "TOPLEFT", frame, "TOPLEFT", x, y)
+                pixel.SetPixelWidth(tab, tabWidth)
+                x = x + tabWidth + TAB_GAP
             end
             starttab = endtab + 1
         end
 
-        pixel.SetPixelHeight(frame, TAB_STRIP_TOP + numrows * TAB_ROW_HEIGHT)
+        -- Height drives the scroll region anchored below, so only touch it on an actual row
+        -- change: resizing the strip every tick reflows the whole page behind it.
+        if numrows ~= currentRows then
+            currentRows = numrows
+            pixel.SetPixelHeight(frame, TAB_STRIP_TOP + TAB_INSET * 2 + numrows * TAB_ROW_HEIGHT)
+        end
     end
 
     ---@param tabs table[] { {id, text, disabled?}, ... }
@@ -245,10 +328,16 @@ local function CreateTabStrip(gui, parent, opts)
             tab.label:Show()
             gui:ApplyFont(tab.label, "normal")
             tab.label:SetText(t.text or "")
-            tab.naturalWidth = tab.label:GetStringWidth() + TAB_HPAD * 2
             active[i] = tab
         end
+        MeasureTabs()
         self:Layout()
+        -- Re-measure once the fonts have settled: a label measured before its font is realized
+        -- reports a short string width (AceGUI does the same via a one-shot OnUpdate).
+        C_Timer.After(0, function()
+            MeasureTabs()
+            strip:Layout()
+        end)
         for _, tab in ipairs(active) do ApplyTabState(tab) end
     end
 
@@ -260,7 +349,11 @@ local function CreateTabStrip(gui, parent, opts)
         if onSelect then safecall(onSelect, value) end
     end
 
-    frame:HookScript("OnSizeChanged", function() strip:Layout() end)
+    -- Track the host, not the strip: the strip's own size changes are our doing.
+    parent:HookScript("OnSizeChanged", function()
+        ApplyWidth()
+        strip:Layout()
+    end)
 
     local function Restyle()
         baseline:SetColorTexture(theme.border[1], theme.border[2], theme.border[3], theme.border[4])
@@ -268,6 +361,8 @@ local function CreateTabStrip(gui, parent, opts)
             gui:ApplyFont(tab.label, "normal")
             ApplyTabState(tab)
         end
+        MeasureTabs()
+        strip:Layout()
     end
     Restyle()
     gui:OnThemeChanged(Restyle)
@@ -324,12 +419,15 @@ function InstanceMixin:CreateContentHost(parent, opts)
     pixel.SetPixelHeight(scrollChild, 1)
     scrollFrame:SetScrollChild(scrollChild)
 
-    local scrollbar = gui:CreateScrollbar(scrollFrame, opts.scrollbarOptions or {
+    -- Anchored to the scroll region, not the host, so it starts below the tab strip in tabs mode.
+    local scrollbarOptions = opts.scrollbarOptions or {
         width = 16,
         thumbHeight = 40,
         padding = { top = -1, bottom = -1, right = 0 },
         scrollStep = 40,
-    })
+    }
+    scrollbarOptions.anchorToScrollFrame = true
+    local scrollbar = gui:CreateScrollbar(scrollFrame, scrollbarOptions)
 
     local scrollbarVisible = false
     local sidebarInset = 0
@@ -359,13 +457,40 @@ function InstanceMixin:CreateContentHost(parent, opts)
     }
 
     local tabStrip, miniSidebar
+    local ApplyTabsForItem -- defined once the strip helpers exist
 
     local function ResetScroll()
         if scrollbar:IsShown() then scrollbar:SetValue(0) else scrollFrame:SetVerticalScroll(0) end
     end
 
-    local function MemoryKey()
+    -- A page-level sidebar alongside tabs makes the sidebar the outer axis: the selected item
+    -- decides which tabs exist. A per-tab sidebar is the reverse. Which one is outer decides how
+    -- the selections are remembered, so the inner axis is keyed by the outer one.
+    local function IsSidebarOuter(descriptor)
+        return descriptor ~= nil and descriptor.sidebar ~= nil and (descriptor.mode or "clean") == "tabs"
+    end
+
+    local function ItemMemoryKey()
+        if IsSidebarOuter(host._descriptor) then return host.currentId or "" end
         return (host.currentId or "") .. "/" .. (host._currentTab or "")
+    end
+
+    local function TabMemoryKey()
+        if IsSidebarOuter(host._descriptor) then
+            return (host.currentId or "") .. "/" .. (host._currentItem or "")
+        end
+        return host.currentId or ""
+    end
+
+    ---The tab list, which a sidebar-outer page may derive from the selected item.
+    ---@return table[]
+    local function ResolveTabs(descriptor, itemKey, item)
+        local tabs = descriptor.tabs
+        if type(tabs) == "function" then
+            local resolved = select(2, safecall(tabs, itemKey, item))
+            return resolved or {}
+        end
+        return tabs or {}
     end
 
     -- Builds a fluent page into the (freshly cleared) scroll child. `tabId`, `itemKey` and `item`
@@ -380,14 +505,11 @@ function InstanceMixin:CreateContentHost(parent, opts)
         UpdateScrollbar()
     end
 
-    local function AnchorMiniSidebar(stripFrame)
+    -- The mini sidebar always spans the full host height; in tabs mode the strip is inset beside it.
+    local function AnchorMiniSidebar()
         local msf = miniSidebar.frame
         msf:ClearAllPoints()
-        if stripFrame then
-            pixel.SetPixelPoint(msf, "TOPLEFT", stripFrame, "BOTTOMLEFT", 0, 0)
-        else
-            pixel.SetPixelPoint(msf, "TOPLEFT", frame, "TOPLEFT", 0, 0)
-        end
+        pixel.SetPixelPoint(msf, "TOPLEFT", frame, "TOPLEFT", 0, 0)
         pixel.SetPixelPoint(msf, "BOTTOMLEFT", frame, "BOTTOMLEFT", 0, 0)
     end
 
@@ -397,10 +519,17 @@ function InstanceMixin:CreateContentHost(parent, opts)
             onSelect = function(key, item)
                 local descriptor = host._descriptor
                 if not descriptor then return end
-                host._itemMemory[MemoryKey()] = key
+                host._itemMemory[ItemMemoryKey()] = key
+                host._currentItem, host._currentItemData = key, item
                 ClearScrollChild(scrollChild)
                 host.page = nil
-                BuildPage(descriptor, host._currentTab, key, item)
+                -- Sidebar-outer: the new item may offer a different tab set, and re-selecting a
+                -- tab rebuilds the page, so ApplyTabsForItem owns the build in that case.
+                if IsSidebarOuter(descriptor) then
+                    ApplyTabsForItem(descriptor, key, item)
+                else
+                    BuildPage(descriptor, host._currentTab, key, item)
+                end
                 ResetScroll()
             end,
         })
@@ -408,15 +537,15 @@ function InstanceMixin:CreateContentHost(parent, opts)
         return miniSidebar
     end
 
-    -- The per-tab sidebar (tabs) or the page-level one (clean).
+    -- The per-tab sidebar (tabs) or the page-level one (clean / sidebar-outer).
     local function ResolveSidebar(descriptor, tabId)
+        if descriptor.sidebar then return descriptor.sidebar end
         if tabId then
             for _, t in ipairs(descriptor.tabs or {}) do
                 if t.id == tabId then return t.sidebar end
             end
-            return nil
         end
-        return descriptor.sidebar
+        return nil
     end
 
     -- Picks the item to select: the remembered one if still present, else the declared default, else the first.
@@ -442,15 +571,28 @@ function InstanceMixin:CreateContentHost(parent, opts)
             local items = ms:SetConfig(sd)
             ms.frame:Show()
             sidebarInset = sd.width or 192
-            AnchorMiniSidebar(stripFrame)
-            AnchorScrollBeside(ms.frame)
-            local key, item = ResolveInitialItem(items, host._itemMemory[MemoryKey()], sd.default)
+            AnchorMiniSidebar()
+            if stripFrame then
+                -- Strip sits right of the sidebar, so the scroll region below it is already clear of both.
+                tabStrip:SetLeftInset(sidebarInset)
+                AnchorScrollBelow(stripFrame)
+            else
+                AnchorScrollBeside(ms.frame)
+            end
+            local key, item = ResolveInitialItem(items, host._itemMemory[ItemMemoryKey()], sd.default)
             ms:SetSelected(key)
+            host._currentItem, host._currentItemData = key, item
             BuildPage(descriptor, tabId, key, item)
         else
             if miniSidebar then miniSidebar.frame:Hide() end
             sidebarInset = 0
-            if stripFrame then AnchorScrollBelow(stripFrame) else AnchorScrollTop() end
+            host._currentItem, host._currentItemData = nil, nil
+            if stripFrame then
+                tabStrip:SetLeftInset(0)
+                AnchorScrollBelow(stripFrame)
+            else
+                AnchorScrollTop()
+            end
             BuildPage(descriptor, tabId)
         end
     end
@@ -459,13 +601,20 @@ function InstanceMixin:CreateContentHost(parent, opts)
     local function EnsureTabStrip()
         if tabStrip then return tabStrip end
         tabStrip = CreateTabStrip(gui, frame, {
+            rightReserve = 0,
             onSelect = function(tabId)
                 local descriptor = host._descriptor
                 if not descriptor then return end
-                host._tabMemory[host.currentId] = tabId
+                host._currentTab = tabId
+                host._tabMemory[TabMemoryKey()] = tabId
                 ClearScrollChild(scrollChild)
                 host.page = nil
-                ShowContent(descriptor, tabId)
+                -- Sidebar-outer keeps the sidebar as it is; only the content below changes.
+                if IsSidebarOuter(descriptor) then
+                    BuildPage(descriptor, tabId, host._currentItem, host._currentItemData)
+                else
+                    ShowContent(descriptor, tabId)
+                end
                 ResetScroll()
             end,
         })
@@ -485,12 +634,55 @@ function InstanceMixin:CreateContentHost(parent, opts)
         return first
     end
 
+    -- Sidebar-outer: rebuild the strip for the selected item, keeping the current tab when the
+    -- new item still offers it. Selecting a tab fires onSelect, which builds the page.
+    function ApplyTabsForItem(descriptor, itemKey, item)
+        local strip = EnsureTabStrip()
+        strip.frame:Show()
+        local tabs = ResolveTabs(descriptor, itemKey, item)
+        strip:SetLeftInset(sidebarInset)
+        strip:SetTabs(tabs)
+        AnchorScrollBelow(strip.frame)
+
+        local initial = ResolveInitialTab(tabs, host._currentTab or host._tabMemory[TabMemoryKey()])
+        if initial then
+            strip:Select(initial)
+        else
+            host._currentTab = nil
+            BuildPage(descriptor, nil, itemKey, item)
+        end
+    end
+
+    local function ShowSidebarOuter(descriptor)
+        local sd = descriptor.sidebar
+        local ms = EnsureMiniSidebar()
+        local items = ms:SetConfig(sd)
+        ms.frame:Show()
+        sidebarInset = sd.width or 192
+        AnchorMiniSidebar()
+
+        local key, item = ResolveInitialItem(items, host._itemMemory[ItemMemoryKey()], sd.default)
+        ms:SetSelected(key)
+        host._currentItem, host._currentItemData = key, item
+        host._currentTab = host._tabMemory[TabMemoryKey()]
+        ApplyTabsForItem(descriptor, key, item)
+    end
+
     local function ShowTabs(descriptor)
+        if IsSidebarOuter(descriptor) then
+            ShowSidebarOuter(descriptor)
+            return
+        end
+
         local strip = EnsureTabStrip()
         strip.frame:Show()
         local tabs = descriptor.tabs or {}
+        local initial = ResolveInitialTab(tabs, host._tabMemory[TabMemoryKey()])
+        -- Apply the initial tab's sidebar inset before SetTabs measures the strip,
+        -- so the first layout already packs against the narrowed width.
+        local sd = initial and ResolveSidebar(descriptor, initial) or nil
+        strip:SetLeftInset(sd and (sd.width or 192) or 0)
         strip:SetTabs(tabs)
-        local initial = ResolveInitialTab(tabs, host._tabMemory[host.currentId])
         if initial then strip:Select(initial) end
     end
 

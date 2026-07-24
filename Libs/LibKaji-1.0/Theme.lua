@@ -1,4 +1,21 @@
--- LibKaji-1.0 : Theme
+--[[
+# Theme
+
+* The instance-wide palette, metrics and fonts every widget reads from as `gui.theme`.
+* Three modes drive the colors: a bundled `preset`, the player's `class` color, or the host's `custom` overrides.
+* Widgets never poll: they subscribe with `OnThemeChanged` and restyle themselves when the mode or palette changes.
+* A consuming addon can replace the bundled presets, the ordered preset list and the color-key editor metadata at `lib:New()`.
+
+## Example
+
+    GUI:SetMode('preset')
+    GUI:SetPreset('NUI v2')
+
+    GUI:OnThemeChanged(function()
+        frame:SetBackdropColor(unpack(GUI.theme.bgDark))
+    end)
+
+--]]
 
 local lib = LibStub and LibStub("LibKaji-1.0", true)
 if not lib then return end
@@ -310,10 +327,12 @@ function InstanceMixin:ApplyFont(fontString, size)
     fontString:SetShadowColor(0, 0, 0, 0)
 end
 
---[[ Preset / mode engine ------------------------------------------------------
-Resolves the active mode (preset / class / custom) from the host's persisted store
-and pushes the result through SetTheme. The host wires a `store` accessor and an
-optional `classColorProvider` at New(). ]]
+-- Preset / mode engine --
+
+--[[
+* Resolves the active mode — preset, class or custom — from the host's persisted store and pushes the result through SetTheme.
+* The host wires a `store` accessor and an optional `classColorProvider` at New().
+--]]
 
 -- Returns the host's persisted theme store (host DB table), or nil before it exists.
 function InstanceMixin:_Store()

@@ -7,10 +7,10 @@
 
 ## Example
 
-?   local sm = GUI:CreateStateManager()
-?   sm:SetCondition('custom', function() return db.mode == 'custom' end)
-?   sm:Register(colorPicker, 'all', 'custom')
-?   sm:UpdateAll(db.enabled)  -- master enable
+    local sm = GUI:CreateStateManager()
+    sm:SetCondition('custom', function() return db.mode == 'custom' end)
+    sm:Register(colorPicker, 'all', 'custom')
+    sm:UpdateAll(db.enabled)  -- master enable
 
 --]]
 

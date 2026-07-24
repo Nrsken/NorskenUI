@@ -5,12 +5,12 @@
 
 ## Examples
 
-?   row:AddWidget(GUI:CreateColorPicker(row, 'Custom Color', {
-?       color = db.Color,
-?       callback = function(r, g, b, a)
-?           db.Color = { r, g, b, a }
-?       end,
-?   }))
+    row:AddWidget(GUI:CreateColorPicker(row, 'Custom Color', {
+        color = db.Color,
+        callback = function(r, g, b, a)
+            db.Color = { r, g, b, a }
+        end,
+    }))
 
 --]]
 
@@ -80,12 +80,10 @@ function InstanceMixin:CreateColorPicker(parent, labelText, config)
     local theme = self.theme
     local color = config.value or { 1, 1, 1, 1 }
 
-    -- Create the main frame for the color picker row.
     local row = CreateFrame("Frame", nil, parent) --[[@as KajiGUIColorPicker]]
     pixel.SetPixelHeight(row, 34)
     row.gui = gui
 
-    -- Create the label font string for the color picker.
     local label = row:CreateFontString(nil, "OVERLAY")
     pixel.SetPixelPoint(label, "TOPLEFT", row, "TOPLEFT", 0, 1)
     label:SetJustifyH("LEFT")
@@ -94,7 +92,6 @@ function InstanceMixin:CreateColorPicker(parent, labelText, config)
     label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
     row.label = label
 
-    -- Create the background texture for the color swatch.
     local swatchBg = row:CreateTexture(nil, "BACKGROUND")
     pixel.SetPixelSize(swatchBg, 48, 24)
     pixel.SetPixelPoint(swatchBg, "TOPLEFT", row, "TOPLEFT", 0, -14)
@@ -102,7 +99,6 @@ function InstanceMixin:CreateColorPicker(parent, labelText, config)
     swatchBg:SetAlpha(0.8)
     pixel.SetPixelSnap(swatchBg)
 
-    -- Create the color swatch button that displays the current color and opens the color picker on click.
     local swatch = CreateFrame("Button", nil, row, "BackdropTemplate") --[[@as KajiGUIColorSwatch]]
     pixel.SetPixelSize(swatch, 48, 24)
     pixel.SetPixelPoint(swatch, "TOPLEFT", row, "TOPLEFT", 0, -14)
@@ -112,7 +108,6 @@ function InstanceMixin:CreateColorPicker(parent, labelText, config)
     swatch.r, swatch.g, swatch.b, swatch.a = color[1], color[2], color[3], color[4] or 1
     row.swatch = swatch
 
-    -- Create the hex text font string that displays the hex code of the current color.
     local hexText = row:CreateFontString(nil, "OVERLAY")
     pixel.SetPixelPoint(hexText, "LEFT", swatch, "RIGHT", 8, 0)
     gui:ApplyFont(hexText, "small")
@@ -125,7 +120,6 @@ function InstanceMixin:CreateColorPicker(parent, labelText, config)
 
     Mixin(row, ColorPickerMixin)
 
-    -- Create an animator for the border color of the swatch on hover.
     local animateBorder = Animations:CreateHoverColorAnimator(swatch,
         function(r, g, b, a)
             swatch:SetBackdropBorderColor(r, g, b, a)
@@ -135,7 +129,6 @@ function InstanceMixin:CreateColorPicker(parent, labelText, config)
         theme.animDuration
     )
 
-    -- Set up scripts for mouse events on the swatch to handle hover, click and color picker functionality.
     swatch:SetScript("OnEnter", function() animateBorder(true) end)
     swatch:SetScript("OnLeave", function() animateBorder(false) end)
     swatch:SetScript("OnClick", function()

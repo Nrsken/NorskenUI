@@ -6,14 +6,16 @@ local UF = NRSKNUI:GetModule('UnitFrames')
 local ipairs = ipairs
 local CreateFrame = CreateFrame
 
--- Status-icon slots, separate from the text tag slots. Iterated in order.
-local SLOTS = { 'IndicatorOne', 'IndicatorTwo', 'IndicatorThree', 'IndicatorFour' }
-
--- Units without real events update their tags on a timer instead.
-local EVENTLESS = {
-    targettarget = true,
-    focustarget = true,
-    pettarget = true,
+-- Native oUF indicator elements, keyed into uDB.Indicators. Consumed by the GUI and ApplyElementStates.
+UF.IndicatorDefs = {
+    { key = 'Resting',    element = 'RestingIndicator' },
+    { key = 'Combat',     element = 'CombatIndicator' },
+    { key = 'ReadyCheck', element = 'ReadyCheckIndicator' },
+    { key = 'Summon',     element = 'SummonIndicator' },
+    { key = 'Resurrect',  element = 'ResurrectIndicator' },
+    { key = 'Quest',      element = 'QuestIndicator' },
+    { key = 'PvP',        element = 'PvPIndicator' },
+    { key = 'Phase',      element = 'PhaseIndicator' },
 }
 
 UF.Elements = UF.Elements or {}
@@ -27,45 +29,24 @@ UF.Elements.Indicators = {
         container:SetPixelPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
         container:SetFrameLevel(1000)
         container:SetFrameStrata("MEDIUM")
-
         frame.IndicatorContainer = container
-        frame.IndicatorSlots = {}
+
+        -- oUF applies each element's default texture/atlas on enable.
+        for _, def in ipairs(UF.IndicatorDefs) do
+            frame[def.element] = container:CreateTexture(nil, 'OVERLAY')
+        end
     end,
 
     Configure = function(frame, unit, uDB, general)
         local container = frame.IndicatorContainer
-        local indDB = uDB.Indicators
-        local slots = frame.IndicatorSlots
 
-        for _, name in ipairs(SLOTS) do
-            local slotDB = indDB[name]
-            local fs = slots[name]
+        for _, def in ipairs(UF.IndicatorDefs) do
+            local db = uDB.Indicators[def.key]
+            local tex = frame[def.element]
 
-            if not fs then
-                fs = container:CreateFontString(nil, 'OVERLAY')
-                if EVENTLESS[unit] then fs.frequentUpdates = 0.5 end
-                fs:SetWordWrap(false)
-                slots[name] = fs
-            end
-
-            if slotDB.Enabled and slotDB.Tag ~= '' then
-                fs:SetFontStyle(slotDB)
-                fs:SetFontJustify(slotDB, container, slotDB.Position.XOffset, slotDB.Position.YOffset)
-
-                if fs.nuiTag ~= slotDB.Tag then
-                    if fs.nuiTag then frame:Untag(fs) end
-                    frame:Tag(fs, slotDB.Tag)
-                    fs.nuiTag = slotDB.Tag
-                end
-
-                fs:Show()
-            else
-                if fs.nuiTag then
-                    frame:Untag(fs)
-                    fs.nuiTag = nil
-                end
-                fs:Hide()
-            end
+            tex:SetPixelSize(db.Size, db.Size)
+            tex:ClearAllPoints()
+            tex:SetPixelPoint(db.Position.AnchorFrom, container, db.Position.AnchorTo, db.Position.XOffset, db.Position.YOffset)
         end
     end,
 }

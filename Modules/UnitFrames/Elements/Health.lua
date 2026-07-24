@@ -12,9 +12,15 @@ UF.Elements.Health = {
     Construct = function(frame, unit)
         if frame.Health then return end
 
-        -- Setup tooltip handlers for the frame.
-        frame:SetScript('OnEnter', function(self) UF:ShowTooltip(self.unit) end)
-        frame:SetScript('OnLeave', function(self) UF:HideTooltip() end)
+        -- Setup tooltip + highlight handlers for the frame.
+        frame:SetScript('OnEnter', function(self)
+            if self.nuiHighlight.nuiEnabled then self.nuiHighlight:Show() end
+            UF:ShowTooltip(self.unit)
+        end)
+        frame:SetScript('OnLeave', function(self)
+            self.nuiHighlight:Hide()
+            UF:HideTooltip()
+        end)
 
         -- Backgroundbar
         local healthBackground = CreateFrame('StatusBar', nil, frame)
@@ -62,11 +68,22 @@ UF.Elements.Health = {
         healthBar.healAbsorbClampMode = 1
         healthBar.healAbsorbMode = 1
 
+        -- oUF skips an absorb whose field is nil, so disabling clears the field; these keep the
+        -- bars reachable for configuration.
+        healthBar.nuiHealAbsorb = HealAbsorb
+        healthBar.nuiDamageAbsorb = DamageAbsorb
+
         -- Border frame
         local healthBorderFrame = CreateFrame('Frame', nil, frame)
         healthBorderFrame:SetFrameLevel(frame:GetFrameLevel() + 4)
         healthBorderFrame:AddBorders()
         frame.healthBorderFrame = healthBorderFrame
+
+        -- Mouseover highlight
+        local highlight = healthBorderFrame:CreateTexture(nil, 'OVERLAY')
+        highlight:SetBlendMode('ADD')
+        highlight:Hide()
+        frame.nuiHighlight = highlight
 
         -- RaidIcon
         local RaidIcon = healthBorderFrame:CreateTexture(nil, 'OVERLAY', nil, 1) -- Higher than border textures.
@@ -97,10 +114,11 @@ UF.Elements.Health = {
         LeaderIndicator:ClearAllPoints()
         LeaderIndicator:SetPixelPoint(uDB.LeaderIndicator.Position.AnchorFrom, frame, uDB.LeaderIndicator.Position.AnchorTo, uDB.LeaderIndicator.Position.XOffset, uDB.LeaderIndicator.Position.YOffset)
 
-        -- Set the texture for both the foreground and background bars.
+        -- Foreground texture; background follows it unless a background texture is set (unit override first).
         local texture = NRSKNUI:GetStatusbar(general, hDB.StatusBarTexture)
+        local bgName = hDB.BackgroundTexture ~= '' and hDB.BackgroundTexture or general.BackgroundTexture
         healthBar:SetStatusBarTexture(texture)
-        healthBackground:SetStatusBarTexture(texture)
+        healthBackground:SetStatusBarTexture(bgName ~= '' and NRSKNUI:ResolveMediaPath('statusbar', bgName) or texture)
 
         -- Set sizing
         healthBar:SetAllPoints(frame)
@@ -108,40 +126,75 @@ UF.Elements.Health = {
         healthBorderFrame:SetAllPoints(frame)
 
         -- Prime to Immediate, postUpdate switches to the steady mode after the first paint.
-        healthBar.nuiSmoothing = (general.Smooth and hDB.Smooth) and Interpolation.ExponentialEaseOut or Interpolation.Immediate
+        local smooth = hDB.UseGlobalSmooth and general.Smooth or (not hDB.UseGlobalSmooth and hDB.Smooth)
+        healthBar.nuiSmoothing = smooth and Interpolation.ExponentialEaseOut or Interpolation.Immediate
         healthBar.smoothing = Interpolation.Immediate
 
         -- Background always fills opposite the foreground so the two meet in the middle.
         healthBar:SetReverseFill(hDB.Inverse or false)
         healthBackground:SetReverseFill(not (hDB.Inverse or false))
 
+        -- The whole colour set comes from General unless the unit overrides it.
+        local classColor, foreground, background, backgroundClass, classAlpha
+        if hDB.UseGlobalColors then
+            classColor = general.ColorByClass
+            foreground = general.Colors.Foreground
+            background = general.Colors.Background
+            backgroundClass = general.Colors.BackgroundWhenColorByClass
+            classAlpha = general.ForegroundAlphaWhenColorByClass
+        else
+            classColor = hDB.ColorByClass
+            foreground = hDB.Foreground
+            background = hDB.Background
+            backgroundClass = hDB.BackgroundWhenColorByClass
+            classAlpha = hDB.ForegroundAlphaWhenColorByClass
+        end
+
         -- oUF flags pick the hue, PostUpdateHealthColor enforces the alpha.
-        healthBar.ForegroundAlphaWhenColorByClass = hDB.ForegroundAlphaWhenColorByClass
-        healthBar.nuiForeground = hDB.Foreground
-        healthBar.nuiColorByClass = hDB.ColorByClass
-        healthBar.colorClass = hDB.ColorByClass
-        healthBar.colorReaction = hDB.ColorByClass
+        healthBar.ForegroundAlphaWhenColorByClass = classAlpha
+        healthBar.nuiForeground = foreground
+        healthBar.nuiColorByClass = classColor
+        healthBar.colorClass = classColor
+        healthBar.colorReaction = classColor
         healthBar.colorHealth = false
 
         -- Background coloring
-        healthBackground:SetStatusBarColor(hDB.Background[1], hDB.Background[2], hDB.Background[3], hDB.Background[4])
-        healthBar.nuiBackground = hDB.ColorByClass and hDB.BackgroundWhenColorByClass or hDB.Background
+        healthBackground:SetStatusBarColor(background[1], background[2], background[3], background[4])
+        healthBar.nuiBackground = classColor and backgroundClass or background
+
+        -- Mouseover highlight
+        local highlight = frame.nuiHighlight
+        local hlDB = general.Highlight
+        highlight.nuiEnabled = hlDB.Enabled
+        highlight:SetPixelInside(frame, 1, 1)
+        highlight:SetTexture(NRSKNUI:GetStatusbar(hlDB))
+        highlight:SetVertexColor(hlDB.Color[1], hlDB.Color[2], hlDB.Color[3], hlDB.Color[4])
+        if not hlDB.Enabled then highlight:Hide() end
 
         -- Absorb bars
-        local HealAbsorb = healthBar.HealAbsorb
-        local DamageAbsorb = healthBar.DamageAbsorb
+        local HealAbsorb = healthBar.nuiHealAbsorb
+        local DamageAbsorb = healthBar.nuiDamageAbsorb
         local OverDamageAbsorb = healthBar.OverDamageAbsorb
         local OverClip = healthBar.OverDamageAbsorbClip
         local fill = healthBar:GetStatusBarTexture()
         local inverse = hDB.Inverse or false
-        local healColor = hDB.HealAbsorb.Color
-        local dmgColor = hDB.DamageAbsorb.Color
 
-        -- Each absorb resolves its own global-or-override texture, independent of the main bar toggle.
-        local shield = NRSKNUI:GetStatusbar(hDB.DamageAbsorb)
+        -- Each absorb reads the General slot unless the unit overrides the whole slot.
+        local haDB = hDB.HealAbsorb.UseGlobal and general.HealAbsorb or hDB.HealAbsorb
+        local daDB = hDB.DamageAbsorb.UseGlobal and general.DamageAbsorb or hDB.DamageAbsorb
+        local healColor = haDB.Color
+        local dmgColor = daDB.Color
+        local shield = NRSKNUI:GetStatusbar(daDB)
+
+        -- oUF only drives an absorb whose element field is set, so disabling clears it.
+        healthBar.HealAbsorb = haDB.Enabled and HealAbsorb or nil
+        healthBar.DamageAbsorb = daDB.Enabled and DamageAbsorb or nil
+        HealAbsorb:SetShown(haDB.Enabled)
+        DamageAbsorb:SetShown(daDB.Enabled)
+        OverClip:SetShown(daDB.Enabled)
 
         -- Heal absorb bar config
-        HealAbsorb:SetStatusBarTexture(NRSKNUI:GetStatusbar(hDB.HealAbsorb))
+        HealAbsorb:SetStatusBarTexture(NRSKNUI:GetStatusbar(haDB))
         HealAbsorb:SetStatusBarColor(healColor[1], healColor[2], healColor[3], healColor[4])
         HealAbsorb:ClearAllPoints()
         HealAbsorb:SetPixelPoint('TOP')
