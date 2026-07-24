@@ -591,6 +591,19 @@ function Tooltips:OnEnable()
     if NRSKNUI:ShouldNotLoadModule() then return end -- Don't enable module if ElvUI is enabled.
     if not self.db.Enabled then return end
 
+    -- Need to run this early during PLAYER_LOGIN.
+    AuraContainerInbound.SetTooltipBackdrop({
+        backdropInfo = {
+            bgFile   = [[Interface\Buttons\WHITE8X8]],
+            edgeFile = [[Interface\Buttons\WHITE8X8]],
+            edgeSize = 1,
+            insets   = { left = 1, right = 1, top = 1, bottom = 1 },
+        },
+        centerColor = CreateColor(0, 0, 0, 0.8),
+        borderColor = CreateColor(0, 0, 0, 1),
+        anchorOffsets = { left = 0, right = 0, top = 0, bottom = 0 },
+    })
+
     -- One-time setup, everything re-appliable runs through ApplySettings.
     SkinQueueStatus()
     TooltipInit()

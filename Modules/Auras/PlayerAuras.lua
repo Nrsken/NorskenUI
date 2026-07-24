@@ -85,6 +85,7 @@ function PlayerAuras:BuildContainer(kind)
         fontSize = cfg.FontSize,
         fontOutline = cfg.FontOutline,
         cancelButton = (kind == 'Buffs') and 'RightButtonUp' or nil,
+        hideTooltipInCombat = cfg.HideTooltipInCombat,
     })
     if not container then return end
 

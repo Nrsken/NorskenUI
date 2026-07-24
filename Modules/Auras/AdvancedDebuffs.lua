@@ -56,6 +56,7 @@ function AdvancedDebuffs:BuildContainer()
         showDebuffBorder = self.db.ShowBorder or nil,
         fontSize = self.db.FontSize,
         fontOutline = self.db.FontOutline,
+        HideTooltipInCombat = self.db.HideTooltipInCombat,
     })
     if not container then return end
 

@@ -151,6 +151,13 @@ function NRSKNUI:SkinAuraButton(container, options, button)
         })
     end
 
+    local hideTooltipInCombat = options.hideTooltipInCombat
+    if hideTooltipInCombat == nil then hideTooltipInCombat = container.hideTooltipInCombat end
+    if hideTooltipInCombat then
+        button:SetHideTooltipInCombat(true)
+    end
+
+
     -- Right-click cancelaura.
     local cancelButton = options.cancelButton or container.cancelButton
     if cancelButton then
@@ -416,6 +423,7 @@ local function CreateAuraContainer(self, config)
     container.fontDB = config.fontDB
     container.fontSize = config.fontSize
     container.fontOutline = config.fontOutline
+    container.hideTooltipInCombat = config.hideTooltipInCombat
 
     return Mixin(container, ContainerMixin)
 end
