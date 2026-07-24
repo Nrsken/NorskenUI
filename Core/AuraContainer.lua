@@ -76,6 +76,7 @@ function NRSKNUI:SkinAuraButton(container, options, button)
     local cooldown
     if not (options.disableCooldown or container.disableCooldown) then
         cooldown = CreateFrame('Cooldown', nil, button, 'CooldownFrameTemplate')
+        -- For weapon enchants, we have a second border inside the outer border, so inset the cooldown inside the icon to avoid overlapping the border.
         if not borderColor then
             cooldown:SetAllPoints(icon)
         else
