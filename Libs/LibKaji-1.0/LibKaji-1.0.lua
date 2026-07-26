@@ -90,3 +90,27 @@ function lib:New(opts)
 end
 
 ---@class KajiGUIInstanceMixin
+---@field CreateGUIWindow fun(self: KajiGUIInstance, opts?: KajiGUIWindowOptions): KajiGUIWindow
+---@field RegisterPage fun(self: KajiGUIInstance, id: string, descriptor: table): void
+---@field GetTheme fun(self: KajiGUIInstance): table
+---@field ApplyTheme fun(self: KajiGUIInstance): KajiGUIInstance
+---@field OnThemeChanged fun(self: KajiGUIInstance, callback: fun()): void
+---@field GetMode fun(self: KajiGUIInstance): string
+---@field SetMode fun(self: KajiGUIInstance, mode: string): KajiGUIInstance
+---@field GetPresetNames fun(self: KajiGUIInstance): string[]
+---@field GetSelectedPreset fun(self: KajiGUIInstance): string
+---@field SetPreset fun(self: KajiGUIInstance, name: string): KajiGUIInstance
+---@field GetPreset fun(self: KajiGUIInstance, name: string): table|nil
+---@field GetColorKeys fun(self: KajiGUIInstance): table[]
+---@field GetCustomColor fun(self: KajiGUIInstance, key: string): number, number, number, number
+---@field SetCustomColor fun(self: KajiGUIInstance, key: string, r: number, g: number, b: number, a?: number): KajiGUIInstance
+---@field CopyPresetToCustom fun(self: KajiGUIInstance, name: string): KajiGUIInstance
+---@field ResetCustomColors fun(self: KajiGUIInstance): KajiGUIInstance
+---@field ResetTheme fun(self: KajiGUIInstance): KajiGUIInstance
+---@field Color fun(self: KajiGUIInstance, key: string): number, number, number, number
+---@field RGBAToHex fun(self: KajiGUIInstance, r: number, g: number, b: number): string
+---@field ColorText fun(self: KajiGUIInstance, text: string): string
+---@field FlashMessage fun(self: KajiGUIInstance, text: string, opts?: table): Frame
+---@field Prompt fun(self: KajiGUIInstance, opts: KajiPromptOptions): Frame
+---@field CopyDialog fun(self: KajiGUIInstance, title: string, text: string, label?: string): Frame
+---@field ShowContextMenu fun(self: KajiGUIInstance, entries: table[]): void

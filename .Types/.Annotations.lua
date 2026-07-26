@@ -107,7 +107,23 @@ function EditBox:SetFontJustify(source, parent, offsetX, offsetY, skip, bound, f
 ---@field ScheduleUpdate fun(self: Frame) Arm the SetScheduledUpdate handler to run once next frame; repeated calls coalesce
 ---@field SetOnUpdateMode fun(self: Frame, mode: number) Set the OnUpdateMode (Enum.OnUpdateMode) for this frame; see docs for details
 ---@field FitBackdropToText fun(self: Frame, fontString: FontString, text: string, padX: number, padY: number): boolean Size the backdrop to the widest string sharing text's digit shape; returns true if it resized
+---@field CreateAuraContainer fun(self: Frame, config: table): NUIAuraContainer?
+---@field container NUIAuraContainer?
 local Frame
+
+---@class NUIAuraContainer : Frame
+---@field AddGroup fun(self: NUIAuraContainer, filter: string)
+---@field AddFilteredGroup fun(self: NUIAuraContainer, filterName: string)
+---@field ReapplyFilters fun(self: NUIAuraContainer)
+---@field RebindFilteredGroups fun(self: NUIAuraContainer, filterName: string)
+---@field SetItemEnchantLayout fun(self: NUIAuraContainer, config: table)
+---@field AddItemEnchant fun(self: NUIAuraContainer, slot: number)
+---@field SetUnit fun(self: NUIAuraContainer, unit: string)
+---@field ApplyLayout fun(self: NUIAuraContainer, config: table)
+
+---@class NUIAuraHostFrame : Frame
+---@field container NUIAuraContainer?
+---@field CreateAuraContainer fun(self: NUIAuraHostFrame, config: table): NUIAuraContainer?
 
 ---Strip textures/atlases in a controlled way. `'Keyed'` recurses keyed children then clears own regions.
 ---
@@ -333,6 +349,12 @@ function FontString:GetWidestDigit() end
 
 ---@class _G
 ---@field StaticPopup1Button1 Button
+---@field WorldMapFrameHomeButtonText FontString
+---@field Number12FontOutline Font
+---@field Game15Font_Shadow Font
+---@field SystemFont16_Shadow_ThickOutline Font
+---@field SystemFont22_Shadow_ThickOutline Font
+---@field UserScaledFontSystem15Shadow Font
 
 ---@class SkinColors
 ---@field border RGBA

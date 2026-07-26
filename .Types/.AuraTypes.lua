@@ -72,4 +72,3 @@ candidateFilters = {
     maxDuration = 200000,          -- non-negative number or nil; any non-nil value also hides permanent auras (duration == 0)
 }
 
--- /dump AuraUtil.IsValidFilterString('HELPFUL|PLAYER|BIG_DEFENSIVE|EXTERNAL_DEFENSIVE')

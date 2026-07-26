@@ -216,7 +216,7 @@ end
 
 --- Deep copy a table
 ---@param src table
----@return table
+---@return table|nil
 local function DeepCopy(src)
     if type(src) ~= "table" then return src end
     local copy = {}
@@ -449,7 +449,8 @@ end
 -- Global API table for WagoUI Packs compatibility
 -- Uses C_EncodingUtil as per official Wago implementation guide, if i did somethings wrong, contact me :)
 -- https://github.com/methodgg/Wago-Creator-UI/blob/main/WagoUI_Libraries/LibAddonProfiles/ImplementationGuide.lua
-NorskenUIAPI = NorskenUIAPI or {}
+_G.NorskenUIAPI = _G.NorskenUIAPI or {}
+local NorskenUIAPI = _G.NorskenUIAPI
 
 --- Export a profile by key
 ---@param profileKey string The profile name to export

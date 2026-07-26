@@ -1,6 +1,14 @@
 ---@class NRSKNUI
+---@field GUI KajiGUIInstance
+---@field EditMode table?
+---@field FrameChooser table?
 local NRSKNUI = select(2, ...)
----@class GUIFrame
+---@class GUIFrame : KajiGUIWindow
+---@field ReloadText string
+---@field RefreshContent fun(self: GUIFrame): void
+---@field OpenPage fun(self: GUIFrame, itemId: string, sectionId: string?, context: any?): void
+---@field ApplyThemeColors fun(self: GUIFrame): void
+---@field mainFrame Frame
 NRSKNUI.GUIFrame = NRSKNUI.GUIFrame or {}
 local Theme = NRSKNUI.Theme
 
@@ -13,6 +21,7 @@ NRSKNUI.GUIFrame.ReloadText = 'Disabling/Enabling this requires a reload to take
 ---Gets the GUI instance for NorskenUI, providing access to GUI creation and management functions.
 ---@return KajiGUIInstance
 function NRSKNUI:GetGUI()
+    ---@type KajiGUIInstance
     local GUI = self.GUI
     GUI.services.editMode = self.EditMode
     GUI.services.frameChooser = self.FrameChooser
@@ -20,6 +29,7 @@ function NRSKNUI:GetGUI()
 end
 
 local GUI = NRSKNUI:GetGUI()
+---@type GUIFrame
 local window = GUI:CreateGUIWindow({
     name = 'NorskenUIGUIFrame',
     size = { 950, 700 },

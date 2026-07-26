@@ -446,6 +446,18 @@ function InstanceMixin:CreateContentHost(parent, opts)
     ApplyScrollChildWidth()
 
     ---@class KajiGUIContentHost
+    ---@field frame Frame
+    ---@field scrollFrame ScrollFrame
+    ---@field scrollChild Frame
+    ---@field scrollbar any
+    ---@field UpdateScrollbar fun(): void
+    ---@field ShowPage fun(self: KajiGUIContentHost, id: string, target?: table): void
+    ---@field FlashWidget fun(self: KajiGUIContentHost, widget: Frame): void
+    ---@field ScrollToLabel fun(self: KajiGUIContentHost, label: string): void
+    ---@field page? Frame
+    ---@field currentId? string
+    ---@field tabStrip? table
+    ---@field miniSidebar? table
     local host = {
         frame = frame,
         scrollFrame = scrollFrame,

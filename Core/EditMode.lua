@@ -235,7 +235,9 @@ local function OnDragStop(overlay)
     C_Timer.After(0, function()
         EditMode:UpdateOverlayPosition(overlay)
         EditMode:SelectElement(element.key)
-        if NRSKNUI.GUIFrame and NRSKNUI.GUIFrame:IsShown() then NRSKNUI.GUIFrame:RefreshContent() end
+        if NRSKNUI.GUIFrame and NRSKNUI.GUIFrame:IsShown() then
+            NRSKNUI.GUIFrame:RefreshContent()
+        end
     end)
 
     dragOverlay = nil
