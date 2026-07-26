@@ -107,6 +107,8 @@ function InstanceMixin:CreateColorPicker(parent, labelText, config)
     swatch:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
     swatch.r, swatch.g, swatch.b, swatch.a = color[1], color[2], color[3], color[4] or 1
     row.swatch = swatch
+    swatch.isKajiColorPicker = true
+    swatch.colorPickerRow = row
 
     local hexText = row:CreateFontString(nil, "OVERLAY")
     pixel.SetPixelPoint(hexText, "LEFT", swatch, "RIGHT", 8, 0)

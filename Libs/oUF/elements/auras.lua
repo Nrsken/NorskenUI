@@ -22,44 +22,34 @@ groups and slots for each element.
 .showBuffBorder         - Show dispel border texture when it's a buff (boolean?)
 .showDebuffBorder       - Show dispel border texture when it's a debuff (boolean?)
 .showDefaultBorder      - Whether to show the border even when there's no dispel type (boolean?)
-.showBorderIcon         - Show dispel type icon on the border texture. Not applicable if the border style is not Atlas (boolean?)
-.borderStyle            - Which style to use for the border, one of Enum.CustomAuraButtonBorderStyle (number?)
+.borderStyle            - Which style to use for the border, one of Enum.CustomAuraButtonDispelTypeTextureStyle (number?)
+.showBuffIndicator      - Show dispel indicator texture when it's a buff (boolean?)
+.showDebuffIndicator    - Show dispel indicator texture when it's a debuff (boolean?)
 .showCount              - Show Count fontstring representing aura applications (boolean?)
 .countFormatter         - Formatter used to adjust the text displayed on the Count fontstring ([NumericFormatter](https://warcraft.wiki.gg/wiki/ScriptObject_NumericFormatter)?)
 .showDuration           - Show Duration fontstring representing time remaining of the aura (boolean?)
+.durationBinding        - Duration binding base object ([DurationTextBinding](https://warcraft.wiki.gg/wiki/ScriptObject_DurationTextBinding)?)
+.durationFormat         - Text format for the text displayed on the Duration fontstring. `durationFormat` takes presedence (string?)
 .durationFormatter      - Formatter used to adjust the text displayed on the Duration fontstring ([NumericFormatter](https://warcraft.wiki.gg/wiki/ScriptObject_NumericFormatter)?)
-.durationFormat         - Plain text format for the text displayed on the Duration fontstring. `durationFormatter` takes presedence (string?)
-.durationColorCurve     - Curve used to color the text displayed on the Duration fontstring ([ColorCurve](https://warcraft.wiki.gg/wiki/ScriptObject_ColorCurveObject)?)
-.durationModifier       - Duration binding time modifier ([Enum.DurationTimeModifer](https://warcraft.wiki.gg/wiki/Enum.DurationTimeModifier)?)
-.durationUpdateInterval - Interval of updates for the text displayed on the Duration fontstring (number?)
-.durationExpiredText    - Text used on the Duration fontstring when it has expired. Defaults to an empty string (string?)
-.durationZeroText       - Text used on the Duration fontstring when it has no duration. Defaults to an empty string (string?)
+.durationColors         - Curve used to color the text displayed on the Duration fontstring ([ColorCurve](https://warcraft.wiki.gg/wiki/ScriptObject_ColorCurveObject)?)
 .disableMouse           - Disables mouse events (boolean?)
 .disableCooldown        - Disables the provided cooldown spiral frame (boolean?)
 .cancelButton           - A list of mouse buttons and actions used to cancel the aura, if possible ([string](https://warcraft.wiki.gg/wiki/API_Button_RegisterForClicks)?)
+.tooltipAnchor          - Anchor point for the tooltip. Defaults to 'ANCHOR_BOTTOMLEFT' (string?)
+.tooltipOffsetX         - Horizontal anchor offset for the tooltip (number?)
+.tooltipOffsetY         - Vertical anchor offset for the tooltip (number?)
+.tooltipHideInCombat    - Whether to hide the tooltip during combat (boolean?)
 
-## Options (for groups and slots)
+## Options (for groups)
 
-> Note: these options must be set within the options table for groups or slots
+> Note: these are shared attributes for all groups of an element, and can be set within group options as well
 
-.spacing  - Spacing between each button. Defaults to 0 (number)
-.spacingX - Horizontal spacing between each button. Takes priority over `spacing` (number)
-.spacingY - Vertical spacing between each button. Takes priority over `spacing` (number)
-
-## Options (for groups only)
-
-> Note: these options must be set within the options table for groups
-
-.num  - Number of auras to display. Defaults to an infinite number (number)
-.gap  - Gap between each aura group. Defaults to 0 (number)
-.gapX - Horizontal gap between each button. Takes priority over `gap` (number)
-.gapY - Vertical gap between each button. Takes priority over `gap` (number)
-
-## Options (for slots only)
-
-> Note: these options must be set within the options table for slots
-
-.maxCols - Maximum number of aura button columns before wrapping to a new row. Defaults to element width divided by aura button size (number)
+.maxFrameCount    - Number of buttons to display. Defaults to an infinite number (number)
+.elementSpacing   - Spacing between each button (number)
+.lineSpacing      - Spacing between each button row or column (number)
+.groupSpacing     - Spacing between each group (number)
+.groupLineSpacing - Spacing between each group row or column
+.forceNewLine     - Whether to force a new row or column between each group (boolean)
 
 ## Examples
 
@@ -99,38 +89,27 @@ local oUF = ns.oUF
 
 local Private = oUF.Private
 local argcheck = Private.argcheck
-local GetOrCreateAuraContainer = Private.GetOrCreateAuraContainer
 
 local STATE = {}
 
-local function SetSlotPosition(element, button, options)
-	local width = options.width or options.size or element.width or element.size or 16
-	local height = options.height or options.size or element.height or element.size or 16
-	local sizeX = width + (options.spacingX or options.spacing or element.spacingX or element.spacing or 0)
-	local sizeY = height + (options.spacingY or options.spacing or element.spacingY or element.spacing or 0)
-	local anchor = options.initialAnchor or element.initialAnchor or 'TOPLEFT'
-	local growthX = (options.growthX or element.growthX == 'LEFT' and -1) or 1
-	local growthY = (options.growthY or element.growthY == 'DOWN' and -1) or 1
-	local cols = options.maxCols or element.maxCols or math.floor(element:GetAuraLayoutRowWidth() / sizeX + 0.5)
-
-	local col = (options.slotIndex - 1) % cols
-	local row = math.floor((options.slotIndex - 1) / cols)
-
-	button:ClearAllPoints()
-	button:SetPoint(anchor, element, anchor, col * sizeX * growthX, row * sizeY * growthY)
-end
-
 local function CreateButton(element, options, button)
-	local width = options.width or options.size or element.width or element.size or 16
-	local height = options.height or options.size or element.height or element.size or 16
+	local size = options.size or element.size or 16
+	local width = options.width or element.width or size
+	local height = options.height or element.height or size
 	button:SetSize(width, height)
 	button:EnableMouse(not (options.disableMouse or element.disableMouse))
 
+	local tooltipAnchor = options.tooltipAnchor or element.tooltipAnchor or 'ANCHOR_BOTTOMLEFT'
+	local tooltipOffsetX = options.tooltipOffsetX or element.tooltipOffsetX or 0
+	local tooltipOffsetY = options.tooltipOffsetY or element.tooltipOffsetY or 0
+	button:SetTooltipAnchorPoint(tooltipAnchor, tooltipOffsetX, tooltipOffsetY)
+	button:SetHideTooltipInCombat(options.tooltipHideInCombat or element.tooltipHideInCombat)
+
 	if(not (options.disableCooldown or element.disableCooldown)) then
-		local cd = CreateFrame('Cooldown', '$parentCooldown', button, 'CooldownFrameTemplate')
-		cd:SetAllPoints()
-		button.Cooldown = cd
-		button:SetDurationCooldown(cd)
+		local cooldown = CreateFrame('Cooldown', '$parentCooldown', button, 'CooldownFrameTemplate')
+		cooldown:SetAllPoints()
+		button.Cooldown = cooldown
+		button:SetDurationCooldown(cooldown)
 	end
 
 	local icon = button:CreateTexture(nil, 'BORDER')
@@ -163,13 +142,24 @@ local function CreateButton(element, options, button)
 		local border = button:CreateTexture(nil, 'OVERLAY')
 		border:SetAllPoints()
 		button.Border = border
-		button:SetAuraBorder(border, {
-			style = options.borderStyle or element.borderStyle,
-			showIcon = options.showBorderIcon or element.showBorderIcon,
+		button:AddDispelTypeTexture(border, {
+			style = options.borderStyle or element.borderStyle or Enum.CustomAuraButtonDispelTypeTextureStyle.Border,
 			showWhenHarmful = options.showDebuffBorder or element.showDebuffBorder,
 			showWhenHelpful = options.showBuffBorder or element.showBuffBorder,
 			showWithoutDispelType = options.showDefaultBorder or element.showDefaultBorder,
 			customDispelColorMap = element.__owner.colors.dispel,
+		})
+	end
+
+	if((options.showDebuffIndicator or element.showDebuffIndicator) or (options.showBuffIndicator or element.showBuffIndicator)) then
+		local dispelIndicator = button:CreateTexture(nil, 'OVERLAY', nil, 1) -- above other overlay widgets
+		dispelIndicator:SetPoint('CENTER', button, 'TOPRIGHT')
+		dispelIndicator:SetSize(18, 18)
+		button.DispelIndicator = dispelIndicator
+		button:AddDispelTypeTexture(dispelIndicator, {
+			style = Enum.CustomAuraButtonDispelTypeTextureStyle.Icon,
+			showWhenHarmful = options.showDebuffIndicator or element.showDebuffIndicator,
+			showWhenHelpful = options.showBuffIndicator or element.showBuffIndicator,
 		})
 	end
 
@@ -178,30 +168,15 @@ local function CreateButton(element, options, button)
 		time:SetPoint('TOPLEFT', 1, 0) -- TBD
 		button.Time = time
 		button:SetDurationText(time, {
-			formatter = options.durationFormatter or element.durationFormatter,
+			binding = options.durationBinding or element.durationBinding,
+			textFormatter = options.durationFormatter or element.durationFormatter,
 			textFormat = options.durationFormat or element.durationFormat,
-			textColorCurve = options.durationColorCurve or element.durationColorCurve,
-			timeModifier = options.durationModifier or element.durationModifier,
-			updateInterval = options.durationUpdateInterval or element.durationUpdateInterval,
-			expiredText = options.durationExpiredText or element.durationExpiredText or '',
-			zeroDurationText = options.durationZeroText or element.durationZeroText or '',
+			textColor = options.durationColors or element.durationColors,
 		})
 	end
 
 	if(options.cancelButton or element.cancelButton) then
 		button:SetCancelAuraButtons(options.cancelButton or element.cancelButton)
-	end
-
-	if(options.slotIndex) then
-		--[[ Override: Auras:SetSlotPosition(button, options)
-		Used to anchor aura slots.  
-		Called when new aura buttons have been created.
-
-		* self    - the element used to represent the aura buttons (AuraContainer)
-		* button  - the aura button (AuraButton)
-		* options - the aura group/slot options passed through to CreateButton (table)
-		--]]
-		(options.SetSlotPosition or element.SetSlotPosition or SetSlotPosition) (element, button, options)
 	end
 
 	--[[ Callback: Auras:PostCreateButton(button)
@@ -244,15 +219,16 @@ function elementMixin:AddGroup(filter, options)
 		options = {}
 	end
 
-	-- default num to nil to get blizz defaults (math.huge)
-	options.maxFrameCount = options.maxFrameCount or options.num or self.num
+	-- attributes inherited from the element
+	options.maxFrameCount = options.maxFrameCount or self.maxFrameCount
 
 	-- layout attributes inherited from the element
 	local layout = options.layout or {}
-	layout.elementSpacingX = layout.elementSpacingX or self.spacingX or self.spacing
-	layout.elementSpacingY = layout.elementSpacingY or self.spacingY or self.spacing
-	layout.gapX = layout.gapX or self.gapX or self.gap
-	layout.gapY = layout.gapY or self.gapY or self.gap
+	layout.elementSpacing = layout.elementSpacing or self.elementSpacing
+	layout.lineSpacing = layout.lineSpacing or self.lineSpacing
+	layout.groupSpacing = layout.groupSpacing or self.groupSpacing
+	layout.groupLineSpacing = layout.groupLineSpacing or self.groupLineSpacing
+	layout.forceNewLine = layout.forceNewLine or self.forceNewLine
 	options.layout = layout
 
 	-- some nice shorthands for stuff that might be shared across groups, with more familiar defaults
@@ -270,7 +246,7 @@ function elementMixin:AddGroup(filter, options)
 		* options - options passed through from auras:AddGroup and auras:AddSlot
 		* button  - the aura button (AuraButton)
 		--]]
-		options.initializeFrame = GenerateClosure(self.CreateButton or CreateButton, self, options)
+		options.initializeFrame = GenerateClosure(options.CreateButton or self.CreateButton or CreateButton, self, options)
 	end
 
 	-- keep track of how many groups we've created, for key generation purposes
@@ -319,16 +295,13 @@ function elementMixin:AddSlot(filter, options)
 
 	if(not options.initializeFrame) then
 		-- we want to provide a default set of widgets for buttons
-		options.initializeFrame = GenerateClosure(self.CreateButton or CreateButton, self, options)
+		options.initializeFrame = GenerateClosure(options.CreateButton or self.CreateButton or CreateButton, self, options)
 	end
 
 	-- keep track of how many groups we've created, for key generation purposes
 	local frame = self.__owner
 	local index = (STATE[frame].slotIndex or 0) + 1
 	STATE[frame].slotIndex = index
-
-	-- need to inject index into options so we can position the slot on creation
-	options.slotIndex = index
 
 	local key = 'Slot' .. index
 	STATE[frame].containerSlots[self][key] = filter -- TODO: need to hook the method too
@@ -361,7 +334,8 @@ Create and return a aura element.
 All of these options are provided as a convenience, and can be applied after creation through
 methods on the element.
 
-.maxWidth      - Max width of the element. Defaults to the parent's width (number?)
+.layout        - Which axis the container should layout groups. Defaults to AnchorUtil.FlowLayoutAxis.Horizontal (number?)
+.layoutLimit   - Max width or height of the element, depending on the layout. Defaults to the parent width or height (number?)
 .initialAnchor - Anchor point for the element. Defaults to 'TOPLEFT' (string?)
 .growthX       - Horizontal growth direction. Defaults to 'RIGHT' (string?)
 .growthY       - Vertical growth direction. Defaults to 'UP' (string?)
@@ -377,16 +351,10 @@ methods on the element.
 * auras - the element used to represent the aura buttons (AuraContainer)
 --]]
 local function Create(self, options)
-	local element = GetOrCreateAuraContainer(self)
-	if(not element) then
-		return
-	end
-
-	element.__owner = self
-
 	-- keep a local state of each container created for each frame
 	if(not STATE[self]) then
 		STATE[self] = {
+			index = 1,
 			-- we need to keep track of containers in order for UAE to update them
 			containers = {},
 			-- we also need to keep track of each individual group and slot for each container
@@ -394,6 +362,11 @@ local function Create(self, options)
 			containerSlots = {},
 		}
 	end
+
+	local element = CreateFrame('AuraContainer', '$parentAuraContainer' .. STATE[self].index, self, 'CustomAuraContainerTemplate')
+	STATE[self].index = STATE[self].index + 1
+
+	element.__owner = self
 
 	-- inject this container into the state table
 	table.insert(STATE[self].containers, element)
@@ -407,18 +380,27 @@ local function Create(self, options)
 	hooksecurefunc(element, 'SetAuraSlotFilterString', GenerateClosure(hookFilterChange, 'containerSlots'))
 
 	-- element-wide options we'll just set directly from options
-	element:SetAuraLayoutRowWidth(options.maxWidth or self:GetWidth())
-	element:SetAuraLayoutAnchorPoint(options.initialAnchor or 'TOPLEFT')
+	element:SetFlowLayoutAnchorPoint(options.initialAnchor or 'TOPLEFT')
+
+	if(options.layout) then
+		element:SetFlowLayoutAxis(options.layout)
+	end
+
+	if(options.layout == AnchorUtil.FlowLayoutAxis.Vertical) then
+		element:SetFlowLayoutMaximumLineSize(options.layoutLimit or self:GetHeight())
+	else
+		element:SetFlowLayoutMaximumLineSize(options.layoutLimit or self:GetWidth())
+	end
 
 	local growthX = (options.growthX == 'LEFT' and -1) or 1
 	local growthY = (options.growthY == 'DOWN' and -1) or 1
-	element:SetAuraLayoutGrowthDirection(growthX, growthY)
+	element:SetFlowLayoutGrowthDirection(growthX, growthY)
 
 	local paddingLeft = options.paddingLeft or options.padding or 0
 	local paddingRight = options.paddingRight or options.padding or 0
 	local paddingTop = options.paddingTop or options.padding or 0
 	local paddingBottom = options.paddingBottom or options.padding or 0
-	element:SetAuraLayoutPadding(paddingLeft, paddingRight, paddingTop, paddingBottom)
+	element:SetFlowLayoutPadding(paddingLeft, paddingRight, paddingTop, paddingBottom)
 
 	if(options.policies) then
 		-- just expose it easily for layouts in case they want to use it

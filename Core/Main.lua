@@ -32,13 +32,19 @@ function NRSKNUI:OnInitialize()
         self.db:SetProfile(profileName)
     end
 
+    -- Aura filters live in db.global, so this only needs running once per session.
+    self.AuraFilters:Migrate()
+
     -- Load custom colors from the profile
     self:LoadCustomColors()
+    self:RefreshCurves()
+    self:RefreshAuraDurationFormatter()
 
-    -- Profile change callbacks (registered after the global-profile switch above,
-    -- so that switch does not trigger a full module refresh during init)
+    -- Profile change callbacks
     local function OnProfileRefresh()
         self:LoadCustomColors()
+        self:RefreshCurves()
+        self:RefreshAuraDurationFormatter()
         self:ApplyBlizzardFonts(true)
         self.ProfileManager:RefreshAllModules()
     end

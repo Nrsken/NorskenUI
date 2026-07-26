@@ -26,6 +26,7 @@
 ---@class UnitFrames : NRSKNUI.Module, NRSKNUI.AceEvent, NRSKNUI.AceTimer, NRSKNUI.AceHook
 ---@class PlayerAuras : NRSKNUI.Module, NRSKNUI.AceEvent, NRSKNUI.AceTimer, NRSKNUI.AceHook
 ---@class AdvancedDebuffs : NRSKNUI.Module, NRSKNUI.AceEvent, NRSKNUI.AceTimer, NRSKNUI.AceHook
+---@class Defensives : NRSKNUI.Module, NRSKNUI.AceEvent, NRSKNUI.AceTimer, NRSKNUI.AceHook
 ---@class PetTexts : NRSKNUI.Module, NRSKNUI.AceEvent
 
 -- Typed accessors. Overloads dispatch on the literal module name.
@@ -58,6 +59,7 @@ local NRSKNUI
 ---@overload fun(self: NRSKNUI, name: "UnitFrames", silent?: boolean): UnitFrames
 ---@overload fun(self: NRSKNUI, name: "PlayerAuras", silent?: boolean): PlayerAuras
 ---@overload fun(self: NRSKNUI, name: "AdvancedDebuffs", silent?: boolean): AdvancedDebuffs
+---@overload fun(self: NRSKNUI, name: "Defensives", silent?: boolean): Defensives
 ---@overload fun(self: NRSKNUI, name: "PetTexts", silent?: boolean): PetTexts
 ---@param name string
 ---@param silent? boolean
@@ -89,6 +91,7 @@ function NRSKNUI:GetModule(name, silent) end
 ---@overload fun(self: NRSKNUI, name: "UnitFrames", ...: string): UnitFrames
 ---@overload fun(self: NRSKNUI, name: "PlayerAuras", ...: string): PlayerAuras
 ---@overload fun(self: NRSKNUI, name: "AdvancedDebuffs", ...: string): AdvancedDebuffs
+---@overload fun(self: NRSKNUI, name: "Defensives", ...: string): Defensives
 ---@overload fun(self: NRSKNUI, name: "PetTexts", ...: string): PetTexts
 ---@param name string
 ---@param ... string

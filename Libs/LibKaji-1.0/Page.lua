@@ -332,6 +332,17 @@ function Page:GlowSettingsCard(config, group)
     return AddPremadeCard(self, real, widgets, group, true)
 end
 
+---Adds a premade FilterCard to the page and registers its widgets.
+---The card rebuilds its body in place when the selected filter changes.
+---@param config table CreateFilterCard config
+---@param group? string condition group (defaults to 'all')
+---@return KajiGUICard real
+function Page:FilterCard(config, group)
+    group = group or "all"
+    local real, _, widgets = self.gui:CreateFilterCard(self.parent, 0, config)
+    return AddPremadeCard(self, real, widgets, group, true)
+end
+
 ---Adds a premade LoadConditionsCard to the page and registers its widgets.
 ---The card rebuilds its body in place when enable or the category changes.
 ---@param config table CreateLoadConditionsCard config

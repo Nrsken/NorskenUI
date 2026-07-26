@@ -8,15 +8,20 @@ local CreateFrame = CreateFrame
 local pairs = pairs
 local RunNextFrame = RunNextFrame
 
--- kind -> { filter, moverKey, displayName }
 local KINDS = {
     Buffs = {
+        filter = 'HELPFUL',
         moverKey = 'PlayerBuffs',
-        displayName = 'Player Buffs',
+        displayName = 'Standard Buffs',
+        guiPath = 'standardBuffs',
+        blizzardFrame = 'BuffFrame',
     },
     Debuffs = {
+        filter = 'HARMFUL',
         moverKey = 'PlayerDebuffs',
-        displayName = 'Player Debuffs',
+        displayName = 'Standard Debuffs',
+        guiPath = 'standardDebuffs',
+        blizzardFrame = 'DebuffFrame',
     },
 }
 
@@ -32,9 +37,54 @@ end
 
 ---Layout anchor corner derived from growth direction.
 local function AnchorCorner(cfg)
-    local vertical = (cfg.GrowthY == 'DOWN') and 'TOP' or 'BOTTOM'
-    local horizontal = (cfg.GrowthX == 'LEFT') and 'RIGHT' or 'LEFT'
+    local vertical = (cfg.verticalGrowthDirection == 'DOWN') and 'TOP' or 'BOTTOM'
+    local horizontal = (cfg.horizontalGrowthDirection == 'LEFT') and 'RIGHT' or 'LEFT'
     return vertical .. horizontal
+end
+
+---The container config built from a kind's current db. Shared by creation and live re-apply, so both
+---always read the same settings.
+---@param kind string
+---@return table
+function PlayerAuras:GetContainerConfig(kind)
+    local cfg = self.db[kind]
+    local weaponEnchants = (kind == 'Buffs') and cfg.showWeaponEnchants
+
+    return {
+        maximumLineSize = cfg.perRow * (cfg.size + cfg.elementSpacing),
+        anchorPoint = AnchorCorner(cfg),
+        horizontalGrowthDirection = cfg.horizontalGrowthDirection,
+        verticalGrowthDirection = cfg.verticalGrowthDirection,
+        size = cfg.size,
+        elementSpacing = cfg.elementSpacing,
+        lineSpacing = cfg.lineSpacing,
+        groupSpacing = weaponEnchants and cfg.groupSpacing or nil,
+        groupLineSpacing = weaponEnchants and cfg.groupLineSpacing or nil,
+        maxFrameCount = cfg.maxFrameCount,
+        sortMethod = AuraContainerSortMethod[cfg.sortMethod],
+        sortDirection = AuraContainerSortDirection[cfg.sortDirection],
+        showApplicationCount = cfg.showApplicationCount,
+        showDurationText = cfg.showDurationText,
+        durationTextColorCurve = true,
+        drawSwipe = cfg.drawSwipe,
+        drawEdge = cfg.drawEdge,
+        reverseSwipe = cfg.reverseSwipe,
+        showDebuffBorder = (kind == 'Debuffs') and cfg.showBorder or nil,
+        showDebuffDispelIcon = (kind == 'Debuffs') and cfg.showDebuffDispelIcon or nil,
+        dispelIconSize = (kind == 'Debuffs') and cfg.dispelIconSize or nil,
+        fontDB = cfg,
+        stackFont = cfg.StackFont,
+        durationFont = cfg.DurationFont,
+        cancelAuraButtons = (kind == 'Buffs') and 'RightButtonUp' or nil,
+        tooltipHideInCombat = cfg.tooltipHideInCombat,
+    }
+end
+
+---Size the host to the grid the current settings describe, so the mover matches what is rendered.
+---@param kind string
+function PlayerAuras:ResizeHost(kind)
+    local cfg = self.db[kind]
+    self.hosts[kind]:SetSize(cfg.perRow * (cfg.size + cfg.elementSpacing), 3 * (cfg.size + cfg.lineSpacing))
 end
 
 ---Create the mover host frame for a kind, the container is attached later, out of combat.
@@ -43,15 +93,10 @@ end
 function PlayerAuras:GetHost(kind)
     if self.hosts[kind] then return self.hosts[kind] end
 
-    local cfg = self.db[kind]
-    local host = CreateFrame('Frame', 'NRSKNUI_Player' .. kind, UIParent)
+    self.hosts[kind] = CreateFrame('Frame', 'NRSKNUI_Player' .. kind, UIParent)
+    self:ResizeHost(kind)
 
-    local cellW = cfg.Size + (cfg.SpacingX or 0)
-    local cellH = cfg.Size + (cfg.SpacingY or 0)
-    host:SetSize(cfg.PerRow * cellW, 3 * cellH)
-
-    self.hosts[kind] = host
-    return host
+    return self.hosts[kind]
 end
 
 ---Attach the native aura container to a host.
@@ -61,51 +106,17 @@ function PlayerAuras:BuildContainer(kind)
     if not host or host.container then return end
 
     local cfg = self.db[kind]
-    local corner = AnchorCorner(cfg)
-    local weaponEnchants = (kind == 'Buffs') and cfg.ShowWeaponEnchants
-
-    local container = host:CreateAuraContainer({
-        maxWidth = cfg.PerRow * (cfg.Size + (cfg.SpacingX or 0)),
-        initialAnchor = corner,
-        growthX = cfg.GrowthX,
-        growthY = cfg.GrowthY,
-        size = cfg.Size,
-        spacingX = cfg.SpacingX,
-        spacingY = cfg.SpacingY,
-        gap = weaponEnchants and (cfg.Gap or 4) or nil,
-        gapX = cfg.GapX,
-        gapY = cfg.GapY,
-        num = cfg.Max,
-        showCount = cfg.ShowCount,
-        showDuration = cfg.ShowDuration,
-        showSwipe = cfg.ShowSwipe,
-        showEdge = cfg.ShowEdge,
-        reverseSwipe = cfg.ReverseSwipe,
-        showBuffBorder = (kind == 'Buffs') and cfg.ShowBorder or nil,
-        showDebuffBorder = (kind == 'Debuffs') and cfg.ShowBorder or nil,
-        fontSize = cfg.FontSize,
-        fontOutline = cfg.FontOutline,
-        cancelButton = (kind == 'Buffs') and 'RightButtonUp' or nil,
-        hideTooltipInCombat = cfg.HideTooltipInCombat,
-    })
+    local config = self:GetContainerConfig(kind)
+    local container = host:CreateAuraContainer(config)
     if not container then return end
 
     container:ClearAllPoints()
-    container:SetPoint(corner, host, corner)
+    container:SetPoint(config.anchorPoint, host, config.anchorPoint)
 
-    if kind == 'Buffs' then
-        container:AddGroup('HELPFUL', {
-            candidateFilters = {
-            }
-        })
-    else
-        container:AddGroup('HARMFUL', {
-            candidateFilters = {
-            }
-        })
-    end
+    -- Since these are basic player auras, we just use the basic HELPFUL/HARMFUL filters.
+    container:AddGroup(KINDS[kind].filter)
 
-    if weaponEnchants then
+    if kind == 'Buffs' and cfg.showWeaponEnchants then
         RunNextFrame(function() -- Need delay slightly, enchant info isn't ready.
             container:AddItemEnchant(AuraContainerItemEnchantmentSlot.MainHand)
             container:AddItemEnchant(AuraContainerItemEnchantmentSlot.OffHand)
@@ -123,16 +134,35 @@ function PlayerAuras:BuildContainer(kind)
 end
 
 function PlayerAuras:ApplySettings()
-    for kind in pairs(KINDS) do
+    for kind, info in pairs(KINDS) do
+        local cfg = self.db[kind]
         local host = self:GetHost(kind)
-        host:Show()
-        host:ApplyPosition(self.db[kind])
-        EM:Register(self, { key = KINDS[kind].moverKey, displayName = KINDS[kind].displayName, frame = host, db = self.db[kind], guiPath = 'playerauras', })
+
+        if cfg.Enabled then
+            self:ResizeHost(kind)
+            host:Show()
+            host:ApplyPosition(cfg)
+            EM:Register(self, { key = info.moverKey, displayName = info.displayName, frame = host, db = cfg, guiPath = info.guiPath, })
+
+            local container = host.container
+            if container then
+                -- Layout re-applies live, button appearance does not (see container:ApplyLayout).
+                local config = self:GetContainerConfig(kind)
+                container:ClearAllPoints()
+                container:SetPoint(config.anchorPoint, host, config.anchorPoint)
+                container:ApplyLayout(config)
+            end
+        else
+            host:Hide()
+            EM:UnregisterElement(info.moverKey)
+        end
     end
 
     NRSKNUI:RunWhenSafe(function()
         for kind in pairs(KINDS) do
-            self:BuildContainer(kind)
+            if self.db[kind].Enabled then
+                self:BuildContainer(kind)
+            end
         end
     end)
 end
@@ -143,8 +173,11 @@ function PlayerAuras:OnEnable()
     self:ApplySettings()
 
     NRSKNUI:RunWhenSafe(function()
-        _G.BuffFrame:Banish()
-        _G.DebuffFrame:Banish()
+        for kind, info in pairs(KINDS) do
+            if self.db[kind].Enabled then
+                _G[info.blizzardFrame]:Banish()
+            end
+        end
     end)
 end
 

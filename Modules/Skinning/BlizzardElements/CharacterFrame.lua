@@ -128,11 +128,11 @@ local function SkinEquipSetRow(row)
         row.icon:SetZoom()
 
         if row.HighlightBar then
-            row.HighlightBar:SetColorTexture(unpack(NRSKNUI.HighlightColor))
+            row.HighlightBar:SetColorTexture(unpack(NRSKNUI.Colors.highlightColor))
             row.HighlightBar:SetDrawLayer('BACKGROUND')
         end
         if row.SelectedBar then
-            row.SelectedBar:SetColorTexture(unpack(NRSKNUI.SelectedColor))
+            row.SelectedBar:SetColorTexture(unpack(NRSKNUI.Colors.selectedColor))
             row.SelectedBar:SetDrawLayer('BACKGROUND')
         end
     end
@@ -460,11 +460,11 @@ local function SkinSidebarTabs(S)
 
             if tab.Icon then tab.Icon:SetAllPoints(tab) end
             if tab.Highlight then
-                tab.Highlight:SetColorTexture(unpack(NRSKNUI.HighlightColor))
+                tab.Highlight:SetColorTexture(unpack(NRSKNUI.Colors.highlightColor))
                 tab.Highlight:SetAllPoints(tab)
             end
             if tab.Hider then
-                tab.Hider:SetColorTexture(unpack(NRSKNUI.BlackBgColor))
+                tab.Hider:SetColorTexture(unpack(NRSKNUI.Colors.blackBgColor))
                 tab.Hider:SetAllPoints(tab)
             end
             if tab.TabBg then tab.TabBg:SetAlpha(0) end
@@ -636,7 +636,7 @@ BSKIN:RegisterSkin('Blizzard_UIPanels_Game', 'CharacterFrame', function(S)
     if PaperDollItemSlotButton_Update then
         hooksecurefunc('PaperDollItemSlotButton_Update', function(slot)
             local highlight = slot:GetHighlightTexture()
-            if highlight then highlight:SetColorTexture(unpack(NRSKNUI.HighlightColor)) end
+            if highlight then highlight:SetColorTexture(unpack(NRSKNUI.Colors.highlightColor)) end
         end)
     end
 end)

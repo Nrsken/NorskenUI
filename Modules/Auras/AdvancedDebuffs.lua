@@ -17,51 +17,68 @@ end
 
 ---Layout anchor corner derived from growth direction.
 local function AnchorCorner(cfg)
-    local vertical = (cfg.GrowthY == 'DOWN') and 'TOP' or 'BOTTOM'
-    local horizontal = (cfg.GrowthX == 'LEFT') and 'RIGHT' or 'LEFT'
+    local vertical = (cfg.verticalGrowthDirection == 'DOWN') and 'TOP' or 'BOTTOM'
+    local horizontal = (cfg.horizontalGrowthDirection == 'LEFT') and 'RIGHT' or 'LEFT'
     return vertical .. horizontal
 end
 
----Create the mover host frame for a kind, the container is attached later, out of combat.
+---The container config built from the current db. Shared by creation and live re-apply, so both
+---always read the same settings.
+---@return table
+function AdvancedDebuffs:GetContainerConfig()
+    local db = self.db
+
+    return {
+        maximumLineSize = db.perRow * (db.size + db.elementSpacing),
+        anchorPoint = AnchorCorner(db),
+        horizontalGrowthDirection = db.horizontalGrowthDirection,
+        verticalGrowthDirection = db.verticalGrowthDirection,
+        size = db.size,
+        elementSpacing = db.elementSpacing,
+        lineSpacing = db.lineSpacing,
+        maxFrameCount = db.maxFrameCount,
+        sortMethod = AuraContainerSortMethod[db.sortMethod],
+        sortDirection = AuraContainerSortDirection[db.sortDirection],
+        showApplicationCount = db.showApplicationCount,
+        showDurationText = db.showDurationText,
+        durationTextColorCurve = true,
+        drawSwipe = db.drawSwipe,
+        drawEdge = db.drawEdge,
+        reverseSwipe = db.reverseSwipe,
+        showDebuffBorder = db.showBorder or nil,
+        fontDB = db,
+        stackFont = db.StackFont,
+        durationFont = db.DurationFont,
+        tooltipHideInCombat = db.tooltipHideInCombat,
+        showDebuffDispelIcon = db.showDebuffDispelIcon,
+        dispelIconSize = db.dispelIconSize,
+    }
+end
+
+---Size the host to the grid the current settings describe, so the mover matches what is rendered.
+function AdvancedDebuffs:ResizeHost()
+    local db = self.db
+    self.host:SetSize(db.perRow * (db.size + db.elementSpacing), 3 * (db.size + db.lineSpacing))
+end
+
+---Create the mover host frame, the container is attached later, out of combat.
 function AdvancedDebuffs:CreateHost()
     if self.host then return end
 
-    local host = CreateFrame('Frame', 'NRSKNUI_PlayerAdvancedDebuffs', UIParent)
-    local cellW = self.db.Size + (self.db.SpacingX or 0)
-    local cellH = self.db.Size + (self.db.SpacingY or 0)
-    host:SetSize(self.db.PerRow * cellW, 3 * cellH)
-
-    self.host = host
+    self.host = CreateFrame('Frame', 'NRSKNUI_PlayerAdvancedDebuffs', UIParent)
+    self:ResizeHost()
 end
 
 ---Attach the native aura container to a host.
 function AdvancedDebuffs:BuildContainer()
     if not self.host or self.host.container then return end
-    local corner = AnchorCorner(self.db)
 
-    local container = self.host:CreateAuraContainer({
-        maxWidth = self.db.PerRow * (self.db.Size + (self.db.SpacingX or 0)),
-        initialAnchor = corner,
-        growthX = self.db.GrowthX,
-        growthY = self.db.GrowthY,
-        size = self.db.Size,
-        spacingX = self.db.SpacingX,
-        spacingY = self.db.SpacingY,
-        num = self.db.Max,
-        showCount = self.db.ShowCount,
-        showDuration = self.db.ShowDuration,
-        showSwipe = self.db.ShowSwipe,
-        showEdge = self.db.ShowEdge,
-        reverseSwipe = self.db.ReverseSwipe,
-        showDebuffBorder = self.db.ShowBorder or nil,
-        fontSize = self.db.FontSize,
-        fontOutline = self.db.FontOutline,
-        HideTooltipInCombat = self.db.HideTooltipInCombat,
-    })
+    local config = self:GetContainerConfig()
+    local container = self.host:CreateAuraContainer(config)
     if not container then return end
 
     container:ClearAllPoints()
-    container:SetPoint(corner, self.host, corner)
+    container:SetPoint(config.anchorPoint, self.host, config.anchorPoint)
 
     container:AddFilteredGroup(self.db.Filter)
 
@@ -74,18 +91,32 @@ function AdvancedDebuffs:OnFilterChanged()
     local container = self.host and self.host.container
     if not container then return end
 
-    if not container:ReapplyFilters() then
-        NRSKNUI:RunWhenSafe(function()
-            local c = self.host and self.host.container
-            if c then c:ReapplyFilters() end
-        end)
-    end
+    container:ReapplyFilters()
+end
+
+---Rebind the container to whichever named filter the db now points at.
+function AdvancedDebuffs:ApplyFilter()
+    local container = self.host and self.host.container
+    if not container then return end
+
+    container:RebindFilteredGroups(self.db.Filter)
 end
 
 function AdvancedDebuffs:ApplySettings()
+    self:ResizeHost()
     self.host:Show()
     self.host:ApplyPosition(self.db)
     EM:Register(self, 'PlayerAdvancedDebuffs', self.host, 'advancedDebuffs')
+
+    local container = self.host.container
+    if container then
+        -- Layout re-applies live, button appearance does not (see container:ApplyLayout).
+        local config = self:GetContainerConfig()
+        container:ClearAllPoints()
+        container:SetPoint(config.anchorPoint, self.host, config.anchorPoint)
+        container:ApplyLayout(config)
+        return
+    end
 
     NRSKNUI:RunWhenSafe(function()
         self:BuildContainer()
@@ -99,11 +130,6 @@ function AdvancedDebuffs:OnEnable()
     self:ApplySettings()
 
     NRSKNUI.AuraFilters:RegisterCallback(self, function(module) module:OnFilterChanged() end)
-
-    NRSKNUI:RunWhenSafe(function()
-        _G.BuffFrame:Banish()
-        _G.DebuffFrame:Banish()
-    end)
 end
 
 function AdvancedDebuffs:OnDisable()

@@ -7,7 +7,7 @@
 *     clean -> a single scrollable fluent page (build(page))
 *     tabs  -> a sub-tab strip over per-tab pages (build(page, tabId))
 * A `sidebar` field adds a full-height left item list (MiniSidebar) beside the scroll region, orthogonal to mode:
-*     sidebar = { items: table|fun():table, width?, buttons?, renderItem?, default? }
+*     sidebar = { items: table|fun():table, width?, buttons?, renderItem?, onContextMenu?, default? }
 * All layouts share the uniform contract build(page, tabId, itemKey, item) — trailing args are nil
 * when no tab strip / sidebar is active, so plain pages just declare build(page).
 *

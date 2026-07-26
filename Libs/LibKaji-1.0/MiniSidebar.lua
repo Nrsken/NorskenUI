@@ -5,6 +5,8 @@
 * Owns only the list column: an optional button area on top, then a scrollable flat list of items.
 * Items are plain data: { key, text, icon? }. renderItem(itemFrame, item, selected) can override the default rendering.
 * Fires opts.onSelect(key, item) when an item is clicked. Self-restyles on theme change.
+* A descriptor may add onContextMenu(key, item, itemFrame), fired on right-click. The sidebar has no
+  opinion on what that means; the host decides (typically gui:ShowContextMenu).
 
 --]]
 
@@ -128,7 +130,7 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
     local function CreateItem()
         local item = CreateFrame("Button", nil, scrollChild)
         pixel.SetPixelHeight(item, ITEM_HEIGHT)
-        item:RegisterForClicks("LeftButtonUp")
+        item:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 
         local hoverBg = item:CreateTexture(nil, "BACKGROUND")
         hoverBg:SetAllPoints()
@@ -179,7 +181,11 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
                 self.label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
             end
         end)
-        item:SetScript("OnClick", function(self)
+        item:SetScript("OnClick", function(self, button)
+            if button == "RightButton" then
+                if ms.onContextMenu then safecall(ms.onContextMenu, self.key, self.item, self) end
+                return
+            end
             if self.key ~= ms.selected then ms:Select(self.key) end
         end)
 
@@ -281,11 +287,12 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
 
     ---Applies a sidebar descriptor and renders the list. Returns the resolved items
     ---so the caller can pick the initial selection.
-    ---@param sd table { items: table|fun(): table, width?: number, buttons?: table[], renderItem?: fun(itemFrame, item, selected) }
+    ---@param sd table { items: table|fun(): table, width?: number, buttons?: table[], renderItem?: fun(itemFrame, item, selected), onContextMenu?: fun(key, item, itemFrame) }
     ---@return table items
     function ms:SetConfig(sd)
         pixel.SetPixelWidth(frame, sd.width or DEFAULT_WIDTH)
         self.renderItem = sd.renderItem
+        self.onContextMenu = sd.onContextMenu
         if self._buttonsRef ~= sd.buttons then
             self._buttonsRef = sd.buttons
             LayoutButtons(sd.buttons)

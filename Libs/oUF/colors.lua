@@ -146,7 +146,7 @@ if(not customClassColors()) then
 end
 
 -- copy of DEBUFF_DISPLAY_INFO from AuraUtil
-colors.dispel[""] = _G.DEBUFF_TYPE_NONE_COLOR -- Blizzard doesn't have a "None" type
+colors.dispel.None = _G.DEBUFF_TYPE_NONE_COLOR
 colors.dispel.Magic = _G.DEBUFF_TYPE_MAGIC_COLOR
 colors.dispel.Curse = _G.DEBUFF_TYPE_CURSE_COLOR
 colors.dispel.Disease = _G.DEBUFF_TYPE_DISEASE_COLOR

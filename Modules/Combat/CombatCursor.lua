@@ -98,6 +98,7 @@ function CursorCircle:CreateFrames()
     local ring = CreateFrame('Frame', nil, follower)
     ring:SetPixelPoint('CENTER')
     ring:SetFrameStrata('TOOLTIP')
+    ring:SetFrameLevel(999)
     ring:EnableMouse(false)
 
     -- Main ring texture

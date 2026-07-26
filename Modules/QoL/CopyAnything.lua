@@ -182,7 +182,7 @@ function CopyAnything:TryCopy(key)
     if not copyId then
         local frames = GetMouseFoci()
         local focus = frames and frames[1]
-        if focus and focus.isNUIColorPicker and focus.colorPickerRow then
+        if focus and focus.isKajiColorPicker and focus.colorPickerRow then
             local r, g, b, a = focus.colorPickerRow:GetColor()
             local function fmtNum(n)
                 local s = format('%.2f', n)

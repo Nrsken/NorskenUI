@@ -112,6 +112,14 @@ function NRSKNUI:CanCompareUnits(unit1, unit2)
     return CanCompareUnitTokens(unit1, unit2)
 end
 
+---Just in case Blizzard adds an API down the line that tells us if a spellID is restricted, this is a placeholder for that.
+---For now, all spellIDs are considered unrestricted.
+---@param spellID number
+---@return boolean
+function NRSKNUI:IsSpellAuraProtected(spellID)
+    return false
+end
+
 ---Safely get a value if it is not secret and can be accessed, otherwise return nil.
 ---@param value any
 ---@return any|nil

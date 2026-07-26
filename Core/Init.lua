@@ -32,9 +32,6 @@ NRSKNUI.MyName, NRSKNUI.MyRealm = UnitFullName('player')
 -- Texture and color constants
 NRSKNUI.ClearTexture = 0
 NRSKNUI.WhiteTexture = 'Interface\\Buttons\\WHITE8X8'
-NRSKNUI.HighlightColor = { 1, 1, 1, 0.25 }
-NRSKNUI.SelectedColor = { 0.8, 0.8, 0.8, 0.25 }
-NRSKNUI.BlackBgColor = { 0, 0, 0, 0.8 }
 NRSKNUI.GlobalZoom = 0.3
 -- Supported separator types.
 NRSKNUI.Separators = {
@@ -142,8 +139,9 @@ NRSKNUI.PetTexts = NRSKNUI:NewModule('PetTexts', 'AceEvent-3.0')
 -- Player Auras
 NRSKNUI.PlayerAuras = NRSKNUI:NewModule('PlayerAuras', 'AceEvent-3.0')
 NRSKNUI.AdvancedDebuffs = NRSKNUI:NewModule('AdvancedDebuffs', 'AceEvent-3.0')
+NRSKNUI.Defensives = NRSKNUI:NewModule('Defensives', 'AceEvent-3.0')
 
--- Combat Modules   
+-- Combat Modules
 NRSKNUI.CombatTimer = NRSKNUI:NewModule('CombatTimer', 'AceEvent-3.0')
 NRSKNUI.PotionReady = NRSKNUI:NewModule('PotionReady', 'AceEvent-3.0')
 NRSKNUI.RangeChecker = NRSKNUI:NewModule('RangeChecker', 'AceEvent-3.0')

@@ -207,6 +207,11 @@ NRSKNUI.Colors = {
     reaction = {},
     power = {},
     status = {},
+    dispel = {},
+    white = CreateColor(1, 1, 1, 1),
+    highlightColor = { 1, 1, 1, 0.25 },
+    selectedColor = { 0.8, 0.8, 0.8, 0.25 },
+    blackBgColor = { 0, 0, 0, 0.8 },
 }
 
 ---Custom color palette (db.profile.Colors), pushed into oUF.colors and NRSKNUI.Colors.
@@ -233,6 +238,12 @@ function NRSKNUI:LoadCustomColors()
         local col = oUF:CreateColor(c[1], c[2], c[3])
         oUF.colors.class[token] = col
         palette.class[token] = col
+    end
+
+    for index, c in next, db.Dispel do
+        local col = oUF:CreateColor(c[1], c[2], c[3])
+        oUF.colors.dispel[index] = col
+        palette.dispel[index] = col
     end
 
     -- Status colors are consumed directly (RGBA) by the health handler, mirror to oUF too.

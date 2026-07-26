@@ -465,7 +465,7 @@ local frame
 ---@field showBuffBorder? boolean
 ---@field showDebuffBorder? boolean
 ---@field showBorderSymbol? boolean
----@field borderStyle? number AuraButtonBorderStyle
+---@field borderStyle? number Enum.CustomAuraButtonDispelTypeTextureStyle (AuraButtonBorderStyle is deprecated in 12.1)
 ---@field showCount? boolean
 ---@field countFormatter? any NumericFormatter
 ---@field showDuration? boolean

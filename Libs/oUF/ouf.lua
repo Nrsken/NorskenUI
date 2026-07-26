@@ -12,7 +12,6 @@ local argcheck = Private.argcheck
 local print = Private.print --luacheck: no unused
 local unitExists = Private.unitExists
 local nierror = Private.nierror
-local allocateAuraContainers = Private.AllocateAuraContainers
 
 local styles, style = {}
 local callback, objects, headers = {}, {}, {}
@@ -620,16 +619,6 @@ do
 		end
 	end
 
-	--[[ header:SetNumAuraContainers(numContainers)
-	Sets the amount of aura containers to pre-create for each header child.
-
-	The default is 3.
-	--]]
-	function headerMixin:SetNumAuraContainers(numContainers)
-		-- up to 40 raid units can exist at the same time
-		allocateAuraContainers(self.prefix .. 'UnitButton', 40, numContainers)
-	end
-
 	--[[ oUF:SpawnHeader(overrideName, template, ...)
 	Used to create a group header and apply the currently active style to it.
 
@@ -720,8 +709,6 @@ do
 		if(header:GetAttribute('showParty')) then
 			self:DisableBlizzard('party')
 		end
-
-		header:SetNumAuraContainers(3)
 
 		return header
 	end
@@ -869,16 +856,6 @@ do
 		updateDriver(self)
 	end
 
-	--[[ nameplates:SetNumAuraContainers(numContainers)
-	Sets the amount of aura containers to pre-allocate for each nameplate.
-
-	The default is 3.
-	--]]
-	function nameplateDriverMixin:SetNumAuraContainers(numContainers)
-		-- up to 40 nameplates can exist at the same time
-		allocateAuraContainers(self.prefix .. 'NamePlate', 40, numContainers)
-	end
-
 	local previouslyActiveElements = {}
 	local function driverEventHandler(self, event, unit)
 		if(event == 'PLAYER_LOGIN') then
@@ -1009,8 +986,6 @@ do
 		else
 			nameplateDriver:RegisterEvent('PLAYER_LOGIN')
 		end
-
-		nameplateDriver:SetNumAuraContainers(3)
 
 		return nameplateDriver
 	end

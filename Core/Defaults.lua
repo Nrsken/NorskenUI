@@ -43,27 +43,10 @@ local Defaults = {
             },
             sidebarExpanded = nil,      -- Expanded sidebar groups
         },
-
-        -- Account-wide named aura filters, compiled by Core/AuraFilters.lua into
-        -- (filterString, candidateFilters) and referenced by name from any aura module.
-        AuraFilters = {
-            ['Boss & Priority'] = {
-                name = 'Boss & Priority',
-                type = 'HARMFUL',
-                candidates = { isBossOrRoleAura = true, isPriorityAura = true },
-                useGlobalBlocklist = true,
-            },
-            ['Dispellable'] = {
-                name = 'Dispellable',
-                type = 'HARMFUL',
-                tokens = { DISPELLABLE = true },
-                useGlobalBlocklist = true,
-            },
-        },
-
-        -- Account-wide spell blocklist (excludeSpellIDs source). Only non-secret spell IDs work.
-        -- Keyed by spellId, value = { label, enabled }. Merged into every filter unless opted out.
+        -- Aura Filters
+        AuraFilters = {},
         AuraBlocklist = {},
+        AuraSpellLists = {},
     },
     profile = {
         -- Shared color palette, pushed into oUF.colors + NRSKNUI.Colors by NRSKNUI:LoadCustomColors().
@@ -115,11 +98,48 @@ local Defaults = {
                 Disconnected = { 0.5, 0.5, 0.5, 1 },
                 Dead = { 0.35, 0, 0.05, 1 },
             },
+            -- Custom dispel colors
+            Dispel = {
+                None = { 0.80000007152557, 0, 0, 0 },
+                Magic = { 0, 0.50588238239288, 1, 1 },
+                Curse = { 0.6235294342041, 0.023529414087534, 0.89411771297455, 1 },
+                Disease = { 0.94509810209274, 0.41568630933762, 0.035294119268656, 1 },
+                Poison = { 0.48235297203064, 0.78039222955704, 0, 1 },
+                Bleed = { 0.72156864404678, 0, 0.05882353335619, 1 },
+                Enrage = { 0.95294117927551, 0.37254902720451, 0.95686280727386, 1 },
+            },
         },
         globalMedia = {
             Enabled = true,
             profileFont = { Enabled = true, FontFace = "Expressway", },
-            profileBar = { Enabled = true, statusBar = "NorskenUI", },
+            profileBar = { Enabled = true, statusBar = "NorskenUI" },
+            -- Addons global formatter defaults.
+            durationBreakpointColors = true,
+            durationCurveColors = false,
+            durationSingleColor = false,
+            profileBreakPoints = {
+                pointOne = { threshold = 0, step = 0.1, format = '%0.1f', },
+                pointTwo = { threshold = 3, step = 1, format = '%d', },
+                pointThree = { threshold = 10, step = 1, format = '%d', },
+                pointFour = { threshold = 60, format = '%dm', },
+                pointFive = { threshold = 3600, format = '%dh', },
+            },
+            profileColorCurve = {
+                colorOne = { 1, 0.25, 0.25, 1 },
+                colorTwo = { 1.00, 0.25, 0.25, 1 },
+                colorThree = { 1.00, 0.75, 0.20, 1 },
+                colorFour = { 1.00, 0.95, 0.70, 1 },
+                colorFive = { 1.00, 0.95, 0.70, 1 },
+            },
+            profileColorBreakPoint = {
+                colorOne = { 1, 0.25, 0.25, 1 },
+                colorTwo = { 1, 1, 1, 1 },
+                colorThree = { 1, 1, 1, 1 },
+                colorFour = { 1, 1, 1, 1 },
+                colorFive = { 1, 1, 1, 1 },
+            },
+            durationSingleColorValue = { 1, 1, 1, 1 },
+            -- Blizzard Fonts
             blizzardFonts = {
                 Enabled = true,
                 Outline = "OUTLINE",
@@ -740,34 +760,54 @@ local Defaults = {
         Auras = {
             Enabled = true,
             Buffs = {
-                Size = 40,
-                PerRow = 10,
-                Max = 40,
-                SpacingX = 1,
-                SpacingY = 1,
-                GrowthX = "LEFT",
-                GrowthY = "DOWN",
-                ShowCount = true,
-                ShowDuration = true,
-                ShowSwipe = true,
-                ReverseSwipe = true,
-                ShowEdge = false,
-                ShowBorder = false,
-                ShowWeaponEnchants = true,
-                HideTooltipInCombat = false,
-                Gap = 0,
-                GapX = 0,
-                GapY = 0,
+                Enabled = true,
+                -- Aura container options, names match Blizzard's (see Core/AuraContainer.lua).
+                size = 40,
+                perRow = 10,
+                maxFrameCount = 40,
+                elementSpacing = 1,
+                lineSpacing = 1,
+                groupSpacing = 0, -- seam between the weapon enchants and the buff group
+                groupLineSpacing = 0,
+                horizontalGrowthDirection = "LEFT",
+                verticalGrowthDirection = "DOWN",
+                -- Enum key names, resolved against AuraContainerSortMethod/SortDirection at use time.
+                sortMethod = "ExpirationOnly",
+                sortDirection = "Normal",
+                showApplicationCount = true,
+                showDurationText = true,
+                drawSwipe = true,
+                drawEdge = false,
+                reverseSwipe = true,
+                tooltipHideInCombat = false,
+                showWeaponEnchants = true,
                 UseGlobalFont = true,
                 FontFace = "Expressway",
-                FontSize = 12,
                 FontOutline = "OUTLINE",
                 FontShadow = {
                     Enabled = false,
                     Color = { 0, 0, 0, 1 },
                     OffsetX = 1,
-                    YOffset = -1,
+                    OffsetY = -1,
                 },
+                -- Per-string size and placement inside the aura button, face/outline/shadow are shared.
+                StackFont = {
+                    FontSize = 12,
+                    Position = {
+                        AnchorFrom = "BOTTOMRIGHT",
+                        XOffset = -1,
+                        YOffset = 1,
+                    },
+                },
+                DurationFont = {
+                    FontSize = 12,
+                    Position = {
+                        AnchorFrom = "CENTER",
+                        XOffset = 0,
+                        YOffset = 0,
+                    },
+                },
+                anchorFrameType = "SCREEN",
                 Position = {
                     AnchorFrom = "TOPRIGHT",
                     AnchorTo = "TOPRIGHT",
@@ -776,30 +816,54 @@ local Defaults = {
                 },
             },
             Debuffs = {
-                Size = 50,
-                PerRow = 10,
-                Max = 10,
-                SpacingX = 1,
-                SpacingY = 1,
-                GrowthX = "LEFT",
-                GrowthY = "DOWN",
-                ShowCount = true,
-                ShowDuration = true,
-                ShowSwipe = false,
-                ReverseSwipe = true,
-                ShowEdge = false,
-                ShowBorder = true,
+                Enabled = true,
+                -- Aura container options, names match Blizzard's (see Core/AuraContainer.lua).
+                size = 50,
+                perRow = 10,
+                maxFrameCount = 10,
+                elementSpacing = 1,
+                lineSpacing = 1,
+                horizontalGrowthDirection = "LEFT",
+                verticalGrowthDirection = "DOWN",
+                -- Enum key names, resolved against AuraContainerSortMethod/SortDirection at use time.
+                sortMethod = "ExpirationOnly",
+                sortDirection = "Normal",
+                showApplicationCount = true,
+                showDurationText = true,
+                drawSwipe = false,
+                drawEdge = false,
+                reverseSwipe = true,
+                showBorder = true,
+                showDebuffDispelIcon = true,
+                dispelIconSize = 12,
+                tooltipHideInCombat = false,
                 UseGlobalFont = true,
-                HideTooltipInCombat = false,
                 FontFace = "Expressway",
-                FontSize = 12,
                 FontOutline = "OUTLINE",
                 FontShadow = {
                     Enabled = false,
                     Color = { 0, 0, 0, 1 },
                     OffsetX = 1,
-                    YOffset = -1,
+                    OffsetY = -1,
                 },
+                -- Per-string size and placement inside the aura button, face/outline/shadow are shared.
+                StackFont = {
+                    FontSize = 12,
+                    Position = {
+                        AnchorFrom = "BOTTOMRIGHT",
+                        XOffset = -1,
+                        YOffset = 1,
+                    },
+                },
+                DurationFont = {
+                    FontSize = 14,
+                    Position = {
+                        AnchorFrom = "CENTER",
+                        XOffset = 0,
+                        YOffset = 0,
+                    },
+                },
+                anchorFrameType = "SCREEN",
                 Position = {
                     AnchorFrom = "TOPRIGHT",
                     AnchorTo = "TOPRIGHT",
@@ -811,29 +875,58 @@ local Defaults = {
 
         AdvancedDebuffs = {
             Enabled = true,
-            Filter = 'Boss & Priority', -- name into db.global.AuraFilters (nil = all harmful)
-            Size = 50,
-            PerRow = 10,
-            Max = 10,
-            SpacingX = 1,
-            SpacingY = 1,
-            GrowthX = "LEFT",
-            GrowthY = "UP",
-            ShowCount = true,
-            ShowDuration = true,
-            ShowSwipe = false,
-            ReverseSwipe = true,
-            ShowEdge = false,
-            ShowBorder = true,
+            -- Name into db.global.AuraFilters, or a bare filter string. That table ships empty, so the
+            -- default is the plain HARMFUL the GUI's "None" entry also stores (see Core/AuraFilters.lua).
+            Filter = 'HARMFUL',
+            -- Aura container options, names match Blizzard's (see Core/AuraContainer.lua).
+            size = 50,
+            perRow = 10,
+            maxFrameCount = 10,
+            elementSpacing = 1,
+            lineSpacing = 1,
+            horizontalGrowthDirection = "LEFT",
+            verticalGrowthDirection = "UP",
+            -- Enum key names, resolved against AuraContainerSortMethod/SortDirection at use time so
+            -- this table stays free of Blizzard load-order dependencies (same reason filters use strings).
+            sortMethod = "ExpirationOnly",
+            sortDirection = "Normal",
+            showApplicationCount = true,
+            showDurationText = true,
+            drawSwipe = false,
+            drawEdge = false,
+            reverseSwipe = true,
+            showBorder = true,
+            showDebuffDispelIcon = true,
+            dispelIconSize = 12,
+            tooltipHideInCombat = false,
             UseGlobalFont = true,
             FontFace = "Expressway",
-            FontSize = 12,
             FontOutline = "OUTLINE",
+
+            -- Per-string size and placement inside the aura button. Face/outline/shadow above are
+            -- shared by both. AnchorFrom doubles as the relative point (see FontCore SetFontJustify).
+            StackFont = {
+                FontSize = 14,
+                Position = {
+                    AnchorFrom = "BOTTOMRIGHT",
+                    XOffset = -1,
+                    YOffset = 1
+                },
+            },
+            DurationFont = {
+                FontSize = 18,
+                Position = {
+                    AnchorFrom = "CENTER",
+                    XOffset = 0,
+                    YOffset = 0
+                },
+            },
+
             FontShadow = {
                 Enabled = false,
                 Color = { 0, 0, 0, 1 },
                 OffsetX = 1,
-                YOffset = -1,
+                OffsetY = -1,
             },
             anchorFrameType = "SELECTFRAME",
             ParentFrame = "NUF_Player",
@@ -842,6 +935,66 @@ local Defaults = {
                 AnchorTo = "TOPRIGHT",
                 XOffset = 0,
                 YOffset = 120
+            },
+        },
+
+        Defensives = {
+            Enabled = true,
+            Filter = 'HELPFUL',
+            -- Aura container options, names match Blizzard's (see Core/AuraContainer.lua).
+            size = 50,
+            perRow = 10,
+            maxFrameCount = 10,
+            elementSpacing = 1,
+            lineSpacing = 1,
+            horizontalGrowthDirection = "LEFT",
+            verticalGrowthDirection = "UP",
+            -- Enum key names, resolved against AuraContainerSortMethod/SortDirection at use time so
+            -- this table stays free of Blizzard load-order dependencies (same reason filters use strings).
+            sortMethod = "ExpirationOnly",
+            sortDirection = "Normal",
+            showApplicationCount = true,
+            showDurationText = true,
+            drawSwipe = false,
+            drawEdge = false,
+            reverseSwipe = true,
+            tooltipHideInCombat = false,
+            UseGlobalFont = true,
+            FontFace = "Expressway",
+            FontOutline = "OUTLINE",
+
+            -- Per-string size and placement inside the aura button. Face/outline/shadow above are
+            -- shared by both. AnchorFrom doubles as the relative point (see FontCore SetFontJustify).
+            StackFont = {
+                FontSize = 14,
+                Position = {
+                    AnchorFrom = "BOTTOMRIGHT",
+                    XOffset = -1,
+                    YOffset = 1
+                },
+            },
+            DurationFont = {
+                FontSize = 18,
+                Position = {
+                    AnchorFrom = "CENTER",
+                    XOffset = 0,
+                    YOffset = 0
+                },
+            },
+
+            FontShadow = {
+                Enabled = false,
+                Color = { 0, 0, 0, 1 },
+                OffsetX = 1,
+                OffsetY = -1,
+            },
+            anchorFrameType = "SELECTFRAME",
+            ParentFrame = "NUF_Player",
+            Position = {
+                AnchorFrom = "BOTTOMRIGHT",
+                AnchorTo = "TOPRIGHT",
+                XOffset = 0,
+                YOffset = 90
             },
         },
 

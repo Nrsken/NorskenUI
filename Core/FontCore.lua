@@ -145,7 +145,7 @@ local function ApplyObjectShadow(obj, shadow)
         ox, oy = shadow.OffsetX or 1, shadow.OffsetY or -1
     end
 
-    -- ** Blizzy bug **
+    -- ! Blizzy bug
     -- Always write both branches (color + offset) so toggling a shadow off on a reused object actually clears a previously-set shadow instead of leaving it stale.
     if obj.GetFontObjectForAlphabet then
         for i = 1, #ALPHABETS do

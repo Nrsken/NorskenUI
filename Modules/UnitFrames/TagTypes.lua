@@ -10,7 +10,7 @@ local format = string.format
 
 local UnitClass = UnitClass
 local UnitNameUnmodified = UnitNameUnmodified
-local UnitClassification = UnitClassification
+local select = select
 local UnitReaction = UnitReaction
 local UnitIsTapDenied = UnitIsTapDenied
 local UnitIsConnected = UnitIsConnected
@@ -34,6 +34,7 @@ local UnitPowerPercent = UnitPowerPercent
 local UnitIsRelatedToActiveQuest = C_QuestLog and C_QuestLog.UnitIsRelatedToActiveQuest
 local IncomingSummonStatus = C_IncomingSummon and C_IncomingSummon.IncomingSummonStatus
 local TruncateWhenZero = C_StringUtil and C_StringUtil.TruncateWhenZero
+local GetClassColor = C_ClassColor and C_ClassColor.GetClassColor
 
 local SummonStatus = Enum and Enum.SummonStatus
 
@@ -47,15 +48,15 @@ Tags.Methods['nrsknuf:perpower:smartcolor'] = function(unit)
 	if not unit or not UnitExists(unit) then return "" end
 	local unitPower = UnitPower(unit)
 	local powerType = UnitPowerType(unit)
-    local health = _FRAME and _FRAME.Health
+	local health = _FRAME and _FRAME.Health
 
-    local color
+	local color
 	if health and health.nuiColorByClass then
 		color = '|cffffffff'
 	else
 		color = NRSKNUI.Colors.power[powerType] and Hex(NRSKNUI.Colors.power[powerType])
 	end
-	
+
 	if unitPower then
 		return color .. format("%.f", UnitPowerPercent(unit, nil, true, CurveConstants.ScaleTo100)) .. "|r"
 	end
@@ -71,22 +72,24 @@ Tags.Methods['nrsknuf:unit:smartcolor'] = function(unit)
 		return '|cffffffff'
 	end
 
-	-- UnitClass and UnitIsPVP return secrets once the unit's identity is restricted. A secret
-	-- cannot be used as a table key or branched on, and a tag must return a plain string
-	-- regardless: oUF does `f(unit) or ''` on the result, which would error on a secret.
-	local secret = NRSKNUI:IsSecretUnit(unit)
-
 	local reaction = UnitReaction(unit, 'player')
 	if UnitIsTapDenied(unit) or not UnitIsConnected(unit) then
 		return '|cff999999'
 	elseif UnitIsPlayer(unit) or UnitTreatAsPlayerForDisplay(unit) then
-		if secret then return '|cffffffff' end
+		local color
+		local classToken = select(2, UnitClass(unit))
+		if classToken ~= nil then
+			color = GetClassColor(classToken)
+		end
 
-		local _, classToken = UnitClass(unit)
-		return NRSKNUI.Colors.class[classToken] and Hex(NRSKNUI.Colors.class[classToken])
+		if color == nil then
+			color = NRSKNUI.Colors.white
+		end
+
+		return color:GenerateHexColorMarkup()
 	elseif not UnitIsPlayer(unit) and reaction then
 		return NRSKNUI.Colors.reaction[reaction] and Hex(NRSKNUI.Colors.reaction[reaction])
-	elseif not secret and UnitFactionGroup(unit) and UnitIsEnemy(unit, 'player') and UnitIsPVP(unit) then
+	elseif UnitFactionGroup(unit) and UnitIsEnemy(unit, 'player') and UnitIsPVP(unit) then
 		return '|cffff0000'
 	else
 		return '|cffffffff'

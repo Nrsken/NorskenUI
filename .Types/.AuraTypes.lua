@@ -1,5 +1,13 @@
 ---@meta
 
+-- Blizzard_AuraContainerShared globals the addon API stubs don't carry yet.
+
+---@type { axis: number, anchorPoint: string, horizontalGrowthDirection: number, verticalGrowthDirection: number, paddingLeft: number, paddingRight: number, paddingTop: number, paddingBottom: number, maximumLineSize: number }
+CustomAuraContainerLayoutDefaults = nil
+
+---@type { None: number, ProcessAura: number }
+CustomAuraContainerAuraProcessingPolicy = nil
+
 filters = {
     'HELPFUL',                 -- Helpful:                only helpful auras (buffs)
     'HARMFUL',                 -- Harmful:                only harmful auras (debuffs)
@@ -43,7 +51,7 @@ candidateFilters = {
         ['Enrage'] = true,
     },
 
-    processedAuraType = {
+    processedAuraType = { -- needs the ProcessAura policy; container:AddFilteredGroup turns it on when a filter sets this
         -- AuraUtil.AuraUpdateChangedType.None, -- This cannot be used.
         AuraUtil.AuraUpdateChangedType.Debuff, -- 2
         AuraUtil.AuraUpdateChangedType.Buff,   -- 3
@@ -61,5 +69,7 @@ candidateFilters = {
     nameplateShowAll = nil,        -- must be a boolean or nil
     nameplateShowPersonal = nil,   -- must be a boolean or nil
 
-    maxDuration = 200000,          -- must be a non-negative number or nil
+    maxDuration = 200000,          -- non-negative number or nil; any non-nil value also hides permanent auras (duration == 0)
 }
+
+-- /dump AuraUtil.IsValidFilterString('HELPFUL|PLAYER|BIG_DEFENSIVE|EXTERNAL_DEFENSIVE')

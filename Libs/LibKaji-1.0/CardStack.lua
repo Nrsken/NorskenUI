@@ -21,6 +21,8 @@ local Mixin = Mixin
 ---@field topOffset number y position of the first card
 ---@field cards Frame[] ordered cards
 ---@field paused boolean
+---@field laying boolean
+---@field pending boolean
 ---@field onLayout? fun(height: number)
 local CardStackMixin = {}
 
@@ -30,6 +32,8 @@ local CardStackMixin = {}
 ---@return T card the same card, for inline use
 function CardStackMixin:Add(card)
     self.cards[#self.cards + 1] = card
+    -- Lets a card that grew on its own (auto-height text) pull the stack back into line.
+    card._onHeightChanged = function() self:DoLayout() end
     return card
 end
 
@@ -50,6 +54,14 @@ end
 function CardStackMixin:DoLayout()
     if self.paused then return self.parent:GetHeight() end
 
+    -- Re-anchoring a card can resize it (auto-height text remeasures on the new width), which lands
+    -- back here mid-pass. Fold that into one more pass rather than recursing through the stack.
+    if self.laying then
+        self.pending = true
+        return self.parent:GetHeight()
+    end
+    self.laying = true
+
     local pad = self.gui.theme.paddingSmall
     local y = self.topOffset
     for _, card in ipairs(self.cards) do
@@ -61,6 +73,12 @@ function CardStackMixin:DoLayout()
     end
 
     pixel.SetPixelHeight(self.parent, y)
+    self.laying = false
+
+    if self.pending then
+        self.pending = false
+        return self:DoLayout()
+    end
 
     if self.onLayout then self.onLayout(y) end
 
@@ -91,6 +109,8 @@ function InstanceMixin:CreateCardStack(parent, topOffset, onLayout)
         topOffset = topOffset or self.theme.paddingSmall,
         cards = {},
         paused = false,
+        laying = false,
+        pending = false,
         onLayout = onLayout,
     }
 

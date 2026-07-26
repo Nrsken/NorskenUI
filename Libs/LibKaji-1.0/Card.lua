@@ -23,6 +23,7 @@ local Mixin = Mixin
 local ipairs = ipairs
 local wipe = wipe
 local tinsert = table.insert
+local abs = math.abs
 
 local WHITE = "Interface\\Buttons\\WHITE8X8"
 
@@ -37,8 +38,29 @@ local WHITE = "Interface\\Buttons\\WHITE8X8"
 ---@field contentHeight number
 ---@field rows table
 ---@field currentY number
+---@field _leadPad? number
+---@field _onHeightChanged? fun(card: KajiGUICard) set by the card stack, for rows that resize themselves
 ---@field _yOffset number
 local CardMixin = {}
+
+---Re-anchors every entry in the vertical flow from the top, using the height each one was added
+---with. Cheap enough to be the single layout path: a card holds a handful of rows.
+function CardMixin:Relayout()
+    local pad = self.gui.theme.paddingSmall
+    local y = self._leadPad or 0
+
+    for _, row in ipairs(self.rows) do
+        local offset = y + (row._layoutOffsetY or 0)
+        row:ClearAllPoints()
+        pixel.SetPixelPoint(row, "TOPLEFT", self.content, "TOPLEFT", 0, -offset)
+        pixel.SetPixelPoint(row, "TOPRIGHT", self.content, "TOPRIGHT", 0, -offset)
+        y = y + (row._layoutHeight or 24) + (row._layoutSpacing or pad)
+    end
+
+    self.currentY = y
+    pixel.SetPixelHeight(self.content, y > 0 and y or 1)
+    self:UpdateHeight()
+end
 
 ---Adds a row (or any frame) below the previous one.
 ---@param widget Frame
@@ -46,20 +68,13 @@ local CardMixin = {}
 ---@param spacing? number trailing spacing; pass 0 for the last row
 ---@return Frame
 function CardMixin:AddRow(widget, height, spacing)
-    local theme = self.gui.theme
-    height = height or widget:GetHeight() or 24
-    spacing = spacing or theme.paddingSmall
-
     widget:SetParent(self.content)
-    widget:ClearAllPoints()
-    pixel.SetPixelPoint(widget, "TOPLEFT", self.content, "TOPLEFT", 0, -self.currentY)
-    pixel.SetPixelPoint(widget, "TOPRIGHT", self.content, "TOPRIGHT", 0, -self.currentY)
+    widget._card = self
+    widget._layoutHeight = height or widget:GetHeight() or 24
+    widget._layoutSpacing = spacing or self.gui.theme.paddingSmall
 
-    self.currentY = self.currentY + height + spacing
     tinsert(self.rows, widget)
-
-    pixel.SetPixelHeight(self.content, self.currentY)
-    self:UpdateHeight()
+    self:Relayout()
 
     return widget
 end
@@ -71,17 +86,15 @@ end
 function CardMixin:AddLabel(text, size)
     local theme = self.gui.theme
     local label = self.content:CreateFontString(nil, "OVERLAY")
-    pixel.SetPixelPoint(label, "TOPLEFT", self.content, "TOPLEFT", 0, -self.currentY)
-    pixel.SetPixelPoint(label, "TOPRIGHT", self.content, "TOPRIGHT", 0, -self.currentY)
     label:SetJustifyH("LEFT")
     self.gui:ApplyFont(label, size or "normal")
     label:SetText(text)
     label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
 
-    local height = label:GetStringHeight() or 14
-    self.currentY = self.currentY + height + theme.paddingSmall
-    pixel.SetPixelHeight(self.content, self.currentY)
-    self:UpdateHeight()
+    label._layoutHeight = label:GetStringHeight() or 14
+    label._layoutSpacing = theme.paddingSmall
+    tinsert(self.rows, label)
+    self:Relayout()
 
     return label
 end
@@ -92,23 +105,32 @@ function CardMixin:AddSeparator()
     local theme = self.gui.theme
     local sep = self.content:CreateTexture(nil, "ARTWORK")
     pixel.SetPixelHeight(sep, theme.borderSize)
-    pixel.SetPixelPoint(sep, "TOPLEFT", self.content, "TOPLEFT", 0, -self.currentY - theme.paddingSmall)
-    pixel.SetPixelPoint(sep, "TOPRIGHT", self.content, "TOPRIGHT", 0, -self.currentY - theme.paddingSmall)
     sep:SetColorTexture(theme.border[1], theme.border[2], theme.border[3], 0.5)
 
-    self.currentY = self.currentY + theme.borderSize + theme.paddingSmall * 2
-    pixel.SetPixelHeight(self.content, self.currentY)
-    self:UpdateHeight()
+    -- The line sits padding below the previous row and takes the same padding again after it.
+    sep._layoutOffsetY = theme.paddingSmall
+    sep._layoutHeight = theme.borderSize
+    sep._layoutSpacing = theme.paddingSmall * 2
+    tinsert(self.rows, sep)
+    self:Relayout()
 
     return sep
 end
 
+---Adds empty vertical space. Carried as trailing spacing on the last entry so the flow stays
+---relayoutable, which is identical to advancing the cursor.
 ---@param amount? number
 function CardMixin:AddSpacing(amount)
     amount = amount or self.gui.theme.paddingMedium
-    self.currentY = self.currentY + amount
-    pixel.SetPixelHeight(self.content, self.currentY)
-    self:UpdateHeight()
+    local last = self.rows[#self.rows]
+
+    if last then
+        last._layoutSpacing = (last._layoutSpacing or 0) + amount
+    else
+        self._leadPad = (self._leadPad or 0) + amount
+    end
+
+    self:Relayout()
 end
 
 function CardMixin:UpdateHeight()
@@ -125,12 +147,15 @@ end
 ---Clears every row so the card can be repopulated (used by fluent card:Rebuild).
 function CardMixin:Reset()
     for _, row in ipairs(self.rows) do
+        -- Cut the link back to us first: a discarded row must not reflow the card we are rebuilding.
+        row._card = nil
         if row.Hide then row:Hide() end
         if row.SetParent then row:SetParent(nil) end
     end
     wipe(self.rows)
     self.currentY = 0
     self.contentHeight = 0
+    self._leadPad = nil
     pixel.SetPixelHeight(self.content, 1)
     pixel.SetPixelHeight(self, self.headerHeight + self.gui.theme.paddingMedium * 2)
 end
@@ -221,7 +246,27 @@ end
 ---@field widgets table
 ---@field nextX number
 ---@field _rowHeight number
+---@field _card? KajiGUICard set when the row is added to a card
 local RowMixin = {}
+
+---Resizes the row to fit a widget that measured its own content, and reflows the card around it.
+---This is the upward half of the layout: everything above the widget is anchored, so a taller
+---widget only becomes visible once the row, the card and the stack all know about it.
+---@param height number
+function RowMixin:SetContentHeight(height)
+    height = pixel.ToPixelGrid(height)
+    if abs(height - (self._rowHeight or 0)) < 0.5 then return end
+
+    self._rowHeight = height
+    self._layoutHeight = height
+    pixel.SetPixelHeight(self, height)
+
+    local card = self._card
+    if not card then return end
+
+    card:Relayout()
+    if card._onHeightChanged then card._onHeightChanged(card) end
+end
 
 ---Adds a widget at a relative width. Widths in a row should sum to 1.0.
 ---@param widget Frame

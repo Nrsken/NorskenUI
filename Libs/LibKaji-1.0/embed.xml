@@ -7,6 +7,7 @@
     <Script file="Theme.lua" />
     <Script file="Util.lua" />
     <Script file="Dialog.lua" />
+    <Script file="ContextMenu.lua" />
     <Script file="Animations.lua" />
 
     <!-- Layout + state infra -->
@@ -42,5 +43,6 @@
     <Script file="Widgets\DynamicGroupCard.lua" />
     <Script file="Widgets\GlowSettingsCard.lua" />
     <Script file="Widgets\LoadConditionsCard.lua" />
+    <Script file="Widgets\FilterCard.lua" />
 
 </Ui>

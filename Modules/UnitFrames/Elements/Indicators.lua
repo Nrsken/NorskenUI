@@ -5,10 +5,11 @@ local UF = NRSKNUI:GetModule('UnitFrames')
 
 local ipairs = ipairs
 local CreateFrame = CreateFrame
+local unpack = unpack
 
 -- Native oUF indicator elements, keyed into uDB.Indicators. Consumed by the GUI and ApplyElementStates.
 UF.IndicatorDefs = {
-    { key = 'Resting',    element = 'RestingIndicator' },
+    { key = 'Resting',    element = 'RestingIndicator',   texture = true, path = [[Interface\HUD\UIUnitFrameRestingFlipbook]], coords = { 45 / 360, 80 / 360, 200 / 420, 240 / 420 }, desaturated = true },
     { key = 'Combat',     element = 'CombatIndicator' },
     { key = 'ReadyCheck', element = 'ReadyCheckIndicator' },
     { key = 'Summon',     element = 'SummonIndicator' },
@@ -47,6 +48,13 @@ UF.Elements.Indicators = {
             tex:SetPixelSize(db.Size, db.Size)
             tex:ClearAllPoints()
             tex:SetPixelPoint(db.Position.AnchorFrom, container, db.Position.AnchorTo, db.Position.XOffset, db.Position.YOffset)
+            if def.texture then
+                tex:SetTexture(def.path)
+                tex:SetTexCoord(unpack(def.coords))
+                tex:SetDesaturated(def.desaturated)
+            elseif def.atlas then
+                tex:SetAtlas(def.atlas)
+            end
         end
     end,
 }

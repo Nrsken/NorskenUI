@@ -3,6 +3,8 @@
 
 * A read-only text block: an accent-less title above a body paragraph.
 * The body accepts a string, a function returning one, or a list (rendered as a bulleted list).
+* Without a `height` the block measures its own wrapped text and grows the row it sits in to fit,
+  so dynamic text is never clipped. Pass a `height` for a fixed box instead.
 
 ## Examples
 
@@ -16,6 +18,13 @@
         bgMode = 'show',
     })
 
+    -- Grows with the text, never shorter than 40.
+    row:Text('Matches auras in any of 2 branches:', {
+        text = { 'Branch 1: HELPFUL', 'Branch 2: HARMFUL' },
+        autoHeight = true,
+        minHeight = 40,
+    })
+
 --]]
 
 local lib = LibStub and LibStub("LibKaji-1.0", true)
@@ -26,15 +35,22 @@ local pixel = lib.Pixel
 local CreateFrame = CreateFrame
 local type = type
 local ipairs = ipairs
+local abs = math.abs
+local max = math.max
 local tconcat = table.concat
+
+---@alias KajiGUITextBody string|string[]|fun(): string|string[]
 
 ---@class KajiGUIText : Frame
 ---@field container Frame|BackdropTemplate
 ---@field SetEnabled fun(self: KajiGUIText, enabled: boolean)
+---@field SetText fun(self: KajiGUIText, text: KajiGUITextBody)
 
 ---@class KajiGUITextConfig
----@field text? string|string[]|fun(): string|string[]
----@field height? number
+---@field text? KajiGUITextBody
+---@field height? number fixed height; omitting it sizes the block to its wrapped text
+---@field autoHeight? boolean force auto sizing even with a height set (which then acts as a floor)
+---@field minHeight? number shortest the block may get while auto sizing
 ---@field bgMode? "show"|"border"|"hide"
 ---@field wrapOn? boolean
 
@@ -50,8 +66,15 @@ function InstanceMixin:CreateText(parent, titleText, config)
     local rowHeight = config.height or 34
     local bgMode = config.bgMode
 
+    -- A height means the caller sized the box themselves, so honour it unless they opt back in.
+    local autoHeight = config.autoHeight
+    if autoHeight == nil then autoHeight = config.height == nil end
+    local minHeight = config.minHeight or config.height or 0
+
     local row = CreateFrame("Frame", nil, parent)
     pixel.SetPixelHeight(row, rowHeight)
+    -- Keeps the row it is added to from stamping its own height back over the measured one.
+    if autoHeight then row.explicitHeight = true end
 
     local container = CreateFrame("Frame", nil, row, "BackdropTemplate")
     pixel.SetPixelHeight(container, rowHeight)
@@ -80,11 +103,18 @@ function InstanceMixin:CreateText(parent, titleText, config)
     title:SetText(titleText or "")
     title:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
 
-    local totSpacer = title:GetStringHeight() + 2
+    local totSpacer = title:GetStringHeight() + 6
 
+    -- Auto sizing anchors one corner and sets the width itself, so GetStringHeight reports the
+    -- wrapped height right away. Pinning both sides only resolves the width on the next layout pass,
+    -- which would leave us measuring against the previous one.
     local label = container:CreateFontString(nil, "OVERLAY")
     pixel.SetPixelPoint(label, "TOPLEFT", container, "TOPLEFT", 0, -totSpacer)
-    pixel.SetPixelPoint(label, "BOTTOMRIGHT", container, "BOTTOMRIGHT", 0, 0)
+    if autoHeight then
+        label:SetJustifyV("TOP")
+    else
+        pixel.SetPixelPoint(label, "BOTTOMRIGHT", container, "BOTTOMRIGHT", 0, 0)
+    end
     label:SetJustifyH("LEFT")
     label:SetSpacing(4)
     label:SetWordWrap(true)
@@ -107,6 +137,37 @@ function InstanceMixin:CreateText(parent, titleText, config)
     end
     label:SetText(ResolveBody(bodyText))
     container.label = label
+
+    -- Last height we settled on. Nil until the first measure, so the row always hears about it once.
+    local measured
+
+    ---Sizes the block to its wrapped text at the given width and passes the height up to the row.
+    ---@param width number?
+    local function Measure(width)
+        -- No width yet means the row has not been laid out; OnSizeChanged brings us back.
+        if not autoHeight or not width or width <= 0 then return end
+
+        pixel.SetPixelWidth(label, width)
+        local desired = max(totSpacer + (label:GetStringHeight() or 0) + theme.paddingSmall, minHeight)
+        -- Bailing on an unchanged height is what stops resize -> OnSizeChanged -> resize looping.
+        if measured and abs(desired - measured) < 0.5 then return end
+
+        measured = desired
+        pixel.SetPixelHeight(container, desired)
+        pixel.SetPixelHeight(row, desired)
+
+        local owner = row:GetParent()
+        if owner and owner.SetContentHeight then owner:SetContentHeight(desired) end
+    end
+
+    row:SetScript("OnSizeChanged", function(self, width) Measure(width) end)
+
+    ---Replaces the body text, remeasuring when the block sizes itself.
+    ---@param text string|string[]|fun(): string|string[]
+    function row:SetText(text)
+        label:SetText(ResolveBody(text))
+        Measure(self:GetWidth())
+    end
 
     function row:SetEnabled(enabled)
         self:SetAlpha(enabled and 1 or 0.4)
