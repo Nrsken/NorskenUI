@@ -8,6 +8,8 @@ local CopyTable = CopyTable
 local ipairs = ipairs
 local type = type
 local huge = math.huge
+local min = math.min
+local ceil = math.ceil
 
 -- Read from the live client rather than hardcoded, these tokens can change between patches.
 local AuraFilterTokens = AuraUtil.AuraFilters
@@ -99,6 +101,33 @@ local function ResolveGrowthDirection(direction, default)
     end
 
     return default
+end
+
+--[[
+
+API: NRSKNUI:GetAuraGridSize(config, count)
+
+Extent of the largest grid a config can lay out: a full line wide and as many lines as the cap needs.
+
+A live container sizes itself down to the auras actually up (Blizzard does this in
+CustomAuraContainerFlowLayoutMixin:OnLayoutComplete), but that size is secret and cannot be read back,
+so anything that needs a real number, a mover in particular, has to describe the worst case instead.
+
+* config - carries .size, .perRow, .elementSpacing and .lineSpacing
+* count  - most buttons that can be placed
+
+--]]
+---@param config table
+---@param count number
+---@return number width
+---@return number height
+function NRSKNUI:GetAuraGridSize(config, count)
+    local columns = min(config.perRow, count)
+    local rows = ceil(count / config.perRow)
+
+    -- Trailing spacing is left out of both axes, matching the bounds AnchorUtil.ApplyFlowLayout reports.
+    return columns * config.size + (columns - 1) * config.elementSpacing,
+        rows * config.size + (rows - 1) * config.lineSpacing
 end
 
 -- Check what type of duration text coloring is enabled in the global media settings.
@@ -382,6 +411,23 @@ local function ResolveBranches(filterName)
     local branches = NRSKNUI:GetAuraFilter(filterName)
     if branches and branches[1] then return branches end
     return { { filterString = AuraFilterTokens.Harmful } }
+end
+
+--[[
+
+API: NRSKNUI:GetAuraFilterBranchCount(filterName)
+
+How many groups :AddFilteredGroup will build for a named filter, one per branch.
+maxFrameCount is a per-group cap, so callers sizing to a filtered display's worst case have to
+multiply by this.
+
+* filterName - key into db.global.AuraFilters (may be nil)
+
+--]]
+---@param filterName string?
+---@return number
+function NRSKNUI:GetAuraFilterBranchCount(filterName)
+    return #ResolveBranches(filterName)
 end
 
 ---Point a binding's groups at its filter's current branches: rebind the groups it already owns,

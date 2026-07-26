@@ -52,10 +52,12 @@ function Defensives:GetContainerConfig()
     }
 end
 
----Size the host to the grid the current settings describe, so the mover matches what is rendered.
+---Size the host to the largest grid the current settings can produce, so the mover covers the display's
+---full footprint. maxFrameCount caps each filter branch, so the worst case scales with the branch count.
 function Defensives:ResizeHost()
     local db = self.db
-    self.host:SetSize(db.perRow * (db.size + db.elementSpacing), 3 * (db.size + db.lineSpacing))
+    local count = db.maxFrameCount * NRSKNUI:GetAuraFilterBranchCount(db.Filter)
+    self.host:SetSize(NRSKNUI:GetAuraGridSize(db, count))
 end
 
 ---Create the mover host frame, the container is attached later, out of combat.
@@ -88,6 +90,7 @@ function Defensives:OnFilterChanged()
     local container = self.host and self.host.container
     if not container then return end
 
+    self:ResizeHost() -- editing a filter can add or drop branches, which moves the worst case
     container:ReapplyFilters()
 end
 
@@ -96,6 +99,7 @@ function Defensives:ApplyFilter()
     local container = self.host and self.host.container
     if not container then return end
 
+    self:ResizeHost()
     container:RebindFilteredGroups(self.db.Filter)
 end
 

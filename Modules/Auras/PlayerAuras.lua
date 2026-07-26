@@ -80,11 +80,13 @@ function PlayerAuras:GetContainerConfig(kind)
     }
 end
 
----Size the host to the grid the current settings describe, so the mover matches what is rendered.
+---Size the host to the largest grid the current settings can produce, so the mover covers the display's
+---full footprint. Weapon enchants are their own flow group and sit outside maxFrameCount.
 ---@param kind string
 function PlayerAuras:ResizeHost(kind)
     local cfg = self.db[kind]
-    self.hosts[kind]:SetSize(cfg.perRow * (cfg.size + cfg.elementSpacing), 3 * (cfg.size + cfg.lineSpacing))
+    local count = cfg.maxFrameCount + ((kind == 'Buffs' and cfg.showWeaponEnchants) and 2 or 0)
+    self.hosts[kind]:SetSize(NRSKNUI:GetAuraGridSize(cfg, count))
 end
 
 ---Create the mover host frame for a kind, the container is attached later, out of combat.
