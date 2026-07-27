@@ -107,8 +107,11 @@ function EditBox:SetFontJustify(source, parent, offsetX, offsetY, skip, bound, f
 ---@field ScheduleUpdate fun(self: Frame) Arm the SetScheduledUpdate handler to run once next frame; repeated calls coalesce
 ---@field SetOnUpdateMode fun(self: Frame, mode: number) Set the OnUpdateMode (Enum.OnUpdateMode) for this frame; see docs for details
 ---@field FitBackdropToText fun(self: Frame, fontString: FontString, text: string, padX: number, padY: number): boolean Size the backdrop to the widest string sharing text's digit shape; returns true if it resized
+---@field SetAlphaFromBoolean fun(self: Frame, value: boolean|number|nil, alphaIfTrue?: number, alphaIfFalse?: number)
 ---@field CreateAuraContainer fun(self: Frame, config: table): NUIAuraContainer?
 ---@field container NUIAuraContainer?
+---@field _PixelGlow Frame? Attached by LibCustomGlow's PixelGlow_Start
+---@field _AutoCastGlow Frame? Attached by LibCustomGlow's AutoCastGlow_Start
 local Frame
 
 ---@class NUIAuraContainer : Frame
@@ -190,6 +193,7 @@ function Frame:StyleChildFontStrings(source, getSize, outline, shadow, skip, set
 ---@field SetScheduledUpdate fun(self: Button, callback: fun(self: Button), whenVisible?: boolean) Install a coalesced one-shot handler; arm it with ScheduleUpdate
 ---@field ScheduleUpdate fun(self: Button) Arm the SetScheduledUpdate handler to run once next frame; repeated calls coalesce
 ---@field RegisterCallback fun(self: table, event: string, callback: fun(btn: any), owner: table)
+---@field SetAlphaFromBoolean fun(self: Button, value: boolean|number|nil, alphaIfTrue?: number, alphaIfFalse?: number)
 local Button
 
 ---Strip textures/atlases in a controlled way. `'Keyed'` recurses keyed children then clears own regions.
@@ -523,3 +527,24 @@ function FontString:GetWidestDigit() end
 ---@field MyName string
 ---@field MyRealm string
 ---@field MySpec NRSKNUI.MySpecData
+
+---@class FocusCastbar
+---@field db NRSKNUI.FocusCastbarDB
+---@field casting boolean?
+---@field channeling boolean?
+---@field empowering boolean?
+---@field notInterruptible boolean
+---@field castBarID number?
+---@field spellID number?
+---@field spellName string?
+---@field holdTime number Seconds left of the post cast hold, counted down in OnUpdate
+---@field textElapsed number Accumulator for the throttled time text
+---@field interruptId number? The player's known interrupt, nil when the class has none
+---@field isPreview boolean?
+---@field glowInitialized boolean?
+---@field previewTimer FunctionContainer?
+---@field pips Texture[]
+---@field colCast colorRGBA
+---@field colUninterruptible colorRGBA
+---@field colNotReady colorRGBA
+---@field durationFormatter table The shared aura duration NumericFormatter, re-fetched on every ApplySettings

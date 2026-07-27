@@ -111,3 +111,68 @@
 ---
 ---IsHooked checks if a method or script is currently hooked.
 ---@field IsHooked fun(self: NRSKNUI.AceHook, obj: any, method?: string): boolean
+
+---@class NRSKNUI.UnitFramesTagSettings
+---@field Separator string
+---@field UpdateInterval number
+
+---@class NRSKNUI.UnitFramesDB
+---@field General table
+---@field TagSettings NRSKNUI.UnitFramesTagSettings
+---@field Units table<string, table>
+
+---@class UnitFrames : NRSKNUI.Module
+---@field db NRSKNUI.UnitFramesDB
+
+---@class NRSKNUI.FocusCastbarTargetNames
+---@field Anchor string
+---@field XOffset number
+---@field YOffset number
+---@field FontSize number
+
+---@class NRSKNUI.FocusCastbarTargetMarker
+---@field Enabled boolean
+---@field Anchor string
+---@field Size number
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.FocusCastbarHoldTimer
+---@field Enabled boolean
+---@field Duration number
+---@field InterruptedColor number[]
+---@field SuccessColor number[]
+
+---@class NRSKNUI.FocusCastbarKickIndicator
+---@field Enabled boolean
+---@field TickWidth number
+---@field NotReadyColor number[]
+---@field TickColor number[]
+---@field TickWidth number
+
+---@class NRSKNUI.FocusCastbarGlow
+---@field GlowEnabled boolean
+---@field GlowType string
+---@field GlowColor number[]
+---@field GlowLines number
+---@field GlowFrequency number
+---@field GlowLength number
+---@field GlowThickness number
+---@field GlowBorder boolean
+---@field GlowScale number
+
+---@class NRSKNUI.FocusCastbarDB
+---@field Enabled boolean
+---@field Width number
+---@field Height number
+---@field CastColor number[]
+---@field NotInterruptibleColor number[]
+---@field TextColor number[]
+---@field HideNotInterruptible boolean
+---@field BackdropColor number[]
+---@field BorderColor number[]
+---@field TargetNames NRSKNUI.FocusCastbarTargetNames
+---@field TargetMarker NRSKNUI.FocusCastbarTargetMarker
+---@field HoldTimer NRSKNUI.FocusCastbarHoldTimer
+---@field KickIndicator NRSKNUI.FocusCastbarKickIndicator
+---@field ImportantGlow NRSKNUI.FocusCastbarGlow

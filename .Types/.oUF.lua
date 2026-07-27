@@ -132,6 +132,15 @@ function color:GetCurve() end
 ---@field RefreshMethods fun(self: oUF.Tags, tag: string) Recompile tag functions for a tag
 ---@field RefreshEvents fun(self: oUF.Tags, tag: string) Re-register events for a tag
 
+---@class _ENV
+_ENV = _G._ENV
+
+---@param r number|table
+---@param g number|nil
+---@param b number|nil
+---@return string
+function Hex(r, g, b) end
+
 -- Group header --
 
 ---@class oUF.Header : Frame
@@ -190,6 +199,8 @@ function nameplates:SetCVars(...) end
 function nameplates:SetNumAuraContainers(numContainers) end
 
 -- Unit frame (the `self` passed to style functions) --
+
+---@alias oUF.ToggleWidget oUF.Castbar|oUF.Power|oUF.Health|oUF.RaidTargetIndicator|oUF.LeaderIndicator|oUF.Element|Frame|Texture|StatusBar
 
 ---@class oUF.UnitFrame : Button
 ---@field unit string The frame's unit token
@@ -304,6 +315,7 @@ local frame
 ---@field PostUpdate? fun(self: oUF.Health, unit: string, cur: number, max: number, lossPerc: number)
 ---@field PostUpdateColor? fun(self: oUF.Health, unit: string, color: oUF.Color?)
 ---@field UpdateColor? fun(self: oUF.UnitFrame, event: string, unit: string)
+---@field nuiForeground? StatusBar
 
 -- Power --
 
@@ -334,6 +346,7 @@ local frame
 ---@field PostUpdatePrediction? fun(self: oUF.Power, unit: string, cost: number)
 ---@field GetDisplayPower? fun(self: oUF.Power, unit: string): number?, number?
 ---@field UpdateColor? fun(self: oUF.UnitFrame, event: string, unit: string)
+---@field nuiColor? oUF.Color
 
 -- Additional / Alternative power --
 
