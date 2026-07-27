@@ -5,7 +5,6 @@ local _G = _G
 local pairs = pairs
 local tostring = tostring
 local max = math.max
-local CreateFrame = CreateFrame
 
 local vertexEnum = Enum and Enum.FontStringScaleAnimationMode and Enum.FontStringScaleAnimationMode.Vertex
 local fontSizeEnum = Enum and Enum.FontStringScaleAnimationMode and Enum.FontStringScaleAnimationMode.FontSize
