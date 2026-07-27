@@ -27,7 +27,7 @@ NRSKNUI.Locale = GetLocale()
 NRSKNUI.AddOnName = GetAddOnMetadata(addonName, 'Title')
 NRSKNUI.Version = GetAddOnMetadata(addonName, 'Version')
 NRSKNUI.Author = GetAddOnMetadata(addonName, 'Author')
-NRSKNUI.MyClass = select(2, UnitClass('player'))
+_, NRSKNUI.MyClass, NRSKNUI.MyClassID = UnitClass('player')
 NRSKNUI.MyName, NRSKNUI.MyRealm = UnitFullName('player')
 -- Texture and color constants
 NRSKNUI.ClearTexture = 0
@@ -149,3 +149,4 @@ NRSKNUI.CombatCross = NRSKNUI:NewModule('CombatCross', 'AceEvent-3.0')
 NRSKNUI.CombatMessage = NRSKNUI:NewModule('CombatMessage', 'AceEvent-3.0', 'AceTimer-3.0')
 NRSKNUI.CombatRes = NRSKNUI:NewModule('CombatRes', 'AceEvent-3.0', 'AceTimer-3.0')
 NRSKNUI.CombatCursor = NRSKNUI:NewModule('CursorCircle', 'AceEvent-3.0')
+NRSKNUI.FocusCastbar = NRSKNUI:NewModule('FocusCastbar', 'AceEvent-3.0')

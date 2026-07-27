@@ -113,6 +113,7 @@ local Defaults = {
             Enabled = true,
             profileFont = { Enabled = true, FontFace = "Expressway", },
             profileBar = { Enabled = true, statusBar = "NorskenUI" },
+            profileSpark = { Enabled = true, sparkTexture = "Solid", Scale = 1, Width = 2, color = { 1, 1, 1, 1 } },
             -- Addons global formatter defaults.
             durationBreakpointColors = true,
             durationCurveColors = false,
@@ -1283,12 +1284,18 @@ local Defaults = {
                 UseGlobalBar = true,
                 StatusBarTexture = "NorskenUI",
 
+                -- Spark
+                UseGlobalSpark = true,
+                SparkTexture = "Solid",
+                SparkScale = 1,
+                SparkWidth = 2,
+                SparkColor = { 1, 1, 1, 1 },
+
                 -- Hold Timer
                 HoldTimer = {
                     Enabled = true,
                     Duration = 1,
                     InterruptedColor = { 0.1, 0.8, 0.1, 1 },
-                    FailedColor = { 0.780, 0.250, 0.250, 1 },
                     SuccessColor = { 0.780, 0.250, 0.250, 1 },
                 },
                 timeToHold = 0.5,
@@ -1296,6 +1303,7 @@ local Defaults = {
                 -- Kick Indicator
                 KickIndicator = {
                     Enabled = true,
+                    TickWidth = 2,
                     NotReadyColor = { 0.5, 0.5, 0.5, 1 },
                     TickColor = { 0.1, 0.8, 0.1, 1 },
                 },
@@ -2533,6 +2541,11 @@ local Defaults = {
                 UseGlobalBar = true,
                 statusBar = "NorskenUI",
                 BackgroundTexture = "", -- "" = match the foreground texture
+                UseGlobalSpark = true,
+                SparkTexture = "Solid",
+                SparkScale = 1,
+                SparkWidth = 2,
+                SparkColor = { 1, 1, 1, 1 },
                 UseGlobalFont = true,
                 FontFace = "Expressway",
                 FontOutline = "OUTLINE",

@@ -53,6 +53,7 @@ local Mixin = Mixin
 local C_Timer = C_Timer
 local UIParent = UIParent
 local pi = math.pi
+local GetAtlasInfo = C_Texture and C_Texture.GetAtlasInfo
 
 local DROPDOWN_HEIGHT = 24
 local ITEM_HEIGHT = 24
@@ -75,6 +76,17 @@ local function ApplyPreviewFont(fontString, fontPath, size)
     local ok, valid = pcall(fontString.SetFont, fontString, fontPath, size or PREVIEW_SIZE, "OUTLINE")
     if not ok or not valid then
         fontString:SetFontObject("GameFontHighlightSmall")
+    end
+end
+
+-- A media value can be an atlas name rather than a file path, and SetTexture cannot draw
+-- an atlas, so the preview swatch picks the setter that matches what LSM handed back.
+local function ApplyPreviewTexture(texture, value)
+    if not texture then return end
+    if type(value) == "string" and GetAtlasInfo and GetAtlasInfo(value) then
+        texture:SetAtlas(value)
+    else
+        texture:SetTexture(value)
     end
 end
 
@@ -278,13 +290,17 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
     local mediaType = config.media
     local options = config.options
     local isFontPreview = mediaType == "font"
-    local isStatusbarPreview = mediaType == "statusbar"
+    -- Every media type that is not a font or a sound previews as a texture swatch, so
+    -- custom types registered by the host (sparks, borders) get a preview for free.
+    local isTexturePreview = mediaType ~= nil and not isFontPreview and mediaType ~= "sound"
 
     -- Media mode: build a sorted option list straight from LSM. Explicit options are
     -- kept in front of the list (e.g. an inherit sentinel like 'Global (...)').
-    if mediaType and LSM then
+    -- HashTable is nil until something registers under the type, custom ones included.
+    local mediaHash = mediaType and LSM and LSM:HashTable(mediaType)
+    if mediaHash then
         local names = {}
-        for name in pairs(LSM:HashTable(mediaType)) do names[#names + 1] = name end
+        for name in pairs(mediaHash) do names[#names + 1] = name end
         tsort(names, function(a, b) return strlower(a) < strlower(b) end)
         local merged = {}
         if options then
@@ -302,7 +318,7 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
     row.gui = gui
     row._callback = config.callback
     row._isFontPreview = isFontPreview
-    row._isStatusbarPreview = isStatusbarPreview
+    row._isStatusbarPreview = isTexturePreview
 
     local label = row:CreateFontString(nil, "OVERLAY")
     pixel.SetPixelPoint(label, "TOPLEFT", row, "TOPLEFT", 0, 1)
@@ -375,8 +391,8 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
 
         if isFontPreview and value then
             ApplyPreviewFont(selectedText, gui:ResolveMedia("font", value), PREVIEW_SIZE)
-        elseif isStatusbarPreview and value then
-            selectedBar:SetTexture(gui:ResolveMedia("statusbar", value))
+        elseif isTexturePreview and value then
+            ApplyPreviewTexture(selectedBar, gui:ResolveMedia(mediaType, value))
             selectedBar:SetVertexColor(theme.accent[1], theme.accent[2], theme.accent[3], 0.4)
             selectedBar:Show()
         else
@@ -599,8 +615,8 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
 
             if isFontPreview then
                 ApplyPreviewFont(btn._text, gui:ResolveMedia("font", key), PREVIEW_SIZE)
-            elseif isStatusbarPreview then
-                btn._previewBar:SetTexture(gui:ResolveMedia("statusbar", key))
+            elseif isTexturePreview then
+                ApplyPreviewTexture(btn._previewBar, gui:ResolveMedia(mediaType, key))
                 btn._previewBar:SetVertexColor(theme.accent[1], theme.accent[2], theme.accent[3], 0.4)
                 btn._previewBar:Show()
             end

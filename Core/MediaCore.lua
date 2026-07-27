@@ -11,6 +11,7 @@ local PlaySoundFile = PlaySoundFile
 
 local GetFileID = C_UIFileAsset and C_UIFileAsset.GetFileID
 local IsKnownFile = C_UIFileAsset and C_UIFileAsset.IsKnownFile
+local GetAtlasInfo = C_Texture and C_Texture.GetAtlasInfo
 
 -- Locale masks: LSM rejects font registrations on koKR/zhCN/zhTW/ruRU clients unless the mask includes their locale bit and Fetch then falls back to the locale default game font.
 local westAndRU = LSM.LOCALE_BIT_western + LSM.LOCALE_BIT_ruRU
@@ -18,16 +19,18 @@ local westAndRU = LSM.LOCALE_BIT_western + LSM.LOCALE_BIT_ruRU
 local FALLBACK_FONT = STANDARD_TEXT_FONT or (GameFontNormal and GameFontNormal:GetFont()) or 'Fonts\\FRIZQT__.TTF'
 local FALLBACK_SIZE = 12
 local DEFAULT_FONT_NAME = 'Expressway'
+local SOLID = NRSKNUI.WhiteTexture
 local fallbackPaths = {
     font = FALLBACK_FONT,
     statusbar = [[Interface\TargetingFrame\UI-StatusBar]],
+    spark = SOLID,
 }
 
 NRSKNUI.Media = {
     Fonts = {},
     Statusbars = {},
     Sounds = {},
-    Solid = [[Interface\Buttons\WHITE8X8]],
+    Solid = SOLID,
     FallbackFont = FALLBACK_FONT,
     FallbackSize = FALLBACK_SIZE,
     DefaultFont = DEFAULT_FONT_NAME,
@@ -43,11 +46,14 @@ local mediaPaths = {
     font = [[Interface\AddOns\NorskenUI\Media\Fonts\]],
     statusbar = [[Interface\AddOns\NorskenUI\Media\Statusbars\]],
     sound = [[Interface\AddOns\NorskenUI\Media\Sounds\]],
+    spark = '',
 }
 
+---Register one media file with LSM. Types with a media folder above take a bare file name and
+---get NRSKNUI.Media populated, types without one take the finished path or atlas name.
 ---@param MediaType string
----@param FileName string
----@param DisplayName string | boolean
+---@param FileName string file name, or a complete path/atlas for types with no media folder
+---@param DisplayName string | boolean true reuses the file name, a string names it explicitly
 ---@param LocaleMask number?
 local function RegisterLSMMedia(MediaType, FileName, DisplayName, LocaleMask)
     local mediaPathForType = mediaPaths[MediaType]
@@ -82,6 +88,16 @@ RegisterLSMMedia('statusbar', 'StripesThick.blp', true) -- WA Assets: https://gi
 
 -- Sound reg
 RegisterLSMMedia('sound', 'Whisper.ogg', '|cffe51039NorskenWhisper|r')
+
+-- Spark reg
+RegisterLSMMedia('spark', SOLID, 'Solid')
+RegisterLSMMedia('spark', [[Interface\CastingBar\UI-CastingBar-Spark]], 'Blizzard Spark')
+RegisterLSMMedia('spark', 'Insanity-Spark', 'Blizzard Insanity Spark')
+RegisterLSMMedia('spark', 'XPBarAnim-OrangeSpark', 'Blizzard XPBar Spark')
+RegisterLSMMedia('spark', 'GarrMission_EncounterBar-Spark', 'Blizzard Garrison Mission Encounter Spark')
+RegisterLSMMedia('spark', 'Legionfall_BarSpark', 'Blizzard Legionfall Spark')
+RegisterLSMMedia('spark', 'honorsystem-bar-spark', 'Blizzard Honor System Spark')
+RegisterLSMMedia('spark', 'bonusobjectives-bar-spark', 'Bonus Objectives Spark')
 
 
 -- Font preloader using new C_UIFileAsset API --
@@ -201,6 +217,70 @@ function NRSKNUI:GetStatusbar(moduleDB, override)
         name = (moduleDB and (moduleDB.StatusBarTexture or moduleDB.statusBar)) or 'NorskenUI'
     end
     return self:ResolveMediaPath('statusbar', name) or fallbackPaths.statusbar --[[@as string]]
+end
+
+---Resolve spark texture to a usable file path or atlas name, with a fallback to the solid spark.
+---@param name string? LSM spark name, literal path, or atlas name
+---@return string value
+local function ResolveSpark(name)
+    if name and name ~= '' then
+        if LSM:IsValid('spark', name) then
+            local value = LSM:Fetch('spark', name, true)
+            if value then return value end
+        elseif (GetAtlasInfo and GetAtlasInfo(name)) or (IsKnownFile and IsKnownFile(name)) then
+            return name
+        end
+    end
+    return fallbackPaths.spark
+end
+
+---Set a spark texture, vertex color and size to suit the bar height and chosen texture.
+---@param texture Texture
+---@param moduleDB table?
+---@param barHeight number? height of the bar the spark rides on, omit to keep the caller's size.
+---@param override string? per-element spark name, wins over the global texture but not its scale.
+function NRSKNUI:SetSpark(texture, moduleDB, barHeight, override)
+    local global = self.db and self.db.profile and self.db.profile.globalMedia
+    local globalSpark = global and global.Enabled and global.profileSpark
+
+    -- Use global or per module spark settings, but allow a per-element override to win outright.
+    local name, scale, color, width
+    if globalSpark and globalSpark.Enabled and not (moduleDB and moduleDB.UseGlobalSpark == false) then
+        name, scale, color, width = globalSpark.sparkTexture, globalSpark.Scale, globalSpark.color, globalSpark.Width
+    elseif moduleDB then
+        name, scale, color, width = moduleDB.SparkTexture, moduleDB.SparkScale, moduleDB.SparkColor, moduleDB.SparkWidth
+    end
+
+    -- Set spark texture.
+    local value = ResolveSpark(override or name or 'Solid')
+    local atlas = GetAtlasInfo and GetAtlasInfo(value)
+    if atlas then
+        texture:SetAtlas(value)
+    else
+        texture:SetTexture(value)
+    end
+
+    -- Spark coloring.
+    texture:SetDesaturated(true) -- Set to true so that the spark can be colored with SetVertexColor, even if the texture is a colored atlas.
+    if color then
+        texture:SetVertexColor(color[1], color[2], color[3], color[4] or 1)
+    else
+        texture:SetVertexColor(1, 1, 1, 1)
+    end
+
+    if not barHeight then return end
+
+    -- Calculate the spark size based on the bar height and the texture's aspect ratio.
+    -- Only the solid spark takes a width setting: it is a plain fill with no proportions of its
+    -- own, where every other texture derives its width from the art so it cannot be stretched.
+    local height = barHeight * (scale or 1)
+    if value == SOLID then
+        texture:SetPixelSize(width or 2, (barHeight - 2) * (scale or 1))
+    elseif atlas and atlas.width and atlas.height and atlas.height > 0 then
+        texture:SetPixelSize(height * (atlas.width / atlas.height), height)
+    else
+        texture:SetPixelSize(height, height)
+    end
 end
 
 ---@param name string|number LSM sound name, literal path, or fileID

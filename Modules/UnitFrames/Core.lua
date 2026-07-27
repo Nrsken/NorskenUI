@@ -1,6 +1,7 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 ---@class UnitFrames
+---@field IndicatorDefs { key: string, element: string }[]
 local UF = NRSKNUI:GetModule('UnitFrames')
 ---@class NorskenUF
 local oUF = NRSKNUI.oUF
@@ -57,7 +58,7 @@ end
 ---Set enabled/disabled for a constructed element on a frame.
 ---@param frame oUF.UnitFrame
 ---@param name string
----@param widget oUF.Castbar|oUF.Power|oUF.Health
+---@param widget oUF.ToggleWidget?
 ---@param enabled boolean
 local function SetElement(frame, name, widget, enabled)
     if not widget then return end

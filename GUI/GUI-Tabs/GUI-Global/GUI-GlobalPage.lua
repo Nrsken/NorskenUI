@@ -188,18 +188,22 @@ local function BuildGlobalUIScaleTab(page, db)
 end
 
 local function BuildGlobalTexturesTab(page, db)
-    page:SetCondition('globBarON', function() return db.Enabled end)
+    local bar, spark = db.profileBar, db.profileSpark
+
+    page:SetCondition('globBarON', function() return bar.Enabled end)
+    page:SetCondition('globSparkON', function() return spark.Enabled end)
+    page:SetCondition('globSparkSolid', function() return spark.Enabled and spark.sparkTexture == 'Solid' end)
 
     local globalTexturesCard = page:Card(L['Global Bar'])
     local useGlobalBarRow = globalTexturesCard:Row(rowHL, 0)
     useGlobalBarRow:Checkbox(L['Use Global Bar Texture'], {
         width = 0.5,
-        value = db.Enabled,
+        value = bar.Enabled,
         msgPopup = true,
         msgText = L['Global Bar'],
         tooltip = L['Enable this to use the same bar texture across all modules.'],
         callback = function(checked)
-            db.Enabled = checked
+            bar.Enabled = checked
             NRSKNUI:ApplyToAllModules()
             page:Refresh()
         end,
@@ -208,11 +212,82 @@ local function BuildGlobalTexturesTab(page, db)
     useGlobalBarRow:Dropdown(L['Global Bar Texture'], {
         width = 0.5,
         media = 'statusbar',
-        value = db.statusBar,
+        value = bar.statusBar,
         searchable = true,
         conditions = { 'globBarON' },
         callback = function(key)
-            db.statusBar = key
+            bar.statusBar = key
+            NRSKNUI:ApplyToAllModules()
+        end,
+    })
+
+    local globalSparkCard = page:Card(L['Global Spark'])
+    local useGlobalSparkRow = globalSparkCard:Row(rowH)
+    useGlobalSparkRow:Checkbox(L['Use Global Spark Texture'], {
+        width = 1,
+        value = spark.Enabled,
+        msgPopup = true,
+        msgText = L['Global Spark'],
+        tooltip = L['Enable this to use the same spark texture across all castbars.'],
+        callback = function(checked)
+            spark.Enabled = checked
+            NRSKNUI:ApplyToAllModules()
+            page:Refresh()
+        end,
+    })
+
+    globalSparkCard:Separator()
+
+    local globalSparkTextureRow = globalSparkCard:Row(rowH)
+    globalSparkTextureRow:Dropdown(L['Global Spark Texture'], {
+        width = 0.5,
+        media = 'spark',
+        value = spark.sparkTexture,
+        searchable = true,
+        conditions = { 'globSparkON' },
+        callback = function(key)
+            spark.sparkTexture = key
+            NRSKNUI:ApplyToAllModules()
+            page:Refresh() -- re-evaluates globSparkSolid for the width slider
+        end,
+    })
+
+    globalSparkTextureRow:ColorPicker(L['Spark Color'], {
+        width = 0.5,
+        value = spark.color,
+        conditions = { 'globSparkON' },
+        callback = function(r, g, b, a)
+            spark.color = { r, g, b, a }
+            NRSKNUI:ApplyToAllModules()
+        end,
+    })
+
+    local sparkStyleRow = globalSparkCard:Row(rowHL, 0)
+    sparkStyleRow:Slider(L['Spark Scale'], {
+        width = 0.5,
+        min = 0.5,
+        max = 4,
+        step = 0.05,
+        value = spark.Scale,
+        conditions = { 'globSparkON' },
+        tooltip = L['Scales the spark against the bar height. Art sparks keep their own proportions.'],
+        callback = function(val)
+            spark.Scale = val
+            NRSKNUI:ApplyToAllModules()
+        end,
+        callbackOnRelease = true,
+    })
+
+    sparkStyleRow:Slider(L['Spark Width'], {
+        width = 0.5,
+        min = 1,
+        max = 16,
+        step = 1,
+        value = spark.Width,
+        conditions = { 'globSparkSolid' },
+        tooltip = L['Only the solid spark can be widened, art sparks keep their own proportions.'],
+        callback = function(val)
+            spark.Width = val
             NRSKNUI:ApplyToAllModules()
         end,
     })
@@ -516,7 +591,7 @@ GUI:RegisterPage('globalPage', {
     tabs = {
         { id = 'colors',    text = L['Color Settings'] },
         { id = 'uiscale',   text = L['UI Scale Settings'] },
-        { id = 'textures',  text = L['Global Texture'] },
+        { id = 'textures',  text = L['Global Textures'] },
         { id = 'formatter', text = L['Custom Formatter'] },
     },
     build = function(page, tabId, itemKey)
@@ -525,7 +600,7 @@ GUI:RegisterPage('globalPage', {
         elseif tabId == 'uiscale' then
             BuildGlobalUIScaleTab(page, NRSKNUI.db.global.UIScale)
         elseif tabId == 'textures' then
-            BuildGlobalTexturesTab(page, NRSKNUI.db.profile.globalMedia.profileBar)
+            BuildGlobalTexturesTab(page, NRSKNUI.db.profile.globalMedia)
         elseif tabId == 'formatter' then
             BuildFormatterTab(page, NRSKNUI.db.profile.globalMedia)
         end

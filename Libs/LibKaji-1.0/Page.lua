@@ -311,6 +311,16 @@ function Page:FontSettingsCard(config, group)
     return AddPremadeCard(self, real, widgets, group, false)
 end
 
+---Adds a premade SparkSettingsCard to the page and registers its widgets.
+---@param config table CreateSparkSettingsCard config
+---@param group? string condition group (defaults to 'all')
+---@return KajiGUICard real
+function Page:SparkSettingsCard(config, group)
+    group = group or "all"
+    local real, _, widgets = self.gui:CreateSparkSettingsCard(self.parent, 0, config)
+    return AddPremadeCard(self, real, widgets, group, false)
+end
+
 ---Adds a premade TextFormatCard to the page and registers its widgets.
 ---@param config table CreateTextFormatCard config
 ---@param group? string condition group (defaults to 'all')

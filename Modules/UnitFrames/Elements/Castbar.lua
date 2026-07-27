@@ -77,10 +77,9 @@ UF.Elements.Castbar = {
         castBar.PostCastInterrupted = PostCastFail
         castBar.Icon = icon -- oUF sets its texture on cast start
 
-        -- Spark
+        -- Spark, its texture comes from the global spark media in Configure.
         local spark = castBar:CreateTexture(nil, 'OVERLAY')
         spark:SetBlendMode('ADD')
-        spark:SetColorTexture(1, 1, 1, 0.5)
         castBar.Spark = spark
 
         -- Safe zone texture for latency, player only, oUF handles positioning.
@@ -169,12 +168,11 @@ UF.Elements.Castbar = {
         safeZone:SetShown(safeZoneDB.Enabled)
         castBar.SafeZone = safeZoneDB.Enabled and safeZone or nil
 
-        -- Spark sits on the right edge of the bar, 2px wide and as tall as the bar minus 2px.
+        -- Spark sits on the right edge of the bar, SetSpark sizes it to suit the chosen texture.
         local spark = castBar.Spark
-        spark:SetPixelWidth(2)
-        spark:SetPixelHeight(cDB.Height - 2)
         spark:ClearAllPoints()
         spark:SetPoint('CENTER', castBar:GetStatusBarTexture(), 'RIGHT', 0, 0)
+        NRSKNUI:SetSpark(spark, general, cDB.Height)
 
         -- Cast name text sits inside the bar with a 4px inset.
         local text = castBar.Text

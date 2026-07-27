@@ -6,7 +6,7 @@
 ## Examples
 
     row:AddWidget(GUI:CreateColorPicker(row, 'Custom Color', {
-        color = db.Color,
+        value = db.Color,
         callback = function(r, g, b, a)
             db.Color = { r, g, b, a }
         end,

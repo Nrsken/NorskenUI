@@ -40,6 +40,7 @@
     <Script file="Widgets\PositionCard.lua" />
     <Script file="Widgets\TextFormatCard.lua" />
     <Script file="Widgets\FontSettingsCard.lua" />
+    <Script file="Widgets\SparkSettingsCard.lua" />
     <Script file="Widgets\DynamicGroupCard.lua" />
     <Script file="Widgets\GlowSettingsCard.lua" />
     <Script file="Widgets\LoadConditionsCard.lua" />

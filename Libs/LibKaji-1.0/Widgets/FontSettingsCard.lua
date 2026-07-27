@@ -238,7 +238,7 @@ function InstanceMixin:CreateFontSettingsCard(scrollChild, yOffset, config)
     tinsert(widgets, shadowEnableCheck)
 
     local shadowColorPicker = gui:CreateColorPicker(row3, "Shadow Color", {
-        color = shadowDb[shadowKeys.color] or { 0, 0, 0, 1 },
+        value = shadowDb[shadowKeys.color] or { 0, 0, 0, 1 },
         callback = function(r, g, b, a)
             shadowDb[shadowKeys.color] = { r, g, b, a }
             if onChange then onChange() end

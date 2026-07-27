@@ -335,7 +335,17 @@ local function BuildTexturesTab(page, db)
         end,
     })
 
-    -- Card 3: Absorbs
+    -- Card 3: Castbar spark
+    page:SparkSettingsCard({
+        title = L['Castbar Spark'],
+        db = general,
+        onChangeCallback = ApplySettings,
+        globalOverride = { label = L['Use Global Spark'] },
+        labels = { texture = L['Spark Texture'], scale = L['Spark Scale'], width = L['Spark Width'], color = L['Spark Color'] },
+        scaleTooltip = L['Scales the spark against the bar height. Art sparks keep their own proportions.'],
+    })
+
+    -- Card 4: Absorbs
     local absorbCard = page:Card(L['Absorbs'], 'all')
     local absorbRow = absorbCard:Row(rowHL, 0)
     absorbRow:Dropdown(L['Heal Absorb'], {
@@ -361,7 +371,7 @@ local function BuildTexturesTab(page, db)
         end,
     })
 
-    -- Card 4: Mouseover Highlight
+    -- Card 5: Mouseover Highlight
     local hlCard = page:Card(L['Mouseover Highlight'], 'all')
     local hlRow = hlCard:Row(rowH)
     hlRow:Checkbox(L['Enable Highlight'], {

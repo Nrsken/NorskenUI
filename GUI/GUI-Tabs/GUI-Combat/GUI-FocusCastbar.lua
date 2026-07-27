@@ -47,7 +47,9 @@ local function BuildGeneralSettingsTab(page, db)
         max = 1000,
         step = 1,
         value = db.Width,
-        callback = function(val) db.Width = val; ApplySettings() end,
+        callback = function(val)
+            db.Width = val; ApplySettings()
+        end,
     })
     sizeRow:Slider(L['Height'], {
         width = 0.5,
@@ -55,7 +57,9 @@ local function BuildGeneralSettingsTab(page, db)
         max = 500,
         step = 1,
         value = db.Height,
-        callback = function(val) db.Height = val; ApplySettings() end,
+        callback = function(val)
+            db.Height = val; ApplySettings()
+        end,
     })
 
     local textureRow = barCard:Row(rowH)
@@ -74,19 +78,34 @@ local function BuildGeneralSettingsTab(page, db)
         searchable = true,
         conditions = { 'customBar' },
         value = db.StatusBarTexture,
-        callback = function(key) db.StatusBarTexture = key; ApplySettings() end,
+        callback = function(key)
+            db.StatusBarTexture = key; ApplySettings()
+        end,
     })
 
     local barColorRow = barCard:Row(rowHL, 0)
     barColorRow:ColorPicker(L['Background'], {
         width = 0.5,
         value = db.BackdropColor,
-        callback = function(r, g, b, a) db.BackdropColor = { r, g, b, a }; ApplySettings() end,
+        callback = function(r, g, b, a)
+            db.BackdropColor = { r, g, b, a }; ApplySettings()
+        end,
     })
     barColorRow:ColorPicker(L['Border'], {
         width = 0.5,
         value = db.BorderColor,
-        callback = function(r, g, b, a) db.BorderColor = { r, g, b, a }; ApplySettings() end,
+        callback = function(r, g, b, a)
+            db.BorderColor = { r, g, b, a }; ApplySettings()
+        end,
+    })
+
+    page:SparkSettingsCard({
+        title = L['Spark'],
+        db = db,
+        onChangeCallback = ApplySettings,
+        globalOverride = { label = L['Use Global Spark'] },
+        labels = { texture = L['Spark Texture'], scale = L['Spark Scale'], width = L['Spark Width'], color = L['Spark Color'] },
+        scaleTooltip = L['Scales the spark against the bar height. Art sparks keep their own proportions.'],
     })
 end
 
@@ -101,18 +120,22 @@ local function BuildColorSettingsTab(page, db)
     baseColorRow:ColorPicker(L['Text'], {
         width = 0.5,
         value = db.TextColor,
-        callback = function(r, g, b, a) db.TextColor = { r, g, b, a }; ApplySettings() end,
+        callback = function(r, g, b, a)
+            db.TextColor = { r, g, b, a }; ApplySettings()
+        end,
     })
-    baseColorRow:ColorPicker(L['Cast / Kick Ready'], {
+    baseColorRow:ColorPicker(L['Interruptible / Kick Ready'], {
         width = 0.5,
         value = db.CastColor,
-        callback = function(r, g, b, a) db.CastColor = { r, g, b, a }; ApplySettings() end,
+        callback = function(r, g, b, a)
+            db.CastColor = { r, g, b, a }; ApplySettings()
+        end,
     })
 
     colorsCard:Separator()
 
     local uninterruptRow = colorsCard:Row(rowH)
-    uninterruptRow:Checkbox(L['Hide Uninterruptible'], {
+    uninterruptRow:Checkbox(L['Hide Uninterruptible Casts'], {
         width = 0.5,
         value = db.HideNotInterruptible,
         callback = function(checked)
@@ -124,7 +147,9 @@ local function BuildColorSettingsTab(page, db)
         width = 0.5,
         conditions = { 'uninterruptible' },
         value = db.NotInterruptibleColor,
-        callback = function(r, g, b, a) db.NotInterruptibleColor = { r, g, b, a }; ApplySettings() end,
+        callback = function(r, g, b, a)
+            db.NotInterruptibleColor = { r, g, b, a }; ApplySettings()
+        end,
     })
 
     colorsCard:Separator()
@@ -139,16 +164,33 @@ local function BuildColorSettingsTab(page, db)
         end,
     })
     kickRow:ColorPicker(L['Not Ready'], {
-        width = 0.26,
+        width = 0.5,
         conditions = { 'kickIndicator' },
         value = db.KickIndicator.NotReadyColor,
-        callback = function(r, g, b, a) db.KickIndicator.NotReadyColor = { r, g, b, a }; ApplySettings() end,
+        callback = function(r, g, b, a)
+            db.KickIndicator.NotReadyColor = { r, g, b, a }; ApplySettings()
+        end,
     })
-    kickRow:ColorPicker(L['Tick'], {
-        width = 0.24,
+
+    local kickRow2 = colorsCard:Row(rowH)
+    kickRow2:Slider(L['Tick Width'], {
+        width = 0.5,
+        conditions = { 'kickIndicator' },
+        min = 0,
+        max = 16,
+        step = 1,
+        value = db.KickIndicator.TickWidth,
+        callback = function(val)
+            db.KickIndicator.TickWidth = val; ApplySettings()
+        end,
+    })
+    kickRow2:ColorPicker(L['Tick'], {
+        width = 0.5,
         conditions = { 'kickIndicator' },
         value = db.KickIndicator.TickColor,
-        callback = function(r, g, b, a) db.KickIndicator.TickColor = { r, g, b, a }; ApplySettings() end,
+        callback = function(r, g, b, a)
+            db.KickIndicator.TickColor = { r, g, b, a }; ApplySettings()
+        end,
     })
 
     colorsCard:Separator()
@@ -177,7 +219,9 @@ local function BuildColorSettingsTab(page, db)
         max = 2,
         step = 0.1,
         value = db.HoldTimer.Duration,
-        callback = function(val) db.HoldTimer.Duration = val; db.timeToHold = val end,
+        callback = function(val)
+            db.HoldTimer.Duration = val; db.timeToHold = val
+        end,
     })
     holdRow2:ColorPicker(L['Success'], {
         width = 0.5,
@@ -209,7 +253,9 @@ local function BuildNamesSettingsTab(page, db)
         width = 0.5,
         options = anchorOptions,
         value = db.TargetNames.Anchor,
-        callback = function(key) db.TargetNames.Anchor = key; ApplySettings() end,
+        callback = function(key)
+            db.TargetNames.Anchor = key; ApplySettings()
+        end,
     })
     targetRow:Slider(L['X Offset'], {
         width = 0.5,
@@ -217,7 +263,9 @@ local function BuildNamesSettingsTab(page, db)
         max = 100,
         step = 1,
         value = db.TargetNames.XOffset,
-        callback = function(val) db.TargetNames.XOffset = val; ApplySettings() end,
+        callback = function(val)
+            db.TargetNames.XOffset = val; ApplySettings()
+        end,
     })
 
     local targetRow2 = targetCard:Row(rowHL, 0)
@@ -227,7 +275,9 @@ local function BuildNamesSettingsTab(page, db)
         max = 100,
         step = 1,
         value = db.TargetNames.YOffset,
-        callback = function(val) db.TargetNames.YOffset = val; ApplySettings() end,
+        callback = function(val)
+            db.TargetNames.YOffset = val; ApplySettings()
+        end,
     })
 
     -- Card 2: Raid Marker
@@ -237,7 +287,9 @@ local function BuildNamesSettingsTab(page, db)
         width = 0.5,
         options = anchorOptions,
         value = db.TargetMarker.Anchor,
-        callback = function(key) db.TargetMarker.Anchor = key; ApplySettings() end,
+        callback = function(key)
+            db.TargetMarker.Anchor = key; ApplySettings()
+        end,
     })
     markerRow:Slider(L['Size'], {
         width = 0.5,
@@ -245,7 +297,9 @@ local function BuildNamesSettingsTab(page, db)
         max = 100,
         step = 1,
         value = db.TargetMarker.Size,
-        callback = function(val) db.TargetMarker.Size = val; ApplySettings() end,
+        callback = function(val)
+            db.TargetMarker.Size = val; ApplySettings()
+        end,
     })
 
     local markerRow2 = markerCard:Row(rowHL, 0)
@@ -255,7 +309,9 @@ local function BuildNamesSettingsTab(page, db)
         max = 100,
         step = 1,
         value = db.TargetMarker.XOffset,
-        callback = function(val) db.TargetMarker.XOffset = val; ApplySettings() end,
+        callback = function(val)
+            db.TargetMarker.XOffset = val; ApplySettings()
+        end,
     })
     markerRow2:Slider(L['Y Offset'], {
         width = 0.5,
@@ -263,7 +319,9 @@ local function BuildNamesSettingsTab(page, db)
         max = 100,
         step = 1,
         value = db.TargetMarker.YOffset,
-        callback = function(val) db.TargetMarker.YOffset = val; ApplySettings() end,
+        callback = function(val)
+            db.TargetMarker.YOffset = val; ApplySettings()
+        end,
     })
 end
 
