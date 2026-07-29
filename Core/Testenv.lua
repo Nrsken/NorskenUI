@@ -29,6 +29,9 @@ function NRSKNUI:TestEnv()
 
     NRSKNUI.AuraData = {}
     local Data = NRSKNUI.AuraData
+    local GetSpellName = C_Spell and C_Spell.GetSpellName
+    local heartyWellFedName = GetSpellName(462187)
+    local wellFedName = GetSpellName(19705)
 
     local DataT = {
         -- Raid Buffs
@@ -77,7 +80,6 @@ function NRSKNUI:TestEnv()
             spellId = 381748,
             extraSpellIds = { 381732, 381741, 381746, 381749, 381750, 381751, 381752, 381753, 381754, 381755, 381756, 381757, 381758 }
         },
-
         -- Self Buffs
         {
             key = 'flasks',
@@ -86,23 +88,39 @@ function NRSKNUI:TestEnv()
             secret = true,
             spellIds = { 1235111, 1235110, 1235057, 1235108, 432021, 431971, 431972, 431974, 431973, 1264426 }
         },
-
+        {
+            key = 'arcanefamiliar',
+            sourceClass = 'MAGE',
+            specId = 62,
+            sourceTalent = 205022,
+            category = 'selfbuff',
+            secret = true,
+            spellId = 210126,
+        },
+        {
+            key = 'grimoiresacrifice',
+            sourceClass = 'WARLOCK',
+            specId = { 265, 267 },
+            sourceTalent = 108503,
+            category = 'selfbuff',
+            secret = true,
+            spellId = 196099,
+        },
         -- Self Food
         {
             key = 'heartywellfed',
             sourceClass = 'ANY',
             category = 'food',
             secret = true,
-            spellName = C_Spell.GetSpellName(462187)
+            spellName = heartyWellFedName
         },
         {
             key = 'wellfed',
             sourceClass = 'ANY',
             category = 'food',
             secret = true,
-            spellName = C_Spell.GetSpellName(19705)
+            spellName = wellFedName
         },
-
         -- Targeted Buffs
         {
             key = 'sourceofmagic',
@@ -113,7 +131,64 @@ function NRSKNUI:TestEnv()
             spellId = 369459,
             targetType = 'healer'
         },
-
+        {
+            key = 'beaconoflight',
+            sourceClass = 'PALADIN',
+            specId = 65,
+            negatorTalent = 200025,
+            category = 'targetbuff',
+            secret = true,
+            spellId = 53563,
+            targetType = 'any'
+        },
+        {
+            key = 'beaconoffaith',
+            sourceClass = 'PALADIN',
+            specId = 65,
+            sourceTalent = 156910,
+            category = 'targetbuff',
+            secret = true,
+            spellId = 156910,
+            targetType = 'any'
+        },
+        {
+            key = 'symbioticrelationship',
+            sourceClass = 'DRUID',
+            sourceTalent = 474750,
+            category = 'targetbuff',
+            secret = true,
+            spellId = 474750,
+            targetType = 'any'
+        },
+        {
+            key = 'linkedspirits',
+            sourceClass = 'MONK',
+            sourceTalent = 434774,
+            category = 'targetbuff',
+            secret = true,
+            spellId = 434763,
+            targetType = 'any'
+        },
+        {
+            key = 'timelessness',
+            sourceClass = 'EVOKER',
+            specId = 1473,
+            sourceTalent = 412710,
+            category = 'targetbuff',
+            secret = true,
+            spellId = 412710,
+            targetType = 'any'
+        },
+        {
+            key = 'blisteringscales',
+            sourceClass = 'EVOKER',
+            specId = 1473,
+            sourceTalent = 360827,
+            category = 'targetbuff',
+            secret = true,
+            spellId = 360827,
+            targetType = 'any'
+        },
         -- Rogue Poisons
         {
             key = 'poisons',
@@ -131,96 +206,68 @@ function NRSKNUI:TestEnv()
                 { key = 'numbing',    spellId = 5761,   poisonType = 'nonlethal', talent = 5761 },
             },
         },
+        -- Paladin Rites
+        {
+            key = 'rites',
+            sourceClass = 'PALADIN',
+            category = 'enchants',
+            secret = false,
+            riteIds = {
+                { key = 'sanctification', spellId = 433568, specId = { 65, 66 }, talent = 433568 },
+                { key = 'adjuration',     spellId = 433583, specId = { 65, 66 }, talent = 433583 },
+            },
+        },
+        -- Shaman Imbuements
+        {
+            key = 'imbuements',
+            sourceClass = 'SHAMAN',
+            category = 'enchants',
+            secret = false,
+            imbuementIds = {
+                {},
+            },
+        },
     }
-
     -- Non secret data.
     Data.Safe = {
-        -- Raid Buffs
-        [1126] = true,                                                                                                                  -- Mark of the Wild
-        [1459] = true,                                                                                                                  -- Arcane Intellect
-        [6673] = true,                                                                                                                  -- Battle Shout
-        [21562] = true,                                                                                                                 -- Power Word: Fortitude
-        [462854] = true,                                                                                                                -- Skyfury
-
-        [381748] = true,                                                                                                                -- Blessing of the Bronze
-        extraBuffSpellIds = { 381732, 381741, 381746, 381749, 381750, 381751, 381752, 381753, 381754, 381755, 381756, 381757, 381758 }, -- For each class.
-
-        -- Evoker source
-        [369459] = true, -- Source of Magic
-
-        -- Rogue Poisons
-        [2823] = true,   -- Deadly Poison
-        [315584] = true, -- Instant Poison
-        [3408] = true,   -- Crippling Poison
-        [381637] = true, -- Atrophic Poison
-        [381664] = true, -- Amplifying Poison
-        [8679] = true,   -- Wound Poison
-        [5761] = true,   -- Numbing Poison
-
         -- Shaman Imbuements
-        [319773] = true, -- Windfury Weapon
-        [319778] = true, -- Flametongue Weapon
-        [382021] = true, -- Earthliving Weapon
-        [382022] = true, -- Earthliving Weapon
-        [457496] = true, -- Tidecaller's Guard
-        [457481] = true, -- Tidecaller's Guard
-        [462757] = true, -- Thunderstrike Ward
-        [462742] = true, -- Thunderstrike Ward
 
-        -- Paladin Rites
-        [433568] = true, -- Rite of Sanctification
-        [433583] = true, -- Rite of Adjuration
+        -- Enha talent: 33757
+        [319773] = true, -- Windfury Weapon, enchantID: 5401
+
+        -- Enha/Ele talent: 318038
+        [319778] = true, -- Flametongue Weapon, enchantID: 5400
+
+        -- Resto talent: 382021
+        [382021] = true, -- Earthliving Weapon, enchantID: 6498
+        [382022] = true, -- Earthliving Weapon, enchantID: 6498
+
+        -- Totemic talent, resto only: 445033
+        [457496] = true, -- Tidecaller's Guard, enchantID: 7528
+        [457481] = true, -- Tidecaller's Guard, enchantID: 7528
+
+        -- Ele talent: 462757
+        [462757] = true, -- Thunderstrike Ward, enchantID: 7587
+        [462742] = true, -- Thunderstrike Ward, enchantID: 7587
     }
 
-    -- Secret ids/data.
-    Data.WELL_FED_NAME = C_Spell.GetSpellName(19705)         -- Well Fed
-    Data.HEARTY_WELL_FED_NAME = C_Spell.GetSpellName(462187) -- Hearty Well Fed
-
     Data.Restricted = {
-        -- Flasks
-        [1235111] = true, -- Flask of the Shattered Sun
-        [1235110] = true, -- Flask of the Blood Knights
-        [1235057] = true, -- Flask of Thalassian Resistance
-        [1235108] = true, -- Flask of the Magisters
-        [432021] = true,  -- Flask of Alchemical Chaos
-        [431971] = true,  -- Flask of Tempered Aggression
-        [431972] = true,  -- Flask of Tempered Swiftness
-        [431974] = true,  -- Flask of Tempered Mastery
-        [431973] = true,  -- Flask of Tempered Versatility
-        [1264426] = true, -- Void-Touched
-
-        -- Targeted Buffs --
-
-        -- Paladin
-        [53563] = true,  -- Beacon of Light
-        [156910] = true, -- Beacon of Faith
-
-        -- Evoker
-        [360827] = true, -- Blistering Scales
-        [412710] = true, -- Timelessness
-
-        -- Druid
-        [474750] = true, -- Symbiotic Relationship
-
-        -- Monk
-        [434763] = true, -- Linked Spirits
-
         -- Self Buffs --
 
-        -- Mage
-        [210126] = true, -- Arcane Familiar
-
-        -- Warlock
-        [196099] = true, -- Grimoire Sacrifice
-
-        -- Shaman
+        -- Enha/Ele/Resto
         [192106] = true, -- Lightning Shield
-        [52127] = true,  -- Water Shield
+
+        -- Resto
+        [52127] = true, -- Water Shield
 
         -- Self & Targeted --
 
-        -- Shaman
-        [974] = true, -- Earth Shield
+        -- Shaman, orbit talent: 383010
+        [383648] = true, -- Earth Shield self
+        [974] = true,    -- Earth Shield target
+
+        -- Shaman, NO orbit talent
+        [974] = true, -- Earth Shield self
 
         -- Group Presence Buffs --
 
