@@ -765,4 +765,5 @@ local function CreateAuraContainer(self, config)
     return Mixin(container, ContainerMixin)
 end
 
-NRSKNUI:InjectAPI(CreateFrame('Frame'), { CreateAuraContainer = CreateAuraContainer }) -- Inject in all frames so we can call frame:CreateAuraContainer() from anywhere.
+NRSKNUI:InjectAPI(CreateFrame('Frame'), { CreateAuraContainer = CreateAuraContainer })
+NRSKNUI:InjectAPI(CreateFrame('Button'), { CreateAuraContainer = CreateAuraContainer })

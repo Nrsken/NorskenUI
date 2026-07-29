@@ -128,8 +128,8 @@ end
 ---@param unit string
 ---@return string
 local function UnitLabel(unit)
-    local label = unit:gsub('^%l', upper)       -- Player, Targettarget, ...
-    return (label:gsub('target$', 'Target'))    -- TargetTarget, FocusTarget, PetTarget
+    local label = unit:gsub('^%l', upper)    -- Player, Targettarget, ...
+    return (label:gsub('target$', 'Target')) -- TargetTarget, FocusTarget, PetTarget
 end
 
 ---Generate a global name for a unit frame, e.g. 'NUF_Player' or 'NUF_TargetTarget'.
@@ -199,6 +199,8 @@ function UF:OnEnable()
         self.styleRegistered = true
     end
 
+    NRSKNUI.AuraFilters:RegisterCallback(self, function(module) module:ReapplyAuraFilters() end)
+
     -- Deferring the spawn of units until combat has ended.
     NRSKNUI:RunWhenSafe(function()
         self:SpawnUnits()
@@ -218,6 +220,7 @@ function UF:ApplySettings()
 end
 
 function UF:OnDisable()
+    NRSKNUI.AuraFilters:UnregisterCallback(self)
     NRSKNUI:RunWhenSafe(function()
         for _, frame in pairs(UF.frames) do
             UnregisterUnitWatch(frame)

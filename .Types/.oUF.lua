@@ -239,6 +239,7 @@ function nameplates:SetNumAuraContainers(numContainers) end
 ---@field ResurrectIndicator? oUF.ResurrectIndicator
 ---@field SummonIndicator? oUF.SummonIndicator
 ---@field ThreatIndicator? oUF.ThreatIndicator
+---@field Auras? table<string, table> NorskenUI: native aura containers keyed by display name
 --- Activate an element for the given unit frame.
 ---@field EnableElement fun(self: oUF.UnitFrame, name: string, unit?: string)
 --- Deactivate an element for the given unit frame.

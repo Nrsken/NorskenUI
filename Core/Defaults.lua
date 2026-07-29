@@ -2765,6 +2765,98 @@ local Defaults = {
                         },
                         Position = { AnchorFrom = "TOPLEFT", AnchorTo = "BOTTOMLEFT", XOffset = 0, YOffset = -10 },
                     },
+                    Auras = {
+                        Buffs = {
+                            Enabled = true,
+                            Filter = "HELPFUL",
+                            size = 32,
+                            perRow = 4,
+                            maxFrameCount = 8,
+                            elementSpacing = 1,
+                            lineSpacing = 1,
+                            horizontalGrowthDirection = "LEFT",
+                            verticalGrowthDirection = "UP",
+                            sortMethod = "ExpirationOnly",
+                            sortDirection = "Normal",
+                            showApplicationCount = true,
+                            showDurationText = true,
+                            drawSwipe = false,
+                            drawEdge = false,
+                            reverseSwipe = true,
+                            showBorder = false,
+                            showBorderWithoutDispelType = false,
+                            showDispelIcon = false,
+                            dispelIconSize = 10,
+                            disableMouse = false,
+                            tooltipHideInCombat = false,
+                            StackFont = {
+                                FontSize = 12,
+                                Position = {
+                                    AnchorFrom = "BOTTOMRIGHT",
+                                    XOffset = -1,
+                                    YOffset = 1,
+                                },
+                            },
+                            DurationFont = {
+                                FontSize = 12,
+                                Position = {
+                                    AnchorFrom = "CENTER",
+                                    XOffset = 0,
+                                    YOffset = 0
+                                },
+                            },
+                            Position = {
+                                AnchorTo = "TOPRIGHT",
+                                XOffset = 0,
+                                YOffset = 1
+                            },
+                        },
+                        Debuffs = {
+                            Enabled = true,
+                            Filter = "HARMFUL",
+                            size = 32,
+                            perRow = 2,
+                            maxFrameCount = 6,
+                            elementSpacing = 1,
+                            lineSpacing = 1,
+                            horizontalGrowthDirection = "RIGHT",
+                            verticalGrowthDirection = "UP",
+                            sortMethod = "ExpirationOnly",
+                            sortDirection = "Normal",
+                            showApplicationCount = true,
+                            showDurationText = true,
+                            drawSwipe = false,
+                            drawEdge = false,
+                            reverseSwipe = true,
+                            showBorder = true,
+                            showBorderWithoutDispelType = true,
+                            showDispelIcon = false,
+                            dispelIconSize = 10,
+                            disableMouse = false,
+                            tooltipHideInCombat = false,
+                            StackFont = {
+                                FontSize = 12,
+                                Position = {
+                                    AnchorFrom = "BOTTOMRIGHT",
+                                    XOffset = -1,
+                                    YOffset = 1
+                                },
+                            },
+                            DurationFont = {
+                                FontSize = 12,
+                                Position = {
+                                    AnchorFrom = "CENTER",
+                                    XOffset = 0,
+                                    YOffset = 0
+                                },
+                            },
+                            Position = {
+                                AnchorTo = "TOPLEFT",
+                                XOffset = 0,
+                                YOffset = 1
+                            },
+                        },
+                    },
                     RaidIcon = {
                         Enabled = true,
                         Size = 24,
@@ -2817,6 +2909,10 @@ local Defaults = {
                     },
                     Castbar = {
                         Enabled = false,
+                    },
+                    Auras = {
+                        Buffs = { Enabled = false },
+                        Debuffs = { Enabled = false },
                     },
                 },
                 target = {
@@ -2886,6 +2982,10 @@ local Defaults = {
                         XOffset = 1,
                         YOffset = 10
                     },
+                    Auras = {
+                        Buffs = { Enabled = false },
+                        Debuffs = { Enabled = false },
+                    },
                 },
                 focus = {
                     Position = {
@@ -2940,7 +3040,11 @@ local Defaults = {
                         AnchorTo = "RIGHT",
                         XOffset = 1,
                         YOffset = 10
-                    }
+                    },
+                    Auras = {
+                        Buffs = { Enabled = false },
+                        Debuffs = { Enabled = false },
+                    },
                 },
                 pet = {
                     Width = 110,
@@ -2972,6 +3076,10 @@ local Defaults = {
                     },
                     Power = {
                         Enabled = false,
+                    },
+                    Auras = {
+                        Buffs = { Enabled = false },
+                        Debuffs = { Enabled = false },
                     },
                 },
                 pettarget = {
@@ -3007,6 +3115,10 @@ local Defaults = {
                         AnchorTo = "RIGHT",
                         XOffset = 1,
                         YOffset = 0
+                    },
+                    Auras = {
+                        Buffs = { Enabled = false },
+                        Debuffs = { Enabled = false },
                     },
                 },
             },

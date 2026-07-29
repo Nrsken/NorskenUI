@@ -12,6 +12,7 @@
     <Script file='Elements\Indicators.lua' />
     <Script file='Elements\Castbar.lua' />
     <Script file='Elements\Range.lua' />
+    <Script file='Elements\Auras.lua' />
     <Script file='Style.lua' />
     <Script file='Core.lua' />
 </Ui>
