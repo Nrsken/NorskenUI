@@ -234,7 +234,9 @@ local function GetUnitColor(tooltip)
             -- Unit is a player
             if UnitIsPlayer(unit) or UnitTreatAsPlayerForDisplay(unit) then
                 local classToken = select(2, UnitClass(unit))
-                return GetClassColor(classToken)
+                if classToken ~= nil then
+                    return GetClassColor(classToken)
+                end
             elseif UnitIsMinion(unit) then
                 -- Unit is a pet/minion
                 return NRSKNUI:CreateColor(UnitSelectionColor(unit, true))
@@ -536,6 +538,18 @@ local function TooltipProcessor()
         -- Style the guild name line for players
         StyleGuildLine(data)
         AddMountLine(tooltip, data)
+
+        --! For chinese names this is needed for some reason.(shrug)
+        -- Blizzard re-runs the post calls on refresh passes without re-running the line pre
+        -- calls, which leaves line 1 on the raw tooltip data color, so reapply on every pass.
+        local nameColor = tooltip.nrsknui_namecolor
+        local guid = data and data.guid
+        local sameUnit = nameColor and (not nameColor.guid or not guid or issecretvalue(guid) or nameColor.guid == guid)
+        local tooltipName = sameUnit and tooltip:GetName()
+        local nameLine = tooltipName and _G[tooltipName .. 'TextLeft1']
+        if nameLine then
+            nameLine:SetTextColor(nameColor[1], nameColor[2], nameColor[3])
+        end
     end)
 
     -- Color unit name, style realm name: 'Norsken (TarrenMill)' and apply statusbar coloring.
@@ -547,6 +561,16 @@ local function TooltipProcessor()
         if not unitGUID then return end
 
         local r, g, b = GetUnitColor(tooltip):GetRGB()
+
+        -- Cache so the post-call can reapply it, keyed to the unit so a refresh pass for a different unit cannot reuse it.
+        local nameColor = tooltip.nrsknui_namecolor
+        if not nameColor then
+            nameColor = {}
+            tooltip.nrsknui_namecolor = nameColor
+        end
+        nameColor[1], nameColor[2], nameColor[3] = r, g, b
+        nameColor.guid = not issecretvalue(unitGUID) and unitGUID or nil
+
         local bar = tooltip.StatusBar
         if bar then
             local color = bar.nrsknui_barcolor
