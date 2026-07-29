@@ -2,6 +2,7 @@
 local NRSKNUI = select(2, ...)
 local Theme = NRSKNUI.Theme
 local Animations = NRSKNUI.Libs.KAJI.Animations
+---@class NRSKNUI.Anchors
 local Anchors = NRSKNUI.Anchors or {}
 NRSKNUI.Anchors = Anchors
 Anchors.isActive = false
@@ -263,7 +264,7 @@ end
 -- Registration --
 
 ---Registers a frame as a draggable anchor.
----@param module AceModule
+---@param module NRSKNUI.ModuleBase
 ---@param key string Unique anchor key.
 ---@param frame Frame? The frame to move; defaults to module.frame.
 ---@param guiPath string? Sidebar item id opened by the panel's Open Settings button.

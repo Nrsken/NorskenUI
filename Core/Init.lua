@@ -17,6 +17,7 @@
 ---@field TimeFormats table<string, string>
 ---@field Libs NRSKNUI.Libraries
 ---@field GUI KajiGUIInstance
+---@field Theme KajiTheme
 local NRSKNUI = select(2, ...)
 local addonName = select(1, ...)
 

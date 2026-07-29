@@ -17,9 +17,11 @@
 
 --]]
 
-local lib = LibStub and LibStub("LibKaji-1.0", true)
+---@class LibKaji-1.0
+local lib = _G.LibStub and _G.LibStub('LibKaji-1.0', true)
 if not lib then return end
 ---@class KajiGUIInstanceMixin
+---@field theme KajiTheme
 local InstanceMixin = lib.InstanceMixin
 local LSM = LibStub("LibSharedMedia-3.0", true)
 
@@ -33,6 +35,24 @@ local CreateFont = CreateFont
 local FALLBACK_FONT = STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF"
 local MEDIA = lib.mediaBase
 
+---Theme table.
+---@class KajiTheme
+---@field bgDark number[]
+---@field bgMedium number[]
+---@field bgLight number[]
+---@field bgHover number[]
+---@field border number[]
+---@field accent number[]
+---@field accentHover number[]
+---@field accentDim number[]
+---@field textPrimary number[]
+---@field textSecondary number[]
+---@field textMuted number[]
+---@field selectedBg number[]
+---@field selectedText number[]
+---@field error number[]
+---@field success number[]
+---@field warning number[]
 local DEFAULT_THEME = {
     -- Backgrounds
     bgDark                  = { 0.0235, 0.0235, 0.0235, 0.6 },
@@ -79,7 +99,7 @@ local DEFAULT_THEME = {
     fontSizeNormal          = 12,
     fontSizeLarge           = 16,
     fontOutline             = "OUTLINE",
-    fontShadow              = false,
+    fontShadow              = false, ---@type boolean presets and the font editor both flip this
     -- Widget textures (consumers override to match their look)
     checkTexture            = MEDIA .. "ok-iconBlack.tga",
     crossTexture            = MEDIA .. "cross-small.png",
@@ -292,7 +312,7 @@ end
 
 ---@param overrides? table
 function InstanceMixin:_InitTheme(overrides)
-    self.theme = {}
+    self.theme = {} ---@type KajiTheme
     self._themeCallbacks = {}
     mergeInto(self.theme, DEFAULT_THEME)
     if overrides then mergeInto(self.theme, overrides) end
@@ -309,7 +329,7 @@ end
 ---Returns the live theme table. Both it and every color table inside it keep their
 ---identity across theme changes (see mergeInto), so a held `theme.accent` reference
 ---always reads the current palette. Widgets and animators rely on this.
----@return table
+---@return KajiTheme
 function InstanceMixin:GetTheme()
     return self.theme
 end
@@ -337,7 +357,7 @@ function InstanceMixin:ResetTheme()
 end
 
 ---Subscribes to theme changes. The callback receives the live theme table.
----@param callback fun(theme: table)
+---@param callback fun(theme: KajiTheme)
 ---@return fun() unsubscribe
 function InstanceMixin:OnThemeChanged(callback)
     self._themeCallbacks[callback] = true
