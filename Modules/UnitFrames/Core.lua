@@ -1,11 +1,11 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class UnitFrames
+---@class UnitFramesModule
 ---@field IndicatorDefs { key: string, element: string }[]
 local UF = NRSKNUI:GetModule('UnitFrames')
 ---@class NorskenUF
 local oUF = NRSKNUI.oUF
-local EM = NRSKNUI.EditMode
+local Anchors = NRSKNUI.Anchors
 
 local upper = string.upper
 local pairs = pairs
@@ -124,13 +124,19 @@ function UF:ConfigureFrame(frame, unit)
     frame:UpdateAllElements('ForceUpdate')
 end
 
+---Title-case a unit into a readable label, e.g. 'targettarget' -> 'TargetTarget'.
+---@param unit string
+---@return string
+local function UnitLabel(unit)
+    local label = unit:gsub('^%l', upper)       -- Player, Targettarget, ...
+    return (label:gsub('target$', 'Target'))    -- TargetTarget, FocusTarget, PetTarget
+end
+
 ---Generate a global name for a unit frame, e.g. 'NUF_Player' or 'NUF_TargetTarget'.
 ---@param unit string
 ---@return string
 local function GlobalName(unit)
-    local label = unit:gsub('^%l', upper)   -- Player, Targettarget, ...
-    label = label:gsub('target$', 'Target') -- TargetTarget, FocusTarget, PetTarget
-    return 'NUF_' .. label
+    return 'NUF_' .. UnitLabel(unit)
 end
 
 -- Spawn units and register them with anchors.
@@ -143,9 +149,13 @@ function UF:SpawnUnits()
             frame = oUF:Spawn(unit, GlobalName(unit))
             UF.frames[unit] = frame
 
-            if EM and EM.Register then
-                EM:Register(self, 'UnitFrame_' .. unit, frame, nil, { db = UF.GetUnitDB(unit) })
-            end
+            -- db is resolved live rather than captured: UF.db is reassigned by UpdateDB()
+            -- on a profile switch, so a captured table would write to the old profile.
+            Anchors:Register(self, 'UnitFrame_' .. unit, frame, 'unitFramesUnits', {
+                displayName = UnitLabel(unit),
+                db = function() return UF.GetUnitDB(unit) end,
+                guiContext = unit,
+            })
 
             -- oUF auto-enables every constructed element during Spawn, and the PLAYER_ENTERING_WORLD
             -- ApplySettings can land before this deferred spawn, so the disabled ones are backed out

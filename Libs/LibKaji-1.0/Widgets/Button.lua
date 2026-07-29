@@ -6,48 +6,52 @@
 ## Examples
 
     row:Button('Apply', {
-        callback = function()
-            Apply()
-        end
+        width = 0.5,
+        callback = function() Apply() end,
     })
-    GUI:CreateButton(parent, 'Select', {
-        width = 110,
-        image = iconID,
-        callback = fn
-    })
+    GUI:CreateButton(parent, 'Select', { width = 110, image = iconID, callback = fn })
 
 --]]
 
 local lib = LibStub and LibStub("LibKaji-1.0", true)
 if not lib then return end
+---@class KajiGUIInstanceMixin
 local InstanceMixin = lib.InstanceMixin
 local Animations = lib.Animations
 local safecall = lib.safecall
 local pixel = lib.Pixel
 
 local CreateFrame = CreateFrame
-local type = type
 local Mixin = Mixin
+
+local WIDGET_TYPE = "Button"
+local ICON_TEXT_GAP = 6
 
 ---@class KajiGUIButtonMixin : Button, BackdropTemplate
 ---@field gui KajiGUIInstance
----@field icon? Texture
+---@field icon Texture
 ---@field text FontString
 ---@field _callback? fun()
----@field _tooltip? string
+---@field _tooltipTitle? string see lib.SetTooltip
 ---@field _bgColor number[]
+---@field _hasIcon boolean
+---@field _imageColor? number[] icon tint; may be a live theme color table
+---@field _iconSize number
+---@field _iconSpan number
+---@field _iconYOffset number
+---@field _animateBorder fun(isHover: boolean)
+---@field _syncBorder fun(r: number, g: number, b: number, a?: number)
 local ButtonMixin = {}
 
 ---@param newLabel string
 function ButtonMixin:SetLabel(newLabel)
     self.text:SetText(newLabel)
+    self:LayoutContent()
 end
 
 ---@param newImage string|number
 function ButtonMixin:SetImage(newImage)
-    if self.icon then
-        self.icon:SetTexture(newImage)
-    end
+    self.icon:SetTexture(newImage)
 end
 
 ---@param enabled boolean
@@ -68,15 +72,123 @@ end
 
 ---@param newTooltip string
 function ButtonMixin:SetTooltip(newTooltip)
-    self._tooltip = newTooltip
+    self._tooltipTitle = newTooltip
+end
+
+---The icon/text block is centred against the button's width, which is only final once the
+---row has resolved it - and OnAcquire runs before that, on whatever width the previous
+---occupant left behind.
+function ButtonMixin:OnLayout()
+    self:LayoutContent()
+end
+
+---Centres the icon and text as one block. Re-run on resize and whenever either changes.
+function ButtonMixin:LayoutContent()
+    local text = self.text:GetText() or ""
+    local hasText = text ~= ""
+
+    if not self._hasIcon then
+        self.text:ClearAllPoints()
+        pixel.SetPixelPoint(self.text, "CENTER")
+        return
+    end
+
+    local span = self.text:GetStringWidth() + self._iconSize
+    if hasText then span = span + ICON_TEXT_GAP end
+    self._iconSpan = hasText and span or self._iconSize
+
+    local width = self:GetWidth()
+    if not width or width <= 0 then return end
+
+    self.icon:ClearAllPoints()
+    pixel.SetPixelPoint(self.icon, "LEFT", self, "LEFT", (width - self._iconSpan) / 2, self._iconYOffset)
+
+    self.text:ClearAllPoints()
+    if hasText then
+        pixel.SetPixelPoint(self.text, "LEFT", self.icon, "RIGHT", ICON_TEXT_GAP, 0)
+    end
 end
 
 function ButtonMixin:UpdateColors()
     local theme = self.gui.theme
-    local bg = self._bgColor
-    self:SetBackdropColor(bg[1], bg[2], bg[3], 1)
-    self:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
+    lib.RefreshBackdrop(self)
     self.text:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
+    -- The hover animator rests on the border color, so reseat it after a palette change.
+    self._syncBorder(theme.border[1], theme.border[2], theme.border[3], theme.border[4] or 1)
+
+    -- Re-tinted here rather than only on acquire: callers hand us a live theme table
+    -- (theme.accent for the Anchors nudge arrows), whose contents change under us.
+    if self._hasIcon then
+        local color = self._imageColor
+        if color then
+            self.icon:SetVertexColor(color[1], color[2], color[3], color[4] or 1)
+        else
+            self.icon:SetVertexColor(1, 1, 1, 1)
+        end
+    end
+end
+
+---@param parent Frame
+---@param buttonText? string
+---@param config table
+function ButtonMixin:OnAcquire(parent, buttonText, config)
+    local theme = self.gui.theme
+    local text = buttonText or "Button"
+    local image = config.image
+    local imageSize = config.imageSize or 16
+
+    self:SetParent(parent)
+    self:ClearAllPoints()
+    pixel.SetPixelHeight(self, config.height or 24)
+    pixel.SetPixelWidth(self, config.width or 120)
+    self.explicitHeight = config.height and true or nil
+
+    self._bgColor = config.bgColor or theme.bgMedium
+    self._callback = config.callback
+    self._hasIcon = image ~= nil
+    self._imageColor = config.imageColor
+    self._iconSize = imageSize
+    self._iconYOffset = config.yOffset or 0
+
+    -- A button's tooltip is a bare title above the button, not a labelled body.
+    lib.SetTooltip(self, self.gui, config.tooltip, nil, { anchor = "ANCHOR_TOP", x = 0, y = 4 })
+
+    self._kajiBackdrop = { bg = self._bgColor, bgAlpha = 0.9, border = "border", borderAlpha = 1 }
+
+    -- The icon always exists; only its content and visibility change between uses.
+    self.icon:SetShown(self._hasIcon)
+    if self._hasIcon then
+        pixel.SetPixelSize(self.icon, imageSize, imageSize)
+        self.icon:SetTexture(image)
+
+        -- Rotation blurs on the pixel grid unless snapping is released first.
+        local rotation = config.imageRotation or 0
+        self.icon:SetTexelSnappingBias(rotation ~= 0 and 0 or 1)
+        self.icon:SetSnapToPixelGrid(rotation == 0)
+        self.icon:SetRotation(rotation)
+    end
+
+    self.text:SetText(text)
+
+    self:Enable()
+    self:EnableMouse(true)
+    self:SetAlpha(1)
+    self:UpdateColors()
+    self:LayoutContent()
+    self:Show()
+end
+
+function ButtonMixin:OnRelease()
+    self._callback = nil
+    self._bgColor = nil
+    self._hasIcon = false
+    self._imageColor = nil
+    lib.ClearTooltip(self)
+    self.text:SetText("")
+    self.icon:SetRotation(0)
+    self.icon:SetVertexColor(1, 1, 1, 1)
+    self.icon:Hide()
+    self.explicitHeight = nil
 end
 
 ---@class KajiGUIButton : KajiGUIButtonMixin
@@ -86,110 +198,62 @@ end
 ---@field callback? fun()
 ---@field image? string|number
 ---@field imageSize? number
+---@field imageRotation? number radians; releases pixel snapping so the rotated texture stays crisp
+---@field imageColor? number[] vertex color applied to the image
 ---@field width? number pixel width (default 120)
 ---@field height? number pixel height (default 24)
 ---@field bgColor? number[]
+
+lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
+    local theme = gui.theme
+    local button = CreateFrame("Button", nil, gui._poolHost, "BackdropTemplate")
+    button.gui = gui
+    lib.SetBackdrop(button, gui, { bg = "bgMedium", bgAlpha = 0.9, border = "border", borderAlpha = 1 })
+
+    local icon = button:CreateTexture(nil, "ARTWORK")
+    icon:Hide()
+    button.icon = icon
+
+    local text = button:CreateFontString(nil, "OVERLAY")
+    gui:ApplyFont(text, "normal")
+    button.text = text
+
+    Mixin(button, ButtonMixin)
+
+    button._animateBorder, button._syncBorder = Animations:CreateHoverColorAnimator(button,
+        function(r, g, b, a) button:SetBackdropBorderColor(r, g, b, a) end,
+        theme.border, theme.accent, theme.animDuration)
+
+    -- Every script is set once here and reads state from fields, so a recycled button
+    -- never carries a previous caller's callback or stacks a second handler.
+    button:SetScript("OnSizeChanged", button.LayoutContent)
+    button:SetScript("OnEnter", function(self)
+        self._animateBorder(true)
+        lib.ShowTooltip(self)
+    end)
+    button:SetScript("OnLeave", function(self)
+        self._animateBorder(false)
+        self:SetBackdropColor(self._bgColor[1], self._bgColor[2], self._bgColor[3], 0.9)
+        lib.HideTooltip()
+    end)
+    button:SetScript("OnMouseDown", function(self)
+        local selected = self.gui.theme.selectedBg
+        self:SetBackdropColor(selected[1], selected[2], selected[3], selected[4])
+    end)
+    button:SetScript("OnMouseUp", function(self)
+        self:SetBackdropColor(self._bgColor[1], self._bgColor[2], self._bgColor[3], 0.9)
+    end)
+    button:SetScript("OnClick", function(self)
+        safecall(self._callback)
+    end)
+
+    return button
+end)
 
 ---@param parent Frame
 ---@param buttonText? string
 ---@param config? KajiGUIButtonConfig
 ---@return KajiGUIButton
 function InstanceMixin:CreateButton(parent, buttonText, config)
-    if type(config) ~= "table" then config = {} end
-    local gui = self
-    local theme = self.theme
-    local text = buttonText or "Button"
-    local image = config.image
-    local imageSize = config.imageSize or 16
-    local height = config.height or 24
-    local bgColor = config.bgColor or theme.bgMedium
-    local yOffset = config.yOffset or 0
-
-    local button = CreateFrame("Button", nil, parent, "BackdropTemplate")
-    button.gui = gui
-    pixel.SetPixelHeight(button, height)
-    if config.height then button.explicitHeight = true end
-    pixel.SetPixelWidth(button, config.width or 120)
-    button._bgColor = bgColor
-    button._callback = config.callback
-    button._tooltip = config.tooltip
-    button:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1 })
-    button:SetBackdropColor(bgColor[1], bgColor[2], bgColor[3], 1)
-    button:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
-
-    local animateBorder = Animations:CreateHoverColorAnimator(button,
-        function(r, g, b, a)
-            button:SetBackdropBorderColor(r, g, b, a)
-        end,
-        theme.border,
-        theme.accent,
-        theme.animDuration
-    )
-    local contentWidth = 0
-    local iconWidget
-
-    if image then
-        iconWidget = button:CreateTexture(nil, "ARTWORK")
-        pixel.SetPixelSize(iconWidget, imageSize, imageSize)
-        iconWidget:SetTexture(image)
-        contentWidth = contentWidth + imageSize
-    end
-
-    local textWidget = button:CreateFontString(nil, "OVERLAY")
-    gui:ApplyFont(textWidget, "normal")
-    textWidget:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
-    textWidget:SetText(text)
-    contentWidth = contentWidth + textWidget:GetStringWidth()
-
-    if image and text and text ~= "" then
-        contentWidth = contentWidth + 6
-    end
-
-    if iconWidget then
-        local iconSpan = (text ~= "") and contentWidth or imageSize
-        local function AlignIcon()
-            local w = button:GetWidth()
-            if not w or w <= 0 then return end
-            iconWidget:ClearAllPoints()
-            pixel.SetPixelPoint(iconWidget, "LEFT", button, "LEFT", (w - iconSpan) / 2, yOffset)
-        end
-        AlignIcon()
-        button:SetScript("OnSizeChanged", AlignIcon)
-        if text ~= "" then
-            pixel.SetPixelPoint(textWidget, "LEFT", iconWidget, "RIGHT", 6, 0)
-        end
-    else
-        pixel.SetPixelPoint(textWidget, "CENTER")
-    end
-
-    button:SetScript("OnEnter", function(btn)
-        animateBorder(true)
-        if btn._tooltip then
-            GameTooltip:SetOwner(btn, "ANCHOR_TOP", 0, 4)
-            GameTooltip:SetText(btn._tooltip, theme.accent[1], theme.accent[2], theme.accent[3], 1, false)
-            GameTooltip:Show()
-        end
-    end)
-    button:SetScript("OnLeave", function(btn)
-        animateBorder(false)
-        btn:SetBackdropColor(btn._bgColor[1], btn._bgColor[2], btn._bgColor[3], 1)
-        GameTooltip:Hide()
-    end)
-    button:SetScript("OnMouseDown", function(btn)
-        btn:SetBackdropColor(theme.selectedBg[1], theme.selectedBg[2], theme.selectedBg[3], theme.selectedBg[4])
-    end)
-    button:SetScript("OnMouseUp", function(btn)
-        btn:SetBackdropColor(btn._bgColor[1], btn._bgColor[2], btn._bgColor[3], 1)
-    end)
-    button:SetScript("OnClick", function(btn)
-        safecall(btn._callback)
-    end)
-
-    button.icon = iconWidget
-    button.text = textWidget
-
-    Mixin(button, ButtonMixin)
-
-    ---@cast button KajiGUIButton
-    return button
+    return self:BuildWidget(WIDGET_TYPE, parent, buttonText, config)
 end

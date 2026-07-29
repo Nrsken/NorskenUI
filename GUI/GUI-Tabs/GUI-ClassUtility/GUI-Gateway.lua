@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class Gateway
+---@class GatewayModule
 local Gateway = NRSKNUI:GetModule('Gateway', true)
 local L = NRSKNUI.Libs.AL
 local GUI = NRSKNUI.GUI

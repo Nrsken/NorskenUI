@@ -12,6 +12,7 @@
 
 local lib = LibStub and LibStub("LibKaji-1.0", true)
 if not lib then return end
+---@class KajiGUIInstanceMixin
 local InstanceMixin = lib.InstanceMixin
 local safecall = lib.safecall
 local pixel = lib.Pixel
@@ -24,7 +25,7 @@ local strfind, strlower = string.find, string.lower
 
 -- Collector: mirrors the fluent surface, records labels, builds nothing --
 
-local WIDGET_METHODS = { "Checkbox", "Slider", "Dropdown", "Button", "ColorPicker", "EditBox", "MultiLineEditBox", "Text" }
+local WIDGET_METHODS = { "Checkbox", "Slider", "Dropdown", "Button", "ColorPicker", "EditBox", "MultiLineEditBox", "Text", "AnchorPicker" }
 
 -- `ctx` tags each harvested label with the { tabId, itemKey } it was built under, so a widget
 -- result can navigate straight to the tab / sidebar item that owns it.
@@ -54,7 +55,25 @@ local function MakeCard(labels, ctx)
     return card
 end
 
-local function MakePage(labels, ctx)
+-- Premade cards build through the same fluent surface as any other card, so running
+-- their real builder against the collector records exactly the labels the live page
+-- would show — no hand-maintained label lists to drift out of date.
+local function RecordPremade(gui, labels, ctx, name, config)
+    local card = MakeCard(labels, ctx)
+    local def = lib.premadeCards and lib.premadeCards[name]
+    if not def then return card end
+
+    config = config or {}
+    local title = config.title or def.title
+    if type(title) == "string" and title ~= "" then
+        labels[#labels + 1] = { text = title, tabId = ctx.tabId, itemKey = ctx.itemKey }
+    end
+
+    safecall(def.build, card, config, gui)
+    return card
+end
+
+local function MakePage(gui, labels, ctx)
     local page = {}
     page.Card = function() return MakeCard(labels, ctx) end
     page.SetEnabled = function(self) return self end
@@ -62,19 +81,9 @@ local function MakePage(labels, ctx)
     page.Refresh = function(self) return self end
     page.Finish = function() return 0 end
 
-    -- Premade cards (Page:FontSettingsCard, :PositionCard, ...) build their widgets through the real
-    -- frame API rather than this collector, so a dry build records nothing for them. Each registers
-    -- the labels it can surface in lib.premadeCardSearch; record those under the current context.
-    for name, provider in pairs(lib.premadeCardSearch or {}) do
-        page[name] = function(_, config)
-            local list = select(2, safecall(provider, config)) or {}
-            for _, label in ipairs(list) do
-                if type(label) == "string" and label ~= "" then
-                    labels[#labels + 1] = { text = label, tabId = ctx.tabId, itemKey = ctx.itemKey }
-                end
-            end
-            return MakeCard(labels, ctx)
-        end
+    page.PremadeCard = function(_, name, config) return RecordPremade(gui, labels, ctx, name, config) end
+    for name in pairs(lib.premadeCards or {}) do
+        page[name] = function(_, config) return RecordPremade(gui, labels, ctx, name, config) end
     end
 
     setmetatable(page, { __index = function() return function() return page end end })
@@ -98,14 +107,14 @@ end
 -- Runs `build` against the frameless collector once per tab / sidebar-item combination the real
 -- content host would render, so every reachable widget label is harvested and tagged. Mirrors the
 -- layout branching in ContentArea (clean / tabs / per-tab sidebar / sidebar-outer).
-local function HarvestBuild(descriptor, raw)
+local function HarvestBuild(gui, descriptor, raw)
     local build = descriptor.build
     if not build then return end
     local mode = descriptor.mode or "clean"
     local sidebar = descriptor.sidebar
 
     local function run(tabId, itemKey, item)
-        local page = MakePage(raw, { tabId = tabId, itemKey = itemKey })
+        local page = MakePage(gui, raw, { tabId = tabId, itemKey = itemKey })
         safecall(build, page, tabId, itemKey, item)
     end
 
@@ -155,7 +164,7 @@ function InstanceMixin:HarvestSearchLabels(pageId)
             for _, term in ipairs(descriptor.search) do raw[#raw + 1] = { text = term } end
         end
         if not descriptor.noHarvest and descriptor.build then
-            HarvestBuild(descriptor, raw)
+            HarvestBuild(self, descriptor, raw)
         end
     end
 

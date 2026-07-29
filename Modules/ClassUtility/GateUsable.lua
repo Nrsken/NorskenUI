@@ -1,8 +1,8 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class Gateway
+---@class GatewayModule
 local Gateway = NRSKNUI:GetModule('Gateway')
-local EM = NRSKNUI.EditMode
+local Anchors = NRSKNUI.Anchors
 
 local IsInGroup = IsInGroup
 local unpack = unpack
@@ -104,7 +104,7 @@ function Gateway:CreateAlertFrame()
 
     -- Finalize the frame and register it with Anchors.
     self.alertFrame = frame
-    EM:Register(self, 'GatewayAlert', self.alertFrame, 'gateway')
+    Anchors:Register(self, 'GatewayAlert', self.alertFrame, 'gateway')
     frame:Hide()
 end
 
@@ -137,7 +137,7 @@ end
 function Gateway:OnDisable()
     if self.alertFrame then
         self.alertFrame:Hide()
-        EM:UnregisterModuleElement('GatewayAlert')
+        Anchors:Unregister('GatewayAlert')
     end
     self.wasUsable = nil
     self.hasItem = false

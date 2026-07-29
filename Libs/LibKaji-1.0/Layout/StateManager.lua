@@ -16,6 +16,7 @@
 
 local lib = LibStub and LibStub("LibKaji-1.0", true)
 if not lib then return end
+---@class KajiGUIInstanceMixin
 local InstanceMixin = lib.InstanceMixin
 
 local ipairs = ipairs

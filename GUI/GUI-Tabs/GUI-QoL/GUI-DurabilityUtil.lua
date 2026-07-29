@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class Durability
+---@class DurabilityModule
 local Durability = NRSKNUI:GetModule('Durability')
 local L = NRSKNUI.Libs.AL
 local GUI = NRSKNUI.GUI

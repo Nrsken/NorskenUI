@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@type Minimap?
+---@class MinimapModule
 local MAP = NRSKNUI:GetModule('Minimap', true)
 local L = NRSKNUI.Libs.AL
 local GUI = NRSKNUI.GUI

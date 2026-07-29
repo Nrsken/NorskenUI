@@ -70,8 +70,12 @@ local function RegisterLSMMedia(MediaType, FileName, DisplayName, LocaleMask)
             NRSKNUI.Media[pathKey][cleanFileName] = fullFilePath
         end
 
-        -- If DisplayName is true, then use key as displayname, else use specified displayname.
-        local nameKey = (DisplayName == true and cleanFileName) or DisplayName
+        local nameKey
+        if DisplayName == true then
+            nameKey = cleanFileName
+        elseif type(DisplayName) == 'string' then
+            nameKey = DisplayName
+        end
         LSM:Register(MediaType, nameKey, fullFilePath, LocaleMask)
     end
 end
@@ -160,12 +164,13 @@ end
 
 ---Resolve an LSM media name (or literal file path) to a usable file path.
 ---@param mediaType string 'font' | 'statusbar' | 'sound'
----@param name string|number|nil LSM name, literal path, or fileID
----@return string|number|nil path per-type fallback when unresolved (nil for sounds)
+---@param name string|nil LSM name or literal path
+---@return string|nil path per-type fallback when unresolved (nil for sounds)
 function NRSKNUI:ResolveMediaPath(mediaType, name)
     if name and name ~= '' then
         if LSM:IsValid(mediaType, name) then
-            local path = LSM:Fetch(mediaType, name, true) -- noDefault: nil when unregistered
+            local path = LSM:Fetch(mediaType, name, true)
+
             if path and (not IsKnownFile or IsKnownFile(path)) then
                 return path
             end
@@ -191,7 +196,7 @@ function NRSKNUI:GetFont(moduleDB)
     else
         name = moduleDB and (moduleDB.FontFace or moduleDB.Font or moduleDB.fontFace) or DEFAULT_FONT_NAME
     end
-    return self:ResolveMediaPath('font', name) or FALLBACK_FONT --[[@as string]]
+    return self:ResolveMediaPath('font', name) or FALLBACK_FONT
 end
 
 ---Resolve a module's effective statusbar straight to a usable texture path.
@@ -202,7 +207,7 @@ function NRSKNUI:GetStatusbar(moduleDB, override)
     -- A per-element override is an explicit pick, so it beats the global bar too. Without this
     -- the global texture silently swallowed every element override (global media is on by default).
     if override then
-        return self:ResolveMediaPath('statusbar', override) or fallbackPaths.statusbar --[[@as string]]
+        return self:ResolveMediaPath('statusbar', override) or fallbackPaths.statusbar
     end
 
     local global = self.db and self.db.profile and self.db.profile.globalMedia
@@ -216,7 +221,7 @@ function NRSKNUI:GetStatusbar(moduleDB, override)
     else
         name = (moduleDB and (moduleDB.StatusBarTexture or moduleDB.statusBar)) or 'NorskenUI'
     end
-    return self:ResolveMediaPath('statusbar', name) or fallbackPaths.statusbar --[[@as string]]
+    return self:ResolveMediaPath('statusbar', name) or fallbackPaths.statusbar
 end
 
 ---Resolve spark texture to a usable file path or atlas name, with a fallback to the solid spark.
@@ -283,7 +288,7 @@ function NRSKNUI:SetSpark(texture, moduleDB, barHeight, override)
     end
 end
 
----@param name string|number LSM sound name, literal path, or fileID
+---@param name string LSM sound name or literal path
 ---@param channel string?
 function NRSKNUI:PlaySafeSound(name, channel)
     local resolved = self:ResolveMediaPath('sound', name)

@@ -1,8 +1,8 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class FocusCastbar
+---@class FocusCastbarModule
 local FocusCastbar = NRSKNUI:GetModule('FocusCastbar')
-local EM = NRSKNUI.EditMode
+local Anchors = NRSKNUI.Anchors
 local LCG = NRSKNUI.Libs.LCG
 
 local CreateFrame = CreateFrame
@@ -155,7 +155,7 @@ function FocusCastbar:CreateFrame()
 
     -- Built once so the script can be attached and detached per cast without a closure each time.
     self.onUpdate = function(_, elapsed) self:OnUpdate(elapsed) end
-    EM:Register(self, 'FocusCastbar', coreFrame, 'FocusCastbar')
+    Anchors:Register(self, 'FocusCastbar', coreFrame, 'focusCastbar')
 end
 
 function FocusCastbar:ApplySettings()

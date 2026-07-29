@@ -2,6 +2,32 @@
 
 -- Annotations for NorskenUI addon
 
+---@class GUIFrame : KajiGUIWindow
+---@field ReloadText string
+---@field ApplyThemeColors fun(self: GUIFrame): void
+---@field mainFrame Frame
+---@field SidebarConfig table
+
+---@class FocusCastbar
+---@field casting boolean?
+---@field channeling boolean?
+---@field empowering boolean?
+---@field notInterruptible boolean
+---@field castBarID number?
+---@field spellID number?
+---@field spellName string?
+---@field holdTime number Seconds left of the post cast hold, counted down in OnUpdate
+---@field textElapsed number Accumulator for the throttled time text
+---@field interruptId number? The player's known interrupt, nil when the class has none
+---@field isPreview boolean?
+---@field glowInitialized boolean?
+---@field previewTimer FunctionContainer?
+---@field pips Texture[]
+---@field colCast colorRGBA
+---@field colUninterruptible colorRGBA
+---@field colNotReady colorRGBA
+---@field durationFormatter table The shared aura duration NumericFormatter, re-fetched on every ApplySettings
+
 ---@class SkinEntry
 ---@field addonName string?
 ---@field key string
@@ -482,7 +508,6 @@ function FontString:GetWidestDigit() end
 ---@field MinWidth? number container minimum width (default 1)
 ---@field MinHeight? number container minimum height (default 1)
 ---@field Comparator? fun(a: NRSKNUI.DynamicGroupChildRecord, b: NRSKNUI.DynamicGroupChildRecord): boolean? custom sort, ties fall through to order/index
----@field Position? table anchor config (see Frame:ApplyPosition)
 
 ---@class NRSKNUI.DynamicGroupChildRecord
 ---@field child Frame
@@ -512,39 +537,10 @@ function FontString:GetWidestDigit() end
 ---@field _contentW number
 ---@field _contentH number
 
----@class NRSKNUI.MySpecData
----@field id number
----@field role string
----@field position string
----@field talents string
-
----@class NRSKNUI
----@field Locale string
----@field AddOnName string?
----@field Version string?
----@field Author string?
----@field MyClass string
----@field MyName string
----@field MyRealm string
----@field MySpec NRSKNUI.MySpecData
-
----@class FocusCastbar
----@field db NRSKNUI.FocusCastbarDB
----@field casting boolean?
----@field channeling boolean?
----@field empowering boolean?
----@field notInterruptible boolean
----@field castBarID number?
----@field spellID number?
----@field spellName string?
----@field holdTime number Seconds left of the post cast hold, counted down in OnUpdate
----@field textElapsed number Accumulator for the throttled time text
----@field interruptId number? The player's known interrupt, nil when the class has none
----@field isPreview boolean?
----@field glowInitialized boolean?
----@field previewTimer FunctionContainer?
----@field pips Texture[]
----@field colCast colorRGBA
----@field colUninterruptible colorRGBA
----@field colNotReady colorRGBA
----@field durationFormatter table The shared aura duration NumericFormatter, re-fetched on every ApplySettings
+---@class NRSKNUI.AnchorOverlay : Frame
+---@field entry table the registry entry this overlay tracks
+---@field text FontString
+---@field isHovered boolean
+---@field didDrag boolean
+---@field animateBorder fun(r: number, g: number, b: number, a?: number)
+---@field fadeTo fun(alpha: number)

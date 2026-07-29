@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class Tweaks
+---@class TweaksModule
 local Tweaks = NRSKNUI:GetModule('Tweaks')
 
 local ipairs = ipairs
@@ -69,11 +69,21 @@ function Tweaks:ToggleHideBossBanner()
 
     -- Drive registration from the setting so toggling off restores the banner.
     if self.db.HideBossBanner then
-        banner:UnregisterEvent("ENCOUNTER_LOOT_RECEIVED")
-        banner:UnregisterEvent("BOSS_KILL")
+        banner:UnregisterEvent('ENCOUNTER_LOOT_RECEIVED')
+        banner:UnregisterEvent('BOSS_KILL')
     else
-        banner:RegisterEvent("ENCOUNTER_LOOT_RECEIVED")
-        banner:RegisterEvent("BOSS_KILL")
+        banner:RegisterEvent('ENCOUNTER_LOOT_RECEIVED')
+        banner:RegisterEvent('BOSS_KILL')
+    end
+end
+
+function Tweaks:ToggleWhisperSounds()
+    if self.db.WhisperSounds.Enabled then
+        self:RegisterEvent('CHAT_MSG_WHISPER', function() NRSKNUI:PlaySafeSound(self.db.WhisperSounds.WhisperSound) end)
+        self:RegisterEvent('CHAT_MSG_BN_WHISPER', function() NRSKNUI:PlaySafeSound(self.db.WhisperSounds.BNetWhisperSound) end)
+    else
+        self:UnregisterEvent('CHAT_MSG_WHISPER')
+        self:UnregisterEvent('CHAT_MSG_BN_WHISPER')
     end
 end
 
@@ -83,6 +93,7 @@ function Tweaks:ApplySettings()
     self:SetEnterAccept()
     self:SetupTalkingHeadHider()
     self:ToggleHideBossBanner()
+    self:ToggleWhisperSounds()
 end
 
 function Tweaks:OnEnable()

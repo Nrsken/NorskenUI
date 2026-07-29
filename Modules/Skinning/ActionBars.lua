@@ -1207,58 +1207,20 @@ local function SetupStanceBarVisibility(container)
     )
 end
 
--- Register each bar with my custom edit mode
-local function RegisterBarWithEditMode(barName, barDB, barContainer)
+-- Register each bar as a draggable anchor.
+local function RegisterBarAnchor(barName, barDB, barContainer)
     local db = barDB
     local frame = barContainer
 
-    local config = {
-        key = "ActionBars_" .. barName,
+    NRSKNUI.Anchors:Register(ACB, "ActionBars_" .. barName, frame, nil, {
         displayName = barName,
-        frame = frame,
-
-        getPosition = function()
-            return {
-                AnchorFrom = db.Position and db.Position.AnchorPoint or "BOTTOM",
-                AnchorTo = db.Position and db.Position.AnchorPoint or "BOTTOM",
-                XOffset = (db.Position and db.Position.XOffset) or 0,
-                YOffset = (db.Position and db.Position.YOffset) or 0,
-            }
+        db = db,
+        apply = function()
+            local pos = db.Position
+            if not pos then return end
+            ApplyEdgePosition(frame, pos.AnchorPoint or "BOTTOM", pos.XOffset or 0, pos.YOffset or 0)
         end,
-
-        setPosition = function(pos)
-            if not db.Position then db.Position = {} end
-
-            local anchorPoint, x, y
-
-            -- If position values provided, use them directly
-            -- Otherwise recalculate from current frame location (used after drag)
-            if pos and pos.XOffset and pos.YOffset then
-                anchorPoint = pos.AnchorFrom or db.Position.AnchorPoint or "BOTTOM"
-                x = pos.XOffset
-                y = pos.YOffset
-            else
-                anchorPoint, x, y = CalculateEdgePosition(frame)
-            end
-
-            -- Save edge-relative position
-            db.Position.AnchorPoint = anchorPoint
-            db.Position.XOffset = x
-            db.Position.YOffset = y
-
-            -- Apply the position
-            ApplyEdgePosition(frame, anchorPoint, x, y)
-        end,
-
-        getParentFrame = function() return UIParent end,
-
-        -- Flag for edit mode to use edge-relative positioning logic
-        usesEdgeRelativePositioning = true,
-
-        guiPath = "ActionBars",
-        guiContext = barName, -- Pass the bar key
-    }
-    NRSKNUI.EditMode:RegisterElement(config)
+    })
 end
 
 -- Migration to edge-relative positioning (resolution-independent)
@@ -1322,7 +1284,7 @@ function ACB:InitializeBars()
         SetupMouseoverScript(cfg.nrsknui_container)
 
         if cfg.enabled then
-            RegisterBarWithEditMode(
+            RegisterBarAnchor(
                 cfg.name,
                 cfg.dbReference,
                 cfg.nrsknui_container
@@ -1718,7 +1680,7 @@ function ACB:UpdateBarEnabled(barKey)
             container:Show()
         end
         -- Register with edit mode when enabled
-        RegisterBarWithEditMode(barKey, barDB, container)
+        RegisterBarAnchor(barKey, barDB, container)
     else
         -- For pet/stance bars, trigger visibility update (will set alpha to 0)
         if container._updatePetVisibility then
@@ -1726,8 +1688,8 @@ function ACB:UpdateBarEnabled(barKey)
         else
             container:Hide()
         end
-        -- Unregister from edit mode when disabled
-        NRSKNUI.EditMode:UnregisterElement("ActionBars_" .. barKey)
+        -- Drop the anchor when the bar is disabled
+        NRSKNUI.Anchors:Unregister("ActionBars_" .. barKey)
     end
 end
 

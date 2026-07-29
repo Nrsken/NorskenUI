@@ -81,6 +81,7 @@ local function TogglePlayerAuras(checked)
     auras.Enabled = anyEnabled
     NRSKNUI:ToggleModule('PlayerAuras', anyEnabled)
 
+    ---@class PlayerAurasModule
     local module = NRSKNUI:GetModule('PlayerAuras', true)
     if module and module:IsEnabled() then module:ApplySettings() end
 
@@ -194,6 +195,7 @@ local function BuildFilterTab(page, display, db)
             if window and window.content then window.content:ShowPage('filterBuilder') end
         end,
         onChangeCallback = function()
+            ---@type NRSKNUI.AuraModule
             local module = NRSKNUI:GetModule(display.moduleName, true)
             if module then module:ApplyFilter() end
         end,

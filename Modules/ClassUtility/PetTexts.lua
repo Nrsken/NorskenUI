@@ -1,8 +1,8 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class PetTexts
+---@class PetTextsModule
 local PetTexts = NRSKNUI:GetModule('PetTexts')
-local EM = NRSKNUI.EditMode
+local Anchors = NRSKNUI.Anchors
 
 local ipairs = ipairs
 local unpack = unpack
@@ -99,7 +99,7 @@ function PetTexts:CreateGroup()
         parentGroup[petType.key] = text
     end
 
-    EM:Register(self, 'PetTexts', parentGroup, 'petTexts')
+    Anchors:Register(self, 'PetTexts', parentGroup, 'petTexts')
 end
 
 function PetTexts:ApplySettings()

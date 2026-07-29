@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@type PotionReady?
+---@class PotionReadyModule
 local PotionReady = NRSKNUI:GetModule('PotionReady', true)
 local L = NRSKNUI.Libs.AL
 local GUI = NRSKNUI.GUI

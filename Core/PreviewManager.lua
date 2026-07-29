@@ -5,13 +5,13 @@ local NRSKNUI = select(2, ...)
 
 local PreviewManager = {
     guiOpen = false,
-    editModeActive = false,
+    anchorsActive = false,
     previewsActive = false,
 }
 NRSKNUI.PreviewManager = PreviewManager
 
 function PreviewManager:UpdatePreviewState()
-    local shouldShowPreviews = self.guiOpen or self.editModeActive
+    local shouldShowPreviews = self.guiOpen or self.anchorsActive
 
     if shouldShowPreviews and not self.previewsActive then
         self:StartAllPreviews()
@@ -27,8 +27,8 @@ function PreviewManager:SetGUIOpen(open)
     self:UpdatePreviewState()
 end
 
-function PreviewManager:SetEditModeActive(active)
-    self.editModeActive = active
+function PreviewManager:SetAnchorsActive(active)
+    self.anchorsActive = active
     self:UpdatePreviewState()
 end
 

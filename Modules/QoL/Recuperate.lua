@@ -1,8 +1,8 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class Recuperate
+---@class RecuperateModule
 local Recuperate = NRSKNUI:GetModule('Recuperate')
-local EM = NRSKNUI.EditMode
+local Anchors = NRSKNUI.Anchors
 
 local UnitHealthPercent = UnitHealthPercent
 local UnitIsDeadOrGhost = UnitIsDeadOrGhost
@@ -44,7 +44,7 @@ function Recuperate:CreateButton()
     button.icon:SetTexture(iconID)
 
     self.button = button
-    EM:Register(self, 'RecuperateButton', self.button, 'Recuperate')
+    Anchors:Register(self, 'RecuperateButton', self.button, 'recuperate')
     button:Hide()
 end
 

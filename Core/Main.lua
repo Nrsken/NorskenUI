@@ -18,6 +18,7 @@ function NRSKNUI:OnInitialize()
     self.MyGUID = UnitGUID('player') -- Player GUID is not reliably available at file-scope load time
 
     self.db = self.Libs.AceDB:New("NorskenUIDB", self:GetDefaultDB(), true)
+    ---@cast self.db NRSKNUI.DBObject
 
     LDS:EnhanceDatabase(self.db, "NorskenUI")
     -- Hook CheckDualSpecState to skip spec-based switching when global profile is active
@@ -89,8 +90,8 @@ local function SetupMinimapIcon()
                     NRSKNUI.GUIFrame:Toggle()
                 end
             elseif button == "RightButton" then
-                if NRSKNUI.EditMode then
-                    NRSKNUI.EditMode:Toggle()
+                if NRSKNUI.Anchors then
+                    NRSKNUI.Anchors:Toggle()
                 end
             end
         end,
@@ -100,7 +101,9 @@ local function SetupMinimapIcon()
             tt:AddLine("Right-Click to toggle anchors", 0.70, 0.70, 0.70)
         end,
     })
-    LDBIcon:Register("NorskenUI", MyLDB, NRSKNUI.db.profile.Minimap)
+    local minimapDB = NRSKNUI.db.profile.Minimap
+    ---@cast minimapDB LibDBIcon.button.DB
+    LDBIcon:Register("NorskenUI", MyLDB, minimapDB)
 end
 
 local function OnPlayerEnteringWorld()
@@ -125,8 +128,8 @@ function NRSKNUI:OnEnable()
 
     GUI:ApplyTheme()
     GUI:OnThemeChanged(function() -- None AceModules go into here.
-        if self.EditMode and self.EditMode:IsActive() then
-            self.EditMode:RefreshOverlays()
+        if self.Anchors and self.Anchors:IsActive() then
+            self.Anchors:RefreshTheme()
         end
     end)
 

@@ -18,7 +18,7 @@
     <Script file="AuraContainer.lua" />
     <Script file="AuraFilters.lua" />
     <Script file="PreviewManager.lua" />
-    <Script file="EditMode.lua" />
+    <Script file="Anchors.lua" />
     <Script file="Commands.lua" />
     <Script file="ProfileManager.lua" />
     <Script file="Dialog.lua" />

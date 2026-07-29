@@ -1,8 +1,8 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class CombatRes
+---@class CombatResModule
 local CombatRes = NRSKNUI:GetModule("CombatRes")
-local EM = NRSKNUI.EditMode
+local Anchors = NRSKNUI.Anchors
 
 local CreateFrame = CreateFrame
 local GetTime = GetTime
@@ -63,7 +63,7 @@ function CombatRes:CreateFrame()
     -- Finalize the frame and register it with Anchors.
     ---@type Frame
     self.coreFrame = coreFrame
-    EM:Register(self, 'CombatRes', self.coreFrame, 'BattleRes')
+    Anchors:Register(self, 'CombatRes', self.coreFrame, 'combatRes')
     self.coreFrame:Hide()
 end
 

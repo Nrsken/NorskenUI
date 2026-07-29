@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class CombatRes
+---@class CombatResModule
 local CombatRes = NRSKNUI:GetModule('CombatRes', true)
 local L = NRSKNUI.Libs.AL
 local GUI = NRSKNUI.GUI

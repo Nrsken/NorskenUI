@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class MiscVars
+---@class MiscVarsModule
 local MiscVars = NRSKNUI:GetModule('MiscVars')
 
 local ipairs = ipairs

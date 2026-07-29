@@ -1,8 +1,8 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class AdvancedDebuffs
+---@class AdvancedDebuffsModule
 local AdvancedDebuffs = NRSKNUI:GetModule('AdvancedDebuffs')
-local EM = NRSKNUI.EditMode
+local Anchors = NRSKNUI.Anchors
 
 local CreateFrame = CreateFrame
 
@@ -110,7 +110,7 @@ function AdvancedDebuffs:ApplySettings()
     self:ResizeHost()
     self.host:Show()
     self.host:ApplyPosition(self.db)
-    EM:Register(self, 'PlayerAdvancedDebuffs', self.host, 'advancedDebuffs')
+    Anchors:Register(self, 'AdvancedDebuffs', self.host, 'advancedDebuffs')
 
     local container = self.host.container
     if container then

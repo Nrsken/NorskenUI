@@ -617,7 +617,7 @@ function GroupMixin:GetResolvedAnchor(grow)
 end
 
 ---Update the group's position based on its configuration and optional grow direction.
----@param source NRSKNUI.DynamicGroupConfig
+---@param source table placement config (Position/Strata/anchorFrameType/ParentFrame), same shape Frame:ApplyPosition takes
 ---@param grow? string
 function GroupMixin:UpdateGroupPosition(source, grow)
     local posConfig = source.Position

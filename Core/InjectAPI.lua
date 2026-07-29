@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
-local Pixel = NRSKNUI.Libs.KAJI.PixelMixin
+local PixelMixin = NRSKNUI.Libs.KAJI.PixelMixin
 
 -- Injection API for adding methods to frame metatables.
 
@@ -613,14 +613,14 @@ do
         Banish = Banish,
         StyleChildFontStrings = StyleChildFontStrings,
         SetZoom = SetZoom,
-        SetPixelSize = Pixel.SetPixelSize,
-        SetPixelWidth = Pixel.SetPixelWidth,
-        SetPixelHeight = Pixel.SetPixelHeight,
-        SetPixelPoint = Pixel.SetPixelPoint,
-        SetGridPoint = Pixel.SetGridPoint,
-        SetPixelInside = Pixel.SetPixelInside,
-        SetPixelOutside = Pixel.SetPixelOutside,
-        SetPixelSnap = Pixel.SetPixelSnap,
+        SetPixelSize = PixelMixin.SetPixelSize,
+        SetPixelWidth = PixelMixin.SetPixelWidth,
+        SetPixelHeight = PixelMixin.SetPixelHeight,
+        SetPixelPoint = PixelMixin.SetPixelPoint,
+        SetGridPoint = PixelMixin.SetGridPoint,
+        SetPixelInside = PixelMixin.SetPixelInside,
+        SetPixelOutside = PixelMixin.SetPixelOutside,
+        SetPixelSnap = PixelMixin.SetPixelSnap,
         StyleButton = StyleButton,
         ApplyOnUpdate = ApplyOnUpdate,
         SetScheduledUpdate = SetScheduledUpdate,

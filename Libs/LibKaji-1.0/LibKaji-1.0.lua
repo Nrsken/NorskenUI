@@ -5,6 +5,26 @@
 * Also exposes a standalone set of pixel-snapping utilities (`lib.Pixel`), usable without the GUI.
 * Every consumer gets its own instance, so two addons embedding the library never share theme or state.
 
+For comment styling I am using Better Comments extension for VSCode, with a custom theme for API tags:
+{
+    "tag": "API",
+    "color": "#C678DD",
+    "strikethrough": false,
+    "underline": false,
+    "backgroundColor": "transparent",
+    "bold": false,
+    "italic": false
+},
+{
+    "tag": "A!",
+    "color": "#C678DD",
+    "strikethrough": false,
+    "underline": false,
+    "backgroundColor": "transparent",
+    "bold": false,
+    "italic": false
+}
+
 ## Example
 
     local GUI = LibStub('LibKaji-1.0'):New({
@@ -28,6 +48,11 @@
 local addonName = ...
 local MAJOR, MINOR = "LibKaji-1.0", 1
 assert(LibStub, MAJOR .. " requires LibStub")
+
+---@class LibKaji-1.0
+---@field Animations LibKaji-1.0.Animations
+---@field Pixel LibKaji-1.0.Pixel
+---@field PixelMixin LibKaji-1.0.PixelMixin
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end -- a newer or equal version is already loaded
 
@@ -36,19 +61,22 @@ lib.mediaBase = "Interface\\AddOns\\" .. addonName .. "\\Libs\\" .. MAJOR .. "\\
 
 local Mixin = Mixin
 
--- Method table shared by every instance.
+-- Method table shared by every instance. Every file that adds methods re-declares
+-- `---@class KajiGUIInstanceMixin` on its own local, so each definition's own
+-- @param/@return annotations register on the class instead of being listed here.
+---@class KajiGUIInstanceMixin
 lib.InstanceMixin = lib.InstanceMixin or {}
 local InstanceMixin = lib.InstanceMixin
 
 ---Systems that can be provided by the consuming addon to extend the library's functionality.
 ---@class KajiGUIServices
----@field editMode? table the addon's edit-mode system (for PositionCard)
+---@field positionSync? { Changed: fun() } notified when the GUI edits a position, so the host's mover overlay can follow
 ---@field frameChooser? table the addon's frame picker (for PositionCard)
 ---@field registerSearchable? fun(widget: Frame, label: string) host search-index hook
 
 ---@class KajiGUIOptions
 ---@field theme? table overrides merged over the library's default theme
----@field editMode? table
+---@field positionSync? { Changed: fun() }
 ---@field frameChooser? table
 ---@field registerSearchable? fun(widget: Frame, label: string)
 ---@field overlay? Frame high-strata frame open dropdowns reparent to (defaults to UIParent)
@@ -63,18 +91,18 @@ local InstanceMixin = lib.InstanceMixin
 ---@param opts? KajiGUIOptions
 ---@return KajiGUIInstance
 function lib:New(opts)
-    opts = opts or {}
+    opts                        = opts or {}
 
     ---@class KajiGUIInstance : KajiGUIInstanceMixin
-    local instance = Mixin({}, InstanceMixin)
+    local instance              = Mixin({}, InstanceMixin)
 
     ---@type KajiGUIServices
-    instance.services = {
-        editMode = opts.editMode,
+    instance.services           = {
+        positionSync = opts.positionSync,
         frameChooser = opts.frameChooser,
         registerSearchable = opts.registerSearchable,
     }
-    instance.overlay = opts.overlay
+    instance.overlay            = opts.overlay
 
     -- Theme engine wiring.
     instance.presets            = opts.presets or lib.THEME_PRESETS
@@ -85,32 +113,7 @@ function lib:New(opts)
     instance.classColorProvider = opts.classColorProvider
 
     instance:_InitTheme(opts.theme)
+    instance:_InitPool()
 
     return instance
 end
-
----@class KajiGUIInstanceMixin
----@field CreateGUIWindow fun(self: KajiGUIInstance, opts?: KajiGUIWindowOptions): KajiGUIWindow
----@field RegisterPage fun(self: KajiGUIInstance, id: string, descriptor: table): void
----@field GetTheme fun(self: KajiGUIInstance): table
----@field ApplyTheme fun(self: KajiGUIInstance): KajiGUIInstance
----@field OnThemeChanged fun(self: KajiGUIInstance, callback: fun()): void
----@field GetMode fun(self: KajiGUIInstance): string
----@field SetMode fun(self: KajiGUIInstance, mode: string): KajiGUIInstance
----@field GetPresetNames fun(self: KajiGUIInstance): string[]
----@field GetSelectedPreset fun(self: KajiGUIInstance): string
----@field SetPreset fun(self: KajiGUIInstance, name: string): KajiGUIInstance
----@field GetPreset fun(self: KajiGUIInstance, name: string): table|nil
----@field GetColorKeys fun(self: KajiGUIInstance): table[]
----@field GetCustomColor fun(self: KajiGUIInstance, key: string): number, number, number, number
----@field SetCustomColor fun(self: KajiGUIInstance, key: string, r: number, g: number, b: number, a?: number): KajiGUIInstance
----@field CopyPresetToCustom fun(self: KajiGUIInstance, name: string): KajiGUIInstance
----@field ResetCustomColors fun(self: KajiGUIInstance): KajiGUIInstance
----@field ResetTheme fun(self: KajiGUIInstance): KajiGUIInstance
----@field Color fun(self: KajiGUIInstance, key: string): number, number, number, number
----@field RGBAToHex fun(self: KajiGUIInstance, r: number, g: number, b: number): string
----@field ColorText fun(self: KajiGUIInstance, text: string): string
----@field FlashMessage fun(self: KajiGUIInstance, text: string, opts?: table): Frame
----@field Prompt fun(self: KajiGUIInstance, opts: KajiPromptOptions): Frame
----@field CopyDialog fun(self: KajiGUIInstance, title: string, text: string, label?: string): Frame
----@field ShowContextMenu fun(self: KajiGUIInstance, entries: table[]): void

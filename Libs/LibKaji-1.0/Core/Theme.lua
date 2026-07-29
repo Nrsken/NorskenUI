@@ -19,6 +19,7 @@
 
 local lib = LibStub and LibStub("LibKaji-1.0", true)
 if not lib then return end
+---@class KajiGUIInstanceMixin
 local InstanceMixin = lib.InstanceMixin
 local LSM = LibStub("LibSharedMedia-3.0", true)
 
@@ -55,27 +56,23 @@ local DEFAULT_THEME = {
     error                   = { 0.90, 0.30, 0.30, 1 },
     success                 = { 0.30, 0.80, 0.40, 1 },
     warning                 = { 0.90, 0.75, 0.30, 1 },
-
     -- Dimensions
     headerHeight            = 35,
     footerHeight            = 28,
     sidebarWidth            = 242,
     contentWidth            = 679.1,
     borderSize              = 1,
-
     -- Spacing
     paddingSmall            = 4,
     paddingMedium           = 8,
     paddingLarge            = 16,
     scrollbarWidth          = 17,
-
     -- Row heights
     rowHeight               = 40,
     rowHeightLast           = 44,
     rowHeightTall           = 80,
     rowHeightSeparator      = 8,
     rowHeightLabelSeparator = 22,
-
     -- Fonts
     fontFace                = FALLBACK_FONT,
     fontSizeSmall           = 12,
@@ -83,7 +80,6 @@ local DEFAULT_THEME = {
     fontSizeLarge           = 16,
     fontOutline             = "OUTLINE",
     fontShadow              = false,
-
     -- Widget textures (consumers override to match their look)
     checkTexture            = MEDIA .. "ok-iconBlack.tga",
     crossTexture            = MEDIA .. "cross-small.png",
@@ -91,7 +87,6 @@ local DEFAULT_THEME = {
     stepperTexture          = MEDIA .. "collapse.tga",
     colorSwatchTexture      = MEDIA .. "NUIcolorPickerBG.png",
     resizeHandleTexture     = MEDIA .. "NorskenCustomResizeHandle23px.png",
-
     -- Animation
     animDuration            = 0.18,
 }
@@ -101,45 +96,109 @@ lib.DEFAULT_THEME = DEFAULT_THEME
 -- (dark and medium differ only in alpha unless `medium` is given); accent variants are
 -- derived from the accent color. Shared rows (text/status) are constant across presets.
 local function BuildPreset(spec)
-    local d, m, l, a = spec.dark, spec.medium or spec.dark, spec.light, spec.accent
-    local sa = spec.selectedAlpha or 0.25
+    local aC = spec.accent
+    local aH = spec.accentHover or { aC[1], aC[2], aC[3], 0.25 }
+    local aD = spec.accentDim or aC
+    local dBG = spec.dark
+    local mBG = spec.medium or spec.dark
+    local lBG = spec.light
+    local sBG = spec.selectedBg or { aC[1], aC[2], aC[3], 0.25 }
+    local hBG = spec.bgHover or { 0.22, 0.22, 0.24, 1 }
+    local tP = spec.textPrimary or { 0.95, 0.95, 0.95, 1 }
+    local tS = spec.textSecondary or { 0.70, 0.70, 0.70, 1 }
+    local tM = spec.textMuted or { 0.50, 0.50, 0.50, 1 }
+
     return {
-        bgDark        = { d[1], d[2], d[3], 0.6 },
-        bgMedium      = { m[1], m[2], m[3], 0.8 },
-        bgLight       = { l[1], l[2], l[3], 1 },
-        bgHover       = spec.bgHover or { 0.22, 0.22, 0.24, 1 },
-        border        = { 0, 0, 0, 1 },
-        accent        = { a[1], a[2], a[3], 1 },
-        accentHover   = { a[1], a[2], a[3], 0.25 },
-        accentDim     = { a[1], a[2], a[3], 1 },
-        textPrimary   = { 0.95, 0.95, 0.95, 1 },
-        textSecondary = { 0.70, 0.70, 0.70, 1 },
-        textMuted     = { 0.50, 0.50, 0.50, 1 },
-        selectedBg    = { a[1], a[2], a[3], sa },
-        selectedText  = { a[1], a[2], a[3], 1 },
-        error         = { 0.90, 0.30, 0.30, 1 },
-        success       = { 0.30, 0.80, 0.40, 1 },
-        warning       = { 0.90, 0.75, 0.30, 1 },
+        -- Backgrounds & Border
+        bgDark = dBG,
+        bgMedium = mBG,
+        bgLight = lBG,
+        bgHover = hBG,
+        border = { 0, 0, 0, 1 },
+        -- Accent Colors
+        accent = aC,
+        accentHover = aH,
+        accentDim = aD,
+        -- Text colors
+        textPrimary = tP,
+        textSecondary = tS,
+        textMuted = tM,
+        selectedBg = sBG,
+        selectedText = aC,
+        error = { 0.90, 0.30, 0.30, 1 },
+        success = { 0.30, 0.80, 0.40, 1 },
+        warning = { 0.90, 0.75, 0.30, 1 },
     }
 end
 
 -- Bundled preset themes. Consumers may override the whole set via New{ presets = ... }.
 local THEME_PRESETS = {
-    ["Warpaint"]   = BuildPreset { dark = { 0.0745, 0.0588, 0.0510 }, light = { 0.1945, 0.1788, 0.1710 }, accent = { 0.7098, 0.2000, 0.1412 } },
-    ["Greenwake"]  = BuildPreset { dark = { 0.031, 0.106, 0.106 }, light = { 0.125, 0.231, 0.216 }, accent = { 0.933, 0.910, 0.698 } },
-    ["Timberfall"] = BuildPreset { dark = { 0.092, 0.069, 0.018 }, light = { 0.286, 0.220, 0.118 }, accent = { 0.988, 0.361, 0.008 } },
-    ["Obsidian"]   = BuildPreset { dark = { 0.014, 0.047, 0.063 }, light = { 0.114, 0.147, 0.163 }, accent = { 0.900, 0.467, 0.976 }, selectedAlpha = 0.15 },
-    ["Mocha"]      = BuildPreset { dark = { 0.0588, 0.0559, 0.0294 }, light = { 0.1019, 0.0969, 0.0510 }, accent = { 0.7451, 0.9412, 0.0000 } },
-    ["Frost"]      = BuildPreset { dark = { 0.024, 0.078, 0.106 }, light = { 0.067, 0.129, 0.176 }, accent = { 0.790, 0.857, 0.872 } },
-    ["Echo"]       = BuildPreset { dark = { 0.0666, 0.0000, 0.0000 }, light = { 0.0705, 0.0705, 0.0705 }, accent = { 0.7803, 0.0000, 0.0000 } },
-    ["Dark"]       = BuildPreset { dark = { 0.0235, 0.0235, 0.0235 }, medium = { 0.0431, 0.0431, 0.0431 }, light = { 0.1176, 0.1176, 0.1176 }, accent = { 0.8980, 0.0627, 0.2235 } },
-    ["NUI v2"]     = BuildPreset { dark = { 0.015, 0.047, 0.062 }, light = { 0.113, 0.145, 0.164 }, accent = { 0, 1, 0.588 }, selectedAlpha = 0.15, bgHover = { 0.219, 0.219, 0.239, 1 } },
+    ["Warpaint"] = BuildPreset {
+        dark = { 0.0745, 0.0588, 0.0510, 0.6 },
+        light = { 0.1945, 0.1788, 0.1710, 1 },
+        accent = { 0.7098, 0.2000, 0.1412 },
+    },
+    ["Greenwake"] = BuildPreset {
+        dark = { 0.031, 0.106, 0.106, 0.6 },
+        light = { 0.125, 0.231, 0.216, 1 },
+        accent = { 0.933, 0.910, 0.698 },
+    },
+    ["Timberfall"] = BuildPreset {
+        dark = { 0.092, 0.069, 0.018, 0.6 },
+        light = { 0.286, 0.220, 0.118, 1 },
+        accent = { 0.988, 0.361, 0.008 },
+    },
+    ["Obsidian"] = BuildPreset {
+        dark = { 0.014, 0.047, 0.063, 0.6 },
+        light = { 0.114, 0.147, 0.163, 1 },
+        accent = { 0.900, 0.467, 0.976 },
+        selectedBg = { 0.900, 0.467, 0.976, 0.25 },
+    },
+    ["Mocha"] = BuildPreset {
+        dark = { 0.0588, 0.0559, 0.0294, 0.6 },
+        light = { 0.1019, 0.0969, 0.0510, 1 },
+        accent = { 0.7451, 0.9412, 0.0000 },
+    },
+    ["Frost"] = BuildPreset {
+        dark = { 0.024, 0.078, 0.106, 0.6 },
+        light = { 0.067, 0.129, 0.176, 1 },
+        accent = { 0.790, 0.857, 0.872 },
+    },
+    ["Echo"] = BuildPreset {
+        dark = { 0.0666, 0.0000, 0.0000, 0.6 },
+        light = { 0.0705, 0.0705, 0.0705, 1 },
+        accent = { 0.7803, 0.0000, 0.0000 },
+    },
+    ["Dark"] = BuildPreset {
+        dark = { 0.0235, 0.0235, 0.0235, 0.6 },
+        medium = { 0.0431, 0.0431, 0.0431, 0.8 },
+        light = { 0.1176, 0.1176, 0.1176, 1 },
+        accent = { 0.8980, 0.0627, 0.2235 },
+    },
+    ["NUI v2"] = BuildPreset {
+        dark = { 0.015, 0.047, 0.062, 0.6 },
+        light = { 0.113, 0.145, 0.164, 1 },
+        accent = { 0, 1, 0.588 },
+        selectedBg = { 0.8980, 0.0627, 0.2235, 0.25 },
+        bgHover = { 0.219, 0.219, 0.239, 1 },
+    },
+    ["NUI v3"] = BuildPreset {
+        dark = { 0, 0, 0, 0.5 },
+        medium = { 0, 0, 0, 0.5 },
+        light = { 0.17, 0.17, 0.17, 0.8 },
+        accent = { 0.85, 1, 0.39 },
+        bgHover = { 0.22, 0.22, 0.24, 1 },
+        textPrimary = { 1, 1, 1, 1 },
+        textSecondary = { 0.82, 0.82, 0.82, 1 },
+        textMuted = { 0.5, 0.5, 0.5, 1 },
+        selectedBg = { 0.68, 0.68, 0.68, 0.25 },
+    },
 }
 lib.THEME_PRESETS = THEME_PRESETS
 
 -- Ordered preset names for the theme picker.
 local THEME_PRESET_NAMES = {
-    "Echo", "Warpaint", "Greenwake", "Timberfall", "Obsidian", "Mocha", "Frost", "Dark", "NUI v2",
+    "Echo", "Warpaint", "Greenwake", "Timberfall", "Obsidian", "Mocha", "Frost", "Dark", "NUI v2", "NUI v3",
 }
 lib.THEME_PRESET_NAMES = THEME_PRESET_NAMES
 
@@ -176,18 +235,31 @@ local function copyColor(color)
     return { color[1] or 1, color[2] or 1, color[3] or 1, color[4] or 1 }
 end
 
--- Copies a value, shallow-copying tables. Used to merge theme overrides.
-local function copyValue(value)
-    if type(value) ~= "table" then return value end
-    local copy = {}
-    for i = 1, #value do copy[i] = value[i] end
-    return copy
+-- Overwrites dst's array part from src, keeping dst's identity.
+local function overwriteArray(dst, src)
+    for i = 1, #src do dst[i] = src[i] end
+    for i = #src + 1, #dst do dst[i] = nil end
 end
 
----Merges src's keys into dst, copying values.
+---Merges src's keys into dst. Table values are merged into the table already at that
+---key rather than replacing it: widgets, animators and the host addon hold direct
+---references to theme colors, and swapping the table would leave every one of them
+---pointing at the previous palette. Only the first merge allocates.
 local function mergeInto(dst, src)
     for key, value in pairs(src) do
-        dst[key] = copyValue(value)
+        if type(value) == "table" then
+            local existing = dst[key]
+            if type(existing) == "table" then
+                overwriteArray(existing, value)
+            else
+                -- Copy rather than alias: src may be DEFAULT_THEME or a caller's table.
+                local copy = {}
+                overwriteArray(copy, value)
+                dst[key] = copy
+            end
+        else
+            dst[key] = value
+        end
     end
 end
 
@@ -234,7 +306,9 @@ function InstanceMixin:_InitTheme(overrides)
     end
 end
 
----Returns the live theme table (mutated in place on change, so held refs stay valid).
+---Returns the live theme table. Both it and every color table inside it keep their
+---identity across theme changes (see mergeInto), so a held `theme.accent` reference
+---always reads the current palette. Widgets and animators rely on this.
 ---@return table
 function InstanceMixin:GetTheme()
     return self.theme
@@ -271,8 +345,16 @@ function InstanceMixin:OnThemeChanged(callback)
 end
 
 function InstanceMixin:_FireThemeChanged()
+    -- Chrome (the window, sidebars, scrollbars) is built once and subscribes.
     for callback in pairs(self._themeCallbacks) do
         callback(self.theme)
+    end
+
+    -- Widgets don't subscribe: the set of acquired widgets is already an exact,
+    -- bounded registry, so there is nothing to unsubscribe and nothing to leak.
+    -- Released widgets are skipped and pick the new palette up in OnAcquire.
+    for widget in pairs(self._acquired) do
+        if widget.UpdateColors then widget:UpdateColors() end
     end
 end
 

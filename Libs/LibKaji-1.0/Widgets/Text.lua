@@ -1,50 +1,173 @@
 --[[
 # Text
 
-* A read-only text block: an accent-less title above a body paragraph.
-* The body accepts a string, a function returning one, or a list (rendered as a bulleted list).
-* Without a `height` the block measures its own wrapped text and grows the row it sits in to fit,
-  so dynamic text is never clipped. Pass a `height` for a fixed box instead.
+* A titled block of body text, optionally boxed, that can size itself to its wrapped
+  content and push the resulting height up through the row it lives in.
 
 ## Examples
 
-    row:Text('About', {
-        text = 'This module does a thing.'
-    })
-
-    row:Text('Notes', {
+    row:Text('Note', {
+        width = 1,
         text = { 'First point', 'Second point' },
-        height = 60,
-        bgMode = 'show',
-    })
-
-    -- Grows with the text, never shorter than 40.
-    row:Text('Matches auras in any of 2 branches:', {
-        text = { 'Branch 1: HELPFUL', 'Branch 2: HARMFUL' },
         autoHeight = true,
-        minHeight = 40,
+        bgMode = 'hide',
     })
 
 --]]
 
 local lib = LibStub and LibStub("LibKaji-1.0", true)
 if not lib then return end
+---@class KajiGUIInstanceMixin
 local InstanceMixin = lib.InstanceMixin
 local pixel = lib.Pixel
 
 local CreateFrame = CreateFrame
+local Mixin = Mixin
 local type = type
 local ipairs = ipairs
 local abs = math.abs
 local max = math.max
 local tconcat = table.concat
 
+local WIDGET_TYPE = "Text"
+local BLACK = { 0, 0, 0 }
+
+-- bgMode -> backdrop spec. Every mode builds the same frame; only visibility differs.
+local BG_MODES = {
+    show   = { bg = "bgDark", bgAlpha = 1, border = "border", borderAlpha = 1 },
+    border = { bg = BLACK, bgAlpha = 0, border = BLACK, borderAlpha = 1 },
+    hide   = { bg = BLACK, bgAlpha = 0, border = BLACK, borderAlpha = 0 },
+}
+
 ---@alias KajiGUITextBody string|string[]|fun(): string|string[]
 
----@class KajiGUIText : Frame
+---@class KajiGUITextMixin : Frame
+---@field gui KajiGUIInstance
 ---@field container Frame|BackdropTemplate
----@field SetEnabled fun(self: KajiGUIText, enabled: boolean)
----@field SetText fun(self: KajiGUIText, text: KajiGUITextBody)
+---@field title FontString
+---@field label FontString
+---@field _autoHeight boolean
+---@field _minHeight number
+---@field _titleSpacer number
+---@field _measured? number last settled height, nil until the first measure
+local TextMixin = {}
+
+---Flattens the body, which may be a string, a bulleted list, or a provider for either.
+---@param input? KajiGUITextBody
+---@return string
+function TextMixin:ResolveBody(input)
+    if type(input) == "function" then
+        input = input()
+    end
+    if type(input) == "table" then
+        local lines = {}
+        for i, v in ipairs(input) do
+            lines[i] = self.gui:ColorText("• ") .. v
+        end
+        return tconcat(lines, "\n")
+    end
+    return input or ""
+end
+
+---Sizes the block to its wrapped text at the given width and passes the height up to the row.
+---@param width? number
+function TextMixin:Measure(width)
+    -- No width yet means the row has not been laid out; OnSizeChanged brings us back.
+    if not self._autoHeight or not width or width <= 0 then return end
+
+    pixel.SetPixelWidth(self.label, width)
+    local desired = max(self._titleSpacer + (self.label:GetStringHeight() or 0) + self.gui.theme.paddingSmall,
+        self._minHeight)
+    -- Bailing on an unchanged height is what stops resize -> OnSizeChanged -> resize looping.
+    if self._measured and abs(desired - self._measured) < 0.5 then return end
+
+    self._measured = desired
+    pixel.SetPixelHeight(self.container, desired)
+    pixel.SetPixelHeight(self, desired)
+
+    local owner = self:GetParent()
+    if owner and owner.SetContentHeight then owner:SetContentHeight(desired) end
+end
+
+---Measures against the width the row just resolved. An auto-height block released and
+---re-acquired at the same width raises no OnSizeChanged, so this is the only thing that
+---remeasures it - without it the block returns collapsed to its default row height.
+---@param width number
+function TextMixin:OnLayout(width)
+    self:Measure(width)
+end
+
+---Replaces the body text, remeasuring when the block sizes itself.
+---@param text KajiGUITextBody
+function TextMixin:SetText(text)
+    self.label:SetText(self:ResolveBody(text))
+    self:Measure(self:GetWidth())
+end
+
+---@param enabled boolean
+function TextMixin:SetEnabled(enabled)
+    self:SetAlpha(enabled and 1 or 0.4)
+end
+
+function TextMixin:UpdateColors()
+    local theme = self.gui.theme
+    lib.RefreshBackdrop(self.container)
+    self.title:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
+    self.label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
+end
+
+---@param parent Frame
+---@param titleText? string
+---@param config table
+function TextMixin:OnAcquire(parent, titleText, config)
+    local rowHeight = config.height or 34
+
+    -- A height means the caller sized the box themselves, so honour it unless they opt back in.
+    local autoHeight = config.autoHeight
+    if autoHeight == nil then autoHeight = config.height == nil end
+
+    self._autoHeight = autoHeight and true or false
+    self._minHeight = config.minHeight or config.height or 0
+    self._measured = nil
+
+    self:SetParent(parent)
+    self:ClearAllPoints()
+    pixel.SetPixelHeight(self, rowHeight)
+    pixel.SetPixelHeight(self.container, rowHeight)
+    -- Keeps the row it is added to from stamping its own height back over the measured one.
+    self.explicitHeight = self._autoHeight or nil
+
+    self.container._kajiBackdrop = BG_MODES[config.bgMode] or BG_MODES.hide
+    lib.RefreshBackdrop(self.container)
+
+    self.title:SetText(titleText or "")
+    self._titleSpacer = self.title:GetStringHeight() + 6
+
+    -- Auto sizing anchors one corner and sets the width itself, so GetStringHeight reports the
+    -- wrapped height right away. Pinning both sides only resolves the width on the next layout
+    -- pass, which would leave us measuring against the previous one.
+    self.label:ClearAllPoints()
+    pixel.SetPixelPoint(self.label, "TOPLEFT", self.container, "TOPLEFT", 0, -self._titleSpacer)
+    if self._autoHeight then
+        self.label:SetJustifyV("TOP")
+    else
+        pixel.SetPixelPoint(self.label, "BOTTOMRIGHT", self.container, "BOTTOMRIGHT", 0, 0)
+    end
+    self.label:SetText(self:ResolveBody(config.text))
+
+    self:SetAlpha(1)
+    self:UpdateColors()
+    self:Show()
+end
+
+function TextMixin:OnRelease()
+    self.title:SetText("")
+    self.label:SetText("")
+    self.explicitHeight = nil
+    self._measured = nil
+end
+
+---@class KajiGUIText : KajiGUITextMixin
 
 ---@class KajiGUITextConfig
 ---@field text? KajiGUITextBody
@@ -52,46 +175,15 @@ local tconcat = table.concat
 ---@field autoHeight? boolean force auto sizing even with a height set (which then acts as a floor)
 ---@field minHeight? number shortest the block may get while auto sizing
 ---@field bgMode? "show"|"border"|"hide"
----@field wrapOn? boolean
 
----@param parent Frame
----@param titleText string
----@param config? KajiGUITextConfig
----@return KajiGUIText
-function InstanceMixin:CreateText(parent, titleText, config)
-    config = config or {}
-    local gui = self
-    local theme = self.theme
-    local bodyText = config.text
-    local rowHeight = config.height or 34
-    local bgMode = config.bgMode
-
-    -- A height means the caller sized the box themselves, so honour it unless they opt back in.
-    local autoHeight = config.autoHeight
-    if autoHeight == nil then autoHeight = config.height == nil end
-    local minHeight = config.minHeight or config.height or 0
-
-    local row = CreateFrame("Frame", nil, parent)
-    pixel.SetPixelHeight(row, rowHeight)
-    -- Keeps the row it is added to from stamping its own height back over the measured one.
-    if autoHeight then row.explicitHeight = true end
+lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
+    local row = CreateFrame("Frame", nil, gui._poolHost)
+    row.gui = gui
 
     local container = CreateFrame("Frame", nil, row, "BackdropTemplate")
-    pixel.SetPixelHeight(container, rowHeight)
     pixel.SetPixelPoint(container, "TOPLEFT", row, "TOPLEFT", 0, 0)
     pixel.SetPixelPoint(container, "TOPRIGHT", row, "TOPRIGHT", 0, 0)
-    container:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1 })
-
-    if bgMode == "show" then
-        container:SetBackdropColor(theme.bgDark[1], theme.bgDark[2], theme.bgDark[3], 1)
-        container:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
-    elseif bgMode == "border" then
-        container:SetBackdropColor(0, 0, 0, 0)
-        container:SetBackdropBorderColor(0, 0, 0, 1)
-    else
-        container:SetBackdropColor(0, 0, 0, 0)
-        container:SetBackdropBorderColor(0, 0, 0, 0)
-    end
+    lib.SetBackdrop(container, gui, BG_MODES.hide)
     row.container = container
 
     local title = container:CreateFontString(nil, "OVERLAY")
@@ -100,79 +192,27 @@ function InstanceMixin:CreateText(parent, titleText, config)
     pixel.SetPixelHeight(title, 18)
     title:SetJustifyH("LEFT")
     gui:ApplyFont(title, "large")
-    title:SetText(titleText or "")
-    title:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
+    row.title = title
 
-    local totSpacer = title:GetStringHeight() + 6
-
-    -- Auto sizing anchors one corner and sets the width itself, so GetStringHeight reports the
-    -- wrapped height right away. Pinning both sides only resolves the width on the next layout pass,
-    -- which would leave us measuring against the previous one.
     local label = container:CreateFontString(nil, "OVERLAY")
-    pixel.SetPixelPoint(label, "TOPLEFT", container, "TOPLEFT", 0, -totSpacer)
-    if autoHeight then
-        label:SetJustifyV("TOP")
-    else
-        pixel.SetPixelPoint(label, "BOTTOMRIGHT", container, "BOTTOMRIGHT", 0, 0)
-    end
     label:SetJustifyH("LEFT")
     label:SetSpacing(4)
     label:SetWordWrap(true)
     label:SetNonSpaceWrap(true)
     gui:ApplyFont(label, "small")
-    label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
-
-    local function ResolveBody(input)
-        if type(input) == "function" then
-            input = input()
-        end
-        if type(input) == "table" then
-            local lines = {}
-            for i, v in ipairs(input) do
-                lines[i] = gui:ColorText("• ") .. v
-            end
-            return tconcat(lines, "\n")
-        end
-        return input or ""
-    end
-    label:SetText(ResolveBody(bodyText))
+    row.label = label
     container.label = label
 
-    -- Last height we settled on. Nil until the first measure, so the row always hears about it once.
-    local measured
+    Mixin(row, TextMixin)
+    row:SetScript("OnSizeChanged", function(self, width) self:Measure(width) end)
 
-    ---Sizes the block to its wrapped text at the given width and passes the height up to the row.
-    ---@param width number?
-    local function Measure(width)
-        -- No width yet means the row has not been laid out; OnSizeChanged brings us back.
-        if not autoHeight or not width or width <= 0 then return end
-
-        pixel.SetPixelWidth(label, width)
-        local desired = max(totSpacer + (label:GetStringHeight() or 0) + theme.paddingSmall, minHeight)
-        -- Bailing on an unchanged height is what stops resize -> OnSizeChanged -> resize looping.
-        if measured and abs(desired - measured) < 0.5 then return end
-
-        measured = desired
-        pixel.SetPixelHeight(container, desired)
-        pixel.SetPixelHeight(row, desired)
-
-        local owner = row:GetParent()
-        if owner and owner.SetContentHeight then owner:SetContentHeight(desired) end
-    end
-
-    row:SetScript("OnSizeChanged", function(self, width) Measure(width) end)
-
-    ---Replaces the body text, remeasuring when the block sizes itself.
-    ---@param text string|string[]|fun(): string|string[]
-    function row:SetText(text)
-        label:SetText(ResolveBody(text))
-        Measure(self:GetWidth())
-    end
-
-    function row:SetEnabled(enabled)
-        self:SetAlpha(enabled and 1 or 0.4)
-    end
-
-    ---@cast row KajiGUIText
     return row
+end)
+
+---@param parent Frame
+---@param titleText? string
+---@param config? KajiGUITextConfig
+---@return KajiGUIText
+function InstanceMixin:CreateText(parent, titleText, config)
+    return self:BuildWidget(WIDGET_TYPE, parent, titleText, config)
 end

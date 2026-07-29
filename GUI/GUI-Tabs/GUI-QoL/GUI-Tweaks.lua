@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class Tweaks
+---@class TweaksModule
 local Tweaks = NRSKNUI:GetModule('Tweaks')
 local L = NRSKNUI.Libs.AL
 local GUI = NRSKNUI.GUI

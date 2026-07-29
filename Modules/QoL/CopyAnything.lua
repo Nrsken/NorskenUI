@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class CopyAnything
+---@class CopyAnythingModule
 local CopyAnything = NRSKNUI:GetModule('CopyAnything')
 
 local IsControlKeyDown, IsShiftKeyDown, IsAltKeyDown = IsControlKeyDown, IsShiftKeyDown, IsAltKeyDown

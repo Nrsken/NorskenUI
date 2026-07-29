@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class UnitFrames
+---@class UnitFramesModule
 local UF = NRSKNUI:GetModule('UnitFrames')
 
 local UnitHealthMissing = UnitHealthMissing

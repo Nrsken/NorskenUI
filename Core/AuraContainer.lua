@@ -255,7 +255,7 @@ function NRSKNUI:SkinAuraButton(container, options, button)
 
         button:SetDurationText(time, {
             textFormatter = Opt(options, container, 'durationTextFormatter')
-                or NRSKNUI:GetAuraDurationFormatter(useBreakpointColors, useSingleColor and singleColor or nil),
+                or NRSKNUI:GetAuraDurationFormatter(useBreakpointColors, (useSingleColor and singleColor) or nil),
             textColor = (useCurveColors and colorCurve) and {
                 curve = colorCurve,
                 property = Enum.DurationTextBindingProperty.RemainingDuration,

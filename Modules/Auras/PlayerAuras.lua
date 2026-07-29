@@ -1,8 +1,8 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class PlayerAuras
+---@class PlayerAurasModule
 local PlayerAuras = NRSKNUI:GetModule('PlayerAuras')
-local EM = NRSKNUI.EditMode
+local Anchors = NRSKNUI.Anchors
 
 local CreateFrame = CreateFrame
 local pairs = pairs
@@ -144,7 +144,12 @@ function PlayerAuras:ApplySettings()
             self:ResizeHost(kind)
             host:Show()
             host:ApplyPosition(cfg)
-            EM:Register(self, { key = info.moverKey, displayName = info.displayName, frame = host, db = cfg, guiPath = info.guiPath, })
+            -- db is resolved live rather than captured: self.db is reassigned by
+            -- UpdateDB() on a profile switch and cfg would still point at the old one.
+            Anchors:Register(self, info.moverKey, host, info.guiPath, {
+                displayName = info.displayName,
+                db = function(module) return module.db[kind] end,
+            })
 
             local container = host.container
             if container then
@@ -156,7 +161,7 @@ function PlayerAuras:ApplySettings()
             end
         else
             host:Hide()
-            EM:UnregisterElement(info.moverKey)
+            Anchors:Unregister(info.moverKey)
         end
     end
 

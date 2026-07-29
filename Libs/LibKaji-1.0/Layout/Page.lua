@@ -30,6 +30,7 @@
 
 local lib = LibStub and LibStub("LibKaji-1.0", true)
 if not lib then return end
+---@class KajiGUIInstanceMixin
 local InstanceMixin = lib.InstanceMixin
 
 local ipairs = ipairs
@@ -108,6 +109,11 @@ function FluentRow:MultiLineEditBox(label, config) return self:_Add("CreateMulti
 ---@return Frame widget
 function FluentRow:Text(label, config) return self:_Add("CreateText", label, config) end
 
+---@param label? string
+---@param config? KajiGUIWidgetConfig
+---@return KajiGUIAnchorPicker widget
+function FluentRow:AnchorPicker(label, config) return self:_Add("CreateAnchorPicker", label, config) end
+
 ---Icon has a (parent, config) signature, so it gets its own method.
 ---@param config? KajiGUIWidgetConfig
 ---@return Frame widget
@@ -159,6 +165,29 @@ function FluentCard:Row(height, spacing)
     local row = self.page.gui:CreateRow(self.real.content, height)
     self.real:AddRow(row, height, spacing)
     return setmetatable({ real = row, card = self }, FluentRowMeta)
+end
+
+---Gives the card its own enable logic, for cards whose controls gate each other.
+---The card is deferred in the state manager, so `fn(enabled)` runs after every plain
+---widget has been set and its derivation wins. Stored as a field, not a script, so a
+---rebuild replaces it cleanly.
+---@param fn fun(enabled: boolean)
+---@return self
+function FluentCard:SetEnabledHandler(fn)
+    self.real._hasInternalWidgetState = true
+    self.real._enabledHandler = fn
+    return self
+end
+
+---Registers a callback the host can invoke to re-read outside state back into this card,
+---e.g. GUI:RefreshPositionCards after a mover drag. Stored on the frame as a field, so a
+---rebuild replaces it and a release drops it with the card. A no-op on the frameless
+---search collector.
+---@param fn fun()
+---@return self
+function FluentCard:OnExternalRefresh(fn)
+    self.real._refreshPositions = fn
+    return self
 end
 
 ---Adds a full-width separator row.
@@ -252,117 +281,70 @@ function Page:Card(title, group)
     return card
 end
 
----Adds a premade card (constructed via a gui:Create*Card returning card, _, widgets)
----to the page and registers its widgets. When wireRebuild is true, the card can
----rebuild its body in place (e.g. on a structural dropdown change) without a full
----page refresh: drop the old inner widgets, register the new set, reflow.
----@param page KajiGUIPage
----@param real KajiGUICard
----@param widgets? Frame[]
----@param group string
----@param wireRebuild boolean
----@return KajiGUICard real
-local function AddPremadeCard(page, real, widgets, group, wireRebuild)
-    page.stack:Add(real)
-    page.manager:Register(real, group)
-    if widgets then page.manager:RegisterGroup(widgets, group) end
+-- Premade cards --
 
-    if wireRebuild then
-        real._onBeforeRebuild = function(oldWidgets)
-            for _, widget in ipairs(oldWidgets) do page.manager:Unregister(widget) end
-        end
-        real._onAfterRebuild = function(newWidgets)
-            page.manager:RegisterGroup(newWidgets, group)
-            page.stack:DoLayout()
-            page:Refresh()
-        end
-    end
+--[[
+Premade cards are ordinary fluent builds. Each Widgets/*Card.lua registers
+`lib.premadeCards[name] = { title = …, build = function(card, config, gui) … end }`
+and the build runs through `card:Rebuild`, so widget tracking, condition groups,
+in-place rebuilds and the frameless search collector all work with no special
+casing. `card:Rebuild()` with no argument re-runs the stored builder.
+--]]
 
-    return real
-end
-
----Adds a premade PositionCard to the page and registers its widgets.
----@param config table CreatePositionCard config
+---Builds a registered premade card into the page.
+---@param name string key in lib.premadeCards
+---@param config? table card config, `title` overrides the card's default
 ---@param group? string condition group (defaults to 'all')
----@return KajiGUICard real the underlying position card
-function Page:PositionCard(config, group)
-    group = group or "all"
-    local real, _, widgets = self.gui:CreatePositionCard(self.parent, 0, config)
-    return AddPremadeCard(self, real, widgets, group, true)
+---@return KajiGUIFluentCard
+function Page:PremadeCard(name, config, group)
+    local def = lib.premadeCards and lib.premadeCards[name]
+    if not def then error("Unknown premade card '" .. tostring(name) .. "'", 2) end
+
+    config = config or {}
+    local gui = self.gui
+    local card = self:Card(config.title or def.title, group or "all")
+    return card:Rebuild(function(fluent) def.build(fluent, config, gui) end)
 end
 
----Adds a premade DynamicGroupCard to the page and registers its widgets.
----@param config table CreateDynamicGroupCard config
----@param group? string condition group (defaults to 'all')
----@return KajiGUICard real
-function Page:DynamicGroupCard(config, group)
-    group = group or "all"
-    local real, _, widgets = self.gui:CreateDynamicGroupCard(self.parent, 0, config)
-    return AddPremadeCard(self, real, widgets, group, true)
-end
+---@param config table
+---@param group? string
+---@return KajiGUIFluentCard
+function Page:PositionCard(config, group) return self:PremadeCard("PositionCard", config, group) end
 
----Adds a premade FontSettingsCard to the page and registers its widgets.
----@param config table CreateFontSettingsCard config
----@param group? string condition group (defaults to 'all')
----@return KajiGUICard real
-function Page:FontSettingsCard(config, group)
-    group = group or "all"
-    local real, _, widgets = self.gui:CreateFontSettingsCard(self.parent, 0, config)
-    return AddPremadeCard(self, real, widgets, group, false)
-end
+---@param config table
+---@param group? string
+---@return KajiGUIFluentCard
+function Page:DynamicGroupCard(config, group) return self:PremadeCard("DynamicGroupCard", config, group) end
 
----Adds a premade SparkSettingsCard to the page and registers its widgets.
----@param config table CreateSparkSettingsCard config
----@param group? string condition group (defaults to 'all')
----@return KajiGUICard real
-function Page:SparkSettingsCard(config, group)
-    group = group or "all"
-    local real, _, widgets = self.gui:CreateSparkSettingsCard(self.parent, 0, config)
-    return AddPremadeCard(self, real, widgets, group, false)
-end
+---@param config table
+---@param group? string
+---@return KajiGUIFluentCard
+function Page:FontSettingsCard(config, group) return self:PremadeCard("FontSettingsCard", config, group) end
 
----Adds a premade TextFormatCard to the page and registers its widgets.
----@param config table CreateTextFormatCard config
----@param group? string condition group (defaults to 'all')
----@return KajiGUICard real
-function Page:TextFormatCard(config, group)
-    group = group or "all"
-    local real, _, widgets = self.gui:CreateTextFormatCard(self.parent, 0, config)
-    return AddPremadeCard(self, real, widgets, group, false)
-end
+---@param config table
+---@param group? string
+---@return KajiGUIFluentCard
+function Page:SparkSettingsCard(config, group) return self:PremadeCard("SparkSettingsCard", config, group) end
 
----Adds a premade GlowSettingsCard to the page and registers its widgets.
----The card rebuilds its body in place when the glow type changes.
----@param config table CreateGlowSettingsCard config
----@param group? string condition group (defaults to 'all')
----@return KajiGUICard real
-function Page:GlowSettingsCard(config, group)
-    group = group or "all"
-    local real, _, widgets = self.gui:CreateGlowSettingsCard(self.parent, 0, config)
-    return AddPremadeCard(self, real, widgets, group, true)
-end
+---@param config table
+---@param group? string
+---@return KajiGUIFluentCard
+function Page:TextFormatCard(config, group) return self:PremadeCard("TextFormatCard", config, group) end
 
----Adds a premade FilterCard to the page and registers its widgets.
----The card rebuilds its body in place when the selected filter changes.
----@param config table CreateFilterCard config
----@param group? string condition group (defaults to 'all')
----@return KajiGUICard real
-function Page:FilterCard(config, group)
-    group = group or "all"
-    local real, _, widgets = self.gui:CreateFilterCard(self.parent, 0, config)
-    return AddPremadeCard(self, real, widgets, group, true)
-end
+---@param config table
+---@param group? string
+---@return KajiGUIFluentCard
+function Page:GlowSettingsCard(config, group) return self:PremadeCard("GlowSettingsCard", config, group) end
 
----Adds a premade LoadConditionsCard to the page and registers its widgets.
----The card rebuilds its body in place when enable or the category changes.
----@param config table CreateLoadConditionsCard config
----@param group? string condition group (defaults to 'all')
----@return KajiGUICard real
-function Page:LoadConditionsCard(config, group)
-    group = group or "all"
-    local real, _, widgets = self.gui:CreateLoadConditionsCard(self.parent, 0, config)
-    return AddPremadeCard(self, real, widgets, group, true)
-end
+---@param config table
+---@param group? string
+---@return KajiGUIFluentCard
+function Page:FilterCard(config, group) return self:PremadeCard("FilterCard", config, group) end
+
+---@param config table
+---@param group? string
+---@return KajiGUIFluentCard
+function Page:LoadConditionsCard(config, group) return self:PremadeCard("LoadConditionsCard", config, group) end
 
 ---Finalizes the page, performs the first layout and refresh and returns the total height of the page.
 ---@return number height

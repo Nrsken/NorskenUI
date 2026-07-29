@@ -2,6 +2,7 @@
 local NRSKNUI = select(2, ...)
 
 -- Default settings table
+---@type NRSKNUI.DBDefaults
 local Defaults = {
     global = {
         UseGlobalProfile = false,  -- Switch to global profile
@@ -1230,6 +1231,12 @@ local Defaults = {
                 HideTalkingHead = true,
                 HideBossBanner = true,
                 EnterAccept = false,
+
+                WhisperSounds = {
+                    Enabled = false,
+                    WhisperSound = "|cffe51039NorskenWhisper|r",
+                    BNetWhisperSound = "|cffe51039NorskenWhisper|r",
+                },
             },
 
             CooldownStrings = {
@@ -1470,11 +1477,6 @@ local Defaults = {
                     AnchorTo = "BOTTOMLEFT",
                     XOffset = 1,
                     YOffset = 1,
-                },
-                WhisperSounds = {
-                    Enabled = false,
-                    WhisperSound = "|cffe51039NorskenWhisper|r",
-                    BNetWhisperSound = "|cffe51039NorskenWhisper|r",
                 },
             },
 
@@ -3025,6 +3027,7 @@ local Defaults = {
 }
 
 -- Returns the Default Table.
+---@return NRSKNUI.DBDefaults
 function NRSKNUI:GetDefaultDB()
     return Defaults
 end

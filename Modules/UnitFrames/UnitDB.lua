@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class UnitFrames
+---@class UnitFramesModule
 ---@field SoloUnits string[]
 local UF = NRSKNUI:GetModule('UnitFrames')
 

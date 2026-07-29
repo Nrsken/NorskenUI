@@ -12,7 +12,11 @@ GUI:RegisterPage('homePage', {
         local db = NRSKNUI.db.profile
         if not db then return end
 
-        local function toggleEditMode() if NRSKNUI.EditMode then NRSKNUI.EditMode:Toggle() end end
+        local function toggleAnchors()
+            if NRSKNUI.Anchors then
+                NRSKNUI.Anchors:Toggle()
+            end
+        end
         local function reloadUI() ReloadUI() end
 
         local playerNameColored = NRSKNUI:ColorTextByClass(NRSKNUI.MyName, NRSKNUI.MyClass)
@@ -56,7 +60,7 @@ GUI:RegisterPage('homePage', {
         welcomeCard:Separator()
 
         local quickActionRow = welcomeCard:Row(32)
-        quickActionRow:Button(L['Toggle Anchors'], { width = 0.5, height = 32, callback = toggleEditMode, })
+        quickActionRow:Button(L['Toggle Anchors'], { width = 0.5, height = 32, callback = toggleAnchors, })
         quickActionRow:Button(L['Reload UI'], { width = 0.5, height = 32, callback = reloadUI })
 
         -- Card 2: ElvUI Integration

@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class UnitFrames
+---@class UnitFramesModule
 local UF = NRSKNUI:GetModule('UnitFrames')
 
 -- Units that never get a power bar or castbar.

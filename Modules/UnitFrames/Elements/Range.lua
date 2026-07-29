@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class UnitFrames
+---@class UnitFramesModule
 local UF = NRSKNUI:GetModule('UnitFrames')
 
 -- Range element, handles range fading for unit frames by check data from Modules\UnitFrames\RangeData.lua.

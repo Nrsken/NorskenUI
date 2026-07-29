@@ -1,8 +1,8 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class PotionReady
+---@class PotionReadyModule
 local PotionReady = NRSKNUI:GetModule("PotionReady")
-local EM = NRSKNUI.EditMode
+local Anchors = NRSKNUI.Anchors
 local LC = NRSKNUI.LoadConditions
 
 local unpack = unpack
@@ -39,7 +39,7 @@ function PotionReady:CreateAlertFrame()
 
     -- Finalize the frame and register it with Anchors.
     self.alertFrame = frame
-    EM:Register(self, 'PotionReadyAlert', self.alertFrame, 'PotionReady')
+    Anchors:Register(self, 'PotionReadyAlert', self.alertFrame, 'potionReady')
     frame:Hide()
 end
 
@@ -118,7 +118,7 @@ function PotionReady:OnDisable()
     end
     if self.alertFrame then
         self.alertFrame:Hide()
-        EM:UnregisterModuleElement('PotionReadyAlert')
+        Anchors:Unregister('PotionReadyAlert')
     end
     self.isPreview = false
 end

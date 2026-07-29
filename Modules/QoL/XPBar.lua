@@ -1,8 +1,8 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class XPBar
+---@class XPBarModule
 local XPBar = NRSKNUI:GetModule('XPBar')
-local EM = NRSKNUI.EditMode
+local Anchors = NRSKNUI.Anchors
 local kajiGUI = NRSKNUI.GUI
 
 local CreateFrame = CreateFrame
@@ -524,7 +524,7 @@ function XPBar:OnEnable()
     self:RegisterEvent('QUEST_LOG_UPDATE')
     self:RegisterEvent('TIME_PLAYED_MSG')
 
-    EM:Register(self, 'ExperienceBar', self.coreFrame, 'XPBar')
+    Anchors:Register(self, 'ExperienceBar', self.coreFrame, 'XPBar')
 end
 
 function XPBar:OnDisable()
@@ -545,7 +545,7 @@ function XPBar:ShowPreview()
     if not self.coreFrame then
         self:CreateBar()
         self:ApplySettings()
-        EM:Register(self, 'ExperienceBar', self.coreFrame, 'XPBar')
+        Anchors:Register(self, 'ExperienceBar', self.coreFrame, 'XPBar')
     end
 
     self:Render(self:GetPreviewData())

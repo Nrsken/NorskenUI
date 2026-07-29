@@ -24,6 +24,7 @@
 
 local lib = LibStub and LibStub("LibKaji-1.0", true)
 if not lib then return end
+---@class KajiGUIInstanceMixin
 local InstanceMixin = lib.InstanceMixin
 local safecall = lib.safecall
 local pixel = lib.Pixel
@@ -61,19 +62,20 @@ end
 ---@param descriptor table { mode?: "clean"|"tabs", build: fun(page, tabId?, itemKey?, item?), tabs?, sidebar?, search? }
 function InstanceMixin:RegisterPage(id, descriptor)
     self._pages = self._pages or {}
+    -- Re-registering replaces the build function, so any labels harvested from the
+    -- old one are stale.
+    if self._pages[id] then self:InvalidateSearchLabels(id) end
     self._pages[id] = descriptor
 end
 
+---Tears down the previous page. Every child here is a pooled card, so releasing them
+---hands back their rows and widgets too and the frames get reused by the next page -
+---orphaning them with SetParent(nil) leaked the whole subtree, permanently.
+---@param gui KajiGUIInstance
 ---@param scrollChild Frame
-local function ClearScrollChild(scrollChild)
+local function ClearScrollChild(gui, scrollChild)
     for _, child in ipairs({ scrollChild:GetChildren() }) do
-        child:Hide()
-        child:SetParent(nil)
-    end
-    for _, region in ipairs({ scrollChild:GetRegions() }) do
-        if region:IsObjectType("FontString") or region:IsObjectType("Texture") then
-            region:Hide()
-        end
+        gui:ReleaseWidget(child)
     end
     pixel.SetPixelHeight(scrollChild, 1)
 end
@@ -533,7 +535,7 @@ function InstanceMixin:CreateContentHost(parent, opts)
                 if not descriptor then return end
                 host._itemMemory[ItemMemoryKey()] = key
                 host._currentItem, host._currentItemData = key, item
-                ClearScrollChild(scrollChild)
+                ClearScrollChild(gui, scrollChild)
                 host.page = nil
                 -- Sidebar-outer: the new item may offer a different tab set, and re-selecting a
                 -- tab rebuilds the page, so ApplyTabsForItem owns the build in that case.
@@ -626,7 +628,7 @@ function InstanceMixin:CreateContentHost(parent, opts)
                 if not descriptor then return end
                 host._currentTab = tabId
                 host._tabMemory[TabMemoryKey()] = tabId
-                ClearScrollChild(scrollChild)
+                ClearScrollChild(gui, scrollChild)
                 host.page = nil
                 -- Sidebar-outer keeps the sidebar as it is; only the content below changes.
                 if IsSidebarOuter(descriptor) then
@@ -720,7 +722,7 @@ function InstanceMixin:CreateContentHost(parent, opts)
     --- on the tab / sidebar item that owns the matched widget. Consumed once by the initial show.
     function host:ShowPage(id, target)
         local descriptor = gui._pages and gui._pages[id]
-        ClearScrollChild(scrollChild)
+        ClearScrollChild(gui, scrollChild)
         host.page = nil
         host.currentId = id
         host._descriptor = descriptor

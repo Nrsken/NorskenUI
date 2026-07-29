@@ -1,11 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class GUIFrame : KajiGUIWindow
----@field SidebarConfig table
----@field RefreshContent fun(self: GUIFrame): void
----@field OpenPage fun(self: GUIFrame, itemId: string, sectionId: string?, context: any?): void
----@field ApplyThemeColors fun(self: GUIFrame): void
----@field mainFrame Frame
+---@class GUIFrame
 local GUIFrame = NRSKNUI.GUIFrame
 local L = NRSKNUI.Libs.AL
 

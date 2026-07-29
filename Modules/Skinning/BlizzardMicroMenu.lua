@@ -86,7 +86,7 @@ function MM:CreateMicroBar()
     backdrop:SetBorderParent(borderFrame)
     microBar.borderFrame = borderFrame
 
-    NRSKNUI.EditMode:Register(self, 'TooltipAnchor', self.microBar, 'MicroMenu')
+    NRSKNUI.Anchors:Register(self, 'MicroMenu', self.microBar, nil)
 
     self:ApplySettings()
 end

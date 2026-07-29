@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class Automation
+---@class AutomationModule
 local Automation = NRSKNUI:GetModule('Automation')
 
 local pcall = pcall

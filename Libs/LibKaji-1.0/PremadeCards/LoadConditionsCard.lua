@@ -3,7 +3,7 @@
 
 * Premade card for a module's load conditions:
 * an enable toggle plus a compact category selector (Instance / Group / Combat / Role / Position), each category showing its own set of checkboxes.
-* Toggling enable or switching category changes the visible rows, so the card body rebuilds in place (no full page refresh).
+* Toggling enable or switching category changes the visible rows, so the card rebuilds in place (no full page refresh).
 
 ## Examples
 
@@ -16,12 +16,11 @@
 
 local lib = LibStub and LibStub("LibKaji-1.0", true)
 if not lib then return end
-local InstanceMixin = lib.InstanceMixin
+
+lib.premadeCards = lib.premadeCards or {}
 
 local ipairs = ipairs
 local pairs = pairs
-local wipe = wipe
-local tinsert = table.insert
 local sformat = string.format
 local C_Timer = C_Timer
 
@@ -111,134 +110,107 @@ local function BuildCategoryOptions(db)
 end
 
 ---Load conditions card with a compact category selector.
----@param scrollChild Frame
----@param yOffset number
----@param config table
----@return KajiGUICard card
----@return number newYOffset
----@return Frame[] widgets
-function InstanceMixin:CreateLoadConditionsCard(scrollChild, yOffset, config)
-    config = config or {}
-    local gui = self
-    local theme = self.theme
+lib.premadeCards.LoadConditionsCard = {
+    title = "Load Conditions",
 
-    local title = config.title or "Load Conditions"
-    local db = config.db
-    local onChange = config.onChangeCallback
+    ---@param card KajiGUIFluentCard
+    ---@param config table
+    ---@param gui KajiGUIInstance
+    build = function(card, config, gui)
+        local theme = gui.theme
+        local db = config.db
+        local onChange = config.onChangeCallback
 
-    db.Enabled = db.Enabled or false
-    db.SelectedCategory = db.SelectedCategory or "Instance"
-    db.Instance = db.Instance or { Types = {} }
-    db.Group = db.Group or { Types = {} }
-    db.Combat = db.Combat or {}
-    db.Role = db.Role or { Types = {} }
-    db.Position = db.Position or { Types = {} }
+        db.Enabled = db.Enabled or false
+        db.SelectedCategory = db.SelectedCategory or "Instance"
+        db.Instance = db.Instance or { Types = {} }
+        db.Group = db.Group or { Types = {} }
+        db.Combat = db.Combat or {}
+        db.Role = db.Role or { Types = {} }
+        db.Position = db.Position or { Types = {} }
 
-    local widgets = {}
-    local card = gui:CreateCard(scrollChild, title, yOffset)
-
-    local function fireChange()
-        if onChange then onChange() end
-    end
-
-    -- Forward-declared: assigned below, referenced by the checkbox callbacks here.
-    local ScheduleRebuild
-
-    -- Emits a checkbox for a { key, label } entry bound to a target table.
-    local function AddCheckRow(target, entry1, entry2, isLast)
-        local height = isLast and theme.rowHeightLast or theme.rowHeight
-        local row = gui:CreateRow(card.content, height)
-
-        local check1 = gui:CreateCheckbox(row, entry1.label, {
-            value = target[entry1.key] == true,
-            callback = function(checked)
-                target[entry1.key] = checked or nil
-                fireChange()
-                ScheduleRebuild()
-            end
-        })
-        row:AddWidget(check1, entry2 and 0.5 or 1)
-        tinsert(widgets, check1)
-
-        if entry2 then
-            local check2 = gui:CreateCheckbox(row, entry2.label, {
-                value = target[entry2.key] == true,
-                callback = function(checked)
-                    target[entry2.key] = checked or nil
-                    fireChange()
-                    ScheduleRebuild()
-                end
-            })
-            row:AddWidget(check2, 0.5)
-            tinsert(widgets, check2)
+        local function fireChange()
+            if onChange then onChange() end
         end
 
-        card:AddRow(row, height, isLast and 0 or nil)
-    end
+        -- Both the enable toggle and every option checkbox rebuild the card, and they fire
+        -- from inside their own click handler. Rebuild hides/reparents the row that owns the
+        -- clicked widget, so defer it off the current call stack (one frame). The guard lives
+        -- on the card so a rebuild scheduled by the outgoing build cannot double up.
+        local function ScheduleRebuild()
+            if card._rebuildPending then return end
+            card._rebuildPending = true
+            C_Timer.After(0, function()
+                card._rebuildPending = false
+                card:Rebuild()
+            end)
+        end
 
-    local BuildContent
-    -- Rebuilds the whole card body (enable toggle changed, or category switched).
-    local function RebuildContent()
-        if card._onBeforeRebuild then card._onBeforeRebuild(widgets) end
-        wipe(widgets)
-        card:Reset()
-        BuildContent()
-        if card._onAfterRebuild then card._onAfterRebuild(widgets) end
-    end
+        -- Emits one or two checkboxes for { key, label } entries bound to a target table.
+        local function AddCheckRow(target, entry1, entry2, isLast)
+            local height = isLast and theme.rowHeightLast or theme.rowHeight
+            local row = card:Row(height, isLast and 0 or nil)
 
-    -- Both the enable toggle and every option checkbox trigger a rebuild, and they fire
-    -- from inside their own click handler. Reset() hides/reparents the row that owns the
-    -- clicked widget, so defer the rebuild off the current call stack (one frame).
-    local rebuildPending = false
-    ScheduleRebuild = function()
-        if rebuildPending then return end
-        rebuildPending = true
-        C_Timer.After(0, function()
-            rebuildPending = false
-            RebuildContent()
-        end)
-    end
+            row:Checkbox(entry1.label, {
+                width = entry2 and 0.5 or 1,
+                value = target[entry1.key] == true,
+                callback = function(checked)
+                    target[entry1.key] = checked or nil
+                    fireChange()
+                    ScheduleRebuild()
+                end,
+            })
 
-    BuildContent = function()
+            if entry2 then
+                row:Checkbox(entry2.label, {
+                    width = 0.5,
+                    value = target[entry2.key] == true,
+                    callback = function(checked)
+                        target[entry2.key] = checked or nil
+                        fireChange()
+                        ScheduleRebuild()
+                    end,
+                })
+            end
+        end
+
         local isEnabled = db.Enabled
         local selectedCategory = db.SelectedCategory
 
         -- Main row: Enable toggle (+ active count) + Category dropdown.
         local mainHeight = isEnabled and theme.rowHeight or theme.rowHeightLast
-        local mainRow = gui:CreateRow(card.content, mainHeight)
+        local mainRow = card:Row(mainHeight, not isEnabled and 0 or nil)
 
         local activeCount = GetActiveCount(db)
         local accentHex = sformat("%02x%02x%02x", theme.accent[1] * 255, theme.accent[2] * 255, theme.accent[3] * 255)
         local enableLabel = activeCount > 0 and ("Enable |cff" .. accentHex .. "(" .. activeCount .. " active)|r") or
             "Enable"
-        local enableToggle = gui:CreateCheckbox(mainRow, enableLabel, {
+
+        mainRow:Checkbox(enableLabel, {
+            width = 0.5,
             value = isEnabled,
             callback = function(checked)
                 db.Enabled = checked
                 fireChange()
                 ScheduleRebuild()
-            end
+            end,
         })
-        mainRow:AddWidget(enableToggle, 0.5)
-        tinsert(widgets, enableToggle)
 
         if isEnabled then
-            local categoryDropdown = gui:CreateDropdown(mainRow, "Category", {
+            mainRow:Dropdown("Category", {
+                width = 0.5,
                 options = BuildCategoryOptions(db),
                 value = selectedCategory,
                 callback = function(value)
                     db.SelectedCategory = value
                     ScheduleRebuild()
-                end
+                end,
             })
-            mainRow:AddWidget(categoryDropdown, 0.5)
-            tinsert(widgets, categoryDropdown)
         end
-        card:AddRow(mainRow, mainHeight, not isEnabled and 0 or nil)
 
         if not isEnabled then return end
 
-        card:AddRow(gui:CreateSeparator(card.content), theme.rowHeightSeparator)
+        card:Separator()
 
         if selectedCategory == "Instance" then
             local instanceDb = db.Instance
@@ -260,33 +232,5 @@ function InstanceMixin:CreateLoadConditionsCard(scrollChild, yOffset, config)
                 end
             end
         end
-    end
-
-    BuildContent()
-
-    card.conditionWidgets = widgets
-    card._hasInternalWidgetState = true
-
-    function card:SetEnabled(enabled)
-        local alpha = enabled and 1 or 0.5
-        self:SetAlpha(alpha)
-        if self.header then self.header:SetAlpha(alpha) end
-        if self.titleText then self.titleText:SetAlpha(alpha) end
-        for _, widget in ipairs(self.conditionWidgets) do
-            if widget.SetEnabled then widget:SetEnabled(enabled) end
-        end
-    end
-
-    return card, card:GetNextOffset(), widgets
-end
-
--- Labels this card can surface, for the frameless search harvester (see Search.lua).
-lib.premadeCardSearch = lib.premadeCardSearch or {}
-function lib.premadeCardSearch.LoadConditionsCard(config)
-    config = config or {}
-    local labels = { config.title or "Load Conditions", "Enable", "Category" }
-    for _, set in ipairs({ INSTANCE_TYPES, GROUP_TYPES, COMBAT_OPTIONS, ROLE_TYPES, POSITION_TYPES }) do
-        for _, entry in ipairs(set) do labels[#labels + 1] = entry.label end
-    end
-    return labels
-end
+    end,
+}

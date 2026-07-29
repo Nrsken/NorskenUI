@@ -32,6 +32,7 @@
 
 local lib = LibStub and LibStub("LibKaji-1.0", true)
 if not lib then return end
+---@class KajiGUIInstanceMixin
 local InstanceMixin = lib.InstanceMixin
 local Animations = lib.Animations
 local safecall = lib.safecall
@@ -55,6 +56,7 @@ local UIParent = UIParent
 local pi = math.pi
 local GetAtlasInfo = C_Texture and C_Texture.GetAtlasInfo
 
+local WIDGET_TYPE = "Dropdown"
 local DROPDOWN_HEIGHT = 24
 local ITEM_HEIGHT = 24
 local MAX_DROPDOWN_HEIGHT = 400
@@ -68,14 +70,19 @@ local HOVER_DURATION = 0.12
 local STANDARD_BACKDROP = { bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1 }
 local BORDER_ONLY_BACKDROP = { edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1 }
 
-local function ApplyPreviewFont(fontString, fontPath, size)
-    if not fontString or not fontPath then return end
+-- A preview is a raw SetFont on a region the theme otherwise owns, so every path that
+-- cannot produce one has to hand the region back to the theme font. Leaving it alone
+-- keeps the last previewed face on a recycled dropdown.
+local function ApplyPreviewFont(gui, fontString, fontPath, size)
+    if not fontString then return end
     fontString:SetShadowColor(0, 0, 0, 0)
-    -- SetFont returns false on failure on older clients but hard-errors on a missing
-    -- file on 12.1, so both paths need to land in the fallback.
-    local ok, valid = pcall(fontString.SetFont, fontString, fontPath, size or PREVIEW_SIZE, "OUTLINE")
+
+    local ok, valid
+    if fontPath then
+        ok, valid = pcall(fontString.SetFont, fontString, fontPath, size or PREVIEW_SIZE, "OUTLINE")
+    end
     if not ok or not valid then
-        fontString:SetFontObject("GameFontHighlightSmall")
+        gui:ApplyFont(fontString, "normal")
     end
 end
 
@@ -169,7 +176,8 @@ end
 
 local function ReleaseItemButton(gui, btn)
     btn:Hide()
-    btn:SetParent(nil)
+    -- Parked on the pool host rather than orphaned, matching Pool.lua.
+    btn:SetParent(gui._poolHost)
     btn:SetScript("OnClick", nil)
     btn:SetScript("OnEnter", nil)
     btn:SetScript("OnLeave", nil)
@@ -186,6 +194,18 @@ end
 
 -- Mixin (public API) --
 
+---@class KajiGUIDropdownMixin : Frame
+---@field gui KajiGUIInstance
+---@field label FontString
+---@field dropdown Button
+---@field _mediaType? string
+---@field _searchable boolean
+---@field _isFontPreview boolean
+---@field _isStatusbarPreview boolean
+---@field _callback? fun(value: any)
+---@field _currentValue any
+---@field _isOpen boolean
+---@field _itemButtons table[]
 local DropdownMixin = {}
 
 --- Normalizes an options table into keyed lookups + an ordered key list.
@@ -260,15 +280,6 @@ DropdownMixin.SetOptions = DropdownMixin.UpdateOptions
 
 -- Constructor --
 
----@class KajiGUIDropdown : Frame
----@field label FontString
----@field dropdown Button
----@field SetValue fun(self: KajiGUIDropdown, value: any, silent?: boolean)
----@field GetValue fun(self: KajiGUIDropdown): any
----@field SetEnabled fun(self: KajiGUIDropdown, enabled: boolean)
----@field UpdateOptions fun(self: KajiGUIDropdown, newOptions: table)
----@field SetOptions fun(self: KajiGUIDropdown, newOptions: table)
-
 ---@class KajiGUIDropdownConfig
 ---@field options? table key→text, array of strings, or array of {value/key, text, color?, tooltip?, indicator?}
 ---@field media? "font"|"statusbar"|"sound"|"border"|"background" auto-populate + preview from LSM; explicit options are kept in front
@@ -281,50 +292,44 @@ DropdownMixin.SetOptions = DropdownMixin.UpdateOptions
 ---@param labelText string
 ---@param config KajiGUIDropdownConfig
 ---@return KajiGUIDropdown
-function InstanceMixin:CreateDropdown(parent, labelText, config)
-    config = config or {}
-    local gui = self
-    local theme = self.theme
+---Media mode: a sorted option list straight from LSM, with any explicit options kept in
+---front (e.g. an inherit sentinel like 'Global (...)'). HashTable is nil until something
+---registers under the type, custom ones included.
+---@param mediaType? string
+---@param options? table
+---@return table? options
+local function ResolveMediaOptions(mediaType, options)
+    local mediaHash = mediaType and LSM and LSM:HashTable(mediaType)
+    if not mediaHash then return options end
+
+    local names = {}
+    for name in pairs(mediaHash) do names[#names + 1] = name end
+    tsort(names, function(a, b) return strlower(a) < strlower(b) end)
+
+    local merged = {}
+    if options then
+        for _, opt in ipairs(options) do merged[#merged + 1] = opt end
+    end
+    for _, name in ipairs(names) do merged[#merged + 1] = { value = name, text = name } end
+    return merged
+end
+
+lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
+    local theme = gui.theme
     gui._dropdownPool = gui._dropdownPool or {}
 
-    local mediaType = config.media
-    local options = config.options
-    local isFontPreview = mediaType == "font"
-    -- Every media type that is not a font or a sound previews as a texture swatch, so
-    -- custom types registered by the host (sparks, borders) get a preview for free.
-    local isTexturePreview = mediaType ~= nil and not isFontPreview and mediaType ~= "sound"
-
-    -- Media mode: build a sorted option list straight from LSM. Explicit options are
-    -- kept in front of the list (e.g. an inherit sentinel like 'Global (...)').
-    -- HashTable is nil until something registers under the type, custom ones included.
-    local mediaHash = mediaType and LSM and LSM:HashTable(mediaType)
-    if mediaHash then
-        local names = {}
-        for name in pairs(mediaHash) do names[#names + 1] = name end
-        tsort(names, function(a, b) return strlower(a) < strlower(b) end)
-        local merged = {}
-        if options then
-            for _, opt in ipairs(options) do merged[#merged + 1] = opt end
-        end
-        for _, name in ipairs(names) do merged[#merged + 1] = { value = name, text = name } end
-        options = merged
-    end
-
-    local selected = config.value
-    local searchable = config.searchable == true
-
-    local row = CreateFrame("Frame", nil, parent)
+    local row = CreateFrame("Frame", nil, gui._poolHost)
     pixel.SetPixelHeight(row, 34)
     row.gui = gui
-    row._callback = config.callback
-    row._isFontPreview = isFontPreview
-    row._isStatusbarPreview = isTexturePreview
+    -- Defaults only; OnAcquire decides these per use.
+    row._isFontPreview = false
+    row._isStatusbarPreview = false
+    row._searchable = false
 
     local label = row:CreateFontString(nil, "OVERLAY")
     pixel.SetPixelPoint(label, "TOPLEFT", row, "TOPLEFT", 0, 1)
     label:SetJustifyH("LEFT")
     gui:ApplyFont(label, "small")
-    label:SetText(labelText or "")
     label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
     row.label = label
 
@@ -333,7 +338,7 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
     pixel.SetPixelPoint(dropdownButton, "TOPLEFT", row, "TOPLEFT", 0, -14)
     pixel.SetPixelPoint(dropdownButton, "TOPRIGHT", row, "TOPRIGHT", 0, -14)
     dropdownButton:SetBackdrop(STANDARD_BACKDROP)
-    dropdownButton:SetBackdropColor(theme.bgMedium[1], theme.bgMedium[2], theme.bgMedium[3], 1)
+    dropdownButton:SetBackdropColor(theme.bgMedium[1], theme.bgMedium[2], theme.bgMedium[3], 0.9)
     dropdownButton:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
     pixel.SetPixelSnap(dropdownButton)
 
@@ -389,10 +394,16 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
             selectedText:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
         end
 
-        if isFontPreview and value then
-            ApplyPreviewFont(selectedText, gui:ResolveMedia("font", value), PREVIEW_SIZE)
-        elseif isTexturePreview and value then
-            ApplyPreviewTexture(selectedBar, gui:ResolveMedia(mediaType, value))
+        -- Font and bar are independent: a statusbar dropdown recycled from a font one still
+        -- needs the font put back, so neither preview may live in the other's else branch.
+        if row._isFontPreview and value then
+            ApplyPreviewFont(gui, selectedText, gui:ResolveMedia("font", value), PREVIEW_SIZE)
+        else
+            gui:ApplyFont(selectedText, "normal")
+        end
+
+        if row._isStatusbarPreview and value then
+            ApplyPreviewTexture(selectedBar, gui:ResolveMedia(row._mediaType, value))
             selectedBar:SetVertexColor(theme.accent[1], theme.accent[2], theme.accent[3], 0.4)
             selectedBar:Show()
         else
@@ -404,14 +415,14 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
     local dropdownList = CreateFrame("Frame", nil, row, "BackdropTemplate")
     pixel.SetPixelHeight(dropdownList, 1)
     dropdownList:SetBackdrop(STANDARD_BACKDROP)
-    dropdownList:SetBackdropColor(theme.bgMedium[1], theme.bgMedium[2], theme.bgMedium[3], 1)
+    dropdownList:SetBackdropColor(theme.bgMedium[1], theme.bgMedium[2], theme.bgMedium[3], 0.9)
     dropdownList:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
     dropdownList:SetFrameStrata("TOOLTIP")
     dropdownList:SetClipsChildren(true)
     dropdownList:Hide()
 
     local scrollFrame = CreateFrame("ScrollFrame", nil, dropdownList)
-    pixel.SetPixelPoint(scrollFrame, "TOPLEFT", dropdownList, "TOPLEFT", 0, searchable and -(SEARCH_BOX_HEIGHT + SEARCH_PADDING) or 0)
+    pixel.SetPixelPoint(scrollFrame, "TOPLEFT", dropdownList, "TOPLEFT", 0, 0)
     pixel.SetPixelPoint(scrollFrame, "BOTTOMRIGHT", dropdownList, "BOTTOMRIGHT", 0, 0)
 
     local scrollChild = CreateFrame("Frame", nil, scrollFrame)
@@ -428,7 +439,7 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
         pixel.SetPixelWidth(scrollbar, 12)
         scrollbar:SetBackdrop(STANDARD_BACKDROP)
         scrollbar:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
-        scrollbar:SetBackdropColor(theme.bgDark[1], theme.bgDark[2], theme.bgDark[3], 1)
+        scrollbar:SetBackdropColor(theme.bgDark[1], theme.bgDark[2], theme.bgDark[3], 0.9)
         scrollbar:SetOrientation("VERTICAL")
         scrollbar:SetValueStep(pixel.GetMult())
         scrollbar:SetMinMaxValues(0, 100)
@@ -475,7 +486,7 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
     arrowRotation:SetSmoothing("IN_OUT")
     arrowAnimGroup:SetScript("OnFinished", function() arrow:SetRotation(row._isOpen and 0 or -pi / 2) end)
 
-    local SetBorderHover = Animations:CreateHoverColorAnimator(dropdownButton,
+    local SetBorderHover, SetBorderHoverSync = Animations:CreateHoverColorAnimator(dropdownButton,
         function(r, g, b, a) dropdownButton:SetBackdropBorderColor(r, g, b, a) end,
         theme.border, theme.accent, theme.animDuration)
 
@@ -613,10 +624,10 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
             btn._index = i
             btn._text:SetText(displayText or key)
 
-            if isFontPreview then
-                ApplyPreviewFont(btn._text, gui:ResolveMedia("font", key), PREVIEW_SIZE)
-            elseif isTexturePreview then
-                ApplyPreviewTexture(btn._previewBar, gui:ResolveMedia(mediaType, key))
+            if row._isFontPreview then
+                ApplyPreviewFont(gui, btn._text, gui:ResolveMedia("font", key), PREVIEW_SIZE)
+            elseif row._isStatusbarPreview then
+                ApplyPreviewTexture(btn._previewBar, gui:ResolveMedia(row._mediaType, key))
                 btn._previewBar:SetVertexColor(theme.accent[1], theme.accent[2], theme.accent[3], 0.4)
                 btn._previewBar:Show()
             end
@@ -673,13 +684,15 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
     end
     row._createItemButtons = CreateItemButtons
 
-    if searchable then
+    -- Built unconditionally and shown only when the dropdown is searchable: creating it
+    -- per config would leave a recycled dropdown without a search box.
+    do
         searchContainer = CreateFrame("Frame", nil, dropdownList, "BackdropTemplate")
         pixel.SetPixelHeight(searchContainer, SEARCH_BOX_HEIGHT)
         pixel.SetPixelPoint(searchContainer, "TOPLEFT", dropdownList, "TOPLEFT", SEARCH_PADDING, -SEARCH_PADDING)
         pixel.SetPixelPoint(searchContainer, "TOPRIGHT", dropdownList, "TOPRIGHT", -SEARCH_INPUT_RIGHT_PADDING, -SEARCH_PADDING)
         searchContainer:SetBackdrop(STANDARD_BACKDROP)
-        searchContainer:SetBackdropColor(theme.bgDark[1], theme.bgDark[2], theme.bgDark[3], 1)
+        searchContainer:SetBackdropColor(theme.bgDark[1], theme.bgDark[2], theme.bgDark[3], 0.9)
         searchContainer:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
         searchContainer:Hide()
 
@@ -740,14 +753,14 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
         dropdownList:ClearAllPoints()
         pixel.SetPixelPoint(dropdownList, "TOPLEFT", dropdownButton, "BOTTOMLEFT", 0, -2)
 
-        if searchable then
+        if row._searchable then
             searchText = ""
-            if searchContainer then searchContainer:Show() end
-            if searchEditBox then searchEditBox:SetText("") end
+            searchContainer:Show()
+            searchEditBox:SetText("")
         end
 
         CreateItemButtons()
-        local extraHeight = searchable and (SEARCH_BOX_HEIGHT + SEARCH_PADDING * 2) or 0
+        local extraHeight = row._searchable and (SEARCH_BOX_HEIGHT + SEARCH_PADDING * 2) or 0
         local contentHeight = (#filteredKeys > 0 and (#filteredKeys * ITEM_HEIGHT) or ITEM_HEIGHT) + extraHeight
         local maxHeight = min(contentHeight, MAX_DROPDOWN_HEIGHT)
         local needsScrollbar = contentHeight > MAX_DROPDOWN_HEIGHT
@@ -789,7 +802,7 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
         mouseChecker.wasMouseDown = false
         mouseChecker:Show()
 
-        if searchable and searchEditBox then
+        if row._searchable then
             C_Timer.After(0, function()
                 if row._isOpen and searchEditBox:IsShown() then
                     searchEditBox:SetFocus()
@@ -802,36 +815,38 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
     dropdownButton:SetScript("OnClick", ToggleDropdown)
     dropdownButton:SetScript("OnEnter", function()
         SetBorderHover(true)
-        if config.tooltip and not row._isOpen then
-            GameTooltip:SetOwner(row, "ANCHOR_CURSOR_RIGHT", 30, 0)
-            GameTooltip:SetText(labelText or "", theme.accent[1], theme.accent[2], theme.accent[3], 1, false)
-            GameTooltip:AddLine(config.tooltip, theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], false)
-            GameTooltip:Show()
-        end
+        if not row._isOpen then lib.ShowTooltip(row) end
     end)
     dropdownButton:SetScript("OnLeave", function()
         SetBorderHover(false)
-        if config.tooltip then GameTooltip:Hide() end
+        lib.HideTooltip()
     end)
 
-    if selected ~= nil then
-        row._currentValue = selected
-        ApplySelected(selected)
-    else
+    -- Re-anchors the list contents for the searchable / plain layouts. Called per acquire
+    -- because the search strip changes where the scroll area starts.
+    row._applySearchLayout = function()
+        scrollFrame:ClearAllPoints()
+        pixel.SetPixelPoint(scrollFrame, "TOPLEFT", dropdownList, "TOPLEFT", 0,
+            row._searchable and -(SEARCH_BOX_HEIGHT + SEARCH_PADDING) or 0)
+        pixel.SetPixelPoint(scrollFrame, "BOTTOMRIGHT", dropdownList, "BOTTOMRIGHT", 0, 0)
+        searchContainer:Hide()
+        if emptyLabel then emptyLabel:Hide() end
+    end
+
+    -- The placeholder is not a font name, and it is the one OnAcquire path that never
+    -- reaches ApplySelected, so it restores the theme font itself.
+    row._setSelectedPlaceholder = function()
         selectedText:SetText("Select...")
+        gui:ApplyFont(selectedText, "normal")
     end
 
     dropdownList:SetScript("OnHide", function()
         row._isOpen = false
-        if searchable then
-            searchText = ""
-            if searchEditBox then
-                searchEditBox:SetText("")
-                searchEditBox:ClearFocus()
-            end
-            if searchContainer then searchContainer:Hide() end
-            if emptyLabel then emptyLabel:Hide() end
-        end
+        searchText = ""
+        searchEditBox:SetText("")
+        searchEditBox:ClearFocus()
+        searchContainer:Hide()
+        if emptyLabel then emptyLabel:Hide() end
     end)
 
     dropdownButton:SetScript("OnHide", function()
@@ -843,10 +858,120 @@ function InstanceMixin:CreateDropdown(parent, labelText, config)
     row._dropdownList = dropdownList
     row._dropdownButton = dropdownButton
     row.dropdown = dropdownButton
+    row._selectedTextRegion = selectedText
 
-    Mixin(row, DropdownMixin)
+    -- Dropdown paints its chrome directly rather than through lib.SetBackdrop, so the
+    -- re-tint is written once here and replayed by UpdateColors.
+    row._restyle = function()
+        local active = row.gui.theme
+        dropdownButton:SetBackdropColor(active.bgMedium[1], active.bgMedium[2], active.bgMedium[3], 0.9)
+        dropdownButton:SetBackdropBorderColor(active.border[1], active.border[2], active.border[3], 1)
+        dropdownList:SetBackdropColor(active.bgMedium[1], active.bgMedium[2], active.bgMedium[3], 0.9)
+        dropdownList:SetBackdropBorderColor(active.border[1], active.border[2], active.border[3], 1)
+        row.label:SetTextColor(active.textSecondary[1], active.textSecondary[2], active.textSecondary[3], 1)
 
-    gui:RegisterSearchableWidget(row, labelText)
-    ---@cast row KajiGUIDropdown
-    return row
+        searchContainer:SetBackdropColor(active.bgDark[1], active.bgDark[2], active.bgDark[3], 0.9)
+        searchContainer:SetBackdropBorderColor(active.border[1], active.border[2], active.border[3], 1)
+        searchEditBox:SetTextColor(active.accent[1], active.accent[2], active.accent[3], 1)
+        if emptyLabel then
+            emptyLabel:SetTextColor(active.textSecondary[1], active.textSecondary[2], active.textSecondary[3], 1)
+        end
+
+        arrow:SetVertexColor(active.textSecondary[1], active.textSecondary[2], active.textSecondary[3], 1)
+        SetBorderHoverSync(active.border[1], active.border[2], active.border[3], active.border[4] or 1)
+
+        -- Repaint the selection so its own option color (or the accent default) follows.
+        if row._currentValue ~= nil then row._applySelected(row._currentValue) end
+    end
+
+    ---Hands every live item button back to the shared pool.
+    row._releaseItemButtons = function()
+        for _, btn in ipairs(row._itemButtons) do ReleaseItemButton(row.gui, btn) end
+        wipe(row._itemButtons)
+        row._itemsCreated = false
+    end
+
+    return Mixin(row, DropdownMixin)
+end)
+
+function DropdownMixin:ReleaseItemButtons()
+    self._releaseItemButtons()
+end
+
+function DropdownMixin:UpdateColors()
+    self._restyle()
+end
+
+---@param parent Frame
+---@param labelText? string
+---@param config table
+function DropdownMixin:OnAcquire(parent, labelText, config)
+    local mediaType = config.media
+
+    self:SetParent(parent)
+    self:ClearAllPoints()
+    pixel.SetPixelHeight(self, 34)
+
+    self._mediaType = mediaType
+    self._isFontPreview = mediaType == "font"
+    -- Every media type that is not a font or a sound previews as a texture swatch, so
+    -- custom types registered by the host (sparks, borders) get a preview for free.
+    self._isStatusbarPreview = mediaType ~= nil and not self._isFontPreview and mediaType ~= "sound"
+    self._searchable = config.searchable == true
+
+    self.label:SetText(labelText or "")
+    lib.SetTooltip(self, self.gui, labelText, config.tooltip)
+
+    NormalizeOptions(self, ResolveMediaOptions(mediaType, config.options))
+    self._applySearchLayout()
+
+    -- Seeded before the callback is attached, so filling in a recycled dropdown never
+    -- looks like the user just picked something.
+    self._callback = nil
+    self._currentValue = config.value
+    if config.value ~= nil then
+        self._applySelected(config.value)
+    else
+        self._setSelectedPlaceholder()
+    end
+    self._callback = config.callback
+
+    self:SetEnabled(true)
+    self:SetAlpha(1)
+    self:UpdateColors()
+    self:Show()
+
+    self.gui:RegisterSearchableWidget(self, labelText)
+end
+
+function DropdownMixin:OnRelease()
+    -- Closing first matters most: an open list is reparented to the overlay and is driven
+    -- by the shared mouseChecker, which would otherwise keep poking a recycled widget.
+    if self._closeDropdown then self._closeDropdown(true) end
+    if mouseChecker.activeDropdown == self then
+        mouseChecker.activeDropdown = nil
+        mouseChecker:Hide()
+    end
+    if self.gui._activeDropdown == self._dropdownButton then
+        self.gui._activeDropdown = nil
+    end
+
+    self:ReleaseItemButtons()
+
+    self._callback = nil
+    self._currentValue = nil
+    self._mediaType = nil
+    self._hasPending, self._pendingValue = false, nil
+    self.label:SetText("")
+    lib.ClearTooltip(self)
+end
+
+---@class KajiGUIDropdown : KajiGUIDropdownMixin
+
+---@param parent Frame
+---@param labelText? string
+---@param config? KajiGUIDropdownConfig
+---@return KajiGUIDropdown
+function InstanceMixin:CreateDropdown(parent, labelText, config)
+    return self:BuildWidget(WIDGET_TYPE, parent, labelText, config)
 end

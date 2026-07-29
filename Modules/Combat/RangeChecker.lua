@@ -1,9 +1,9 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class RangeChecker
+---@class RangeCheckerModule
 local RangeChecker = NRSKNUI:GetModule('RangeChecker')
 local LRC = NRSKNUI.Libs.LRC
-local EM = NRSKNUI.EditMode
+local Anchors = NRSKNUI.Anchors
 
 local CreateFrame = CreateFrame
 local UnitExists = UnitExists
@@ -56,7 +56,7 @@ function RangeChecker:CreateFrame()
 
     -- Finalize the frame and register it with Anchors.
     self.frame = frame
-    EM:Register(self, 'RangeCheckerAlert', self.frame, 'RangeChecker')
+    Anchors:Register(self, 'RangeCheckerAlert', self.frame, 'rangeChecker')
     frame:Hide()
 end
 
@@ -140,7 +140,7 @@ function RangeChecker:OnDisable()
     if self.frame then
         self.frame:SetScript('OnUpdate', nil)
         self.frame:Hide()
-        EM:UnregisterModuleElement('RangeChecker')
+        Anchors:Unregister('RangeCheckerAlert')
     end
     self.isPreview = false
 end

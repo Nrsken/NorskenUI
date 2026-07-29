@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@type RangeChecker?
+---@class RangeCheckerModule
 local RangeChecker = NRSKNUI:GetModule('RangeChecker', true)
 local L = NRSKNUI.Libs.AL
 local GUI = NRSKNUI.GUI

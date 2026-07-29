@@ -1,8 +1,8 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class Tooltips
+---@class TooltipsModule
 local Tooltips = NRSKNUI:GetModule('Tooltips')
-local EM = NRSKNUI.EditMode
+local Anchors = NRSKNUI.Anchors
 
 local EnumerateFrames = EnumerateFrames
 local hooksecurefunc = hooksecurefunc
@@ -143,7 +143,7 @@ local function CustomAnchorHandler()
         customAnchor:SetSize(170, 60)
         customAnchor:SetClampedToScreen(true)
         Tooltips.TTAnchor = customAnchor
-        EM:Register(Tooltips, 'TooltipAnchor', Tooltips.TTAnchor, 'tooltips')
+        Anchors:Register(Tooltips, 'TooltipAnchor', Tooltips.TTAnchor, 'tooltip')
     end
 
     local pos = Tooltips.db.Position

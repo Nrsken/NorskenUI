@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class CombatCross
+---@class CombatCrossModule
 local CombatCross = NRSKNUI:GetModule('CombatCross')
 
 local GetSpecializationInfo = GetSpecializationInfo

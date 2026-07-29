@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class CombatTimer: AceModule, AceEvent-3.0
+---@class CombatTimerModule
 local CombatTimer = NRSKNUI:GetModule('CombatTimer')
 local L = NRSKNUI.Libs.AL
 local GUI = NRSKNUI.GUI

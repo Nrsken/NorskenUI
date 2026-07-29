@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@type FocusCastbar?
+---@class FocusCastbarModule
 local FocusCastbar = NRSKNUI:GetModule('FocusCastbar', true)
 local L = NRSKNUI.Libs.AL
 local GUI = NRSKNUI.GUI

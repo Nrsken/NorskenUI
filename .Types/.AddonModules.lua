@@ -2,33 +2,33 @@
 
 -- Concrete module classes. Methods are defined in each module's own file.
 
----@class CombatTimer : NRSKNUI.Module, NRSKNUI.AceEvent
----@class Gateway : NRSKNUI.Module, NRSKNUI.AceEvent
----@class PotionReady : NRSKNUI.Module, NRSKNUI.AceEvent
----@class RangeChecker : NRSKNUI.Module, NRSKNUI.AceEvent
----@class Skinning : NRSKNUI.Module, NRSKNUI.AceEvent
----@class Tooltips : NRSKNUI.Module, NRSKNUI.AceEvent
----@class Minimap : NRSKNUI.Module, NRSKNUI.AceEvent
----@class BurningRush : NRSKNUI.Module, NRSKNUI.AceEvent
----@class AuctionHouseFilter : NRSKNUI.Module, NRSKNUI.AceEvent
----@class Automation : NRSKNUI.Module, NRSKNUI.AceEvent, NRSKNUI.AceHook
----@class Tweaks : NRSKNUI.Module, NRSKNUI.AceEvent, NRSKNUI.AceHook
----@class XPBar : NRSKNUI.Module, NRSKNUI.AceEvent
----@class CopyAnything : NRSKNUI.Module, NRSKNUI.AceEvent
----@class Recuperate : NRSKNUI.Module, NRSKNUI.AceEvent
----@class MiscVars : NRSKNUI.Module, NRSKNUI.AceEvent
----@class Durability : NRSKNUI.Module, NRSKNUI.AceEvent
----@class CombatCross : NRSKNUI.Module, NRSKNUI.AceEvent
----@class CombatMessage : NRSKNUI.Module, NRSKNUI.AceEvent, NRSKNUI.AceTimer
----@class CombatRes : NRSKNUI.Module, NRSKNUI.AceEvent, NRSKNUI.AceTimer
----@class Restricted : NRSKNUI.Module, NRSKNUI.AceEvent
----@class CursorCircle : NRSKNUI.Module, NRSKNUI.AceEvent
----@class UnitFrames : NRSKNUI.Module, NRSKNUI.AceEvent, NRSKNUI.AceTimer, NRSKNUI.AceHook
----@class PlayerAuras : NRSKNUI.Module, NRSKNUI.AceEvent, NRSKNUI.AceTimer, NRSKNUI.AceHook
----@class AdvancedDebuffs : NRSKNUI.Module, NRSKNUI.AceEvent, NRSKNUI.AceTimer, NRSKNUI.AceHook
----@class Defensives : NRSKNUI.Module, NRSKNUI.AceEvent, NRSKNUI.AceTimer, NRSKNUI.AceHook
----@class PetTexts : NRSKNUI.Module, NRSKNUI.AceEvent
----@class FocusCastbar : NRSKNUI.Module, NRSKNUI.AceEvent
+---@class UnitFramesModule : NRSKNUI.ModuleBase, AceEvent-3.0, AceTimer-3.0, AceHook-3.0
+---@class RestrictedModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class AuctionHouseFilterModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class AutomationModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class TweaksModule : NRSKNUI.ModuleBase, AceEvent-3.0, AceHook-3.0
+---@class XPBarModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class CopyAnythingModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class RecuperateModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class MiscVarsModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class DurabilityModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class BurningRushModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class TooltipsModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class MinimapModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class SkinningModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class GatewayModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class PetTextsModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class PlayerAurasModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class AdvancedDebuffsModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class DefensivesModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class CombatTimerModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class PotionReadyModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class RangeCheckerModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class CombatCrossModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class CombatMessageModule : NRSKNUI.ModuleBase, AceEvent-3.0, AceTimer-3.0
+---@class CombatResModule : NRSKNUI.ModuleBase, AceEvent-3.0, AceTimer-3.0
+---@class CombatCursorModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class FocusCastbarModule : NRSKNUI.ModuleBase, AceEvent-3.0
 
 -- Typed accessors. Overloads dispatch on the literal module name.
 
@@ -65,7 +65,7 @@ local NRSKNUI
 ---@overload fun(self: NRSKNUI, name: "FocusCastbar", silent?: boolean): FocusCastbar
 ---@param name string
 ---@param silent? boolean
----@return NRSKNUI.Module
+---@return AceModule
 function NRSKNUI:GetModule(name, silent) end
 
 --- Register a new module. Trailing args are embedded library names (e.g. "AceEvent-3.0").
@@ -98,5 +98,5 @@ function NRSKNUI:GetModule(name, silent) end
 ---@overload fun(self: NRSKNUI, name: "FocusCastbar", ...: string): FocusCastbar
 ---@param name string
 ---@param ... string
----@return NRSKNUI.Module
+---@return AceModule
 function NRSKNUI:NewModule(name, ...) end

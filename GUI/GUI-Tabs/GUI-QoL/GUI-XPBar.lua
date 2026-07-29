@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class XPBar
+---@class XPBarModule
 local XPBar = NRSKNUI:GetModule('XPBar')
 local L = NRSKNUI.Libs.AL
 local GUI = NRSKNUI.GUI

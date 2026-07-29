@@ -1,28 +1,73 @@
 --[[
 # Dialog
 
-* Themed transient messages (FlashMessage) and modal prompts (Prompt / CopyDialog).
+* Themed messages and modal prompts for FlashMessage / Prompt / CopyDialog.
 
-## Example
+Access the context menu through the `InstanceMixin` of the `LibKaji-1.0` library:
+* ns.GUI = _G.LibStub('LibKaji-1.0'):New()  -- Core file
+* local GUI = ns.GUI                        -- Usage files calls like this
 
-    GUI:FlashMessage('Combat Cross')
-    GUI:FlashMessage('Saved', {
-        duration = 1,
-        y = 300
-    })
+# Dialog APIs
 
-    GUI:Prompt({
-        title = 'Reload Required',
-        text = 'Reload your UI now?',
-        onAccept = ReloadUI,
-    })
+A! Displays a message that fades in, holds, then fades out.
+API: GUI:FlashMessage(text, opts)
+* `text`           - The message to display.
+* `opts`           - An optional table of options:
+  * `duration`     - How long to hold the message before fading out (default 2 seconds).
+  * `size`         - Font size: 'small', 'normal', 'large' or a numeric value (default 'large').
+  * `parent`       - Parent frame to anchor the message to (default UIParent).
+  * `x`            - X offset from the center of the parent (default 0).
+  * `y`            - Y offset from the center of the parent (default 250).
+  * `anchorFrom`   - Anchor point on the message frame (default 'CENTER').
+  * `anchorTo`     - Anchor point on the parent frame (default 'CENTER').
 
-    GUI:CopyDialog('Export', exportString, 'CTRL-C to copy')
+
+A! Opens a modal prompt with a header, optional edit box or message body and Accept/Cancel buttons. Only one prompt is active per instance at a time.
+API: GUI:Prompt(opts)
+* `opts`           - An optional table of options:
+  * `title`        - The header text (default 'Confirm').
+  * `text`         - The message text (optional).
+  * `width`        - The dialog width in pixels (default 300).
+  * `editBox`      - If true, shows an edit box instead of a message body.
+  * `editBoxLabel` - Optional label above the edit box.
+  * `texture`      - Optional table with texture info for a header icon:
+    * `path`       - Texture path.
+    * `width`      - Texture width in pixels (default 20).
+    * `height`     - Texture height in pixels (default 20).
+    * `color`      - Optional color table {r,g,b} to tint the texture.
+  * `onAccept`     - Optional function called when the Accept button is clicked or Enter is pressed in the edit box.
+  * `onCancel`     - Optional function called when the Cancel button is clicked or the dialog is closed.
+  * `acceptText`   - Optional text for the Accept button (default 'Accept').
+  * `cancelText`   - Optional text for the Cancel button (default 'Cancel').
+
+A! Opens a modal prompt with a read-only-feel edit box the user copies with CTRL-C
+API: GUI:CopyDialog(title, text, label)
+* `title`          - The header text (default 'Copy').
+* `text`           - The text to display in the edit box.
+* `label`          - Optional label above the edit box.
+
+## Examples
+
+GUI:FlashMessage('Combat Cross')
+GUI:FlashMessage('Saved', {
+    duration = 1,
+    y = 300,
+})
+
+GUI:Prompt({
+    title = 'Reload Required',
+    text = 'Reload your UI now?',
+    onAccept = ReloadUI,
+})
+
+GUI:CopyDialog('Export', exportString, 'CTRL-C to copy')
 
 --]]
 
-local lib = LibStub and LibStub("LibKaji-1.0", true)
+---@class LibKaji-1.0
+local lib = _G.LibStub and _G.LibStub('LibKaji-1.0', true)
 if not lib then return end
+---@class KajiGUIInstanceMixin
 local InstanceMixin = lib.InstanceMixin
 local pixel = lib.Pixel
 
@@ -35,33 +80,43 @@ local max = math.max
 
 local After = C_Timer.After
 
-local WHITE = "Interface\\Buttons\\WHITE8X8"
+local WHITE = 'Interface\\Buttons\\WHITE8X8'
+
+local BUTTON_WIDTH = 100
+local BUTTON_HEIGHT = 26
+local HEADER_HEIGHT = 28
+local EDITBOX_HEIGHT = 38
+local PADDING = 12
 
 ---Flashes an accent-colored message that fades in, holds, then fades out.
 ---@param text string
----@param opts? { duration?: number, size?: "small"|"normal"|"large"|number, parent?: Frame, x?: number, y?: number }
+---@param opts? { duration?: number, size?: 'small'|'normal'|'large'|number, parent?: Frame, x?: number, y?: number, anchorFrom?: string, anchorTo?: string }
 function InstanceMixin:FlashMessage(text, opts)
     opts = opts or {}
 
     -- Reuse a single container per instance so rapid toggles don't stack messages.
     local container = self._flashContainer
     if not container then
-        container = CreateFrame("Frame", nil, opts.parent or UIParent)
+        container = CreateFrame('Frame', nil, opts.parent or UIParent)
         container:SetToplevel(true)
-        container:SetFrameStrata("TOOLTIP")
-        container.text = container:CreateFontString(nil, "OVERLAY")
-        pixel.SetPixelPoint(container.text, "CENTER")
+        container:SetFrameStrata('TOOLTIP')
+        container.text = container:CreateFontString(nil, 'OVERLAY')
+        pixel.SetPixelPoint(container.text, 'CENTER')
         self._flashContainer = container
     end
 
     container:SetParent(opts.parent or UIParent)
     container:ClearAllPoints()
-    pixel.SetPixelPoint(container, "CENTER", opts.parent or UIParent, "CENTER", opts.x or 0, opts.y or 250)
+    pixel.SetPixelPoint(container, opts.anchorFrom or 'CENTER', opts.parent or UIParent, opts.anchorTo or 'CENTER', opts.x or 0, opts.y or 250)
 
     local fontString = container.text
-    self:ApplyFont(fontString, opts.size or "large")
-    fontString:SetTextColor(self:Color("accent"))
+    self:ApplyFont(fontString, opts.size or 'large')
+    fontString:SetTextColor(self:Color('accent'))
     fontString:SetText(text)
+
+    -- The container is never sized anywhere else, and a 0x0 frame has no rect for its
+    -- regions to resolve against, so the text never draws. Size it to the string.
+    container:SetSize(max(fontString:GetStringWidth(), 1), max(fontString:GetStringHeight(), 1))
 
     UIFrameFadeIn(fontString, 0.2, 0, 1)
     container:Show()
@@ -83,17 +138,6 @@ function InstanceMixin:FlashMessage(text, opts)
 end
 
 -- Modal prompts --
-
---[[
-* A centered, movable dialog with a header, optional edit box or message body and Accept/Cancel buttons.
-* An edit box supplied without an onAccept handler becomes a copy dialog: CTRL-C to copy, no buttons.
---]]
-
-local BUTTON_WIDTH = 100
-local BUTTON_HEIGHT = 26
-local HEADER_HEIGHT = 28
-local EDITBOX_HEIGHT = 38
-local PADDING = 12
 
 ---@class KajiPromptOptions
 ---@field title? string
@@ -131,16 +175,16 @@ end
 
 local function CreateDialogBase(theme, opts, textHeight)
     local width, height = CalculateDialogSize(opts, textHeight)
-    local dialog = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+    local dialog = CreateFrame('Frame', nil, UIParent, 'BackdropTemplate')
     dialog:SetSize(width, height)
-    dialog:SetPoint("CENTER", UIParent, "CENTER", 0, 350)
-    dialog:SetFrameStrata("TOOLTIP")
+    dialog:SetPoint('CENTER', UIParent, 'CENTER', 0, 350)
+    dialog:SetFrameStrata('TOOLTIP')
     dialog:SetFrameLevel(100)
     dialog:EnableMouse(true)
     dialog:SetMovable(true)
-    dialog:RegisterForDrag("LeftButton")
-    dialog:SetScript("OnDragStart", dialog.StartMoving)
-    dialog:SetScript("OnDragStop", dialog.StopMovingOrSizing)
+    dialog:RegisterForDrag('LeftButton')
+    dialog:SetScript('OnDragStart', dialog.StartMoving)
+    dialog:SetScript('OnDragStop', dialog.StopMovingOrSizing)
     dialog:SetBackdrop({ bgFile = WHITE, edgeFile = WHITE, edgeSize = 1 })
     dialog:SetBackdropColor(theme.bgLight[1], theme.bgLight[2], theme.bgLight[3], theme.bgLight[4] or 1)
     dialog:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
@@ -149,23 +193,23 @@ end
 
 local function CreateDialogHeader(gui, dialog, title)
     local theme = gui.theme
-    local header = CreateFrame("Frame", nil, dialog, "BackdropTemplate")
+    local header = CreateFrame('Frame', nil, dialog, 'BackdropTemplate')
     header:SetHeight(HEADER_HEIGHT)
-    header:SetPoint("TOPLEFT", dialog, "TOPLEFT", 1, -1)
-    header:SetPoint("TOPRIGHT", dialog, "TOPRIGHT", -1, -1)
+    header:SetPoint('TOPLEFT', dialog, 'TOPLEFT', 1, -1)
+    header:SetPoint('TOPRIGHT', dialog, 'TOPRIGHT', -1, -1)
     header:SetBackdrop({ bgFile = WHITE })
     header:SetBackdropColor(theme.bgMedium[1], theme.bgMedium[2], theme.bgMedium[3], 1)
 
-    local bottomBorder = header:CreateTexture(nil, "BORDER")
+    local bottomBorder = header:CreateTexture(nil, 'BORDER')
     bottomBorder:SetHeight(theme.borderSize or 1)
-    bottomBorder:SetPoint("BOTTOMLEFT", header, "BOTTOMLEFT", 0, 0)
-    bottomBorder:SetPoint("BOTTOMRIGHT", header, "BOTTOMRIGHT", 0, 0)
+    bottomBorder:SetPoint('BOTTOMLEFT', header, 'BOTTOMLEFT', 0, 0)
+    bottomBorder:SetPoint('BOTTOMRIGHT', header, 'BOTTOMRIGHT', 0, 0)
     bottomBorder:SetColorTexture(theme.border[1], theme.border[2], theme.border[3], theme.border[4] or 1)
 
-    local titleLabel = header:CreateFontString(nil, "OVERLAY")
-    titleLabel:SetPoint("CENTER", header, "CENTER", 0, 0)
-    gui:ApplyFont(titleLabel, "large")
-    titleLabel:SetText(title or "Confirm")
+    local titleLabel = header:CreateFontString(nil, 'OVERLAY')
+    titleLabel:SetPoint('CENTER', header, 'CENTER', 0, 0)
+    gui:ApplyFont(titleLabel, 'large')
+    titleLabel:SetText(title or 'Confirm')
     titleLabel:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
 
     return header
@@ -173,11 +217,11 @@ end
 
 local function CreateCloseButton(gui, header, onClose)
     local theme = gui.theme
-    local closeBtn = CreateFrame("Button", nil, header)
+    local closeBtn = CreateFrame('Button', nil, header)
     closeBtn:SetSize(17, 17)
-    closeBtn:SetPoint("RIGHT", header, "RIGHT", -6, 0)
+    closeBtn:SetPoint('RIGHT', header, 'RIGHT', -6, 0)
 
-    local closeTex = closeBtn:CreateTexture(nil, "ARTWORK")
+    local closeTex = closeBtn:CreateTexture(nil, 'ARTWORK')
     closeTex:SetAllPoints()
     closeTex:SetTexture(theme.crossTexture)
     closeTex:SetVertexColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
@@ -185,13 +229,13 @@ local function CreateCloseButton(gui, header, onClose)
     closeTex:SetTexelSnappingBias(0)
     closeTex:SetSnapToPixelGrid(false)
 
-    closeBtn:SetScript("OnEnter", function()
+    closeBtn:SetScript('OnEnter', function()
         closeTex:SetVertexColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
     end)
-    closeBtn:SetScript("OnLeave", function()
+    closeBtn:SetScript('OnLeave', function()
         closeTex:SetVertexColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
     end)
-    closeBtn:SetScript("OnClick", onClose)
+    closeBtn:SetScript('OnClick', onClose)
 
     return closeBtn
 end
@@ -200,11 +244,11 @@ local function CreateHeaderTexture(header, opts)
     if not opts.texture then return end
     local tex = opts.texture
 
-    local frame = CreateFrame("Button", nil, header)
+    local frame = CreateFrame('Button', nil, header)
     frame:SetSize(tex.width or 20, tex.height or 20)
-    frame:SetPoint("LEFT", header, "LEFT", 6, 0)
+    frame:SetPoint('LEFT', header, 'LEFT', 6, 0)
 
-    local texture = frame:CreateTexture(nil, "ARTWORK")
+    local texture = frame:CreateTexture(nil, 'ARTWORK')
     texture:SetAllPoints()
     texture:SetTexture(tex.path)
     if tex.color then
@@ -215,17 +259,17 @@ local function CreateHeaderTexture(header, opts)
 end
 
 local function MeasureTextHeight(gui, text, width, fontStyle)
-    local measureFrame = CreateFrame("Frame", nil, UIParent)
+    local measureFrame = CreateFrame('Frame', nil, UIParent)
     measureFrame:SetSize(width, 200)
 
-    local measureLabel = measureFrame:CreateFontString(nil, "OVERLAY")
+    local measureLabel = measureFrame:CreateFontString(nil, 'OVERLAY')
     measureLabel:SetWidth(width)
-    measureLabel:SetPoint("TOPLEFT", measureFrame, "TOPLEFT", 0, 0)
-    measureLabel:SetJustifyH("CENTER")
-    measureLabel:SetJustifyV("TOP")
+    measureLabel:SetPoint('TOPLEFT', measureFrame, 'TOPLEFT', 0, 0)
+    measureLabel:SetJustifyH('CENTER')
+    measureLabel:SetJustifyV('TOP')
     measureLabel:SetWordWrap(true)
-    gui:ApplyFont(measureLabel, fontStyle or "normal")
-    measureLabel:SetText(text or "")
+    gui:ApplyFont(measureLabel, fontStyle or 'normal')
+    measureLabel:SetText(text or '')
 
     local height = measureLabel:GetStringHeight()
     measureFrame:Hide()
@@ -235,8 +279,8 @@ local function MeasureTextHeight(gui, text, width, fontStyle)
 end
 
 local function SetupEscapeHandler(gui, dialog, onCancel)
-    dialog:SetScript("OnKeyDown", function(self, key)
-        if key == "ESCAPE" then
+    dialog:SetScript('OnKeyDown', function(self, key)
+        if key == 'ESCAPE' then
             self:SetPropagateKeyboardInput(false)
             if onCancel then onCancel() end
             self:Hide()
@@ -262,7 +306,7 @@ function InstanceMixin:Prompt(opts)
 
     local textHeight
     if not opts.editBox and opts.text then
-        textHeight = MeasureTextHeight(self, opts.text, textWidth, "normal")
+        textHeight = MeasureTextHeight(self, opts.text, textWidth, 'normal')
     end
 
     local dialog = CreateDialogBase(theme, opts, textHeight)
@@ -283,26 +327,26 @@ function InstanceMixin:Prompt(opts)
     local isCopyMode = opts.editBox and not opts.onAccept
 
     if opts.editBox then
-        local editBoxWidget = self:CreateEditBox(dialog, opts.editBoxLabel or "", {
-            value = opts.text or "",
+        local editBoxWidget = self:CreateEditBox(dialog, opts.editBoxLabel or '', {
+            value = opts.text or '',
             autoFocus = true,
         })
-        editBoxWidget:SetPoint("TOPLEFT", header, "BOTTOMLEFT", PADDING, -8)
-        editBoxWidget:SetPoint("TOPRIGHT", header, "BOTTOMRIGHT", -PADDING, -8)
+        editBoxWidget:SetPoint('TOPLEFT', header, 'BOTTOMLEFT', PADDING, -8)
+        editBoxWidget:SetPoint('TOPRIGHT', header, 'BOTTOMRIGHT', -PADDING, -8)
 
         local editBox = editBoxWidget.editBox
         editBox:HighlightText()
-        editBox:SetJustifyH("CENTER")
+        editBox:SetJustifyH('CENTER')
 
         if isCopyMode then
-            editBox:SetScript("OnKeyDown", function(_, key)
-                if key == "C" and (IsControlKeyDown() or IsMetaKeyDown()) then
-                    self:FlashMessage("Copied to clipboard", { duration = 2, size = 18, y = 350 })
+            editBox:SetScript('OnKeyDown', function(_, key)
+                if key == 'C' and (IsControlKeyDown() or IsMetaKeyDown()) then
+                    self:FlashMessage('Copied to clipboard', { duration = 2, size = 18, y = 350 })
                     CloseDialog()
                 end
             end)
         else
-            editBox:SetScript("OnEnterPressed", function(eb)
+            editBox:SetScript('OnEnterPressed', function(eb)
                 if opts.onAccept then
                     opts.onAccept(eb:GetText())
                 end
@@ -312,23 +356,23 @@ function InstanceMixin:Prompt(opts)
 
         dialog.editBox = editBox
     else
-        local messageLabel = dialog:CreateFontString(nil, "OVERLAY")
-        messageLabel:SetPoint("TOPLEFT", header, "BOTTOMLEFT", PADDING, -PADDING)
-        messageLabel:SetPoint("TOPRIGHT", header, "BOTTOMRIGHT", -PADDING, -PADDING)
-        messageLabel:SetJustifyH("CENTER")
-        messageLabel:SetJustifyV("TOP")
-        self:ApplyFont(messageLabel, "normal")
-        messageLabel:SetText(opts.text or "")
+        local messageLabel = dialog:CreateFontString(nil, 'OVERLAY')
+        messageLabel:SetPoint('TOPLEFT', header, 'BOTTOMLEFT', PADDING, -PADDING)
+        messageLabel:SetPoint('TOPRIGHT', header, 'BOTTOMRIGHT', -PADDING, -PADDING)
+        messageLabel:SetJustifyH('CENTER')
+        messageLabel:SetJustifyV('TOP')
+        self:ApplyFont(messageLabel, 'normal')
+        messageLabel:SetText(opts.text or '')
         messageLabel:SetTextColor(theme.textPrimary[1], theme.textPrimary[2], theme.textPrimary[3], 1)
     end
 
     if not isCopyMode then
-        local buttonContainer = CreateFrame("Frame", nil, dialog)
+        local buttonContainer = CreateFrame('Frame', nil, dialog)
         buttonContainer:SetHeight(BUTTON_HEIGHT)
-        buttonContainer:SetPoint("BOTTOMLEFT", dialog, "BOTTOMLEFT", PADDING, PADDING)
-        buttonContainer:SetPoint("BOTTOMRIGHT", dialog, "BOTTOMRIGHT", -PADDING, PADDING)
+        buttonContainer:SetPoint('BOTTOMLEFT', dialog, 'BOTTOMLEFT', PADDING, PADDING)
+        buttonContainer:SetPoint('BOTTOMRIGHT', dialog, 'BOTTOMRIGHT', -PADDING, PADDING)
 
-        local acceptBtn = self:CreateButton(buttonContainer, opts.acceptText or "Accept", {
+        local acceptBtn = self:CreateButton(buttonContainer, opts.acceptText or 'Accept', {
             width = BUTTON_WIDTH,
             height = BUTTON_HEIGHT,
             callback = function()
@@ -342,9 +386,9 @@ function InstanceMixin:Prompt(opts)
                 CloseDialog()
             end
         })
-        acceptBtn:SetPoint("RIGHT", buttonContainer, "CENTER", -4, 0)
+        acceptBtn:SetPoint('RIGHT', buttonContainer, 'CENTER', -4, 0)
 
-        local cancelBtn = self:CreateButton(buttonContainer, opts.cancelText or "Cancel", {
+        local cancelBtn = self:CreateButton(buttonContainer, opts.cancelText or 'Cancel', {
             width = BUTTON_WIDTH,
             height = BUTTON_HEIGHT,
             callback = function()
@@ -352,7 +396,7 @@ function InstanceMixin:Prompt(opts)
                 CloseDialog()
             end
         })
-        cancelBtn:SetPoint("LEFT", buttonContainer, "CENTER", 4, 0)
+        cancelBtn:SetPoint('LEFT', buttonContainer, 'CENTER', 4, 0)
         cancelBtn.text:SetTextColor(theme.textPrimary[1], theme.textPrimary[2], theme.textPrimary[3], 1)
     end
 
@@ -374,6 +418,6 @@ function InstanceMixin:CopyDialog(title, text, label)
         title = title,
         text = text,
         editBox = true,
-        editBoxLabel = label or "CTRL-C to copy",
+        editBoxLabel = label or 'CTRL-C to copy',
     })
 end

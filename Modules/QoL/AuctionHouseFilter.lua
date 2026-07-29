@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class AuctionHouseFilter
+---@class AuctionHouseFilterModule
 local AuctionHouseFilter = NRSKNUI:GetModule('AuctionHouseFilter')
 
 local C_Timer = C_Timer

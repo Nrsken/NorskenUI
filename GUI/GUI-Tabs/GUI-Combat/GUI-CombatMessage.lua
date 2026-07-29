@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class CombatMessage
+---@class CombatMessageModule
 local CombatMessage = NRSKNUI:GetModule('CombatMessage')
 local L = NRSKNUI.Libs.AL
 local LSM = NRSKNUI.Libs.LSM

@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class CursorCircle
+---@class CombatCursorModule
 local CursorCircle = NRSKNUI:GetModule('CursorCircle')
 local L = NRSKNUI.Libs.AL
 local GUI = NRSKNUI.GUI

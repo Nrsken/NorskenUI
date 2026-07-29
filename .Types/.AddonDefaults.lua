@@ -1,0 +1,3344 @@
+---@meta
+
+-- BEGIN GENERATED DB TYPES --
+---@class NRSKNUI.DBGlobal
+---@field [string] any
+---@field AuraBlocklist NRSKNUI.DBGlobal.AuraBlocklist
+---@field AuraFilters NRSKNUI.DBGlobal.AuraFilters
+---@field AuraSpellLists NRSKNUI.DBGlobal.AuraSpellLists
+---@field GUIState NRSKNUI.DBGlobal.GUIState
+---@field GlobalProfile string
+---@field Theme NRSKNUI.DBGlobal.Theme
+---@field UIScale NRSKNUI.DBGlobal.UIScale
+---@field UseGlobalProfile boolean
+---@field XPTable NRSKNUI.DBGlobal.XPTable
+
+---@class NRSKNUI.DBGlobal.AuraBlocklist
+---@field [string] any
+
+---@class NRSKNUI.DBGlobal.AuraFilters
+---@field [string] any
+
+---@class NRSKNUI.DBGlobal.AuraSpellLists
+---@field [string] any
+
+---@class NRSKNUI.DBGlobal.GUIState
+---@field [string] any
+---@field GUIFrameLayoutVersion number
+---@field frame NRSKNUI.DBGlobal.GUIState.frame
+---@field sidebarExpanded nil
+
+---@class NRSKNUI.DBGlobal.GUIState.frame
+---@field [string] any
+---@field height nil
+---@field point nil
+---@field relativePoint nil
+---@field width nil
+---@field xOffset nil
+---@field yOffset nil
+
+---@class NRSKNUI.DBGlobal.Theme
+---@field [string] any
+---@field customColors NRSKNUI.DBGlobal.Theme.customColors
+---@field fontFace string
+---@field fontOutline string
+---@field fontShadow boolean
+---@field fontSizeLarge number
+---@field fontSizeNormal number
+---@field fontSizeSmall number
+---@field mode string
+---@field selectedPreset string
+
+---@class NRSKNUI.DBGlobal.Theme.customColors
+---@field [string] any
+
+---@class NRSKNUI.DBGlobal.UIScale
+---@field [string] any
+---@field Enabled boolean
+---@field Scale number
+
+---@class NRSKNUI.DBGlobal.XPTable
+---@field [string] any
+
+---@class NRSKNUI.DBProfile
+---@field [string] any
+---@field AdvancedDebuffs NRSKNUI.DBProfile.AdvancedDebuffs
+---@field Auras NRSKNUI.DBProfile.Auras
+---@field BattleRes NRSKNUI.DBProfile.BattleRes
+---@field BlizzardRM NRSKNUI.DBProfile.BlizzardRM
+---@field BurningRush NRSKNUI.DBProfile.BurningRush
+---@field CharacterPanel NRSKNUI.DBProfile.CharacterPanel
+---@field Colors NRSKNUI.DBProfile.Colors
+---@field CombatCross NRSKNUI.DBProfile.CombatCross
+---@field CombatMessage NRSKNUI.DBProfile.CombatMessage
+---@field CombatTimer NRSKNUI.DBProfile.CombatTimer
+---@field Defensives NRSKNUI.DBProfile.Defensives
+---@field DungeonCasts NRSKNUI.DBProfile.DungeonCasts
+---@field DungeonTimers NRSKNUI.DBProfile.DungeonTimers
+---@field HealerMana NRSKNUI.DBProfile.HealerMana
+---@field IncarnStacks NRSKNUI.DBProfile.IncarnStacks
+---@field InstanceReset NRSKNUI.DBProfile.InstanceReset
+---@field Minimap NRSKNUI.DBProfile.Minimap
+---@field Miscellaneous NRSKNUI.DBProfile.Miscellaneous
+---@field MissingItems NRSKNUI.DBProfile.MissingItems
+---@field PetTexts NRSKNUI.DBProfile.PetTexts
+---@field PotionReady NRSKNUI.DBProfile.PotionReady
+---@field RangeChecker NRSKNUI.DBProfile.RangeChecker
+---@field ReckonTracker NRSKNUI.DBProfile.ReckonTracker
+---@field RerollKeystone NRSKNUI.DBProfile.RerollKeystone
+---@field Skinning NRSKNUI.DBProfile.Skinning
+---@field TotemTracker NRSKNUI.DBProfile.TotemTracker
+---@field UnitFrames NRSKNUI.DBProfile.UnitFrames
+---@field UseElvUI NRSKNUI.DBProfile.UseElvUI
+---@field globalMedia NRSKNUI.DBProfile.globalMedia
+
+---@class NRSKNUI.DBProfile.AdvancedDebuffs
+---@field [string] any
+---@field DurationFont NRSKNUI.DBProfile.AdvancedDebuffs.DurationFont
+---@field Enabled boolean
+---@field Filter string
+---@field FontFace string
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.AdvancedDebuffs.FontShadow
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.AdvancedDebuffs.Position
+---@field StackFont NRSKNUI.DBProfile.AdvancedDebuffs.StackFont
+---@field UseGlobalFont boolean
+---@field anchorFrameType string
+---@field dispelIconSize number
+---@field drawEdge boolean
+---@field drawSwipe boolean
+---@field elementSpacing number
+---@field horizontalGrowthDirection string
+---@field lineSpacing number
+---@field maxFrameCount number
+---@field perRow number
+---@field reverseSwipe boolean
+---@field showApplicationCount boolean
+---@field showBorder boolean
+---@field showDebuffDispelIcon boolean
+---@field showDurationText boolean
+---@field size number
+---@field sortDirection string
+---@field sortMethod string
+---@field tooltipHideInCombat boolean
+---@field verticalGrowthDirection string
+
+---@class NRSKNUI.DBProfile.AdvancedDebuffs.DurationFont
+---@field [string] any
+---@field FontSize number
+---@field Position NRSKNUI.DBProfile.AdvancedDebuffs.DurationFont.Position
+
+---@class NRSKNUI.DBProfile.AdvancedDebuffs.DurationFont.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.AdvancedDebuffs.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field OffsetY number
+
+---@class NRSKNUI.DBProfile.AdvancedDebuffs.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.AdvancedDebuffs.StackFont
+---@field [string] any
+---@field FontSize number
+---@field Position NRSKNUI.DBProfile.AdvancedDebuffs.StackFont.Position
+
+---@class NRSKNUI.DBProfile.AdvancedDebuffs.StackFont.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Auras
+---@field [string] any
+---@field Buffs NRSKNUI.DBProfile.Auras.Buffs
+---@field Debuffs NRSKNUI.DBProfile.Auras.Debuffs
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.Auras.Buffs
+---@field [string] any
+---@field DurationFont NRSKNUI.DBProfile.Auras.Buffs.DurationFont
+---@field Enabled boolean
+---@field FontFace string
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.Auras.Buffs.FontShadow
+---@field Position NRSKNUI.DBProfile.Auras.Buffs.Position
+---@field StackFont NRSKNUI.DBProfile.Auras.Buffs.StackFont
+---@field UseGlobalFont boolean
+---@field anchorFrameType string
+---@field drawEdge boolean
+---@field drawSwipe boolean
+---@field elementSpacing number
+---@field groupLineSpacing number
+---@field groupSpacing number
+---@field horizontalGrowthDirection string
+---@field lineSpacing number
+---@field maxFrameCount number
+---@field perRow number
+---@field reverseSwipe boolean
+---@field showApplicationCount boolean
+---@field showDurationText boolean
+---@field showWeaponEnchants boolean
+---@field size number
+---@field sortDirection string
+---@field sortMethod string
+---@field tooltipHideInCombat boolean
+---@field verticalGrowthDirection string
+
+---@class NRSKNUI.DBProfile.Auras.Buffs.DurationFont
+---@field [string] any
+---@field FontSize number
+---@field Position NRSKNUI.DBProfile.Auras.Buffs.DurationFont.Position
+
+---@class NRSKNUI.DBProfile.Auras.Buffs.DurationFont.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Auras.Buffs.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field OffsetY number
+
+---@class NRSKNUI.DBProfile.Auras.Buffs.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Auras.Buffs.StackFont
+---@field [string] any
+---@field FontSize number
+---@field Position NRSKNUI.DBProfile.Auras.Buffs.StackFont.Position
+
+---@class NRSKNUI.DBProfile.Auras.Buffs.StackFont.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Auras.Debuffs
+---@field [string] any
+---@field DurationFont NRSKNUI.DBProfile.Auras.Debuffs.DurationFont
+---@field Enabled boolean
+---@field FontFace string
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.Auras.Debuffs.FontShadow
+---@field Position NRSKNUI.DBProfile.Auras.Debuffs.Position
+---@field StackFont NRSKNUI.DBProfile.Auras.Debuffs.StackFont
+---@field UseGlobalFont boolean
+---@field anchorFrameType string
+---@field dispelIconSize number
+---@field drawEdge boolean
+---@field drawSwipe boolean
+---@field elementSpacing number
+---@field horizontalGrowthDirection string
+---@field lineSpacing number
+---@field maxFrameCount number
+---@field perRow number
+---@field reverseSwipe boolean
+---@field showApplicationCount boolean
+---@field showBorder boolean
+---@field showDebuffDispelIcon boolean
+---@field showDurationText boolean
+---@field size number
+---@field sortDirection string
+---@field sortMethod string
+---@field tooltipHideInCombat boolean
+---@field verticalGrowthDirection string
+
+---@class NRSKNUI.DBProfile.Auras.Debuffs.DurationFont
+---@field [string] any
+---@field FontSize number
+---@field Position NRSKNUI.DBProfile.Auras.Debuffs.DurationFont.Position
+
+---@class NRSKNUI.DBProfile.Auras.Debuffs.DurationFont.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Auras.Debuffs.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field OffsetY number
+
+---@class NRSKNUI.DBProfile.Auras.Debuffs.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Auras.Debuffs.StackFont
+---@field [string] any
+---@field FontSize number
+---@field Position NRSKNUI.DBProfile.Auras.Debuffs.StackFont.Position
+
+---@class NRSKNUI.DBProfile.Auras.Debuffs.StackFont.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.BattleRes
+---@field [string] any
+---@field BackdropEnabled boolean
+---@field BackdropHeight number
+---@field BackdropWidth number
+---@field BackgroundColor table
+---@field BorderColor table
+---@field ColorChargeAvailable table
+---@field ColorChargeUnavailable table
+---@field ColorFormat table
+---@field ColorSeparator table
+---@field ColorTimer table
+---@field Enabled boolean
+---@field FontFace string
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.BattleRes.FontShadow
+---@field FontSize number
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.BattleRes.Position
+---@field Separator string
+---@field Strata string
+---@field TextCharge string
+---@field TextFormat string
+---@field TextSeparator string
+---@field TextTimer string
+---@field TimeFormat string
+---@field UseGlobalFont boolean
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.BattleRes.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field OffsetY number
+
+---@class NRSKNUI.DBProfile.BattleRes.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.BlizzardRM
+---@field [string] any
+---@field Alpha number
+---@field Enabled boolean
+---@field FadeInDuration number
+---@field FadeOnMouseOut boolean
+---@field FadeOutDuration number
+---@field Position NRSKNUI.DBProfile.BlizzardRM.Position
+---@field Strata string
+
+---@class NRSKNUI.DBProfile.BlizzardRM.Position
+---@field [string] any
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.BurningRush
+---@field [string] any
+---@field Enabled boolean
+---@field GlowBorder boolean
+---@field GlowColor table
+---@field GlowDuration number
+---@field GlowEnabled boolean
+---@field GlowFrequency number
+---@field GlowLength number
+---@field GlowLines number
+---@field GlowScale number
+---@field GlowStartAnim boolean
+---@field GlowThickness number
+---@field GlowType string
+---@field GlowXOffset number
+---@field GlowYOffset number
+---@field IconSize number
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.BurningRush.Position
+---@field Strata string
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.BurningRush.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.CharacterPanel
+---@field [string] any
+---@field CategoryFontSize number
+---@field DecimalItemLevel boolean
+---@field Enabled boolean
+---@field FontFace string
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.CharacterPanel.FontShadow
+---@field GemSocketHelper NRSKNUI.DBProfile.CharacterPanel.GemSocketHelper
+---@field IlvlValueSize number
+---@field LevelTextSize number
+---@field NameTextSize number
+---@field ShowRaceText boolean
+---@field StatsFontSize number
+---@field TrackIndicators NRSKNUI.DBProfile.CharacterPanel.TrackIndicators
+---@field UseGlobalFont boolean
+
+---@class NRSKNUI.DBProfile.CharacterPanel.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field OffsetY number
+
+---@class NRSKNUI.DBProfile.CharacterPanel.GemSocketHelper
+---@field [string] any
+---@field Enabled boolean
+---@field EnchantHelper boolean
+---@field ShowOnlyEmpty boolean
+---@field SocketButtonSize number
+---@field SocketButtonSpacing number
+
+---@class NRSKNUI.DBProfile.CharacterPanel.TrackIndicators
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.Colors
+---@field [string] any
+---@field Class NRSKNUI.DBProfile.Colors.Class
+---@field Dispel NRSKNUI.DBProfile.Colors.Dispel
+---@field Power NRSKNUI.DBProfile.Colors.Power
+---@field Reaction NRSKNUI.DBProfile.Colors.Reaction
+---@field Status NRSKNUI.DBProfile.Colors.Status
+
+---@class NRSKNUI.DBProfile.Colors.Class
+---@field [string] any
+---@field DEATHKNIGHT table
+---@field DEMONHUNTER table
+---@field DRUID table
+---@field EVOKER table
+---@field HUNTER table
+---@field MAGE table
+---@field MONK table
+---@field PALADIN table
+---@field PRIEST table
+---@field ROGUE table
+---@field SHAMAN table
+---@field WARLOCK table
+---@field WARRIOR table
+
+---@class NRSKNUI.DBProfile.Colors.Dispel
+---@field [string] any
+---@field Bleed table
+---@field Curse table
+---@field Disease table
+---@field Enrage table
+---@field Magic table
+---@field None table
+---@field Poison table
+
+---@class NRSKNUI.DBProfile.Colors.Power
+---@field [string] any
+---@field [number] any
+
+---@class NRSKNUI.DBProfile.Colors.Reaction
+---@field [string] any
+---@field [number] any
+
+---@class NRSKNUI.DBProfile.Colors.Status
+---@field [string] any
+---@field Dead table
+---@field Disconnected table
+---@field Tapped table
+
+---@class NRSKNUI.DBProfile.CombatCross
+---@field [string] any
+---@field CenterDotSize number
+---@field Color table
+---@field ColorMode string
+---@field CrossCenterDotEnabled boolean
+---@field CrossGap number
+---@field CrossLength number
+---@field CrossThickness number
+---@field DiamondSize number
+---@field Enabled boolean
+---@field Mode string
+---@field OutOfRangeColor table
+---@field Outline boolean
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.CombatCross.Position
+---@field RangeColorMeleeEnabled boolean
+---@field RangeColorRangedEnabled boolean
+---@field Strata string
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.CombatCross.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.CombatMessage
+---@field [string] any
+---@field Config NRSKNUI.DynamicGroupConfig
+---@field Duration number
+---@field Enabled boolean
+---@field EnterCombat NRSKNUI.DBProfile.CombatMessage.EnterCombat
+---@field ExitCombat NRSKNUI.DBProfile.CombatMessage.ExitCombat
+---@field FontFace string
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.CombatMessage.FontShadow
+---@field FontSize number
+---@field NoTarget NRSKNUI.DBProfile.CombatMessage.NoTarget
+---@field ParentFrame string
+---@field PartyDeath NRSKNUI.DBProfile.CombatMessage.PartyDeath
+---@field Position NRSKNUI.DBProfile.CombatMessage.Position
+---@field Strata string
+---@field UseGlobalFont boolean
+---@field anchorFrameType string
+
+---@alias NRSKNUI.DBProfile.CombatMessage.Config NRSKNUI.DynamicGroupConfig
+
+---@class NRSKNUI.DBProfile.CombatMessage.EnterCombat
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field FontSize number
+---@field Text string
+
+---@class NRSKNUI.DBProfile.CombatMessage.ExitCombat
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field FontSize number
+---@field Text string
+
+---@class NRSKNUI.DBProfile.CombatMessage.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field OffsetY number
+
+---@class NRSKNUI.DBProfile.CombatMessage.NoTarget
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field FontSize number
+---@field Text string
+
+---@class NRSKNUI.DBProfile.CombatMessage.PartyDeath
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field FontSize number
+---@field LoadCondition string
+---@field SoundDamager string
+---@field SoundHealer string
+---@field SoundTank string
+---@field Text string
+---@field UseClassColor boolean
+
+---@class NRSKNUI.DBProfile.CombatMessage.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.CombatTimer
+---@field [string] any
+---@field BackdropEnabled boolean
+---@field BackdropHeight number
+---@field BackdropWidth number
+---@field BackgroundColor table
+---@field BorderColor table
+---@field ColorInCombat table
+---@field ColorOutOfCombat table
+---@field CombatOnly boolean
+---@field Enabled boolean
+---@field FontFace string
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.CombatTimer.FontShadow
+---@field FontSize number
+---@field Format string
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.CombatTimer.Position
+---@field PrintEnd boolean
+---@field Strata string
+---@field UseGlobalFont boolean
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.CombatTimer.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field OffsetY number
+
+---@class NRSKNUI.DBProfile.CombatTimer.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Defensives
+---@field [string] any
+---@field DurationFont NRSKNUI.DBProfile.Defensives.DurationFont
+---@field Enabled boolean
+---@field Filter string
+---@field FontFace string
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.Defensives.FontShadow
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.Defensives.Position
+---@field StackFont NRSKNUI.DBProfile.Defensives.StackFont
+---@field UseGlobalFont boolean
+---@field anchorFrameType string
+---@field drawEdge boolean
+---@field drawSwipe boolean
+---@field elementSpacing number
+---@field horizontalGrowthDirection string
+---@field lineSpacing number
+---@field maxFrameCount number
+---@field perRow number
+---@field reverseSwipe boolean
+---@field showApplicationCount boolean
+---@field showDurationText boolean
+---@field size number
+---@field sortDirection string
+---@field sortMethod string
+---@field tooltipHideInCombat boolean
+---@field verticalGrowthDirection string
+
+---@class NRSKNUI.DBProfile.Defensives.DurationFont
+---@field [string] any
+---@field FontSize number
+---@field Position NRSKNUI.DBProfile.Defensives.DurationFont.Position
+
+---@class NRSKNUI.DBProfile.Defensives.DurationFont.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Defensives.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field OffsetY number
+
+---@class NRSKNUI.DBProfile.Defensives.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Defensives.StackFont
+---@field [string] any
+---@field FontSize number
+---@field Position NRSKNUI.DBProfile.Defensives.StackFont.Position
+
+---@class NRSKNUI.DBProfile.Defensives.StackFont.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.DungeonCasts
+---@field [string] any
+---@field BackgroundColor table
+---@field BarDisplay NRSKNUI.DBProfile.DungeonCasts.BarDisplay
+---@field BorderColor table
+---@field CastingColor table
+---@field ChannelingColor table
+---@field Enabled boolean
+---@field Frame NRSKNUI.DBProfile.DungeonCasts.Frame
+---@field Icon NRSKNUI.DBProfile.DungeonCasts.Icon
+---@field NotInterruptibleColor table
+---@field RaidIcon NRSKNUI.DBProfile.DungeonCasts.RaidIcon
+---@field Target NRSKNUI.DBProfile.DungeonCasts.Target
+---@field Text NRSKNUI.DBProfile.DungeonCasts.Text
+
+---@class NRSKNUI.DBProfile.DungeonCasts.BarDisplay
+---@field [string] any
+---@field FontFace string
+---@field FontOutline string
+---@field FontSize number
+---@field SparkEnabled boolean
+---@field StatusBarTexture string
+---@field UseGlobalBar boolean
+---@field UseGlobalFont boolean
+
+---@class NRSKNUI.DBProfile.DungeonCasts.Frame
+---@field [string] any
+---@field GrowthDirection string
+---@field Height number
+---@field MaxBars number
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.DungeonCasts.Frame.Position
+---@field Spacing number
+---@field Strata string
+---@field Width number
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.DungeonCasts.Frame.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.DungeonCasts.Icon
+---@field [string] any
+---@field Enabled boolean
+---@field Size number
+---@field Zoom number
+
+---@class NRSKNUI.DBProfile.DungeonCasts.RaidIcon
+---@field [string] any
+---@field Enabled boolean
+---@field Size number
+
+---@class NRSKNUI.DBProfile.DungeonCasts.Target
+---@field [string] any
+---@field Enabled boolean
+---@field Position string
+---@field Separator string
+---@field ShowClassColor boolean
+
+---@class NRSKNUI.DBProfile.DungeonCasts.Text
+---@field [string] any
+---@field NameAlign string
+---@field ShowTime boolean
+---@field TextColor table
+---@field TimeAlign string
+
+---@class NRSKNUI.DBProfile.DungeonTimers
+---@field [string] any
+---@field BarDisplay NRSKNUI.DBProfile.DungeonTimers.BarDisplay
+---@field BarGroup NRSKNUI.DBProfile.DungeonTimers.BarGroup
+---@field Dungeons NRSKNUI.DBProfile.DungeonTimers.Dungeons
+---@field Enabled boolean
+---@field TextDisplay NRSKNUI.DBProfile.DungeonTimers.TextDisplay
+---@field TextGroup NRSKNUI.DBProfile.DungeonTimers.TextGroup
+---@field TriggerDefaults NRSKNUI.DBProfile.DungeonTimers.TriggerDefaults
+
+---@class NRSKNUI.DBProfile.DungeonTimers.BarDisplay
+---@field [string] any
+---@field FontFace string
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.DungeonTimers.BarDisplay.FontShadow
+---@field FontSize number
+---@field UseGlobalBar boolean
+---@field UseGlobalFont boolean
+---@field barHeight number
+---@field barTexture string
+---@field barWidth number
+---@field iconEnabled boolean
+
+---@class NRSKNUI.DBProfile.DungeonTimers.BarDisplay.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field OffsetY number
+
+---@class NRSKNUI.DBProfile.DungeonTimers.BarGroup
+---@field [string] any
+---@field GrowthDirection string
+---@field Position NRSKNUI.DBProfile.DungeonTimers.BarGroup.Position
+---@field Spacing number
+
+---@class NRSKNUI.DBProfile.DungeonTimers.BarGroup.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.DungeonTimers.Dungeons
+---@field [string] any
+---@field AlgetharAcademy NRSKNUI.DBProfile.DungeonTimers.Dungeons.AlgetharAcademy
+---@field MagistersTerrace NRSKNUI.DBProfile.DungeonTimers.Dungeons.MagistersTerrace
+---@field MaisaraCaverns NRSKNUI.DBProfile.DungeonTimers.Dungeons.MaisaraCaverns
+---@field NexusPointXenas NRSKNUI.DBProfile.DungeonTimers.Dungeons.NexusPointXenas
+---@field PitOfSaron NRSKNUI.DBProfile.DungeonTimers.Dungeons.PitOfSaron
+---@field SeatOfTriumvirate NRSKNUI.DBProfile.DungeonTimers.Dungeons.SeatOfTriumvirate
+---@field Skyreach NRSKNUI.DBProfile.DungeonTimers.Dungeons.Skyreach
+---@field WindrunnerSpire NRSKNUI.DBProfile.DungeonTimers.Dungeons.WindrunnerSpire
+
+---@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.AlgetharAcademy
+---@field [string] any
+---@field Enabled boolean
+---@field Triggers NRSKNUI.DBProfile.DungeonTimers.Dungeons.AlgetharAcademy.Triggers
+---@field instanceId number
+
+---@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.AlgetharAcademy.Triggers
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.MagistersTerrace
+---@field [string] any
+---@field Enabled boolean
+---@field Triggers NRSKNUI.DBProfile.DungeonTimers.Dungeons.MagistersTerrace.Triggers
+---@field instanceId number
+
+---@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.MagistersTerrace.Triggers
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.MaisaraCaverns
+---@field [string] any
+---@field Enabled boolean
+---@field Triggers NRSKNUI.DBProfile.DungeonTimers.Dungeons.MaisaraCaverns.Triggers
+---@field instanceId number
+
+---@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.MaisaraCaverns.Triggers
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.NexusPointXenas
+---@field [string] any
+---@field Enabled boolean
+---@field Triggers NRSKNUI.DBProfile.DungeonTimers.Dungeons.NexusPointXenas.Triggers
+---@field instanceId number
+
+---@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.NexusPointXenas.Triggers
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.PitOfSaron
+---@field [string] any
+---@field Enabled boolean
+---@field Triggers NRSKNUI.DBProfile.DungeonTimers.Dungeons.PitOfSaron.Triggers
+---@field instanceId number
+
+---@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.PitOfSaron.Triggers
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.SeatOfTriumvirate
+---@field [string] any
+---@field Enabled boolean
+---@field Triggers NRSKNUI.DBProfile.DungeonTimers.Dungeons.SeatOfTriumvirate.Triggers
+---@field instanceId number
+
+---@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.SeatOfTriumvirate.Triggers
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.Skyreach
+---@field [string] any
+---@field Enabled boolean
+---@field Triggers NRSKNUI.DBProfile.DungeonTimers.Dungeons.Skyreach.Triggers
+---@field instanceId number
+
+---@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.Skyreach.Triggers
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.WindrunnerSpire
+---@field [string] any
+---@field Enabled boolean
+---@field Triggers NRSKNUI.DBProfile.DungeonTimers.Dungeons.WindrunnerSpire.Triggers
+---@field instanceId number
+
+---@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.WindrunnerSpire.Triggers
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.DungeonTimers.TextDisplay
+---@field [string] any
+---@field FontFace string
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.DungeonTimers.TextDisplay.FontShadow
+---@field FontSize number
+---@field UseGlobalFont boolean
+---@field textAlign string
+
+---@class NRSKNUI.DBProfile.DungeonTimers.TextDisplay.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field OffsetY number
+
+---@class NRSKNUI.DBProfile.DungeonTimers.TextGroup
+---@field [string] any
+---@field GrowthDirection string
+---@field Position NRSKNUI.DBProfile.DungeonTimers.TextGroup.Position
+---@field Spacing number
+
+---@class NRSKNUI.DBProfile.DungeonTimers.TextGroup.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.DungeonTimers.TriggerDefaults
+---@field [string] any
+---@field actionOnHideSound string
+---@field actionOnShowSound string
+---@field backgroundColor table
+---@field barColor table
+---@field barText1Format string
+---@field barText1Justify string
+---@field barText1XOffset number
+---@field barText1YOffset number
+---@field barText2Format string
+---@field barText2Justify string
+---@field barText2XOffset number
+---@field barText2YOffset number
+---@field countEnabled boolean
+---@field countOperator string
+---@field countValue number
+---@field customText string
+---@field decimalThreshold number
+---@field displayType string
+---@field enabled boolean
+---@field extendTimer number
+---@field loadPosEnabled boolean
+---@field loadPosMelee boolean
+---@field loadPosRanged boolean
+---@field loadRoleDPS boolean
+---@field loadRoleEnabled boolean
+---@field loadRoleHealer boolean
+---@field loadRoleTank boolean
+---@field message string
+---@field messageOperator string
+---@field remainingEnabled boolean
+---@field remainingOperator string
+---@field remainingValue number
+---@field showDecimals boolean
+---@field spellId string
+---@field textColor table
+---@field textFormat string
+---@field textJustify string
+---@field triggerType string
+---@field useBigWigsColors boolean
+
+---@class NRSKNUI.DBProfile.HealerMana
+---@field [string] any
+---@field EnableInRaid boolean
+---@field Enabled boolean
+---@field FontFace string
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.HealerMana.FontShadow
+---@field FrameSpacing number
+---@field FrameWidth number
+---@field GrowDirection string
+---@field HighManaColor table
+---@field IconSize number
+---@field ManaFontSize number
+---@field ManaYOffset number
+---@field MaxHealers number
+---@field NameFontSize number
+---@field NameYOffset number
+---@field ParentFrame string
+---@field PartyPosition NRSKNUI.DBProfile.HealerMana.PartyPosition
+---@field RaidPosition NRSKNUI.DBProfile.HealerMana.RaidPosition
+---@field SplitPositioning boolean
+---@field Strata string
+---@field UseGlobalFont boolean
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.HealerMana.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field OffsetY number
+
+---@class NRSKNUI.DBProfile.HealerMana.PartyPosition
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.HealerMana.RaidPosition
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.IncarnStacks
+---@field [string] any
+---@field Enabled boolean
+---@field GlowBorder boolean
+---@field GlowColor table
+---@field GlowDuration number
+---@field GlowEnabled boolean
+---@field GlowFrequency number
+---@field GlowLength number
+---@field GlowLines number
+---@field GlowScale number
+---@field GlowStartAnim boolean
+---@field GlowThickness number
+---@field GlowType string
+---@field GlowXOffset number
+---@field GlowYOffset number
+---@field IconSize number
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.IncarnStacks.Position
+---@field ShowStacks boolean
+---@field ShowTimer boolean
+---@field StackFontFace string
+---@field StackFontOutline string
+---@field StackFontSize number
+---@field StackTextColor table
+---@field Strata string
+---@field TimerFontFace string
+---@field TimerFontOutline string
+---@field TimerFontSize number
+---@field TimerTextColor table
+---@field UseGlobalFont boolean
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.IncarnStacks.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.InstanceReset
+---@field [string] any
+---@field Enabled boolean
+---@field Message string
+
+---@class NRSKNUI.DBProfile.Minimap
+---@field [string] any
+---@field hide boolean
+---@field hideMessage boolean
+
+---@class NRSKNUI.DBProfile.Miscellaneous
+---@field [string] any
+---@field AuctionHouseFilter NRSKNUI.DBProfile.Miscellaneous.AuctionHouseFilter
+---@field Automation NRSKNUI.DBProfile.Miscellaneous.Automation
+---@field BenchAlert NRSKNUI.DBProfile.Miscellaneous.BenchAlert
+---@field CooldownStrings NRSKNUI.DBProfile.Miscellaneous.CooldownStrings
+---@field CopyAnything NRSKNUI.DBProfile.Miscellaneous.CopyAnything
+---@field CursorCircle NRSKNUI.DBProfile.Miscellaneous.CursorCircle
+---@field Durability NRSKNUI.DBProfile.Miscellaneous.Durability
+---@field FocusCastbar NRSKNUI.DBProfile.Miscellaneous.FocusCastbar
+---@field Gateway NRSKNUI.DBProfile.Miscellaneous.Gateway
+---@field MiscVars NRSKNUI.DBProfile.Miscellaneous.MiscVars
+---@field Recuperate NRSKNUI.DBProfile.Miscellaneous.Recuperate
+---@field SpellAlert NRSKNUI.DBProfile.Miscellaneous.SpellAlert
+---@field Tweaks NRSKNUI.DBProfile.Miscellaneous.Tweaks
+---@field WayFinder NRSKNUI.DBProfile.Miscellaneous.WayFinder
+---@field XPBar NRSKNUI.DBProfile.Miscellaneous.XPBar
+
+---@class NRSKNUI.DBProfile.Miscellaneous.AuctionHouseFilter
+---@field [string] any
+---@field AuctionHouse NRSKNUI.DBProfile.Miscellaneous.AuctionHouseFilter.AuctionHouse
+---@field Auctionator NRSKNUI.DBProfile.Miscellaneous.AuctionHouseFilter.Auctionator
+---@field CraftOrders NRSKNUI.DBProfile.Miscellaneous.AuctionHouseFilter.CraftOrders
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.Miscellaneous.AuctionHouseFilter.AuctionHouse
+---@field [string] any
+---@field CurrentExpansion boolean
+---@field FocusSearchBar boolean
+
+---@class NRSKNUI.DBProfile.Miscellaneous.AuctionHouseFilter.Auctionator
+---@field [string] any
+---@field FocusSearchBar boolean
+
+---@class NRSKNUI.DBProfile.Miscellaneous.AuctionHouseFilter.CraftOrders
+---@field [string] any
+---@field CurrentExpansion boolean
+---@field FocusSearchBar boolean
+
+---@class NRSKNUI.DBProfile.Miscellaneous.Automation
+---@field [string] any
+---@field AutoAcceptDaily boolean
+---@field AutoAcceptEvent boolean
+---@field AutoAcceptRegular boolean
+---@field AutoAcceptWeekly boolean
+---@field AutoBonusRollMode string
+---@field AutoBonusRollQuest boolean
+---@field AutoCompleteQuest boolean
+---@field AutoFillDelete boolean
+---@field AutoHideHelptips boolean
+---@field AutoLoot boolean
+---@field AutoRepair boolean
+---@field AutoRoleCheck boolean
+---@field AutoSellJunk boolean
+---@field Enabled boolean
+---@field FastLoot boolean
+---@field OverrideKey string
+---@field OverrideMode string
+---@field SkipCinematics boolean
+---@field UseGuildFunds boolean
+
+---@class NRSKNUI.DBProfile.Miscellaneous.BenchAlert
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field FontFace string
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.Miscellaneous.BenchAlert.FontShadow
+---@field FontSize number
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.Miscellaneous.BenchAlert.Position
+---@field Strata string
+---@field Text string
+---@field UseGlobalFont boolean
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.Miscellaneous.BenchAlert.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Miscellaneous.BenchAlert.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Miscellaneous.CooldownStrings
+---@field [string] any
+---@field Enabled boolean
+---@field Profiles NRSKNUI.DBProfile.Miscellaneous.CooldownStrings.Profiles
+
+---@class NRSKNUI.DBProfile.Miscellaneous.CooldownStrings.Profiles
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.Miscellaneous.CopyAnything
+---@field [string] any
+---@field Enabled boolean
+---@field key string
+---@field modifier string
+
+---@class NRSKNUI.DBProfile.Miscellaneous.CursorCircle
+---@field [string] any
+---@field Color table
+---@field ColorMode string
+---@field Enabled boolean
+---@field GCD NRSKNUI.DBProfile.Miscellaneous.CursorCircle.GCD
+---@field Size number
+---@field Texture string
+---@field VisibilityMode string
+
+---@class NRSKNUI.DBProfile.Miscellaneous.CursorCircle.GCD
+---@field [string] any
+---@field HideOutOfCombat boolean
+---@field Mode string
+---@field Reverse boolean
+---@field RingColor table
+---@field RingColorMode string
+---@field Size number
+---@field SwipeColor table
+---@field SwipeColorMode string
+---@field Texture string
+
+---@class NRSKNUI.DBProfile.Miscellaneous.Durability
+---@field [string] any
+---@field CombatShowPercent number
+---@field Enabled boolean
+---@field FontFace string
+---@field FontOutline string
+---@field FontSize number
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.Miscellaneous.Durability.Position
+---@field ShowPercent number
+---@field Strata string
+---@field TextBroken string
+---@field TextColorBroken table
+---@field TextColorLow table
+---@field TextLow string
+---@field UseGlobalFont boolean
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.Miscellaneous.Durability.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Miscellaneous.FocusCastbar
+---@field [string] any
+---@field BackdropColor table
+---@field BorderColor table
+---@field CastColor table
+---@field Enabled boolean
+---@field FontFace string
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.Miscellaneous.FocusCastbar.FontShadow
+---@field FontSize number
+---@field Height number
+---@field HideNotInterruptible boolean
+---@field HoldTimer NRSKNUI.DBProfile.Miscellaneous.FocusCastbar.HoldTimer
+---@field ImportantGlow NRSKNUI.DBProfile.Miscellaneous.FocusCastbar.ImportantGlow
+---@field KickIndicator NRSKNUI.DBProfile.Miscellaneous.FocusCastbar.KickIndicator
+---@field NotInterruptibleColor table
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.Miscellaneous.FocusCastbar.Position
+---@field SparkColor table
+---@field SparkScale number
+---@field SparkTexture string
+---@field SparkWidth number
+---@field StatusBarTexture string
+---@field Strata string
+---@field TargetMarker NRSKNUI.DBProfile.Miscellaneous.FocusCastbar.TargetMarker
+---@field TargetNames NRSKNUI.DBProfile.Miscellaneous.FocusCastbar.TargetNames
+---@field TextColor table
+---@field UseGlobalBar boolean
+---@field UseGlobalFont boolean
+---@field UseGlobalSpark boolean
+---@field Width number
+---@field anchorFrameType string
+---@field timeToHold number
+
+---@class NRSKNUI.DBProfile.Miscellaneous.FocusCastbar.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field OffsetY number
+
+---@class NRSKNUI.DBProfile.Miscellaneous.FocusCastbar.HoldTimer
+---@field [string] any
+---@field Duration number
+---@field Enabled boolean
+---@field InterruptedColor table
+---@field SuccessColor table
+
+---@class NRSKNUI.DBProfile.Miscellaneous.FocusCastbar.ImportantGlow
+---@field [string] any
+---@field GlowBorder boolean
+---@field GlowColor table
+---@field GlowEnabled boolean
+---@field GlowFrequency number
+---@field GlowLength number
+---@field GlowLines number
+---@field GlowScale number
+---@field GlowThickness number
+---@field GlowType string
+
+---@class NRSKNUI.DBProfile.Miscellaneous.FocusCastbar.KickIndicator
+---@field [string] any
+---@field Enabled boolean
+---@field NotReadyColor table
+---@field TickColor table
+---@field TickWidth number
+
+---@class NRSKNUI.DBProfile.Miscellaneous.FocusCastbar.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Miscellaneous.FocusCastbar.TargetMarker
+---@field [string] any
+---@field Anchor string
+---@field Enabled boolean
+---@field Size number
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Miscellaneous.FocusCastbar.TargetNames
+---@field [string] any
+---@field Anchor string
+---@field FontSize number
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Miscellaneous.Gateway
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field FontFace string
+---@field FontOutline string
+---@field FontSize number
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.Miscellaneous.Gateway.Position
+---@field Strata string
+---@field Text string
+---@field UseGlobalFont boolean
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.Miscellaneous.Gateway.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Miscellaneous.MiscVars
+---@field [string] any
+---@field Enabled boolean
+---@field SpellQueueWindowMelee nil
+---@field SpellQueueWindowRanged nil
+
+---@class NRSKNUI.DBProfile.Miscellaneous.Recuperate
+---@field [string] any
+---@field Enabled boolean
+---@field LoadInParty boolean
+---@field LoadInRaid boolean
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.Miscellaneous.Recuperate.Position
+---@field Size number
+---@field Strata string
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.Miscellaneous.Recuperate.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Miscellaneous.SpellAlert
+---@field [string] any
+---@field Enabled boolean
+---@field Global NRSKNUI.DBProfile.Miscellaneous.SpellAlert.Global
+---@field Specs NRSKNUI.DBProfile.Miscellaneous.SpellAlert.Specs
+---@field UseGlobal boolean
+
+---@class NRSKNUI.DBProfile.Miscellaneous.SpellAlert.Global
+---@field [string] any
+---@field Alpha number
+---@field Scale number
+
+---@class NRSKNUI.DBProfile.Miscellaneous.SpellAlert.Specs
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.Miscellaneous.Tweaks
+---@field [string] any
+---@field Enabled boolean
+---@field EnterAccept boolean
+---@field HideBossBanner boolean
+---@field HideTalkingHead boolean
+---@field WhisperSounds NRSKNUI.DBProfile.Miscellaneous.Tweaks.WhisperSounds
+
+---@class NRSKNUI.DBProfile.Miscellaneous.Tweaks.WhisperSounds
+---@field [string] any
+---@field BNetWhisperSound string
+---@field Enabled boolean
+---@field WhisperSound string
+
+---@class NRSKNUI.DBProfile.Miscellaneous.WayFinder
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.Miscellaneous.XPBar
+---@field [string] any
+---@field BackgroundColor table
+---@field BorderColor table
+---@field ColorMode string
+---@field ColorModeQuest string
+---@field ColorModeRested string
+---@field Enabled boolean
+---@field FontFace string
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.Miscellaneous.XPBar.FontShadow
+---@field FontSize number
+---@field HideBlizzardBar boolean
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.Miscellaneous.XPBar.Position
+---@field QuestColor table
+---@field QuestShow boolean
+---@field QuestTexture string
+---@field RestedColor table
+---@field RestedShow boolean
+---@field RestedTexture string
+---@field StatusBarTexture string
+---@field StatusColor table
+---@field Strata string
+---@field TextColor table
+---@field UseGlobalBar boolean
+---@field UseGlobalFont boolean
+---@field anchorFrameType string
+---@field height number
+---@field hideWhenMax boolean
+---@field width number
+
+---@class NRSKNUI.DBProfile.Miscellaneous.XPBar.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field OffsetY number
+
+---@class NRSKNUI.DBProfile.Miscellaneous.XPBar.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.MissingItems
+---@field [string] any
+---@field ActiveGroup string
+---@field Display NRSKNUI.DBProfile.MissingItems.Display
+---@field Enabled boolean
+---@field Groups table
+---@field Items NRSKNUI.DBProfile.MissingItems.Items
+
+---@class NRSKNUI.DBProfile.MissingItems.Display
+---@field [string] any
+---@field DefaultColor table
+---@field FontFace string
+---@field FontOutline string
+---@field FontSize number
+---@field LineSpacing number
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.MissingItems.Display.Position
+---@field Strata string
+---@field UseGlobalFont boolean
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.MissingItems.Display.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.MissingItems.Items
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.PetTexts
+---@field [string] any
+---@field Config NRSKNUI.DynamicGroupConfig
+---@field DeadColor table
+---@field Enabled boolean
+---@field FontFace string
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.PetTexts.FontShadow
+---@field FontSize number
+---@field MissingColor table
+---@field ParentFrame string
+---@field PassiveColor table
+---@field PetDead string
+---@field PetMissing string
+---@field PetPassive string
+---@field PetWrong string
+---@field Position NRSKNUI.DBProfile.PetTexts.Position
+---@field Strata string
+---@field UseGlobalFont boolean
+---@field WrongColor table
+---@field anchorFrameType string
+
+---@alias NRSKNUI.DBProfile.PetTexts.Config NRSKNUI.DynamicGroupConfig
+
+---@class NRSKNUI.DBProfile.PetTexts.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field OffsetY number
+
+---@class NRSKNUI.DBProfile.PetTexts.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.PotionReady
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field FontFace string
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.PotionReady.FontShadow
+---@field FontSize number
+---@field LoadConditions NRSKNUI.DBProfile.PotionReady.LoadConditions
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.PotionReady.Position
+---@field Strata string
+---@field Text string
+---@field UseGlobalFont boolean
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.PotionReady.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.PotionReady.LoadConditions
+---@field [string] any
+---@field Combat NRSKNUI.DBProfile.PotionReady.LoadConditions.Combat
+---@field Enabled boolean
+---@field Group NRSKNUI.DBProfile.PotionReady.LoadConditions.Group
+---@field Instance NRSKNUI.DBProfile.PotionReady.LoadConditions.Instance
+---@field SelectedCategory string
+
+---@class NRSKNUI.DBProfile.PotionReady.LoadConditions.Combat
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.PotionReady.LoadConditions.Group
+---@field [string] any
+---@field Types NRSKNUI.DBProfile.PotionReady.LoadConditions.Group.Types
+
+---@class NRSKNUI.DBProfile.PotionReady.LoadConditions.Group.Types
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.PotionReady.LoadConditions.Instance
+---@field [string] any
+---@field Types NRSKNUI.DBProfile.PotionReady.LoadConditions.Instance.Types
+
+---@class NRSKNUI.DBProfile.PotionReady.LoadConditions.Instance.Types
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.PotionReady.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.RangeChecker
+---@field [string] any
+---@field ColorFour table
+---@field ColorOne table
+---@field ColorThree table
+---@field ColorTwo table
+---@field CombatOnly boolean
+---@field Enabled boolean
+---@field FontFace string
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.RangeChecker.FontShadow
+---@field FontSize number
+---@field MaxRange number
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.RangeChecker.Position
+---@field Strata string
+---@field UpdateThrottle number
+---@field UseGlobalFont boolean
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.RangeChecker.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field OffsetY number
+
+---@class NRSKNUI.DBProfile.RangeChecker.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.ReckonTracker
+---@field [string] any
+---@field Enabled boolean
+---@field GlowBorder boolean
+---@field GlowColor table
+---@field GlowDuration number
+---@field GlowEnabled boolean
+---@field GlowFrequency number
+---@field GlowLength number
+---@field GlowLines number
+---@field GlowScale number
+---@field GlowStartAnim boolean
+---@field GlowThickness number
+---@field GlowType string
+---@field GlowXOffset number
+---@field GlowYOffset number
+---@field IconSize number
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.ReckonTracker.Position
+---@field Strata string
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.ReckonTracker.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.RerollKeystone
+---@field [string] any
+---@field Enabled boolean
+---@field FontColor table
+---@field FontColorKey table
+---@field FontFace string
+---@field FontOutline string
+---@field FontSize number
+---@field FontSizeKey number
+---@field GlowBorder boolean
+---@field GlowColor table
+---@field GlowDuration number
+---@field GlowEnabled boolean
+---@field GlowFrequency number
+---@field GlowLength number
+---@field GlowLines number
+---@field GlowScale number
+---@field GlowStartAnim boolean
+---@field GlowThickness number
+---@field GlowType string
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.RerollKeystone.Position
+---@field Size number
+---@field Strata string
+---@field UseGlobalFont boolean
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.RerollKeystone.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Skinning
+---@field [string] any
+---@field ActionBars NRSKNUI.DBProfile.Skinning.ActionBars
+---@field Battlenet NRSKNUI.DBProfile.Skinning.Battlenet
+---@field BlizzardElements NRSKNUI.DBProfile.Skinning.BlizzardElements
+---@field BlizzardMouseover NRSKNUI.DBProfile.Skinning.BlizzardMouseover
+---@field BlizzardRM NRSKNUI.DBProfile.Skinning.BlizzardRM
+---@field Chatv2 NRSKNUI.DBProfile.Skinning.Chatv2
+---@field DetailsBackdrop NRSKNUI.DBProfile.Skinning.DetailsBackdrop
+---@field MicroMenu NRSKNUI.DBProfile.Skinning.MicroMenu
+---@field Minimap NRSKNUI.DBProfile.Skinning.Minimap
+---@field Tooltips NRSKNUI.DBProfile.Skinning.Tooltips
+---@field UICleanup NRSKNUI.DBProfile.Skinning.UICleanup
+---@field UIWidgets NRSKNUI.DBProfile.Skinning.UIWidgets
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars
+---@field [string] any
+---@field Bars NRSKNUI.DBProfile.Skinning.ActionBars.Bars
+---@field ChargeAnchor string
+---@field ChargeXOffset number
+---@field ChargeYOffset number
+---@field CooldownAnchor string
+---@field CooldownXOffset number
+---@field CooldownYOffset number
+---@field Enabled boolean
+---@field FontFace string
+---@field FontOutline string
+---@field FontSizes NRSKNUI.DBProfile.Skinning.ActionBars.FontSizes
+---@field HideChargeText boolean
+---@field HideKeybindText boolean
+---@field HideMacroText boolean
+---@field HideProfTexture boolean
+---@field KeybindAnchor string
+---@field KeybindXOffset number
+---@field KeybindYOffset number
+---@field MacroAnchor string
+---@field MacroXOffset number
+---@field MacroYOffset number
+---@field Mouseover NRSKNUI.DBProfile.Skinning.ActionBars.Mouseover
+---@field MouseoverOverride boolean
+---@field RangeOverlayColor table
+---@field UseGlobalFont boolean
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars
+---@field [string] any
+---@field Bar1 NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar1
+---@field Bar2 NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar2
+---@field Bar3 NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar3
+---@field Bar4 NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar4
+---@field Bar5 NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar5
+---@field Bar6 NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar6
+---@field Bar7 NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar7
+---@field Bar8 NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar8
+---@field PetBar NRSKNUI.DBProfile.Skinning.ActionBars.Bars.PetBar
+---@field StanceBar NRSKNUI.DBProfile.Skinning.ActionBars.Bars.StanceBar
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar1
+---@field [string] any
+---@field BackdropColor table
+---@field BorderColor table
+---@field ButtonSize number
+---@field ButtonsPerLine number
+---@field Enabled boolean
+---@field FlyoutDirection string
+---@field FontSizes NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar1.FontSizes
+---@field GrowthDirection string
+---@field HideEmptyBackdrops boolean
+---@field Layout string
+---@field Mouseover NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar1.Mouseover
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar1.Position
+---@field Spacing number
+---@field TextPositions NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar1.TextPositions
+---@field TextVisibility NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar1.TextVisibility
+---@field TotalButtons number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar1.FontSizes
+---@field [string] any
+---@field ChargeSize number
+---@field CooldownSize number
+---@field GlobalOverride boolean
+---@field KeybindSize number
+---@field MacroSize number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar1.Mouseover
+---@field [string] any
+---@field Alpha number
+---@field Enabled boolean
+---@field GlobalOverride boolean
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar1.Position
+---@field [string] any
+---@field AnchorPoint string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar1.TextPositions
+---@field [string] any
+---@field ChargeAnchor string
+---@field ChargeXOffset number
+---@field ChargeYOffset number
+---@field GlobalOverride boolean
+---@field KeybindAnchor string
+---@field KeybindXOffset number
+---@field KeybindYOffset number
+---@field MacroAnchor string
+---@field MacroXOffset number
+---@field MacroYOffset number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar1.TextVisibility
+---@field [string] any
+---@field GlobalOverride boolean
+---@field HideChargeText boolean
+---@field HideKeybindText boolean
+---@field HideMacroText boolean
+---@field HideProfTexture boolean
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar2
+---@field [string] any
+---@field BackdropColor table
+---@field BorderColor table
+---@field ButtonSize number
+---@field ButtonsPerLine number
+---@field Enabled boolean
+---@field FlyoutDirection string
+---@field FontSizes NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar2.FontSizes
+---@field GrowthDirection string
+---@field HideEmptyBackdrops boolean
+---@field Layout string
+---@field Mouseover NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar2.Mouseover
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar2.Position
+---@field Spacing number
+---@field TextPositions NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar2.TextPositions
+---@field TextVisibility NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar2.TextVisibility
+---@field TotalButtons number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar2.FontSizes
+---@field [string] any
+---@field ChargeSize number
+---@field CooldownSize number
+---@field GlobalOverride boolean
+---@field KeybindSize number
+---@field MacroSize number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar2.Mouseover
+---@field [string] any
+---@field Alpha number
+---@field Enabled boolean
+---@field GlobalOverride boolean
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar2.Position
+---@field [string] any
+---@field AnchorPoint string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar2.TextPositions
+---@field [string] any
+---@field ChargeAnchor string
+---@field ChargeXOffset number
+---@field ChargeYOffset number
+---@field GlobalOverride boolean
+---@field KeybindAnchor string
+---@field KeybindXOffset number
+---@field KeybindYOffset number
+---@field MacroAnchor string
+---@field MacroXOffset number
+---@field MacroYOffset number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar2.TextVisibility
+---@field [string] any
+---@field GlobalOverride boolean
+---@field HideChargeText boolean
+---@field HideKeybindText boolean
+---@field HideMacroText boolean
+---@field HideProfTexture boolean
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar3
+---@field [string] any
+---@field BackdropColor table
+---@field BorderColor table
+---@field ButtonSize number
+---@field ButtonsPerLine number
+---@field Enabled boolean
+---@field FlyoutDirection string
+---@field FontSizes NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar3.FontSizes
+---@field GrowthDirection string
+---@field HideEmptyBackdrops boolean
+---@field Layout string
+---@field Mouseover NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar3.Mouseover
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar3.Position
+---@field Spacing number
+---@field TextPositions NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar3.TextPositions
+---@field TextVisibility NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar3.TextVisibility
+---@field TotalButtons number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar3.FontSizes
+---@field [string] any
+---@field ChargeSize number
+---@field CooldownSize number
+---@field GlobalOverride boolean
+---@field KeybindSize number
+---@field MacroSize number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar3.Mouseover
+---@field [string] any
+---@field Alpha number
+---@field Enabled boolean
+---@field GlobalOverride boolean
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar3.Position
+---@field [string] any
+---@field AnchorPoint string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar3.TextPositions
+---@field [string] any
+---@field ChargeAnchor string
+---@field ChargeXOffset number
+---@field ChargeYOffset number
+---@field GlobalOverride boolean
+---@field KeybindAnchor string
+---@field KeybindXOffset number
+---@field KeybindYOffset number
+---@field MacroAnchor string
+---@field MacroXOffset number
+---@field MacroYOffset number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar3.TextVisibility
+---@field [string] any
+---@field GlobalOverride boolean
+---@field HideChargeText boolean
+---@field HideKeybindText boolean
+---@field HideMacroText boolean
+---@field HideProfTexture boolean
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar4
+---@field [string] any
+---@field BackdropColor table
+---@field BorderColor table
+---@field ButtonSize number
+---@field ButtonsPerLine number
+---@field Enabled boolean
+---@field FlyoutDirection string
+---@field FontSizes NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar4.FontSizes
+---@field GrowthDirection string
+---@field HideEmptyBackdrops boolean
+---@field Layout string
+---@field Mouseover NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar4.Mouseover
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar4.Position
+---@field Spacing number
+---@field TextPositions NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar4.TextPositions
+---@field TextVisibility NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar4.TextVisibility
+---@field TotalButtons number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar4.FontSizes
+---@field [string] any
+---@field ChargeSize number
+---@field CooldownSize number
+---@field GlobalOverride boolean
+---@field KeybindSize number
+---@field MacroSize number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar4.Mouseover
+---@field [string] any
+---@field Alpha number
+---@field Enabled boolean
+---@field GlobalOverride boolean
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar4.Position
+---@field [string] any
+---@field AnchorPoint string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar4.TextPositions
+---@field [string] any
+---@field ChargeAnchor string
+---@field ChargeXOffset number
+---@field ChargeYOffset number
+---@field GlobalOverride boolean
+---@field KeybindAnchor string
+---@field KeybindXOffset number
+---@field KeybindYOffset number
+---@field MacroAnchor string
+---@field MacroXOffset number
+---@field MacroYOffset number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar4.TextVisibility
+---@field [string] any
+---@field GlobalOverride boolean
+---@field HideChargeText boolean
+---@field HideKeybindText boolean
+---@field HideMacroText boolean
+---@field HideProfTexture boolean
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar5
+---@field [string] any
+---@field BackdropColor table
+---@field BorderColor table
+---@field ButtonSize number
+---@field ButtonsPerLine number
+---@field Enabled boolean
+---@field FlyoutDirection string
+---@field FontSizes NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar5.FontSizes
+---@field GrowthDirection string
+---@field HideEmptyBackdrops boolean
+---@field Layout string
+---@field Mouseover NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar5.Mouseover
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar5.Position
+---@field Spacing number
+---@field TextPositions NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar5.TextPositions
+---@field TextVisibility NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar5.TextVisibility
+---@field TotalButtons number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar5.FontSizes
+---@field [string] any
+---@field ChargeSize number
+---@field CooldownSize number
+---@field GlobalOverride boolean
+---@field KeybindSize number
+---@field MacroSize number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar5.Mouseover
+---@field [string] any
+---@field Alpha number
+---@field Enabled boolean
+---@field GlobalOverride boolean
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar5.Position
+---@field [string] any
+---@field AnchorPoint string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar5.TextPositions
+---@field [string] any
+---@field ChargeAnchor string
+---@field ChargeXOffset number
+---@field ChargeYOffset number
+---@field GlobalOverride boolean
+---@field KeybindAnchor string
+---@field KeybindXOffset number
+---@field KeybindYOffset number
+---@field MacroAnchor string
+---@field MacroXOffset number
+---@field MacroYOffset number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar5.TextVisibility
+---@field [string] any
+---@field GlobalOverride boolean
+---@field HideChargeText boolean
+---@field HideKeybindText boolean
+---@field HideMacroText boolean
+---@field HideProfTexture boolean
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar6
+---@field [string] any
+---@field BackdropColor table
+---@field BorderColor table
+---@field ButtonSize number
+---@field ButtonsPerLine number
+---@field Enabled boolean
+---@field FlyoutDirection string
+---@field FontSizes NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar6.FontSizes
+---@field GrowthDirection string
+---@field HideEmptyBackdrops boolean
+---@field Layout string
+---@field Mouseover NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar6.Mouseover
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar6.Position
+---@field Spacing number
+---@field TextPositions NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar6.TextPositions
+---@field TextVisibility NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar6.TextVisibility
+---@field TotalButtons number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar6.FontSizes
+---@field [string] any
+---@field ChargeSize number
+---@field CooldownSize number
+---@field GlobalOverride boolean
+---@field KeybindSize number
+---@field MacroSize number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar6.Mouseover
+---@field [string] any
+---@field Alpha number
+---@field Enabled boolean
+---@field GlobalOverride boolean
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar6.Position
+---@field [string] any
+---@field AnchorPoint string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar6.TextPositions
+---@field [string] any
+---@field ChargeAnchor string
+---@field ChargeXOffset number
+---@field ChargeYOffset number
+---@field GlobalOverride boolean
+---@field KeybindAnchor string
+---@field KeybindXOffset number
+---@field KeybindYOffset number
+---@field MacroAnchor string
+---@field MacroXOffset number
+---@field MacroYOffset number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar6.TextVisibility
+---@field [string] any
+---@field GlobalOverride boolean
+---@field HideChargeText boolean
+---@field HideKeybindText boolean
+---@field HideMacroText boolean
+---@field HideProfTexture boolean
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar7
+---@field [string] any
+---@field BackdropColor table
+---@field BorderColor table
+---@field ButtonSize number
+---@field ButtonsPerLine number
+---@field Enabled boolean
+---@field FlyoutDirection string
+---@field FontSizes NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar7.FontSizes
+---@field GrowthDirection string
+---@field HideEmptyBackdrops boolean
+---@field Layout string
+---@field Mouseover NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar7.Mouseover
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar7.Position
+---@field Spacing number
+---@field TextPositions NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar7.TextPositions
+---@field TextVisibility NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar7.TextVisibility
+---@field TotalButtons number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar7.FontSizes
+---@field [string] any
+---@field ChargeSize number
+---@field CooldownSize number
+---@field GlobalOverride boolean
+---@field KeybindSize number
+---@field MacroSize number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar7.Mouseover
+---@field [string] any
+---@field Alpha number
+---@field Enabled boolean
+---@field GlobalOverride boolean
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar7.Position
+---@field [string] any
+---@field AnchorPoint string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar7.TextPositions
+---@field [string] any
+---@field ChargeAnchor string
+---@field ChargeXOffset number
+---@field ChargeYOffset number
+---@field GlobalOverride boolean
+---@field KeybindAnchor string
+---@field KeybindXOffset number
+---@field KeybindYOffset number
+---@field MacroAnchor string
+---@field MacroXOffset number
+---@field MacroYOffset number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar7.TextVisibility
+---@field [string] any
+---@field GlobalOverride boolean
+---@field HideChargeText boolean
+---@field HideKeybindText boolean
+---@field HideMacroText boolean
+---@field HideProfTexture boolean
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar8
+---@field [string] any
+---@field BackdropColor table
+---@field BorderColor table
+---@field ButtonSize number
+---@field ButtonsPerLine number
+---@field Enabled boolean
+---@field FlyoutDirection string
+---@field FontSizes NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar8.FontSizes
+---@field GrowthDirection string
+---@field HideEmptyBackdrops boolean
+---@field Layout string
+---@field Mouseover NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar8.Mouseover
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar8.Position
+---@field Spacing number
+---@field TextPositions NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar8.TextPositions
+---@field TextVisibility NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar8.TextVisibility
+---@field TotalButtons number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar8.FontSizes
+---@field [string] any
+---@field ChargeSize number
+---@field CooldownSize number
+---@field GlobalOverride boolean
+---@field KeybindSize number
+---@field MacroSize number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar8.Mouseover
+---@field [string] any
+---@field Alpha number
+---@field Enabled boolean
+---@field GlobalOverride boolean
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar8.Position
+---@field [string] any
+---@field AnchorPoint string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar8.TextPositions
+---@field [string] any
+---@field ChargeAnchor string
+---@field ChargeXOffset number
+---@field ChargeYOffset number
+---@field GlobalOverride boolean
+---@field KeybindAnchor string
+---@field KeybindXOffset number
+---@field KeybindYOffset number
+---@field MacroAnchor string
+---@field MacroXOffset number
+---@field MacroYOffset number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar8.TextVisibility
+---@field [string] any
+---@field GlobalOverride boolean
+---@field HideChargeText boolean
+---@field HideKeybindText boolean
+---@field HideMacroText boolean
+---@field HideProfTexture boolean
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.PetBar
+---@field [string] any
+---@field BackdropColor table
+---@field BorderColor table
+---@field ButtonSize number
+---@field ButtonsPerLine number
+---@field Enabled boolean
+---@field FontSizes NRSKNUI.DBProfile.Skinning.ActionBars.Bars.PetBar.FontSizes
+---@field GrowthDirection string
+---@field HideEmptyBackdrops boolean
+---@field Layout string
+---@field Mouseover NRSKNUI.DBProfile.Skinning.ActionBars.Bars.PetBar.Mouseover
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.Skinning.ActionBars.Bars.PetBar.Position
+---@field Spacing number
+---@field TextPositions NRSKNUI.DBProfile.Skinning.ActionBars.Bars.PetBar.TextPositions
+---@field TextVisibility NRSKNUI.DBProfile.Skinning.ActionBars.Bars.PetBar.TextVisibility
+---@field TotalButtons number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.PetBar.FontSizes
+---@field [string] any
+---@field ChargeSize number
+---@field CooldownSize number
+---@field GlobalOverride boolean
+---@field KeybindSize number
+---@field MacroSize number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.PetBar.Mouseover
+---@field [string] any
+---@field Alpha number
+---@field Enabled boolean
+---@field GlobalOverride boolean
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.PetBar.Position
+---@field [string] any
+---@field AnchorPoint string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.PetBar.TextPositions
+---@field [string] any
+---@field ChargeAnchor string
+---@field ChargeXOffset number
+---@field ChargeYOffset number
+---@field GlobalOverride boolean
+---@field KeybindAnchor string
+---@field KeybindXOffset number
+---@field KeybindYOffset number
+---@field MacroAnchor string
+---@field MacroXOffset number
+---@field MacroYOffset number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.PetBar.TextVisibility
+---@field [string] any
+---@field GlobalOverride boolean
+---@field HideChargeText boolean
+---@field HideKeybindText boolean
+---@field HideMacroText boolean
+---@field HideProfTexture boolean
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.StanceBar
+---@field [string] any
+---@field BackdropColor table
+---@field BorderColor table
+---@field ButtonSize number
+---@field ButtonsPerLine number
+---@field Enabled boolean
+---@field FontSizes NRSKNUI.DBProfile.Skinning.ActionBars.Bars.StanceBar.FontSizes
+---@field GrowthDirection string
+---@field HideEmptyBackdrops boolean
+---@field Layout string
+---@field Mouseover NRSKNUI.DBProfile.Skinning.ActionBars.Bars.StanceBar.Mouseover
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.Skinning.ActionBars.Bars.StanceBar.Position
+---@field Spacing number
+---@field TextPositions NRSKNUI.DBProfile.Skinning.ActionBars.Bars.StanceBar.TextPositions
+---@field TextVisibility NRSKNUI.DBProfile.Skinning.ActionBars.Bars.StanceBar.TextVisibility
+---@field TotalButtons number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.StanceBar.FontSizes
+---@field [string] any
+---@field ChargeSize number
+---@field CooldownSize number
+---@field GlobalOverride boolean
+---@field KeybindSize number
+---@field MacroSize number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.StanceBar.Mouseover
+---@field [string] any
+---@field Alpha number
+---@field Enabled boolean
+---@field GlobalOverride boolean
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.StanceBar.Position
+---@field [string] any
+---@field AnchorPoint string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.StanceBar.TextPositions
+---@field [string] any
+---@field ChargeAnchor string
+---@field ChargeXOffset number
+---@field ChargeYOffset number
+---@field GlobalOverride boolean
+---@field KeybindAnchor string
+---@field KeybindXOffset number
+---@field KeybindYOffset number
+---@field MacroAnchor string
+---@field MacroXOffset number
+---@field MacroYOffset number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.StanceBar.TextVisibility
+---@field [string] any
+---@field GlobalOverride boolean
+---@field HideChargeText boolean
+---@field HideKeybindText boolean
+---@field HideMacroText boolean
+---@field HideProfTexture boolean
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.FontSizes
+---@field [string] any
+---@field ChargeSize number
+---@field CooldownSize number
+---@field KeybindSize number
+---@field MacroSize number
+
+---@class NRSKNUI.DBProfile.Skinning.ActionBars.Mouseover
+---@field [string] any
+---@field Alpha number
+---@field Enabled boolean
+---@field FadeInDuration number
+---@field FadeOutDuration number
+
+---@class NRSKNUI.DBProfile.Skinning.Battlenet
+---@field [string] any
+---@field Enabled boolean
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.Skinning.Battlenet.Position
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.Skinning.Battlenet.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Skinning.BlizzardElements
+---@field [string] any
+---@field Enabled boolean
+---@field FontButtonSize number
+---@field FontEditBoxSize number
+---@field FontFace string
+---@field FontLargeSize number
+---@field FontMediumSize number
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.Skinning.BlizzardElements.FontShadow
+---@field FontSmallSize number
+---@field FontTabSize number
+---@field Frames NRSKNUI.DBProfile.Skinning.BlizzardElements.Frames
+---@field General NRSKNUI.DBProfile.Skinning.BlizzardElements.General
+---@field ObjectiveTracker NRSKNUI.DBProfile.Skinning.BlizzardElements.ObjectiveTracker
+---@field UseGlobalFont boolean
+
+---@class NRSKNUI.DBProfile.Skinning.BlizzardElements.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field OffsetY number
+
+---@class NRSKNUI.DBProfile.Skinning.BlizzardElements.Frames
+---@field [string] any
+---@field CharacterFrame boolean
+---@field InspectFrame boolean
+---@field PlayerSpells boolean
+
+---@class NRSKNUI.DBProfile.Skinning.BlizzardElements.General
+---@field [string] any
+---@field AccentMode string
+---@field BackgroundColor table
+---@field BorderColor table
+---@field CustomAccentColor table
+---@field DisabledColor table
+---@field HighlightColor table
+---@field PanelColor table
+---@field WidgetColor table
+
+---@class NRSKNUI.DBProfile.Skinning.BlizzardElements.ObjectiveTracker
+---@field [string] any
+---@field ColorMode string
+---@field CustomColor table
+---@field Enabled boolean
+---@field FontStyling boolean
+---@field QuestTextSize number
+---@field QuestTitleSize number
+---@field SkinHeaders boolean
+---@field SkinMinimizeButton boolean
+---@field SkinProgressBars boolean
+---@field SkinQuestIcons boolean
+
+---@class NRSKNUI.DBProfile.Skinning.BlizzardMouseover
+---@field [string] any
+---@field Alpha number
+---@field BagMouseover NRSKNUI.DBProfile.Skinning.BlizzardMouseover.BagMouseover
+---@field Enabled boolean
+---@field FadeInDuration number
+---@field FadeOutDuration number
+
+---@class NRSKNUI.DBProfile.Skinning.BlizzardMouseover.BagMouseover
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.Skinning.BlizzardRM
+---@field [string] any
+---@field Alpha number
+---@field Enabled boolean
+---@field FadeInDuration number
+---@field FadeOnMouseOut boolean
+---@field FadeOutDuration number
+---@field Position NRSKNUI.DBProfile.Skinning.BlizzardRM.Position
+---@field Strata string
+
+---@class NRSKNUI.DBProfile.Skinning.BlizzardRM.Position
+---@field [string] any
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Skinning.Chatv2
+---@field [string] any
+---@field Backdrop NRSKNUI.DBProfile.Skinning.Chatv2.Backdrop
+---@field EditBox NRSKNUI.DBProfile.Skinning.Chatv2.EditBox
+---@field EditBoxFontSize number
+---@field EditBoxPosition string
+---@field Enabled boolean
+---@field FadeAlpha number
+---@field FadeEnabled boolean
+---@field FadeTabs boolean
+---@field FadeTime number
+---@field FontFace string
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.Skinning.Chatv2.FontShadow
+---@field FontSize number
+---@field Height number
+---@field MaxLines number
+---@field NumScrollMessages number
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.Skinning.Chatv2.Position
+---@field ShortChannels boolean
+---@field TabBackdrop NRSKNUI.DBProfile.Skinning.Chatv2.TabBackdrop
+---@field TabFontFace nil
+---@field TabFontOutline string
+---@field TabFontSize number
+---@field TabSelectedTextColor NRSKNUI.DBProfile.Skinning.Chatv2.TabSelectedTextColor
+---@field TabSelectedTextEnabled boolean
+---@field TabSelector string
+---@field TabSelectorColor NRSKNUI.DBProfile.Skinning.Chatv2.TabSelectorColor
+---@field TabTextColor NRSKNUI.DBProfile.Skinning.Chatv2.TabTextColor
+---@field TimestampColor NRSKNUI.DBProfile.Skinning.Chatv2.TimestampColor
+---@field TimestampColorEnabled boolean
+---@field TimestampFormat string
+---@field UseGlobalFont boolean
+---@field UseLocalTime boolean
+---@field Width number
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.Skinning.Chatv2.Backdrop
+---@field [string] any
+---@field BorderColor table
+---@field Color table
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.Skinning.Chatv2.EditBox
+---@field [string] any
+---@field BackdropColor table
+---@field BorderColor table
+
+---@class NRSKNUI.DBProfile.Skinning.Chatv2.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field OffsetY number
+
+---@class NRSKNUI.DBProfile.Skinning.Chatv2.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Skinning.Chatv2.TabBackdrop
+---@field [string] any
+---@field BorderColor table
+---@field Color table
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.Skinning.Chatv2.TabSelectedTextColor
+---@field [string] any
+---@field b number
+---@field g number
+---@field r number
+
+---@class NRSKNUI.DBProfile.Skinning.Chatv2.TabSelectorColor
+---@field [string] any
+---@field b number
+---@field g number
+---@field r number
+
+---@class NRSKNUI.DBProfile.Skinning.Chatv2.TabTextColor
+---@field [string] any
+---@field b number
+---@field g number
+---@field r number
+
+---@class NRSKNUI.DBProfile.Skinning.Chatv2.TimestampColor
+---@field [string] any
+---@field b number
+---@field g number
+---@field r number
+
+---@class NRSKNUI.DBProfile.Skinning.DetailsBackdrop
+---@field [string] any
+---@field Enabled boolean
+---@field backdrops NRSKNUI.DBProfile.Skinning.DetailsBackdrop.backdrops
+---@field currentEdit number
+
+---@class NRSKNUI.DBProfile.Skinning.DetailsBackdrop.backdrops
+---@field [string] any
+---@field [number] any
+
+---@class NRSKNUI.DBProfile.Skinning.MicroMenu
+---@field [string] any
+---@field BackdropBorderColor table
+---@field BackdropColor table
+---@field BackdropSpacing number
+---@field ButtonHeight number
+---@field ButtonSpacing number
+---@field ButtonWidth number
+---@field Enabled boolean
+---@field Mouseover NRSKNUI.DBProfile.Skinning.MicroMenu.Mouseover
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.Skinning.MicroMenu.Position
+---@field ShowBackdrop boolean
+---@field Strata string
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.Skinning.MicroMenu.Mouseover
+---@field [string] any
+---@field Alpha number
+---@field Enabled boolean
+---@field FadeInDuration number
+---@field FadeOutDuration number
+
+---@class NRSKNUI.DBProfile.Skinning.MicroMenu.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Skinning.Minimap
+---@field [string] any
+---@field AddOnComp NRSKNUI.DBProfile.Skinning.Minimap.AddOnComp
+---@field Border NRSKNUI.DBProfile.Skinning.Minimap.Border
+---@field BugSack NRSKNUI.DBProfile.Skinning.Minimap.BugSack
+---@field Enabled boolean
+---@field FontFace string
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.Skinning.Minimap.FontShadow
+---@field InstanceDifficulty NRSKNUI.DBProfile.Skinning.Minimap.InstanceDifficulty
+---@field LandingPage NRSKNUI.DBProfile.Skinning.Minimap.LandingPage
+---@field Mail NRSKNUI.DBProfile.Skinning.Minimap.Mail
+---@field Position NRSKNUI.DBProfile.Skinning.Minimap.Position
+---@field QueueStatus NRSKNUI.DBProfile.Skinning.Minimap.QueueStatus
+---@field Scale number
+---@field Size number
+---@field UseGlobalFont boolean
+
+---@class NRSKNUI.DBProfile.Skinning.Minimap.AddOnComp
+---@field [string] any
+---@field Anchor string
+---@field Enabled boolean
+---@field Size number
+---@field X number
+---@field Y number
+
+---@class NRSKNUI.DBProfile.Skinning.Minimap.Border
+---@field [string] any
+---@field Color table
+---@field Thickness number
+
+---@class NRSKNUI.DBProfile.Skinning.Minimap.BugSack
+---@field [string] any
+---@field Anchor string
+---@field Enabled boolean
+---@field Size number
+---@field X number
+---@field Y number
+
+---@class NRSKNUI.DBProfile.Skinning.Minimap.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field OffsetY number
+
+---@class NRSKNUI.DBProfile.Skinning.Minimap.InstanceDifficulty
+---@field [string] any
+---@field Anchor string
+---@field Enabled boolean
+---@field Scale number
+---@field X number
+---@field Y number
+
+---@class NRSKNUI.DBProfile.Skinning.Minimap.LandingPage
+---@field [string] any
+---@field Anchor string
+---@field Enabled boolean
+---@field Size number
+---@field X number
+---@field Y number
+
+---@class NRSKNUI.DBProfile.Skinning.Minimap.Mail
+---@field [string] any
+---@field Anchor string
+---@field Enabled boolean
+---@field Scale number
+---@field X number
+---@field Y number
+
+---@class NRSKNUI.DBProfile.Skinning.Minimap.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field X number
+---@field Y number
+
+---@class NRSKNUI.DBProfile.Skinning.Minimap.QueueStatus
+---@field [string] any
+---@field Anchor string
+---@field Enabled boolean
+---@field Scale number
+---@field X number
+---@field Y number
+
+---@class NRSKNUI.DBProfile.Skinning.Tooltips
+---@field [string] any
+---@field BackgroundColor table
+---@field BorderColor table
+---@field Enabled boolean
+---@field FontFace string
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.Skinning.Tooltips.FontShadow
+---@field GuildNameColor table
+---@field GuildRankColor table
+---@field HeaderTextSize number
+---@field HideInCombat boolean
+---@field HideInCombatTypes NRSKNUI.DBProfile.Skinning.Tooltips.HideInCombatTypes
+---@field HideThreatLine boolean
+---@field MinionColor table
+---@field Mod string
+---@field NameRealmColor table
+---@field Position NRSKNUI.DBProfile.Skinning.Tooltips.Position
+---@field ShowAuraContainerSpellID boolean
+---@field ShowItemQualityBorder boolean
+---@field ShowMountInfo boolean
+---@field ShowStatusBar boolean
+---@field SkinAuraContainer boolean
+---@field StatusBarTexture string
+---@field TextSize number
+---@field TextSmallSize number
+---@field UseGlobalBar boolean
+---@field UseGlobalFont boolean
+
+---@class NRSKNUI.DBProfile.Skinning.Tooltips.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field OffsetY number
+
+---@class NRSKNUI.DBProfile.Skinning.Tooltips.HideInCombatTypes
+---@field [string] any
+---@field Auras boolean
+---@field Items boolean
+---@field Spells boolean
+---@field Units boolean
+
+---@class NRSKNUI.DBProfile.Skinning.Tooltips.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Skinning.UICleanup
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.Skinning.UIWidgets
+---@field [string] any
+---@field Enabled boolean
+---@field FontFace string
+---@field FontOutline string
+---@field StatusBar NRSKNUI.DBProfile.Skinning.UIWidgets.StatusBar
+---@field TextWidget NRSKNUI.DBProfile.Skinning.UIWidgets.TextWidget
+
+---@class NRSKNUI.DBProfile.Skinning.UIWidgets.StatusBar
+---@field [string] any
+---@field BackdropColor table
+---@field BarTextSize number
+---@field BorderColor table
+---@field Enabled boolean
+---@field LabelSize number
+---@field StripTextures boolean
+---@field StyleBarText boolean
+---@field StyleLabel boolean
+---@field Width number
+
+---@class NRSKNUI.DBProfile.Skinning.UIWidgets.TextWidget
+---@field [string] any
+---@field Enabled boolean
+---@field Size number
+---@field StyleText boolean
+---@field Width number
+
+---@class NRSKNUI.DBProfile.TotemTracker
+---@field [string] any
+---@field Enabled boolean
+---@field FontFace string
+---@field FontOutline string
+---@field GrowDirection string
+---@field IconSize number
+---@field IconSpacing number
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.TotemTracker.Position
+---@field Reverse boolean
+---@field ShowTimer boolean
+---@field Strata string
+---@field Swipe boolean
+---@field TimerFontSize number
+---@field UseGlobalFont boolean
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.TotemTracker.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames
+---@field [string] any
+---@field Enabled boolean
+---@field General NRSKNUI.DBProfile.UnitFrames.General
+---@field TagSettings NRSKNUI.DBProfile.UnitFrames.TagSettings
+---@field Units NRSKNUI.DBProfile.UnitFrames.Units
+
+---@class NRSKNUI.DBProfile.UnitFrames.General
+---@field [string] any
+---@field BackgroundTexture string
+---@field CastbarColorByClass boolean
+---@field ColorByClass boolean
+---@field ColorByPower boolean
+---@field Colors NRSKNUI.DBProfile.UnitFrames.General.Colors
+---@field DamageAbsorb NRSKNUI.DBProfile.UnitFrames.General.DamageAbsorb
+---@field FontFace string
+---@field FontOutline string
+---@field ForegroundAlphaWhenColorByClass number
+---@field HealAbsorb NRSKNUI.DBProfile.UnitFrames.General.HealAbsorb
+---@field Highlight NRSKNUI.DBProfile.UnitFrames.General.Highlight
+---@field Range NRSKNUI.DBProfile.UnitFrames.General.Range
+---@field SafeZone NRSKNUI.DBProfile.UnitFrames.General.SafeZone
+---@field Smooth boolean
+---@field SparkColor table
+---@field SparkScale number
+---@field SparkTexture string
+---@field SparkWidth number
+---@field UseGlobalBar boolean
+---@field UseGlobalFont boolean
+---@field UseGlobalSpark boolean
+---@field statusBar string
+
+---@class NRSKNUI.DBProfile.UnitFrames.General.Colors
+---@field [string] any
+---@field Background table
+---@field BackgroundWhenColorByClass table
+---@field Castbar table
+---@field CastbarBackground table
+---@field CastbarFail table
+---@field CastbarNonInterruptible table
+---@field Foreground table
+---@field Power table
+
+---@class NRSKNUI.DBProfile.UnitFrames.General.DamageAbsorb
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field StatusBarTexture string
+---@field UseGlobalBar boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.General.HealAbsorb
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field StatusBarTexture string
+---@field UseGlobalBar boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.General.Highlight
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field StatusBarTexture string
+---@field UseGlobalBar boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.General.Range
+---@field [string] any
+---@field Enabled boolean
+---@field InsideAlpha number
+---@field OutsideAlpha number
+
+---@class NRSKNUI.DBProfile.UnitFrames.General.SafeZone
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.TagSettings
+---@field [string] any
+---@field Separator string
+---@field UpdateInterval number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units
+---@field [string] any
+---@field focus NRSKNUI.DBProfile.UnitFrames.Units.focus
+---@field focustarget NRSKNUI.DBProfile.UnitFrames.Units.focustarget
+---@field pet NRSKNUI.DBProfile.UnitFrames.Units.pet
+---@field pettarget NRSKNUI.DBProfile.UnitFrames.Units.pettarget
+---@field player NRSKNUI.DBProfile.UnitFrames.Units.player
+---@field target NRSKNUI.DBProfile.UnitFrames.Units.target
+---@field targettarget NRSKNUI.DBProfile.UnitFrames.Units.targettarget
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.focus
+---@field [string] any
+---@field Castbar NRSKNUI.DBProfile.UnitFrames.Units.focus.Castbar
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.focus.Position
+---@field Power NRSKNUI.DBProfile.UnitFrames.Units.focus.Power
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.focus.Castbar
+---@field [string] any
+---@field Enabled boolean
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.focus.Castbar.Position
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.focus.Castbar.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.focus.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.focus.Power
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.focustarget
+---@field [string] any
+---@field Castbar NRSKNUI.DBProfile.UnitFrames.Units.focustarget.Castbar
+---@field Height number
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.focustarget.Position
+---@field Power NRSKNUI.DBProfile.UnitFrames.Units.focustarget.Power
+---@field Tags NRSKNUI.DBProfile.UnitFrames.Units.focustarget.Tags
+---@field Width number
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.focustarget.Castbar
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.focustarget.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.focustarget.Power
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.focustarget.Tags
+---@field [string] any
+---@field TagOne NRSKNUI.DBProfile.UnitFrames.Units.focustarget.Tags.TagOne
+---@field TagThree NRSKNUI.DBProfile.UnitFrames.Units.focustarget.Tags.TagThree
+---@field TagTwo NRSKNUI.DBProfile.UnitFrames.Units.focustarget.Tags.TagTwo
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.focustarget.Tags.TagOne
+---@field [string] any
+---@field BoundTo string
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.focustarget.Tags.TagOne.Position
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.focustarget.Tags.TagOne.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.focustarget.Tags.TagThree
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.focustarget.Tags.TagTwo
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.pet
+---@field [string] any
+---@field Height number
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.pet.Position
+---@field Power NRSKNUI.DBProfile.UnitFrames.Units.pet.Power
+---@field Tags NRSKNUI.DBProfile.UnitFrames.Units.pet.Tags
+---@field Width number
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.pet.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.pet.Power
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.pet.Tags
+---@field [string] any
+---@field TagOne NRSKNUI.DBProfile.UnitFrames.Units.pet.Tags.TagOne
+---@field TagThree NRSKNUI.DBProfile.UnitFrames.Units.pet.Tags.TagThree
+---@field TagTwo NRSKNUI.DBProfile.UnitFrames.Units.pet.Tags.TagTwo
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.pet.Tags.TagOne
+---@field [string] any
+---@field BoundTo string
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.pet.Tags.TagOne.Position
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.pet.Tags.TagOne.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.pet.Tags.TagThree
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.pet.Tags.TagTwo
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.pettarget
+---@field [string] any
+---@field Castbar NRSKNUI.DBProfile.UnitFrames.Units.pettarget.Castbar
+---@field Height number
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.pettarget.Position
+---@field Power NRSKNUI.DBProfile.UnitFrames.Units.pettarget.Power
+---@field Tags NRSKNUI.DBProfile.UnitFrames.Units.pettarget.Tags
+---@field Width number
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.pettarget.Castbar
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.pettarget.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.pettarget.Power
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.pettarget.Tags
+---@field [string] any
+---@field TagOne NRSKNUI.DBProfile.UnitFrames.Units.pettarget.Tags.TagOne
+---@field TagThree NRSKNUI.DBProfile.UnitFrames.Units.pettarget.Tags.TagThree
+---@field TagTwo NRSKNUI.DBProfile.UnitFrames.Units.pettarget.Tags.TagTwo
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.pettarget.Tags.TagOne
+---@field [string] any
+---@field BoundTo string
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.pettarget.Tags.TagOne.Position
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.pettarget.Tags.TagOne.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.pettarget.Tags.TagThree
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.pettarget.Tags.TagTwo
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.player
+---@field [string] any
+---@field Castbar NRSKNUI.DBProfile.UnitFrames.Units.player.Castbar
+---@field Indicators NRSKNUI.DBProfile.UnitFrames.Units.player.Indicators
+---@field LeaderIndicator NRSKNUI.DBProfile.UnitFrames.Units.player.LeaderIndicator
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.player.Position
+---@field Power NRSKNUI.DBProfile.UnitFrames.Units.player.Power
+---@field Tags NRSKNUI.DBProfile.UnitFrames.Units.player.Tags
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.player.Castbar
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.player.Indicators
+---@field [string] any
+---@field Resting NRSKNUI.DBProfile.UnitFrames.Units.player.Indicators.Resting
+---@field Summon NRSKNUI.DBProfile.UnitFrames.Units.player.Indicators.Summon
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.player.Indicators.Resting
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.player.Indicators.Summon
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.player.LeaderIndicator
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.player.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.player.Power
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.player.Tags
+---@field [string] any
+---@field TagThree NRSKNUI.DBProfile.UnitFrames.Units.player.Tags.TagThree
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.player.Tags.TagThree
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.target
+---@field [string] any
+---@field Castbar NRSKNUI.DBProfile.UnitFrames.Units.target.Castbar
+---@field Indicators NRSKNUI.DBProfile.UnitFrames.Units.target.Indicators
+---@field LeaderIndicator NRSKNUI.DBProfile.UnitFrames.Units.target.LeaderIndicator
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.target.Position
+---@field Power NRSKNUI.DBProfile.UnitFrames.Units.target.Power
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.target.Castbar
+---@field [string] any
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.target.Castbar.Position
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.target.Castbar.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.target.Indicators
+---@field [string] any
+---@field Quest NRSKNUI.DBProfile.UnitFrames.Units.target.Indicators.Quest
+---@field Summon NRSKNUI.DBProfile.UnitFrames.Units.target.Indicators.Summon
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.target.Indicators.Quest
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.target.Indicators.Summon
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.target.LeaderIndicator
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.target.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.target.Power
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.targettarget
+---@field [string] any
+---@field Castbar NRSKNUI.DBProfile.UnitFrames.Units.targettarget.Castbar
+---@field Height number
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.targettarget.Position
+---@field Power NRSKNUI.DBProfile.UnitFrames.Units.targettarget.Power
+---@field Tags NRSKNUI.DBProfile.UnitFrames.Units.targettarget.Tags
+---@field Width number
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.targettarget.Castbar
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.targettarget.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.targettarget.Power
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.targettarget.Tags
+---@field [string] any
+---@field TagOne NRSKNUI.DBProfile.UnitFrames.Units.targettarget.Tags.TagOne
+---@field TagThree NRSKNUI.DBProfile.UnitFrames.Units.targettarget.Tags.TagThree
+---@field TagTwo NRSKNUI.DBProfile.UnitFrames.Units.targettarget.Tags.TagTwo
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.targettarget.Tags.TagOne
+---@field [string] any
+---@field BoundTo string
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.targettarget.Tags.TagOne.Position
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.targettarget.Tags.TagOne.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.targettarget.Tags.TagThree
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.targettarget.Tags.TagTwo
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UseElvUI
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.globalMedia
+---@field [string] any
+---@field Enabled boolean
+---@field blizzardFonts NRSKNUI.DBProfile.globalMedia.blizzardFonts
+---@field durationBreakpointColors boolean
+---@field durationCurveColors boolean
+---@field durationSingleColor boolean
+---@field durationSingleColorValue table
+---@field profileBar NRSKNUI.DBProfile.globalMedia.profileBar
+---@field profileBreakPoints NRSKNUI.DBProfile.globalMedia.profileBreakPoints
+---@field profileColorBreakPoint NRSKNUI.DBProfile.globalMedia.profileColorBreakPoint
+---@field profileColorCurve NRSKNUI.DBProfile.globalMedia.profileColorCurve
+---@field profileFont NRSKNUI.DBProfile.globalMedia.profileFont
+---@field profileSpark NRSKNUI.DBProfile.globalMedia.profileSpark
+
+---@class NRSKNUI.DBProfile.globalMedia.blizzardFonts
+---@field [string] any
+---@field Enabled boolean
+---@field Families NRSKNUI.DBProfile.globalMedia.blizzardFonts.Families
+---@field HideShadow boolean
+---@field Outline string
+---@field Overrides NRSKNUI.DBProfile.globalMedia.blizzardFonts.Overrides
+---@field Slug boolean
+---@field Specials NRSKNUI.DBProfile.globalMedia.blizzardFonts.Specials
+
+---@class NRSKNUI.DBProfile.globalMedia.blizzardFonts.Families
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.globalMedia.blizzardFonts.Overrides
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.globalMedia.blizzardFonts.Specials
+---@field [string] any
+---@field ActionStatus NRSKNUI.DBProfile.globalMedia.blizzardFonts.Specials.ActionStatus
+---@field ChatBubbles NRSKNUI.DBProfile.globalMedia.blizzardFonts.Specials.ChatBubbles
+---@field CombatFont NRSKNUI.DBProfile.globalMedia.blizzardFonts.Specials.CombatFont
+---@field CombatText NRSKNUI.DBProfile.globalMedia.blizzardFonts.Specials.CombatText
+---@field ErrorText NRSKNUI.DBProfile.globalMedia.blizzardFonts.Specials.ErrorText
+---@field NameFont NRSKNUI.DBProfile.globalMedia.blizzardFonts.Specials.NameFont
+---@field Nameplates NRSKNUI.DBProfile.globalMedia.blizzardFonts.Specials.Nameplates
+---@field PvPZoneText NRSKNUI.DBProfile.globalMedia.blizzardFonts.Specials.PvPZoneText
+---@field SubZoneText NRSKNUI.DBProfile.globalMedia.blizzardFonts.Specials.SubZoneText
+---@field ZoneText NRSKNUI.DBProfile.globalMedia.blizzardFonts.Specials.ZoneText
+
+---@class NRSKNUI.DBProfile.globalMedia.blizzardFonts.Specials.ActionStatus
+---@field [string] any
+---@field Enabled boolean
+---@field Hide boolean
+---@field Position NRSKNUI.DBProfile.globalMedia.blizzardFonts.Specials.ActionStatus.Position
+---@field Size number
+
+---@class NRSKNUI.DBProfile.globalMedia.blizzardFonts.Specials.ActionStatus.Position
+---@field [string] any
+---@field Anchor string
+---@field X number
+---@field Y number
+
+---@class NRSKNUI.DBProfile.globalMedia.blizzardFonts.Specials.ChatBubbles
+---@field [string] any
+---@field Enabled boolean
+---@field Size number
+
+---@class NRSKNUI.DBProfile.globalMedia.blizzardFonts.Specials.CombatFont
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.globalMedia.blizzardFonts.Specials.CombatText
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.globalMedia.blizzardFonts.Specials.ErrorText
+---@field [string] any
+---@field Enabled boolean
+---@field Hide boolean
+---@field Position NRSKNUI.DBProfile.globalMedia.blizzardFonts.Specials.ErrorText.Position
+---@field Size number
+
+---@class NRSKNUI.DBProfile.globalMedia.blizzardFonts.Specials.ErrorText.Position
+---@field [string] any
+---@field Anchor string
+---@field X number
+---@field Y number
+
+---@class NRSKNUI.DBProfile.globalMedia.blizzardFonts.Specials.NameFont
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.globalMedia.blizzardFonts.Specials.Nameplates
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.globalMedia.blizzardFonts.Specials.PvPZoneText
+---@field [string] any
+---@field Enabled boolean
+---@field Size number
+
+---@class NRSKNUI.DBProfile.globalMedia.blizzardFonts.Specials.SubZoneText
+---@field [string] any
+---@field Enabled boolean
+---@field Size number
+
+---@class NRSKNUI.DBProfile.globalMedia.blizzardFonts.Specials.ZoneText
+---@field [string] any
+---@field Enabled boolean
+---@field Hide boolean
+---@field Position NRSKNUI.DBProfile.globalMedia.blizzardFonts.Specials.ZoneText.Position
+---@field Size number
+
+---@class NRSKNUI.DBProfile.globalMedia.blizzardFonts.Specials.ZoneText.Position
+---@field [string] any
+---@field Anchor string
+---@field X number
+---@field Y number
+
+---@class NRSKNUI.DBProfile.globalMedia.profileBar
+---@field [string] any
+---@field Enabled boolean
+---@field statusBar string
+
+---@class NRSKNUI.DBProfile.globalMedia.profileBreakPoints
+---@field [string] any
+---@field pointFive NRSKNUI.DBProfile.globalMedia.profileBreakPoints.pointFive
+---@field pointFour NRSKNUI.DBProfile.globalMedia.profileBreakPoints.pointFour
+---@field pointOne NRSKNUI.DBProfile.globalMedia.profileBreakPoints.pointOne
+---@field pointThree NRSKNUI.DBProfile.globalMedia.profileBreakPoints.pointThree
+---@field pointTwo NRSKNUI.DBProfile.globalMedia.profileBreakPoints.pointTwo
+
+---@class NRSKNUI.DBProfile.globalMedia.profileBreakPoints.pointFive
+---@field [string] any
+---@field format string
+---@field threshold number
+
+---@class NRSKNUI.DBProfile.globalMedia.profileBreakPoints.pointFour
+---@field [string] any
+---@field format string
+---@field threshold number
+
+---@class NRSKNUI.DBProfile.globalMedia.profileBreakPoints.pointOne
+---@field [string] any
+---@field format string
+---@field step number
+---@field threshold number
+
+---@class NRSKNUI.DBProfile.globalMedia.profileBreakPoints.pointThree
+---@field [string] any
+---@field format string
+---@field step number
+---@field threshold number
+
+---@class NRSKNUI.DBProfile.globalMedia.profileBreakPoints.pointTwo
+---@field [string] any
+---@field format string
+---@field step number
+---@field threshold number
+
+---@class NRSKNUI.DBProfile.globalMedia.profileColorBreakPoint
+---@field [string] any
+---@field colorFive table
+---@field colorFour table
+---@field colorOne table
+---@field colorThree table
+---@field colorTwo table
+
+---@class NRSKNUI.DBProfile.globalMedia.profileColorCurve
+---@field [string] any
+---@field colorFive table
+---@field colorFour table
+---@field colorOne table
+---@field colorThree table
+---@field colorTwo table
+
+---@class NRSKNUI.DBProfile.globalMedia.profileFont
+---@field [string] any
+---@field Enabled boolean
+---@field FontFace string
+
+---@class NRSKNUI.DBProfile.globalMedia.profileSpark
+---@field [string] any
+---@field Enabled boolean
+---@field Scale number
+---@field Width number
+---@field color table
+---@field sparkTexture string
+
+---@class NRSKNUI.DBChar
+---@field [string] any
+---@field XPBar NRSKNUI.DBChar.XPBar
+
+---@class NRSKNUI.DBChar.XPBar
+---@field [string] any
+---@field LevelAccumulationTime number
+---@field SessionAccumulationTime number
+---@field StartTime number
+---@field StartTimeLevel number
+---@field TotalAccumulationTime number
+---@field XPGained number
+---@field XPLast number
+---@field XPMax number
+
+---@class NRSKNUI.DBDefaults : AceDB.Schema
+---@field global NRSKNUI.DBGlobal
+---@field profile NRSKNUI.DBProfile
+---@field char NRSKNUI.DBChar
+
+---@alias NRSKNUI.DBObject NRSKNUI.DBDefaults & AceDBObject-3.0
+
+-- END GENERATED DB TYPES --

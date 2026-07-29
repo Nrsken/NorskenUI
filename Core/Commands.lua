@@ -7,10 +7,38 @@ local canaccessvalue = canaccessvalue
 local GetMouseFocus = GetMouseFocus
 local GetMouseFoci = GetMouseFoci
 local pcall = pcall
-local ipairs = ipairs
+local ipairs, pairs = ipairs, pairs
 local type = type
+local format = string.format
 local floor = math.floor
 local loadAddOn = LoadAddOnWithErrorHandling or UIParentLoadAddOn -- UIParentLoadAddOn is renamed to: LoadAddOnWithErrorHandling in 12.1.X+
+
+---Reports the GUI's widget pool: how many of each type are live versus parked.
+---`total` is the number ever created, i.e. the most of that type ever on screen at once.
+---It climbs on the first visit to a heavier page and must then plateau - a total that
+---keeps growing as you revisit pages means widgets are being built instead of reused.
+---`pooled 0` is fine on its own; it just means everything that exists is in use.
+function NRSKNUI:PrintPoolStats()
+    local GUI = self.GUI
+    if not GUI or not GUI.GetPoolStats then
+        self:Print("Widget pool unavailable.")
+        return
+    end
+
+    local stats, live, pooled = GUI:GetPoolStats()
+
+    local names = {}
+    for widgetType in pairs(stats) do names[#names + 1] = widgetType end
+    table.sort(names)
+
+    self:Print(format("Widget pool: |cff00ff00%d live|r, |cffaaaaaa%d pooled|r, |cffffd100%d total|r",
+        live, pooled, live + pooled))
+    for _, widgetType in ipairs(names) do
+        local entry = stats[widgetType]
+        self:Print(format("  %-18s live %3d   pooled %3d   |cffffd100total %3d|r",
+            widgetType, entry.acquired, entry.pooled, entry.acquired + entry.pooled))
+    end
+end
 
 -- Setup slash commands
 function NRSKNUI:SetupSlashCommands()
@@ -24,10 +52,12 @@ function NRSKNUI:SetupSlashCommands()
             if NRSKNUI.GUIFrame then
                 NRSKNUI.GUIFrame:Toggle()
             end
-        elseif msg == "edit" or msg == "unlock" then
-            if NRSKNUI.EditMode then
-                NRSKNUI.EditMode:Toggle()
+        elseif msg == "anchors" then
+            if NRSKNUI.Anchors then
+                NRSKNUI.Anchors:Toggle()
             end
+        elseif msg == "poolstats" then
+            NRSKNUI:PrintPoolStats()
         end
     end
 

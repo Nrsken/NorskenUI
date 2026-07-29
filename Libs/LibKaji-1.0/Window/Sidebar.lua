@@ -12,6 +12,7 @@
 
 local lib = LibStub and LibStub("LibKaji-1.0", true)
 if not lib then return end
+---@class KajiGUIInstanceMixin
 local InstanceMixin = lib.InstanceMixin
 local safecall = lib.safecall
 local pixel = lib.Pixel
@@ -478,17 +479,22 @@ function InstanceMixin:CreateSidebar(parent, opts)
         end
     end
 
+    ---Expands the header owning itemId.
+    ---@return boolean changed true when a collapsed header was opened, so callers can skip a Refresh
     function sidebar:EnsureExpandedFor(itemId)
-        if not self.config then return end
+        if not self.config then return false end
         for _, entry in ipairs(self.config) do
             if entry.type ~= "item" and entry.items then
                 for _, child in ipairs(entry.items) do
                     if child.id == itemId then
-                        self.expanded[entry.id] = true; return
+                        local changed = not self.expanded[entry.id]
+                        self.expanded[entry.id] = true
+                        return changed
                     end
                 end
             end
         end
+        return false
     end
 
     function sidebar:ShowResults(results)

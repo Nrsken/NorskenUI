@@ -538,7 +538,7 @@ function CHAT:OnEnable()
     self:BuildCopyChatFrame()
     self:CreateChatPanel()
     self:SetupChat()
-    self:RegisterEditMode()
+    self:RegisterAnchor()
     self:SetupBlizzardEditModeLock()
     self:RegisterWhisperSounds()
     self:ForceInlineWhispers()
@@ -682,7 +682,7 @@ function CHAT:OnDisable()
     self:UnregisterEvent("CHAT_MSG_BN_WHISPER")
     self:UnhookAll()
     self:RestoreAllChats()
-    self:UnregisterEditMode()
+    self:UnregisterAnchor()
     self.hooksSecured = false
     if self.themeSub then
         self.themeSub()
@@ -691,41 +691,15 @@ function CHAT:OnDisable()
     if self.panel then self.panel:Hide() end
 end
 
-function CHAT:RegisterEditMode()
-    if not NRSKNUI.EditMode then return end
-
-    NRSKNUI.EditMode:RegisterElement({
-        key = "Chatv2",
-        displayName = "CHAT PANEL",
-        frame = self.panel,
-        getPosition = function()
-            return self.db.Position
-        end,
-        setPosition = function(pos)
-            self.db.Position.AnchorFrom = pos.AnchorFrom
-            self.db.Position.AnchorTo = pos.AnchorTo
-            self.db.Position.XOffset = pos.XOffset
-            self.db.Position.YOffset = pos.YOffset
-
-            self.panel:ClearAllPoints()
-            self.panel:SetPoint(
-                pos.AnchorFrom,
-                _G[self.db.ParentFrame] or UIParent,
-                pos.AnchorTo,
-                pos.XOffset,
-                pos.YOffset
-            )
-        end,
-        getParentFrame = function()
-            return _G[self.db.ParentFrame] or UIParent
-        end,
-        guiPath = "Chatv2",
+function CHAT:RegisterAnchor()
+    NRSKNUI.Anchors:Register(self, "Chatv2", self.panel, nil, {
+        displayName = "Chat Panel",
+        apply = "UpdatePanel",
     })
 end
 
-function CHAT:UnregisterEditMode()
-    if not NRSKNUI.EditMode then return end
-    NRSKNUI.EditMode:UnregisterElement("Chatv2")
+function CHAT:UnregisterAnchor()
+    NRSKNUI.Anchors:Unregister("Chatv2")
 end
 
 function CHAT:CreateChatPanel()

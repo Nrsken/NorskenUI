@@ -1,11 +1,27 @@
 ---@class NRSKNUI : AceAddon-3.0, AceEvent-3.0, AceTimer-3.0, AceHook-3.0
----@field db NRSKNUI.AceDB
+---@field db NRSKNUI.DBObject
+---@field FrameChooser table?
+---@field Locale string
+---@field AddOnName string?
+---@field Version string?
+---@field Author string?
+---@field MyClass string
+---@field MyClassID number
+---@field MyName string
+---@field MyRealm string
+---@field MySpec NRSKNUI.MySpecData
+---@field ClearTexture number
+---@field WhiteTexture string
+---@field GlobalZoom number
+---@field Separators table<string, string>
+---@field TimeFormats table<string, string>
+---@field Libs NRSKNUI.Libraries
+---@field GUI KajiGUIInstance
 local NRSKNUI = select(2, ...)
 local addonName = select(1, ...)
 
 local _G = _G
 local GetLocale = GetLocale
-local select = select
 local UnitClass = UnitClass
 local UnitFullName = UnitFullName
 local assert = assert

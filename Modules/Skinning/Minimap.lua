@@ -1,9 +1,9 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class Minimap
+---@class MinimapModule
 local Map = NRSKNUI:GetModule('Minimap')
 local Theme = NRSKNUI.Theme
-local EM = NRSKNUI.EditMode
+local Anchors = NRSKNUI.Anchors
 
 local hooksecurefunc = hooksecurefunc
 local ipairs = ipairs
@@ -62,8 +62,7 @@ function Map:OnEnable()
     _G.MinimapCluster:Banish()
 
     self:RegisterEvent('PLAYER_ENTERING_WORLD')
-
-    EM:Register(self, 'Minimap', _G.Minimap, 'Minimap')
+    Anchors:Register(self, 'Minimap', _G.Minimap, 'minimap', { xKey = 'X', yKey = 'Y' })
 end
 
 function Map:PLAYER_ENTERING_WORLD()

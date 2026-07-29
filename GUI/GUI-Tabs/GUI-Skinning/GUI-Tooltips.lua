@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@type Tooltips?
+---@class TooltipsModule
 local Tooltips = NRSKNUI:GetModule('Tooltips', true)
 local L = NRSKNUI.Libs.AL
 local GUI = NRSKNUI.GUI

@@ -1,21 +1,17 @@
 --[[
 # Pixel
 
-* Pixel-perfect geometry for the library and its consumers.
-* Owns the perfect-pixel math (physical height -> multiplier) and a set of frame helpers that
-* snap sizes/points onto the physical pixel grid, so borders and 1px lines stay crisp at any resolution.
-* Fully self-contained: no dependency on the consuming addon. The math tracks resolution/scale changes
-* on its own via UI_SCALE_CHANGED / DISPLAY_SIZE_CHANGED.
-
-## Consuming
-* `lib.Pixel`        - function table (object-first): ToPixelGrid, SetPixel*, SetGridPoint, GetMult, ...
-* `lib.PixelMixin`   - the frame-method subset, ready to Mixin onto (or inject into) a frame's metatable.
-* `lib.AttachPixelAPI(frame)` - convenience Mixin of PixelMixin onto a single frame.
-
 --]]
 
-local lib = LibStub and LibStub("LibKaji-1.0", true)
+---@class LibKaji-1.0
+local lib = _G.LibStub and _G.LibStub('LibKaji-1.0', true)
 if not lib then return end
+---@class LibKaji-1.0.PixelMixin
+local PixelMixin = {}
+lib.PixelMixin = PixelMixin
+---@class LibKaji-1.0.Pixel
+local Pixel = {}
+lib.Pixel = Pixel
 
 local Mixin = Mixin
 local CreateFrame = CreateFrame
@@ -25,6 +21,7 @@ local issecrettable = issecrettable
 local floor = math.floor
 local type = type
 local pcall = pcall
+
 local UIParent = UIParent
 
 local physH, perfectPixel, bestPixel, mult
@@ -46,10 +43,10 @@ end
 
 Recompute()
 
-local watcher = CreateFrame("Frame")
-watcher:RegisterEvent("UI_SCALE_CHANGED")
-watcher:RegisterEvent("DISPLAY_SIZE_CHANGED")
-watcher:SetScript("OnEvent", Recompute)
+local watcher = CreateFrame('Frame')
+watcher:RegisterEvent('UI_SCALE_CHANGED')
+watcher:RegisterEvent('DISPLAY_SIZE_CHANGED')
+watcher:SetScript('OnEvent', Recompute)
 
 ---The auto scale factor for the current resolution, clamped to a sane range.
 ---@return number
@@ -69,7 +66,7 @@ local function GetMult()
     return mult
 end
 
----Returns the value only when it is safe to read; otherwise nil. Mirrors the host's SafeValue.
+---Returns the value only when it is safe to read, otherwise nil.
 ---@param value any
 ---@return any|nil
 local function SafeValue(value)
@@ -80,7 +77,7 @@ local function SafeValue(value)
 end
 
 ---Snaps a coordinate to the nearest physical pixel. At mult 1 the grid is whole units, so
----measured values (GetWidth after a drag) still need rounding — never early-out on mult == 1.
+---measured values (GetWidth after a drag) still need rounding, never early-out on mult == 1.
 ---@param value number
 ---@return number
 local function ToPixelGrid(value)
@@ -259,35 +256,32 @@ local function SetGridPoint(object, point, relativeTo, relativePoint, offsetX, o
     object:SetPoint(point, relativeTo, relativePoint, offsetX + dx, offsetY + dy)
 end
 
----Chooses a natural anchor for a movable frame based on which screen third it rests in
----(top/bottom + left/right/centre) and returns the offsets, relative to that UIParent edge,
----that reproduce its current position. Anchoring by the nearest edge keeps the frame put when
----the screen resolution changes, and is what the edge snap below aligns.
+---Calculates the best anchor point and offsets for a frame to be positioned on the pixel grid.
 ---@param frame Frame
 ---@return string point, number x, number y
 local function CalculateFramePosition(frame)
-    if not frame then return "CENTER", 0, 0 end
+    if not frame then return 'CENTER', 0, 0 end
     local centerX, centerY = UIParent:GetCenter()
     local screenWidth = UIParent:GetRight()
     local frameX, frameY = frame:GetCenter()
     if not (centerX and centerY and screenWidth and frameX and frameY) then
-        return "CENTER", 0, 0
+        return 'CENTER', 0, 0
     end
 
-    local point = "BOTTOM"
+    local point = 'BOTTOM'
     local x, y
     if frameY >= centerY then
-        point = "TOP"
+        point = 'TOP'
         y = -(UIParent:GetTop() - frame:GetTop())
     else
         y = frame:GetBottom()
     end
 
     if frameX >= (screenWidth * 2 / 3) then
-        point = point .. "RIGHT"
+        point = point .. 'RIGHT'
         x = frame:GetRight() - screenWidth
     elseif frameX <= (screenWidth / 3) then
-        point = point .. "LEFT"
+        point = point .. 'LEFT'
         x = frame:GetLeft()
     else
         x = frameX - centerX
@@ -296,10 +290,7 @@ local function CalculateFramePosition(frame)
     return point, floor(x + 0.5), floor(y + 0.5)
 end
 
----Snaps a movable frame's position onto the pixel grid after a drag. Keeps the current
----anchor and rounds its offsets to a whole physical pixel (grid = mult, the pixel size in
----local units); once the frame lands perfect, children anchored with integer offsets inherit
----the alignment.
+---Snaps a frame's top-left corner to the pixel grid, keeping its size and bottom-right corner fixed.
 ---@param frame Frame
 ---@param forceAbsolute boolean? Re-derive a fresh corner anchor from the frame's screen position.
 local function SnapFrameToPixels(frame, forceAbsolute)
@@ -335,9 +326,8 @@ local function SnapFrame(frame)
     SnapFrameToPixels(frame)
 end
 
----Snaps a frame's size and edges onto the pixel grid by re-anchoring its TOPLEFT corner to
----UIParent. For move/resize stops: a kept CENTER anchor plus an odd width leaves the edges
----on half pixels, which no amount of size rounding can fix.
+---Snaps a frame's edges to the pixel grid, keeping its top-left corner fixed. 
+---If the frame is unanchored, it will be snapped to the nearest pixel grid.
 ---@param frame Frame
 local function SnapFrameEdges(frame)
     if not frame then return end
@@ -348,52 +338,37 @@ local function SnapFrameEdges(frame)
     end
     SnapFrameSize(frame)
     frame:ClearAllPoints()
-    frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", ToPixelGrid(left), ToPixelGrid(top))
+    frame:SetPoint('TOPLEFT', UIParent, 'BOTTOMLEFT', ToPixelGrid(left), ToPixelGrid(top))
 end
 
--- Frame-method subset: object-first funcs meant to live on a frame's metatable.
----@class KajiPixelMixin
----@field SetPixelSnap fun(self: Frame|Texture)
----@field SetPixelSize fun(self: Frame, width: number, height?: number, ...: any)
----@field SetPixelWidth fun(self: Frame, width: number, ...: any)
----@field SetPixelHeight fun(self: Frame, height: number, ...: any)
----@field SetPixelPoint fun(self: Frame, point: string, arg2?: Frame|string|number, arg3?: string|number, arg4?: number, arg5?: number, ...: any)
----@field SetPixelInside fun(self: Frame, anchor: Frame, xOffset: number, yOffset: number, anchor2?: Frame)
----@field SetPixelOutside fun(self: Frame, anchor: Frame, xOffset: number, yOffset: number, anchor2?: Frame)
----@field SetGridPoint fun(self: Frame, point: string, relativeTo?: Frame|string, relativePoint?: string, offsetX?: number, offsetY?: number)
-local PixelMixin = {
-    SetPixelSnap = SetPixelSnap,
-    SetPixelSize = SetPixelSize,
-    SetPixelWidth = SetPixelWidth,
-    SetPixelHeight = SetPixelHeight,
-    SetPixelPoint = SetPixelPoint,
-    SetPixelInside = SetPixelInside,
-    SetPixelOutside = SetPixelOutside,
-    SetGridPoint = SetGridPoint,
-}
+-- Smaller function table for the mixin, so we don't pollute the instance with all the helpers.
+PixelMixin.SetPixelSnap = SetPixelSnap
+PixelMixin.SetPixelSize = SetPixelSize
+PixelMixin.SetPixelWidth = SetPixelWidth
+PixelMixin.SetPixelHeight = SetPixelHeight
+PixelMixin.SetPixelPoint = SetPixelPoint
+PixelMixin.SetPixelInside = SetPixelInside
+PixelMixin.SetPixelOutside = SetPixelOutside
+PixelMixin.SetGridPoint = SetGridPoint
 
-lib.PixelMixin = PixelMixin
-
--- Full function table (scalar helpers + accessors + the frame methods).
-lib.Pixel = {
-    ToPixelGrid = ToPixelGrid,
-    GetMult = GetMult,
-    GetPerfectPixel = GetPerfectPixel,
-    GetBestPixelSize = GetBestPixelSize,
-    SetPixelSnap = SetPixelSnap,
-    SetPixelSize = SetPixelSize,
-    SetPixelWidth = SetPixelWidth,
-    SetPixelHeight = SetPixelHeight,
-    SetPixelPoint = SetPixelPoint,
-    SetPixelInside = SetPixelInside,
-    SetPixelOutside = SetPixelOutside,
-    SetGridPoint = SetGridPoint,
-    CalculateFramePosition = CalculateFramePosition,
-    SnapFrameToPixels = SnapFrameToPixels,
-    SnapFrameSize = SnapFrameSize,
-    SnapFrame = SnapFrame,
-    SnapFrameEdges = SnapFrameEdges,
-}
+-- Full function table for the library, so consumers can call the functions without mixing them onto a frame.
+Pixel.ToPixelGrid = ToPixelGrid
+Pixel.GetMult = GetMult
+Pixel.GetPerfectPixel = GetPerfectPixel
+Pixel.GetBestPixelSize = GetBestPixelSize
+Pixel.SetPixelSnap = SetPixelSnap
+Pixel.SetPixelSize = SetPixelSize
+Pixel.SetPixelWidth = SetPixelWidth
+Pixel.SetPixelHeight = SetPixelHeight
+Pixel.SetPixelPoint = SetPixelPoint
+Pixel.SetPixelInside = SetPixelInside
+Pixel.SetPixelOutside = SetPixelOutside
+Pixel.SetGridPoint = SetGridPoint
+Pixel.CalculateFramePosition = CalculateFramePosition
+Pixel.SnapFrameToPixels = SnapFrameToPixels
+Pixel.SnapFrameSize = SnapFrameSize
+Pixel.SnapFrame = SnapFrame
+Pixel.SnapFrameEdges = SnapFrameEdges
 
 ---Mixes the pixel frame-methods onto a single frame/texture.
 ---@generic T

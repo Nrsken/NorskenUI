@@ -1,14 +1,6 @@
 ---@class NRSKNUI
----@field GUI KajiGUIInstance
----@field EditMode table?
----@field FrameChooser table?
 local NRSKNUI = select(2, ...)
----@class GUIFrame : KajiGUIWindow
----@field ReloadText string
----@field RefreshContent fun(self: GUIFrame): void
----@field OpenPage fun(self: GUIFrame, itemId: string, sectionId: string?, context: any?): void
----@field ApplyThemeColors fun(self: GUIFrame): void
----@field mainFrame Frame
+---@class GUIFrame
 NRSKNUI.GUIFrame = NRSKNUI.GUIFrame or {}
 local Theme = NRSKNUI.Theme
 
@@ -18,12 +10,22 @@ local SOCIAL = 'Interface\\AddOns\\NorskenUI\\Media\\SupportLogos\\'
 
 NRSKNUI.GUIFrame.ReloadText = 'Disabling/Enabling this requires a reload to take full effect.'
 
+-- Fired whenever the GUI edits a position, so the live anchor overlay and its nudge panel follow the sliders.
+-- The reverse direction (drag/nudge -> sliders) goes through GUI:RefreshPositionCards().
+local positionSync = {
+    Changed = function()
+        if NRSKNUI.Anchors and NRSKNUI.Anchors:IsActive() then
+            NRSKNUI.Anchors:OnExternalPositionChange()
+        end
+    end,
+}
+
 ---Gets the GUI instance for NorskenUI, providing access to GUI creation and management functions.
 ---@return KajiGUIInstance
 function NRSKNUI:GetGUI()
     ---@type KajiGUIInstance
     local GUI = self.GUI
-    GUI.services.editMode = self.EditMode
+    GUI.services.positionSync = positionSync
     GUI.services.frameChooser = self.FrameChooser
     return GUI
 end
@@ -112,8 +114,8 @@ window:AddHeaderButton({
     icon = TEX .. 'anchor.png',
     size = 22,
     onClick = function()
-        if NRSKNUI.EditMode then
-            NRSKNUI.EditMode:Toggle()
+        if NRSKNUI.Anchors then
+            NRSKNUI.Anchors:Toggle()
         end
     end,
     tooltip = 'Open Anchors',

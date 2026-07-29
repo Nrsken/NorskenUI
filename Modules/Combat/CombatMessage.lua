@@ -1,8 +1,8 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class CombatMessage
+---@class CombatMessageModule
 local CombatMessage = NRSKNUI:GetModule('CombatMessage')
-local EM = NRSKNUI.EditMode
+local Anchors = NRSKNUI.Anchors
 
 local CreateFrame = CreateFrame
 local unpack = unpack
@@ -12,6 +12,7 @@ local UnitClass = UnitClass
 local UnitExists = UnitExists
 local UnitIsDeadOrGhost = UnitIsDeadOrGhost
 local UnitGroupRolesAssigned = UnitGroupRolesAssigned
+local UnitIsFeignDeath = UnitIsFeignDeath
 local IsInGroup = IsInGroup
 local IsInRaid = IsInRaid
 local GetTime = GetTime
@@ -89,7 +90,7 @@ function CombatMessage:CreateGroup()
         parentGroup[msgType.key] = text
     end
 
-    EM:Register(self, 'CombatMessages', parentGroup, 'combatMessage')
+    Anchors:Register(self, 'CombatMessages', parentGroup, 'combatMessage')
 end
 
 function CombatMessage:ApplySettings()
@@ -241,6 +242,9 @@ function CombatMessage:UNIT_DIED(_, destGUID)
 
     local isGroupUnit = unit:match('^party%d') or unit:match('^raid%d')
     if not isGroupUnit then return end
+
+    -- UNIT_DIED fires for feign death xd, but we don't want to show a death message for that, ty M33shoq for info :).
+    if UnitIsFeignDeath(unit) then return end
 
     if not self:PassPartyDeathThrottle() then return end
 

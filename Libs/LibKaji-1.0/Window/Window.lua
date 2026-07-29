@@ -11,6 +11,7 @@
 
 local lib = LibStub and LibStub("LibKaji-1.0", true)
 if not lib then return end
+---@class KajiGUIInstanceMixin
 local InstanceMixin = lib.InstanceMixin
 local Animations = lib.Animations
 local safecall = lib.safecall
@@ -281,11 +282,17 @@ function WindowMixin:AddFooterSocial(config)
 end
 
 ---Builds and shows the page registered under id, remembering it as the current page.
+---Mirrors what selecting the entry in the sidebar does, so external navigation also
+---expands the owning header rather than selecting an entry that stays hidden.
 ---@param id string
-function WindowMixin:ShowPage(id)
+---@param target? table optional page target, e.g. { tabId = ..., itemKey = ... }
+function WindowMixin:ShowPage(id, target)
     self._currentId = id
-    if self.content then self.content:ShowPage(id) end
-    if self.sidebar then self.sidebar:SetSelected(id) end
+    if self.content then self.content:ShowPage(id, target) end
+    if self.sidebar then
+        if self.sidebar:EnsureExpandedFor(id) then self.sidebar:Refresh() end
+        self.sidebar:SetSelected(id)
+    end
 end
 
 local SEARCH_BOX_HEIGHT = 30
@@ -539,5 +546,6 @@ function InstanceMixin:CreateGUIWindow(opts)
         end
     end)
 
+    lib.window = window
     return window
 end

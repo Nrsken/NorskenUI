@@ -1,8 +1,8 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class Defensives
+---@class DefensivesModule
 local Defensives = NRSKNUI:GetModule('Defensives')
-local EM = NRSKNUI.EditMode
+local Anchors = NRSKNUI.Anchors
 
 local CreateFrame = CreateFrame
 
@@ -107,7 +107,7 @@ function Defensives:ApplySettings()
     self:ResizeHost()
     self.host:Show()
     self.host:ApplyPosition(self.db)
-    EM:Register(self, 'Defensives', self.host, 'Defensives')
+    Anchors:Register(self, 'Defensives', self.host, 'defensives')
 
     local container = self.host.container
     if container then

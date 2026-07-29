@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class PetTexts
+---@class PetTextsModule
 local PetTexts = NRSKNUI:GetModule('PetTexts', true)
 local L = NRSKNUI.Libs.AL
 local GUI = NRSKNUI.GUI

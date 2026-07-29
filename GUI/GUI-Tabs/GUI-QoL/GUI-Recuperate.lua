@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class Recuperate
+---@class RecuperateModule
 local Recuperate = NRSKNUI:GetModule('Recuperate')
 local L = NRSKNUI.Libs.AL
 local GUI = NRSKNUI.GUI
