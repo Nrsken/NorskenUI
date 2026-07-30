@@ -9,7 +9,7 @@ local rowHL = Theme.rowHeightLast
 local AuraFilters = NRSKNUI.AuraFilters
 local AF = AuraUtil.AuraFilters
 
-local ipairs, pairs, type, tonumber = ipairs, pairs, type, tonumber
+local ipairs, pairs, tonumber = ipairs, pairs, tonumber
 local tsort = table.sort
 local tremove = table.remove
 local min, max = math.min, math.max
@@ -193,23 +193,18 @@ local function DispelState(branch, key)
     return nil
 end
 
----What an attached spellID list contributes, for the row body. The enabled test mirrors AddNamedList
----in Core/AuraFilters.lua, so the count matches what actually reaches the filter.
+---What an attached spellID list contributes, for the row body.
 ---@param name string
 ---@return string
 local function ListSummary(name)
     local list = Lists() and Lists()[name]
     if not list then return '' end
 
-    local total, enabled = 0, 0
-    for _, entry in pairs(list.spells or {}) do
-        total = total + 1
-        if type(entry) ~= 'table' or entry.enabled ~= false then enabled = enabled + 1 end
-    end
+    local total = 0
+    for _ in pairs(list.spells or {}) do total = total + 1 end
 
     if total == 0 then return L['No spells yet'] end
-    if enabled == total then return format(L['%d spells'], total) end
-    return format(L['%d of %d spells enabled'], enabled, total)
+    return format(L['%d spells'], total)
 end
 
 -- kind -> how its conditions are listed, added, removed and drawn. `entries` is resolved lazily so

@@ -314,7 +314,7 @@ local function BuildHealthSection(page, uDB, unit)
 
     -- Card 4/5: one card per absorb, each with its own global-or-override toggle.
     local absorbSlots = {
-        { db = hDB.HealAbsorb,   title = L['Heal Absorb'],   label = L['Enable Heal Absorb'],   cond = 'ownHealAbsorb', onCond = 'healAbsorbOn' },
+        { db = hDB.HealAbsorb,   title = L['Heal Absorb'],   label = L['Enable Heal Absorb'],   cond = 'ownHealAbsorb',   onCond = 'healAbsorbOn' },
         { db = hDB.DamageAbsorb, title = L['Damage Absorb'], label = L['Enable Damage Absorb'], cond = 'ownDamageAbsorb', onCond = 'damageAbsorbOn' },
     }
     for _, slot in ipairs(absorbSlots) do

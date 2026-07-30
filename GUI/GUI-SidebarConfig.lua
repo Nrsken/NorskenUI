@@ -62,8 +62,10 @@ GUIFrame.SidebarConfig = {
             text = L['Unit Frames'],
             defaultExpanded = false,
             items = {
-                { id = 'unitFramesGeneral', text = L['General'] },
-                { id = 'unitFramesUnits',   text = L['Units'] },
+                { id = 'unitFramesGeneral',      text = L['General'] },
+                { id = 'unitFramesUnits',        text = L['Units'] },
+                { id = 'unitFramesAuraBuffs',    text = L['Aura Buffs'] },
+                { id = 'unitFramesAuraDebuffs',  text = L['Aura Debuffs'] },
             }
         },
         {

@@ -8,10 +8,11 @@ local rowHL = Theme.rowHeightLast
 
 local AuraFilters = NRSKNUI.AuraFilters
 
-local ipairs, pairs, type, tonumber = ipairs, pairs, type, tonumber
+local ipairs, pairs, type, tonumber, tostring = ipairs, pairs, type, tonumber, tostring
 local tsort = table.sort
 local format = string.format
 local GetSpellName = C_Spell and C_Spell.GetSpellName
+local GetSpellInfo = C_Spell and C_Spell.GetSpellInfo
 
 local LIST_TYPES = {
     { value = 'blacklist', text = L['Blacklist'] },
@@ -165,16 +166,8 @@ local function BuildListPage(page, key)
                     NRSKNUI:Print(format(L['No spell found for ID %d'], id))
                     return
                 end
-                if NRSKNUI:IsSpellAuraProtected(id) then
-                    NRSKNUI:CreatePrompt({
-                        title = L['Protected Spell'],
-                        text = format(L["'%s' (%d) is protected and cannot be used in aura filters."], sname, id),
-                        acceptText = L['OK'],
-                    })
-                    return
-                end
                 list.spells = list.spells or {}
-                list.spells[id] = { label = sname, enabled = true }
+                list.spells[id] = { label = sname }
                 AuraFilters:Invalidate()
                 idInput:SetValue('')
                 c:Rebuild()
@@ -198,14 +191,59 @@ local function BuildListPage(page, key)
             local entry = list.spells[sid]
             local last = index == #ids
             local row = c:Row(last and rowHL or rowH, last and 0 or nil)
-            row:Checkbox(format('%s (%d)', entry.label or '?', sid), {
-                width = 0.75,
-                value = entry.enabled ~= false,
-                callback = function(checked)
-                    entry.enabled = checked
-                    AuraFilters:Invalidate()
+            local restricted = NRSKNUI:IsSpellAuraSecret(sid)
+            local label = entry.label or '?'
+            local tip = nil
+            local spellInfo = GetSpellInfo and GetSpellInfo(sid)
+
+            local safeTip = NRSKNUI:ColorTextByTheme('• ') .. L['This spellID is never secret, it will always be filtered by this list.']
+            local restrictedTip = NRSKNUI:ColorTextByTheme('• ') .. L['HARMFUL'] .. ' » ' .. L['This spellID is ignored for debuffs on you and friendly units.'] .. '\n' ..
+                NRSKNUI:ColorTextByTheme('• ') .. L['HELPFUL'] .. ' » ' .. L['This spellID is ignored for buffs on enemy units.']
+
+            if restricted then
+                label = label .. ' ' .. [[|A:quest-legendary-available:14:14|a]]
+                tip = restrictedTip
+            else
+                label = label .. ' ' .. [[|A:Event-Scheduler-Green-Checkmark:14:14|a]]
+                tip = safeTip
+            end
+
+            local idBox
+            idBox = row:EditBox(label, {
+                width = 0.5,
+                tooltip = tip,
+                value = tostring(sid),
+                callback = function(text)
+                    local id = tonumber(text)
+                    if id == sid then return end
+
+                    local sname = id and GetSpellName and GetSpellName(id)
+                    if not id then
+                        NRSKNUI:Print(L['Enter a numeric spell ID'])
+                    elseif list.spells[id] then
+                        NRSKNUI:Print(format(L['Spell ID %d is already in this list'], id))
+                    elseif not sname then
+                        NRSKNUI:Print(format(L['No spell found for ID %d'], id))
+                    else
+                        list.spells[sid] = nil
+                        list.spells[id] = { label = sname }
+                        AuraFilters:Invalidate()
+                        c:Rebuild()
+                        return
+                    end
+                    idBox:SetValue(tostring(sid))
                 end,
             })
+
+            row:Icon({
+                width = 0.25,
+                size = 24,
+                align = 'LEFT',
+                yOffset = -14,
+                texture = spellInfo and spellInfo.iconID,
+                tooltip = spellInfo and function(tooltip) tooltip:SetSpellByID(sid) end,
+            })
+
             row:Button(L['Remove'], {
                 width = 0.25,
                 height = 24,

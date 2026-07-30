@@ -7,6 +7,7 @@ local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
 
 local AuraFilters = NRSKNUI.AuraFilters
+local AuraCards = NRSKNUI.GUIAuraCards
 local AF = AuraUtil.AuraFilters
 
 local ipairs = ipairs
@@ -18,53 +19,9 @@ Every aura display is the same page, driven by one descriptor per sidebar item:
 * The standard displays run a hardcoded HELPFUL/HARMFUL group, so they lose the tab and Sorting moves to Layout.
 * harmful  - only harmful displays get the dispel border/icon toggles.
 * enchants - standard buffs additionally flow the temporary weapon enchants.
+
+The cards themselves live in GUI/GUI-AuraCards.lua, shared with the per-unit containers under GUI-UnitFrames.
 --]]
-
--- Enum key names rather than values: the db stores the key, resolved at use time (see Defaults.lua).
-local SORT_METHODS = {
-    { value = 'ExpirationOnly',     text = L['Expiration Only'] },
-    { value = 'Expiration',         text = L['Expiration'] },
-    { value = 'Default',            text = L['Default'] },
-    { value = 'ImportantOnly',      text = L['Important Only'] },
-    { value = 'BigDefensive',       text = L['Big Defensive'] },
-    { value = 'UnitFrameDebuff',    text = L['Unit Frame Debuff'] },
-    { value = 'Name',               text = L['Name'] },
-    { value = 'NameOnly',           text = L['Name Only'] },
-    { value = 'AuraInstanceIDOnly', text = L['Aura Instance ID'] },
-}
-
-local SORT_DIRECTIONS = {
-    { value = 'Normal',  text = L['Normal'] },
-    { value = 'Reverse', text = L['Reverse'] },
-}
-
-local GROWTH_X = {
-    { value = 'RIGHT', text = L['Right'] },
-    { value = 'LEFT',  text = L['Left'] },
-}
-
-local GROWTH_Y = {
-    { value = 'UP',   text = L['Up'] },
-    { value = 'DOWN', text = L['Down'] },
-}
-
-local TEXT_ANCHORS = {
-    { value = 'TOPLEFT',     text = L['Top Left'] },
-    { value = 'TOP',         text = L['Top'] },
-    { value = 'TOPRIGHT',    text = L['Top Right'] },
-    { value = 'LEFT',        text = L['Left'] },
-    { value = 'CENTER',      text = L['Center'] },
-    { value = 'RIGHT',       text = L['Right'] },
-    { value = 'BOTTOMLEFT',  text = L['Bottom Left'] },
-    { value = 'BOTTOM',      text = L['Bottom'] },
-    { value = 'BOTTOMRIGHT', text = L['Bottom Right'] },
-}
-
--- The stack and duration strings take the same three controls, so the font tab builds both from this.
-local TEXT_SLOTS = {
-    { key = 'StackFont',    anchor = L['Stack Anchor'],    x = L['Stack X'],    y = L['Stack Y'] },
-    { key = 'DurationFont', anchor = L['Duration Anchor'], x = L['Duration X'], y = L['Duration Y'] },
-}
 
 local function Apply(display)
     local module = NRSKNUI:GetModule(display.moduleName, true)
@@ -135,48 +92,8 @@ local DISPLAYS = {
     },
 }
 
-local function CreateReloadCard(page)
-    local reloadCard = page:Card(L['Apply Changes'], 'all')
-    reloadCard:Row(56):Text(L['Aura Button Information'], {
-        width = 1,
-        text = L['Aura buttons are built once by the game and cannot be restyled in place. These settings are saved immediately but only take effect after a reload.'],
-        height = 56,
-        bgMode = 'none',
-    })
-    reloadCard:Row(32):Button(L['Reload UI'], {
-        width = 1,
-        height = 32,
-        callback = function()
-            ReloadUI()
-        end,
-    })
-end
-
-local function CreateSortingCard(page, display, db)
-    local sortCard = page:Card(L['Sorting'], 'all')
-    local sortRow = sortCard:Row(rowHL, 0)
-    sortRow:Dropdown(L['Sort Method'], {
-        width = 0.5,
-        options = SORT_METHODS,
-        value = db.sortMethod,
-        callback = function(key)
-            db.sortMethod = key
-            Apply(display)
-        end,
-    })
-    sortRow:Dropdown(L['Sort Direction'], {
-        width = 0.5,
-        options = SORT_DIRECTIONS,
-        value = db.sortDirection,
-        callback = function(key)
-            db.sortDirection = key
-            Apply(display)
-        end,
-    })
-end
-
 -- Filter Tab
-local function BuildFilterTab(page, display, db)
+local function BuildFilterTab(page, display, db, ctx)
     -- Card 1
     page:FilterCard({
         title = L['Aura Filter'],
@@ -202,11 +119,11 @@ local function BuildFilterTab(page, display, db)
     })
 
     -- Card 2
-    CreateSortingCard(page, display, db)
+    AuraCards:Sorting(page, db, ctx)
 end
 
 -- Layout Tab
-local function BuildLayoutTab(page, display, db)
+local function BuildLayoutTab(page, display, db, ctx)
     -- Card 1
     local enableCard = page:Card(display.title)
     enableCard:Row(rowHL, 0):Checkbox(display.enableText, {
@@ -223,79 +140,10 @@ local function BuildLayoutTab(page, display, db)
     })
 
     -- Card 2
-    local gridCard = page:Card(L['Grid'], 'all')
-    local countRow = gridCard:Row(rowH)
-    countRow:Slider(L['Max Auras'], {
-        width = 0.5,
-        tooltip = display.filtered and L['Applies per filter branch, so a filter with several branches can show more than this in total.'] or nil,
-        min = 1,
-        max = 40,
-        step = 1,
-        value = db.maxFrameCount,
-        callback = function(val)
-            db.maxFrameCount = val
-            Apply(display)
-        end,
-    })
-    countRow:Slider(L['Per Row'], {
-        width = 0.5,
-        min = 1,
-        max = 20,
-        step = 1,
-        value = db.perRow,
-        callback = function(val)
-            db.perRow = val
-            Apply(display)
-        end,
-    })
-
-    local spacingRow = gridCard:Row(rowHL, 0)
-    spacingRow:Slider(L['Element Spacing'], {
-        width = 0.5,
-        tooltip = L['Spacing between auras along the row.'],
-        min = 0,
-        max = 20,
-        step = 1,
-        value = db.elementSpacing,
-        callback = function(val)
-            db.elementSpacing = val
-            Apply(display)
-        end,
-    })
-    spacingRow:Slider(L['Line Spacing'], {
-        width = 0.5,
-        tooltip = L['Spacing between aura rows.'],
-        min = 0,
-        max = 20,
-        step = 1,
-        value = db.lineSpacing,
-        callback = function(val)
-            db.lineSpacing = val
-            Apply(display)
-        end,
-    })
+    AuraCards:Grid(page, db, ctx)
 
     -- Card 3
-    local growthCard = page:Card(L['Growth'], 'all')
-    local growthRow = growthCard:Row(rowHL, 0)
-    growthRow:Dropdown(L['Horizontal Growth'], {
-        width = 0.5,
-        options = GROWTH_X,
-        value = db.horizontalGrowthDirection,
-        callback = function(key)
-            db.horizontalGrowthDirection = key
-            Apply(display)
-        end,
-    })
-    growthRow:Dropdown(L['Vertical Growth'], {
-        width = 0.5,
-        options = GROWTH_Y,
-        value = db.verticalGrowthDirection,
-        callback = function(key)
-            db.verticalGrowthDirection = key
-            Apply(display)
-        end,
-    })
+    AuraCards:Growth(page, db, ctx)
 
     -- Card 4
     if display.enchants then
@@ -339,103 +187,31 @@ local function BuildLayoutTab(page, display, db)
 
     -- Card 5: no Filter tab to host it on the standard displays.
     if not display.filtered then
-        CreateSortingCard(page, display, db)
+        AuraCards:Sorting(page, db, ctx)
     end
 end
 
 -- Appearance Tab
-local function BuildAppearanceTab(page, display, db)
+local function BuildAppearanceTab(page, display, db, ctx)
     -- Card 1
-    local sizeCard = page:Card(L['Icons'], 'all')
-    sizeCard:Row(rowHL, 0):Slider(L['Size'], {
-        width = 1,
-        min = 12,
-        max = 80,
-        step = 1,
-        value = db.size,
-        callback = function(val)
-            db.size = val
-            Apply(display) -- resizes the mover host and the wrap width even though buttons keep their size
-        end,
-    })
+    AuraCards:Icons(page, db, ctx)
 
     -- Card 2
-    local textCard = page:Card(L['Text'], 'all')
-    local textRow = textCard:Row(rowHL, 0)
-    textRow:Checkbox(L['Show Count'], {
-        width = 0.5,
-        value = db.showApplicationCount,
-        callback = function(checked) db.showApplicationCount = checked end,
-    })
-    textRow:Checkbox(L['Show Duration'], {
-        width = 0.5,
-        value = db.showDurationText,
-        callback = function(checked) db.showDurationText = checked end,
-    })
+    AuraCards:Text(page, db)
 
     -- Card 3
-    local cooldownCard = page:Card(L['Cooldown'], 'all')
-    local swipeRow = cooldownCard:Row(rowH)
-    swipeRow:Checkbox(L['Draw Swipe'], {
-        width = 0.5,
-        value = db.drawSwipe,
-        callback = function(checked) db.drawSwipe = checked end,
-    })
-    swipeRow:Checkbox(L['Reverse Swipe'], {
-        width = 0.5,
-        value = db.reverseSwipe,
-        callback = function(checked) db.reverseSwipe = checked end,
-    })
-    cooldownCard:Row(rowHL, 0):Checkbox(L['Draw Edge'], {
-        width = 1,
-        value = db.drawEdge,
-        callback = function(checked) db.drawEdge = checked end,
-    })
+    AuraCards:Cooldown(page, db)
 
     -- Card 4
     if display.harmful then
-        local dispelCard = page:Card(L['Dispel Indicators'], 'all')
-        local dispelRow = dispelCard:Row(rowH)
-        dispelRow:Checkbox(L['Show Border'], {
-            width = 1,
-            tooltip = L['Colors the aura border by dispel type.'],
-            value = db.showBorder,
-            callback = function(checked) db.showBorder = checked end,
-        })
-
-        dispelCard:Separator()
-
-        local dispelIconRow = dispelCard:Row(rowHL, 0)
-        dispelIconRow:Checkbox(L['Show Dispel Icon'], {
-            width = 0.5,
-            tooltip = L['Shows the dispel type icon in the corner of the aura.'],
-            value = db.showDebuffDispelIcon,
-            callback = function(checked)
-                db.showDebuffDispelIcon = checked
-                page:Refresh()
-            end,
-        })
-        dispelIconRow:Slider(L['Dispel Icon Size'], {
-            width = 0.5,
-            min = 4,
-            max = 40,
-            step = 1,
-            value = db.dispelIconSize,
-            conditions = { 'showDebuffDispelIcon' },
-            callback = function(val) db.dispelIconSize = val end,
-        })
+        AuraCards:Dispel(page, db, ctx)
     end
 
     -- Card 5
-    local tooltipCard = page:Card(L['Tooltip'], 'all')
-    tooltipCard:Row(rowHL, 0):Checkbox(L['Hide Tooltip In Combat'], {
-        width = 1,
-        value = db.tooltipHideInCombat,
-        callback = function(checked) db.tooltipHideInCombat = checked end,
-    })
+    AuraCards:Tooltip(page, db, ctx)
 
     -- Card 6
-    CreateReloadCard(page)
+    AuraCards:Reload(page)
 end
 
 -- Font Settings Tab
@@ -453,38 +229,10 @@ local function BuildFontTab(page, display, db)
     })
 
     -- Card 2
-    local textCard = page:Card(L['Text Position'], 'all')
-    for index, slot in ipairs(TEXT_SLOTS) do
-        local last = index == #TEXT_SLOTS
-        local position = db[slot.key].Position
-        local row = textCard:Row(last and rowHL or rowH, last and 0 or nil)
-
-        row:Dropdown(slot.anchor, {
-            width = 0.4,
-            options = TEXT_ANCHORS,
-            value = position.AnchorFrom,
-            callback = function(key) position.AnchorFrom = key end,
-        })
-        row:Slider(slot.x, {
-            width = 0.3,
-            min = -40,
-            max = 40,
-            step = 1,
-            value = position.XOffset,
-            callback = function(val) position.XOffset = val end,
-        })
-        row:Slider(slot.y, {
-            width = 0.3,
-            min = -40,
-            max = 40,
-            step = 1,
-            value = position.YOffset,
-            callback = function(val) position.YOffset = val end,
-        })
-    end
+    AuraCards:TextPosition(page, db)
 
     -- Card 3
-    CreateReloadCard(page)
+    AuraCards:Reload(page)
 end
 
 for _, display in ipairs(DISPLAYS) do
@@ -504,14 +252,20 @@ for _, display in ipairs(DISPLAYS) do
             local db = display.GetDB()
             if not db then return end
             page:SetEnabled(function() return db.Enabled end)
-            page:SetCondition('showDebuffDispelIcon', function() return db.showDebuffDispelIcon end)
+
+            local ctx = {
+                Apply = function() Apply(display) end,
+                filtered = display.filtered,
+                dispelIconKey = 'showDebuffDispelIcon',
+                withoutDispelType = true,
+            }
 
             if tabId == 'layout' then
-                BuildLayoutTab(page, display, db)
+                BuildLayoutTab(page, display, db, ctx)
             elseif tabId == 'filter' then
-                BuildFilterTab(page, display, db)
+                BuildFilterTab(page, display, db, ctx)
             elseif tabId == 'appearance' then
-                BuildAppearanceTab(page, display, db)
+                BuildAppearanceTab(page, display, db, ctx)
             elseif tabId == 'font' then
                 BuildFontTab(page, display, db)
             elseif tabId == 'position' then

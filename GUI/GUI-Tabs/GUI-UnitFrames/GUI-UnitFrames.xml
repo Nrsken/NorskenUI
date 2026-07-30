@@ -3,5 +3,6 @@
 
     <Script file='GUI-UFGeneral.lua'/>
     <Script file='GUI-UFUnits.lua'/>
+    <Script file='GUI-UFAuras.lua'/>
 
 </Ui>

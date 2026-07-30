@@ -209,6 +209,7 @@ NRSKNUI.Colors = {
     status = {},
     dispel = {},
     white = CreateColor(1, 1, 1, 1),
+    warning = { 1, 0.55, 0.2, 1 },
     highlightColor = { 1, 1, 1, 0.25 },
     selectedColor = { 0.8, 0.8, 0.8, 0.25 },
     blackBgColor = { 0, 0, 0, 0.8 },

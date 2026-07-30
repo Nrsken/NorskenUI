@@ -30,6 +30,7 @@ Modules/ClassUtility/ClassUtility.xml
 # Load GUI Core File
 GUI/GUI-Core.lua
 GUI/GUI-SidebarConfig.lua
+GUI/GUI-AuraCards.lua
 
 # Load GUI Tab Files
 GUI/GUI-Tabs/GUI-Global/GUI-Global.xml

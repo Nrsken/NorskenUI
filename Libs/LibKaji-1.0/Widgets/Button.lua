@@ -180,7 +180,6 @@ end
 
 function ButtonMixin:OnRelease()
     self._callback = nil
-    self._bgColor = nil
     self._hasIcon = false
     self._imageColor = nil
     lib.ClearTooltip(self)

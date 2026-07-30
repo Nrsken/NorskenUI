@@ -118,6 +118,7 @@
 ---@field reverseSwipe boolean
 ---@field showApplicationCount boolean
 ---@field showBorder boolean
+---@field showBorderWithoutDispelType boolean
 ---@field showDebuffDispelIcon boolean
 ---@field showDurationText boolean
 ---@field size number
@@ -256,6 +257,7 @@
 ---@field reverseSwipe boolean
 ---@field showApplicationCount boolean
 ---@field showBorder boolean
+---@field showBorderWithoutDispelType boolean
 ---@field showDebuffDispelIcon boolean
 ---@field showDurationText boolean
 ---@field size number
@@ -517,7 +519,8 @@
 ---@field UseGlobalFont boolean
 ---@field anchorFrameType string
 
----@alias NRSKNUI.DBProfile.CombatMessage.Config NRSKNUI.DynamicGroupConfig
+---@class NRSKNUI.DBProfile.CombatMessage.Config
+---@field [string] any
 
 ---@class NRSKNUI.DBProfile.CombatMessage.EnterCombat
 ---@field [string] any
@@ -1447,7 +1450,8 @@
 ---@field WrongColor table
 ---@field anchorFrameType string
 
----@alias NRSKNUI.DBProfile.PetTexts.Config NRSKNUI.DynamicGroupConfig
+---@class NRSKNUI.DBProfile.PetTexts.Config
+---@field [string] any
 
 ---@class NRSKNUI.DBProfile.PetTexts.FontShadow
 ---@field [string] any
@@ -2832,6 +2836,7 @@
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.focustarget
 ---@field [string] any
+---@field Auras NRSKNUI.DBProfile.UnitFrames.Units.focustarget.Auras
 ---@field Castbar NRSKNUI.DBProfile.UnitFrames.Units.focustarget.Castbar
 ---@field Height number
 ---@field ParentFrame string
@@ -2840,6 +2845,19 @@
 ---@field Tags NRSKNUI.DBProfile.UnitFrames.Units.focustarget.Tags
 ---@field Width number
 ---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.focustarget.Auras
+---@field [string] any
+---@field Buffs NRSKNUI.DBProfile.UnitFrames.Units.focustarget.Auras.Buffs
+---@field Debuffs NRSKNUI.DBProfile.UnitFrames.Units.focustarget.Auras.Debuffs
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.focustarget.Auras.Buffs
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.focustarget.Auras.Debuffs
+---@field [string] any
+---@field Enabled boolean
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.focustarget.Castbar
 ---@field [string] any
@@ -2884,6 +2902,7 @@
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.pet
 ---@field [string] any
+---@field Auras NRSKNUI.DBProfile.UnitFrames.Units.pet.Auras
 ---@field Height number
 ---@field ParentFrame string
 ---@field Position NRSKNUI.DBProfile.UnitFrames.Units.pet.Position
@@ -2891,6 +2910,19 @@
 ---@field Tags NRSKNUI.DBProfile.UnitFrames.Units.pet.Tags
 ---@field Width number
 ---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.pet.Auras
+---@field [string] any
+---@field Buffs NRSKNUI.DBProfile.UnitFrames.Units.pet.Auras.Buffs
+---@field Debuffs NRSKNUI.DBProfile.UnitFrames.Units.pet.Auras.Debuffs
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.pet.Auras.Buffs
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.pet.Auras.Debuffs
+---@field [string] any
+---@field Enabled boolean
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.pet.Position
 ---@field [string] any
@@ -2931,6 +2963,7 @@
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.pettarget
 ---@field [string] any
+---@field Auras NRSKNUI.DBProfile.UnitFrames.Units.pettarget.Auras
 ---@field Castbar NRSKNUI.DBProfile.UnitFrames.Units.pettarget.Castbar
 ---@field Height number
 ---@field ParentFrame string
@@ -2939,6 +2972,19 @@
 ---@field Tags NRSKNUI.DBProfile.UnitFrames.Units.pettarget.Tags
 ---@field Width number
 ---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.pettarget.Auras
+---@field [string] any
+---@field Buffs NRSKNUI.DBProfile.UnitFrames.Units.pettarget.Auras.Buffs
+---@field Debuffs NRSKNUI.DBProfile.UnitFrames.Units.pettarget.Auras.Debuffs
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.pettarget.Auras.Buffs
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.pettarget.Auras.Debuffs
+---@field [string] any
+---@field Enabled boolean
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.pettarget.Castbar
 ---@field [string] any
@@ -2983,6 +3029,7 @@
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.player
 ---@field [string] any
+---@field Auras NRSKNUI.DBProfile.UnitFrames.Units.player.Auras
 ---@field Castbar NRSKNUI.DBProfile.UnitFrames.Units.player.Castbar
 ---@field Indicators NRSKNUI.DBProfile.UnitFrames.Units.player.Indicators
 ---@field LeaderIndicator NRSKNUI.DBProfile.UnitFrames.Units.player.LeaderIndicator
@@ -2991,6 +3038,19 @@
 ---@field Power NRSKNUI.DBProfile.UnitFrames.Units.player.Power
 ---@field Tags NRSKNUI.DBProfile.UnitFrames.Units.player.Tags
 ---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.player.Auras
+---@field [string] any
+---@field Buffs NRSKNUI.DBProfile.UnitFrames.Units.player.Auras.Buffs
+---@field Debuffs NRSKNUI.DBProfile.UnitFrames.Units.player.Auras.Debuffs
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.player.Auras.Buffs
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.player.Auras.Debuffs
+---@field [string] any
+---@field Enabled boolean
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.player.Castbar
 ---@field [string] any
@@ -3083,6 +3143,7 @@
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.targettarget
 ---@field [string] any
+---@field Auras NRSKNUI.DBProfile.UnitFrames.Units.targettarget.Auras
 ---@field Castbar NRSKNUI.DBProfile.UnitFrames.Units.targettarget.Castbar
 ---@field Height number
 ---@field ParentFrame string
@@ -3091,6 +3152,19 @@
 ---@field Tags NRSKNUI.DBProfile.UnitFrames.Units.targettarget.Tags
 ---@field Width number
 ---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.targettarget.Auras
+---@field [string] any
+---@field Buffs NRSKNUI.DBProfile.UnitFrames.Units.targettarget.Auras.Buffs
+---@field Debuffs NRSKNUI.DBProfile.UnitFrames.Units.targettarget.Auras.Debuffs
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.targettarget.Auras.Buffs
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.targettarget.Auras.Debuffs
+---@field [string] any
+---@field Enabled boolean
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.targettarget.Castbar
 ---@field [string] any

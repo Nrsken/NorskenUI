@@ -77,7 +77,7 @@ local function BuildPresetCard(page)
     local swatchRow = card:Row(28)
     for _, key in ipairs(PREVIEW_KEYS) do
         local color = preset[key]
-        local swatch = swatchRow:Icon({ width = 1 / #PREVIEW_KEYS, size = 24 })
+        local swatch = swatchRow:Icon({ width = 1 / #PREVIEW_KEYS, align = 'FILL' })
         swatch.icon:SetColorTexture(color[1], color[2], color[3], color[4] or 1)
     end
 end
@@ -85,7 +85,7 @@ end
 local function BuildClassCard(page)
     local card = page:Card(L['Class Color Mode'])
     local color = NRSKNUI:GetPlayerClassColor()
-    local swatch = card:Row(18):Icon({ width = 1, size = 18 })
+    local swatch = card:Row(18):Icon({ width = 1, align = 'FILL' })
     swatch.icon:SetColorTexture(color[1], color[2], color[3], 1)
     card:Row(40, 0):Text(nil, {
         width = 1,

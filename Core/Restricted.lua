@@ -16,8 +16,10 @@ local UnitAffectingCombat = UnitAffectingCombat
 
 local ShouldUnitIdentityBeSecret = C_Secrets and C_Secrets.ShouldUnitIdentityBeSecret
 local CanCompareUnitTokens = C_Secrets and C_Secrets.CanCompareUnitTokens
+local GetSpellAuraSecrecy = C_Secrets and C_Secrets.GetSpellAuraSecrecy
 local GetAddOnRestrictionState = C_RestrictedActions and C_RestrictedActions.GetAddOnRestrictionState
 
+local NeverSecret = Enum and Enum.SecrecyLevel.NeverSecret
 local RestrictionType = Enum and Enum.AddOnRestrictionType
 local RestrictionState = Enum and Enum.AddOnRestrictionState
 local RestrictionInactive = RestrictionState and RestrictionState.Inactive
@@ -112,12 +114,15 @@ function NRSKNUI:CanCompareUnits(unit1, unit2)
     return CanCompareUnitTokens(unit1, unit2)
 end
 
----Just in case Blizzard adds an API down the line that tells us if a spellID is restricted, this is a placeholder for that.
----For now, all spellIDs are considered unrestricted.
+---Pre-flight, can this spell hand back secrets when queried as an aura?
+---Aura containers only honour includeSpellIDs/excludeSpellIDs on a harmful aura when the unit is one
+---the player cannot assist and on a helpful aura when it is one they can (see
+---AuraContainerUtil.CanApplyIdentityCandidateFilters). A never-secret spell is exempt and matches by
+---ID in both directions, so this is what tells a filter whether its spellIDs can be ignored.
 ---@param spellID number
 ---@return boolean
-function NRSKNUI:IsSpellAuraProtected(spellID)
-    return false
+function NRSKNUI:IsSpellAuraSecret(spellID)
+    return GetSpellAuraSecrecy(spellID) ~= NeverSecret
 end
 
 ---Safely get a value if it is not secret and can be accessed, otherwise return nil.

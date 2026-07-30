@@ -46,6 +46,7 @@ function AdvancedDebuffs:GetContainerConfig()
         drawEdge = db.drawEdge,
         reverseSwipe = db.reverseSwipe,
         showDebuffBorder = db.showBorder or nil,
+        showWithoutDispelType = db.showBorderWithoutDispelType,
         fontDB = db,
         stackFont = db.StackFont,
         durationFont = db.DurationFont,

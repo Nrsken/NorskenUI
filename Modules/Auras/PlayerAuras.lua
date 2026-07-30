@@ -70,6 +70,7 @@ function PlayerAuras:GetContainerConfig(kind)
         drawEdge = cfg.drawEdge,
         reverseSwipe = cfg.reverseSwipe,
         showDebuffBorder = (kind == 'Debuffs') and cfg.showBorder or nil,
+        showWithoutDispelType = (kind == 'Debuffs') and cfg.showBorderWithoutDispelType or nil,
         showDebuffDispelIcon = (kind == 'Debuffs') and cfg.showDebuffDispelIcon or nil,
         dispelIconSize = (kind == 'Debuffs') and cfg.dispelIconSize or nil,
         fontDB = cfg,

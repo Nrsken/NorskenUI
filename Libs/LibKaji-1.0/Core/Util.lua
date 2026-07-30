@@ -8,7 +8,8 @@
 
 --]]
 
-local lib = LibStub and LibStub("LibKaji-1.0", true)
+---@class LibKaji-1.0
+local lib = _G.LibStub and _G.LibStub('LibKaji-1.0', true)
 if not lib then return end
 ---@class KajiGUIInstanceMixin
 local InstanceMixin = lib.InstanceMixin
@@ -128,12 +129,15 @@ end
 ---@param frame Frame
 ---@param gui KajiGUIInstance
 ---@param title? string shown in the accent color
----@param tooltip? string|{ text?: string, default?: any } body, and an optional default line
+---@param tooltip? string|{ text?: string, default?: any }|fun(tooltip: GameTooltip, frame: Frame) body and an optional default line, or a filler that writes the tooltip itself (SetSpellByID and friends)
 ---@param opts? { anchor?: string, x?: number, y?: number, owner?: Frame }
 function lib.SetTooltip(frame, gui, title, tooltip, opts)
     opts = opts or {}
-    local text, default
-    if type(tooltip) == "table" then
+    local text, default, content
+    local kind = type(tooltip)
+    if kind == "function" then
+        content = tooltip
+    elseif kind == "table" then
         text, default = tooltip.text, tooltip.default
     else
         text = tooltip
@@ -142,6 +146,7 @@ function lib.SetTooltip(frame, gui, title, tooltip, opts)
     frame._kajiGui = gui
     frame._tooltipTitle = title
     frame._tooltipText = text
+    frame._tooltipContent = content
     frame._tooltipDefault = default ~= nil and
         (type(default) == "boolean" and (default and "On" or "Off") or tostring(default)) or nil
     frame._tooltipOwner = opts.owner
@@ -155,21 +160,31 @@ end
 function lib.ClearTooltip(frame)
     frame._tooltipTitle = nil
     frame._tooltipText = nil
+    frame._tooltipContent = nil
     frame._tooltipDefault = nil
 end
 
 ---Shows the tooltip configured by SetTooltip. Call from the widget's own OnEnter.
 ---@param frame Frame
 function lib.ShowTooltip(frame)
-    local title, text = frame._tooltipTitle, frame._tooltipText
-    if not title and not text then return end
+    local title, text, content = frame._tooltipTitle, frame._tooltipText, frame._tooltipContent
+    if not (title or text or content) then return end
 
     local theme = frame._kajiGui.theme
     GameTooltip:SetOwner(frame._tooltipOwner or frame, frame._tooltipAnchor or "ANCHOR_CURSOR_RIGHT",
         frame._tooltipX or 30, frame._tooltipY or 0)
-    GameTooltip:SetText(title or text, theme.accent[1], theme.accent[2], theme.accent[3], 1, false)
-    if title and text then
-        GameTooltip:AddLine(text, theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], false)
+
+    -- A filler writes its own header, so the widget's title is its to set and ours only appends.
+    if content then
+        content(GameTooltip, frame)
+        if text then
+            GameTooltip:AddLine(text, theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], true)
+        end
+    else
+        GameTooltip:SetText(title or text, theme.accent[1], theme.accent[2], theme.accent[3], 1, false)
+        if title and text then
+            GameTooltip:AddLine(text, theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], true)
+        end
     end
     if frame._tooltipDefault then
         GameTooltip:AddLine("Default: " .. frame._tooltipDefault, theme.success[1], theme.success[2], theme.success[3])
@@ -180,4 +195,14 @@ end
 ---Counterpart to ShowTooltip, for the widget's own OnLeave.
 function lib.HideTooltip()
     GameTooltip:Hide()
+end
+
+---@param texture Texture
+---@param zoom? number
+function lib.SetTextureZoom(texture, zoom)
+    local zoomMult = zoom or 0.3
+    local texMin = 0.25 * zoomMult
+    local texMax = 1 - 0.25 * zoomMult
+
+    texture:SetTexCoord(texMin, texMax, texMin, texMax)
 end

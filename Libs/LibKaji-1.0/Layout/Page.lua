@@ -115,8 +115,8 @@ function FluentRow:Text(label, config) return self:_Add("CreateText", label, con
 function FluentRow:AnchorPicker(label, config) return self:_Add("CreateAnchorPicker", label, config) end
 
 ---Icon has a (parent, config) signature, so it gets its own method.
----@param config? KajiGUIWidgetConfig
----@return Frame widget
+---@param config? KajiGUIWidgetConfig|KajiGUIIconConfig
+---@return KajiGUIIcon widget
 function FluentRow:Icon(config)
     config = config or {}
     local gui = self.card.page.gui

@@ -61,6 +61,9 @@ local TABLE_CANDIDATE_FIELDS = {
     'includeDispelTypes', 'excludeDispelTypes', 'includeSpellIDs', 'excludeSpellIDs',
 }
 
+-- The two candidate fields the client only applies in one direction, see BranchRestriction.
+local SPELLID_CANDIDATE_FIELDS = { 'includeSpellIDs', 'excludeSpellIDs' }
+
 local function GetStore()
     return NRSKNUI.db.global.AuraFilters
 end
@@ -112,7 +115,7 @@ local function AddBlocklistExclusions(into)
     return into
 end
 
----Merge a named spellID list's enabled spells into the matching include/exclude map by its type.
+---Merge a named spellID list's spells into the matching include/exclude map by its type.
 ---@param cFilter table? existing candidateFilters to extend
 ---@param list table { type: string, spells: table }
 ---@return table? cFilter
@@ -120,14 +123,11 @@ local function AddNamedList(cFilter, list)
     local field = list.type == 'whitelist' and 'includeSpellIDs' or 'excludeSpellIDs'
     if type(list.spells) ~= 'table' then return cFilter end
 
-    for spellId, entry in pairs(list.spells) do
+    for spellId in pairs(list.spells) do
         if type(spellId) == 'number' and spellId > 0 then
-            local enabled = type(entry) ~= 'table' or entry.enabled ~= false
-            if enabled then
-                cFilter = cFilter or {}
-                cFilter[field] = cFilter[field] or {}
-                cFilter[field][spellId] = true
-            end
+            cFilter = cFilter or {}
+            cFilter[field] = cFilter[field] or {}
+            cFilter[field][spellId] = true
         end
     end
     return cFilter
@@ -266,7 +266,7 @@ end
 ---HELPFUL/HARMFUL) compiles to a single branch, so a selection always resolves to a real filter.
 ---Returns nil when it is neither, so callers can fall back.
 ---@param name string?
----@return table[]? branches { filterString: string, candidateFilters: table?, spellLists: table? }
+---@return table[]? branches { filterString: string, candidateFilters: table?, spellLists: table?, type: string }
 function AuraFilters:GetBranches(name)
     if not name then return nil end
 
@@ -290,6 +290,9 @@ function AuraFilters:GetBranches(name)
             filterString = BuildFilterString(branch),
             candidateFilters = BuildCandidateFilters(branch, spec, attached),
             spellLists = attached,
+            -- The base type on its own, which the filter string no longer separates out. Only the
+            -- summary reads it, to say which way round a spellID restriction bites.
+            type = branch.type or Filters.Harmful,
         }
     end
 
@@ -333,6 +336,38 @@ local function CountKeys(map)
         for _ in pairs(map) do count = count + 1 end
     end
     return count
+end
+
+---Does this branch match on a spellID the client can refuse to look at?
+---@param candidates table? compiled candidateFilters
+---@return boolean
+local function HasSecretSpellID(candidates)
+    if not candidates then return false end
+
+    for _, field in ipairs(SPELLID_CANDIDATE_FIELDS) do
+        for spellId in pairs(candidates[field] or {}) do
+            if NRSKNUI:IsSpellAuraSecret(spellId) then return true end
+        end
+    end
+    return false
+end
+
+---Branch restriction text for the GUI's FilterCard summary, when the branch has a candidate filter that the client may ignore. Returns nil when there is no restriction.
+---@param branch table compiled branch
+---@return string? line
+local function BranchRestriction(branch)
+    if not HasSecretSpellID(branch.candidateFilters) then return nil end
+
+    local text
+    if branch.type == Filters.Harmful then
+        text = L['Spell IDs are ignored for debuffs on you and units you can assist.']
+    elseif branch.type == Filters.Helpful then
+        text = L['Spell IDs are ignored for buffs on units you cannot assist.']
+    else
+        text = L['Spell IDs are ignored for debuffs on friendly units and buffs on hostile units.']
+    end
+
+    return NRSKNUI:ColorText(text, NRSKNUI.Colors.warning)
 end
 
 ---One branch's candidate filters as short phrases, appended to its filter string in the summary.
@@ -407,6 +442,10 @@ function AuraFilters:Describe(name)
         tinsert(qualifiers, 1, branch.filterString)
         -- Only the branch number stays in the body colour, so the eye lands on what each one matches.
         tinsert(lines, format(L['Branch %d: %s'], index, NRSKNUI:ColorTextByTheme(tconcat(qualifiers, ', '))))
+
+        -- Its own line under the branch it belongs to, since it contradicts what that line just said.
+        local restriction = BranchRestriction(branch)
+        if restriction then tinsert(lines, restriction) end
     end
 
     local heading = #branches == 1 and L['Matches auras in the branch:']
@@ -445,7 +484,7 @@ end
 
 ---Convenience on the addon namespace so consumers read cleanly (matches container:AddFilteredGroup).
 ---@param name string?
----@return table[]? branches { filterString: string, candidateFilters: table?, spellLists: table? }
+---@return table[]? branches { filterString: string, candidateFilters: table?, spellLists: table?, type: string }
 function NRSKNUI:GetAuraFilter(name)
     return AuraFilters:GetBranches(name)
 end

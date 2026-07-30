@@ -781,7 +781,13 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
             scrollbar:SetValue(0)
         elseif scrollbar then
             scrollbar:Hide()
+            scrollbar:SetMinMaxValues(0, 0)
         end
+
+        -- A ScrollFrame keeps its offset when its scroll child shrinks, and a pooled dropdown
+        -- carries that offset into its next life: one that was scrolled while holding a long list
+        -- would open a short one scrolled clean past every item, showing an empty list.
+        scrollFrame:SetVerticalScroll(0)
 
         pixel.SetPixelHeight(dropdownList, targetHeight)
         dropdownList:Show()
