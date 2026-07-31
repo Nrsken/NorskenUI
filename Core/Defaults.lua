@@ -1001,6 +1001,58 @@ local Defaults = {
                 YOffset = 90
             },
         },
+        Speed = {
+            Enabled = true,
+            Filter = 'HELPFUL',
+            size = 50,
+            perRow = 6,
+            maxFrameCount = 6,
+            elementSpacing = 1,
+            lineSpacing = 1,
+            horizontalGrowthDirection = "LEFT",
+            verticalGrowthDirection = "UP",
+            sortMethod = "ExpirationOnly",
+            sortDirection = "Normal",
+            showApplicationCount = true,
+            showDurationText = true,
+            drawSwipe = false,
+            drawEdge = false,
+            reverseSwipe = true,
+            tooltipHideInCombat = false,
+            UseGlobalFont = true,
+            FontFace = "Expressway",
+            FontOutline = "OUTLINE",
+            StackFont = {
+                FontSize = 14,
+                Position = {
+                    AnchorFrom = "BOTTOMRIGHT",
+                    XOffset = -1,
+                    YOffset = 1
+                },
+            },
+            DurationFont = {
+                FontSize = 18,
+                Position = {
+                    AnchorFrom = "CENTER",
+                    XOffset = 0,
+                    YOffset = 0
+                },
+            },
+            FontShadow = {
+                Enabled = false,
+                Color = { 0, 0, 0, 1 },
+                OffsetX = 1,
+                OffsetY = -1,
+            },
+            anchorFrameType = "SELECTFRAME",
+            ParentFrame = "NUF_Player",
+            Position = {
+                AnchorFrom = "RIGHT",
+                AnchorTo = "LEFT",
+                XOffset = -1,
+                YOffset = 0
+            },
+        },
 
         -- Miscellaneous Settings
         Miscellaneous = {

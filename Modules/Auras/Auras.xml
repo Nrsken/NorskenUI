@@ -4,4 +4,5 @@
     <Script file="PlayerAuras.lua" />
     <Script file="AdvancedDebuffs.lua" />
     <Script file="Defensives.lua" />
+    <Script file="Speed.lua" />
 </Ui>

@@ -52,6 +52,7 @@ GUIFrame.SidebarConfig = {
             items = {
                 { id = 'advancedDebuffs', text = L['Advanced Debuffs'] },
                 { id = 'defensives',      text = L['Defensives'] },
+                { id = 'speed',           text = L['Speed'] },
                 { id = 'standardBuffs',   text = L['Standard Buffs'] },
                 { id = 'standardDebuffs', text = L['Standard Debuffs'] },
             }

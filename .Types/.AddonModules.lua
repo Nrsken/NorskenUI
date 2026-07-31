@@ -29,6 +29,7 @@
 ---@class CombatResModule : NRSKNUI.ModuleBase, AceEvent-3.0, AceTimer-3.0
 ---@class CombatCursorModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class FocusCastbarModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class SpeedModule : NRSKNUI.ModuleBase, AceEvent-3.0
 
 -- Typed accessors. Overloads dispatch on the literal module name.
 
@@ -63,6 +64,7 @@ local NRSKNUI
 ---@overload fun(self: NRSKNUI, name: "Defensives", silent?: boolean): Defensives
 ---@overload fun(self: NRSKNUI, name: "PetTexts", silent?: boolean): PetTexts
 ---@overload fun(self: NRSKNUI, name: "FocusCastbar", silent?: boolean): FocusCastbar
+---@overload fun(self: NRSKNUI, name: "Speed", silent?: boolean): Speed
 ---@param name string
 ---@param silent? boolean
 ---@return AceModule
@@ -96,6 +98,7 @@ function NRSKNUI:GetModule(name, silent) end
 ---@overload fun(self: NRSKNUI, name: "Defensives", ...: string): Defensives
 ---@overload fun(self: NRSKNUI, name: "PetTexts", ...: string): PetTexts
 ---@overload fun(self: NRSKNUI, name: "FocusCastbar", ...: string): FocusCastbar
+---@overload fun(self: NRSKNUI, name: "Speed", ...: string): Speed
 ---@param name string
 ---@param ... string
 ---@return AceModule

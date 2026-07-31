@@ -70,6 +70,16 @@ local DISPLAYS = {
         Toggle = function(checked) NRSKNUI:ToggleModule('Defensives', checked) end,
     },
     {
+        pageId = 'speed',
+        moduleName = 'Speed',
+        title = L['Speed'],
+        enableText = L['Enable Speed'],
+        harmful = true,
+        filtered = true,
+        GetDB = function() return NRSKNUI.db.profile.Speed end,
+        Toggle = function(checked) NRSKNUI:ToggleModule('Speed', checked) end,
+    },
+    {
         pageId = 'standardBuffs',
         moduleName = 'PlayerAuras',
         title = L['Standard Buffs'],

@@ -89,6 +89,7 @@
 ---@field ReckonTracker NRSKNUI.DBProfile.ReckonTracker
 ---@field RerollKeystone NRSKNUI.DBProfile.RerollKeystone
 ---@field Skinning NRSKNUI.DBProfile.Skinning
+---@field Speed NRSKNUI.DBProfile.Speed
 ---@field TotemTracker NRSKNUI.DBProfile.TotemTracker
 ---@field UnitFrames NRSKNUI.DBProfile.UnitFrames
 ---@field UseElvUI NRSKNUI.DBProfile.UseElvUI
@@ -2690,6 +2691,71 @@
 ---@field StyleText boolean
 ---@field Width number
 
+---@class NRSKNUI.DBProfile.Speed
+---@field [string] any
+---@field DurationFont NRSKNUI.DBProfile.Speed.DurationFont
+---@field Enabled boolean
+---@field Filter string
+---@field FontFace string
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.Speed.FontShadow
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.Speed.Position
+---@field StackFont NRSKNUI.DBProfile.Speed.StackFont
+---@field UseGlobalFont boolean
+---@field anchorFrameType string
+---@field drawEdge boolean
+---@field drawSwipe boolean
+---@field elementSpacing number
+---@field horizontalGrowthDirection string
+---@field lineSpacing number
+---@field maxFrameCount number
+---@field perRow number
+---@field reverseSwipe boolean
+---@field showApplicationCount boolean
+---@field showDurationText boolean
+---@field size number
+---@field sortDirection string
+---@field sortMethod string
+---@field tooltipHideInCombat boolean
+---@field verticalGrowthDirection string
+
+---@class NRSKNUI.DBProfile.Speed.DurationFont
+---@field [string] any
+---@field FontSize number
+---@field Position NRSKNUI.DBProfile.Speed.DurationFont.Position
+
+---@class NRSKNUI.DBProfile.Speed.DurationFont.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Speed.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field OffsetY number
+
+---@class NRSKNUI.DBProfile.Speed.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Speed.StackFont
+---@field [string] any
+---@field FontSize number
+---@field Position NRSKNUI.DBProfile.Speed.StackFont.Position
+
+---@class NRSKNUI.DBProfile.Speed.StackFont.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field XOffset number
+---@field YOffset number
+
 ---@class NRSKNUI.DBProfile.TotemTracker
 ---@field [string] any
 ---@field Enabled boolean
@@ -2811,13 +2877,10 @@
 ---@field Auras NRSKNUI.DBProfile.UnitFrames.Units.boss.Auras
 ---@field Castbar NRSKNUI.DBProfile.UnitFrames.Units.boss.Castbar
 ---@field GrowthDirection string
----@field Height number
 ---@field ParentFrame string
 ---@field Position NRSKNUI.DBProfile.UnitFrames.Units.boss.Position
 ---@field Power NRSKNUI.DBProfile.UnitFrames.Units.boss.Power
 ---@field Spacing number
----@field Tags NRSKNUI.DBProfile.UnitFrames.Units.boss.Tags
----@field Width number
 ---@field anchorFrameType string
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Auras
@@ -2847,8 +2910,6 @@
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Castbar
 ---@field [string] any
----@field Enabled boolean
----@field Height number
 ---@field Position NRSKNUI.DBProfile.UnitFrames.Units.boss.Castbar.Position
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Castbar.Position
@@ -2868,40 +2929,6 @@
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Power
 ---@field [string] any
 ---@field Enabled boolean
----@field Height number
-
----@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Tags
----@field [string] any
----@field TagOne NRSKNUI.DBProfile.UnitFrames.Units.boss.Tags.TagOne
----@field TagThree NRSKNUI.DBProfile.UnitFrames.Units.boss.Tags.TagThree
----@field TagTwo NRSKNUI.DBProfile.UnitFrames.Units.boss.Tags.TagTwo
-
----@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Tags.TagOne
----@field [string] any
----@field BoundTo string
----@field Position NRSKNUI.DBProfile.UnitFrames.Units.boss.Tags.TagOne.Position
-
----@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Tags.TagOne.Position
----@field [string] any
----@field AnchorFrom string
----@field AnchorTo string
----@field XOffset number
----@field YOffset number
-
----@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Tags.TagThree
----@field [string] any
----@field Enabled boolean
-
----@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Tags.TagTwo
----@field [string] any
----@field Position NRSKNUI.DBProfile.UnitFrames.Units.boss.Tags.TagTwo.Position
-
----@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Tags.TagTwo.Position
----@field [string] any
----@field AnchorFrom string
----@field AnchorTo string
----@field XOffset number
----@field YOffset number
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.focus
 ---@field [string] any

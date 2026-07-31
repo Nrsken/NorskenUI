@@ -157,6 +157,7 @@ NRSKNUI.PetTexts = NRSKNUI:NewModule('PetTexts', 'AceEvent-3.0')
 NRSKNUI.PlayerAuras = NRSKNUI:NewModule('PlayerAuras', 'AceEvent-3.0')
 NRSKNUI.AdvancedDebuffs = NRSKNUI:NewModule('AdvancedDebuffs', 'AceEvent-3.0')
 NRSKNUI.Defensives = NRSKNUI:NewModule('Defensives', 'AceEvent-3.0')
+NRSKNUI.Speed = NRSKNUI:NewModule('Speed', 'AceEvent-3.0')
 
 -- Combat Modules
 NRSKNUI.CombatTimer = NRSKNUI:NewModule('CombatTimer', 'AceEvent-3.0')
