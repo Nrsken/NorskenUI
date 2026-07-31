@@ -1,5 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
+local L = NRSKNUI.Libs.AL
 
 local pairs = pairs
 local ipairs = ipairs
@@ -56,6 +57,39 @@ for _, option in ipairs(NRSKNUI.FontOutlines) do
     end
 end
 local ValidOutlines = NRSKNUI.ValidOutlines
+
+---Get a localized label for a stored outline flag string.
+---@param flags string|nil stored flags, nil or '' reads as no outline
+---@return string? label localized, or the raw flags when nothing in the canonical list matches
+function NRSKNUI:GetOutlineLabel(flags)
+    if not flags or flags == '' then flags = 'NONE' end
+    for _, option in ipairs(NRSKNUI.FontOutlines) do
+        local value = option.value
+        if type(value) == 'table' then
+            for _, alias in ipairs(value) do
+                if alias == flags then return L[option.label] end
+            end
+        elseif value == flags then
+            return L[option.label]
+        end
+    end
+    return flags
+end
+
+---Get a list of outline options for a GUI dropdown, optionally keeping the SLUG variants.
+---@param includeSlug boolean? keep the SLUG variants, slug is otherwise its own axis
+---@return { value: string, text: string }[]
+function NRSKNUI:GetOutlineOptions(includeSlug)
+    local options = {}
+    for _, option in ipairs(NRSKNUI.FontOutlines) do
+        local value = option.value
+        if type(value) == 'table' then value = value[1] end
+        if includeSlug or not value:find('SLUG') then
+            options[#options + 1] = { value = value, text = L[option.label] }
+        end
+    end
+    return options
+end
 
 ---Resolve an outline value and slug preference into final SetFont flags.
 ---@param value string|nil outline value, e.g. 'THICKOUTLINE,MONOCHROME' or 'NONE'

@@ -1,6 +1,7 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 ---@class UnitFramesModule
+---@field Elements UnitFramesElements
 local UF = NRSKNUI:GetModule('UnitFrames')
 
 local abs = math.abs
@@ -46,29 +47,39 @@ local function BuildBound(slotDB, target, toFrame)
     return { relTo = target, point = point, relPoint = relPoint, offsetX = offsetX, offsetY = 0 }
 end
 
+---@class UnitFramesElements
+---@field Tags UnitFramesTagsElement
 UF.Elements = UF.Elements or {}
+
+---@class UnitFramesTagsElement
 UF.Elements.Tags = {
-    Construct = function(frame, unit)
-        if frame.TagContainer then return end
+    ---@param self oUF.UnitFrame
+    ---@param unit string
+    Construct = function(self, unit)
+        if self.TagContainer then return end
 
-        local container = CreateFrame('Frame', nil, frame)
-        container:SetPixelPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
-        container:SetPixelPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
+        local container = CreateFrame('Frame', nil, self)
+        container:SetPixelPoint('TOPLEFT', self, 'TOPLEFT', 0, 0)
+        container:SetPixelPoint('BOTTOMRIGHT', self, 'BOTTOMRIGHT', 0, 0)
         container:SetFrameLevel(999)
-        container:SetFrameStrata("MEDIUM")
+        container:SetFrameStrata('MEDIUM')
 
-        frame.TagContainer = container
-        frame.TagSlots = {}
+        self.TagContainer = container
+        self.TagSlots = {}
     end,
 
-    Configure = function(frame, unit, uDB, general)
-        local container = frame.TagContainer
+    ---@param self oUF.UnitFrame
+    ---@param unit string
+    ---@param uDB table
+    ---@param general table
+    Configure = function(self, unit, uDB, general)
+        local container = self.TagContainer
         local tagsDB = uDB.Tags
-        local slots = frame.TagSlots
+        local slots = self.TagSlots
 
         for _, name in ipairs(SLOTS) do
             if not slots[name] then
-                local fs = container:CreateFontString(nil, 'OVERLAY')
+                local fs = container:CreateFontString(nil, 'OVERLAY') --[[@as NUI.TagFontString]]
                 fs:SetWordWrap(false)
                 slots[name] = fs
             end
@@ -79,7 +90,7 @@ UF.Elements.Tags = {
                 if fs.frequentUpdates ~= interval then
                     fs.frequentUpdates = interval
                     if fs.nuiTag then
-                        frame:Untag(fs)
+                        self:Untag(fs)
                         fs.nuiTag = nil
                     end
                 end
@@ -104,7 +115,7 @@ UF.Elements.Tags = {
                 end
 
                 -- Font chain: slot -> UnitFrames General -> global media. Passing `general` as the
-                -- source is what makes the General font tab reach the tags at all; the slot only
+                -- source is what makes the General font tab reach the tags at all, the slot only
                 -- supplies the face and outline once it opts out of the shared font.
                 local useGlobal = slotDB.UseGlobalFont
                 fs:SetFontStyle(useGlobal and general or slotDB, slotDB.FontSize,
@@ -115,15 +126,15 @@ UF.Elements.Tags = {
                 fs:SetTextColor(c[1], c[2], c[3])
 
                 if fs.nuiTag ~= slotDB.Tag then
-                    if fs.nuiTag then frame:Untag(fs) end
-                    frame:Tag(fs, slotDB.Tag)
+                    if fs.nuiTag then self:Untag(fs) end
+                    self:Tag(fs, slotDB.Tag)
                     fs.nuiTag = slotDB.Tag
                 end
 
                 fs:Show()
             else
                 if fs.nuiTag then
-                    frame:Untag(fs)
+                    self:Untag(fs)
                     fs.nuiTag = nil
                 end
                 fs:Hide()

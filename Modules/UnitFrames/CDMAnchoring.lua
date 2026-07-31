@@ -2,7 +2,6 @@
 local NRSKNUI = select(2, ...)
 ---@class UnitFramesModule
 local UF = NRSKNUI:GetModule('UnitFrames')
----@class NorskenUF
 
 local max = math.max
 local CreateFrame = CreateFrame

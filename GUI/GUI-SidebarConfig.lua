@@ -62,10 +62,15 @@ GUIFrame.SidebarConfig = {
             text = L['Unit Frames'],
             defaultExpanded = false,
             items = {
-                { id = 'unitFramesGeneral',      text = L['General'] },
-                { id = 'unitFramesUnits',        text = L['Units'] },
-                { id = 'unitFramesAuraBuffs',    text = L['Aura Buffs'] },
-                { id = 'unitFramesAuraDebuffs',  text = L['Aura Debuffs'] },
+                { id = 'unitFramesGeneral',       text = L['General'] },
+                { id = 'unitFrames_player',       text = L['Player'] },
+                { id = 'unitFrames_target',       text = L['Target'] },
+                { id = 'unitFrames_targettarget', text = L['Target of Target'] },
+                { id = 'unitFrames_focus',        text = L['Focus'] },
+                { id = 'unitFrames_focustarget',  text = L['Focus Target'] },
+                { id = 'unitFrames_pet',          text = L['Pet'] },
+                { id = 'unitFrames_pettarget',    text = L['Pet Target'] },
+                { id = 'unitFrames_boss',         text = L['Boss'] },
             }
         },
         {

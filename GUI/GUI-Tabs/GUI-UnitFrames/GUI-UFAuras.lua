@@ -3,39 +3,22 @@ local NRSKNUI = select(2, ...)
 ---@class UnitFramesModule
 local UF = NRSKNUI:GetModule('UnitFrames')
 local L = NRSKNUI.Libs.AL
-local GUI = NRSKNUI.GUI
 local Theme = NRSKNUI.Theme
 local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
-
 local AuraFilters = NRSKNUI.AuraFilters
 local AuraCards = NRSKNUI.GUIAuraCards
 local AF = AuraUtil.AuraFilters
 
 local ipairs = ipairs
-local format = string.format
 
 local function ApplySettings() UF:ApplySettings() end
 
+-- sectionKey is the mini sidebar item each kind hangs off on a unit page.
 local KINDS = {
-    { kind = 'Buffs',   pageId = 'unitFramesAuraBuffs',   title = L['Aura Buffs'],   label = L['Buffs'],   harmful = false },
-    { kind = 'Debuffs', pageId = 'unitFramesAuraDebuffs', title = L['Aura Debuffs'], label = L['Debuffs'], harmful = true },
+    { kind = 'Buffs',   sectionKey = 'aurabuffs',   title = L['Aura Buffs'],   label = L['Buffs'],   harmful = false },
+    { kind = 'Debuffs', sectionKey = 'auradebuffs', title = L['Aura Debuffs'], label = L['Debuffs'], harmful = true },
 }
-
-local UNIT_LABELS = {
-    player = L['Player'],
-    target = L['Target'],
-    targettarget = L['Target of Target'],
-    focus = L['Focus'],
-    focustarget = L['Focus Target'],
-    pet = L['Pet'],
-    pettarget = L['Pet Target'],
-}
-
-local UNIT_ITEMS = {}
-for _, unit in ipairs({ 'player', 'target', 'targettarget', 'focus', 'focustarget', 'pet', 'pettarget' }) do
-    UNIT_ITEMS[#UNIT_ITEMS + 1] = { key = unit, text = UNIT_LABELS[unit] }
-end
 
 local AnchorOptions = {}
 for _, point in ipairs({ 'TOPLEFT', 'TOP', 'TOPRIGHT', 'LEFT', 'CENTER', 'RIGHT', 'BOTTOMLEFT', 'BOTTOM', 'BOTTOMRIGHT' }) do
@@ -52,7 +35,7 @@ local TABS = {
 
 -- Layout Tab
 local function BuildLayoutTab(page, def, cfg, unit, ctx)
-    local enableCard = page:Card(format('%s %s', UNIT_LABELS[unit], def.label))
+    local enableCard = page:Card(def.title)
     enableCard:Row(rowHL, 0):Checkbox(L['Enable'], {
         width = 1,
         master = true,
@@ -176,42 +159,49 @@ local TAB_BUILDERS = {
     position = BuildPositionTab,
 }
 
+-- Exposed for GUI-UFPages.lua.
+UF.GUIAuras = {
+    tabs = TABS,
+    search = {
+        L['Grid'], L['Growth'], L['Sorting'], L['Icons'], L['Cooldown'], L['Tooltip'],
+        L['Aura Filter'], L['Dispel Indicators'], L['Text Position'], L['Font Sizes'],
+        L['Max Auras'], L['Per Row'], L['Element Spacing'], L['Line Spacing'],
+        L['Horizontal Growth'], L['Vertical Growth'], L['Sort Method'], L['Sort Direction'],
+        L['Show Count'], L['Show Duration'], L['Draw Swipe'], L['Reverse Swipe'], L['Draw Edge'],
+        L['Show Border'], L['Show Without Dispel Type'], L['Show Dispel Icon'], L['Dispel Icon Size'],
+        L['Hide Tooltip In Combat'], L['Disable Mouse'], L['Stack Size'], L['Duration Size'],
+    },
+}
+
+-- Sidebar item key -> aura kind definition.
+---@class UF.GUIAuraSections
+UF.GUIAuraSections = {}
 for _, def in ipairs(KINDS) do
-    GUI:RegisterPage(def.pageId, {
-        mode = 'tabs',
-        -- The content depends on the selected unit, so there is nothing to harvest from a bare build.
-        noHarvest = true,
-        search = {
-            def.title, L['Grid'], L['Growth'], L['Sorting'], L['Icons'], L['Cooldown'], L['Tooltip'],
-            L['Aura Filter'], L['Dispel Indicators'], L['Text Position'], L['Font Sizes'],
-            L['Max Auras'], L['Per Row'], L['Element Spacing'], L['Line Spacing'],
-            L['Horizontal Growth'], L['Vertical Growth'], L['Sort Method'], L['Sort Direction'],
-            L['Show Count'], L['Show Duration'], L['Draw Swipe'], L['Reverse Swipe'], L['Draw Edge'],
-            L['Show Border'], L['Show Without Dispel Type'], L['Show Dispel Icon'], L['Dispel Icon Size'],
-            L['Hide Tooltip In Combat'], L['Disable Mouse'], L['Stack Size'], L['Duration Size'],
-            L['Anchor To'], L['X Offset'], L['Y Offset'],
-        },
-        sidebar = { items = UNIT_ITEMS },
-        tabs = TABS,
-        build = function(page, tabId, unit)
-            local builder = TAB_BUILDERS[tabId]
-            if not builder or not unit then return end
+    UF.GUIAuraSections[def.sectionKey] = def
+end
 
-            local db = NRSKNUI.db.profile.UnitFrames
-            local uDB = db.Units[unit]
-            local cfg = uDB.Auras[def.kind]
+---Render one aura sub-tab that owns its own SetEnabled chain.
+---@param page KajiGUIPage
+---@param def table one of the KINDS entries
+---@param tabId string
+---@param unit string
+function UF.GUIAuras.Build(page, def, tabId, unit)
+    local builder = TAB_BUILDERS[tabId]
+    if not builder then return end
 
-            page:SetEnabled(function() return db.Enabled and uDB.Enabled and cfg.Enabled end)
+    local db = NRSKNUI.db.profile.UnitFrames
+    local uDB = db.Units[unit]
+    local cfg = uDB.Auras[def.kind]
 
-            local ctx = {
-                Apply = ApplySettings,
-                filtered = true,
-                dispelIconKey = 'showDispelIcon',
-                withoutDispelType = true,
-                disableMouse = true,
-            }
+    page:SetEnabled(function() return (db.Enabled and uDB.Enabled and cfg.Enabled) and true or false end)
 
-            builder(page, def, cfg, unit, ctx)
-        end,
-    })
+    local ctx = {
+        Apply = ApplySettings,
+        filtered = true,
+        dispelIconKey = 'showDispelIcon',
+        withoutDispelType = true,
+        disableMouse = true,
+    }
+
+    builder(page, def, cfg, unit, ctx)
 end

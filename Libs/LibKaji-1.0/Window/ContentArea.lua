@@ -18,7 +18,16 @@
 *     tab-outer    -> `sidebar` on a tab entry: the selected tab decides the item list.
 *     sidebar-outer-> `sidebar` page-level alongside mode='tabs': the item list is fixed and the
 *                     selected item decides the tabs. Pass `tabs = fun(itemKey, item) -> tabs[]`
-*                     to vary them per item; a static table works too.
+*                     to vary them per item; a static table works too. An item whose tabs resolve
+*                     to an empty list gets no strip at all, so a page can mix plain items and
+*                     tabbed ones.
+*
+* A descriptor may also declare page lifecycle hooks, for pages that drive something outside the
+* window while they are open (a live preview, say):
+*     onEnter(pageId) -- fired on every ShowPage of this page, including a re-show of the same page
+*     onLeave(pageId) -- fired when a *different* page is shown
+* Both must be idempotent. They are separate from `build` on purpose: the search harvester calls
+* `build` as a dry run, and a dry run must not have side effects outside the page.
 
 --]]
 
@@ -59,7 +68,7 @@ end
 
 ---Registers a page descriptor under an id. The window's content host builds it on ShowPage(id).
 ---@param id string
----@param descriptor table { mode?: "clean"|"tabs", build: fun(page, tabId?, itemKey?, item?), tabs?, sidebar?, search? }
+---@param descriptor table { mode?: "clean"|"tabs", build: fun(page, tabId?, itemKey?, item?), tabs?, sidebar?, search?, onEnter?: fun(pageId), onLeave?: fun(pageId) }
 function InstanceMixin:RegisterPage(id, descriptor)
     self._pages = self._pages or {}
     -- Re-registering replaces the build function, so any labels harvested from the
@@ -664,9 +673,21 @@ function InstanceMixin:CreateContentHost(parent, opts)
         -- show, and a later user item click also routes through here (with no target).
         local target = host._pendingTarget
         host._pendingTarget = nil
+        local tabs = ResolveTabs(descriptor, itemKey, item)
+
+        -- An item can opt out of sub-tabs entirely by resolving to an empty list; the content then
+        -- fills the space beside the sidebar. Handled before the strip is shown, so a tabless item
+        -- doesn't leave an empty strip (and its baseline) hanging above the page.
+        if #tabs == 0 then
+            if tabStrip then tabStrip.frame:Hide() end
+            host._currentTab = nil
+            AnchorScrollBeside(miniSidebar.frame)
+            BuildPage(descriptor, nil, itemKey, item)
+            return
+        end
+
         local strip = EnsureTabStrip()
         strip.frame:Show()
-        local tabs = ResolveTabs(descriptor, itemKey, item)
         strip:SetLeftInset(sidebarInset)
         strip:SetTabs(tabs)
         AnchorScrollBelow(strip.frame)
@@ -722,11 +743,22 @@ function InstanceMixin:CreateContentHost(parent, opts)
     --- on the tab / sidebar item that owns the matched widget. Consumed once by the initial show.
     function host:ShowPage(id, target)
         local descriptor = gui._pages and gui._pages[id]
+
+        -- Lifecycle hooks for pages that drive something outside the window while they are open.
+        -- onLeave only fires on an actual page change; onEnter re-fires on a re-show of the same
+        -- page, so both are documented as idempotent.
+        local previous = host._descriptor
+        if previous and previous ~= descriptor and previous.onLeave then
+            safecall(previous.onLeave, host.currentId)
+        end
+
         ClearScrollChild(gui, scrollChild)
         host.page = nil
         host.currentId = id
         host._descriptor = descriptor
         host._pendingTarget = target
+
+        if descriptor and descriptor.onEnter then safecall(descriptor.onEnter, id) end
 
         local mode = descriptor and (descriptor.mode or "clean")
         if mode == "tabs" then

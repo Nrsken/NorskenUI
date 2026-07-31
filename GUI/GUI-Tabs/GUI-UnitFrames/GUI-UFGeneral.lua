@@ -10,12 +10,7 @@ local rowHL = Theme.rowHeightLast
 
 local function ApplySettings() UF:ApplySettings() end
 
-local OutlineOptions = {
-    { value = 'NONE',               text = L['None'] },
-    { value = 'OUTLINE',            text = L['Outline'] },
-    { value = 'THICKOUTLINE',       text = L['Thick Outline'] },
-    { value = 'MONOCHROME,OUTLINE', text = L['Mono Outline'] },
-}
+local OutlineOptions = NRSKNUI:GetOutlineOptions(true)
 
 local SeparatorOptions = {}
 for _, sep in ipairs({ '»', '«', '|', '-', '–', '•', '·', '/', ':' }) do
@@ -61,6 +56,9 @@ local function BuildGeneralTab(page, db)
             page:Refresh()
         end,
     })
+
+    rangeCard:Separator()
+
     local alphaRow = rangeCard:Row(rowHL, 0)
     alphaRow:Slider(L['In Range Alpha'], {
         width = 0.5,
@@ -118,7 +116,7 @@ local function BuildColorsTab(page, db)
     local healthCard = page:Card(L['Health'], 'all')
     local healthRow = healthCard:Row(rowH)
     healthRow:Checkbox(L['Class Colored Health'], {
-        width = 0.5,
+        width = 1,
         tooltip = L['Color health bars by class for players and by reaction for NPCs.'],
         value = general.ColorByClass,
         callback = function(checked)
@@ -127,33 +125,11 @@ local function BuildColorsTab(page, db)
             page:Refresh()
         end,
     })
-    healthRow:ColorPicker(L['Foreground'], {
-        width = 0.5,
-        conditions = { 'healthCustom' },
-        value = colors.Foreground,
-        callback = function(r, g, b, a)
-            colors.Foreground = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
-    local healthBgRow = healthCard:Row(rowH)
-    healthBgRow:ColorPicker(L['Background'], {
-        width = 0.5,
-        value = colors.Background,
-        callback = function(r, g, b, a)
-            colors.Background = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
-    healthBgRow:ColorPicker(L['Background (Class Colored)'], {
-        width = 0.5,
-        value = colors.BackgroundWhenColorByClass,
-        callback = function(r, g, b, a)
-            colors.BackgroundWhenColorByClass = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
-    healthCard:Row(rowHL, 0):Slider(L['Class Color Alpha'], {
+
+    healthCard:Separator()
+
+    local healthBgClassRow = healthCard:Row(rowH)
+    healthBgClassRow:Slider(L['Class Color Alpha'], {
         width = 0.5,
         conditions = { 'healthClassColor' },
         min = 0,
@@ -164,6 +140,35 @@ local function BuildColorsTab(page, db)
             general.ForegroundAlphaWhenColorByClass = val; ApplySettings()
         end,
         callbackOnRelease = true,
+    })
+    healthBgClassRow:ColorPicker(L['Background (Class Colored)'], {
+        width = 0.5,
+        conditions = { 'healthClassColor' },
+        value = colors.BackgroundWhenColorByClass,
+        callback = function(r, g, b, a)
+            colors.BackgroundWhenColorByClass = { r, g, b, a }
+            ApplySettings()
+        end,
+    })
+
+    local healthBgRow = healthCard:Row(rowHL, 0)
+    healthBgRow:ColorPicker(L['Foreground'], {
+        width = 0.5,
+        conditions = { 'healthCustom' },
+        value = colors.Foreground,
+        callback = function(r, g, b, a)
+            colors.Foreground = { r, g, b, a }
+            ApplySettings()
+        end,
+    })
+    healthBgRow:ColorPicker(L['Background'], {
+        width = 0.5,
+        conditions = { 'healthCustom' },
+        value = colors.Background,
+        callback = function(r, g, b, a)
+            colors.Background = { r, g, b, a }
+            ApplySettings()
+        end,
     })
 
     -- Card 2: Power
@@ -193,7 +198,7 @@ local function BuildColorsTab(page, db)
     local castbarCard = page:Card(L['Castbar'], 'all')
     local castbarRow = castbarCard:Row(rowH)
     castbarRow:Checkbox(L['Class Colored Castbar'], {
-        width = 0.5,
+        width = 1,
         value = general.CastbarColorByClass,
         callback = function(checked)
             general.CastbarColorByClass = checked
@@ -201,7 +206,11 @@ local function BuildColorsTab(page, db)
             page:Refresh()
         end,
     })
-    castbarRow:ColorPicker(L['Castbar Color'], {
+
+    castbarCard:Separator()
+
+    local castStateRow = castbarCard:Row(rowH)
+    castStateRow:ColorPicker(L['Castbar Color'], {
         width = 0.5,
         conditions = { 'castbarCustom' },
         value = colors.Castbar,
@@ -210,7 +219,7 @@ local function BuildColorsTab(page, db)
             ApplySettings()
         end,
     })
-    local castStateRow = castbarCard:Row(rowH)
+
     castStateRow:ColorPicker(L['Non-Interruptible'], {
         width = 0.5,
         value = colors.CastbarNonInterruptible,
@@ -219,7 +228,9 @@ local function BuildColorsTab(page, db)
             ApplySettings()
         end,
     })
-    castStateRow:ColorPicker(L['Interrupted / Failed'], {
+
+    local castBgRow = castbarCard:Row(rowHL, 0)
+    castBgRow:ColorPicker(L['Interrupted / Failed'], {
         width = 0.5,
         value = colors.CastbarFail,
         callback = function(r, g, b, a)
@@ -227,7 +238,8 @@ local function BuildColorsTab(page, db)
             ApplySettings()
         end,
     })
-    castbarCard:Row(rowHL, 0):ColorPicker(L['Background'], {
+
+    castBgRow:ColorPicker(L['Background'], {
         width = 0.5,
         value = colors.CastbarBackground,
         callback = function(r, g, b, a)
@@ -375,7 +387,7 @@ local function BuildTexturesTab(page, db)
     local hlCard = page:Card(L['Mouseover Highlight'], 'all')
     local hlRow = hlCard:Row(rowH)
     hlRow:Checkbox(L['Enable Highlight'], {
-        width = 0.5,
+        width = 1,
         value = general.Highlight.Enabled,
         callback = function(checked)
             general.Highlight.Enabled = checked
@@ -383,16 +395,11 @@ local function BuildTexturesTab(page, db)
             page:Refresh()
         end,
     })
-    hlRow:ColorPicker(L['Highlight Color'], {
-        width = 0.5,
-        conditions = { 'highlightOn' },
-        value = general.Highlight.Color,
-        callback = function(r, g, b, a)
-            general.Highlight.Color = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
-    hlCard:Row(rowHL, 0):Dropdown(L['Highlight Texture'], {
+
+    hlCard:Separator()
+
+    local colorTexRow = hlCard:Row(rowHL, 0)
+    colorTexRow:Dropdown(L['Highlight Texture'], {
         width = 0.5,
         media = 'statusbar',
         searchable = true,
@@ -400,6 +407,15 @@ local function BuildTexturesTab(page, db)
         value = general.Highlight.StatusBarTexture,
         callback = function(key)
             general.Highlight.StatusBarTexture = key
+            ApplySettings()
+        end,
+    })
+    colorTexRow:ColorPicker(L['Highlight Color'], {
+        width = 0.5,
+        conditions = { 'highlightOn' },
+        value = general.Highlight.Color,
+        callback = function(r, g, b, a)
+            general.Highlight.Color = { r, g, b, a }
             ApplySettings()
         end,
     })
@@ -411,7 +427,7 @@ local function BuildFontsTab(page, db)
     local fontCard = page:Card(L['Font Settings'], 'all')
     local fontRow = fontCard:Row(rowH)
     fontRow:Checkbox(L['Use Global Font'], {
-        width = 0.5,
+        width = 1,
         tooltip = L['Use the shared font from the Global Settings page.'],
         value = general.UseGlobalFont,
         callback = function(checked)
@@ -420,7 +436,11 @@ local function BuildFontsTab(page, db)
             page:Refresh()
         end,
     })
-    fontRow:Dropdown(L['Font'], {
+
+    fontCard:Separator()
+
+    local fontDropdownRow = fontCard:Row(rowHL, 0)
+    fontDropdownRow:Dropdown(L['Font'], {
         width = 0.5,
         media = 'font',
         searchable = true,
@@ -431,7 +451,7 @@ local function BuildFontsTab(page, db)
             ApplySettings()
         end,
     })
-    fontCard:Row(rowHL, 0):Dropdown(L['Outline'], {
+    fontDropdownRow:Dropdown(L['Outline'], {
         width = 0.5,
         options = OutlineOptions,
         value = general.FontOutline,

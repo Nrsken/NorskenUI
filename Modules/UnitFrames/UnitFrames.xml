@@ -14,5 +14,6 @@
     <Script file='Elements\Range.lua' />
     <Script file='Elements\Auras.lua' />
     <Script file='Style.lua' />
+    <Script file='Preview.lua' />
     <Script file='Core.lua' />
 </Ui>

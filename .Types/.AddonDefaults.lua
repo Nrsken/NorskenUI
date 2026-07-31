@@ -2797,6 +2797,7 @@
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units
 ---@field [string] any
+---@field boss NRSKNUI.DBProfile.UnitFrames.Units.boss
 ---@field focus NRSKNUI.DBProfile.UnitFrames.Units.focus
 ---@field focustarget NRSKNUI.DBProfile.UnitFrames.Units.focustarget
 ---@field pet NRSKNUI.DBProfile.UnitFrames.Units.pet
@@ -2804,6 +2805,103 @@
 ---@field player NRSKNUI.DBProfile.UnitFrames.Units.player
 ---@field target NRSKNUI.DBProfile.UnitFrames.Units.target
 ---@field targettarget NRSKNUI.DBProfile.UnitFrames.Units.targettarget
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.boss
+---@field [string] any
+---@field Auras NRSKNUI.DBProfile.UnitFrames.Units.boss.Auras
+---@field Castbar NRSKNUI.DBProfile.UnitFrames.Units.boss.Castbar
+---@field GrowthDirection string
+---@field Height number
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.boss.Position
+---@field Power NRSKNUI.DBProfile.UnitFrames.Units.boss.Power
+---@field Spacing number
+---@field Tags NRSKNUI.DBProfile.UnitFrames.Units.boss.Tags
+---@field Width number
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Auras
+---@field [string] any
+---@field Buffs NRSKNUI.DBProfile.UnitFrames.Units.boss.Auras.Buffs
+---@field Debuffs NRSKNUI.DBProfile.UnitFrames.Units.boss.Auras.Debuffs
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Auras.Buffs
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Auras.Debuffs
+---@field [string] any
+---@field Enabled boolean
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.boss.Auras.Debuffs.Position
+---@field horizontalGrowthDirection string
+---@field maxFrameCount number
+---@field perRow number
+---@field size number
+---@field verticalGrowthDirection string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Auras.Debuffs.Position
+---@field [string] any
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Castbar
+---@field [string] any
+---@field Enabled boolean
+---@field Height number
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.boss.Castbar.Position
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Castbar.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Power
+---@field [string] any
+---@field Enabled boolean
+---@field Height number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Tags
+---@field [string] any
+---@field TagOne NRSKNUI.DBProfile.UnitFrames.Units.boss.Tags.TagOne
+---@field TagThree NRSKNUI.DBProfile.UnitFrames.Units.boss.Tags.TagThree
+---@field TagTwo NRSKNUI.DBProfile.UnitFrames.Units.boss.Tags.TagTwo
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Tags.TagOne
+---@field [string] any
+---@field BoundTo string
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.boss.Tags.TagOne.Position
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Tags.TagOne.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Tags.TagThree
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Tags.TagTwo
+---@field [string] any
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.boss.Tags.TagTwo.Position
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Tags.TagTwo.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.focus
 ---@field [string] any

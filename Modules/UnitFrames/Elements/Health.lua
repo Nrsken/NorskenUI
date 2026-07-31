@@ -1,36 +1,43 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 ---@class UnitFramesModule
+---@field Elements UnitFramesElements
 local UF = NRSKNUI:GetModule('UnitFrames')
 
 local CreateFrame = CreateFrame
 
-local Interpolation = Enum.StatusBarInterpolation
+local Interpolation = Enum and Enum.StatusBarInterpolation
 
+---@class UnitFramesElements
+---@field Health UnitFramesHealthElement
 UF.Elements = UF.Elements or {}
+
+---@class UnitFramesHealthElement
 UF.Elements.Health = {
-    Construct = function(frame, unit)
-        if frame.Health then return end
+    ---@param self oUF.UnitFrame
+    ---@param unit string
+    Construct = function(self, unit)
+        if self.Health then return end
 
         -- Setup tooltip + highlight handlers for the frame.
-        frame:SetScript('OnEnter', function(self)
+        self:SetScript('OnEnter', function()
             if self.nuiHighlight.nuiEnabled then self.nuiHighlight:Show() end
             UF:ShowTooltip(self.unit)
         end)
-        frame:SetScript('OnLeave', function(self)
+        self:SetScript('OnLeave', function()
             self.nuiHighlight:Hide()
             UF:HideTooltip()
         end)
 
         -- Backgroundbar
-        local healthBackground = CreateFrame('StatusBar', nil, frame)
-        healthBackground:SetFrameLevel(frame:GetFrameLevel() + 1)
+        local healthBackground = CreateFrame('StatusBar', nil, self)
+        healthBackground:SetFrameLevel(self:GetFrameLevel() + 1)
         healthBackground:SetReverseFill(true)
         healthBackground:SetPixelSnap()
 
         -- Health bar
-        local healthBar = CreateFrame('StatusBar', nil, frame)
-        healthBar:SetFrameLevel(frame:GetFrameLevel() + 2)
+        local healthBar = CreateFrame('StatusBar', nil, self) --[[@as oUF.Health]]
+        healthBar:SetFrameLevel(self:GetFrameLevel() + 2)
         healthBar:SetPixelSnap()
         healthBar:SetClipsChildren(true) -- Keep over-absorb overflow inside the bar.
         healthBar.healthBackground = healthBackground
@@ -41,14 +48,14 @@ UF.Elements.Health = {
         local HealAbsorb = CreateFrame('StatusBar', nil, healthBar)
         HealAbsorb:SetFrameLevel(healthBar:GetFrameLevel() + 1)
         HealAbsorb:SetPixelSnap()
-        HealAbsorb:SetPixelWidth(frame:GetWidth())
+        HealAbsorb:SetPixelWidth(self:GetWidth())
         healthBar.HealAbsorb = HealAbsorb
 
         -- Damage absorb bar
         local DamageAbsorb = CreateFrame('StatusBar', nil, healthBar)
         DamageAbsorb:SetFrameLevel(healthBar:GetFrameLevel() + 1)
         DamageAbsorb:SetPixelSnap()
-        DamageAbsorb:SetPixelWidth(frame:GetWidth())
+        DamageAbsorb:SetPixelWidth(self:GetWidth())
         healthBar.DamageAbsorb = DamageAbsorb
 
         -- Over-absorb bar clip frame.
@@ -61,69 +68,72 @@ UF.Elements.Health = {
         local OverDamageAbsorb = CreateFrame('StatusBar', nil, OverDamageAbsorbClip)
         OverDamageAbsorb:SetFrameLevel(healthBar:GetFrameLevel() + 1)
         OverDamageAbsorb:SetPixelSnap()
-        OverDamageAbsorb:SetPixelWidth(frame:GetWidth())
+        OverDamageAbsorb:SetPixelWidth(self:GetWidth())
 
         healthBar.OverDamageAbsorb = OverDamageAbsorb
         healthBar.damageAbsorbClampMode = 2
         healthBar.healAbsorbClampMode = 1
         healthBar.healAbsorbMode = 1
 
-        -- oUF skips an absorb whose field is nil, so disabling clears the field; these keep the
-        -- bars reachable for configuration.
+        -- oUF skips an absorb whose field is nil, so disabling clears the field, these keep the bars reachable for configuration.
         healthBar.nuiHealAbsorb = HealAbsorb
         healthBar.nuiDamageAbsorb = DamageAbsorb
 
         -- Border frame
-        local healthBorderFrame = CreateFrame('Frame', nil, frame)
-        healthBorderFrame:SetFrameLevel(frame:GetFrameLevel() + 4)
+        local healthBorderFrame = CreateFrame('Frame', nil, self)
+        healthBorderFrame:SetFrameLevel(self:GetFrameLevel() + 4)
         healthBorderFrame:AddBorders()
-        frame.healthBorderFrame = healthBorderFrame
+        self.healthBorderFrame = healthBorderFrame
 
         -- Mouseover highlight
-        local highlight = healthBorderFrame:CreateTexture(nil, 'OVERLAY')
+        local highlight = healthBorderFrame:CreateTexture(nil, 'OVERLAY') --[[@as NUI.HighlightTexture]]
         highlight:SetBlendMode('ADD')
         highlight:Hide()
-        frame.nuiHighlight = highlight
+        self.nuiHighlight = highlight
 
         -- RaidIcon
-        local RaidIcon = healthBorderFrame:CreateTexture(nil, 'OVERLAY', nil, 1) -- Higher than border textures.
-        frame.RaidTargetIndicator = RaidIcon
+        local RaidIcon = healthBorderFrame:CreateTexture(nil, 'OVERLAY', nil, 1) --[[@as oUF.RaidTargetIndicator]] -- Higher than border textures.
+        self.RaidTargetIndicator = RaidIcon
 
         -- Leader indicator
-        local LeaderIndicator = frame:CreateTexture(nil, 'OVERLAY', nil, 1)
-        frame.LeaderIndicator = LeaderIndicator
+        local LeaderIndicator = self:CreateTexture(nil, 'OVERLAY', nil, 1) --[[@as oUF.LeaderIndicator]]
+        self.LeaderIndicator = LeaderIndicator
 
-        frame.Health = healthBar
+        self.Health = healthBar
     end,
 
-    Configure = function(frame, unit, uDB, general)
-        local healthBar = frame.Health
-        local healthBorderFrame = frame.healthBorderFrame
+    ---@param self oUF.UnitFrame
+    ---@param unit string
+    ---@param uDB table
+    ---@param general table
+    Configure = function(self, unit, uDB, general)
+        local healthBar = self.Health
+        local healthBorderFrame = self.healthBorderFrame
         local healthBackground = healthBar.healthBackground
-        local RaidIcon = frame.RaidTargetIndicator
-        local LeaderIndicator = frame.LeaderIndicator
+        local RaidIcon = self.RaidTargetIndicator
+        local LeaderIndicator = self.LeaderIndicator
         local hDB = uDB.Health
 
         -- Position and size the raid icon.
         RaidIcon:SetPixelSize(uDB.RaidIcon.Size, uDB.RaidIcon.Size)
         RaidIcon:ClearAllPoints()
-        RaidIcon:SetPixelPoint(uDB.RaidIcon.Position.AnchorFrom, frame, uDB.RaidIcon.Position.AnchorTo, uDB.RaidIcon.Position.XOffset, uDB.RaidIcon.Position.YOffset)
+        RaidIcon:SetPixelPoint(uDB.RaidIcon.Position.AnchorFrom, self, uDB.RaidIcon.Position.AnchorTo, uDB.RaidIcon.Position.XOffset, uDB.RaidIcon.Position.YOffset)
 
         -- Position and size the leader indicator.
         LeaderIndicator:SetPixelSize(uDB.LeaderIndicator.Size, uDB.LeaderIndicator.Size)
         LeaderIndicator:ClearAllPoints()
-        LeaderIndicator:SetPixelPoint(uDB.LeaderIndicator.Position.AnchorFrom, frame, uDB.LeaderIndicator.Position.AnchorTo, uDB.LeaderIndicator.Position.XOffset, uDB.LeaderIndicator.Position.YOffset)
+        LeaderIndicator:SetPixelPoint(uDB.LeaderIndicator.Position.AnchorFrom, self, uDB.LeaderIndicator.Position.AnchorTo, uDB.LeaderIndicator.Position.XOffset, uDB.LeaderIndicator.Position.YOffset)
 
-        -- Foreground texture; background follows it unless a background texture is set (unit override first).
+        -- Foreground texture, background follows it unless a background texture is set (unit override first).
         local texture = NRSKNUI:GetStatusbar(general, hDB.StatusBarTexture)
         local bgName = hDB.BackgroundTexture ~= '' and hDB.BackgroundTexture or general.BackgroundTexture
         healthBar:SetStatusBarTexture(texture)
         healthBackground:SetStatusBarTexture(bgName ~= '' and NRSKNUI:ResolveMediaPath('statusbar', bgName) or texture)
 
         -- Set sizing
-        healthBar:SetAllPoints(frame)
-        healthBackground:SetAllPoints(frame)
-        healthBorderFrame:SetAllPoints(frame)
+        healthBar:SetAllPoints(self)
+        healthBackground:SetAllPoints(self)
+        healthBorderFrame:SetAllPoints(self)
 
         -- Prime to Immediate, postUpdate switches to the steady mode after the first paint.
         local smooth = hDB.UseGlobalSmooth and general.Smooth or (not hDB.UseGlobalSmooth and hDB.Smooth)
@@ -163,10 +173,10 @@ UF.Elements.Health = {
         healthBar.nuiBackground = classColor and backgroundClass or background
 
         -- Mouseover highlight
-        local highlight = frame.nuiHighlight
+        local highlight = self.nuiHighlight
         local hlDB = general.Highlight
         highlight.nuiEnabled = hlDB.Enabled
-        highlight:SetPixelInside(frame, 1, 1)
+        highlight:SetPixelInside(self, 1, 1)
         highlight:SetTexture(NRSKNUI:GetStatusbar(hlDB))
         highlight:SetVertexColor(hlDB.Color[1], hlDB.Color[2], hlDB.Color[3], hlDB.Color[4])
         if not hlDB.Enabled then highlight:Hide() end
@@ -210,7 +220,7 @@ UF.Elements.Health = {
         -- Over-absorb bar config
         OverDamageAbsorb:SetStatusBarTexture(shield)
         OverDamageAbsorb:SetStatusBarColor(dmgColor[1], dmgColor[2], dmgColor[3], dmgColor[4])
-        OverDamageAbsorb:SetPixelWidth(frame:GetWidth())
+        OverDamageAbsorb:SetPixelWidth(self:GetWidth())
         OverClip:ClearAllPoints()
         OverDamageAbsorb:ClearAllPoints()
 

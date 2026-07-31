@@ -2,6 +2,7 @@
 local NRSKNUI = select(2, ...)
 ---@class UnitFramesModule
 ---@field frames table<string, oUF.UnitFrame>
+---@field Elements UnitFramesElements
 local UF = NRSKNUI:GetModule('UnitFrames')
 ---@class NorskenUF
 local oUF = NRSKNUI.oUF
@@ -93,10 +94,16 @@ function UF:ReapplyAuraFilters()
     end
 end
 
+---@class UnitFramesElements
+---@field Auras UnitFramesAurasElement
 UF.Elements = UF.Elements or {}
+
+---@class UnitFramesAurasElement
 UF.Elements.Auras = {
-    Construct = function(frame, unit)
-        if frame.Auras then return end
+    ---@param self oUF.UnitFrame
+    ---@param unit string
+    Construct = function(self, unit)
+        if self.Auras then return end
 
         local uDB = UF.GetUnitDB(unit)
         local general = UF.db.General
@@ -104,18 +111,22 @@ UF.Elements.Auras = {
 
         for _, kind in ipairs(KINDS) do
             local cfg = uDB.Auras[kind]
-            local container = frame:CreateAuraContainer(GetContainerConfig(cfg, general))
+            local container = self:CreateAuraContainer(GetContainerConfig(cfg, general))
             if container then
                 container:AddFilteredGroup(cfg.Filter)
                 containers[kind] = container
             end
         end
 
-        frame.Auras = containers
+        self.Auras = containers
     end,
 
-    Configure = function(frame, unit, uDB, general)
-        local containers = frame.Auras
+    ---@param self oUF.UnitFrame
+    ---@param unit string
+    ---@param uDB table
+    ---@param general table
+    Configure = function(self, unit, uDB, general)
+        local containers = self.Auras
         if not containers then return end
 
         for kind, container in pairs(containers) do
@@ -125,10 +136,11 @@ UF.Elements.Auras = {
 
             -- Layout re-applies live, button appearance does not, see container:ApplyLayout.
             container:ClearAllPoints()
-            container:SetPoint(config.anchorPoint, frame, pos.AnchorTo, pos.XOffset, pos.YOffset)
+            container:SetPoint(config.anchorPoint, self, pos.AnchorTo, pos.XOffset, pos.YOffset)
             container:ApplyLayout(config)
             container:RebindFilteredGroups(cfg.Filter)
-            container:SetUnit(unit)
+            -- self.unit is the live token, which a preview repoints away from the configured unit.
+            container:SetUnit(self.unit or unit)
             container:SetShown(cfg.Enabled)
         end
     end,

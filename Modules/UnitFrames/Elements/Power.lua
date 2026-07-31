@@ -1,51 +1,62 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 ---@class UnitFramesModule
+---@field Elements UnitFramesElements
 local UF = NRSKNUI:GetModule('UnitFrames')
 
 local CreateFrame = CreateFrame
 
-local Interpolation = Enum.StatusBarInterpolation
+local Interpolation = Enum and Enum.StatusBarInterpolation
 
+---@class UnitFramesElements
+---@field Power UnitFramesPowerElement
 UF.Elements = UF.Elements or {}
+
+---@class UnitFramesPowerElement
 UF.Elements.Power = {
-    Construct = function(frame, unit)
-        if frame.Power then return end
+    ---@param self oUF.UnitFrame
+    ---@param unit string
+    Construct = function(self, unit)
+        if self.Power then return end
 
         -- Power bar background frame
-        local powerBackground = CreateFrame('Frame', nil, frame)
+        local powerBackground = CreateFrame('Frame', nil, self)
         powerBackground:CreateBackdrop(true)
-        frame.powerBackground = powerBackground
+        self.powerBackground = powerBackground
 
         -- Power bar border frame
-        local powerBorderFrame = CreateFrame('Frame', nil, frame)
+        local powerBorderFrame = CreateFrame('Frame', nil, self)
         powerBorderFrame:AddBorders()
-        powerBorderFrame:SetFrameLevel(frame:GetFrameLevel() + 3)
-        frame.powerBorderFrame = powerBorderFrame
+        powerBorderFrame:SetFrameLevel(self:GetFrameLevel() + 3)
+        self.powerBorderFrame = powerBorderFrame
 
         -- Power bar
-        local powerBar = CreateFrame('StatusBar', nil, frame)
-        powerBar:SetFrameLevel(frame:GetFrameLevel() + 2)
+        local powerBar = CreateFrame('StatusBar', nil, self) --[[@as oUF.Power]]
+        powerBar:SetFrameLevel(self:GetFrameLevel() + 2)
         powerBar:SetPixelSnap()
         powerBar.PostUpdate = UF.PostUpdatePower
         powerBar.PostUpdateColor = UF.PostUpdatePowerColor
 
-        frame.Power = powerBar
+        self.Power = powerBar
     end,
 
-    Configure = function(frame, unit, uDB, general)
-        local powerBar = frame.Power
+    ---@param self oUF.UnitFrame
+    ---@param unit string
+    ---@param uDB table
+    ---@param general table
+    Configure = function(self, unit, uDB, general)
+        local powerBar = self.Power
         if not powerBar then return end
-        local powerBackground = frame.powerBackground
-        local powerBorderFrame = frame.powerBorderFrame
+        local powerBackground = self.powerBackground
+        local powerBorderFrame = self.powerBorderFrame
 
         local pDB = uDB.Power
 
         -- Set power bar texture and sizing
         powerBar:SetStatusBarTexture(NRSKNUI:GetStatusbar(general, pDB.StatusBarTexture))
         powerBar:ClearAllPoints()
-        powerBar:SetPixelPoint('BOTTOMLEFT', frame, 'BOTTOMLEFT', 0, -pDB.Height - 1)
-        powerBar:SetPixelPoint('BOTTOMRIGHT', frame, 'BOTTOMRIGHT', 0, -pDB.Height - 1)
+        powerBar:SetPixelPoint('BOTTOMLEFT', self, 'BOTTOMLEFT', 0, -pDB.Height - 1)
+        powerBar:SetPixelPoint('BOTTOMRIGHT', self, 'BOTTOMRIGHT', 0, -pDB.Height - 1)
         powerBar:SetPixelHeight(pDB.Height)
 
         -- Set background and border frame sizing

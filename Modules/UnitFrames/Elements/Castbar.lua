@@ -1,13 +1,25 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 ---@class UnitFramesModule
+---@field Elements UnitFramesElements
 local UF = NRSKNUI:GetModule('UnitFrames')
+local L = NRSKNUI.Libs.AL
 
 local CreateFrame = CreateFrame
 local UnitClass = UnitClass
+local GetTime = GetTime
 local select = select
+local pairs = pairs
+local next = next
+
+local C_Timer = C_Timer
 
 local EvaluateColorFromBoolean = C_CurveUtil and C_CurveUtil.EvaluateColorFromBoolean
+local CreateDuration = C_DurationUtil and C_DurationUtil.CreateDuration
+local ElapsedTime = Enum and Enum.StatusBarTimerDirection.ElapsedTime
+
+local FALLBACK_ICON = 136243
+local PREVIEW_DURATION = 10
 
 ---Empowered-cast stage separator.
 ---@param element table Castbar element
@@ -47,25 +59,87 @@ local function PostCastFail(element)
     element:SetStatusBarColor(element.nuiFailColor:GetRGBA())
 end
 
+-- Preview --
+
+-- Previewed frames borrow an idle unit, so their castbar has nothing to draw. These run a fake cast instead,
+-- driven by the same duration object oUF feeds a real one, so oUF's own OnUpdate keeps
+-- the time text and the bar fill honest and nothing here has to reimplement them.
+local previewBars = {}
+local previewTicker
+
+---@param element table Castbar element
+local function StartPreviewCast(element)
+    local duration = CreateDuration()
+    duration:SetTimeFromStart(GetTime(), PREVIEW_DURATION)
+
+    -- The attribute set oUF's CastStart leaves behind, so its OnUpdate holds the bar open.
+    element.casting = true
+    element.channeling, element.empowering = nil, nil
+    element.castID, element.spellID = nil, nil
+    element.spellName = L['Preview Cast']
+    element.delay = 0
+    element.holdTime = 0
+
+    element:SetTimerDuration(duration, element.smoothing, ElapsedTime)
+    if element.Icon then element.Icon:SetTexture(FALLBACK_ICON) end
+    if element.Spark then element.Spark:Show() end
+    if element.Text then element.Text:SetText(L['Preview Cast']) end
+
+    element:PostCastStart(element.nuiCastPreviewUnit)
+    element:Show()
+end
+
+---@param element table Castbar element
+local function StopPreviewCast(element)
+    -- Clearing the cast flags lets oUF's OnUpdate reset the rest of the attributes for us.
+    element.casting = nil
+    element.holdTime = 0
+    element.nuiCastPreviewUnit = nil
+    element:Hide() -- The OnHide hook takes the container with it.
+end
+
+local function RestartPreviewCasts()
+    for element in pairs(previewBars) do
+        StartPreviewCast(element)
+    end
+end
+
+-- Update the ticker based on whether any frames are previewing casts.
+local function UpdatePreviewTicker()
+    local shouldRun = next(previewBars) ~= nil
+    if shouldRun and not previewTicker then
+        previewTicker = C_Timer.NewTicker(PREVIEW_DURATION, RestartPreviewCasts)
+    elseif not shouldRun and previewTicker then
+        previewTicker:Cancel()
+        previewTicker = nil
+    end
+end
+
+---@class UnitFramesElements
+---@field Castbar UnitFramesCastbarElement
 UF.Elements = UF.Elements or {}
+
+---@class UnitFramesCastbarElement
 UF.Elements.Castbar = {
-    Construct = function(frame, unit)
-        if frame.Castbar then return end
+    ---@param self oUF.UnitFrame
+    ---@param unit string
+    Construct = function(self, unit)
+        if self.Castbar then return end
 
         -- Container frame for the castbar and icon.
-        local container = CreateFrame('Frame', nil, frame)
-        container:SetFrameLevel(frame:GetFrameLevel() + 2)
+        local container = CreateFrame('Frame', nil, self)
+        container:SetFrameLevel(self:GetFrameLevel() + 2)
         container:CreateBackdrop(true)
         container:AddBorders()
         container:Hide()
-        frame.CastbarContainer = container
+        self.CastbarContainer = container
 
         -- Icon texture, sits in the container's left square.
         local icon = container:CreateTexture(nil, 'ARTWORK', nil, 7)
         icon:SetZoom()
 
         -- Main castbar frame, oUF handles the bar's min/max values and OnUpdate.
-        local castBar = CreateFrame('StatusBar', nil, container)
+        local castBar = CreateFrame('StatusBar', nil, container) --[[@as oUF.Castbar]]
         castBar:SetFrameLevel(container:GetFrameLevel() + 1)
         castBar:SetPixelSnap()
         castBar.nuiContainer = container -- PostCastStart shows it, OnHide hides it with the bar
@@ -80,6 +154,7 @@ UF.Elements.Castbar = {
         -- Spark, its texture comes from the global spark media in Configure.
         local spark = castBar:CreateTexture(nil, 'OVERLAY')
         spark:SetBlendMode('ADD')
+        spark:SetPixelSnap() -- When using solid spark style, we need this otherwise the spark will flicker.
         castBar.Spark = spark
 
         -- Safe zone texture for latency, player only, oUF handles positioning.
@@ -97,13 +172,17 @@ UF.Elements.Castbar = {
         local time = castBar:CreateFontString(nil, 'OVERLAY')
         castBar.Time = time
 
-        frame.Castbar = castBar
+        self.Castbar = castBar
     end,
 
-    Configure = function(frame, unit, uDB, general)
-        local castBar = frame.Castbar
+    ---@param self oUF.UnitFrame
+    ---@param unit string
+    ---@param uDB table
+    ---@param general table
+    Configure = function(self, unit, uDB, general)
+        local castBar = self.Castbar
         if not castBar then return end
-        local container = frame.CastbarContainer
+        local container = self.CastbarContainer
         local icon = castBar.Icon
         local cDB = uDB.Castbar
         local pos = cDB.Position
@@ -129,8 +208,8 @@ UF.Elements.Castbar = {
 
         -- Position and size the container.
         container:ClearAllPoints()
-        container:SetPixelPoint('TOPLEFT', frame, 'BOTTOMLEFT', pos.XOffset, pos.YOffset)
-        container:SetPixelPoint('TOPRIGHT', frame, 'BOTTOMRIGHT', pos.XOffset, pos.YOffset)
+        container:SetPixelPoint('TOPLEFT', self, 'BOTTOMLEFT', pos.XOffset, pos.YOffset)
+        container:SetPixelPoint('TOPRIGHT', self, 'BOTTOMRIGHT', pos.XOffset, pos.YOffset)
         container:SetPixelHeight(cDB.Height)
         container:SetBackgroundColor(background[1], background[2], background[3], background[4])
 
@@ -187,5 +266,30 @@ UF.Elements.Castbar = {
         time:ClearAllPoints()
         time:SetPixelPoint('RIGHT', castBar, 'RIGHT', -4, 0)
         time:SetShown(cDB.ShowTime)
+    end,
+
+    ---@param self oUF.UnitFrame
+    ---@param unit string
+    ---@param uDB table
+    ---@param general table
+    ---@param previewing boolean
+    Preview = function(self, unit, uDB, general, previewing)
+        local castBar = self.Castbar
+        if not castBar then return end
+
+        -- No duration API means no synthetic cast, the rest of the preview still works.
+        if previewing and uDB.Castbar.Enabled and CreateDuration then
+            castBar.nuiCastPreviewUnit = self.unit
+            -- Alternating frames preview a shielded cast, so both configured colours are on screen.
+            castBar.notInterruptible = (self.nuiPreviewIndex or 1) % 2 == 0
+
+            previewBars[castBar] = true
+            StartPreviewCast(castBar)
+        elseif previewBars[castBar] then
+            previewBars[castBar] = nil
+            StopPreviewCast(castBar)
+        end
+
+        UpdatePreviewTicker()
     end,
 }

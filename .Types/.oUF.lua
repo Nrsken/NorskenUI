@@ -240,6 +240,26 @@ function nameplates:SetNumAuraContainers(numContainers) end
 ---@field SummonIndicator? oUF.SummonIndicator
 ---@field ThreatIndicator? oUF.ThreatIndicator
 ---@field Auras? table<string, table> NorskenUI: native aura containers keyed by display name
+--- NorskenUI additions, set by the UnitFrames module rather than by oUF.
+---@field nrsknUnit string Config unit key the frame was built for
+---@field nuiBuilt? boolean Set once BuildStyle has finished; later Configure passes re-apply element states
+---@field healthBorderFrame Frame Border overlay above the health bar
+---@field nuiHighlight NUI.HighlightTexture Mouseover highlight
+---@field powerBackground Frame Backdrop behind the power bar
+---@field powerBorderFrame Frame Border overlay above the power bar
+---@field CastbarContainer Frame Holds the castbar and its icon
+---@field TagContainer Frame Parent for the tag font strings
+---@field TagSlots table<string, NUI.TagFontString> Tag font strings keyed by slot name
+---@field IndicatorContainer Frame Parent for the indicator textures
+---@field nuiRangeIn? number In-range alpha
+---@field nuiRangeOut? number Out-of-range alpha
+---@field nuiRangeUnit? string Unit the frame is registered under in `UF.RangeFrames`
+---@field RangeIsInRange? any Stashed range result; may be a secret, so never compare it
+---@field RangeWasChecked? any Stashed range result; may be a secret, so never compare it
+---@field nuiPreviewUnit? string Borrowed unit while the frame is previewing
+---@field nuiPreviewIndex? number Position in the preview set
+---@field nuiPreviewLabel? FontString Preview name label
+---@field nuiCDMHooked? boolean Cooldown Manager anchoring hook applied
 --- Activate an element for the given unit frame.
 ---@field EnableElement fun(self: oUF.UnitFrame, name: string, unit?: string)
 --- Deactivate an element for the given unit frame.
@@ -316,7 +336,17 @@ local frame
 ---@field PostUpdate? fun(self: oUF.Health, unit: string, cur: number, max: number, lossPerc: number)
 ---@field PostUpdateColor? fun(self: oUF.Health, unit: string, color: oUF.Color?)
 ---@field UpdateColor? fun(self: oUF.UnitFrame, event: string, unit: string)
----@field nuiForeground? StatusBar
+--- NorskenUI additions
+---@field healthBackground StatusBar Background bar, fills opposite the foreground
+---@field OverDamageAbsorb StatusBar Absorb overflow past the end of the bar
+---@field OverDamageAbsorbClip Frame Clip frame keeping the overflow bar inside the frame
+---@field nuiHealAbsorb StatusBar Kept reachable when `HealAbsorb` is cleared to disable it
+---@field nuiDamageAbsorb StatusBar Kept reachable when `DamageAbsorb` is cleared to disable it
+---@field nuiSmoothing number Steady smoothing mode; PostUpdate switches to it after the first paint
+---@field nuiColorByClass? boolean
+---@field nuiForeground number[] Configured foreground colour as r, g, b, a
+---@field nuiBackground number[] Configured background colour as r, g, b, a
+---@field ForegroundAlphaWhenColorByClass? number Alpha PostUpdateColor enforces over oUF's class colour
 
 -- Power --
 
@@ -347,7 +377,10 @@ local frame
 ---@field PostUpdatePrediction? fun(self: oUF.Power, unit: string, cost: number)
 ---@field GetDisplayPower? fun(self: oUF.Power, unit: string): number?, number?
 ---@field UpdateColor? fun(self: oUF.UnitFrame, event: string, unit: string)
----@field nuiColor? oUF.Color
+--- NorskenUI additions
+---@field nuiSmoothing number Steady smoothing mode; PostUpdate switches to it after the first paint
+---@field nuiColor number[] Flat colour as r, g, b, a, re-applied over oUF's pick
+---@field nuiColorByPower? boolean
 
 -- Additional / Alternative power --
 
@@ -395,6 +428,8 @@ local frame
 ---@field notInterruptible? boolean
 ---@field spellID? number
 ---@field spellName? string
+---@field delay? number Seconds the cast has been pushed back
+---@field holdTime? number Seconds left to hold the bar visible after a failed/interrupted cast
 --- Callbacks / overrides
 ---@field PostCastStart? fun(self: oUF.Castbar, unit: string)
 ---@field PostCastUpdate? fun(self: oUF.Castbar, unit: string)
@@ -404,10 +439,18 @@ local frame
 ---@field PostCastInterruptible? fun(self: oUF.Castbar, unit: string)
 ---@field PostUpdatePips? fun(self: oUF.Castbar, stages: number)
 ---@field ShouldShow? fun(self: oUF.Castbar, unit: string): boolean
----@field CreatePip? fun(self: oUF.Castbar, stage: number): Frame
+---@field CreatePip? fun(self: oUF.Castbar, stage: number): Texture|Frame The element only anchors and sizes what it returns
 ---@field UpdatePips? fun(self: oUF.Castbar, stages: number)
 ---@field CustomDelayText? fun(self: oUF.Castbar, duration: number)
 ---@field CustomTimeText? fun(self: oUF.Castbar, duration: number)
+--- NorskenUI additions
+---@field nuiContainer Frame Castbar + icon container, shown on cast start and hidden with the bar
+---@field nuiSafeZone Texture Kept reachable when `SafeZone` is cleared to disable it
+---@field nuiColorByClass? boolean
+---@field nuiColor ColorMixin Normal cast colour
+---@field nuiShieldColor ColorMixin Non-interruptible cast colour
+---@field nuiFailColor ColorMixin Failed/interrupted cast colour
+---@field nuiCastPreviewUnit? string Unit the synthetic preview cast reports to PostCastStart
 
 -- ClassPower / Runes / Stagger --
 
@@ -649,3 +692,15 @@ function auras:AddSlot(filter, options) end
 ---@field feedbackUnit? string
 ---@field PreUpdate? fun(self: oUF.ThreatIndicator, unit: string)
 ---@field PostUpdate? fun(self: oUF.ThreatIndicator, unit: string, status: number, color: oUF.Color?)
+
+-- NorskenUI widgets --
+
+--- Plain widgets the UnitFrames module builds and hangs its own state on. They are not oUF
+--- elements, so oUF never touches them; cast at the creation site with `--[[@as ...]]`.
+
+---@class NUI.HighlightTexture : Texture
+---@field nuiEnabled boolean Whether the mouseover highlight is allowed to show
+
+---@class NUI.TagFontString : FontString
+---@field nuiTag? string The tag string currently registered on this font string
+---@field frequentUpdates? number Update interval oUF binds at Tag() time

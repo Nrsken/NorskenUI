@@ -7,8 +7,8 @@ local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
 
 local ipairs = ipairs
-local type = type
 local format = string.format
+local tinsert = table.insert
 
 -- GUI-only inherit sentinel: dropdowns show it as 'Global (...)', the db stores nil.
 local GLOBAL = '__GLOBAL'
@@ -25,34 +25,12 @@ local ANCHOR_POINTS = {
     { key = 'BOTTOMRIGHT', text = L['Bottom Right'] },
 }
 
-local function OutlineLabel(flags)
-    if not flags or flags == '' then return NONE end
-    for _, option in ipairs(NRSKNUI.FontOutlines) do
-        local value = option.value
-        if type(value) == 'table' then
-            for _, alias in ipairs(value) do
-                if alias == flags then return option.label end
-            end
-        elseif value == flags then
-            return option.label
-        end
-    end
-    return flags
-end
-
--- Non-slug outline options; slug is a separate axis (a checkbox globally, unavailable on specials).
+-- Slug is a separate axis here (a checkbox globally, unavailable on specials), so it stays out.
 -- globalLabel adds the inherit sentinel in front for the specials dropdown.
 local function OutlineOptions(globalLabel)
-    local options = {}
+    local options = NRSKNUI:GetOutlineOptions()
     if globalLabel then
-        options[#options + 1] = { key = GLOBAL, text = format('Global (%s)', globalLabel) }
-    end
-    for _, option in ipairs(NRSKNUI.FontOutlines) do
-        local value = option.value
-        if type(value) == 'table' then value = value[1] end
-        if not value:find('SLUG') then
-            options[#options + 1] = { key = value, text = option.label }
-        end
+        tinsert(options, 1, { value = GLOBAL, text = format('Global (%s)', globalLabel) })
     end
     return options
 end
@@ -222,7 +200,7 @@ local function BuildSpecialView(page, entry)
     if not entry.noOutline then
         fontRow:Dropdown(L['Outline'], {
             width = 0.5,
-            options = OutlineOptions(OutlineLabel(blizzDB.Outline)),
+            options = OutlineOptions(NRSKNUI:GetOutlineLabel(blizzDB.Outline)),
             value = sdb.Outline or GLOBAL,
             conditions = { 'spEnabled' },
             tooltip = L['Global follows the Blizzard UI outline and slug settings. Picking an explicit outline turns slug rendering off for this element.'],

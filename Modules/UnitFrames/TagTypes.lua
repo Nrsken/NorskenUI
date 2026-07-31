@@ -24,19 +24,12 @@ local UnitHealth = UnitHealth
 local UnitHealthPercent = UnitHealthPercent
 local UnitIsDead = UnitIsDead
 local UnitIsGhost = UnitIsGhost
-local UnitHasIncomingResurrection = UnitHasIncomingResurrection
-local IsResting = IsResting
 local AbbreviateLargeNumbers = AbbreviateLargeNumbers
 local UnitPowerType = UnitPowerType
 local UnitPower = UnitPower
 local UnitPowerPercent = UnitPowerPercent
 
-local UnitIsRelatedToActiveQuest = C_QuestLog and C_QuestLog.UnitIsRelatedToActiveQuest
-local IncomingSummonStatus = C_IncomingSummon and C_IncomingSummon.IncomingSummonStatus
-local TruncateWhenZero = C_StringUtil and C_StringUtil.TruncateWhenZero
 local GetClassColor = C_ClassColor and C_ClassColor.GetClassColor
-
-local SummonStatus = Enum and Enum.SummonStatus
 
 local DEAD = DEAD
 
@@ -119,46 +112,3 @@ Tags.Methods["nrsknuf:curhp:perhp"] = function(unit)
 		return format("%s %s %.0f%%", AbbreviateLargeNumbers(unitHealth), UF.TagSeparator, unitHealthPercent)
 	end
 end
-
--- Indicator Tags --
-
--- Resting texture, IsResting is player-state (unitless), so only place it on the player frame.
-Tags.Events['nrsknuf:resting'] = 'PLAYER_UPDATE_RESTING'
-Tags.Methods['nrsknuf:resting'] = function()
-	if IsResting() then
-		return [[|TInterface\HUD\UIUnitFrameRestingFlipbook:16:16:0:0:360:420:45:80:200:240|t]]
-	end
-end
-
--- Incoming warlock/summon status.
-Tags.Events['nrsknuf:summon'] = 'INCOMING_SUMMON_CHANGED'
-Tags.Methods['nrsknuf:summon'] = function(unit)
-	local summonStatus = IncomingSummonStatus(unit)
-	if summonStatus == SummonStatus.Pending then
-		return '|A:RaidFrame-Icon-SummonPending:16:16|a'
-	elseif summonStatus == SummonStatus.Accepted then
-		return '|A:RaidFrame-Icon-SummonPending:32:32:0:0:0:255:0|a'
-	elseif summonStatus == SummonStatus.Declined then
-		return '|A:RaidFrame-Icon-SummonPending:32:32:0:0:255:0:0|a'
-	end
-end
-
--- Incoming resurrection.
-Tags.Events['nrsknuf:resurrect'] = 'INCOMING_RESURRECT_CHANGED UNIT_HEALTH'
-Tags.Methods['nrsknuf:resurrect'] = function(unit)
-	if UnitHasIncomingResurrection(unit) then
-		return '|A:RaidFrame-Icon-Rez:22:22|a'
-	end
-end
-
--- Unit is tied to one of the player's active quests.
-Tags.Events['nrsknuf:quest'] = 'QUEST_LOG_UPDATE'
-Tags.Methods['nrsknuf:quest'] = function(unit)
-	if UnitIsRelatedToActiveQuest(unit) then
-		return '|A:Crosshair_legendaryquest_32:16:16|a'
-	end
-end
-
--- Unitless events carry no unitID, so oUF needs them registered as shared.
-Tags.SharedEvents.PLAYER_UPDATE_RESTING = true
-Tags.SharedEvents.QUEST_LOG_UPDATE = true

@@ -2601,6 +2601,7 @@ local Defaults = {
                 UpdateInterval = 0.5,
             },
             Units = {
+                -- Baseline settings for all unit frames, AceDB handles ["**"] and provides a copy of these settings for each unit frame, which can be overridden individually.
                 ["**"] = {
                     Enabled = true,
                     Width = 220,
@@ -2608,11 +2609,16 @@ local Defaults = {
                     anchorFrameType = "UIPARENT",
                     ParentFrame = "UIParent",
                     Strata = "MEDIUM",
-                    Position = { AnchorFrom = "CENTER", AnchorTo = "CENTER", XOffset = 0, YOffset = 0 },
+                    Position = {
+                        AnchorFrom = "CENTER",
+                        AnchorTo = "CENTER",
+                        XOffset = 0,
+                        YOffset = 0
+                    },
                     Health = {
                         Enabled = true,
                         StatusBarTexture = nil,
-                        BackgroundTexture = "", -- "" = follow General.BackgroundTexture
+                        BackgroundTexture = "",
                         UseGlobalColors = true,
                         ColorByClass = false,
                         UseGlobalSmooth = true,
@@ -2657,7 +2663,12 @@ local Defaults = {
                             FontOutline = "OUTLINE",
                             Color = { 1, 1, 1 },
                             BoundTo = "",
-                            Position = { AnchorFrom = "TOPLEFT", AnchorTo = "TOPLEFT", XOffset = 4, YOffset = -6 },
+                            Position = {
+                                AnchorFrom = "TOPLEFT",
+                                AnchorTo = "TOPLEFT",
+                                XOffset = 4,
+                                YOffset = -6
+                            },
                         },
                         TagTwo = {
                             Enabled = true,
@@ -2668,7 +2679,12 @@ local Defaults = {
                             FontOutline = "OUTLINE",
                             Color = { 1, 1, 1 },
                             BoundTo = "",
-                            Position = { AnchorFrom = "BOTTOMLEFT", AnchorTo = "BOTTOMLEFT", XOffset = 4, YOffset = 6 },
+                            Position = {
+                                AnchorFrom = "BOTTOMLEFT",
+                                AnchorTo = "BOTTOMLEFT",
+                                XOffset = 4,
+                                YOffset = 6
+                            },
                         },
                         TagThree = {
                             Enabled = true,
@@ -2679,7 +2695,12 @@ local Defaults = {
                             FontOutline = "OUTLINE",
                             Color = { 1, 1, 1 },
                             BoundTo = "",
-                            Position = { AnchorFrom = "BOTTOMRIGHT", AnchorTo = "BOTTOMRIGHT", XOffset = -4, YOffset = 6 },
+                            Position = {
+                                AnchorFrom = "BOTTOMRIGHT",
+                                AnchorTo = "BOTTOMRIGHT",
+                                XOffset = -4,
+                                YOffset = 6
+                            },
                         },
                         TagFour = {
                             Enabled = false,
@@ -2690,7 +2711,12 @@ local Defaults = {
                             FontOutline = "OUTLINE",
                             Color = { 1, 1, 1 },
                             BoundTo = "",
-                            Position = { AnchorFrom = "CENTER", AnchorTo = "CENTER", XOffset = 0, YOffset = 0 },
+                            Position = {
+                                AnchorFrom = "CENTER",
+                                AnchorTo = "CENTER",
+                                XOffset = 0,
+                                YOffset = 0
+                            },
                         },
                         TagFive = {
                             Enabled = false,
@@ -2701,49 +2727,94 @@ local Defaults = {
                             FontOutline = "OUTLINE",
                             Color = { 1, 1, 1 },
                             BoundTo = "",
-                            Position = { AnchorFrom = "CENTER", AnchorTo = "CENTER", XOffset = 0, YOffset = 0 },
+                            Position = {
+                                AnchorFrom = "CENTER",
+                                AnchorTo = "CENTER",
+                                XOffset = 0,
+                                YOffset = 0
+                            },
                         },
                     },
                     Indicators = {
                         Resting = {
                             Enabled = false,
                             Size = 20,
-                            Position = { AnchorFrom = "TOPLEFT", AnchorTo = "TOPLEFT", XOffset = -4, YOffset = 16 },
+                            Position = {
+                                AnchorFrom = "TOPLEFT",
+                                AnchorTo = "TOPLEFT",
+                                XOffset = -4,
+                                YOffset = 16
+                            },
                         },
                         Combat = {
                             Enabled = false,
                             Size = 20,
-                            Position = { AnchorFrom = "TOPRIGHT", AnchorTo = "TOPRIGHT", XOffset = 4, YOffset = 16 },
+                            Position = {
+                                AnchorFrom = "TOPRIGHT",
+                                AnchorTo = "TOPRIGHT",
+                                XOffset = 4,
+                                YOffset = 16
+                            },
                         },
                         ReadyCheck = {
                             Enabled = false,
                             Size = 20,
-                            Position = { AnchorFrom = "CENTER", AnchorTo = "CENTER", XOffset = 0, YOffset = 0 },
+                            Position = {
+                                AnchorFrom = "CENTER",
+                                AnchorTo = "CENTER",
+                                XOffset = 0,
+                                YOffset = 0
+                            },
                         },
                         Summon = {
                             Enabled = false,
                             Size = 24,
-                            Position = { AnchorFrom = "BOTTOMLEFT", AnchorTo = "BOTTOMLEFT", XOffset = 2, YOffset = 2 },
+                            Position = {
+                                AnchorFrom = "BOTTOMLEFT",
+                                AnchorTo = "BOTTOMLEFT",
+                                XOffset = 2,
+                                YOffset = 2
+                            },
                         },
                         Resurrect = {
                             Enabled = false,
                             Size = 24,
-                            Position = { AnchorFrom = "CENTER", AnchorTo = "CENTER", XOffset = 0, YOffset = 0 },
+                            Position = {
+                                AnchorFrom = "CENTER",
+                                AnchorTo = "CENTER",
+                                XOffset = 0,
+                                YOffset = 0
+                            },
                         },
                         Quest = {
                             Enabled = false,
                             Size = 16,
-                            Position = { AnchorFrom = "TOPRIGHT", AnchorTo = "TOPRIGHT", XOffset = -4, YOffset = 0 },
+                            Position = {
+                                AnchorFrom = "TOPRIGHT",
+                                AnchorTo = "TOPRIGHT",
+                                XOffset = -4,
+                                YOffset = 0
+                            },
                         },
                         PvP = {
                             Enabled = false,
                             Size = 24,
-                            Position = { AnchorFrom = "TOPLEFT", AnchorTo = "TOPLEFT", XOffset = -8, YOffset = 8 },
+                            Position = {
+                                AnchorFrom = "TOPLEFT",
+                                AnchorTo = "TOPLEFT",
+                                XOffset = -8,
+                                YOffset = 8
+                            },
                         },
                         Phase = {
                             Enabled = false,
                             Size = 20,
-                            Position = { AnchorFrom = "CENTER", AnchorTo = "CENTER", XOffset = 0, YOffset = 0 },
+                            Position = {
+                                AnchorFrom = "CENTER",
+                                AnchorTo = "CENTER",
+                                XOffset = 0,
+                                YOffset = 0
+                            },
                         },
                     },
                     Castbar = {
@@ -2756,16 +2827,21 @@ local Defaults = {
                         TimeToHold = 0.5,
                         UseGlobalColors = true,
                         ColorByClass = true,
-                        Color = { 0.35, 0.55, 0.85, 1 },              -- interruptible / normal
-                        NonInterruptibleColor = { 0.7, 0.6, 0.2, 1 }, -- shielded cast
-                        FailColor = { 0.8, 0.25, 0.2, 1 },            -- interrupted / failed
+                        Color = { 0.35, 0.55, 0.85, 1 },
+                        NonInterruptibleColor = { 0.78, 0.25, 0.25, 1 },
+                        FailColor = { 0.8, 0.25, 0.2, 1 },
                         Background = { 0, 0, 0, 0.8 },
                         SafeZone = {
-                            UseGlobal = true, -- own override: the safe zone is a feature toggle, not a colour
+                            UseGlobal = true,
                             Enabled = true,
                             Color = { 0.8, 0.1, 0.1, 0.35 },
                         },
-                        Position = { AnchorFrom = "TOPLEFT", AnchorTo = "BOTTOMLEFT", XOffset = 0, YOffset = -10 },
+                        Position = {
+                            AnchorFrom = "TOPLEFT",
+                            AnchorTo = "BOTTOMLEFT",
+                            XOffset = 0,
+                            YOffset = -10
+                        },
                     },
                     Auras = {
                         Buffs = {
@@ -2880,13 +2956,13 @@ local Defaults = {
                         },
                     },
                 },
+                -- Per unit overrides, these will override the ["**"] settings above
                 player = {
                     Tags = {
                         TagThree = {
                             Enabled = false,
                         },
                     },
-
                     Indicators = {
                         Resting = {
                             Enabled = true,
@@ -2991,9 +3067,9 @@ local Defaults = {
                 },
                 focus = {
                     Position = {
-                        AnchorFrom = "CENTER",
+                        AnchorFrom = "LEFT",
                         AnchorTo = "CENTER",
-                        XOffset = 560,
+                        XOffset = 460,
                         YOffset = -130
                     },
                     Power = {
@@ -3121,6 +3197,45 @@ local Defaults = {
                     Auras = {
                         Buffs = { Enabled = false },
                         Debuffs = { Enabled = false },
+                    },
+                },
+                boss = {
+                    Spacing = 30,
+                    GrowthDirection = "UP",
+                    anchorFrameType = "UIPARENT",
+                    ParentFrame = "UIParent",
+                    Position = {
+                        AnchorFrom = "LEFT",
+                        AnchorTo = "CENTER",
+                        XOffset = 500,
+                        YOffset = -20,
+                    },
+                    Power = {
+                        Enabled = false,
+                    },
+                    Castbar = {
+                        Position = {
+                            AnchorFrom = "TOPLEFT",
+                            AnchorTo = "BOTTOMLEFT",
+                            XOffset = 0,
+                            YOffset = -1,
+                        },
+                    },
+                    Auras = {
+                        Buffs = { Enabled = false },
+                        Debuffs = {
+                            Enabled = true,
+                            size = 22,
+                            perRow = 5,
+                            maxFrameCount = 5,
+                            horizontalGrowthDirection = "RIGHT",
+                            verticalGrowthDirection = "UP",
+                            Position = {
+                                AnchorTo = "TOPLEFT",
+                                XOffset = 0,
+                                YOffset = 1
+                            },
+                        },
                     },
                 },
             },

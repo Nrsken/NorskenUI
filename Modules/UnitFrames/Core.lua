@@ -1,13 +1,16 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 ---@class UnitFramesModule
+---@field frames table<string, oUF.UnitFrame>
 ---@field IndicatorDefs { key: string, element: string }[]
 local UF = NRSKNUI:GetModule('UnitFrames')
 ---@class NorskenUF
 local oUF = NRSKNUI.oUF
 local Anchors = NRSKNUI.Anchors
+local L = NRSKNUI.Libs.AL
 
 local upper = string.upper
+local format = string.format
 local pairs = pairs
 local ipairs = ipairs
 local RegisterUnitWatch = RegisterUnitWatch
@@ -62,13 +65,16 @@ end
 ---@param enabled boolean
 local function SetElement(frame, name, widget, enabled)
     if not widget then return end
-    if enabled then
-        frame:EnableElement(name)
-        widget:Show()
-    else
-        frame:DisableElement(name)
-        widget:Hide()
+
+    if not frame.nuiPreviewUnit then
+        if enabled then
+            frame:EnableElement(name)
+        else
+            frame:DisableElement(name)
+        end
     end
+
+    widget:SetShown(enabled)
 end
 
 ---Apply the DB Enabled flags to a frame's constructed elements.
@@ -94,6 +100,35 @@ function UF:ApplyElementStates(frame, unit, uDB)
     end
 end
 
+-- Anchor pair and offset sign each growth direction chains a boss frame off its predecessor with.
+local BOSS_GROWTH = {
+    UP    = { from = 'BOTTOMLEFT', to = 'TOPLEFT', x = 0, y = 1 },
+    DOWN  = { from = 'TOPLEFT', to = 'BOTTOMLEFT', x = 0, y = -1 },
+    LEFT  = { from = 'TOPRIGHT', to = 'TOPLEFT', x = -1, y = 0 },
+    RIGHT = { from = 'TOPLEFT', to = 'TOPRIGHT', x = 1, y = 0 },
+}
+
+---Position one frame. Every unit reads its own position out of the DB, except boss frames past the
+---first, which chain off their predecessor so the whole group moves with the one mover on boss1.
+---@param frame oUF.UnitFrame
+---@param unit string
+---@param uDB table
+function UF:ApplyUnitPosition(frame, unit, uDB)
+    local index = UF.BossIndex(unit)
+    local previous = index and index > 1 and UF.frames['boss' .. (index - 1)]
+    if not previous then
+        frame:ApplyPosition(uDB)
+        return
+    end
+
+    local growth = BOSS_GROWTH[uDB.GrowthDirection] or BOSS_GROWTH.DOWN
+    local spacing = uDB.Spacing or 0
+
+    frame:ClearAllPoints()
+    frame:SetPixelPoint(growth.from, previous, growth.to, growth.x * spacing, growth.y * spacing)
+    frame:SetFrameStrata(uDB.Strata or 'MEDIUM')
+end
+
 ---Apply the whole DB to one frame: geometry, backdrop, every element and then one ForceUpdate.
 ---@param frame oUF.UnitFrame
 ---@param unit string
@@ -102,7 +137,7 @@ function UF:ConfigureFrame(frame, unit)
     local general = self.db.General
 
     frame:SetPixelSize(uDB.Width, uDB.Height)
-    frame:ApplyPosition(uDB)
+    self:ApplyUnitPosition(frame, unit, uDB)
 
     for _, def in pairs(UF.Elements) do
         if def.Configure then
@@ -113,15 +148,39 @@ function UF:ConfigureFrame(frame, unit)
     -- oUF auto-enables elements on spawn, so ApplyElementStates is only needed for later DB changes.
     if frame.nuiBuilt then
         self:ApplyElementStates(frame, unit, uDB)
-        if uDB.Enabled then
-            RegisterUnitWatch(frame)
-        else
-            UnregisterUnitWatch(frame)
-            frame:Hide()
+
+        -- A previewing frame owns its own visibility until the preview is stopped.
+        if not frame.nuiPreviewUnit then
+            if uDB.Enabled then
+                RegisterUnitWatch(frame)
+            else
+                UnregisterUnitWatch(frame)
+                frame:Hide()
+            end
         end
     end
 
     frame:UpdateAllElements('ForceUpdate')
+
+    -- Preview overrides land last. They hand-drive elements that the pass above resets (the castbar
+    -- has nothing to draw when its unit is idle), so they have to run after the final repaint.
+    self:ApplyElementPreviews(frame, unit, frame.nuiPreviewUnit ~= nil)
+end
+
+---Run every element's preview hook for one frame. Everything these hooks touch is unprotected, so
+---this is also the part of a preview that can be torn down mid-combat.
+---@param frame oUF.UnitFrame
+---@param unit string
+---@param previewing boolean
+function UF:ApplyElementPreviews(frame, unit, previewing)
+    local uDB = UF.GetUnitDB(unit)
+    local general = self.db.General
+
+    for _, def in pairs(UF.Elements) do
+        if def.Preview then
+            def.Preview(frame, unit, uDB, general, previewing)
+        end
+    end
 end
 
 ---Title-case a unit into a readable label, e.g. 'targettarget' -> 'TargetTarget'.
@@ -139,38 +198,63 @@ local function GlobalName(unit)
     return 'NUF_' .. UnitLabel(unit)
 end
 
+---Spawn one unit, wire it up, and settle its visibility.
+---@param unit string
+---@param opts table? anchor overrides: skipAnchor, displayName
+---@return oUF.UnitFrame
+function UF:SpawnUnit(unit, opts)
+    opts = opts or {}
+
+    local frame = UF.frames[unit]
+    if not frame then
+        frame = oUF:Spawn(unit, GlobalName(unit))
+        UF.frames[unit] = frame
+
+        if not opts.skipAnchor then
+            -- db is resolved live rather than captured: UF.db is reassigned by UpdateDB()
+            -- on a profile switch, so a captured table would write to the old profile.
+            Anchors:Register(self, 'UnitFrame_' .. unit, frame, 'unitFrames_' .. UF.NormalizeUnit(unit), {
+                displayName = opts.displayName or UnitLabel(unit),
+                db = function() return UF.GetUnitDB(unit) end,
+                guiContext = 'frame',
+            })
+        end
+
+        -- oUF auto-enables every constructed element during Spawn, and the PLAYER_ENTERING_WORLD
+        -- ApplySettings can land before this deferred spawn, so the disabled ones are backed out
+        -- here. The repaint settles the status-driven elements SetElement force-shows.
+        self:ApplyElementStates(frame, unit, UF.GetUnitDB(unit))
+        frame:UpdateAllElements('ForceUpdate')
+    elseif not frame.nuiPreviewUnit then
+        RegisterUnitWatch(frame)
+    end
+
+    -- oUF:Spawn registers the unit watch itself, so disabled units back it out here. A previewing
+    -- frame owns its own visibility until the preview is stopped.
+    if not frame.nuiPreviewUnit and not UF.GetUnitDB(unit).Enabled then
+        UnregisterUnitWatch(frame)
+        frame:Hide()
+    end
+
+    return frame
+end
+
 -- Spawn units and register them with anchors.
 function UF:SpawnUnits()
     oUF:SetActiveStyle(self.styleName)
 
     for _, unit in ipairs(UF.SoloUnits) do
-        local frame = UF.frames[unit]
-        if not frame then
-            frame = oUF:Spawn(unit, GlobalName(unit))
-            UF.frames[unit] = frame
+        self:SpawnUnit(unit)
+    end
 
-            -- db is resolved live rather than captured: UF.db is reassigned by UpdateDB()
-            -- on a profile switch, so a captured table would write to the old profile.
-            Anchors:Register(self, 'UnitFrame_' .. unit, frame, 'unitFramesUnits', {
-                displayName = UnitLabel(unit),
-                db = function() return UF.GetUnitDB(unit) end,
-                guiContext = unit,
-            })
-
-            -- oUF auto-enables every constructed element during Spawn, and the PLAYER_ENTERING_WORLD
-            -- ApplySettings can land before this deferred spawn, so the disabled ones are backed out
-            -- here. The repaint settles the status-driven elements SetElement force-shows.
-            self:ApplyElementStates(frame, unit, UF.GetUnitDB(unit))
-            frame:UpdateAllElements('ForceUpdate')
-        else
-            RegisterUnitWatch(frame)
-        end
-
-        -- oUF:Spawn registers the unit watch itself, so disabled units back it out here.
-        if not UF.GetUnitDB(unit).Enabled then
-            UnregisterUnitWatch(frame)
-            frame:Hide()
-        end
+    -- Boss frames chain off boss1, so only boss1 gets a mover. They spawn in order because every
+    -- frame anchors to the one before it.
+    for index, unit in ipairs(UF.BossUnits) do
+        local frame = self:SpawnUnit(unit, {
+            skipAnchor = index > 1,
+            displayName = L['Boss Frames'],
+        })
+        UF.Preview:Register('boss', frame, 'player', format('%s %d', L['Boss'], index))
     end
 end
 
@@ -187,6 +271,9 @@ function UF:OnEnable()
         ["Focus Target"] = "NUF_FocusTarget",
         ["Target of Target"] = "NUF_TargetTarget",
     }
+    for index = 1, UF.MAX_BOSS_FRAMES do
+        self.NRSKNUFAnchors[format('Boss %d', index)] = 'NUF_Boss' .. index
+    end
     if SCMAPI and SCMAPI.RegisterAnchorParents then
         SCMAPI.RegisterAnchorParents("NorskenUI", self.NRSKNUFAnchors)
     end
@@ -221,6 +308,7 @@ end
 
 function UF:OnDisable()
     NRSKNUI.AuraFilters:UnregisterCallback(self)
+    UF.Preview:ReleaseAll()
     NRSKNUI:RunWhenSafe(function()
         for _, frame in pairs(UF.frames) do
             UnregisterUnitWatch(frame)

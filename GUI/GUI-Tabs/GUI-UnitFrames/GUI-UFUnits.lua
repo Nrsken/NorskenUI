@@ -3,7 +3,6 @@ local NRSKNUI = select(2, ...)
 ---@class UnitFramesModule
 local UF = NRSKNUI:GetModule('UnitFrames')
 local L = NRSKNUI.Libs.AL
-local GUI = NRSKNUI.GUI
 local Theme = NRSKNUI.Theme
 local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
@@ -21,21 +20,25 @@ local UNIT_LABELS = {
     focustarget = L['Focus Target'],
     pet = L['Pet'],
     pettarget = L['Pet Target'],
+    boss = L['Boss'],
 }
 
+-- These units don't have a power bar, so we hide the power section in their GUI.
 local NO_POWER = { targettarget = true, focustarget = true, pettarget = true }
+
+local GrowthOptions = {
+    { value = 'DOWN',  text = L['Down'] },
+    { value = 'UP',    text = L['Up'] },
+    { value = 'LEFT',  text = L['Left'] },
+    { value = 'RIGHT', text = L['Right'] },
+}
 
 local AnchorOptions = {}
 for _, point in ipairs({ 'TOPLEFT', 'TOP', 'TOPRIGHT', 'LEFT', 'CENTER', 'RIGHT', 'BOTTOMLEFT', 'BOTTOM', 'BOTTOMRIGHT' }) do
     AnchorOptions[#AnchorOptions + 1] = { value = point, text = point }
 end
 
-local OutlineOptions = {
-    { value = 'NONE',               text = L['None'] },
-    { value = 'OUTLINE',            text = L['Outline'] },
-    { value = 'THICKOUTLINE',       text = L['Thick Outline'] },
-    { value = 'MONOCHROME,OUTLINE', text = L['Mono Outline'] },
-}
+local OutlineOptions = NRSKNUI:GetOutlineOptions(true)
 
 local TAG_SLOTS = { 'TagOne', 'TagTwo', 'TagThree', 'TagFour', 'TagFive' }
 
@@ -185,6 +188,33 @@ local function BuildFrameSection(page, uDB, unit)
         showStrata = true,
         onChangeCallback = ApplySettings,
     }, 'unitOn')
+
+    if unit ~= 'boss' then return end
+
+    -- Card 4: Boss chain. Position above only moves boss1, the rest follow these two settings.
+    local chainCard = page:Card(L['Boss Frames'], 'unitOn')
+    local chainRow = chainCard:Row(rowHL, 0)
+    chainRow:Slider(L['Spacing'], {
+        width = 0.5,
+        tooltip = L['Gap between each boss frame and the one before it.'],
+        min = 0,
+        max = 200,
+        step = 1,
+        value = uDB.Spacing,
+        callback = function(val)
+            uDB.Spacing = val; ApplySettings()
+        end,
+        callbackOnRelease = true,
+    })
+    chainRow:Dropdown(L['Growth Direction'], {
+        width = 0.5,
+        tooltip = L['Which way the chain grows away from the first boss frame.'],
+        options = GrowthOptions,
+        value = uDB.GrowthDirection,
+        callback = function(key)
+            uDB.GrowthDirection = key; ApplySettings()
+        end,
+    })
 end
 
 local function BuildHealthSection(page, uDB, unit)
@@ -591,7 +621,7 @@ local function BuildCastbarSection(page, uDB, unit)
         end,
     })
 
-    -- Card 3: Safe Zone. Its own override, independent of the colour group.
+    -- Card 3: Safe Zone. Its own override, independent of the color group.
     page:SetCondition('ownSafeZone', function() return not cDB.SafeZone.UseGlobal end)
     page:SetCondition('safeZoneOn', function() return not cDB.SafeZone.UseGlobal and cDB.SafeZone.Enabled end)
     local safeZoneCard = page:Card(L['Safe Zone'], 'unitOn')
@@ -657,30 +687,16 @@ local function BuildCastbarSection(page, uDB, unit)
     })
 end
 
-local function BuildTagsSection(page, uDB, unit)
-    local selected = 'TagOne'
+-- The tab strip picks the slot, so `selected` is a build-time constant here.
+local function BuildTagsSection(page, uDB, unit, selected)
+    selected = selected or TAG_SLOTS[1]
     page:SetCondition('tagOn', function() return uDB.Tags[selected].Enabled end)
     page:SetCondition('tagOwnFont', function() return not uDB.Tags[selected].UseGlobalFont end)
 
+    -- Still a Rebuild card: Insert Tag appends to the tag string and the EditBox has to re-read.
     local card = page:Card(L['Tags'], 'unitOn')
     card:Rebuild(function(card)
         local slotDB = uDB.Tags[selected]
-
-        local switchRow = card:Row(rowH)
-        for i, name in ipairs(TAG_SLOTS) do
-            local btn = switchRow:Button(format('%s %d', L['Tag'], i), {
-                width = 0.2,
-                callback = function()
-                    selected = name
-                    card:Rebuild()
-                end,
-            })
-            if name == selected then
-                btn.text:SetTextColor(Theme.textPrimary[1], Theme.textPrimary[2], Theme.textPrimary[3], 1)
-            end
-        end
-
-        card:Separator()
 
         local headRow = card:Row(rowH)
         headRow:Checkbox(L['Enable'], {
@@ -798,51 +814,38 @@ local function BuildTagsSection(page, uDB, unit)
     end)
 end
 
-local function BuildIndicatorsSection(page, uDB, unit)
-    local selected = 'Resting'
+-- The tab strip picks the indicator, so `selected` is a build-time constant here.
+local function BuildIndicatorsSection(page, uDB, unit, selected)
+    selected = selected or IndicatorOptions[1].value
     page:SetCondition('indicatorOn', function() return uDB.Indicators[selected].Enabled end)
 
+    local iDB = uDB.Indicators[selected]
     local card = page:Card(L['Indicators'], 'unitOn')
-    card:Rebuild(function(card)
-        local iDB = uDB.Indicators[selected]
 
-        local headRow = card:Row(rowH)
-        headRow:Dropdown(L['Indicator'], {
-            width = 0.5,
-            options = IndicatorOptions,
-            value = selected,
-            callback = function(key)
-                selected = key
-                card:Rebuild()
-            end,
-        })
-        headRow:Checkbox(L['Enable'], {
-            width = 0.5,
-            value = iDB.Enabled,
-            callback = function(checked)
-                iDB.Enabled = checked
-                ApplySettings()
-                page:Refresh()
-            end,
-        })
+    local headRow = card:Row(rowH)
+    headRow:Checkbox(L['Enable'], {
+        width = 0.5,
+        value = iDB.Enabled,
+        callback = function(checked)
+            iDB.Enabled = checked
+            ApplySettings()
+            page:Refresh()
+        end,
+    })
+    headRow:Slider(L['Size'], {
+        width = 0.5,
+        conditions = { 'indicatorOn' },
+        min = 8,
+        max = 48,
+        step = 1,
+        value = iDB.Size,
+        callback = function(val)
+            iDB.Size = val; ApplySettings()
+        end,
+        callbackOnRelease = true,
+    })
 
-        card:Separator()
-
-        card:Row(rowH):Slider(L['Size'], {
-            width = 0.5,
-            conditions = { 'indicatorOn' },
-            min = 8,
-            max = 48,
-            step = 1,
-            value = iDB.Size,
-            callback = function(val)
-                iDB.Size = val; ApplySettings()
-            end,
-            callbackOnRelease = true,
-        })
-
-        AddPositionRows(card, iDB, { 'indicatorOn' })
-    end)
+    AddPositionRows(card, iDB, { 'indicatorOn' })
 end
 
 local function BuildMiscSection(page, uDB, unit)
@@ -882,7 +885,9 @@ local function BuildMiscSection(page, uDB, unit)
     end
 end
 
-local SECTION_BUILDERS = {
+-- Exposed for GUI-UFPages.lua, which assembles the per-unit pages.
+---@class UF.GUISections
+UF.GUISections = {
     frame = BuildFrameSection,
     health = BuildHealthSection,
     power = BuildPowerSection,
@@ -892,55 +897,22 @@ local SECTION_BUILDERS = {
     misc = BuildMiscSection,
 }
 
--- Every unit is always listed in the sidebar; the selected unit decides which section tabs exist.
-local UNIT_ITEMS = {}
-for _, unit in ipairs({ 'player', 'target', 'targettarget', 'focus', 'focustarget', 'pet', 'pettarget' }) do
-    UNIT_ITEMS[#UNIT_ITEMS + 1] = { key = unit, text = UNIT_LABELS[unit] }
+UF.GUIUnitLabels = UNIT_LABELS
+UF.GUINoPower = NO_POWER
+
+---Sub-tab strips. Their ids are the DB keys the builders index with.
+---@class UF.GUITagTab
+---@field id string The tag slot's DB key.
+---@field text string The tag slot's display name.
+UF.GUITagTabs = {}
+for i, name in ipairs(TAG_SLOTS) do
+    UF.GUITagTabs[i] = { id = name, text = format('%s %d', L['Tag'], i) }
 end
 
-local SECTION_TABS = {
-    { id = 'frame',      text = L['Frame'] },
-    { id = 'health',     text = L['Health'] },
-    { id = 'power',      text = L['Power'] },
-    { id = 'castbar',    text = L['Castbar'] },
-    { id = 'tags',       text = L['Tags'] },
-    { id = 'indicators', text = L['Indicators'] },
-    { id = 'misc',       text = L['Miscellaneous'] },
-}
-
-GUI:RegisterPage('unitFramesUnits', {
-    mode = 'tabs',
-    -- The content depends on the selected unit, so there is nothing to harvest from a bare build.
-    noHarvest = true,
-    search = {
-        L['Frame'], L['Health'], L['Power'], L['Castbar'], L['Tags'], L['Indicators'],
-        L['Raid Icon'], L['Leader Indicator'], L['Bound To'], L['Miscellaneous'], L['Safe Zone'],
-        L['Width'], L['Height'], L['Size'], L['Absorbs'], L['Heal Absorb'], L['Damage Absorb'],
-        L['Use Global Colors'], L['Inverse Fill'], L['Enable Castbar'], L['Enable Power Bar'],
-        L['Tag Text'], L['Insert Tag'], L['Outline'], L['Font Size'],
-    },
-    sidebar = { items = UNIT_ITEMS },
-    tabs = function(unit)
-        if not NO_POWER[unit] then return SECTION_TABS end
-
-        local tabs = {}
-        for _, tab in ipairs(SECTION_TABS) do
-            if tab.id ~= 'power' and tab.id ~= 'castbar' then
-                tabs[#tabs + 1] = tab
-            end
-        end
-        return tabs
-    end,
-    build = function(page, sectionKey, unit)
-        local builder = SECTION_BUILDERS[sectionKey]
-        if not builder or not unit then return end
-
-        local db = NRSKNUI.db.profile.UnitFrames
-        local uDB = db.Units[unit]
-
-        page:SetEnabled(function() return db.Enabled end)
-        page:SetCondition('unitOn', function() return uDB.Enabled end)
-
-        builder(page, uDB, unit)
-    end,
-})
+---@class UF.GUIIndicatorTab
+---@field id string The indicator's DB key.
+---@field text string The indicator's display name.
+UF.GUIIndicatorTabs = {}
+for i, option in ipairs(IndicatorOptions) do
+    UF.GUIIndicatorTabs[i] = { id = option.value, text = option.text }
+end

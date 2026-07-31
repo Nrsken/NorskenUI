@@ -7,6 +7,9 @@
 * the old dummy-frame pre-index (which was slow because it built real frames). Runs lazily, ~1ms.
 * A page descriptor may carry `search = { 'Label', ... }` (extra terms, e.g. for widgets hidden behind
 * a structural rebuild) and/or `noHarvest = true` (skip the dry run, rely on `search`).
+* A `search` entry may also be a table, `{ text = 'Label', tabId? = ..., itemKey? = ... }`, so a
+* declared term can name the tab / sidebar item that owns it and the result opens straight there —
+* the same context a harvested label carries.
 
 --]]
 
@@ -161,7 +164,10 @@ function InstanceMixin:HarvestSearchLabels(pageId)
     local raw = {}
     if descriptor then
         if descriptor.search then
-            for _, term in ipairs(descriptor.search) do raw[#raw + 1] = { text = term } end
+            -- A term is either a bare label or an entry that already carries its tab/item context.
+            for _, term in ipairs(descriptor.search) do
+                raw[#raw + 1] = type(term) == "table" and term or { text = term }
+            end
         end
         if not descriptor.noHarvest and descriptor.build then
             HarvestBuild(self, descriptor, raw)
