@@ -66,7 +66,7 @@ end
 ---@param row NUIListRow
 local function SkinHeaderRow(row)
     if row.Right and row.HighlightRight then
-        row:StripTextures('Keyed')
+        row:NUIStripTextures('Keyed')
         BSKIN:CreatePanelBackdrop(row, 'Transparent')
 
         UpdateCollapseArrow(row.Right)
@@ -111,9 +111,9 @@ local function SkinEquipSetRow(row)
         -- recycled between gear sets and the "+ New Set" button, so its visibility
         -- is toggled per update below instead of baked in at skin time.
         local frame = CreateFrame("Frame", nil, row)
-        frame:SetPixelPoint('TOPLEFT', row.icon, 'TOPLEFT', 0, 0)
-        frame:SetPixelPoint('BOTTOMRIGHT', row.icon, 'BOTTOMRIGHT', 0, 0)
-        frame:AddBorders()
+        frame:NUISetPixelPoint('TOPLEFT', row.icon, 'TOPLEFT', 0, 0)
+        frame:NUISetPixelPoint('BOTTOMRIGHT', row.icon, 'BOTTOMRIGHT', 0, 0)
+        frame:NUIAddBorders()
         frame:SetBorderLayer('ARTWORK', 7)
         frame:SetBorderParent(row.icon:GetParent())
         row.NUIIconBorder = frame
@@ -125,7 +125,7 @@ local function SkinEquipSetRow(row)
             end
         end
 
-        row.icon:SetZoom()
+        row.icon:NUISetZoom()
 
         if row.HighlightBar then
             row.HighlightBar:SetColorTexture(unpack(NRSKNUI.Colors.highlightColor))
@@ -182,14 +182,14 @@ local function SetupCustomPortrait()
     end
 
     local frame = CreateFrame('Frame', nil, PaperDollFrame)
-    frame:SetPixelSize(45, 45)
-    frame:SetPixelPoint('TOPLEFT', PaperDollFrame, 'TOPLEFT', 7, -7)
-    frame:AddBorders()
+    frame:NUISetPixelSize(45, 45)
+    frame:NUISetPixelPoint('TOPLEFT', PaperDollFrame, 'TOPLEFT', 7, -7)
+    frame:NUIAddBorders()
 
     frame.icon = frame:CreateTexture(nil, "ARTWORK")
     frame.icon:SetAllPoints(frame)
     frame.icon:SetTexture(icon)
-    frame.icon:SetZoom()
+    frame.icon:NUISetZoom()
 end
 
 -- Current search text, lowercased. Shared between the edit box handler and the data provider filter hook below.
@@ -214,13 +214,13 @@ local function TitleSearch(S)
 
     local scrollParent = scrollBox:GetParent()
 
-    scrollBox:SetPixelPoint('TOPLEFT', scrollParent, 'TOPLEFT', 4, -24)
-    scrollBox:SetPixelPoint('BOTTOMRIGHT', scrollParent, 'BOTTOMRIGHT', 4, 1)
+    scrollBox:NUISetPixelPoint('TOPLEFT', scrollParent, 'TOPLEFT', 4, -24)
+    scrollBox:NUISetPixelPoint('BOTTOMRIGHT', scrollParent, 'BOTTOMRIGHT', 4, 1)
 
     local frame = CreateFrame('Frame', nil, scrollParent)
-    frame:SetPixelSize(scrollBox:GetWidth(), 24)
-    frame:SetPixelPoint('TOPLEFT', scrollParent, 'TOPLEFT', 4, 0)
-    frame:CreateBackdrop()
+    frame:NUISetPixelSize(scrollBox:GetWidth(), 24)
+    frame:NUISetPixelPoint('TOPLEFT', scrollParent, 'TOPLEFT', 4, 0)
+    frame:NUICreateBackdrop()
     frame:SetBackgroundColor(0, 0, 0, 0.5)
 
     local db = BSKIN:GetDB()
@@ -273,8 +273,8 @@ local function SkinShell(S)
     -- For example, backdrop for the item level, Attributes and Enhancements rows.
     local insetRight = CharacterFrame.InsetRight or _G.CharacterFrameInsetRight
     if insetRight then
-        insetRight:StripTextures('Keyed')
-        if insetRight.NineSlice then insetRight.NineSlice:StripTextures('Keyed') end
+        insetRight:NUIStripTextures('Keyed')
+        if insetRight.NineSlice then insetRight.NineSlice:NUIStripTextures('Keyed') end
         if insetRight.Bg then insetRight.Bg:SetAlpha(0) end
     end
 end
@@ -288,9 +288,9 @@ local function SkinTabs(S)
 
         tab:ClearAllPoints()
         if prev then
-            tab:SetPixelPoint('TOPLEFT', prev, 'TOPRIGHT', -1, 0)
+            tab:NUISetPixelPoint('TOPLEFT', prev, 'TOPRIGHT', -1, 0)
         else
-            tab:SetPixelPoint('TOPLEFT', CharacterFrame, 'BOTTOMLEFT', 0, 1)
+            tab:NUISetPixelPoint('TOPLEFT', CharacterFrame, 'BOTTOMLEFT', 0, 1)
         end
         prev = tab
 
@@ -308,11 +308,11 @@ local function SkinSlots(S)
         if slot.verticalFlyout then
             S:HandleArrowButton(pb, 'down')
             pb.NUIClosedDir, pb.NUIOpenDir = 'down', 'up'
-            pb:SetPixelPoint('TOP', slot, 'BOTTOM', 0, 3)
+            pb:NUISetPixelPoint('TOP', slot, 'BOTTOM', 0, 3)
         else
             S:HandleArrowButton(pb, 'right')
             pb.NUIClosedDir, pb.NUIOpenDir = 'right', 'left'
-            pb:SetPixelPoint('LEFT', slot, 'RIGHT', -3, 0)
+            pb:NUISetPixelPoint('LEFT', slot, 'RIGHT', -3, 0)
         end
 
         if slot then S:HandleItemButton(slot) end
@@ -344,7 +344,7 @@ local function SkinModelScene(S)
     local scene = CharacterModelScene
     if not scene then return end
 
-    scene:StripTextures('Keyed')
+    scene:NUIStripTextures('Keyed')
 
     -- Hide the model scene backdrop that has the racial specific texture.
     for _, corner in ipairs({ 'TopLeft', 'TopRight', 'BotLeft', 'BotRight' }) do
@@ -367,15 +367,15 @@ local function AddStatGradients(frame)
     local height = frame:GetHeight()
 
     local left = frame:CreateTexture(nil, 'BORDER')
-    left:SetPixelSize(80, height)
-    left:SetPixelPoint('LEFT', frame, 'CENTER')
+    left:NUISetPixelSize(80, height)
+    left:NUISetPixelPoint('LEFT', frame, 'CENTER')
     left:SetTexture(NRSKNUI.WhiteTexture)
     left:SetGradient('HORIZONTAL', GRAD_BRIGHT, GRAD_FADE)
     frame.NUILeftGrad = left
 
     local right = frame:CreateTexture(nil, 'BORDER')
-    right:SetPixelSize(80, height)
-    right:SetPixelPoint('RIGHT', frame, 'CENTER')
+    right:NUISetPixelSize(80, height)
+    right:NUISetPixelPoint('RIGHT', frame, 'CENTER')
     right:SetTexture(NRSKNUI.WhiteTexture)
     right:SetGradient('HORIZONTAL', GRAD_FADE, GRAD_BRIGHT)
     frame.NUIRightGrad = right
@@ -400,18 +400,18 @@ local function SkinStatsPane(S)
     local pane = CharacterStatsPane
     if not pane then return end
 
-    pane:StripTextures('Keyed')
+    pane:NUIStripTextures('Keyed')
 
     for _, key in ipairs({ 'ItemLevelCategory', 'AttributesCategory', 'EnhancementsCategory' }) do
         local category = pane[key]
         if category then
-            category:StripTextures('Keyed')
+            category:NUIStripTextures('Keyed')
             -- Slim centered header plate, repositioning our own backdrop is fine
             local backdrop = S:CreatePanelBackdrop(category, 'Transparent')
             if backdrop then
                 backdrop:ClearAllPoints()
-                backdrop:SetPixelPoint('CENTER')
-                backdrop:SetPixelSize(150, 18)
+                backdrop:NUISetPixelPoint('CENTER')
+                backdrop:NUISetPixelSize(150, 18)
             end
             local title = category.Title
             if title then
@@ -454,8 +454,8 @@ local function SkinSidebarTabs(S)
             if backdrop then
                 -- Adjust backdrop size slightly so that the borders can be seen.
                 backdrop:ClearAllPoints()
-                backdrop:SetPixelPoint('TOPLEFT', tab, 'TOPLEFT', -2, 2)
-                backdrop:SetPixelPoint('BOTTOMRIGHT', tab, 'BOTTOMRIGHT', 2, -2)
+                backdrop:NUISetPixelPoint('TOPLEFT', tab, 'TOPLEFT', -2, 2)
+                backdrop:NUISetPixelPoint('BOTTOMRIGHT', tab, 'BOTTOMRIGHT', 2, -2)
             end
 
             if tab.Icon then tab.Icon:SetAllPoints(tab) end
@@ -483,7 +483,7 @@ local function SkinSidebarTabs(S)
         tab = _G['PaperDollSidebarTab' .. i]
     end
 
-    _G['PaperDollSidebarTabs']:StripTextures('Keyed')
+    _G['PaperDollSidebarTabs']:NUIStripTextures('Keyed')
 end
 
 local function SkinSidebarPane(S, pane, skinRow)
@@ -501,13 +501,13 @@ local function SkinGearManagerPopup(S)
         if frame.NUISkinned then return end
         frame.NUISkinned = true
 
-        frame:StripTextures('Keyed')
+        frame:NUIStripTextures('Keyed')
         S:CreatePanelBackdrop(frame)
         S:HandleCloseButton(frame.CloseButton, frame)
 
         local borderBox = frame.BorderBox
         if borderBox then
-            borderBox:StripTextures('Keyed')
+            borderBox:NUIStripTextures('Keyed')
             S:HandleEditBox(borderBox.IconSelectorEditBox)
             S:HandleButton(borderBox.OkayButton, 'Transparent')
             S:HandleButton(borderBox.CancelButton, 'Transparent')
@@ -531,14 +531,14 @@ local function SkinReputation(S)
     local rep = _G.ReputationFrame
     if not rep then return end
 
-    rep:StripTextures('Keyed')
+    rep:NUIStripTextures('Keyed')
     if rep.ScrollBar then S:HandleTrimScrollBar(rep.ScrollBar) end
     if rep.ScrollBox then S:HookScrollBoxChildren(rep.ScrollBox, SkinReputationRow) end
     if rep.filterDropdown then S:HandleDropdownButton(rep.filterDropdown) end
 
     local detail = _G.ReputationFrame.ReputationDetailFrame
     if detail then
-        detail:StripTextures('Keyed')
+        detail:NUIStripTextures('Keyed')
         S:CreatePanelBackdrop(detail)
         S:HandleCloseButton(detail.CloseButton, detail)
         S:HandleCheckBox(detail.AtWarCheckbox)
@@ -552,11 +552,11 @@ end
 local function UpdateItemButtons(S)
     local flyoutButtonFrame = _G.EquipmentFlyoutFrame.buttonFrame
 
-    flyoutButtonFrame:StripTextures('Keyed')
+    flyoutButtonFrame:NUIStripTextures('Keyed')
     S:CreatePanelBackdrop(flyoutButtonFrame)
 
     local w, h = flyoutButtonFrame:GetSize()
-    flyoutButtonFrame:SetPixelSize(w + 3, h)
+    flyoutButtonFrame:NUISetPixelSize(w + 3, h)
 
     local flyoutButtons = _G.EquipmentFlyoutFrame.buttons
 
@@ -578,10 +578,10 @@ local function EquipmentUpdateNavigation(S)
     local flyoutButtons = _G.EquipmentFlyoutFrameButtons
 
     flyoutNavigationFrame:ClearAllPoints()
-    flyoutNavigationFrame:SetPixelPoint('TOPLEFT', flyoutButtons, 'BOTTOMLEFT', 0, 0)
-    flyoutNavigationFrame:SetPixelPoint('TOPRIGHT', flyoutButtons, 'BOTTOMRIGHT', 0, 0)
+    flyoutNavigationFrame:NUISetPixelPoint('TOPLEFT', flyoutButtons, 'BOTTOMLEFT', 0, 0)
+    flyoutNavigationFrame:NUISetPixelPoint('TOPRIGHT', flyoutButtons, 'BOTTOMRIGHT', 0, 0)
 
-    flyoutNavigationFrame:StripTextures('Keyed')
+    flyoutNavigationFrame:NUIStripTextures('Keyed')
     S:CreatePanelBackdrop(flyoutNavigationFrame)
 end
 
@@ -595,7 +595,7 @@ local function SkinEquipmentFlyout(S)
     local prevButton = _G.EquipmentFlyoutFrame.NavigationFrame.PrevButton
     local nextButton = _G.EquipmentFlyoutFrame.NavigationFrame.NextButton
 
-    equipmentFlyoutHighlight:StripTextures('Keyed')
+    equipmentFlyoutHighlight:NUIStripTextures('Keyed')
     equipmentFlyoutBg:SetAlpha(0)
     equipmentFlyoutFrame:DisableDrawLayer('ARTWORK')
 
@@ -662,7 +662,7 @@ BSKIN:RegisterSkin('Blizzard_TokenUI', 'CharacterFrame', function(S)
     -- Skins the popup window when you click on a currency.
     local popup = _G.TokenFramePopup
     if popup then
-        popup:StripTextures('Keyed')
+        popup:NUIStripTextures('Keyed')
         S:CreatePanelBackdrop(popup)
         S:HandleCheckBox(popup.InactiveCheckbox)
         S:HandleCheckBox(popup.BackpackCheckbox)
@@ -681,7 +681,7 @@ BSKIN:RegisterSkin('Blizzard_TokenUI', 'CharacterFrame', function(S)
     -- Skins the warbound currency transfer window.
     local menu = _G.CurrencyTransferMenu
     if menu then
-        menu:StripTextures('Keyed')
+        menu:NUIStripTextures('Keyed')
         S:CreatePanelBackdrop(menu)
         S:HandleCloseButton(menu.CloseButton, menu)
 

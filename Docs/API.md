@@ -1,16 +1,16 @@
 # NorskenUI Injected Widget API
 
-Methods NorskenUI injects onto Blizzard widget metatables (see `Core/InjectionAPI.lua`).
-They are available on every frame/texture, e.g. `myFrame:StripTextures('Keyed')`.
+Methods NorskenUI injects onto Blizzard widget metatables (see `Core/InjectAPI.lua`).
+They are available on every frame/texture, e.g. `myFrame:NUIStripTextures('Keyed')`.
 
 The hover tooltips in the editor link here via the `[Documentation]` line on each method.
 
 ---
 
-## StripTextures
+## NUIStripTextures
 
 ```lua
-frame:StripTextures(stripType?, a?, b?)
+frame:NUIStripTextures(stripType?, a?, b?)
 ```
 
 Strip textures/atlases from a frame **or** a texture in a controlled way. Passing a
@@ -40,19 +40,19 @@ single texture directly.
 
 ```lua
 -- Full recurse + clear own regions
-frame:StripTextures('Keyed')
+frame:NUIStripTextures('Keyed')
 
 -- Kill, recursively
-frame:StripTextures('Keyed', true)
+frame:NUIStripTextures('Keyed', true)
 
 -- Alpha 0, recursively
-frame:StripTextures('Keyed', nil, true)
+frame:NUIStripTextures('Keyed', nil, true)
 
 -- Surgical: hide only ARTWORK/HIGHLIGHT layer textures on this frame
-AddonComp:StripTextures('Layer', { 'ARTWORK', 'HIGHLIGHT' })
+AddonComp:NUIStripTextures('Layer', { 'ARTWORK', 'HIGHLIGHT' })
 
 -- Surgical: hide the one atlas
-tooltip.CompareHeader:StripTextures('Atlas', 'tooltip-compare-label')
+tooltip.CompareHeader:NUIStripTextures('Atlas', 'tooltip-compare-label')
 ```
 
 ### Notes
@@ -62,10 +62,10 @@ tooltip.CompareHeader:StripTextures('Atlas', 'tooltip-compare-label')
 
 ---
 
-## CreateBackdrop
+## NUICreateBackdrop
 
 ```lua
-frame:CreateBackdrop(template?)
+frame:NUICreateBackdrop(template?)
 ```
 
 Mixes `PublicBackdropMixin` onto `frame` and builds a pixel-perfect backdrop:
@@ -75,10 +75,10 @@ Installs `SetBackgroundColor`, `SetBorderColor`, `UpdateBackdropFromDB`, `Toggle
 
 ---
 
-## HasBackdrop
+## NUIHasBackdrop
 
 ```lua
-local has = frame:HasBackdrop()
+local has = frame:NUIHasBackdrop()
 ```
 
 Returns `true` if a NorskenUI backdrop was already added to `frame`. Use before
@@ -86,10 +86,10 @@ Returns `true` if a NorskenUI backdrop was already added to `frame`. Use before
 
 ---
 
-## Banish
+## NUIBanish
 
 ```lua
-frame:Banish(...)
+frame:NUIBanish(...)
 ```
 
 Hide an object safely and reparent it to the shared hidden frame. Optional string
@@ -100,20 +100,20 @@ Disables mouse, unregisters events, sets `statehidden`, and respects user placem
 
 ---
 
-## ApplyPosition
+## NUIApplyPosition
 
 ```lua
-frame:ApplyPosition(Config, setParent?)
+frame:NUIApplyPosition(Config, setParent?)
 ```
 
 Position `frame` from a config table. Pass `setParent = true` to also reparent.
 
 ---
 
-## StyleChildFontStrings
+## NUIStyleChildFontStrings
 
 ```lua
-frame:StyleChildFontStrings(source, getSize, outline?, shadow?, skip?, setOwner?)
+frame:NUIStyleChildFontStrings(source, getSize, outline?, shadow?, skip?, setOwner?)
 ```
 
 Walk `frame`'s child `FontString`s and apply a font style. `getSize(fontString, parent)`
@@ -173,10 +173,10 @@ and `skip` is the same internal re-apply flag as `SetFontStyle`. Returns `true` 
 
 ---
 
-## SetZoom (Texture)
+## NUISetZoom (Texture)
 
 ```lua
-texture:SetZoom(zoom?)
+texture:NUISetZoom(zoom?)
 ```
 
 Apply a zoom crop via `SetTexCoord`, using `NRSKNUI.GlobalZoom` when `zoom` is omitted.
@@ -198,9 +198,9 @@ the nearest whole pixel (`floor(value / Mult + 0.5) * Mult`).
 ### SetPixelSize / SetPixelWidth / SetPixelHeight
 
 ```lua
-frame:SetPixelSize(width, height?, ...)
-frame:SetPixelWidth(width, ...)
-frame:SetPixelHeight(height, ...)
+frame:NUISetPixelSize(width, height?, ...)
+frame:NUISetPixelWidth(width, ...)
+frame:NUISetPixelHeight(height, ...)
 ```
 
 Pixel-snapped equivalents of `SetSize`/`SetWidth`/`SetHeight`. `SetPixelSize` falls
@@ -209,7 +209,7 @@ back to `width` when `height` is omitted (square). Extra varargs pass through.
 ### SetPixelPoint
 
 ```lua
-frame:SetPixelPoint(point, arg2?, arg3?, arg4?, arg5?, ...)
+frame:NUISetPixelPoint(point, arg2?, arg3?, arg4?, arg5?, ...)
 ```
 
 `SetPoint` mirror: only the **numeric** offset arguments are snapped, the `relativeTo`
@@ -220,7 +220,7 @@ defaults to the frame's parent. Handles both the long form
 ### SetGridPoint
 
 ```lua
-frame:SetGridPoint(point, relativeTo?, relativePoint?, offsetX?, offsetY?)
+frame:NUISetGridPoint(point, relativeTo?, relativePoint?, offsetX?, offsetY?)
 ```
 
 Like `SetPoint`, but snaps the **resulting position** onto the pixel grid instead of the
@@ -237,8 +237,8 @@ default to `0`. Assumes `frame` and `relativeTo` share an effective scale (both 
 ### SetPixelInside / SetPixelOutside
 
 ```lua
-region:SetPixelInside(anchor?, xOffset?, yOffset?, anchor2?)
-region:SetPixelOutside(anchor?, xOffset?, yOffset?, anchor2?)
+region:NUISetPixelInside(anchor?, xOffset?, yOffset?, anchor2?)
+region:NUISetPixelOutside(anchor?, xOffset?, yOffset?, anchor2?)
 ```
 
 Anchor a region a fixed pixel inset relative to `anchor` via `TOPLEFT`/`BOTTOMRIGHT`.
@@ -250,7 +250,7 @@ different frame. Also calls `SetPixelSnap` on the region.
 ### SetPixelSnap
 
 ```lua
-object:SetPixelSnap()
+object:NUISetPixelSnap()
 ```
 
 Turn off Blizzard's own grid snapping (`SetSnapToPixelGrid(false)` +
@@ -260,10 +260,10 @@ directly and on status bars via their fill texture. Runs once per object (guarde
 
 ---
 
-## StyleButton
+## NUIStyleButton
 
 ```lua
-button:StyleButton(noHover?, noPushed?, noChecked?)
+button:NUIStyleButton(noHover?, noPushed?, noChecked?)
 ```
 
 Replace a button's Blizzard highlight/pushed/checked art with flat additive color

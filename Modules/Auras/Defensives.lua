@@ -106,7 +106,7 @@ end
 function Defensives:ApplySettings()
     self:ResizeHost()
     self.host:Show()
-    self.host:ApplyPosition(self.db)
+    self.host:NUIApplyPosition(self.db)
     Anchors:Register(self, 'Defensives', self.host, 'defensives')
 
     local container = self.host.container

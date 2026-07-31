@@ -144,9 +144,15 @@ function NRSKNUI:OnEnable()
         self:Print(self:ColorTextByTheme("/nui") .. " to open the configuration window.")
     end
 
-    -- Automatically enable modules based on their saved settings
+    -- Resolved once here and never re-read, the other addon has already gutted the Blizzard frames
+    -- and hooked their SetParent by now, so spawning ours later in the session would recurse into
+    -- its hook until the C stack overflows. Ownership can only change on a fresh load.
+    self.UFBlocked = self:ShouldNotLoadUF()
+
+    -- Automatically enable modules based on their saved settings. A blocked UnitFrames never
+    -- reaches OnEnable, so it constructs nothing and stays IsEnabled() == false.
     for name, module in self:IterateModules() do
-        if module.db and module.db.Enabled then
+        if module.db and module.db.Enabled and not (self.UFBlocked and name == 'UnitFrames') then
             self:EnableModule(name)
         end
     end

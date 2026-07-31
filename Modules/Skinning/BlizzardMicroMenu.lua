@@ -81,7 +81,7 @@ function MM:CreateMicroBar()
     borderFrame:SetAllPoints(backdrop)
     borderFrame:SetFrameStrata("DIALOG")
     borderFrame:SetFrameLevel(microBar:GetFrameLevel() + 1)
-    backdrop:AddBorders()
+    backdrop:NUIAddBorders()
     backdrop:SetBorderColor(unpack(self.db.BackdropBorderColor))
     backdrop:SetBorderParent(borderFrame)
     microBar.borderFrame = borderFrame

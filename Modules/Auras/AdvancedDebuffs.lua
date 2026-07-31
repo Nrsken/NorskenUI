@@ -110,7 +110,7 @@ end
 function AdvancedDebuffs:ApplySettings()
     self:ResizeHost()
     self.host:Show()
-    self.host:ApplyPosition(self.db)
+    self.host:NUIApplyPosition(self.db)
     Anchors:Register(self, 'AdvancedDebuffs', self.host, 'advancedDebuffs')
 
     local container = self.host.container

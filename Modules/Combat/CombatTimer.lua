@@ -24,11 +24,11 @@ function CombatTimer:CreateFrame()
     if self.frame then return end
 
     local frame = CreateFrame('Frame', 'NRSKNUI_CombatTimerFrame', UIParent)
-    frame:SetPixelSize(100, 25)
+    frame:NUISetPixelSize(100, 25)
     frame:SetFrameLevel(100)
     frame:EnableMouse(false)
     frame:SetMouseClickEnabled(false)
-    frame:CreateBackdrop()
+    frame:NUICreateBackdrop()
 
     frame.text = frame:CreateFontString(nil, 'OVERLAY')
 
@@ -60,7 +60,7 @@ end
 function CombatTimer:ApplySettings()
     if not self.frame then return end
 
-    self.frame:ApplyPosition(self.db)
+    self.frame:NUIApplyPosition(self.db)
     self.frame.text:SetFontStyle(self.db)
     self.frame.text:SetFontJustify(self.db, nil, 4, 0, nil, nil, true)
 
@@ -86,7 +86,7 @@ function CombatTimer:TextOnUpdate()
     local status = NRSKNUI:FormatTime(totalTime, self.db.Format)
 
     -- Keep the backdrop fitted to the current shape, a resize clobbers the fontstring.
-    local resized = self.frame:FitBackdropToText(self.frame.text, status, self.db.BackdropWidth, self.db.BackdropHeight)
+    local resized = self.frame:NUIFitBackdropToText(self.frame.text, status, self.db.BackdropWidth, self.db.BackdropHeight)
 
     if resized or status ~= self.lastDisplayedText then
         self.frame.text:SetText(status)

@@ -186,7 +186,7 @@ local function StripTextures(object, stripType, a, b)
         for _, childKey in next, STRIP_CHILD_KEYS do
             local child = object[childKey] or (FrameName and _G[FrameName .. childKey])
 
-            if child and child.StripTextures then
+            if child and child.NUIStripTextures then
                 -- 'Keyed' never normalizes a arg aka banish, so forward it as-is.
                 StripTextures(child, 'Keyed', a, b)
             end
@@ -279,10 +279,10 @@ local function CreateBackdrop(frame, noBorders, inset)
     local insetBG = inset or 1
 
     local BG = CreateTextureMixin(frame, nil, 'BACKGROUND')
-    BG:SetPixelPoint('TOPLEFT', frame, 'TOPLEFT', insetBG, -insetBG)
-    BG:SetPixelPoint('BOTTOMRIGHT', frame, 'BOTTOMRIGHT', -insetBG, insetBG)
+    BG:NUISetPixelPoint('TOPLEFT', frame, 'TOPLEFT', insetBG, -insetBG)
+    BG:NUISetPixelPoint('BOTTOMRIGHT', frame, 'BOTTOMRIGHT', -insetBG, insetBG)
     frame.backdropBackground = BG
-    BG:SetPixelSnap()
+    BG:NUISetPixelSnap()
 
     frame:SetBackgroundColor(0, 0, 0, 0.8)
 
@@ -291,28 +291,28 @@ local function CreateBackdrop(frame, noBorders, inset)
     frame.BackDropBorders = {}
 
     local LB = CreateTextureMixin(frame, nil, 'BORDER')
-    LB:SetPixelPoint('TOPLEFT', frame, insetBG, -insetBG)
-    LB:SetPixelPoint('BOTTOMLEFT', frame, insetBG, insetBG)
+    LB:NUISetPixelPoint('TOPLEFT', frame, insetBG, -insetBG)
+    LB:NUISetPixelPoint('BOTTOMLEFT', frame, insetBG, insetBG)
     insert(frame.BackDropBorders, LB)
-    LB:SetPixelSnap()
+    LB:NUISetPixelSnap()
 
     local TB = CreateTextureMixin(frame, nil, 'BORDER')
-    TB:SetPixelPoint('TOPLEFT', frame, insetBG, -insetBG)
-    TB:SetPixelPoint('TOPRIGHT', frame, -insetBG, -insetBG)
+    TB:NUISetPixelPoint('TOPLEFT', frame, insetBG, -insetBG)
+    TB:NUISetPixelPoint('TOPRIGHT', frame, -insetBG, -insetBG)
     insert(frame.BackDropBorders, TB)
-    TB:SetPixelSnap()
+    TB:NUISetPixelSnap()
 
     local RB = CreateTextureMixin(frame, nil, 'BORDER')
-    RB:SetPixelPoint('TOPRIGHT', frame, -insetBG, -insetBG)
-    RB:SetPixelPoint('BOTTOMRIGHT', frame, -insetBG, insetBG)
+    RB:NUISetPixelPoint('TOPRIGHT', frame, -insetBG, -insetBG)
+    RB:NUISetPixelPoint('BOTTOMRIGHT', frame, -insetBG, insetBG)
     insert(frame.BackDropBorders, RB)
-    RB:SetPixelSnap()
+    RB:NUISetPixelSnap()
 
     local BB = CreateTextureMixin(frame, nil, 'BORDER')
-    BB:SetPixelPoint('BOTTOMLEFT', frame, insetBG, insetBG)
-    BB:SetPixelPoint('BOTTOMRIGHT', frame, -insetBG, insetBG)
+    BB:NUISetPixelPoint('BOTTOMLEFT', frame, insetBG, insetBG)
+    BB:NUISetPixelPoint('BOTTOMRIGHT', frame, -insetBG, insetBG)
     insert(frame.BackDropBorders, BB)
-    BB:SetPixelSnap()
+    BB:NUISetPixelSnap()
 
     frame:SetBorderColor(0, 0, 0, 1)
 end
@@ -404,34 +404,34 @@ local function AddBorders(frame)
 
     -- Top border
     local TB = CreateTextureMixin(frame, nil, 'OVERLAY')
-    TB:SetPixelHeight(1)
-    TB:SetPixelPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
-    TB:SetPixelPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
-    TB:SetPixelSnap()
+    TB:NUISetPixelHeight(1)
+    TB:NUISetPixelPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
+    TB:NUISetPixelPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
+    TB:NUISetPixelSnap()
     insert(frame.Borders, TB)
 
     -- Left border
     local LB = CreateTextureMixin(frame, nil, 'OVERLAY')
-    LB:SetPixelWidth(1)
-    LB:SetPixelPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
-    LB:SetPixelPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 0, 0)
-    LB:SetPixelSnap()
+    LB:NUISetPixelWidth(1)
+    LB:NUISetPixelPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
+    LB:NUISetPixelPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 0, 0)
+    LB:NUISetPixelSnap()
     insert(frame.Borders, LB)
 
     -- Bottom border
     local BB = CreateTextureMixin(frame, nil, 'OVERLAY')
-    BB:SetPixelHeight(1)
-    BB:SetPixelPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 0, 0)
-    BB:SetPixelPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
-    BB:SetPixelSnap()
+    BB:NUISetPixelHeight(1)
+    BB:NUISetPixelPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 0, 0)
+    BB:NUISetPixelPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
+    BB:NUISetPixelSnap()
     insert(frame.Borders, BB)
 
     -- Right border
     local RB = CreateTextureMixin(frame, nil, 'OVERLAY')
-    RB:SetPixelWidth(1)
-    RB:SetPixelPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
-    RB:SetPixelPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
-    RB:SetPixelSnap()
+    RB:NUISetPixelWidth(1)
+    RB:NUISetPixelPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
+    RB:NUISetPixelPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
+    RB:NUISetPixelSnap()
     insert(frame.Borders, RB)
 
     frame:SetBorderColor(0, 0, 0, 1)
@@ -465,7 +465,7 @@ local function StyleButton(button, noHover, noPushed, noChecked)
             button[state.set](button, NRSKNUI.ClearTexture)
 
             local texture = button[state.get](button)
-            texture:SetPixelInside()
+            texture:NUISetPixelInside()
             texture:SetBlendMode('ADD')
             texture:SetColorTexture(state.r, state.g, state.b, state.a)
             button[state.field] = texture
@@ -495,7 +495,7 @@ local function ApplyPosition(self, Config, setParent)
     end
 
     self:ClearAllPoints()
-    self:SetPixelPoint(posConfig.AnchorFrom or 'CENTER', parent, posConfig.AnchorTo or 'CENTER', posConfig.XOffset or 0, posConfig.YOffset or 0)
+    self:NUISetPixelPoint(posConfig.AnchorFrom or 'CENTER', parent, posConfig.AnchorTo or 'CENTER', posConfig.XOffset or 0, posConfig.YOffset or 0)
     self:SetFrameStrata(Config.Strata or 'MEDIUM')
 end
 
@@ -596,35 +596,35 @@ local function FitBackdropToText(self, fontString, text, padX, padY)
     -- Widest glyph in every digit slot is a true upper bound for this shape, so it can't overflow.
     local worst = (bare:gsub('%d', fontString:GetWidestDigit()))
     fontString:SetText(worst)
-    self:SetPixelSize(fontString:GetStringWidth() + padX * 2, fontString:GetStringHeight() + padY * 2)
+    self:NUISetPixelSize(fontString:GetStringWidth() + padX * 2, fontString:GetStringHeight() + padY * 2)
     return true
 end
 
 do
     -- Inject methods in this file.
     local injectMethods = {
-        CreateBackdrop = CreateBackdrop,
-        FitBackdropToText = FitBackdropToText,
-        AddBorders = AddBorders,
-        HasBackdrop = HasBackdrop,
-        HasBorder = HasBorder,
-        StripTextures = StripTextures,
-        ApplyPosition = ApplyPosition,
-        Banish = Banish,
-        StyleChildFontStrings = StyleChildFontStrings,
-        SetZoom = SetZoom,
-        SetPixelSize = PixelMixin.SetPixelSize,
-        SetPixelWidth = PixelMixin.SetPixelWidth,
-        SetPixelHeight = PixelMixin.SetPixelHeight,
-        SetPixelPoint = PixelMixin.SetPixelPoint,
-        SetGridPoint = PixelMixin.SetGridPoint,
-        SetPixelInside = PixelMixin.SetPixelInside,
-        SetPixelOutside = PixelMixin.SetPixelOutside,
-        SetPixelSnap = PixelMixin.SetPixelSnap,
-        StyleButton = StyleButton,
-        ApplyOnUpdate = ApplyOnUpdate,
-        SetScheduledUpdate = SetScheduledUpdate,
-        ScheduleUpdate = ScheduleUpdate,
+        NUICreateBackdrop = CreateBackdrop,
+        NUIFitBackdropToText = FitBackdropToText,
+        NUIAddBorders = AddBorders,
+        NUIHasBackdrop = HasBackdrop,
+        NUIHasBorder = HasBorder,
+        NUIStripTextures = StripTextures,
+        NUIApplyPosition = ApplyPosition,
+        NUIBanish = Banish,
+        NUIStyleChildFontStrings = StyleChildFontStrings,
+        NUISetZoom = SetZoom,
+        NUISetPixelSize = PixelMixin.SetPixelSize,
+        NUISetPixelWidth = PixelMixin.SetPixelWidth,
+        NUISetPixelHeight = PixelMixin.SetPixelHeight,
+        NUISetPixelPoint = PixelMixin.SetPixelPoint,
+        NUISetGridPoint = PixelMixin.SetGridPoint,
+        NUISetPixelInside = PixelMixin.SetPixelInside,
+        NUISetPixelOutside = PixelMixin.SetPixelOutside,
+        NUISetPixelSnap = PixelMixin.SetPixelSnap,
+        NUIStyleButton = StyleButton,
+        NUIApplyOnUpdate = ApplyOnUpdate,
+        NUISetScheduledUpdate = SetScheduledUpdate,
+        NUIScheduleUpdate = ScheduleUpdate,
     }
 
     -- Small wrapper to call the NRSKNUI:InjectAPI method, so we don't have to pass the methods

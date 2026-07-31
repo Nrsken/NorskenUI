@@ -116,23 +116,23 @@ function EditBox:SetFontJustify(source, parent, offsetX, offsetY, skip, bound, f
 ---@field UpdateBackdropFromDB fun(self: Frame, db: table)
 ---@field SetBorderColor fun(self: Frame, r: number, g: number, b: number, a: number?)
 ---@field ToggleBackdrop fun(self: Frame, show: boolean)
----@field SetPixelSize fun(self: Frame, width: number, height?: number, ...) Pixel-snapped SetSize (falls back to width for height)
----@field SetPixelWidth fun(self: Frame, width: number, ...) Pixel-snapped SetWidth
----@field SetPixelHeight fun(self: Frame, height: number, ...) Pixel-snapped SetHeight
----@field SetPixelPoint fun(self: Frame, point: string, arg2?: any, arg3?: any, arg4?: any, arg5?: any, ...) SetPoint with numeric offsets snapped to the pixel grid
----@field SetPixelInside fun(self: Frame, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor inset to a frame's corners (defaults 1px)
----@field SetPixelOutside fun(self: Frame, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor outset from a frame's corners (defaults 1px)
----@field SetGridPoint fun(self: Frame, point: string, relativeTo?: Frame|string, relativePoint?: string, offsetX?: number, offsetY?: number) SetPoint but snaps the resulting edges onto the pixel grid (for anchoring to off-grid frames)
----@field SetPixelSnap fun(self: Frame) Disable Blizzard's grid snapping / texel bias on this object
----@field AddBorders fun(self: Frame) Add a 1px border to all 4 edges (or custom size/color)
+---@field NUISetPixelSize fun(self: Frame, width: number, height?: number, ...) Pixel-snapped SetSize (falls back to width for height)
+---@field NUISetPixelWidth fun(self: Frame, width: number, ...) Pixel-snapped SetWidth
+---@field NUISetPixelHeight fun(self: Frame, height: number, ...) Pixel-snapped SetHeight
+---@field NUISetPixelPoint fun(self: Frame, point: string, arg2?: any, arg3?: any, arg4?: any, arg5?: any, ...) SetPoint with numeric offsets snapped to the pixel grid
+---@field NUISetPixelInside fun(self: Frame, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor inset to a frame's corners (defaults 1px)
+---@field NUISetPixelOutside fun(self: Frame, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor outset from a frame's corners (defaults 1px)
+---@field NUISetGridPoint fun(self: Frame, point: string, relativeTo?: Frame|string, relativePoint?: string, offsetX?: number, offsetY?: number) SetPoint but snaps the resulting edges onto the pixel grid (for anchoring to off-grid frames)
+---@field NUISetPixelSnap fun(self: Frame) Disable Blizzard's grid snapping / texel bias on this object
+---@field NUIAddBorders fun(self: Frame) Add a 1px border to all 4 edges (or custom size/color)
 ---@field SetBorderLayer fun(self: Frame, layer: string, sublevel?: number) Set the draw layer of all 4 edges (e.g. 'ARTWORK', 'OVERLAY')
 ---@field SetBorderParent fun(self: Frame, parent: Frame, sublevel?: number) Reparent all 4 edges to a new parent (e.g. the frame's texture)
 ---@field SetBorderShown fun(self: Frame, shown: boolean) Show/hide all 4 edges
----@field ApplyOnUpdate fun(self: Frame, throttle?: number, callback?: fun(self: Frame, elapsed: number)) Add a callback to run on the frame's OnUpdate script (multiple callbacks can be added)
----@field SetScheduledUpdate fun(self: Frame, callback: fun(self: Frame), whenVisible?: boolean) Install a coalesced one-shot handler; arm it with ScheduleUpdate
----@field ScheduleUpdate fun(self: Frame) Arm the SetScheduledUpdate handler to run once next frame; repeated calls coalesce
+---@field NUIApplyOnUpdate fun(self: Frame, throttle?: number, callback?: fun(self: Frame, elapsed: number)) Add a callback to run on the frame's OnUpdate script (multiple callbacks can be added)
+---@field NUISetScheduledUpdate fun(self: Frame, callback: fun(self: Frame), whenVisible?: boolean) Install a coalesced one-shot handler; arm it with ScheduleUpdate
+---@field NUIScheduleUpdate fun(self: Frame) Arm the SetScheduledUpdate handler to run once next frame; repeated calls coalesce
 ---@field SetOnUpdateMode fun(self: Frame, mode: number) Set the OnUpdateMode (Enum.OnUpdateMode) for this frame; see docs for details
----@field FitBackdropToText fun(self: Frame, fontString: FontString, text: string, padX: number, padY: number): boolean Size the backdrop to the widest string sharing text's digit shape; returns true if it resized
+---@field NUIFitBackdropToText fun(self: Frame, fontString: FontString, text: string, padX: number, padY: number): boolean Size the backdrop to the widest string sharing text's digit shape; returns true if it resized
 ---@field SetAlphaFromBoolean fun(self: Frame, value: boolean|number|nil, alphaIfTrue?: number, alphaIfFalse?: number)
 ---@field CreateAuraContainer fun(self: Frame, config: table): NUIAuraContainer?
 ---@field container NUIAuraContainer?
@@ -160,31 +160,31 @@ local Frame
 ---@param stripType? string nil | 'Keyed' | 'Kill' | 'Layer' | 'Atlas' | 'ClearHide' | 'Alpha'
 ---@param a? string|string[]|boolean 'Layer'/'Atlas': layer/atlas name(s) · 'Keyed': banish (kill)
 ---@param b? boolean 'Keyed': alphaZero — set alpha 0 instead of clearing
-function Frame:StripTextures(stripType, a, b) end
+function Frame:NUIStripTextures(stripType, a, b) end
 
 ---Build a pixel-perfect backdrop (bg + 4 border edges) and mix in the backdrop API.
 ---
 ---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#createbackdrop)
-function Frame:CreateBackdrop(noBorders) end
+function Frame:NUICreateBackdrop(noBorders) end
 
 ---Return true if a NorskenUI backdrop was already added.
 ---
 ---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#hasbackdrop)
 ---@return boolean hasBackdrop
-function Frame:HasBackdrop() end
+function Frame:NUIHasBackdrop() end
 
 ---Hide safely and reparent to the shared hidden frame.
 ---
 ---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#banish)
 ---@param ... string? optional child keys to traverse first, e.g. 'Inset'
-function Frame:Banish(...) end
+function Frame:NUIBanish(...) end
 
 ---Position the frame from a config table.
 ---
 ---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#applyposition)
 ---@param Config table
 ---@param setParent? boolean also reparent
-function Frame:ApplyPosition(Config, setParent) end
+function Frame:NUIApplyPosition(Config, setParent) end
 
 ---Walk child FontStrings and apply a font style.
 ---
@@ -195,29 +195,29 @@ function Frame:ApplyPosition(Config, setParent) end
 ---@param shadow? table
 ---@param skip? boolean
 ---@param setOwner? boolean
-function Frame:StyleChildFontStrings(source, getSize, outline, shadow, skip, setOwner) end
+function Frame:NUIStyleChildFontStrings(source, getSize, outline, shadow, skip, setOwner) end
 
 ---@class Button ---@diagnostic disable-line: class-shadows-builtin
 ---@field SetBackgroundColor fun(self: Button, r: number, g: number, b: number, a: number?)
 ---@field UpdateBackdropFromDB fun(self: Button, db: table)
 ---@field SetBorderColor fun(self: Button, r: number, g: number, b: number, a: number?)
 ---@field ToggleBackdrop fun(self: Button, show: boolean)
----@field SetPixelSize fun(self: Button, width: number, height?: number, ...) Pixel-snapped SetSize (falls back to width for height)
----@field SetPixelWidth fun(self: Button, width: number, ...) Pixel-snapped SetWidth
----@field SetPixelHeight fun(self: Button, height: number, ...) Pixel-snapped SetHeight
----@field SetPixelPoint fun(self: Button, point: string, arg2?: any, arg3?: any, arg4?: any, arg5?: any, ...) SetPoint with numeric offsets snapped to the pixel grid
----@field SetPixelInside fun(self: Button, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor inset to a frame's corners (defaults 1px)
----@field SetPixelOutside fun(self: Button, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor outset from a frame's corners (defaults 1px)
----@field SetGridPoint fun(self: Button, point: string, relativeTo?: Frame|string, relativePoint?: string, offsetX?: number, offsetY?: number) SetPoint but snaps the resulting edges onto the pixel grid (for anchoring to off-grid frames)
----@field SetPixelSnap fun(self: Button) Disable Blizzard's grid snapping / texel bias on this object
----@field StyleButton fun(self: Button, noHover?: boolean, noPushed?: boolean, noChecked?: boolean) Swap Blizzard highlight/pushed/checked art for flat additive overlays
----@field AddBorders fun(self: Button) Add a 1px border to all 4 edges (or custom size/color)
+---@field NUISetPixelSize fun(self: Button, width: number, height?: number, ...) Pixel-snapped SetSize (falls back to width for height)
+---@field NUISetPixelWidth fun(self: Button, width: number, ...) Pixel-snapped SetWidth
+---@field NUISetPixelHeight fun(self: Button, height: number, ...) Pixel-snapped SetHeight
+---@field NUISetPixelPoint fun(self: Button, point: string, arg2?: any, arg3?: any, arg4?: any, arg5?: any, ...) SetPoint with numeric offsets snapped to the pixel grid
+---@field NUISetPixelInside fun(self: Button, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor inset to a frame's corners (defaults 1px)
+---@field NUISetPixelOutside fun(self: Button, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor outset from a frame's corners (defaults 1px)
+---@field NUISetGridPoint fun(self: Button, point: string, relativeTo?: Frame|string, relativePoint?: string, offsetX?: number, offsetY?: number) SetPoint but snaps the resulting edges onto the pixel grid (for anchoring to off-grid frames)
+---@field NUISetPixelSnap fun(self: Button) Disable Blizzard's grid snapping / texel bias on this object
+---@field NUIStyleButton fun(self: Button, noHover?: boolean, noPushed?: boolean, noChecked?: boolean) Swap Blizzard highlight/pushed/checked art for flat additive overlays
+---@field NUIAddBorders fun(self: Button) Add a 1px border to all 4 edges (or custom size/color)
 ---@field SetBorderLayer fun(self: Button, layer: string, sublevel?: number) Set the draw layer of all 4 edges (e.g. 'ARTWORK', 'OVERLAY')
 ---@field SetBorderParent fun(self: Button, parent: Frame) Reparent all 4 edges to a new parent (e.g. the frame's texture)
 ---@field SetBorderShown fun(self: Button, shown: boolean) Show/hide all 4 edges
----@field ApplyOnUpdate fun(self: Button, throttle?: number, callback?: fun(self: Button, elapsed: number)) Add a callback to run on the frame's OnUpdate script (multiple callbacks can be added)
----@field SetScheduledUpdate fun(self: Button, callback: fun(self: Button), whenVisible?: boolean) Install a coalesced one-shot handler; arm it with ScheduleUpdate
----@field ScheduleUpdate fun(self: Button) Arm the SetScheduledUpdate handler to run once next frame; repeated calls coalesce
+---@field NUIApplyOnUpdate fun(self: Button, throttle?: number, callback?: fun(self: Button, elapsed: number)) Add a callback to run on the frame's OnUpdate script (multiple callbacks can be added)
+---@field NUISetScheduledUpdate fun(self: Button, callback: fun(self: Button), whenVisible?: boolean) Install a coalesced one-shot handler; arm it with ScheduleUpdate
+---@field NUIScheduleUpdate fun(self: Button) Arm the SetScheduledUpdate handler to run once next frame; repeated calls coalesce
 ---@field RegisterCallback fun(self: table, event: string, callback: fun(btn: any), owner: table)
 ---@field SetAlphaFromBoolean fun(self: Button, value: boolean|number|nil, alphaIfTrue?: number, alphaIfFalse?: number)
 local Button
@@ -228,52 +228,52 @@ local Button
 ---@param stripType? string nil | 'Keyed' | 'Kill' | 'Layer' | 'Atlas' | 'ClearHide' | 'Alpha'
 ---@param a? string|string[]|boolean 'Layer'/'Atlas': layer/atlas name(s) · 'Keyed': banish (kill)
 ---@param b? boolean 'Keyed': alphaZero — set alpha 0 instead of clearing
-function Button:StripTextures(stripType, a, b) end
+function Button:NUIStripTextures(stripType, a, b) end
 
 ---Build a pixel-perfect backdrop (bg + 4 border edges) and mix in the backdrop API.
 ---
 ---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#createbackdrop)
-function Button:CreateBackdrop(noBorders) end
+function Button:NUICreateBackdrop(noBorders) end
 
 ---Return true if a NorskenUI backdrop was already added.
 ---
 ---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#hasbackdrop)
 ---@return boolean hasBackdrop
-function Button:HasBackdrop() end
+function Button:NUIHasBackdrop() end
 
 ---Hide safely and reparent to the shared hidden frame.
 ---
 ---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#banish)
 ---@param ... string? optional child keys to traverse first, e.g. 'Inset'
-function Button:Banish(...) end
+function Button:NUIBanish(...) end
 
 ---Position the frame from a config table.
 ---
 ---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#applyposition)
 ---@param Config table
 ---@param setParent? boolean also reparent
-function Button:ApplyPosition(Config, setParent) end
+function Button:NUIApplyPosition(Config, setParent) end
 
 ---@class StatusBar ---@diagnostic disable-line: class-shadows-builtin
 ---@field SetBackgroundColor fun(self: StatusBar, r: number, g: number, b: number, a: number?)
 ---@field UpdateBackdropFromDB fun(self: StatusBar, db: table)
 ---@field SetBorderColor fun(self: StatusBar, r: number, g: number, b: number, a: number?)
 ---@field ToggleBackdrop fun(self: StatusBar, show: boolean)
----@field SetPixelSize fun(self: StatusBar, width: number, height?: number, ...) Pixel-snapped SetSize (falls back to width for height)
----@field SetPixelWidth fun(self: StatusBar, width: number, ...) Pixel-snapped SetWidth
----@field SetPixelHeight fun(self: StatusBar, height: number, ...) Pixel-snapped SetHeight
----@field SetPixelPoint fun(self: StatusBar, point: string, arg2?: any, arg3?: any, arg4?: any, arg5?: any, ...) SetPoint with numeric offsets snapped to the pixel grid
----@field SetPixelInside fun(self: StatusBar, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor inset to a frame's corners (defaults 1px)
----@field SetPixelOutside fun(self: StatusBar, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor outset from a frame's corners (defaults 1px)
----@field SetGridPoint fun(self: StatusBar, point: string, relativeTo?: Frame|string, relativePoint?: string, offsetX?: number, offsetY?: number) SetPoint but snaps the resulting edges onto the pixel grid (for anchoring to off-grid frames)
----@field SetPixelSnap fun(self: StatusBar) Disable Blizzard's grid snapping / texel bias on this object
----@field AddBorders fun(self: StatusBar) Add a 1px border to all 4 edges (or custom size/color)
+---@field NUISetPixelSize fun(self: StatusBar, width: number, height?: number, ...) Pixel-snapped SetSize (falls back to width for height)
+---@field NUISetPixelWidth fun(self: StatusBar, width: number, ...) Pixel-snapped SetWidth
+---@field NUISetPixelHeight fun(self: StatusBar, height: number, ...) Pixel-snapped SetHeight
+---@field NUISetPixelPoint fun(self: StatusBar, point: string, arg2?: any, arg3?: any, arg4?: any, arg5?: any, ...) SetPoint with numeric offsets snapped to the pixel grid
+---@field NUISetPixelInside fun(self: StatusBar, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor inset to a frame's corners (defaults 1px)
+---@field NUISetPixelOutside fun(self: StatusBar, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor outset from a frame's corners (defaults 1px)
+---@field NUISetGridPoint fun(self: StatusBar, point: string, relativeTo?: Frame|string, relativePoint?: string, offsetX?: number, offsetY?: number) SetPoint but snaps the resulting edges onto the pixel grid (for anchoring to off-grid frames)
+---@field NUISetPixelSnap fun(self: StatusBar) Disable Blizzard's grid snapping / texel bias on this object
+---@field NUIAddBorders fun(self: StatusBar) Add a 1px border to all 4 edges (or custom size/color)
 ---@field SetBorderLayer fun(self: StatusBar, layer: string, sublevel?: number) Set the draw layer of all 4 edges (e.g. 'ARTWORK', 'OVERLAY')
 ---@field SetBorderParent fun(self: StatusBar, parent: Frame) Reparent all 4 edges to a new parent (e.g. the frame's texture)
 ---@field SetBorderShown fun(self: StatusBar, shown: boolean) Show/hide all 4 edges
----@field ApplyOnUpdate fun(self: StatusBar, throttle?: number, callback?: fun(self: StatusBar, elapsed: number)) Add a callback to run on the frame's OnUpdate script (multiple callbacks can be added)
----@field SetScheduledUpdate fun(self: StatusBar, callback: fun(self: StatusBar), whenVisible?: boolean) Install a coalesced one-shot handler; arm it with ScheduleUpdate
----@field ScheduleUpdate fun(self: StatusBar) Arm the SetScheduledUpdate handler to run once next frame; repeated calls coalesce
+---@field NUIApplyOnUpdate fun(self: StatusBar, throttle?: number, callback?: fun(self: StatusBar, elapsed: number)) Add a callback to run on the frame's OnUpdate script (multiple callbacks can be added)
+---@field NUISetScheduledUpdate fun(self: StatusBar, callback: fun(self: StatusBar), whenVisible?: boolean) Install a coalesced one-shot handler; arm it with ScheduleUpdate
+---@field NUIScheduleUpdate fun(self: StatusBar) Arm the SetScheduledUpdate handler to run once next frame; repeated calls coalesce
 local StatusBar
 
 ---Strip textures/atlases in a controlled way. `'Keyed'` recurses keyed children then clears own regions.
@@ -282,43 +282,43 @@ local StatusBar
 ---@param stripType? string nil | 'Keyed' | 'Kill' | 'Layer' | 'Atlas' | 'ClearHide' | 'Alpha'
 ---@param a? string|string[]|boolean 'Layer'/'Atlas': layer/atlas name(s) · 'Keyed': banish (kill)
 ---@param b? boolean 'Keyed': alphaZero — set alpha 0 instead of clearing
-function StatusBar:StripTextures(stripType, a, b) end
+function StatusBar:NUIStripTextures(stripType, a, b) end
 
 ---Build a pixel-perfect backdrop (bg + 4 border edges) and mix in the backdrop API.
 ---
 ---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#createbackdrop)
-function StatusBar:CreateBackdrop(noBorders) end
+function StatusBar:NUICreateBackdrop(noBorders) end
 
 ---Return true if a NorskenUI backdrop was already added.
 ---
 ---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#hasbackdrop)
 ---@return boolean hasBackdrop
-function StatusBar:HasBackdrop() end
+function StatusBar:NUIHasBackdrop() end
 
 ---Hide safely and reparent to the shared hidden frame.
 ---
 ---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#banish)
 ---@param ... string? optional child keys to traverse first, e.g. 'Inset'
-function StatusBar:Banish(...) end
+function StatusBar:NUIBanish(...) end
 
 ---Position the frame from a config table.
 ---
 ---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#applyposition)
 ---@param Config table
 ---@param setParent? boolean also reparent
-function StatusBar:ApplyPosition(Config, setParent) end
+function StatusBar:NUIApplyPosition(Config, setParent) end
 
 ---@class Texture ---@diagnostic disable-line: class-shadows-builtin
----@field SetPixelSize fun(self: Texture, width: number, height?: number, ...) Pixel-snapped SetSize (falls back to width for height)
----@field SetPixelWidth fun(self: Texture, width: number, ...) Pixel-snapped SetWidth
----@field SetPixelHeight fun(self: Texture, height: number, ...) Pixel-snapped SetHeight
----@field SetPixelPoint fun(self: Texture, point: string, arg2?: any, arg3?: any, arg4?: any, arg5?: any, ...) SetPoint with numeric offsets snapped to the pixel grid
----@field SetPixelInside fun(self: Texture, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor inset to a frame's corners (defaults 1px)
----@field SetPixelOutside fun(self: Texture, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor outset from a frame's corners (defaults 1px)
----@field SetGridPoint fun(self: Texture, point: string, relativeTo?: Frame|string, relativePoint?: string, offsetX?: number, offsetY?: number) SetPoint but snaps the resulting edges onto the pixel grid (for anchoring to off-grid frames)
----@field SetPixelSnap fun(self: Texture) Disable Blizzard's grid snapping / texel bias on this texture
----@field SetZoom fun(self: Texture, zoom?: number) Apply a zoom crop via SetTexCoord (uses NRSKNUI.GlobalZoom when omitted)
----@field StripTextures fun(self: Texture, stripType?: string, a?: string|string[]|boolean, b?: boolean) Strip this texture (clear, or per `stripType`). Same modes as the frame version.
+---@field NUISetPixelSize fun(self: Texture, width: number, height?: number, ...) Pixel-snapped SetSize (falls back to width for height)
+---@field NUISetPixelWidth fun(self: Texture, width: number, ...) Pixel-snapped SetWidth
+---@field NUISetPixelHeight fun(self: Texture, height: number, ...) Pixel-snapped SetHeight
+---@field NUISetPixelPoint fun(self: Texture, point: string, arg2?: any, arg3?: any, arg4?: any, arg5?: any, ...) SetPoint with numeric offsets snapped to the pixel grid
+---@field NUISetPixelInside fun(self: Texture, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor inset to a frame's corners (defaults 1px)
+---@field NUISetPixelOutside fun(self: Texture, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor outset from a frame's corners (defaults 1px)
+---@field NUISetGridPoint fun(self: Texture, point: string, relativeTo?: Frame|string, relativePoint?: string, offsetX?: number, offsetY?: number) SetPoint but snaps the resulting edges onto the pixel grid (for anchoring to off-grid frames)
+---@field NUISetPixelSnap fun(self: Texture) Disable Blizzard's grid snapping / texel bias on this texture
+---@field NUISetZoom fun(self: Texture, zoom?: number) Apply a zoom crop via SetTexCoord (uses NRSKNUI.GlobalZoom when omitted)
+---@field NUIStripTextures fun(self: Texture, stripType?: string, a?: string|string[]|boolean, b?: boolean) Strip this texture (clear, or per `stripType`). Same modes as the frame version.
 local Texture
 
 ---Strip this texture (clear, or per `stripType`). Same modes as the frame version.
@@ -327,24 +327,24 @@ local Texture
 ---@param stripType? string nil | 'Keyed' | 'Kill' | 'Layer' | 'Atlas' | 'ClearHide' | 'Alpha'
 ---@param a? string|string[]|boolean 'Layer'/'Atlas': layer/atlas name(s) · 'Keyed': banish (kill)
 ---@param b? boolean 'Keyed': alphaZero — set alpha 0 instead of clearing
-function Texture:StripTextures(stripType, a, b) end
+function Texture:NUIStripTextures(stripType, a, b) end
 
 ---Apply a zoom crop via SetTexCoord (uses NRSKNUI.GlobalZoom when omitted).
 ---
 ---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#setzoom-texture)
 ---@param zoom? number
-function Texture:SetZoom(zoom) end
+function Texture:NUISetZoom(zoom) end
 
 -- FontStrings receive the pixel-perfect widget methods too (injected in InjectionAPI).
 ---@class FontString ---@diagnostic disable-line: class-shadows-builtin
----@field SetPixelSize fun(self: FontString, width: number, height?: number, ...) Pixel-snapped SetSize (falls back to width for height)
----@field SetPixelWidth fun(self: FontString, width: number, ...) Pixel-snapped SetWidth
----@field SetPixelHeight fun(self: FontString, height: number, ...) Pixel-snapped SetHeight
----@field SetPixelPoint fun(self: FontString, point: string, arg2?: any, arg3?: any, arg4?: any, arg5?: any, ...) SetPoint with numeric offsets snapped to the pixel grid
----@field SetPixelInside fun(self: FontString, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor inset to a frame's corners (defaults 1px)
----@field SetPixelOutside fun(self: FontString, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor outset from a frame's corners (defaults 1px)
----@field SetGridPoint fun(self: FontString, point: string, relativeTo?: Frame|string, relativePoint?: string, offsetX?: number, offsetY?: number) SetPoint but snaps the resulting edges onto the pixel grid (for anchoring to off-grid frames)
----@field SetPixelSnap fun(self: FontString) Disable Blizzard's grid snapping / texel bias on this object
+---@field NUISetPixelSize fun(self: FontString, width: number, height?: number, ...) Pixel-snapped SetSize (falls back to width for height)
+---@field NUISetPixelWidth fun(self: FontString, width: number, ...) Pixel-snapped SetWidth
+---@field NUISetPixelHeight fun(self: FontString, height: number, ...) Pixel-snapped SetHeight
+---@field NUISetPixelPoint fun(self: FontString, point: string, arg2?: any, arg3?: any, arg4?: any, arg5?: any, ...) SetPoint with numeric offsets snapped to the pixel grid
+---@field NUISetPixelInside fun(self: FontString, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor inset to a frame's corners (defaults 1px)
+---@field NUISetPixelOutside fun(self: FontString, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor outset from a frame's corners (defaults 1px)
+---@field NUISetGridPoint fun(self: FontString, point: string, relativeTo?: Frame|string, relativePoint?: string, offsetX?: number, offsetY?: number) SetPoint but snaps the resulting edges onto the pixel grid (for anchoring to off-grid frames)
+---@field NUISetPixelSnap fun(self: FontString) Disable Blizzard's grid snapping / texel bias on this object
 local FontString
 
 ---Style this FontString in one call (font face, size, outline, shadow). See `Font:SetFontStyle`.

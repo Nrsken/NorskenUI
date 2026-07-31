@@ -89,14 +89,14 @@ function CursorCircle:CreateFrames()
 
     -- Create the main follower frame that will follow the cursor.
     local follower = CreateFrame('Frame', 'NRSKNUI_CursorCircleFrame', UIParent)
-    follower:SetPixelSize(1)
-    follower:SetPixelPoint('CENTER')
+    follower:NUISetPixelSize(1)
+    follower:NUISetPixelPoint('CENTER')
     follower:EnableMouse(false)
     follower:Hide()
 
     -- Main ring
     local ring = CreateFrame('Frame', nil, follower)
-    ring:SetPixelPoint('CENTER')
+    ring:NUISetPixelPoint('CENTER')
     ring:SetFrameStrata('TOOLTIP')
     ring:SetFrameLevel(999)
     ring:EnableMouse(false)
@@ -104,7 +104,7 @@ function CursorCircle:CreateFrames()
     -- Main ring texture
     ring.texture = ring:CreateTexture(nil, 'BACKGROUND')
     ring.texture:SetAllPoints()
-    ring.texture:SetPixelSnap()
+    ring.texture:NUISetPixelSnap()
 
     -- Main ring cooldown swipe
     ring.cooldown = CreateFrame('Cooldown', nil, ring, 'CooldownFrameTemplate')
@@ -113,14 +113,14 @@ function CursorCircle:CreateFrames()
 
     -- GCD ring
     local gcdRing = CreateFrame('Frame', nil, follower)
-    gcdRing:SetPixelPoint('CENTER')
+    gcdRing:NUISetPixelPoint('CENTER')
     gcdRing:SetFrameStrata('TOOLTIP')
     gcdRing:EnableMouse(false)
 
     -- GCD ring texture
     gcdRing.texture = gcdRing:CreateTexture(nil, 'BACKGROUND')
     gcdRing.texture:SetAllPoints()
-    gcdRing.texture:SetPixelSnap()
+    gcdRing.texture:NUISetPixelSnap()
 
     -- GCD ring cooldown swipe
     gcdRing.cooldown = CreateFrame('Cooldown', nil, gcdRing, 'CooldownFrameTemplate')
@@ -138,7 +138,7 @@ function CursorCircle:CreateFrames()
     follower:SetScript('OnUpdate', function(_, elapsed)
         local scale = 1 / UIParent:GetEffectiveScale()
         local posX, posY = GetCursorPosition()
-        follower:SetPixelPoint('CENTER', UIParent, 'BOTTOMLEFT', posX * scale, posY * scale)
+        follower:NUISetPixelPoint('CENTER', UIParent, 'BOTTOMLEFT', posX * scale, posY * scale)
         self:ResolveAlpha(elapsed)
     end)
 end
@@ -189,12 +189,12 @@ function CursorCircle:ApplySettings()
     local sr, sg, sb, sa = NRSKNUI:GetAccentColor(self.db.GCD.SwipeColorMode, self.db.GCD.SwipeColor)
 
     -- Main ring
-    self.ring:SetPixelSize(self.db.Size, self.db.Size)
+    self.ring:NUISetPixelSize(self.db.Size, self.db.Size)
     self.ring.texture:SetTexture(ringPath)
     self.ring.texture:SetVertexColor(r, g, b, a)
 
     -- Separate GCD ring
-    self.gcdRing:SetPixelSize(self.db.GCD.Size, self.db.GCD.Size)
+    self.gcdRing:NUISetPixelSize(self.db.GCD.Size, self.db.GCD.Size)
     self.gcdRing.texture:SetTexture(gcdPath)
     self.gcdRing.texture:SetVertexColor(rr, rg, rb, ra)
 

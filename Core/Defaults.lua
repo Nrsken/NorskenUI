@@ -214,33 +214,18 @@ local Defaults = {
             GlowStartAnim = false,
             GlowDuration = 1,
         },
-
-        CharacterPanel = {
+        GearUtility = {
             Enabled = true,
-            DecimalItemLevel = true,
-            ShowRaceText = true,
-            UseGlobalFont = true,
-            FontFace = "Expressway",
-            FontOutline = "OUTLINE",
-            StatsFontSize = 11,
-            LevelTextSize = 12,
-            NameTextSize = 12,
-            CategoryFontSize = 12,
-            IlvlValueSize = 16,
-            FontShadow = {
-                Enabled = false,
-                Color = { 0, 0, 0, 1 },
-                OffsetX = 1,
-                OffsetY = -1,
-            },
-            GemSocketHelper = {
-                Enabled = true,
-                SocketButtonSize = 24,
-                SocketButtonSpacing = 1,
-                ShowOnlyEmpty = false,
-                EnchantHelper = true,
-            },
             TrackIndicators = {
+                Enabled = true,
+            },
+            Sockets = {
+                Enabled = true,
+                ButtonSize = 24,
+                ButtonSpacing = 1,
+                ShowOnlyEmpty = false,
+            },
+            Enchants = {
                 Enabled = true,
             },
         },
@@ -294,6 +279,10 @@ local Defaults = {
         -- ElvUI Integration
         UseElvUI = {
             Enabled = true, -- Master toggle for ElvUI integration (disables my skins when true to avoid conflicts)
+        },
+        -- UnitFrame Integration
+        UseOtherUF = {
+            Enabled = true,
         },
         -- Minimap Icon Settings
         Minimap = {

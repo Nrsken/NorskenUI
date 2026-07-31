@@ -37,10 +37,10 @@ local function UpdateCDMAnchorSize(anchor)
         end
     end
 
-    anchor:SetPixelWidth(width)
-    anchor:SetPixelHeight(height)
+    anchor:NUISetPixelWidth(width)
+    anchor:NUISetPixelHeight(height)
     anchor:ClearAllPoints()
-    anchor:SetGridPoint('CENTER', essential, 'CENTER', 0, 0) -- Without this we would need to use .1 offsets to avoid scuffed pixels.
+    anchor:NUISetGridPoint('CENTER', essential, 'CENTER', 0, 0) -- Without this we would need to use .1 offsets to avoid scuffed pixels.
 end
 
 function UF:HookCDMFrame(frame, anchor)
@@ -71,7 +71,7 @@ function UF:CreateCDMAnchor()
     local anchor = _G['NRSKNUF_CDMAnchor'] or CreateFrame('Frame', 'NRSKNUF_CDMAnchor', UIParent)
     UF.CDMAnchor = anchor
     anchor:ClearAllPoints()
-    anchor:SetPixelPoint('CENTER', essential, 'CENTER', 0, 0)
+    anchor:NUISetPixelPoint('CENTER', essential, 'CENTER', 0, 0)
 
     UF:HookCDMFrame(essential, anchor)
     UF:RegisterEvent('PLAYER_ENTERING_WORLD', 'CDMLayoutEvent')

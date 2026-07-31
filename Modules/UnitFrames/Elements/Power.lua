@@ -21,19 +21,19 @@ UF.Elements.Power = {
 
         -- Power bar background frame
         local powerBackground = CreateFrame('Frame', nil, self)
-        powerBackground:CreateBackdrop(true)
+        powerBackground:NUICreateBackdrop(true)
         self.powerBackground = powerBackground
 
         -- Power bar border frame
         local powerBorderFrame = CreateFrame('Frame', nil, self)
-        powerBorderFrame:AddBorders()
+        powerBorderFrame:NUIAddBorders()
         powerBorderFrame:SetFrameLevel(self:GetFrameLevel() + 3)
         self.powerBorderFrame = powerBorderFrame
 
         -- Power bar
         local powerBar = CreateFrame('StatusBar', nil, self) --[[@as oUF.Power]]
         powerBar:SetFrameLevel(self:GetFrameLevel() + 2)
-        powerBar:SetPixelSnap()
+        powerBar:NUISetPixelSnap()
         powerBar.PostUpdate = UF.PostUpdatePower
         powerBar.PostUpdateColor = UF.PostUpdatePowerColor
 
@@ -55,9 +55,9 @@ UF.Elements.Power = {
         -- Set power bar texture and sizing
         powerBar:SetStatusBarTexture(NRSKNUI:GetStatusbar(general, pDB.StatusBarTexture))
         powerBar:ClearAllPoints()
-        powerBar:SetPixelPoint('BOTTOMLEFT', self, 'BOTTOMLEFT', 0, -pDB.Height - 1)
-        powerBar:SetPixelPoint('BOTTOMRIGHT', self, 'BOTTOMRIGHT', 0, -pDB.Height - 1)
-        powerBar:SetPixelHeight(pDB.Height)
+        powerBar:NUISetPixelPoint('BOTTOMLEFT', self, 'BOTTOMLEFT', 0, -pDB.Height - 1)
+        powerBar:NUISetPixelPoint('BOTTOMRIGHT', self, 'BOTTOMRIGHT', 0, -pDB.Height - 1)
+        powerBar:NUISetPixelHeight(pDB.Height)
 
         -- Set background and border frame sizing
         powerBackground:ClearAllPoints()

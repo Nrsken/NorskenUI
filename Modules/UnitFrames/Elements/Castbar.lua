@@ -129,19 +129,19 @@ UF.Elements.Castbar = {
         -- Container frame for the castbar and icon.
         local container = CreateFrame('Frame', nil, self)
         container:SetFrameLevel(self:GetFrameLevel() + 2)
-        container:CreateBackdrop(true)
-        container:AddBorders()
+        container:NUICreateBackdrop(true)
+        container:NUIAddBorders()
         container:Hide()
         self.CastbarContainer = container
 
         -- Icon texture, sits in the container's left square.
         local icon = container:CreateTexture(nil, 'ARTWORK', nil, 7)
-        icon:SetZoom()
+        icon:NUISetZoom()
 
         -- Main castbar frame, oUF handles the bar's min/max values and OnUpdate.
         local castBar = CreateFrame('StatusBar', nil, container) --[[@as oUF.Castbar]]
         castBar:SetFrameLevel(container:GetFrameLevel() + 1)
-        castBar:SetPixelSnap()
+        castBar:NUISetPixelSnap()
         castBar.nuiContainer = container -- PostCastStart shows it, OnHide hides it with the bar
         castBar:HookScript('OnHide', function() container:Hide() end)
         castBar.CreatePip = CreatePip
@@ -154,7 +154,7 @@ UF.Elements.Castbar = {
         -- Spark, its texture comes from the global spark media in Configure.
         local spark = castBar:CreateTexture(nil, 'OVERLAY')
         spark:SetBlendMode('ADD')
-        spark:SetPixelSnap() -- When using solid spark style, we need this otherwise the spark will flicker.
+        spark:NUISetPixelSnap() -- When using solid spark style, we need this otherwise the spark will flicker.
         castBar.Spark = spark
 
         -- Safe zone texture for latency, player only, oUF handles positioning.
@@ -208,18 +208,18 @@ UF.Elements.Castbar = {
 
         -- Position and size the container.
         container:ClearAllPoints()
-        container:SetPixelPoint('TOPLEFT', self, 'BOTTOMLEFT', pos.XOffset, pos.YOffset)
-        container:SetPixelPoint('TOPRIGHT', self, 'BOTTOMRIGHT', pos.XOffset, pos.YOffset)
-        container:SetPixelHeight(cDB.Height)
+        container:NUISetPixelPoint('TOPLEFT', self, 'BOTTOMLEFT', pos.XOffset, pos.YOffset)
+        container:NUISetPixelPoint('TOPRIGHT', self, 'BOTTOMRIGHT', pos.XOffset, pos.YOffset)
+        container:NUISetPixelHeight(cDB.Height)
         container:SetBackgroundColor(background[1], background[2], background[3], background[4])
 
         -- Icon sits in the container's left square, the bar starts just right of it.
         local barLeftInset = 1
         if cDB.ShowIcon then
             icon:ClearAllPoints()
-            icon:SetPixelPoint('TOPLEFT', container, 'TOPLEFT', 1, -1)
-            icon:SetPixelPoint('BOTTOMLEFT', container, 'BOTTOMLEFT', 1, 1)
-            icon:SetPixelWidth(cDB.Height - 2)
+            icon:NUISetPixelPoint('TOPLEFT', container, 'TOPLEFT', 1, -1)
+            icon:NUISetPixelPoint('BOTTOMLEFT', container, 'BOTTOMLEFT', 1, 1)
+            icon:NUISetPixelWidth(cDB.Height - 2)
             icon:Show()
             barLeftInset = cDB.Height - 1
         else
@@ -228,8 +228,8 @@ UF.Elements.Castbar = {
 
         -- Position and size the castbar inside the container, with a 1px inset on all sides.
         castBar:ClearAllPoints()
-        castBar:SetPixelPoint('TOPLEFT', container, 'TOPLEFT', barLeftInset, -1)
-        castBar:SetPixelPoint('BOTTOMRIGHT', container, 'BOTTOMRIGHT', -1, 1)
+        castBar:NUISetPixelPoint('TOPLEFT', container, 'TOPLEFT', barLeftInset, -1)
+        castBar:NUISetPixelPoint('BOTTOMRIGHT', container, 'BOTTOMRIGHT', -1, 1)
         castBar:SetStatusBarTexture(NRSKNUI:GetStatusbar(general, cDB.StatusBarTexture))
         castBar.smoothing = Enum.StatusBarInterpolation.Immediate -- Easing would lag the cast progress.
         castBar.timeToHold = cDB.TimeToHold
@@ -257,14 +257,14 @@ UF.Elements.Castbar = {
         local text = castBar.Text
         text:SetFontStyle(general, 11, general.FontOutline)
         text:ClearAllPoints()
-        text:SetPixelPoint('LEFT', castBar, 'LEFT', 4, 0)
+        text:NUISetPixelPoint('LEFT', castBar, 'LEFT', 4, 0)
         text:SetShown(cDB.ShowSpellName)
 
         -- Cast time text sits inside the bar with a 4px inset.
         local time = castBar.Time
         time:SetFontStyle(general, 11, general.FontOutline)
         time:ClearAllPoints()
-        time:SetPixelPoint('RIGHT', castBar, 'RIGHT', -4, 0)
+        time:NUISetPixelPoint('RIGHT', castBar, 'RIGHT', -4, 0)
         time:SetShown(cDB.ShowTime)
     end,
 

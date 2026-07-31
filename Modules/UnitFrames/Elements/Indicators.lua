@@ -42,8 +42,8 @@ UF.Elements.Indicators = {
 
         -- Own overlay above the text container so icons never sit behind the name.
         local container = CreateFrame('Frame', nil, self)
-        container:SetPixelPoint("TOPLEFT", self, "TOPLEFT", 0, 0)
-        container:SetPixelPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", 0, 0)
+        container:NUISetPixelPoint("TOPLEFT", self, "TOPLEFT", 0, 0)
+        container:NUISetPixelPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", 0, 0)
         container:SetFrameLevel(1000)
         container:SetFrameStrata("MEDIUM")
         self.IndicatorContainer = container
@@ -65,9 +65,9 @@ UF.Elements.Indicators = {
             local db = uDB.Indicators[def.key]
             local tex = self[def.element]
 
-            tex:SetPixelSize(db.Size, db.Size)
+            tex:NUISetPixelSize(db.Size, db.Size)
             tex:ClearAllPoints()
-            tex:SetPixelPoint(db.Position.AnchorFrom, container, db.Position.AnchorTo, db.Position.XOffset, db.Position.YOffset)
+            tex:NUISetPixelPoint(db.Position.AnchorFrom, container, db.Position.AnchorTo, db.Position.XOffset, db.Position.YOffset)
             if def.texture then
                 tex:SetTexture(def.path)
                 tex:SetTexCoord(unpack(def.coords))

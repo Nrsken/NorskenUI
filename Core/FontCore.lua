@@ -384,11 +384,11 @@ local function SetFontJustify(self, source, parent, offsetX, offsetY, skip, boun
     end
 
     self:ClearAllPoints()
-    self:SetPixelPoint(anchor, parent or self:GetParent(), anchor, offsetX or 0, offsetY or 0)
+    self:NUISetPixelPoint(anchor, parent or self:GetParent(), anchor, offsetX or 0, offsetY or 0)
 
     -- A second point bounds the opposite edge to another widget, so the string gets a fixed width and truncates (text...) instead of overrunning it.
     if bound and bound.relTo then
-        self:SetPixelPoint(bound.point, bound.relTo, bound.relPoint, bound.offsetX or 0, bound.offsetY or 0)
+        self:NUISetPixelPoint(bound.point, bound.relTo, bound.relPoint, bound.offsetX or 0, bound.offsetY or 0)
     end
 
     self:SetJustifyH(GetTextJustifyHFromAnchor(anchor)) -- LEFT, CENTER, RIGHT

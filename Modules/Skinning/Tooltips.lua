@@ -198,7 +198,7 @@ end
 local function UpdateBorderColor(tooltip)
     if not Tooltips.db.ShowItemQualityBorder then return end
     if tooltip:IsForbidden() then return end
-    if not tooltip:HasBackdrop() then return end
+    if not tooltip:NUIHasBackdrop() then return end
 
     if GetDisplayedItem and GetColorDataForItemQuality and tooltip.IsTooltipType then
         local _, link = GetDisplayedItem(tooltip)
@@ -284,7 +284,7 @@ local function StyleQueueStatusFonts()
     if not queueFrame or stylingQueueStatus then return end
     stylingQueueStatus = true
 
-    queueFrame:StyleChildFontStrings(Tooltips.db, function(region, child)
+    queueFrame:NUIStyleChildFontStrings(Tooltips.db, function(region, child)
         if region == child.Title then
             return Tooltips.db.HeaderTextSize
         end
@@ -299,11 +299,11 @@ local function SkinQueueStatus()
     local queueFrame = _G.QueueStatusFrame
 
     if not queueFrame then return end
-    if queueFrame:HasBackdrop() then return end
+    if queueFrame:NUIHasBackdrop() then return end
 
     -- Hide original border & background and create our own
-    queueFrame:Banish('NineSlice')
-    queueFrame:CreateBackdrop()
+    queueFrame:NUIBanish('NineSlice')
+    queueFrame:NUICreateBackdrop()
 
     skinnedFrames[#skinnedFrames + 1] = queueFrame
 
@@ -315,20 +315,20 @@ end
 local function SetupSkinning(tooltip)
     if tooltip:IsForbidden() then return end
     if not tooltip.NineSlice or tooltip.IsEmbedded then return end -- Not skinnable
-    if tooltip:HasBackdrop() then return end
+    if tooltip:NUIHasBackdrop() then return end
 
     -- Hide original border & background and create our own
-    tooltip:Banish('NineSlice')
-    tooltip:CreateBackdrop()
+    tooltip:NUIBanish('NineSlice')
+    tooltip:NUICreateBackdrop()
 
     skinnedFrames[#skinnedFrames + 1] = tooltip
 
     tooltip:HookScript('OnShow', UpdateBorderColor)
 
     -- Style the compare header
-    if tooltip.CompareHeader and not tooltip.CompareHeader:HasBackdrop() then
-        tooltip.CompareHeader:StripTextures('Atlas', 'tooltip-compare-label')
-        tooltip.CompareHeader:CreateBackdrop()
+    if tooltip.CompareHeader and not tooltip.CompareHeader:NUIHasBackdrop() then
+        tooltip.CompareHeader:NUIStripTextures('Atlas', 'tooltip-compare-label')
+        tooltip.CompareHeader:NUICreateBackdrop()
         tooltip.CompareHeader:SetPoint('BOTTOMLEFT', tooltip, 'TOPLEFT', 0, -1)
     end
 
@@ -676,5 +676,5 @@ function Tooltips:OnEnable()
     end
 
     -- Kill tooltip handling in Blizzards editmode, we control it with out custom anchor.
-    TooltipContainer:Banish()
+    TooltipContainer:NUIBanish()
 end

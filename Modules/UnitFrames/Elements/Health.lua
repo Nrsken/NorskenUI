@@ -33,12 +33,12 @@ UF.Elements.Health = {
         local healthBackground = CreateFrame('StatusBar', nil, self)
         healthBackground:SetFrameLevel(self:GetFrameLevel() + 1)
         healthBackground:SetReverseFill(true)
-        healthBackground:SetPixelSnap()
+        healthBackground:NUISetPixelSnap()
 
         -- Health bar
         local healthBar = CreateFrame('StatusBar', nil, self) --[[@as oUF.Health]]
         healthBar:SetFrameLevel(self:GetFrameLevel() + 2)
-        healthBar:SetPixelSnap()
+        healthBar:NUISetPixelSnap()
         healthBar:SetClipsChildren(true) -- Keep over-absorb overflow inside the bar.
         healthBar.healthBackground = healthBackground
         healthBar.PostUpdate = UF.PostUpdateHealth
@@ -47,15 +47,15 @@ UF.Elements.Health = {
         -- Heal absorb bar
         local HealAbsorb = CreateFrame('StatusBar', nil, healthBar)
         HealAbsorb:SetFrameLevel(healthBar:GetFrameLevel() + 1)
-        HealAbsorb:SetPixelSnap()
-        HealAbsorb:SetPixelWidth(self:GetWidth())
+        HealAbsorb:NUISetPixelSnap()
+        HealAbsorb:NUISetPixelWidth(self:GetWidth())
         healthBar.HealAbsorb = HealAbsorb
 
         -- Damage absorb bar
         local DamageAbsorb = CreateFrame('StatusBar', nil, healthBar)
         DamageAbsorb:SetFrameLevel(healthBar:GetFrameLevel() + 1)
-        DamageAbsorb:SetPixelSnap()
-        DamageAbsorb:SetPixelWidth(self:GetWidth())
+        DamageAbsorb:NUISetPixelSnap()
+        DamageAbsorb:NUISetPixelWidth(self:GetWidth())
         healthBar.DamageAbsorb = DamageAbsorb
 
         -- Over-absorb bar clip frame.
@@ -67,8 +67,8 @@ UF.Elements.Health = {
         -- Over-absorb bar.
         local OverDamageAbsorb = CreateFrame('StatusBar', nil, OverDamageAbsorbClip)
         OverDamageAbsorb:SetFrameLevel(healthBar:GetFrameLevel() + 1)
-        OverDamageAbsorb:SetPixelSnap()
-        OverDamageAbsorb:SetPixelWidth(self:GetWidth())
+        OverDamageAbsorb:NUISetPixelSnap()
+        OverDamageAbsorb:NUISetPixelWidth(self:GetWidth())
 
         healthBar.OverDamageAbsorb = OverDamageAbsorb
         healthBar.damageAbsorbClampMode = 2
@@ -82,7 +82,7 @@ UF.Elements.Health = {
         -- Border frame
         local healthBorderFrame = CreateFrame('Frame', nil, self)
         healthBorderFrame:SetFrameLevel(self:GetFrameLevel() + 4)
-        healthBorderFrame:AddBorders()
+        healthBorderFrame:NUIAddBorders()
         self.healthBorderFrame = healthBorderFrame
 
         -- Mouseover highlight
@@ -115,14 +115,14 @@ UF.Elements.Health = {
         local hDB = uDB.Health
 
         -- Position and size the raid icon.
-        RaidIcon:SetPixelSize(uDB.RaidIcon.Size, uDB.RaidIcon.Size)
+        RaidIcon:NUISetPixelSize(uDB.RaidIcon.Size, uDB.RaidIcon.Size)
         RaidIcon:ClearAllPoints()
-        RaidIcon:SetPixelPoint(uDB.RaidIcon.Position.AnchorFrom, self, uDB.RaidIcon.Position.AnchorTo, uDB.RaidIcon.Position.XOffset, uDB.RaidIcon.Position.YOffset)
+        RaidIcon:NUISetPixelPoint(uDB.RaidIcon.Position.AnchorFrom, self, uDB.RaidIcon.Position.AnchorTo, uDB.RaidIcon.Position.XOffset, uDB.RaidIcon.Position.YOffset)
 
         -- Position and size the leader indicator.
-        LeaderIndicator:SetPixelSize(uDB.LeaderIndicator.Size, uDB.LeaderIndicator.Size)
+        LeaderIndicator:NUISetPixelSize(uDB.LeaderIndicator.Size, uDB.LeaderIndicator.Size)
         LeaderIndicator:ClearAllPoints()
-        LeaderIndicator:SetPixelPoint(uDB.LeaderIndicator.Position.AnchorFrom, self, uDB.LeaderIndicator.Position.AnchorTo, uDB.LeaderIndicator.Position.XOffset, uDB.LeaderIndicator.Position.YOffset)
+        LeaderIndicator:NUISetPixelPoint(uDB.LeaderIndicator.Position.AnchorFrom, self, uDB.LeaderIndicator.Position.AnchorTo, uDB.LeaderIndicator.Position.XOffset, uDB.LeaderIndicator.Position.YOffset)
 
         -- Foreground texture, background follows it unless a background texture is set (unit override first).
         local texture = NRSKNUI:GetStatusbar(general, hDB.StatusBarTexture)
@@ -176,7 +176,7 @@ UF.Elements.Health = {
         local highlight = self.nuiHighlight
         local hlDB = general.Highlight
         highlight.nuiEnabled = hlDB.Enabled
-        highlight:SetPixelInside(self, 1, 1)
+        highlight:NUISetPixelInside(self, 1, 1)
         highlight:SetTexture(NRSKNUI:GetStatusbar(hlDB))
         highlight:SetVertexColor(hlDB.Color[1], hlDB.Color[2], hlDB.Color[3], hlDB.Color[4])
         if not hlDB.Enabled then highlight:Hide() end
@@ -207,46 +207,46 @@ UF.Elements.Health = {
         HealAbsorb:SetStatusBarTexture(NRSKNUI:GetStatusbar(haDB))
         HealAbsorb:SetStatusBarColor(healColor[1], healColor[2], healColor[3], healColor[4])
         HealAbsorb:ClearAllPoints()
-        HealAbsorb:SetPixelPoint('TOP')
-        HealAbsorb:SetPixelPoint('BOTTOM')
+        HealAbsorb:NUISetPixelPoint('TOP')
+        HealAbsorb:NUISetPixelPoint('BOTTOM')
 
         -- Damage absorb bar config
         DamageAbsorb:SetStatusBarTexture(shield)
         DamageAbsorb:SetStatusBarColor(dmgColor[1], dmgColor[2], dmgColor[3], dmgColor[4])
         DamageAbsorb:ClearAllPoints()
-        DamageAbsorb:SetPixelPoint('TOP')
-        DamageAbsorb:SetPixelPoint('BOTTOM')
+        DamageAbsorb:NUISetPixelPoint('TOP')
+        DamageAbsorb:NUISetPixelPoint('BOTTOM')
 
         -- Over-absorb bar config
         OverDamageAbsorb:SetStatusBarTexture(shield)
         OverDamageAbsorb:SetStatusBarColor(dmgColor[1], dmgColor[2], dmgColor[3], dmgColor[4])
-        OverDamageAbsorb:SetPixelWidth(self:GetWidth())
+        OverDamageAbsorb:NUISetPixelWidth(self:GetWidth())
         OverClip:ClearAllPoints()
         OverDamageAbsorb:ClearAllPoints()
 
         if inverse then
             -- Foreground fills right to left, so the current-health edge is on the left.
-            HealAbsorb:SetPixelPoint('LEFT', fill)
+            HealAbsorb:NUISetPixelPoint('LEFT', fill)
             HealAbsorb:SetReverseFill(false)
-            DamageAbsorb:SetPixelPoint('RIGHT', fill, 'LEFT')
+            DamageAbsorb:NUISetPixelPoint('RIGHT', fill, 'LEFT')
             DamageAbsorb:SetReverseFill(true)
 
-            OverClip:SetPixelPoint('TOPRIGHT', healthBar, 'TOPRIGHT')
-            OverClip:SetPixelPoint('BOTTOMLEFT', fill, 'BOTTOMLEFT')
-            OverDamageAbsorb:SetPixelPoint('TOPLEFT', healthBar, 'TOPLEFT')
-            OverDamageAbsorb:SetPixelPoint('BOTTOMLEFT', healthBar, 'BOTTOMLEFT')
+            OverClip:NUISetPixelPoint('TOPRIGHT', healthBar, 'TOPRIGHT')
+            OverClip:NUISetPixelPoint('BOTTOMLEFT', fill, 'BOTTOMLEFT')
+            OverDamageAbsorb:NUISetPixelPoint('TOPLEFT', healthBar, 'TOPLEFT')
+            OverDamageAbsorb:NUISetPixelPoint('BOTTOMLEFT', healthBar, 'BOTTOMLEFT')
             OverDamageAbsorb:SetReverseFill(false)
         else
             -- Foreground fills left to right, so the current-health edge is on the right.
-            HealAbsorb:SetPixelPoint('RIGHT', fill)
+            HealAbsorb:NUISetPixelPoint('RIGHT', fill)
             HealAbsorb:SetReverseFill(true)
-            DamageAbsorb:SetPixelPoint('LEFT', fill, 'RIGHT')
+            DamageAbsorb:NUISetPixelPoint('LEFT', fill, 'RIGHT')
             DamageAbsorb:SetReverseFill(false)
 
-            OverClip:SetPixelPoint('TOPLEFT', healthBar, 'TOPLEFT')
-            OverClip:SetPixelPoint('BOTTOMRIGHT', fill, 'BOTTOMRIGHT')
-            OverDamageAbsorb:SetPixelPoint('TOPRIGHT', healthBar, 'TOPRIGHT')
-            OverDamageAbsorb:SetPixelPoint('BOTTOMRIGHT', healthBar, 'BOTTOMRIGHT')
+            OverClip:NUISetPixelPoint('TOPLEFT', healthBar, 'TOPLEFT')
+            OverClip:NUISetPixelPoint('BOTTOMRIGHT', fill, 'BOTTOMRIGHT')
+            OverDamageAbsorb:NUISetPixelPoint('TOPRIGHT', healthBar, 'TOPRIGHT')
+            OverDamageAbsorb:NUISetPixelPoint('BOTTOMRIGHT', healthBar, 'BOTTOMRIGHT')
             OverDamageAbsorb:SetReverseFill(true)
         end
     end,

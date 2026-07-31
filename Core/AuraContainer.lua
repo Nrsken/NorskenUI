@@ -192,8 +192,8 @@ function NRSKNUI:SkinAuraButton(container, options, button)
 
     -- Icon, trimmed and inset inside the 1px backdrop border.
     local icon = button:CreateTexture(nil, 'ARTWORK')
-    icon:SetPixelInside(button, 1, 1)
-    icon:SetZoom()
+    icon:NUISetPixelInside(button, 1, 1)
+    icon:NUISetZoom()
     button.Icon = icon
     button:SetIcon(icon)
 
@@ -268,8 +268,8 @@ function NRSKNUI:SkinAuraButton(container, options, button)
     if borderColor then
         local enchantBorder = overlay:CreateTexture(nil, 'OVERLAY')
         enchantBorder:SetTexture('Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\AuraOverlay.png') -- Use our own border texture.
-        enchantBorder:SetPixelSnap()
-        enchantBorder:SetPixelInside(button)
+        enchantBorder:NUISetPixelSnap()
+        enchantBorder:NUISetPixelInside(button)
         enchantBorder:SetVertexColor(borderColor[1], borderColor[2], borderColor[3], borderColor[4] or 1)
     end
 
@@ -279,8 +279,8 @@ function NRSKNUI:SkinAuraButton(container, options, button)
     if showBuffBorder or showDebuffBorder then
         local border = overlay:CreateTexture(nil, 'OVERLAY')
         border:SetTexture('Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\AuraOverlay.png') -- Use our own border texture.
-        border:SetPixelSnap()
-        border:SetPixelInside(button)
+        border:NUISetPixelSnap()
+        border:NUISetPixelInside(button)
         button.Border = border
         button:AddDispelTypeTexture(border, {
             style = Opt(options, container, 'borderStyle', Enum.CustomAuraButtonDispelTypeTextureStyle.PreserveAsset),

@@ -112,12 +112,12 @@ function PetTexts:ApplySettings()
         local text = self.parentGroup[petType.key]
         local child = text:GetParent()
 
-        text:SetPixelPoint('CENTER')
+        text:NUISetPixelPoint('CENTER')
         text:SetFontStyle(self.db)
 
         text:SetText(self.db[petType.textKey])
         text:SetTextColor(unpack(self.db[petType.colorKey]))
-        child:SetPixelSize(text:GetStringWidth(), text:GetStringHeight())
+        child:NUISetPixelSize(text:GetStringWidth(), text:GetStringHeight())
         self.parentGroup:NotifyChildResized(child)
 
         if self.isPreview and self.db.Enabled then

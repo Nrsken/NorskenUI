@@ -106,7 +106,7 @@ end
 function Speed:ApplySettings()
     self:ResizeHost()
     self.host:Show()
-    self.host:ApplyPosition(self.db)
+    self.host:NUIApplyPosition(self.db)
     Anchors:Register(self, 'Speed', self.host, 'speed')
 
     local container = self.host.container

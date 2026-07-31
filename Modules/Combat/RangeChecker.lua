@@ -64,14 +64,14 @@ function RangeChecker:ApplySettings()
     if not self.frame then return end
     self:BuildGradientPalette()
 
-    self.frame:ApplyPosition(self.db)
+    self.frame:NUIApplyPosition(self.db)
     self.frame.text:SetFontStyle(self.db)
     self.frame.text:SetFontJustify(self.db)
     self.frame.text:SetText(self:FormatRangeText(10, 12))
 
     local textWidth = self.frame.text:GetStringWidth() or 50
     local textHeight = self.frame.text:GetStringHeight() or 20
-    self.frame:SetPixelSize(textWidth + 10, textHeight + 4)
+    self.frame:NUISetPixelSize(textWidth + 10, textHeight + 4)
 end
 
 function RangeChecker:ShouldShow()
@@ -110,7 +110,7 @@ function RangeChecker:UpdateRange()
 
     local textWidth = self.frame.text:GetStringWidth() or 50
     local textHeight = self.frame.text:GetStringHeight() or 20
-    self.frame:SetPixelSize(textWidth + 10, textHeight + 4)
+    self.frame:NUISetPixelSize(textWidth + 10, textHeight + 4)
     self.frame:Show()
 end
 

@@ -193,7 +193,9 @@ function UF.GUIAuras.Build(page, def, tabId, unit)
     local uDB = db.Units[unit]
     local cfg = uDB.Auras[def.kind]
 
-    page:SetEnabled(function() return (db.Enabled and uDB.Enabled and cfg.Enabled) and true or false end)
+    page:SetEnabled(function()
+        return (db.Enabled and uDB.Enabled and cfg.Enabled and not NRSKNUI.UFBlocked) and true or false
+    end)
 
     local ctx = {
         Apply = ApplySettings,

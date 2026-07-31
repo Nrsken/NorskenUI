@@ -27,15 +27,15 @@ end
 -- Line creation helper.
 local function CreateLines(pointFrom, frame, width, height)
     local lineFrame = CreateFrame('Frame', nil, frame)
-    lineFrame:SetPixelSize(width, height)
-    lineFrame:SetPixelPoint(pointFrom, frame, 'CENTER')
+    lineFrame:NUISetPixelSize(width, height)
+    lineFrame:NUISetPixelPoint(pointFrom, frame, 'CENTER')
     lineFrame:SetFrameLevel(frame:GetFrameLevel() + 1)
-    lineFrame:AddBorders()
+    lineFrame:NUIAddBorders()
 
     lineFrame.texture = lineFrame:CreateTexture(nil, 'OVERLAY')
     lineFrame.texture:SetTexture(NRSKNUI.WhiteTexture)
-    lineFrame.texture:SetPixelInside()
-    lineFrame.texture:SetPixelSnap()
+    lineFrame.texture:NUISetPixelInside()
+    lineFrame.texture:NUISetPixelSnap()
 
     return lineFrame
 end
@@ -45,7 +45,7 @@ function CombatCross:CreateFrame()
 
     -- Core base frame, all lines and dot are children of this.
     local coreFrame = CreateFrame('Frame', 'NRSKNUI_CombatCrossCoreFrame', UIParent)
-    coreFrame:SetPixelSize(40)
+    coreFrame:NUISetPixelSize(40)
     coreFrame:SetFrameStrata('HIGH')
     coreFrame:SetFrameLevel(100)
 
@@ -61,28 +61,28 @@ function CombatCross:CreateFrame()
     -- Dot backdrop that acts like a border.
     coreFrame.dotBG = coreFrame:CreateTexture(nil, 'ARTWORK')
     coreFrame.dotBG:SetTexture(DOT_TEXTURE)
-    coreFrame.dotBG:SetPixelPoint('CENTER', coreFrame, 'CENTER')
-    coreFrame.dotBG:SetPixelSnap()
+    coreFrame.dotBG:NUISetPixelPoint('CENTER', coreFrame, 'CENTER')
+    coreFrame.dotBG:NUISetPixelSnap()
     coreFrame.dotBG:SetVertexColor(0, 0, 0)
 
     -- Dot texture
     coreFrame.dot = coreFrame:CreateTexture(nil, 'OVERLAY')
     coreFrame.dot:SetTexture(DOT_TEXTURE)
-    coreFrame.dot:SetPixelPoint('CENTER', coreFrame, 'CENTER')
-    coreFrame.dot:SetPixelSnap()
+    coreFrame.dot:NUISetPixelPoint('CENTER', coreFrame, 'CENTER')
+    coreFrame.dot:NUISetPixelSnap()
 
     -- Diamond backdrop that acts like a border.
     coreFrame.diamondBG = coreFrame:CreateTexture(nil, 'ARTWORK')
     coreFrame.diamondBG:SetAtlas(DIAMON_ATLAS)
-    coreFrame.diamondBG:SetPixelPoint('CENTER', coreFrame, 'CENTER')
-    coreFrame.diamondBG:SetPixelSnap()
+    coreFrame.diamondBG:NUISetPixelPoint('CENTER', coreFrame, 'CENTER')
+    coreFrame.diamondBG:NUISetPixelSnap()
     coreFrame.diamondBG:SetVertexColor(0, 0, 0)
 
     -- Diamond texture
     coreFrame.diamond = coreFrame:CreateTexture(nil, 'OVERLAY')
     coreFrame.diamond:SetAtlas(DIAMON_ATLAS)
-    coreFrame.diamond:SetPixelPoint('CENTER', coreFrame, 'CENTER')
-    coreFrame.diamond:SetPixelSnap()
+    coreFrame.diamond:NUISetPixelPoint('CENTER', coreFrame, 'CENTER')
+    coreFrame.diamond:NUISetPixelSnap()
 
     self.coreFrame = coreFrame
     coreFrame:Hide()
@@ -119,21 +119,21 @@ function CombatCross:ApplySettings()
     CombatCross.BaseColor = { r, g, b, a }
 
     -- Position
-    self.coreFrame:ApplyPosition(self.db)
+    self.coreFrame:NUIApplyPosition(self.db)
 
     -- Gap, one time offset so that 0 gap really is no gap.
     local gap = self.db.CrossGap - 2
-    self.coreFrame.textureUp:SetPixelPoint('BOTTOM', self.coreFrame, 'CENTER', 0, gap)
-    self.coreFrame.textureDown:SetPixelPoint('TOP', self.coreFrame, 'CENTER', 0, -gap)
-    self.coreFrame.textureLeft:SetPixelPoint('RIGHT', self.coreFrame, 'CENTER', -gap, 0)
-    self.coreFrame.textureRight:SetPixelPoint('LEFT', self.coreFrame, 'CENTER', gap, 0)
+    self.coreFrame.textureUp:NUISetPixelPoint('BOTTOM', self.coreFrame, 'CENTER', 0, gap)
+    self.coreFrame.textureDown:NUISetPixelPoint('TOP', self.coreFrame, 'CENTER', 0, -gap)
+    self.coreFrame.textureLeft:NUISetPixelPoint('RIGHT', self.coreFrame, 'CENTER', -gap, 0)
+    self.coreFrame.textureRight:NUISetPixelPoint('LEFT', self.coreFrame, 'CENTER', gap, 0)
 
     -- Thickness and length
-    self.coreFrame.textureUp:SetPixelSize(self.db.CrossThickness, self.db.CrossLength)
-    self.coreFrame.textureDown:SetPixelSize(self.db.CrossThickness, self.db.CrossLength)
-    self.coreFrame.textureLeft:SetPixelSize(self.db.CrossLength, self.db.CrossThickness)
-    self.coreFrame.textureRight:SetPixelSize(self.db.CrossLength, self.db.CrossThickness)
-    self.coreFrame.textureCrossDot:SetPixelSize(self.db.CrossThickness, self.db.CrossThickness)
+    self.coreFrame.textureUp:NUISetPixelSize(self.db.CrossThickness, self.db.CrossLength)
+    self.coreFrame.textureDown:NUISetPixelSize(self.db.CrossThickness, self.db.CrossLength)
+    self.coreFrame.textureLeft:NUISetPixelSize(self.db.CrossLength, self.db.CrossThickness)
+    self.coreFrame.textureRight:NUISetPixelSize(self.db.CrossLength, self.db.CrossThickness)
+    self.coreFrame.textureCrossDot:NUISetPixelSize(self.db.CrossThickness, self.db.CrossThickness)
 
     -- Outline
     self.coreFrame.textureUp:SetBorderShown(self.db.Outline)
@@ -155,8 +155,8 @@ function CombatCross:ApplySettings()
     self.coreFrame.textureCrossDot:SetShown(crossMode and self.db.CrossCenterDotEnabled)
 
     -- Dot
-    self.coreFrame.dotBG:SetPixelSize(self.db.CenterDotSize + 2)
-    self.coreFrame.dot:SetPixelSize(self.db.CenterDotSize)
+    self.coreFrame.dotBG:NUISetPixelSize(self.db.CenterDotSize + 2)
+    self.coreFrame.dot:NUISetPixelSize(self.db.CenterDotSize)
     self.coreFrame.dot:SetShown(dotMode)
     self.coreFrame.dotBG:SetShown(dotMode and self.db.Outline)
 
@@ -164,8 +164,8 @@ function CombatCross:ApplySettings()
     local diamondWidth = self.db.DiamondSize - 2
     local diamondHeight = self.db.DiamondSize + 4
     local diamondHeightBG, diamondWidthBG = diamondHeight + 4, diamondWidth + 4
-    self.coreFrame.diamondBG:SetPixelSize(diamondWidthBG, diamondHeightBG)
-    self.coreFrame.diamond:SetPixelSize(diamondWidth, diamondHeight)
+    self.coreFrame.diamondBG:NUISetPixelSize(diamondWidthBG, diamondHeightBG)
+    self.coreFrame.diamond:NUISetPixelSize(diamondWidth, diamondHeight)
     self.coreFrame.diamond:SetShown(diamondMode)
     self.coreFrame.diamondBG:SetShown(diamondMode and self.db.Outline)
 

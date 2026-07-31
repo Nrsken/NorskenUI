@@ -51,7 +51,7 @@ local function SkinTalents(S, talents)
     -- Hero talents select frame.
     local heroTalents = _G.HeroTalentsSelectionDialog
     if heroTalents then
-        heroTalents:StripTextures('Keyed')
+        heroTalents:NUIStripTextures('Keyed')
         S:CreatePanelBackdrop(heroTalents)
     end
 end

@@ -144,7 +144,7 @@ function PlayerAuras:ApplySettings()
         if cfg.Enabled then
             self:ResizeHost(kind)
             host:Show()
-            host:ApplyPosition(cfg)
+            host:NUIApplyPosition(cfg)
             -- db is resolved live rather than captured: self.db is reassigned by
             -- UpdateDB() on a profile switch and cfg would still point at the old one.
             Anchors:Register(self, info.moverKey, host, info.guiPath, {
@@ -183,7 +183,7 @@ function PlayerAuras:OnEnable()
     NRSKNUI:RunWhenSafe(function()
         for kind, info in pairs(KINDS) do
             if self.db[kind].Enabled then
-                _G[info.blizzardFrame]:Banish()
+                _G[info.blizzardFrame]:NUIBanish()
             end
         end
     end)

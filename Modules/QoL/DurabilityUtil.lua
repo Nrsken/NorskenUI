@@ -45,8 +45,8 @@ function Durability:CreateFrame()
     if self.coreFrame then return end
 
     local coreFrame = CreateFrame('Frame', 'NRSKNUI_DurabilityFrame', UIParent)
-    coreFrame:SetPixelSize(180, 28)
-    coreFrame:ApplyPosition(self.db)
+    coreFrame:NUISetPixelSize(180, 28)
+    coreFrame:NUIApplyPosition(self.db)
 
     coreFrame.text = coreFrame:CreateFontString(nil, 'OVERLAY')
 
@@ -71,8 +71,8 @@ function Durability:ApplySettings()
     self.coreFrame.text:SetFontJustify('CENTER', self.coreFrame, 0, 0)
     self.coreFrame.text:SetText(self.db.TextLow)
 
-    self.coreFrame:SetPixelSize(self.coreFrame.text:GetStringWidth(), self.coreFrame.text:GetStringHeight())
-    self.coreFrame:ApplyPosition(self.db)
+    self.coreFrame:NUISetPixelSize(self.coreFrame.text:GetStringWidth(), self.coreFrame.text:GetStringHeight())
+    self.coreFrame:NUIApplyPosition(self.db)
 end
 
 function Durability:OnEvent()

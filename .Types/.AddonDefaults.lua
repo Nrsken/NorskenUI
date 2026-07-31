@@ -69,7 +69,7 @@
 ---@field BattleRes NRSKNUI.DBProfile.BattleRes
 ---@field BlizzardRM NRSKNUI.DBProfile.BlizzardRM
 ---@field BurningRush NRSKNUI.DBProfile.BurningRush
----@field CharacterPanel NRSKNUI.DBProfile.CharacterPanel
+---@field GearUtility NRSKNUI.DBProfile.GearUtility
 ---@field Colors NRSKNUI.DBProfile.Colors
 ---@field CombatCross NRSKNUI.DBProfile.CombatCross
 ---@field CombatMessage NRSKNUI.DBProfile.CombatMessage
@@ -93,6 +93,7 @@
 ---@field TotemTracker NRSKNUI.DBProfile.TotemTracker
 ---@field UnitFrames NRSKNUI.DBProfile.UnitFrames
 ---@field UseElvUI NRSKNUI.DBProfile.UseElvUI
+---@field UseOtherUF NRSKNUI.DBProfile.UseOtherUF
 ---@field globalMedia NRSKNUI.DBProfile.globalMedia
 
 ---@class NRSKNUI.DBProfile.AdvancedDebuffs
@@ -389,39 +390,25 @@
 ---@field XOffset number
 ---@field YOffset number
 
----@class NRSKNUI.DBProfile.CharacterPanel
+---@class NRSKNUI.DBProfile.GearUtility
 ---@field [string] any
----@field CategoryFontSize number
----@field DecimalItemLevel boolean
 ---@field Enabled boolean
----@field FontFace string
----@field FontOutline string
----@field FontShadow NRSKNUI.DBProfile.CharacterPanel.FontShadow
----@field GemSocketHelper NRSKNUI.DBProfile.CharacterPanel.GemSocketHelper
----@field IlvlValueSize number
----@field LevelTextSize number
----@field NameTextSize number
----@field ShowRaceText boolean
----@field StatsFontSize number
----@field TrackIndicators NRSKNUI.DBProfile.CharacterPanel.TrackIndicators
----@field UseGlobalFont boolean
+---@field Enchants NRSKNUI.DBProfile.GearUtility.Enchants
+---@field Sockets NRSKNUI.DBProfile.GearUtility.Sockets
+---@field TrackIndicators NRSKNUI.DBProfile.GearUtility.TrackIndicators
 
----@class NRSKNUI.DBProfile.CharacterPanel.FontShadow
+---@class NRSKNUI.DBProfile.GearUtility.Enchants
 ---@field [string] any
----@field Color table
 ---@field Enabled boolean
----@field OffsetX number
----@field OffsetY number
 
----@class NRSKNUI.DBProfile.CharacterPanel.GemSocketHelper
+---@class NRSKNUI.DBProfile.GearUtility.Sockets
 ---@field [string] any
+---@field ButtonSize number
+---@field ButtonSpacing number
 ---@field Enabled boolean
----@field EnchantHelper boolean
 ---@field ShowOnlyEmpty boolean
----@field SocketButtonSize number
----@field SocketButtonSpacing number
 
----@class NRSKNUI.DBProfile.CharacterPanel.TrackIndicators
+---@class NRSKNUI.DBProfile.GearUtility.TrackIndicators
 ---@field [string] any
 ---@field Enabled boolean
 
@@ -3333,6 +3320,10 @@
 ---@field Enabled boolean
 
 ---@class NRSKNUI.DBProfile.UseElvUI
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UseOtherUF
 ---@field [string] any
 ---@field Enabled boolean
 

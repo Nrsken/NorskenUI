@@ -8,6 +8,8 @@ local Theme = NRSKNUI.Theme
 local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
 
+local format = string.format
+
 local function ApplySettings() UF:ApplySettings() end
 
 local OutlineOptions = NRSKNUI:GetOutlineOptions(true)
@@ -19,8 +21,10 @@ end
 
 local function BuildGeneralTab(page, db)
     -- Card 1: Enable
+    local conflictAddon = NRSKNUI:GetConflictingUFAddon()
     local enableCard = page:Card(L['Unit Frames'])
-    enableCard:Row(rowHL, 0):Checkbox(L['Enable Unit Frames'], {
+
+    local enableToggle = enableCard:Row(conflictAddon and rowH or rowHL, 0):Checkbox(L['Enable Unit Frames'], {
         width = 1,
         master = true,
         value = db.Enabled,
@@ -32,6 +36,21 @@ local function BuildGeneralTab(page, db)
             page:Refresh()
         end,
     })
+
+    if conflictAddon then
+        enableToggle:SetEnabled(not NRSKNUI.UFBlocked)
+
+        enableCard:Row(rowHL, 0):Checkbox(format(L['Defer To %s'], conflictAddon), {
+            width = 1,
+            master = true,
+            tooltip = format(L['%s is loaded and brings its own unit frames. Running both sets at once crashes the client, so keep this on unless you have turned that addon\'s unit frames off.'], conflictAddon),
+            value = NRSKNUI.db.profile.UseOtherUF.Enabled,
+            callback = function(checked)
+                NRSKNUI.db.profile.UseOtherUF.Enabled = checked
+                NRSKNUI:CreateReloadPrompt(L['Unit frame ownership only changes on a fresh load.'])
+            end,
+        })
+    end
 
     -- Card 2: Behaviour
     local behaviourCard = page:Card(L['Behaviour'], 'all')
@@ -508,7 +527,7 @@ GUI:RegisterPage('unitFramesGeneral', {
         local db = NRSKNUI.db.profile.UnitFrames
         if not db then return end
 
-        page:SetEnabled(function() return db.Enabled end)
+        page:SetEnabled(function() return db.Enabled and not NRSKNUI.UFBlocked end)
         page:SetCondition('rangeOn', function() return db.General.Range.Enabled end)
         page:SetCondition('healthCustom', function() return not db.General.ColorByClass end)
         page:SetCondition('healthClassColor', function() return db.General.ColorByClass end)

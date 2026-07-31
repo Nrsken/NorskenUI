@@ -46,11 +46,11 @@ local function SetupCustomPortrait()
     local frame = CreateFrame('Frame', nil, InspectFrame)
     frame:SetSize(45, 45)
     frame:SetPoint('TOPLEFT', InspectFrame, 'TOPLEFT', 7, -7)
-    frame:AddBorders()
+    frame:NUIAddBorders()
 
     frame.icon = frame:CreateTexture(nil, "ARTWORK")
     frame.icon:SetAllPoints(frame)
-    frame.icon:SetZoom()
+    frame.icon:NUISetZoom()
     BSKIN.CustomPortraitFrame = frame
 end
 
@@ -73,10 +73,10 @@ local function SkinModelScene(S)
     local scene = CharacterModelScene
     if not scene then return end
 
-    NRSKNUI:HideTextures(scene)
+    scene:NUIStripTextures()
     local model = InspectModelFrame
     if model then
-        NRSKNUI:HideTextures(model)
+        model:NUIStripTextures()
 
         for _, corner in ipairs({ 'TopLeft', 'TopRight', 'BotLeft', 'BotRight' }) do
             local bg = _G['InspectModelFrameBackground' .. corner]
@@ -137,9 +137,9 @@ BSKIN:RegisterSkin("Blizzard_InspectUI", "InspectFrame", function(S)
     end
 
     if InspectPaperDollFrame then
-        NRSKNUI:HideTextures(InspectPaperDollFrame)
+        InspectPaperDollFrame:NUIStripTextures()
     end
 
-    if InspectPVPFrame then NRSKNUI:HideTextures(InspectPVPFrame) end
-    if InspectTalentFrame then NRSKNUI:HideTextures(InspectTalentFrame) end
+    if InspectPVPFrame then InspectPVPFrame:NUIStripTextures() end
+    if InspectTalentFrame then InspectTalentFrame:NUIStripTextures() end
 end)

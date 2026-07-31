@@ -462,11 +462,11 @@ function ACB:StyleButtonTextures(button)
     if not button then return end
 
     -- Hide blizzard textures we don't need
-    button:Banish('Border')           -- equipped border
-    button:Banish('Flash')            -- red flash when out of mana or unusable
-    button:Banish('NewActionTexture') -- glow texture for new actions
-    button:Banish('SpellHighlightTexture')
-    button:Banish('SlotBackground')   -- Hides the default slot background on action buttons
+    button:NUIBanish('Border')           -- equipped border
+    button:NUIBanish('Flash')            -- red flash when out of mana or unusable
+    button:NUIBanish('NewActionTexture') -- glow texture for new actions
+    button:NUIBanish('SpellHighlightTexture')
+    button:NUIBanish('SlotBackground')   -- Hides the default slot background on action buttons
 
     -- Hide the normal texture
     local normalTex = button:GetNormalTexture()
@@ -480,7 +480,7 @@ function ACB:StyleButtonTextures(button)
 
     -- Style highlight texture
     if button.HighlightTexture then
-        button.HighlightTexture:SetPixelSnap()
+        button.HighlightTexture:NUISetPixelSnap()
         button.HighlightTexture:SetTexture("Interface\\Buttons\\WHITE8x8")
         button.HighlightTexture:SetTexCoord(0, 1, 0, 1)
         button.HighlightTexture:ClearAllPoints()
@@ -493,7 +493,7 @@ function ACB:StyleButtonTextures(button)
     -- Style pushed texture
     local pushed = button:GetPushedTexture()
     if pushed then
-        pushed:SetPixelSnap()
+        pushed:NUISetPixelSnap()
         pushed:SetTexture("Interface\\Buttons\\WHITE8x8")
         pushed:SetTexCoord(0, 1, 0, 1)
         pushed:ClearAllPoints()
@@ -531,7 +531,7 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
 
     -- Create backdrop frame with raw integer size (pixel-perfect approach)
     local backdrop = CreateFrame("Frame", "NRSKNUI_" .. barName .. "Backdrop" .. index, UIParent, "BackdropTemplate")
-    backdrop:SetPixelSnap()
+    backdrop:NUISetPixelSnap()
     backdrop:SetSize(buttonSize, buttonSize)
     backdrop:SetFrameStrata("BACKGROUND")
     backdrop:SetFrameLevel(1)
@@ -552,7 +552,7 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
     backdrop._borderFrame = borderFrame
 
     -- Add borders using helper with textures on borderFrame, stored on backdrop
-    backdrop:AddBorders()
+    backdrop:NUIAddBorders()
     backdrop:SetBorderColor(unpack(borderColor))
     backdrop:SetBorderParent(borderFrame)
     backdrop._barName = barName
@@ -560,7 +560,7 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
     -- Resize and re-anchor the Blizzard button with raw integer size
     button:SetParent(backdrop)
     button:ClearAllPoints()
-    button:SetPixelSnap()
+    button:NUISetPixelSnap()
     button:SetSize(buttonSize, buttonSize)
     button:SetPoint("CENTER", backdrop, "CENTER", 0, 0)
 
@@ -633,15 +633,15 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
     if button.InterruptDisplay then button.InterruptDisplay:SetAlpha(0) end     -- Hides the "slash" texture for interruptible spells
     if button.SpellCastAnimFrame then button.SpellCastAnimFrame:SetAlpha(0) end -- Hides the "shine" animation
     if button.icon then
-        button.icon:SetPixelSnap()
+        button.icon:NUISetPixelSnap()
         button.icon:SetAllPoints(button)
     end
     if button.cooldown then
-        button.cooldown:SetPixelSnap()
+        button.cooldown:NUISetPixelSnap()
         button.cooldown:SetAllPoints(button)
     end
     if button.SpellHighlightTexture then
-        button.SpellHighlightTexture:SetPixelSnap()
+        button.SpellHighlightTexture:NUISetPixelSnap()
         button.SpellHighlightTexture:SetAllPoints(button)
     end
     if button.AutoCastable then button.AutoCastable:SetDrawLayer("OVERLAY", 7) end -- Ensure glow is above the button
@@ -668,11 +668,11 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
     end
 
     -- Icon zoom stuff bcs blizz border uggy
-    button.icon:SetZoom()
+    button.icon:NUISetZoom()
 
     -- Create range overlay, red tint when out of range
     local rangeOverlay = button:CreateTexture(nil, "OVERLAY", nil, 1)
-    rangeOverlay:SetPixelSnap()
+    rangeOverlay:NUISetPixelSnap()
     rangeOverlay:SetAllPoints(button)
     local rangeColor = self.db.RangeOverlayColor
     rangeOverlay:SetColorTexture(rangeColor[1], rangeColor[2], rangeColor[3], rangeColor[4])
@@ -851,7 +851,7 @@ local function SkinBar(cfg)
 
     -- Create container with size and position
     local container = CreateFrame("Frame", "NRSKNUI_" .. cfg.name .. "_Container", UIParent)
-    container:SetPixelSnap()
+    container:NUISetPixelSnap()
     container:SetFrameStrata("LOW")
     container:SetSize(containerWidth, containerHeight)
     cfg.nrsknui_container = container
@@ -1594,15 +1594,15 @@ function ACB:UpdateBarLayout(barKey)
 
                 -- Update icon and cooldown to match new size
                 if button.icon then
-                    button.icon:SetPixelSnap()
+                    button.icon:NUISetPixelSnap()
                     button.icon:SetAllPoints(button)
                 end
                 if button.cooldown then
-                    button.cooldown:SetPixelSnap()
+                    button.cooldown:NUISetPixelSnap()
                     button.cooldown:SetAllPoints(button)
                 end
                 if button.SpellHighlightTexture then
-                    button.SpellHighlightTexture:SetPixelSnap()
+                    button.SpellHighlightTexture:NUISetPixelSnap()
                     button.SpellHighlightTexture:SetAllPoints(button)
                 end
 

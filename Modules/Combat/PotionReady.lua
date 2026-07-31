@@ -46,7 +46,7 @@ end
 function PotionReady:ApplySettings()
     if not self.alertFrame then return end
 
-    self.alertFrame:ApplyPosition(self.db)
+    self.alertFrame:NUIApplyPosition(self.db)
     self.alertFrame.text:SetFontStyle(self.db)
     self.alertFrame.text:SetFontJustify(self.db)
     self.alertFrame.text:SetText(self.db.Text)
@@ -54,7 +54,7 @@ function PotionReady:ApplySettings()
 
     local w = self.alertFrame.text:GetStringWidth()
     local h = self.alertFrame.text:GetStringHeight()
-    self.alertFrame:SetPixelSize(w + 4, h + 4)
+    self.alertFrame:NUISetPixelSize(w + 4, h + 4)
 end
 
 function PotionReady:UpdateCooldownState()

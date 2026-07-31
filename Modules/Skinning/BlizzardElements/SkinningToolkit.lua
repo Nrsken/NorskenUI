@@ -66,7 +66,7 @@ function BSKIN:CreatePanelBackdrop(frame, template, skipRegister)
     local backdrop = CreateFrame('Frame', nil, frame)
     backdrop:SetAllPoints(frame)
     backdrop:SetFrameLevel(math_max(0, frame:GetFrameLevel() - 1))
-    backdrop:CreateBackdrop()
+    backdrop:NUICreateBackdrop()
 
     ---@cast backdrop Frame & PublicBackdropMixin & SkinnedBackdropMixin
     Mixin(backdrop, SkinnedBackdropMixin)
@@ -94,7 +94,7 @@ function BSKIN:CreateStatusBarBackdrop(bar, template)
     backdrop:SetPoint('TOPLEFT', bar, -1, 1)
     backdrop:SetPoint('BOTTOMRIGHT', bar, 1, -1)
     backdrop:SetFrameLevel(math_max(0, bar:GetFrameLevel() - 1))
-    backdrop:CreateBackdrop()
+    backdrop:NUICreateBackdrop()
 
     ---@cast backdrop Frame & PublicBackdropMixin & SkinnedBackdropMixin
     Mixin(backdrop, SkinnedBackdropMixin)
@@ -122,14 +122,14 @@ end
 function BSKIN:HandleIcon(icon, createBackdrop)
     if not icon then return end
 
-    icon:SetZoom()
+    icon:NUISetZoom()
 
     if createBackdrop and not icon.backdrop then
         local parent = icon:GetParent()
         local backdrop = CreateFrame('Frame', nil, parent)
         backdrop:SetPoint('TOPLEFT', icon, -1, 1)
         backdrop:SetPoint('BOTTOMRIGHT', icon, 1, -1)
-        backdrop:AddBorders()
+        backdrop:NUIAddBorders()
         backdrop:SetBorderColor(self:GetBorderColor())
 
         ---@cast backdrop Frame & PublicBackdropMixin & SkinnedIconBackdropMixin
@@ -153,10 +153,10 @@ local function CreateArrowTexture(button, direction, sizeX, sizeY, point, relati
     if button.NUIArrow then return end
 
     local arrow = button:CreateTexture(nil, 'ARTWORK')
-    arrow:SetPixelPoint(point or 'CENTER', relativeTo or button, relativePoint or 'CENTER', xOffset or 0, yOffset or 0)
-    arrow:SetPixelSize(sizeX, sizeY)
+    arrow:NUISetPixelPoint(point or 'CENTER', relativeTo or button, relativePoint or 'CENTER', xOffset or 0, yOffset or 0)
+    arrow:NUISetPixelSize(sizeX, sizeY)
     arrow:SetAtlas(ARROW_ATLAS)
-    arrow:SetPixelSnap()
+    arrow:NUISetPixelSnap()
     arrow:SetDesaturated(true)
 
     -- Store the arrow texture on the button for later access
@@ -195,7 +195,7 @@ function BSKIN:HandleArrowButton(button, direction)
     button.NUISkinned = true
 
     local sizeX, sizeY = 14, 38
-    button:StripTextures()
+    button:NUIStripTextures()
     CreateArrowTexture(button, direction, sizeX, sizeY)
 end
 
@@ -254,7 +254,7 @@ function BSKIN:HandleButton(button, template, skipRegister)
         button:ClearHighlightTexture()
     end
 
-    button:StripTextures('ClearHide')
+    button:NUIStripTextures('ClearHide')
 
     local backdrop = self:CreatePanelBackdrop(button, template, skipRegister)
 
@@ -307,10 +307,10 @@ function BSKIN:HandleCloseButton(button, relativeTo, xOffset, yOffset)
         button:ClearDisabledTexture()
         button:ClearHighlightTexture()
     end
-    button:StripTextures()
+    button:NUIStripTextures()
 
     if relativeTo then
-        button:SetPixelPoint('TOPRIGHT', relativeTo, 'TOPRIGHT', xOffset or -2, yOffset or -2)
+        button:NUISetPixelPoint('TOPRIGHT', relativeTo, 'TOPRIGHT', xOffset or -2, yOffset or -2)
     end
 
     local size = math_max(8, button:GetWidth() * 0.8)
@@ -336,7 +336,7 @@ function BSKIN:HandlePortraitFrame(frame)
     if not frame or frame.NUISkinned then return end
     frame.NUISkinned = true
 
-    frame:StripTextures('Keyed')
+    frame:NUIStripTextures('Keyed')
 
     self:CreatePanelBackdrop(frame)
     if frame.CloseButton then self:HandleCloseButton(frame.CloseButton, frame) end
@@ -407,7 +407,7 @@ function BSKIN:HandleTab(tab)
     tab.NUISkinned = true
     local db = BSKIN:GetDB()
 
-    tab:StripTextures()
+    tab:NUIStripTextures()
     local backdrop = self:CreatePanelBackdrop(tab)
     if backdrop then
         backdrop:ClearAllPoints()
@@ -483,9 +483,9 @@ function BSKIN:HandleTrimScrollBar(scrollBar)
     if not scrollBar or scrollBar.NUISkinned then return end
     scrollBar.NUISkinned = true
 
-    scrollBar:StripTextures()
-    if scrollBar.Background then scrollBar.Background:StripTextures() end
-    if scrollBar.Track then scrollBar.Track:StripTextures() end
+    scrollBar:NUIStripTextures()
+    if scrollBar.Background then scrollBar.Background:NUIStripTextures() end
+    if scrollBar.Track then scrollBar.Track:NUIStripTextures() end
 
     if scrollBar.Back and scrollBar.Back.Texture then
         scrollBar.Back.Texture:SetDesaturated(true)
@@ -499,7 +499,7 @@ function BSKIN:HandleTrimScrollBar(scrollBar)
     if thumb then
         -- Alpha only: the thumb re-sets its atlases on state changes and reads
         -- GetAtlasInfo(Middle:GetAtlas()) in OnSizeChanged, so atlases must stay valid
-        thumb:StripTextures('Alpha')
+        thumb:NUIStripTextures('Alpha')
         self:CreatePanelBackdrop(thumb, nil, true)
 
         ---@cast thumb Frame & SkinnedThumbMixin
@@ -542,8 +542,8 @@ function BSKIN:HandleEditBox(editBox)
     local searchIcon = editBox.searchIcon
     local iconAtlas = searchIcon and searchIcon.GetAtlas and searchIcon:GetAtlas()
 
-    editBox:StripTextures()
-    if editBox.NineSlice then editBox.NineSlice:StripTextures() end
+    editBox:NUIStripTextures()
+    if editBox.NineSlice then editBox.NineSlice:NUIStripTextures() end
     if searchIcon and iconAtlas then searchIcon:SetAtlas(iconAtlas) end
 
     self:CreatePanelBackdrop(editBox)
@@ -603,7 +603,7 @@ function BSKIN:HandleDropdownButton(dropdown, template)
     if not dropdown or dropdown.NUISkinned then return end
     dropdown.NUISkinned = true
 
-    dropdown.Arrow:StripTextures('Alpha')
+    dropdown.Arrow:NUIStripTextures('Alpha')
 
     local sizeX, sizeY = 22, 22
     CreateArrowTexture(dropdown, 'left', sizeX, sizeY, 'RIGHT', dropdown, 'RIGHT', -2, 0)
@@ -686,14 +686,14 @@ function BSKIN:HandleItemButton(button)
 
     local icon = button.icon or button.Icon
     if icon then
-        icon:SetPixelInside()
-        icon:SetZoom()
+        icon:NUISetPixelInside()
+        icon:NUISetZoom()
     end
 
     local normal = button.GetNormalTexture and button:GetNormalTexture()
     if normal then normal:SetAlpha(0) end
 
-    button:StyleButton()
+    button:NUIStyleButton()
 
     local highlight = button.GetHighlightTexture and button:GetHighlightTexture()
     local pushed = button.GetPushedTexture and button:GetPushedTexture()
@@ -732,7 +732,7 @@ function BSKIN:HandleItemButton(button)
         hooksecurefunc(button, 'DisplayAsAzeriteEmpoweredItem', UpdateAzeriteEmpoweredItem)
     end
 
-    button:AddBorders()
+    button:NUIAddBorders()
 
     ---@cast button Button & SkinnedItemButtonMixin
     Mixin(button, SkinnedItemButtonMixin)
@@ -794,7 +794,7 @@ function BSKIN:HandleStatusBar(bar, keepColor)
     if not bar or bar.NUISkinned then return end
     bar.NUISkinned = true
 
-    bar:StripTextures()
+    bar:NUIStripTextures()
     bar:SetStatusBarTexture(NRSKNUI.Media.Statusbars.NorskenUI)
     self:CreateStatusBarBackdrop(bar)
 
@@ -959,9 +959,9 @@ local function StyleControlButtons(frame)
                 button:ClearAllPoints()
 
                 if lastButton then
-                    button:SetPixelPoint('LEFT', lastButton, 'RIGHT', 1, 0)
+                    button:NUISetPixelPoint('LEFT', lastButton, 'RIGHT', 1, 0)
                 else
-                    button:SetPixelPoint('LEFT', 6, 0)
+                    button:NUISetPixelPoint('LEFT', 6, 0)
                 end
 
                 lastButton = button

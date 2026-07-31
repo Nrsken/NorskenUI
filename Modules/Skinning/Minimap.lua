@@ -59,7 +59,7 @@ function Map:OnEnable()
     end
 
     -- Disable minimap in EditMode.
-    _G.MinimapCluster:Banish()
+    _G.MinimapCluster:NUIBanish()
 
     self:RegisterEvent('PLAYER_ENTERING_WORLD')
     Anchors:Register(self, 'Minimap', _G.Minimap, 'minimap', { xKey = 'X', yKey = 'Y' })
@@ -81,14 +81,14 @@ function Map:StripBlizzMap()
     Minimap:SetMaskTexture('Interface\\BUTTONS\\WHITE8X8')
     MinimapCompassTexture:SetTexture(nil)
 
-    _G['MinimapCluster']:Banish()
-    _G['MinimapCompassTexture']:Banish()
-    _G['MinimapCluster']:Banish('BorderTop')
-    _G['MinimapCluster']:Banish('ZoneTextButton')
-    _G['Minimap']:Banish('ZoomIn')
-    _G['Minimap']:Banish('ZoomOut')
-    _G['Minimap']:Banish('ZoomHitArea')
-    _G['GameTimeFrame']:Banish()
+    _G['MinimapCluster']:NUIBanish()
+    _G['MinimapCompassTexture']:NUIBanish()
+    _G['MinimapCluster']:NUIBanish('BorderTop')
+    _G['MinimapCluster']:NUIBanish('ZoneTextButton')
+    _G['Minimap']:NUIBanish('ZoomIn')
+    _G['Minimap']:NUIBanish('ZoomOut')
+    _G['Minimap']:NUIBanish('ZoomHitArea')
+    _G['GameTimeFrame']:NUIBanish()
 
     MinimapCluster.Tracking:ClearAllPoints()
     MinimapCluster.Tracking.Button:SetMenuAnchor(AnchorUtil.CreateAnchor('TOPRIGHT', Minimap, 'BOTTOMLEFT'))
@@ -102,14 +102,14 @@ function Map:UpdateAddonCompartment()
         return
     end
 
-    AddonComp:StripTextures('Layer', { 'ARTWORK', 'HIGHLIGHT' })
+    AddonComp:NUIStripTextures('Layer', { 'ARTWORK', 'HIGHLIGHT' })
     AddonComp:SetParent(Minimap)
     AddonComp:SetScale(1 / self.db.Scale)
     AddonComp:ClearAllPoints()
     AddonComp:SetSize(self.db.AddOnComp.Size, self.db.AddOnComp.Size)
     AddonComp:SetPoint(self.db.AddOnComp.Anchor, Minimap, self.db.AddOnComp.Anchor, self.db.AddOnComp.X, self.db.AddOnComp.Y)
     AddonComp:SetFrameLevel(Minimap:GetFrameLevel() + 2)
-    AddonComp:CreateBackdrop()
+    AddonComp:NUICreateBackdrop()
 
     local textSize = math_floor(self.db.AddOnComp.Size * 0.6)
     AddonComp.Text:SetFontStyle(self.db, textSize, nil, nil, nil, true)
@@ -390,7 +390,7 @@ function Map:CreateBugSackButton()
         local btn = CreateFrame('Button', 'NRSKNUI_BugSackButton', Minimap)
         btn:SetScale(1 / self.db.Scale)
         btn:SetSize(self.db.BugSack.Size, self.db.BugSack.Size)
-        btn:CreateBackdrop()
+        btn:NUICreateBackdrop()
 
         btn.Text = btn:CreateFontString(nil, 'OVERLAY')
         btn.Text:SetFontStyle(self.db, self.db.BugSack.Size - 4)

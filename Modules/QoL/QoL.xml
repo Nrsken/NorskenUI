@@ -9,4 +9,5 @@
     <Script file="MiscVars.lua"/>
     <Script file="AuctionHouseFilter.lua"/>
     <Script file="Recuperate.lua"/>
+    <Script file="GearUtility.lua"/>
 </Ui>

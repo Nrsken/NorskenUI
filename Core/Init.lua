@@ -15,6 +15,7 @@
 ---@field GlobalZoom number
 ---@field Separators table<string, string>
 ---@field TimeFormats table<string, string>
+---@field UFBlocked boolean resolved at login, true when another UI addon owns the unit frames
 ---@field Libs NRSKNUI.Libraries
 ---@field GUI KajiGUIInstance
 ---@field Theme KajiTheme
@@ -138,6 +139,7 @@ NRSKNUI.CopyAnything = NRSKNUI:NewModule('CopyAnything', 'AceEvent-3.0')
 NRSKNUI.Recuperate = NRSKNUI:NewModule('Recuperate', 'AceEvent-3.0')
 NRSKNUI.MiscVars = NRSKNUI:NewModule('MiscVars', 'AceEvent-3.0')
 NRSKNUI.Durability = NRSKNUI:NewModule('Durability', 'AceEvent-3.0')
+NRSKNUI.GearUtility = NRSKNUI:NewModule('GearUtility', 'AceEvent-3.0')
 
 -- Class Util Modules
 NRSKNUI.BurningRush = NRSKNUI:NewModule('BurningRush', 'AceEvent-3.0')

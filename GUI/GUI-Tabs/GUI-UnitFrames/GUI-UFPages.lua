@@ -130,7 +130,7 @@ do
                 local builder = UF.GUISections[sectionKey]
                 if not builder then return end
 
-                page:SetEnabled(function() return db.Enabled end)
+                page:SetEnabled(function() return db.Enabled and not NRSKNUI.UFBlocked end)
                 page:SetCondition('unitOn', function() return uDB.Enabled end)
 
                 builder(page, uDB, unit, tabId)

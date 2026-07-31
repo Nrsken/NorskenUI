@@ -117,7 +117,7 @@ function UF:ApplyUnitPosition(frame, unit, uDB)
     local index = UF.BossIndex(unit)
     local previous = index and index > 1 and UF.frames['boss' .. (index - 1)]
     if not previous then
-        frame:ApplyPosition(uDB)
+        frame:NUIApplyPosition(uDB)
         return
     end
 
@@ -125,7 +125,7 @@ function UF:ApplyUnitPosition(frame, unit, uDB)
     local spacing = uDB.Spacing or 0
 
     frame:ClearAllPoints()
-    frame:SetPixelPoint(growth.from, previous, growth.to, growth.x * spacing, growth.y * spacing)
+    frame:NUISetPixelPoint(growth.from, previous, growth.to, growth.x * spacing, growth.y * spacing)
     frame:SetFrameStrata(uDB.Strata or 'MEDIUM')
 end
 
@@ -136,7 +136,7 @@ function UF:ConfigureFrame(frame, unit)
     local uDB = UF.GetUnitDB(unit)
     local general = self.db.General
 
-    frame:SetPixelSize(uDB.Width, uDB.Height)
+    frame:NUISetPixelSize(uDB.Width, uDB.Height)
     self:ApplyUnitPosition(frame, unit, uDB)
 
     for _, def in pairs(UF.Elements) do
@@ -259,6 +259,9 @@ function UF:SpawnUnits()
 end
 
 function UF:OnEnable()
+    -- Main.lua already skips us on login, this catches the GUI toggle re-enabling us in session.
+    if NRSKNUI.UFBlocked then return end
+
     self:UpdateDB()
     self:CreateCDMAnchor()
 

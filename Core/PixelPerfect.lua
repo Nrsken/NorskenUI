@@ -41,6 +41,7 @@ end
 ---Sets the UI scale based on the user's settings.
 function NRSKNUI:SetUIScale()
     if not self.db.global.UIScale.Enabled then return end
+    if self:GetConflictingScaleAddon() then return end
 
     UIParent:SetScale(self.db.global.UIScale.Scale)
 end

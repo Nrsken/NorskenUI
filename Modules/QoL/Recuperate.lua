@@ -27,18 +27,18 @@ function Recuperate:CreateButton()
     if self.button then return end
 
     local button = CreateFrame('Button', 'NRSKNUI_RecuperateButton', UIParent, 'SecureActionButtonTemplate, SecureHandlerStateTemplate')
-    button:SetPixelSize(self.db.Size, self.db.Size)
+    button:NUISetPixelSize(self.db.Size, self.db.Size)
     button:RegisterForClicks('AnyUp', 'AnyDown')
     button:SetAttribute('type', 'spell')
     button:SetAttribute('spell', RECUPERATE_SPELL_ID)
-    button:AddBorders()
-    button:StyleButton()
+    button:NUIAddBorders()
+    button:NUIStyleButton()
 
     RegisterStateDriver(button, 'visibility', self:GetVisibilityString())
 
     button.icon = button:CreateTexture(nil, 'BORDER')
-    button.icon:SetPixelInside(button, 0, 0)
-    button.icon:SetZoom()
+    button.icon:NUISetPixelInside(button, 0, 0)
+    button.icon:NUISetZoom()
 
     local iconID = GetSpellInfo(RECUPERATE_SPELL_ID).iconID
     button.icon:SetTexture(iconID)
@@ -91,8 +91,8 @@ end
 function Recuperate:ApplySettings()
     if not self.button then return end
 
-    self.button:SetPixelSize(self.db.Size, self.db.Size)
-    self.button:ApplyPosition(self.db)
+    self.button:NUISetPixelSize(self.db.Size, self.db.Size)
+    self.button:NUIApplyPosition(self.db)
 end
 
 function Recuperate:UNIT_HEALTH(_, unit)

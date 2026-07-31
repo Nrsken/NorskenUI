@@ -115,44 +115,33 @@ NRSKNUI.CLASS_INTERRUPTS = {
 }
 
 NRSKNUI.BIGWIGS_EVENTS = {
-    "BigWigs_Timer",
-    "BigWigs_TargetTimer",
-    "BigWigs_CastTimer",
-    "BigWigs_StartBreak",
-    "BigWigs_StartPull",
-    "BigWigs_StopBar",
-    "BigWigs_StopBars",
-    "BigWigs_PauseBar",
-    "BigWigs_ResumeBar",
-    "BigWigs_OnBossDisable",
+    'BigWigs_Timer',
+    'BigWigs_TargetTimer',
+    'BigWigs_CastTimer',
+    'BigWigs_StartBreak',
+    'BigWigs_StartPull',
+    'BigWigs_StopBar',
+    'BigWigs_StopBars',
+    'BigWigs_PauseBar',
+    'BigWigs_ResumeBar',
+    'BigWigs_OnBossDisable',
 }
 
 NRSKNUI.DUNGEON_INFO = {
     -- Dungeons
-    MagistersTerrace  = { instanceId = 2811, name = "Magisters' Terrace", type = "dungeon" },
-    MaisaraCaverns    = { instanceId = 2874, name = "Maisara Caverns", type = "dungeon" },
-    NexusPointXenas   = { instanceId = 2915, name = "Nexus-Point Xenas", type = "dungeon" },
-    WindrunnerSpire   = { instanceId = 2805, name = "Windrunner Spire", type = "dungeon" },
-    AlgetharAcademy   = { instanceId = 2526, name = "Algeth'ar Academy", type = "dungeon" },
-    PitOfSaron        = { instanceId = 658, name = "Pit of Saron", type = "dungeon" },
-    SeatOfTriumvirate = { instanceId = 1753, name = "Seat of the Triumvirate", type = "dungeon" },
-    Skyreach          = { instanceId = 1209, name = "Skyreach", type = "dungeon" },
+    MagistersTerrace  = { instanceId = 2811, name = 'Magisters\' Terrace', type = 'dungeon' },
+    MaisaraCaverns    = { instanceId = 2874, name = 'Maisara Caverns', type = 'dungeon' },
+    NexusPointXenas   = { instanceId = 2915, name = 'Nexus-Point Xenas', type = 'dungeon' },
+    WindrunnerSpire   = { instanceId = 2805, name = 'Windrunner Spire', type = 'dungeon' },
+    AlgetharAcademy   = { instanceId = 2526, name = 'Algeth\'ar Academy', type = 'dungeon' },
+    PitOfSaron        = { instanceId = 658, name = 'Pit of Saron', type = 'dungeon' },
+    SeatOfTriumvirate = { instanceId = 1753, name = 'Seat of the Triumvirate', type = 'dungeon' },
+    Skyreach          = { instanceId = 1209, name = 'Skyreach', type = 'dungeon' },
     -- Raids
-    TheVoidspire      = { instanceId = 2912, name = "The Voidspire", type = "raid" },
-    MarchOnQuelDanas  = { instanceId = 2913, name = "March on Quel'Danas", type = "raid" },
-    TheDreamrift      = { instanceId = 2939, name = "The Dreamrift", type = "raid" },
+    TheVoidspire      = { instanceId = 2912, name = 'The Voidspire', type = 'raid' },
+    MarchOnQuelDanas  = { instanceId = 2913, name = 'March on Quel\'Danas', type = 'raid' },
+    TheDreamrift      = { instanceId = 2939, name = 'The Dreamrift', type = 'raid' },
 }
-
-NRSKNUI.GEM_SOCKET_TYPES = {
-    { name = "Prismatic",  locale = "EMPTY_SOCKET_PRISMATIC",  icon = 458977 },
-    { name = "Meta",       locale = "EMPTY_SOCKET_META",       icon = 136257 },
-    { name = "Tinker",     locale = "EMPTY_SOCKET_TINKER",     icon = 2958630 },
-    { name = "Cogwheel",   locale = "EMPTY_SOCKET_COGWHEEL",   icon = 407324 },
-    { name = "Primordial", locale = "EMPTY_SOCKET_PRIMORDIAL", icon = 4095404 },
-    { name = "Fiber",      locale = "EMPTY_SOCKET_FIBER",      icon = 136260 },
-}
-
-NRSKNUI.SOCKETABLE_SLOTS = { 1, 2, 5, 6, 9, 10, 11, 12, 13, 14, 15 }
 
 -- A nil specId means every spec of the class has a pet, a number restricts it to that one spec.
 NRSKNUI.PET_CLASSES = {
@@ -173,3 +162,110 @@ NRSKNUI.PET_CLASSES = {
         specId = 64
     },
 }
+
+-- Gear Utility Constants
+
+---@class NRSKNUI.ItemSlotInfo
+---@field slot number
+---@field frame Frame
+---@field rightColumn boolean? Paperdoll button sits in the right column
+---@field socketable boolean?
+---@field enchants string[]? Tooltip keywords that target this slot
+
+-- Table with all item slots, their paperdoll frame and any enchant keywords that target them.
+NRSKNUI.ITEM_SLOTS = {
+    { slot = INVSLOT_HEAD,     frame = _G['CharacterHeadSlot'],          enchants = { 'helm', 'head' },                socketable = true, },
+    { slot = INVSLOT_NECK,     frame = _G['CharacterNeckSlot'],          enchants = { 'neck' },                        socketable = true, },
+    { slot = INVSLOT_SHOULDER, frame = _G['CharacterShoulderSlot'],      enchants = { 'shoulder' } },
+    { slot = INVSLOT_BACK,     frame = _G['CharacterBackSlot'],          enchants = { 'cloak', 'cape', 'back' } },
+    { slot = INVSLOT_CHEST,    frame = _G['CharacterChestSlot'],         enchants = { 'chest' } },
+    { slot = INVSLOT_WRIST,    frame = _G['CharacterWristSlot'],         enchants = { 'bracer', 'wrist' },             socketable = true, },
+    { slot = INVSLOT_HAND,     frame = _G['CharacterHandsSlot'],         enchants = { 'glove', 'hand' },               rightColumn = true, },
+    { slot = INVSLOT_WAIST,    frame = _G['CharacterWaistSlot'],         enchants = { 'belt', 'waist' },               rightColumn = true, socketable = true, },
+    { slot = INVSLOT_LEGS,     frame = _G['CharacterLegsSlot'],          enchants = { 'legs', 'leg' },                 rightColumn = true, },
+    { slot = INVSLOT_FEET,     frame = _G['CharacterFeetSlot'],          enchants = { 'boot', 'feet' },                rightColumn = true, },
+    { slot = INVSLOT_FINGER1,  frame = _G['CharacterFinger0Slot'],       enchants = { 'ring' },                        rightColumn = true, socketable = true, },
+    { slot = INVSLOT_FINGER2,  frame = _G['CharacterFinger1Slot'],       enchants = { 'ring' },                        rightColumn = true, socketable = true, },
+    { slot = INVSLOT_TRINKET1, frame = _G['CharacterTrinket0Slot'],      enchants = { 'trinket' },                     rightColumn = true, },
+    { slot = INVSLOT_TRINKET2, frame = _G['CharacterTrinket1Slot'],      enchants = { 'trinket' },                     rightColumn = true, },
+    { slot = INVSLOT_MAINHAND, frame = _G['CharacterMainHandSlot'],      enchants = { '2h weapon', 'staff', 'weapon' } },
+    { slot = INVSLOT_OFFHAND,  frame = _G['CharacterSecondaryHandSlot'], enchants = { 'weapon' },                      rightColumn = true, },
+}
+
+-- Season data.
+NRSKNUI.ITEM_TRACKS = {
+    { key = 'MYTH',     min = 318, max = 344, letter = 'M', color = { 1.00, 0.50, 0.00 } },
+    { key = 'HERO',     min = 305, max = 322, letter = 'H', color = { 0.78, 0.30, 0.78 } },
+    { key = 'CHAMPION', min = 292, max = 309, letter = 'C', color = { 0.00, 0.70, 1.00 } },
+    { key = 'VETERAN',  min = 279, max = 296, letter = 'V', color = { 0.00, 0.80, 0.00 } },
+}
+
+-- PvP gear carries an explicit item level floor instead of an upgrade track.
+NRSKNUI.PVP_ITEM_TRACKS = {
+    { key = 'CONQUEST', itemLevel = 344, letter = 'C', color = { 1.00, 0.50, 0.00 } },
+    { key = 'HONOR',    itemLevel = 331, letter = 'H', color = { 0.00, 0.70, 1.00 } },
+}
+
+-- Crafted gear carries an explicit item level floor instead of an upgrade track and a seasonal text marker in the tooltip.
+NRSKNUI.CRAFTED_ITEM_MARKER = 'Tidal Crafted'
+NRSKNUI.CRAFTED_ITEM_TRACKS = {
+    { key = 'MYTH', itemLevel = 331 },
+    { key = 'HERO', itemLevel = 318 },
+}
+
+-- Second tooltip line on gear from instanced content.
+NRSKNUI.ITEM_DIFFICULTY_TAGS = {
+    [PLAYER_DIFFICULTY1] = 'NORMAL',
+    [PLAYER_DIFFICULTY2] = 'HEROIC',
+    [PLAYER_DIFFICULTY3] = 'LFR',
+    [PLAYER_DIFFICULTY6] = 'MYTHIC',
+    [PLAYER_DIFFICULTY_MYTHIC_PLUS] = 'MYTHICPLUS',
+}
+
+-- All gem types as of Midnight 12.0.0.
+NRSKNUI.GEM_SOCKET_TYPES = {
+    { name = 'Prismatic',  locale = 'EMPTY_SOCKET_PRISMATIC',  icon = 458977 },
+    { name = 'Meta',       locale = 'EMPTY_SOCKET_META',       icon = 136257 },
+    { name = 'Tinker',     locale = 'EMPTY_SOCKET_TINKER',     icon = 2958630 },
+    { name = 'Cogwheel',   locale = 'EMPTY_SOCKET_COGWHEEL',   icon = 407324 },
+    { name = 'Primordial', locale = 'EMPTY_SOCKET_PRIMORDIAL', icon = 4095404 },
+    { name = 'Fiber',      locale = 'EMPTY_SOCKET_FIBER',      icon = 136260 },
+}
+
+do
+    local ipairs, tinsert, sort = ipairs, table.insert, table.sort
+
+    ---@type table<number, NRSKNUI.ItemSlotInfo>
+    NRSKNUI.ITEM_SLOT_INFO = {}
+    ---@type number[]
+    NRSKNUI.SOCKETABLE_SLOTS = {}
+    ---@type { keyword: string, slots: number[] }[]
+    NRSKNUI.ENCHANT_SLOT_KEYWORDS = {}
+    ---@type table<string, NRSKNUI.ItemSlotInfo|table>
+    NRSKNUI.ITEM_TRACK_INFO = {}
+
+    local byKeyword = {}
+
+    for _, info in ipairs(NRSKNUI.ITEM_SLOTS) do
+        NRSKNUI.ITEM_SLOT_INFO[info.slot] = info
+
+        if info.socketable then
+            tinsert(NRSKNUI.SOCKETABLE_SLOTS, info.slot)
+        end
+
+        for _, keyword in ipairs(info.enchants or {}) do
+            if not byKeyword[keyword] then
+                byKeyword[keyword] = { keyword = keyword, slots = {} }
+                tinsert(NRSKNUI.ENCHANT_SLOT_KEYWORDS, byKeyword[keyword])
+            end
+            tinsert(byKeyword[keyword].slots, info.slot)
+        end
+    end
+
+    -- Longest keyword first so "Two-Handed Weapon" matches 'weapon' rather than 'hand'. Matching
+    -- has to be ordered, otherwise a pairs() walk resolves ambiguous enchants differently per run.
+    sort(NRSKNUI.ENCHANT_SLOT_KEYWORDS, function(a, b) return #a.keyword > #b.keyword end)
+
+    for _, track in ipairs(NRSKNUI.ITEM_TRACKS) do NRSKNUI.ITEM_TRACK_INFO[track.key] = track end
+    for _, track in ipairs(NRSKNUI.PVP_ITEM_TRACKS) do NRSKNUI.ITEM_TRACK_INFO[track.key] = track end
+end
