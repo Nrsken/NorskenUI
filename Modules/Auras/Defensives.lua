@@ -3,8 +3,10 @@ local NRSKNUI = select(2, ...)
 ---@class DefensivesModule
 local Defensives = NRSKNUI:GetModule('Defensives')
 local Anchors = NRSKNUI.Anchors
+local AuraPreview = NRSKNUI.AuraPreview
 
 local CreateFrame = CreateFrame
+local min = math.min
 
 function Defensives:UpdateDB()
     self.db = NRSKNUI.db.profile.Defensives
@@ -52,12 +54,17 @@ function Defensives:GetContainerConfig()
     }
 end
 
----Size the host to the largest grid the current settings can produce, so the mover covers the display's
----full footprint. maxFrameCount caps each filter branch, so the worst case scales with the branch count.
-function Defensives:ResizeHost()
+---Most auras the current settings can put on screen.
+---@return number
+function Defensives:GetPreviewCount()
     local db = self.db
-    local count = db.maxFrameCount * NRSKNUI:GetAuraFilterBranchCount(db.Filter)
-    self.host:SetSize(NRSKNUI:GetAuraGridSize(db, count))
+    return min(db.maxFrameCount * NRSKNUI:GetAuraFilterBranchCount(db.Filter), db.previewLimit)
+end
+
+---Size the host to the largest grid the current settings can produce, so the mover covers the display's
+---full footprint.
+function Defensives:ResizeHost()
+    self.host:SetSize(NRSKNUI:GetAuraGridSize(self.db, self:GetPreviewCount()))
 end
 
 ---Create the mover host frame, the container is attached later, out of combat.
@@ -83,6 +90,9 @@ function Defensives:BuildContainer()
 
     container:SetUnit('player')
     self.host.container = container
+
+    AuraPreview:Attach(container, self.host, config.anchorPoint)
+    AuraPreview:Update(container, config, self:GetPreviewCount(), self.db.Filter)
 end
 
 ---Live-reapply the active filter when its definition changes in the GUI.
@@ -116,6 +126,8 @@ function Defensives:ApplySettings()
         container:ClearAllPoints()
         container:SetPoint(config.anchorPoint, self.host, config.anchorPoint)
         container:ApplyLayout(config)
+        AuraPreview:Attach(container, self.host, config.anchorPoint)
+        AuraPreview:Update(container, config, self:GetPreviewCount(), self.db.Filter)
         return
     end
 
@@ -141,14 +153,21 @@ function Defensives:OnDisable()
     end
 end
 
--- Previews, calling the aura data provider API's while in Blizzard Edit Mode can cause some errors so return early if that's the case.
+-- Previews. The real container swaps out for dummy auras, which are the only ones that can follow a
+-- settings change without a reload.
 
 function Defensives:ShowPreview()
-    if not self.db.Enabled or not self.host or NRSKNUI:IsEditModeActive() then return end
-    C_UnitAuras.SwitchAuraDataProvider()
+    local container = self.host and self.host.container
+    if not container then return end
+
+    AuraPreview:SetShown(container, true)
+    container:Hide()
 end
 
 function Defensives:HidePreview()
-    if not self.host or NRSKNUI:IsEditModeActive() then return end
-    C_UnitAuras.ResetAuraDataProvider()
+    local container = self.host and self.host.container
+    if not container then return end
+
+    AuraPreview:SetShown(container, false)
+    container:Show()
 end

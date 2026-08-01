@@ -866,7 +866,9 @@ L['Reverse'] = true
 
 -- Appearance tab
 L['Aura Button Information'] = true
-L['Aura buttons are built once by the game and cannot be restyled in place. These settings are saved immediately but only take effect after a reload.'] = true
+L['Aura buttons are built once by the game and cannot be restyled in place. The preview follows these settings straight away, the real auras pick them up after a reload.'] = true
+L['Preview Limit'] = true
+L['Caps how many icons the preview draws and the mover box covers. The game caps auras per filter branch and never per display, so this leaves the real auras alone.'] = true
 L['Icons'] = true
 L['Show Count'] = true
 L['Show Duration'] = true

@@ -73,6 +73,9 @@ function NRSKNUI:ToggleModule(moduleName, enabled)
     else
         self:DisableModule(moduleName)
     end
+
+    -- A module toggled on while the GUI is open joins the previews the open page calls for.
+    if self.PreviewManager then self.PreviewManager:Refresh() end
 end
 
 local function SetupMinimapIcon()

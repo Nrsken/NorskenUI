@@ -108,6 +108,43 @@ local BOSS_GROWTH = {
     RIGHT = { from = 'TOPLEFT', to = 'TOPRIGHT', x = 1, y = 0 },
 }
 
+-- Corner of boss1 the chain grows away from, and the axis it grows along. Mirrors BOSS_GROWTH: the
+-- overlay span starts at the frame that holds the position and extends over the rest of the chain.
+local BOSS_SPAN = {
+    UP    = { point = 'BOTTOMLEFT', vertical = true },
+    DOWN  = { point = 'TOPLEFT', vertical = true },
+    LEFT  = { point = 'TOPRIGHT', vertical = false },
+    RIGHT = { point = 'TOPLEFT', vertical = false },
+}
+
+---The frame the boss anchor overlay covers. Only boss1 carries the group's position, so it is the one
+---that gets dragged, but the overlay should be grabbable across the whole chain. Anchored to boss1 so
+---it tracks a live drag rather than snapping into place at the end of one.
+---@return Frame
+function UF:GetBossSpan()
+    if not self.bossSpan then
+        self.bossSpan = CreateFrame('Frame', nil, UIParent)
+    end
+    return self.bossSpan
+end
+
+---Size the span to the footprint of every boss frame, whether or not that boss exists right now.
+function UF:UpdateBossSpan()
+    local first = UF.frames.boss1
+    if not first then return end
+
+    local uDB = UF.GetUnitDB('boss1')
+    local growth = BOSS_SPAN[uDB.GrowthDirection] or BOSS_SPAN.DOWN
+    local count = #UF.BossUnits
+    local size = growth.vertical and uDB.Height or uDB.Width
+    local extent = count * size + (count - 1) * (uDB.Spacing or 0)
+
+    local span = self:GetBossSpan()
+    span:ClearAllPoints()
+    span:SetPoint(growth.point, first, growth.point, 0, 0)
+    span:SetSize(growth.vertical and uDB.Width or extent, growth.vertical and extent or uDB.Height)
+end
+
 ---Position one frame. Every unit reads its own position out of the DB, except boss frames past the
 ---first, which chain off their predecessor so the whole group moves with the one mover on boss1.
 ---@param frame oUF.UnitFrame
@@ -200,7 +237,7 @@ end
 
 ---Spawn one unit, wire it up, and settle its visibility.
 ---@param unit string
----@param opts table? anchor overrides: skipAnchor, displayName
+---@param opts table? anchor overrides: skipAnchor, displayName, overlayFrame
 ---@return oUF.UnitFrame
 function UF:SpawnUnit(unit, opts)
     opts = opts or {}
@@ -217,6 +254,7 @@ function UF:SpawnUnit(unit, opts)
                 displayName = opts.displayName or UnitLabel(unit),
                 db = function() return UF.GetUnitDB(unit) end,
                 guiContext = 'frame',
+                overlayFrame = opts.overlayFrame,
             })
         end
 
@@ -253,9 +291,12 @@ function UF:SpawnUnits()
         local frame = self:SpawnUnit(unit, {
             skipAnchor = index > 1,
             displayName = L['Boss Frames'],
+            overlayFrame = index == 1 and self:GetBossSpan() or nil,
         })
         UF.Preview:Register('boss', frame, 'player', format('%s %d', L['Boss'], index))
     end
+
+    self:UpdateBossSpan()
 end
 
 function UF:OnEnable()
@@ -306,6 +347,7 @@ function UF:ApplySettings()
         for unit, frame in pairs(UF.frames) do
             self:ConfigureFrame(frame, unit)
         end
+        self:UpdateBossSpan() -- boss size, spacing and growth all move the group's footprint
     end)
 end
 

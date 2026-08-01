@@ -198,9 +198,70 @@ function Preview:ReleaseAll()
     end
 end
 
----Called by PreviewManager when the GUI or the anchor session closes. Intent goes with it, so a
----later combat drop cannot bring the frames back behind a closed window.
+-- Aura previews --
+
+-- Kept per unit rather than per group: the GUI only ever configures one unit's auras at a time and
+-- dummy buttons on every frame at once is what makes a preview expensive.
+local auraUnits = {}
+
+---Repaint the aura element on every frame rendering a unit, so 'boss' covers all eight of them.
+---@param unit string normalized unit key
+local function RefreshAuraPreviews(unit)
+    for token, frame in pairs(UF.frames) do
+        if UF.NormalizeUnit(token) == unit then
+            UF.Elements.Auras.Preview(frame, token, UF.GetUnitDB(token))
+        end
+    end
+end
+
+---Show dummy auras on a unit's frames and keep showing them until released.
+---@param unit string
+function Preview:RequestAuras(unit)
+    unit = UF.NormalizeUnit(unit)
+    if auraUnits[unit] then return end
+
+    auraUnits[unit] = true
+    RefreshAuraPreviews(unit)
+end
+
+---@param unit string
+function Preview:ReleaseAuras(unit)
+    unit = UF.NormalizeUnit(unit)
+    if not auraUnits[unit] then return end
+
+    auraUnits[unit] = nil
+    RefreshAuraPreviews(unit)
+end
+
+function Preview:ReleaseAllAuras()
+    for unit in pairs(auraUnits) do
+        auraUnits[unit] = nil
+        RefreshAuraPreviews(unit)
+    end
+end
+
+---@param unit string
+---@return boolean
+function Preview:IsAuraPreviewActive(unit)
+    return auraUnits[UF.NormalizeUnit(unit)] == true
+end
+
+---Show a preview for a page. The page is responsible for calling Release when it closes or switches away.
+---@param pageId string? the page asking, e.g. 'unitFrames_target'
+---@param showAll boolean? whether everything is being previewed
+function UF:ShowPreview(pageId, showAll)
+    if showAll then Preview:Request('boss') end
+
+    local unit = pageId and pageId:match('^unitFrames_(.+)$')
+    if not unit then return end
+
+    Preview:RequestAuras(unit)
+    if unit == 'boss' then Preview:Request('boss') end
+end
+
+---Called by PreviewManager when the page changes or the window closes.
 function UF:HidePreview()
+    Preview:ReleaseAllAuras()
     Preview:ReleaseAll()
 end
 

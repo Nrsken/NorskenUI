@@ -294,6 +294,10 @@ function Anchors:Register(module, key, frame, guiPath, opts)
     entry.guiPath = guiPath or opts.guiPath
     entry.guiContext = opts.guiContext
 
+    -- What the overlay covers, when that is bigger than what the drag moves:
+    -- a group of chained frames is dragged by the one frame that carries the position, but should be grabbable across all of them.
+    entry.overlayFrame = opts.overlayFrame
+
     if type(entry.apply) == 'string' and type(module[entry.apply]) ~= 'function' then
         NRSKNUI:Print(format("Anchor '%s' registered with apply='%s', which the module does not define.", key, entry.apply))
     end
@@ -508,8 +512,10 @@ function Anchors:UpdateOverlay(key)
         return
     end
 
+    -- Only the geometry follows overlayFrame, dragging still reads the entry's own frame, so a chained
+    -- group keeps one set of stored offsets. It tracks a live drag because it hangs off that frame.
     overlay:ClearAllPoints()
-    overlay:SetAllPoints(frame)
+    overlay:SetAllPoints(overlay.entry.overlayFrame or frame)
     overlay:Show()
 end
 

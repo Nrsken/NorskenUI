@@ -440,8 +440,8 @@ function ProfileManager:RefreshAllModules()
     -- Refresh GUI frame if open
     if NRSKNUI.GUIFrame and NRSKNUI.GUIFrame.ApplyThemeColors then NRSKNUI.GUIFrame:ApplyThemeColors() end
 
-    -- Start previews again
-    if NRSKNUI.PreviewManager then NRSKNUI.PreviewManager:StartAllPreviews() end
+    -- Put back whatever the GUI state calls for, which is the open page rather than everything.
+    if NRSKNUI.PreviewManager then NRSKNUI.PreviewManager:Refresh() end
 end
 
 -- WagoUI Integration API --

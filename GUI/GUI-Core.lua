@@ -128,6 +128,28 @@ window:AddHeaderButton({
     end,
     tooltip = 'Open Theme Settings',
 })
+window:AddHeaderButton({
+    icon = TEX .. 'eye.png',
+    size = 24,
+    onClick = function(btn)
+        local manager = NRSKNUI.PreviewManager
+        if not manager then return end
+
+        manager:SetForceAll(not manager:IsForceAll())
+        btn:SetActive(manager:IsForceAll())
+    end,
+    tooltip = 'Preview Every Display',
+})
+
+-- Previews follow the open page, so the manager needs to hear about every page change. The host is
+-- hooked rather than window:ShowPage, since the sidebar shows pages through the host directly.
+if window.content then
+    window.content.onPageChanged = function(pageId)
+        if NRSKNUI.PreviewManager then
+            NRSKNUI.PreviewManager:SetPage(pageId)
+        end
+    end
+end
 
 -- Footer socials: auto-packed left -> right. The copy prompt stays addon-side.
 local function CopyPrompt(title, link, icon)

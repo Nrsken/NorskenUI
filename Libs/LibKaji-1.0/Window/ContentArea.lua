@@ -28,6 +28,11 @@
 *     onLeave(pageId) -- fired when a *different* page is shown
 * Both must be idempotent. They are separate from `build` on purpose: the search harvester calls
 * `build` as a dry run, and a dry run must not have side effects outside the page.
+*
+* The host itself takes one hook, for consumers that follow the open page across every page rather than
+* declaring it page by page. Assign it after creating the host:
+*     host.onPageChanged(pageId, previousPageId)
+* It fires after the descriptor's own onEnter, and also for ids that registered no descriptor.
 
 --]]
 
@@ -748,6 +753,7 @@ function InstanceMixin:CreateContentHost(parent, opts)
         -- onLeave only fires on an actual page change; onEnter re-fires on a re-show of the same
         -- page, so both are documented as idempotent.
         local previous = host._descriptor
+        local previousId = host.currentId
         if previous and previous ~= descriptor and previous.onLeave then
             safecall(previous.onLeave, host.currentId)
         end
@@ -759,6 +765,10 @@ function InstanceMixin:CreateContentHost(parent, opts)
         host._pendingTarget = target
 
         if descriptor and descriptor.onEnter then safecall(descriptor.onEnter, id) end
+
+        -- One hook for consumers that track the open page for every page rather than page by page.
+        -- Fires after the descriptor's own onEnter and for pages that registered no descriptor at all.
+        if host.onPageChanged then safecall(host.onPageChanged, id, previousId) end
 
         local mode = descriptor and (descriptor.mode or "clean")
         if mode == "tabs" then

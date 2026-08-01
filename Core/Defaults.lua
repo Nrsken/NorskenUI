@@ -756,6 +756,7 @@ local Defaults = {
                 size = 40,
                 perRow = 10,
                 maxFrameCount = 40,
+                previewLimit = 40,
                 elementSpacing = 1,
                 lineSpacing = 1,
                 groupSpacing = 0, -- seam between the weapon enchants and the buff group
@@ -786,8 +787,8 @@ local Defaults = {
                     FontSize = 12,
                     Position = {
                         AnchorFrom = "BOTTOMRIGHT",
-                        XOffset = -1,
-                        YOffset = 1,
+                        XOffset = 0,
+                        YOffset = 2,
                     },
                 },
                 DurationFont = {
@@ -812,6 +813,7 @@ local Defaults = {
                 size = 50,
                 perRow = 10,
                 maxFrameCount = 10,
+                previewLimit = 40,
                 elementSpacing = 1,
                 lineSpacing = 1,
                 horizontalGrowthDirection = "LEFT",
@@ -843,8 +845,8 @@ local Defaults = {
                     FontSize = 12,
                     Position = {
                         AnchorFrom = "BOTTOMRIGHT",
-                        XOffset = -1,
-                        YOffset = 1,
+                        XOffset = 0,
+                        YOffset = 2,
                     },
                 },
                 DurationFont = {
@@ -874,6 +876,7 @@ local Defaults = {
             size = 50,
             perRow = 10,
             maxFrameCount = 10,
+            previewLimit = 40,
             elementSpacing = 1,
             lineSpacing = 1,
             horizontalGrowthDirection = "LEFT",
@@ -902,8 +905,8 @@ local Defaults = {
                 FontSize = 14,
                 Position = {
                     AnchorFrom = "BOTTOMRIGHT",
-                    XOffset = -1,
-                    YOffset = 1
+                    XOffset = 0,
+                    YOffset = 2
                 },
             },
             DurationFont = {
@@ -938,6 +941,7 @@ local Defaults = {
             size = 50,
             perRow = 10,
             maxFrameCount = 10,
+            previewLimit = 40,
             elementSpacing = 1,
             lineSpacing = 1,
             horizontalGrowthDirection = "LEFT",
@@ -962,8 +966,8 @@ local Defaults = {
                 FontSize = 14,
                 Position = {
                     AnchorFrom = "BOTTOMRIGHT",
-                    XOffset = -1,
-                    YOffset = 1
+                    XOffset = 0,
+                    YOffset = 2
                 },
             },
             DurationFont = {
@@ -996,6 +1000,7 @@ local Defaults = {
             size = 50,
             perRow = 6,
             maxFrameCount = 6,
+            previewLimit = 40,
             elementSpacing = 1,
             lineSpacing = 1,
             horizontalGrowthDirection = "LEFT",
@@ -1015,8 +1020,8 @@ local Defaults = {
                 FontSize = 14,
                 Position = {
                     AnchorFrom = "BOTTOMRIGHT",
-                    XOffset = -1,
-                    YOffset = 1
+                    XOffset = 0,
+                    YOffset = 2
                 },
             },
             DurationFont = {
@@ -2891,6 +2896,7 @@ local Defaults = {
                             size = 32,
                             perRow = 4,
                             maxFrameCount = 8,
+                            previewLimit = 40,
                             elementSpacing = 1,
                             lineSpacing = 1,
                             horizontalGrowthDirection = "LEFT",
@@ -2912,8 +2918,8 @@ local Defaults = {
                                 FontSize = 12,
                                 Position = {
                                     AnchorFrom = "BOTTOMRIGHT",
-                                    XOffset = -1,
-                                    YOffset = 1,
+                                    XOffset = 0,
+                                    YOffset = 2,
                                 },
                             },
                             DurationFont = {
@@ -2936,6 +2942,7 @@ local Defaults = {
                             size = 32,
                             perRow = 2,
                             maxFrameCount = 6,
+                            previewLimit = 40,
                             elementSpacing = 1,
                             lineSpacing = 1,
                             horizontalGrowthDirection = "RIGHT",
@@ -2957,8 +2964,8 @@ local Defaults = {
                                 FontSize = 12,
                                 Position = {
                                     AnchorFrom = "BOTTOMRIGHT",
-                                    XOffset = -1,
-                                    YOffset = 1
+                                    XOffset = 0,
+                                    YOffset = 2
                                 },
                             },
                             DurationFont = {
@@ -3269,6 +3276,7 @@ local Defaults = {
                             size = 22,
                             perRow = 5,
                             maxFrameCount = 5,
+                            previewLimit = 40,
                             horizontalGrowthDirection = "RIGHT",
                             verticalGrowthDirection = "UP",
                             Position = {

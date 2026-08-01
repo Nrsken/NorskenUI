@@ -90,6 +90,19 @@ function AuraCards:Grid(page, db, ctx)
         end,
     })
 
+    card:Row(rowH):Slider(L['Preview Limit'], {
+        width = 1,
+        tooltip = L['Caps how many icons the preview draws and the mover box covers. The game caps auras per filter branch and never per display, so this leaves the real auras alone.'],
+        min = 1,
+        max = 40,
+        step = 1,
+        value = db.previewLimit,
+        callback = function(val)
+            db.previewLimit = val
+            Apply()
+        end,
+    })
+
     local spacingRow = card:Row(rowHL, 0)
     spacingRow:Slider(L['Element Spacing'], {
         width = 0.5,
@@ -206,19 +219,28 @@ end
 
 ---@param page KajiGUIPage
 ---@param db table
+---@param ctx table { Apply: fun() }
 ---@return KajiGUIFluentCard
-function AuraCards:Text(page, db)
+function AuraCards:Text(page, db, ctx)
+    local Apply = ctx.Apply
+
     local card = page:Card(L['Text'], 'all')
     local textRow = card:Row(rowHL, 0)
     textRow:Checkbox(L['Show Count'], {
         width = 0.5,
         value = db.showApplicationCount,
-        callback = function(checked) db.showApplicationCount = checked end,
+        callback = function(checked)
+            db.showApplicationCount = checked
+            Apply()
+        end,
     })
     textRow:Checkbox(L['Show Duration'], {
         width = 0.5,
         value = db.showDurationText,
-        callback = function(checked) db.showDurationText = checked end,
+        callback = function(checked)
+            db.showDurationText = checked
+            Apply()
+        end,
     })
 
     return card
@@ -226,24 +248,36 @@ end
 
 ---@param page KajiGUIPage
 ---@param db table
+---@param ctx table { Apply: fun() }
 ---@return KajiGUIFluentCard
-function AuraCards:Cooldown(page, db)
+function AuraCards:Cooldown(page, db, ctx)
+    local Apply = ctx.Apply
+
     local card = page:Card(L['Cooldown'], 'all')
     local swipeRow = card:Row(rowH)
     swipeRow:Checkbox(L['Draw Swipe'], {
         width = 0.5,
         value = db.drawSwipe,
-        callback = function(checked) db.drawSwipe = checked end,
+        callback = function(checked)
+            db.drawSwipe = checked
+            Apply()
+        end,
     })
     swipeRow:Checkbox(L['Reverse Swipe'], {
         width = 0.5,
         value = db.reverseSwipe,
-        callback = function(checked) db.reverseSwipe = checked end,
+        callback = function(checked)
+            db.reverseSwipe = checked
+            Apply()
+        end,
     })
     card:Row(rowHL, 0):Checkbox(L['Draw Edge'], {
         width = 1,
         value = db.drawEdge,
-        callback = function(checked) db.drawEdge = checked end,
+        callback = function(checked)
+            db.drawEdge = checked
+            Apply()
+        end,
     })
 
     return card
@@ -252,9 +286,10 @@ end
 ---Dispel border and the corner dispel type icon.
 ---@param page KajiGUIPage
 ---@param db table
----@param ctx table { dispelIconKey: string, withoutDispelType?: boolean }
+---@param ctx table { Apply: fun(), dispelIconKey: string, withoutDispelType?: boolean }
 ---@return KajiGUIFluentCard
 function AuraCards:Dispel(page, db, ctx)
+    local Apply = ctx.Apply
     local iconKey = ctx.dispelIconKey
     page:SetCondition(iconKey, function() return db[iconKey] end)
 
@@ -264,14 +299,20 @@ function AuraCards:Dispel(page, db, ctx)
         width = ctx.withoutDispelType and 0.5 or 1,
         tooltip = L['Colors the aura border by dispel type.'],
         value = db.showBorder,
-        callback = function(checked) db.showBorder = checked end,
+        callback = function(checked)
+            db.showBorder = checked
+            Apply()
+        end,
     })
     if ctx.withoutDispelType then
         borderRow:Checkbox(L['Show Without Dispel Type'], {
             width = 0.5,
             tooltip = L['Keeps the border visible on auras that have no dispel type.'],
             value = db.showBorderWithoutDispelType,
-            callback = function(checked) db.showBorderWithoutDispelType = checked end,
+            callback = function(checked)
+                db.showBorderWithoutDispelType = checked
+                Apply()
+            end,
         })
     end
 
@@ -284,6 +325,7 @@ function AuraCards:Dispel(page, db, ctx)
         value = db[iconKey],
         callback = function(checked)
             db[iconKey] = checked
+            Apply()
             page:Refresh()
         end,
     })
@@ -294,7 +336,10 @@ function AuraCards:Dispel(page, db, ctx)
         step = 1,
         value = db.dispelIconSize,
         conditions = { iconKey },
-        callback = function(val) db.dispelIconSize = val end,
+        callback = function(val)
+            db.dispelIconSize = val
+            Apply()
+        end,
     })
 
     return card
@@ -302,9 +347,10 @@ end
 
 ---@param page KajiGUIPage
 ---@param db table
----@param ctx table { disableMouse?: boolean }
+---@param ctx table { Apply: fun(), disableMouse?: boolean }
 ---@return KajiGUIFluentCard
 function AuraCards:Tooltip(page, db, ctx)
+    local Apply = ctx.Apply
     local withMouse = ctx.disableMouse
 
     local card = page:Card(L['Tooltip'], 'all')
@@ -312,14 +358,20 @@ function AuraCards:Tooltip(page, db, ctx)
     row:Checkbox(L['Hide Tooltip In Combat'], {
         width = withMouse and 0.5 or 1,
         value = db.tooltipHideInCombat,
-        callback = function(checked) db.tooltipHideInCombat = checked end,
+        callback = function(checked)
+            db.tooltipHideInCombat = checked
+            Apply()
+        end,
     })
     if withMouse then
         row:Checkbox(L['Disable Mouse'], {
             width = 0.5,
             tooltip = L['Drops all mouse handling, so the auras never show a tooltip and never block clicks.'],
             value = db.disableMouse,
-            callback = function(checked) db.disableMouse = checked end,
+            callback = function(checked)
+                db.disableMouse = checked
+                Apply()
+            end,
         })
     end
 
@@ -329,8 +381,10 @@ end
 ---Anchor and offsets for the stack and duration strings inside the button.
 ---@param page KajiGUIPage
 ---@param db table
+---@param ctx table { Apply: fun() }
 ---@return KajiGUIFluentCard
-function AuraCards:TextPosition(page, db)
+function AuraCards:TextPosition(page, db, ctx)
+    local Apply = ctx.Apply
     local slots = self.TextSlots
 
     local card = page:Card(L['Text Position'], 'all')
@@ -343,7 +397,10 @@ function AuraCards:TextPosition(page, db)
             width = 0.4,
             options = self.TextAnchors,
             value = position.AnchorFrom,
-            callback = function(key) position.AnchorFrom = key end,
+            callback = function(key)
+                position.AnchorFrom = key
+                Apply()
+            end,
         })
         row:Slider(slot.x, {
             width = 0.3,
@@ -351,7 +408,10 @@ function AuraCards:TextPosition(page, db)
             max = 40,
             step = 1,
             value = position.XOffset,
-            callback = function(val) position.XOffset = val end,
+            callback = function(val)
+                position.XOffset = val
+                Apply()
+            end,
         })
         row:Slider(slot.y, {
             width = 0.3,
@@ -359,7 +419,10 @@ function AuraCards:TextPosition(page, db)
             max = 40,
             step = 1,
             value = position.YOffset,
-            callback = function(val) position.YOffset = val end,
+            callback = function(val)
+                position.YOffset = val
+                Apply()
+            end,
         })
     end
 
@@ -372,7 +435,7 @@ function AuraCards:Reload(page)
     local card = page:Card(L['Apply Changes'], 'all')
     card:Row(56):Text(L['Aura Button Information'], {
         width = 1,
-        text = L['Aura buttons are built once by the game and cannot be restyled in place. These settings are saved immediately but only take effect after a reload.'],
+        text = L['Aura buttons are built once by the game and cannot be restyled in place. The preview follows these settings straight away, the real auras pick them up after a reload.'],
         height = 56,
         bgMode = 'none',
     })

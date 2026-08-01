@@ -15,6 +15,10 @@ local SpellHasRange = C_Spell and C_Spell.SpellHasRange
 local DOT_TEXTURE = 'Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\whiteCircle.png'
 local DIAMON_ATLAS = 'progress-bar-diamond-pip-mask'
 
+-- The cross sits at a fixed screen position and registers no anchor, so PreviewManager cannot resolve
+-- its page out of the anchor registry the way every other display is resolved.
+CombatCross.previewPages = 'combatCross'
+
 function CombatCross:UpdateDB()
     self.db = NRSKNUI.db.profile.CombatCross
 end

@@ -220,7 +220,19 @@ function WindowMixin:AddHeaderButton(config)
     -- Tween only alpha; the setter reads accent live so theme changes keep the tint correct.
     local animateAlpha = Animations:CreateColorAnimator(btn, function(_, _, _, a) ApplyAlpha(a) end,
         { 0, 0, 0, 0.7 }, theme.animDuration)
-    gui:OnThemeChanged(function() ApplyAlpha(0.7) end)
+
+    -- A button that toggles something rests lit rather than dimmed, so the state reads without a hover.
+    local function IdleAlpha()
+        return btn._active and 1 or 0.7
+    end
+
+    ---@param active boolean
+    function btn:SetActive(active)
+        btn._active = active and true or false
+        animateAlpha(0, 0, 0, IdleAlpha())
+    end
+
+    gui:OnThemeChanged(function() ApplyAlpha(IdleAlpha()) end)
 
     btn:SetScript("OnEnter", function()
         animateAlpha(0, 0, 0, 1)
@@ -231,11 +243,11 @@ function WindowMixin:AddHeaderButton(config)
         end
     end)
     btn:SetScript("OnLeave", function()
-        animateAlpha(0, 0, 0, 0.7)
+        animateAlpha(0, 0, 0, IdleAlpha())
         GameTooltip:Hide()
     end)
     if config.onClick then
-        btn:SetScript("OnClick", function() safecall(config.onClick) end)
+        btn:SetScript("OnClick", function() safecall(config.onClick, btn) end)
     end
 
     return btn

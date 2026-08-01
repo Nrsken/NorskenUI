@@ -6,11 +6,20 @@ local NRSKNUI = select(2, ...)
 local UF = NRSKNUI:GetModule('UnitFrames')
 ---@class NorskenUF
 local oUF = NRSKNUI.oUF
+local AuraPreview = NRSKNUI.AuraPreview
 
 local pairs = pairs
 local ipairs = ipairs
+local min = math.min
 
 local KINDS = { 'Buffs', 'Debuffs' }
+
+---Most auras a container can put on screen.
+---@param cfg table
+---@return number
+local function PreviewCount(cfg)
+    return min(cfg.maxFrameCount * NRSKNUI:GetAuraFilterBranchCount(cfg.Filter), cfg.previewLimit)
+end
 
 ---Layout anchor corner derived from growth direction.
 ---@param cfg table
@@ -142,6 +151,26 @@ UF.Elements.Auras = {
             -- self.unit is the live token, which a preview repoints away from the configured unit.
             container:SetUnit(self.unit or unit)
             container:SetShown(cfg.Enabled)
+
+            AuraPreview:Attach(container, self, pos.AnchorTo, pos.XOffset, pos.YOffset)
+            AuraPreview:Update(container, config, PreviewCount(cfg), cfg.Filter)
+        end
+    end,
+
+    ---Preview the aura containers, showing the preview and hiding the live auras.
+    ---@param self oUF.UnitFrame
+    ---@param unit string
+    ---@param uDB table
+    Preview = function(self, unit, uDB)
+        local containers = self.Auras
+        if not containers then return end
+
+        local preview = UF.Preview:IsAuraPreviewActive(unit)
+
+        for kind, container in pairs(containers) do
+            local enabled = uDB.Auras[kind].Enabled
+            AuraPreview:SetShown(container, preview and enabled)
+            container:SetShown(enabled and not preview)
         end
     end,
 }

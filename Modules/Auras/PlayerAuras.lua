@@ -3,10 +3,16 @@ local NRSKNUI = select(2, ...)
 ---@class PlayerAurasModule
 local PlayerAuras = NRSKNUI:GetModule('PlayerAuras')
 local Anchors = NRSKNUI.Anchors
+local AuraPreview = NRSKNUI.AuraPreview
 
 local CreateFrame = CreateFrame
+local CopyTable = CopyTable
 local pairs = pairs
+local min = math.min
 local RunNextFrame = RunNextFrame
+
+-- Weapon imbues, so the enchant dummies read as enchants rather than as two more buffs.
+local ENCHANT_PREVIEW_SPELLS = { 33757, 318038 }
 
 local KINDS = {
     Buffs = {
@@ -81,13 +87,40 @@ function PlayerAuras:GetContainerConfig(kind)
     }
 end
 
+---How many enchant frames a kind flows in front of its auras, which is none unless it is the buffs
+---display with weapon enchants turned on.
+---@param kind string
+---@return number
+function PlayerAuras:GetEnchantCount(kind)
+    return (kind == 'Buffs' and self.db[kind].showWeaponEnchants) and 2 or 0
+end
+
+---Most auras the current settings can put on screen.
+---@param kind string
+---@return number
+function PlayerAuras:GetPreviewCount(kind)
+    return min(self.db[kind].maxFrameCount + self:GetEnchantCount(kind), self.db[kind].previewLimit)
+end
+
 ---Size the host to the largest grid the current settings can produce, so the mover covers the display's
----full footprint. Weapon enchants are their own flow group and sit outside maxFrameCount.
+---full footprint.
 ---@param kind string
 function PlayerAuras:ResizeHost(kind)
-    local cfg = self.db[kind]
-    local count = cfg.maxFrameCount + ((kind == 'Buffs' and cfg.showWeaponEnchants) and 2 or 0)
-    self.hosts[kind]:SetSize(NRSKNUI:GetAuraGridSize(cfg, count))
+    self.hosts[kind]:SetSize(NRSKNUI:GetAuraGridSize(self.db[kind], self:GetPreviewCount(kind)))
+end
+
+---The preview's enchant group: the same buttons with the enchant border on them.
+---@param kind string
+---@param config table
+---@return table? lead
+function PlayerAuras:GetPreviewLead(kind, config)
+    local count = self:GetEnchantCount(kind)
+    if count == 0 then return nil end
+
+    local enchantConfig = CopyTable(config)
+    enchantConfig.borderColor = NRSKNUI.Colors.enchantColor
+
+    return { count = count, config = enchantConfig, spells = ENCHANT_PREVIEW_SPELLS }
 end
 
 ---Create the mover host frame for a kind, the container is attached later, out of combat.
@@ -134,6 +167,9 @@ function PlayerAuras:BuildContainer(kind)
     container:SetUnit('player')
 
     host.container = container
+
+    AuraPreview:Attach(container, host, config.anchorPoint)
+    AuraPreview:Update(container, config, self:GetPreviewCount(kind), KINDS[kind].filter, self:GetPreviewLead(kind, config))
 end
 
 function PlayerAuras:ApplySettings()
@@ -159,6 +195,8 @@ function PlayerAuras:ApplySettings()
                 container:ClearAllPoints()
                 container:SetPoint(config.anchorPoint, host, config.anchorPoint)
                 container:ApplyLayout(config)
+                AuraPreview:Attach(container, host, config.anchorPoint)
+                AuraPreview:Update(container, config, self:GetPreviewCount(kind), info.filter, self:GetPreviewLead(kind, config))
             end
         else
             host:Hide()
@@ -195,14 +233,29 @@ function PlayerAuras:OnDisable()
     end
 end
 
--- Previews, calling the aura data provider API's while in Blizzard Edit Mode can cause some errors so return early if that's the case.
+-- Previews. The real container swaps out for dummy auras, which are the only ones that can follow a
+-- settings change without a reload.
 
-function PlayerAuras:ShowPreview()
-    if not self.db.Enabled or NRSKNUI:IsEditModeActive() then return end
-    C_UnitAuras.SwitchAuraDataProvider()
+---@param previewing boolean
+---@param onlyKind string? limits it to one kind, since buffs and debuffs are configured on their own pages
+function PlayerAuras:SetPreviewing(previewing, onlyKind)
+    for kind, info in pairs(KINDS) do
+        local host = self.hosts[kind]
+        local container = host and host.container
+        if container then
+            local wanted = previewing and (onlyKind == nil or onlyKind == info.guiPath)
+            AuraPreview:SetShown(container, wanted)
+            container:SetShown(not wanted)
+        end
+    end
+end
+
+---@param pageId string? the page asking, so only the display it configures previews
+---@param showAll boolean? whether everything is being previewed, which means both displays
+function PlayerAuras:ShowPreview(pageId, showAll)
+    self:SetPreviewing(true, not showAll and pageId or nil)
 end
 
 function PlayerAuras:HidePreview()
-    if NRSKNUI:IsEditModeActive() then return end
-    C_UnitAuras.ResetAuraDataProvider()
+    self:SetPreviewing(false)
 end

@@ -207,10 +207,10 @@ local function BuildAppearanceTab(page, display, db, ctx)
     AuraCards:Icons(page, db, ctx)
 
     -- Card 2
-    AuraCards:Text(page, db)
+    AuraCards:Text(page, db, ctx)
 
     -- Card 3
-    AuraCards:Cooldown(page, db)
+    AuraCards:Cooldown(page, db, ctx)
 
     -- Card 4
     if display.harmful then
@@ -225,7 +225,7 @@ local function BuildAppearanceTab(page, display, db, ctx)
 end
 
 -- Font Settings Tab
-local function BuildFontTab(page, display, db)
+local function BuildFontTab(page, display, db, ctx)
     -- Card 1
     page:FontSettingsCard({
         db = db,
@@ -239,7 +239,7 @@ local function BuildFontTab(page, display, db)
     })
 
     -- Card 2
-    AuraCards:TextPosition(page, db)
+    AuraCards:TextPosition(page, db, ctx)
 
     -- Card 3
     AuraCards:Reload(page)
@@ -277,7 +277,7 @@ for _, display in ipairs(DISPLAYS) do
             elseif tabId == 'appearance' then
                 BuildAppearanceTab(page, display, db, ctx)
             elseif tabId == 'font' then
-                BuildFontTab(page, display, db)
+                BuildFontTab(page, display, db, ctx)
             elseif tabId == 'position' then
                 page:PositionCard({
                     db = db,

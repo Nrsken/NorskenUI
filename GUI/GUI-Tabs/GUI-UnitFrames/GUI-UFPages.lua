@@ -104,8 +104,6 @@ end
 
 do
     for _, unit in ipairs(UNITS) do
-        local isBoss = unit == 'boss'
-
         GUI:RegisterPage(UF.GUIPageID(unit), {
             mode = 'tabs',
             noHarvest = true,
@@ -135,9 +133,6 @@ do
 
                 builder(page, uDB, unit, tabId)
             end,
-            -- Boss frame preview handling.
-            onEnter = isBoss and function() UF.Preview:Request('boss') end or nil,
-            onLeave = isBoss and function() UF.Preview:Release('boss') end or nil,
         })
     end
 end

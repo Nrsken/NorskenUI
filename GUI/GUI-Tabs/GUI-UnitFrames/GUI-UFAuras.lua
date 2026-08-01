@@ -76,8 +76,8 @@ end
 -- Appearance Tab
 local function BuildAppearanceTab(page, def, cfg, unit, ctx)
     AuraCards:Icons(page, cfg, ctx)
-    AuraCards:Text(page, cfg)
-    AuraCards:Cooldown(page, cfg)
+    AuraCards:Text(page, cfg, ctx)
+    AuraCards:Cooldown(page, cfg, ctx)
     AuraCards:Dispel(page, cfg, ctx)
     AuraCards:Tooltip(page, cfg, ctx)
     AuraCards:Reload(page)
@@ -94,7 +94,10 @@ local function BuildFontTab(page, def, cfg, unit, ctx)
         max = 40,
         step = 1,
         value = cfg.StackFont.FontSize,
-        callback = function(val) cfg.StackFont.FontSize = val end,
+        callback = function(val)
+            cfg.StackFont.FontSize = val
+            ApplySettings()
+        end,
     })
     sizeRow:Slider(L['Duration Size'], {
         width = 0.5,
@@ -102,9 +105,12 @@ local function BuildFontTab(page, def, cfg, unit, ctx)
         max = 40,
         step = 1,
         value = cfg.DurationFont.FontSize,
-        callback = function(val) cfg.DurationFont.FontSize = val end,
+        callback = function(val)
+            cfg.DurationFont.FontSize = val
+            ApplySettings()
+        end,
     })
-    AuraCards:TextPosition(page, cfg)
+    AuraCards:TextPosition(page, cfg, ctx)
     AuraCards:Reload(page)
 end
 

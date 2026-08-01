@@ -213,6 +213,7 @@ NRSKNUI.Colors = {
     highlightColor = { 1, 1, 1, 0.25 },
     selectedColor = { 0.8, 0.8, 0.8, 0.25 },
     blackBgColor = { 0, 0, 0, 0.8 },
+    enchantColor = { 0.6, 0, 1, 1 }
 }
 
 ---Custom color palette (db.profile.Colors), pushed into oUF.colors and NRSKNUI.Colors.

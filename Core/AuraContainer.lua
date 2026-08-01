@@ -176,11 +176,14 @@ Tooltips, mouse handling and duration text are all driven natively.
 function NRSKNUI:SkinAuraButton(container, options, button)
     options = options or {}
 
-    -- Size the button and add a backdrop for border.
+    -- Size the button and add a backdrop for border. The backdrop takes no settings and is anchored to
+    -- the button, so a re-skinned preview dummy keeps the one it already has.
     local size = Opt(options, container, 'size', 24)
     button:SetSize(Opt(options, container, 'width', size), Opt(options, container, 'height', size))
     button:EnableMouse(not Opt(options, container, 'disableMouse'))
-    NRSKNUI:CreateBackdrop(button, nil, 0)
+    if not button.backdropBackground then -- the field CreateBackdrop sets, injected methods do not reach an AuraButton
+        NRSKNUI:CreateBackdrop(button, nil, 0)
+    end
 
     -- Tooltip anchor and combat hiding. The native button handles the tooltip itself, we just tell it where to go.
     button:SetTooltipAnchorPoint(
@@ -200,7 +203,8 @@ function NRSKNUI:SkinAuraButton(container, options, button)
     -- Cooldown spiral over the icon.
     local cooldown
     if not Opt(options, container, 'disableCooldown') then
-        cooldown = CreateFrame('Cooldown', nil, button, 'CooldownFrameTemplate')
+        -- Reused when already there, which only a preview dummy does: the container skins a button once.
+        cooldown = button.Cooldown or CreateFrame('Cooldown', nil, button, 'CooldownFrameTemplate')
         cooldown:SetAllPoints(icon)
         cooldown:SetDrawEdge(Opt(options, container, 'drawEdge', false))
         cooldown:SetDrawBling(false)
@@ -220,9 +224,10 @@ function NRSKNUI:SkinAuraButton(container, options, button)
     -- Create a overlay frame to hold the optional regions, so they can be stacked above the cooldown and icon.
     local overlay = button
     if cooldown and (showApplicationCount or showDurationText or showBuffDispelIcon or showDebuffDispelIcon) then
-        overlay = CreateFrame('Frame', nil, button)
+        overlay = button.nuiAuraOverlay or CreateFrame('Frame', nil, button)
         overlay:SetAllPoints()
         overlay:SetFrameLevel(cooldown:GetFrameLevel() + 1)
+        button.nuiAuraOverlay = overlay
     end
 
     local fontDB = Opt(options, container, 'fontDB')
@@ -637,7 +642,7 @@ function ContainerMixin:AddItemEnchant(slot, options)
     options = options or {}
 
     if options.borderColor == nil then
-        options.borderColor = { 0.6, 0, 1 } -- purple marks a weapon enchant --TODO Add DB
+        options.borderColor = NRSKNUI.Colors.enchantColor
     end
 
     if options.hidePermanent == nil then
