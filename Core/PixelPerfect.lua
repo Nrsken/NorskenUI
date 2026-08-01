@@ -13,6 +13,7 @@ NRSKNUI.PhysW, NRSKNUI.PhysH = GetPhysicalScreenSize()                 -- Get th
 NRSKNUI.ScreenW, NRSKNUI.ScreenH = GetScreenWidth(), GetScreenHeight() -- Get the current screen width and height of the game window.
 NRSKNUI.Res = format('%dx%d', NRSKNUI.PhysW, NRSKNUI.PhysH)            -- Format the physical screen size into a resolution string, e.g. "1920x1080".
 NRSKNUI.PerfectPixel = 768 / NRSKNUI.PhysH                             -- Auto scale factor
+NRSKNUI.InverseScale = 1 / UIParent:GetEffectiveScale()                -- Refreshed by SetUIScale
 NRSKNUI.TenEigthyPixel = 768 / 1080                                    -- Scale factor for 1080p resolution
 NRSKNUI.FourteenFortyPixel = 768 / 1440                                -- Scale factor for 1440p resolution
 
@@ -38,12 +39,18 @@ function NRSKNUI:UpdateMult()
     self.Mult = Pixel.GetMult()
 end
 
+---The inverse of UIParent's effective scale.
+function NRSKNUI:UpdateInverseScale()
+    self.InverseScale = 1 / UIParent:GetEffectiveScale()
+end
+
 ---Sets the UI scale based on the user's settings.
 function NRSKNUI:SetUIScale()
-    if not self.db.global.UIScale.Enabled then return end
-    if self:GetConflictingScaleAddon() then return end
+    if self.db.global.UIScale.Enabled and not self:GetConflictingScaleAddon() then
+        UIParent:SetScale(self.db.global.UIScale.Scale)
+    end
 
-    UIParent:SetScale(self.db.global.UIScale.Scale)
+    self:UpdateInverseScale()
 end
 
 ---Updates the physical and screen dimensions, as well as the perfect pixel size.

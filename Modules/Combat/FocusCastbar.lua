@@ -35,6 +35,7 @@ local INTERRUPTED = _G.INTERRUPTED
 
 local FALLBACK_ICON = 136243
 local INTERRUPTED_BY = 'Interrupted by %s'
+local KICK_STATE_THROTTLE = 0.1
 
 local CAST_EVENTS = {
     UNIT_SPELLCAST_START = 'CastStart',
@@ -362,7 +363,8 @@ end
 
 ---The cached cooldown feeds the tick's position, its visibility and the bar color.
 ---@param duration LuaDurationObject The running cast
-function FocusCastbar:UpdateKick(duration)
+---@param elapsed number
+function FocusCastbar:UpdateKick(duration, elapsed)
     self.positioner:SetValue(duration:GetElapsedDuration())
 
     if self.isPreview then return end
@@ -371,7 +373,13 @@ function FocusCastbar:UpdateKick(duration)
     local cooldown = self.interruptCooldown
     if not cooldown then return end
 
+    -- Both bars drive where the tick sits, so they stay per frame. On a throttle the tick jiggles.
     self.kickCooldownBar:SetValue(cooldown:GetRemainingDuration())
+
+    -- The tick's visibility and the bar color only move when the interrupt's readiness does, so they ride a throttle.
+    self.kickElapsed = self.kickElapsed + elapsed
+    if self.kickElapsed < KICK_STATE_THROTTLE then return end
+    self.kickElapsed = 0
 
     -- A ready interrupt needs no tick and an uninterruptible cast hides it either way.
     self.kickTick:SetAlphaFromBoolean(cooldown:IsZero(), 0,
@@ -566,6 +574,7 @@ function FocusCastbar:CastStart()
     self.castBarID, self.spellID, self.spellName = castBarID, spellID, displayName
     self.notInterruptible = notInterruptible
     self.textElapsed = 0
+    self.kickElapsed = 0
 
     self.castBar:SetTimerDuration(duration, Immediate, direction)
     self.iconFrame.texture:SetTexture(texture or FALLBACK_ICON)
@@ -741,7 +750,7 @@ local TEXT_THROTTLE = 0.1
 function FocusCastbar:OnUpdate(elapsed)
     local duration = self.castBar:GetTimerDuration()
     if duration then
-        self:UpdateKick(duration)
+        self:UpdateKick(duration, elapsed)
     end
 
     self.textElapsed = self.textElapsed + elapsed
@@ -756,6 +765,7 @@ function FocusCastbar:OnEnable()
     if not self.db.Enabled then return end
 
     self.textElapsed = 0
+    self.kickElapsed = 0
     self.pips = {}
     self:ResetCastState()
 
@@ -813,6 +823,7 @@ function FocusCastbar:StartPreviewCast()
     self.channeling, self.empowering = nil, nil
     self.notInterruptible = false
     self.textElapsed = 0
+    self.kickElapsed = 0
 
     self.castBar:SetTimerDuration(duration, Immediate, ElapsedTime)
     self.iconFrame.texture:SetTexture(FALLBACK_ICON)

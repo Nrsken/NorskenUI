@@ -135,11 +135,20 @@ function CursorCircle:CreateFrames()
     self.gcdRing = gcdRing
 
     -- Install OnUpdate script, follows the 1x1px follower frame.
+    local lastX, lastY, lastScale
     follower:SetScript('OnUpdate', function(_, elapsed)
-        local scale = 1 / UIParent:GetEffectiveScale()
+        local scale = NRSKNUI.InverseScale
         local posX, posY = GetCursorPosition()
-        follower:NUISetPixelPoint('CENTER', UIParent, 'BOTTOMLEFT', posX * scale, posY * scale)
-        self:ResolveAlpha(elapsed)
+
+        if posX ~= lastX or posY ~= lastY or scale ~= lastScale then
+            lastX, lastY, lastScale = posX, posY, scale
+            follower:SetPoint('CENTER', UIParent, 'BOTTOMLEFT', posX * scale, posY * scale)
+        end
+
+        -- Only the mouse button held modes change alpha over time, the rest are set once on apply.
+        if self.trackHold then
+            self:ResolveAlpha(elapsed)
+        end
     end)
 end
 
@@ -150,6 +159,8 @@ function CursorCircle:UpdateTracking()
     local mode = self.db.VisibilityMode
     local combatOnly = mode == 'combat' or mode == 'mouseDownCombat'
     local show = self.db.Enabled and (not combatOnly or self.inCombat)
+
+    self.trackHold = mode == 'mouseDown' or mode == 'mouseDownCombat'
 
     if not show then
         self.holdTime = 0
