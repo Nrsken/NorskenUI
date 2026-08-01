@@ -45,12 +45,31 @@ local function CastNormalColor(element, unit)
     return element.nuiColor
 end
 
+---Color the bar for the interruptible state stored on the element.
+---oUF keeps its own cast state private, so we track the flag ourselves.
+---@param element table Castbar element
+---@param unit string
+local function ApplyCastColor(element, unit)
+    element:SetStatusBarColor(EvaluateColorFromBoolean(element.nuiNotInterruptible, element.nuiShieldColor, CastNormalColor(element, unit)):GetRGB())
+end
+
 ---Post cast start handler, color the bar based on interruptibility.
 ---@param element table Castbar element
 ---@param unit string
-local function PostCastStart(element, unit)
+---@param notInterruptible boolean
+local function PostCastStart(element, unit, _, _, _, notInterruptible)
+    element.nuiNotInterruptible = notInterruptible
     element.nuiContainer:Show() -- Runs on every cast start, before oUF shows the bar
-    element:SetStatusBarColor(EvaluateColorFromBoolean(element.notInterruptible, element.nuiShieldColor, CastNormalColor(element, unit)):GetRGB())
+    ApplyCastColor(element, unit)
+end
+
+---Post cast interruptible handler, recolor when a cast flips interruptibility mid-cast.
+---@param element table Castbar element
+---@param unit string
+---@param notInterruptible boolean
+local function PostCastInterruptible(element, unit, notInterruptible)
+    element.nuiNotInterruptible = notInterruptible
+    ApplyCastColor(element, unit)
 end
 
 ---Post cast fail handler, color the bars in fail color.
@@ -62,8 +81,8 @@ end
 -- Preview --
 
 -- Previewed frames borrow an idle unit, so their castbar has nothing to draw. These run a fake cast instead,
--- driven by the same duration object oUF feeds a real one, so oUF's own OnUpdate keeps
--- the time text and the bar fill honest and nothing here has to reimplement them.
+-- driven by the same duration object oUF feeds a real one, so the bar fill and the time text update
+-- natively and nothing here has to reimplement them.
 local previewBars = {}
 local previewTicker
 
@@ -72,28 +91,26 @@ local function StartPreviewCast(element)
     local duration = CreateDuration()
     duration:SetTimeFromStart(GetTime(), PREVIEW_DURATION)
 
-    -- The attribute set oUF's CastStart leaves behind, so its OnUpdate holds the bar open.
-    element.casting = true
-    element.channeling, element.empowering = nil, nil
-    element.castID, element.spellID = nil, nil
-    element.spellName = L['Preview Cast']
-    element.delay = 0
-    element.holdTime = 0
+    -- oUF keeps its cast state private and its OnUpdate hides any bar without one, so park the
+    -- script for the preview. The duration object drives the bar on its own meanwhile.
+    element.nuiPreviewOnUpdate = element.nuiPreviewOnUpdate or element:GetScript('OnUpdate')
+    element:SetScript('OnUpdate', nil)
 
     element:SetTimerDuration(duration, element.smoothing, ElapsedTime)
     if element.Icon then element.Icon:SetTexture(FALLBACK_ICON) end
     if element.Spark then element.Spark:Show() end
     if element.Text then element.Text:SetText(L['Preview Cast']) end
+    if element.Time then element.Time.binding:SetDuration(duration) end
 
-    element:PostCastStart(element.nuiCastPreviewUnit)
+    element.nuiContainer:Show()
+    ApplyCastColor(element, element.nuiCastPreviewUnit)
     element:Show()
 end
 
 ---@param element table Castbar element
 local function StopPreviewCast(element)
-    -- Clearing the cast flags lets oUF's OnUpdate reset the rest of the attributes for us.
-    element.casting = nil
-    element.holdTime = 0
+    element:SetScript('OnUpdate', element.nuiPreviewOnUpdate)
+    element.nuiPreviewOnUpdate = nil
     element.nuiCastPreviewUnit = nil
     element:Hide() -- The OnHide hook takes the container with it.
 end
@@ -146,7 +163,7 @@ UF.Elements.Castbar = {
         castBar:HookScript('OnHide', function() container:Hide() end)
         castBar.CreatePip = CreatePip
         castBar.PostCastStart = PostCastStart
-        castBar.PostCastInterruptible = PostCastStart
+        castBar.PostCastInterruptible = PostCastInterruptible
         castBar.PostCastFail = PostCastFail
         castBar.PostCastInterrupted = PostCastFail
         castBar.Icon = icon -- oUF sets its texture on cast start
@@ -281,7 +298,7 @@ UF.Elements.Castbar = {
         if previewing and uDB.Castbar.Enabled and CreateDuration then
             castBar.nuiCastPreviewUnit = self.unit
             -- Alternating frames preview a shielded cast, so both configured colours are on screen.
-            castBar.notInterruptible = (self.nuiPreviewIndex or 1) % 2 == 0
+            castBar.nuiNotInterruptible = (self.nuiPreviewIndex or 1) % 2 == 0
 
             previewBars[castBar] = true
             StartPreviewCast(castBar)
