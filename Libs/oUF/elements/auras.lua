@@ -54,28 +54,28 @@ groups and slots for each element.
 ## Examples
 
   -- Initialize
-  local Container = self:CreateAura()
-  Container.num = 10 -- per-group option
+  local Auras = self:CreateAuras()
+  Auras.num = 10 -- per-group option
 
   -- Position and size
-  Container:SetPoint('TOP', self, 'BOTTOM')
+  Auras:SetPoint('TOP', self, 'BOTTOM')
 
   -- Enable some sub-widgets
-  Container.showCount = true
-  Container.showBuffBorder = true
+  Auras.showCount = true
+  Auras.showBuffBorder = true
 
   -- Register a group using a filter and some options
-  Container:AddGroup('HELPFUL', {
-    maxFrameCount = 20, -- overrides Container.num
+  Auras:AddGroup('HELPFUL', {
+    maxFrameCount = 20, -- overrides Auras.num
     initializeFrame = PostCreateAuraButton, -- overrides CreateButton override
     showDebuffBorder = true, -- group-specific option for its buttons
   })
 
   -- Register another group using a different filter and no options
-  Container:AddGroup('HARMFUL')
+  Auras:AddGroup('HARMFUL')
 
   -- Register a slot with a filter to only include Mark of the Wild
-  Container:AddSlot('HELPFUL', {
+  Auras:AddSlot('HELPFUL', {
     candidateFilters = {
       includeSpellIDs = {
         [1126] = true,
@@ -182,7 +182,7 @@ local function CreateButton(element, options, button)
 	--[[ Callback: Auras:PostCreateButton(button)
 	Called after a new aura button has been created.
 
-	* self    - the element used to represent the aura buttons (AuraContainer)
+	* self    - the element used to represent the aura buttons
 	* button  - the aura button (AuraButton)
 	* options - the aura group/slot options passed through to CreateButton (table)
 	--]]
@@ -242,7 +242,7 @@ function elementMixin:AddGroup(filter, options)
 		--[[ Override: Auras:CreateButton(options, button)
 		Used to initialize an aura button.
 
-		* self    - the element used to represent the aura buttons (AuraContainer)
+		* self    - the element used to represent the aura buttons
 		* options - options passed through from auras:AddGroup and auras:AddSlot
 		* button  - the aura button (AuraButton)
 		--]]
@@ -255,7 +255,7 @@ function elementMixin:AddGroup(filter, options)
 	STATE[frame].groupIndex = index
 
 	local key = 'Group' .. index
-	STATE[frame].containerGroups[self][key] = filter -- TODO: need to hook the method too
+	STATE[frame].elementGroups[self][key] = filter
 	self:AddAuraGroup(key, filter, options)
 
 	return key
@@ -304,7 +304,7 @@ function elementMixin:AddSlot(filter, options)
 	STATE[frame].slotIndex = index
 
 	local key = 'Slot' .. index
-	STATE[frame].containerSlots[self][key] = filter -- TODO: need to hook the method too
+	STATE[frame].elementSlots[self][key] = filter
 	self:AddAuraSlot(key, filter, options)
 
 	return key
@@ -317,9 +317,9 @@ function elementMixin:ForceUpdate()
 	self:UpdateAllAuras()
 end
 
-local function hookFilterChange(tbl, container, key, filter)
-	if filter ~= 'HELPFUL|HARMFUL' then -- noone should need to do this
-		STATE[container.__owner][tbl][container][key] = filter
+local function hookFilterChange(tbl, element, key, filter)
+	if(filter ~= 'HELPFUL|HARMFUL') then -- noone should need to do this
+		STATE[element.__owner][tbl][element][key] = filter
 	end
 end
 
@@ -334,7 +334,7 @@ Create and return a aura element.
 All of these options are provided as a convenience, and can be applied after creation through
 methods on the element.
 
-.layout        - Which axis the container should layout groups. Defaults to AnchorUtil.FlowLayoutAxis.Horizontal (number?)
+.layout        - Which way to layout groups. Defaults to AnchorUtil.FlowLayoutAxis.Horizontal (number?)
 .layoutLimit   - Max width or height of the element, depending on the layout. Defaults to the parent width or height (number?)
 .initialAnchor - Anchor point for the element. Defaults to 'TOPLEFT' (string?)
 .growthX       - Horizontal growth direction. Defaults to 'RIGHT' (string?)
@@ -344,120 +344,125 @@ methods on the element.
 .paddingRight  - Padding on the right side of the element. Takes priority over `padding` (number?)
 .paddingTop    - Padding on the top side of the element. Takes priority over `padding` (number?)
 .paddingBottom - Padding on the bottom side of the element. Takes priority over `padding` (number?)
-.policies      - Policy for how auras should be processed by the container. See CustomAuraContainerProcessAuraPolicyDefaultOptions (table?)
+.policy        - Policy for how auras should be processed. See CustomAuraContainerProcessAuraPolicyDefaultOptions (table?)
+.templates     - Extra templates to use for the aura element (string?)
 
 ## Returns
 
-* auras - the element used to represent the aura buttons (AuraContainer)
+* auras - the element used to represent the aura buttons
 --]]
 local function Create(self, options)
-	-- keep a local state of each container created for each frame
+	-- keep a local state of each element created for each frame
 	if(not STATE[self]) then
 		STATE[self] = {
 			index = 1,
-			-- we need to keep track of containers in order for UAE to update them
-			containers = {},
-			-- we also need to keep track of each individual group and slot for each container
-			containerGroups = {},
-			containerSlots = {},
+			elements = {},
+			-- we also need to keep track of each individual group and slot for each element
+			elementGroups = {},
+			elementSlots = {},
 		}
 	end
 
-	local element = CreateFrame('AuraContainer', '$parentAuraContainer' .. STATE[self].index, self, 'CustomAuraContainerTemplate')
+	local templates = 'CustomAuraContainerTemplate'
+	if(options and options.templates) then
+		templates = templates .. ',' .. options.templates
+	end
+
+	local element = CreateFrame('AuraContainer', '$parentAuras' .. STATE[self].index, self, templates)
+	STATE[self].elements[STATE[self].index] = element
 	STATE[self].index = STATE[self].index + 1
 
 	element.__owner = self
 
-	-- inject this container into the state table
-	table.insert(STATE[self].containers, element)
-
-	-- inject this container into each group/slot state table
-	STATE[self].containerGroups[element] = {}
-	STATE[self].containerSlots[element] = {}
+	-- inject into each group/slot state table
+	STATE[self].elementGroups[element] = {}
+	STATE[self].elementSlots[element] = {}
 
 	-- hook filter methods so we can keep the aformentioned tables updated with the current filters
-	hooksecurefunc(element, 'SetAuraGroupFilterString', GenerateClosure(hookFilterChange, 'containerGroups'))
-	hooksecurefunc(element, 'SetAuraSlotFilterString', GenerateClosure(hookFilterChange, 'containerSlots'))
+	hooksecurefunc(element, 'SetAuraGroupFilterString', GenerateClosure(hookFilterChange, 'elementGroups'))
+	hooksecurefunc(element, 'SetAuraSlotFilterString', GenerateClosure(hookFilterChange, 'elementSlots'))
 
-	-- element-wide options we'll just set directly from options
-	element:SetFlowLayoutAnchorPoint(options.initialAnchor or 'TOPLEFT')
+	if(options) then
+		-- element-wide options we'll just set directly from options
+		element:SetFlowLayoutAnchorPoint(options.initialAnchor or 'TOPLEFT')
 
-	if(options.layout) then
-		element:SetFlowLayoutAxis(options.layout)
-	end
+		if(options.layout) then
+			element:SetFlowLayoutAxis(options.layout)
+		end
 
-	if(options.layout == AnchorUtil.FlowLayoutAxis.Vertical) then
-		element:SetFlowLayoutMaximumLineSize(options.layoutLimit or self:GetHeight())
-	else
-		element:SetFlowLayoutMaximumLineSize(options.layoutLimit or self:GetWidth())
-	end
+		if(options.layout == AnchorUtil.FlowLayoutAxis.Vertical) then
+			element:SetFlowLayoutMaximumLineSize(options.layoutLimit or self:GetHeight())
+		else
+			element:SetFlowLayoutMaximumLineSize(options.layoutLimit or self:GetWidth())
+		end
 
-	local growthX = (options.growthX == 'LEFT' and -1) or 1
-	local growthY = (options.growthY == 'DOWN' and -1) or 1
-	element:SetFlowLayoutGrowthDirection(growthX, growthY)
+		local growthX = (options.growthX == 'LEFT' and -1) or 1
+		local growthY = (options.growthY == 'DOWN' and -1) or 1
+		element:SetFlowLayoutGrowthDirection(growthX, growthY)
 
-	local paddingLeft = options.paddingLeft or options.padding or 0
-	local paddingRight = options.paddingRight or options.padding or 0
-	local paddingTop = options.paddingTop or options.padding or 0
-	local paddingBottom = options.paddingBottom or options.padding or 0
-	element:SetFlowLayoutPadding(paddingLeft, paddingRight, paddingTop, paddingBottom)
+		local paddingLeft = options.paddingLeft or options.padding or 0
+		local paddingRight = options.paddingRight or options.padding or 0
+		local paddingTop = options.paddingTop or options.padding or 0
+		local paddingBottom = options.paddingBottom or options.padding or 0
+		element:SetFlowLayoutPadding(paddingLeft, paddingRight, paddingTop, paddingBottom)
 
-	if(options.policies) then
-		-- just expose it easily for layouts in case they want to use it
-		element:SetAuraProcessingPolicy(CustomAuraContainerAuraProcessingPolicy.ProcessAura, options.policies)
+		if(options.policy  ) then
+			-- just expose it easily for layouts in case they want to use it
+			element:SetAuraProcessingPolicy(CustomAuraContainerAuraProcessingPolicy.ProcessAura, options.policy  )
+		end
 	end
 
 	return Mixin(element, elementMixin)
 end
 
 local function Update(self)
-	if(STATE[self] and STATE[self].containers) then
-		for _, container in next, STATE[self].containers do
-			if container:GetUnit() ~= self.unit then
-				container:SetUnit(self.unit) -- triggers a full update
+	if(STATE[self] and STATE[self].elements) then
+		for _, element in next, STATE[self].elements do
+			if element:GetUnit() ~= self.unit then
+				element:SetUnit(self.unit) -- triggers a full update
 			else
-				container:ForceUpdate()
+				element:ForceUpdate()
 			end
 		end
 	end
 end
 
 local function Enable(self)
-	if(STATE[self] and STATE[self].containers) then
-		for _, container in next, STATE[self].containers do
+	if(STATE[self] and STATE[self].elements) then
+		for _, element in next, STATE[self].elements do
 			-- when enabling a container we have to also reset the filters for each group and slot
 			-- to their last known state
-			for groupKey, filter in next, STATE[self].containerGroups[container] do
-				container:SetAuraGroupFilterString(groupKey, filter)
+			for groupKey, filter in next, STATE[self].elementGroups[element] do
+				element:SetAuraGroupFilterString(groupKey, filter)
 			end
 
-			for slotKey, filter in next, STATE[self].containerSlots[container] do
-				container:SetAuraSlotFilterString(slotKey, filter)
+			for slotKey, filter in next, STATE[self].elementSlots[element] do
+				element:SetAuraSlotFilterString(slotKey, filter)
 			end
 
-			container:SetEnabled(true) -- triggers a full update
+			element:SetEnabled(true) -- triggers a full update
 		end
-	end
 
-	return true
+		return true
+	end
 end
 
 local function Disable(self)
-	if(STATE[self] and STATE[self].containers) then
-		for _, container in next, STATE[self].containers do
-			container:SetEnabled(false)
+	if(STATE[self] and STATE[self].elements) then
+		for _, element in next, STATE[self].elements do
+			element:SetEnabled(false)
 
 			-- disabling a container does not "reset" the groups and slots within, so we have to
 			-- temporarily disable them ourselves. there are however no methods to simply disable groups
 			-- and slots. the best workaround is to set invalid/conflicting filters that would always
 			-- result in no aura buttons
 
-			for groupKey in next, STATE[self].containerGroups[container] do
-				container:SetAuraGroupFilterString(groupKey, 'HELPFUL|HARMFUL')
+			for groupKey in next, STATE[self].elementGroups[element] do
+				element:SetAuraGroupFilterString(groupKey, 'HELPFUL|HARMFUL')
 			end
 
-			for slotKey in next, STATE[self].containerSlots[container] do
-				container:SetAuraSlotFilterString(slotKey, 'HELPFUL|HARMFUL')
+			for slotKey in next, STATE[self].elementSlots[element] do
+				element:SetAuraSlotFilterString(slotKey, 'HELPFUL|HARMFUL')
 			end
 		end
 	end

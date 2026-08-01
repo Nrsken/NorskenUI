@@ -21,6 +21,7 @@ read_globals = {
 
 	-- FrameXML
 	'AnchorUtil',
+	'AuraUtil',
 	'ArenaEnemyMatchFramesContainer',
 	'AuraContainerSortDirection',
 	'AuraContainerSortMethod',
@@ -55,18 +56,22 @@ read_globals = {
 	-- namespaces
 	'C_AddOns',
 	'C_CVar',
+	'C_ClassColor',
 	'C_ClassTalents',
 	'C_ColorUtil',
 	'C_CurveUtil',
+	'C_DurationUtil',
 	'C_IncomingSummon',
 	'C_NamePlate',
 	'C_NamePlateManager',
 	'C_PvP',
+	'C_Secrets',
 	'C_SpecializationInfo',
 	'C_Spell',
 	'C_SpellBook',
 	'C_StringUtil',
 	'C_Texture',
+	'C_Timer',
 	'C_UnitAuras',
 
 	-- API
@@ -128,7 +133,7 @@ read_globals = {
 	'UnitFactionGroup',
 	'UnitGUID',
 	'UnitGetDetailedHealPrediction',
-	'UnitGroupRolesAssigned',
+	'UnitGroupRolesAssignedEnum',
 	'UnitHasIncomingResurrection',
 	'UnitHasVehiclePlayerFrameUI',
 	'UnitHasVehicleUI',
