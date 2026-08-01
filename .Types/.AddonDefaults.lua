@@ -69,7 +69,6 @@
 ---@field BattleRes NRSKNUI.DBProfile.BattleRes
 ---@field BlizzardRM NRSKNUI.DBProfile.BlizzardRM
 ---@field BurningRush NRSKNUI.DBProfile.BurningRush
----@field GearUtility NRSKNUI.DBProfile.GearUtility
 ---@field Colors NRSKNUI.DBProfile.Colors
 ---@field CombatCross NRSKNUI.DBProfile.CombatCross
 ---@field CombatMessage NRSKNUI.DBProfile.CombatMessage
@@ -77,6 +76,7 @@
 ---@field Defensives NRSKNUI.DBProfile.Defensives
 ---@field DungeonCasts NRSKNUI.DBProfile.DungeonCasts
 ---@field DungeonTimers NRSKNUI.DBProfile.DungeonTimers
+---@field GearUtility NRSKNUI.DBProfile.GearUtility
 ---@field HealerMana NRSKNUI.DBProfile.HealerMana
 ---@field IncarnStacks NRSKNUI.DBProfile.IncarnStacks
 ---@field InstanceReset NRSKNUI.DBProfile.InstanceReset
@@ -117,6 +117,7 @@
 ---@field lineSpacing number
 ---@field maxFrameCount number
 ---@field perRow number
+---@field previewLimit number
 ---@field reverseSwipe boolean
 ---@field showApplicationCount boolean
 ---@field showBorder boolean
@@ -191,6 +192,7 @@
 ---@field lineSpacing number
 ---@field maxFrameCount number
 ---@field perRow number
+---@field previewLimit number
 ---@field reverseSwipe boolean
 ---@field showApplicationCount boolean
 ---@field showDurationText boolean
@@ -256,6 +258,7 @@
 ---@field lineSpacing number
 ---@field maxFrameCount number
 ---@field perRow number
+---@field previewLimit number
 ---@field reverseSwipe boolean
 ---@field showApplicationCount boolean
 ---@field showBorder boolean
@@ -389,28 +392,6 @@
 ---@field AnchorTo string
 ---@field XOffset number
 ---@field YOffset number
-
----@class NRSKNUI.DBProfile.GearUtility
----@field [string] any
----@field Enabled boolean
----@field Enchants NRSKNUI.DBProfile.GearUtility.Enchants
----@field Sockets NRSKNUI.DBProfile.GearUtility.Sockets
----@field TrackIndicators NRSKNUI.DBProfile.GearUtility.TrackIndicators
-
----@class NRSKNUI.DBProfile.GearUtility.Enchants
----@field [string] any
----@field Enabled boolean
-
----@class NRSKNUI.DBProfile.GearUtility.Sockets
----@field [string] any
----@field ButtonSize number
----@field ButtonSpacing number
----@field Enabled boolean
----@field ShowOnlyEmpty boolean
-
----@class NRSKNUI.DBProfile.GearUtility.TrackIndicators
----@field [string] any
----@field Enabled boolean
 
 ---@class NRSKNUI.DBProfile.Colors
 ---@field [string] any
@@ -614,6 +595,7 @@
 ---@field lineSpacing number
 ---@field maxFrameCount number
 ---@field perRow number
+---@field previewLimit number
 ---@field reverseSwipe boolean
 ---@field showApplicationCount boolean
 ---@field showDurationText boolean
@@ -924,6 +906,28 @@
 ---@field textJustify string
 ---@field triggerType string
 ---@field useBigWigsColors boolean
+
+---@class NRSKNUI.DBProfile.GearUtility
+---@field [string] any
+---@field Enabled boolean
+---@field Enchants NRSKNUI.DBProfile.GearUtility.Enchants
+---@field Sockets NRSKNUI.DBProfile.GearUtility.Sockets
+---@field TrackIndicators NRSKNUI.DBProfile.GearUtility.TrackIndicators
+
+---@class NRSKNUI.DBProfile.GearUtility.Enchants
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.GearUtility.Sockets
+---@field [string] any
+---@field ButtonSize number
+---@field ButtonSpacing number
+---@field Enabled boolean
+---@field ShowOnlyEmpty boolean
+
+---@class NRSKNUI.DBProfile.GearUtility.TrackIndicators
+---@field [string] any
+---@field Enabled boolean
 
 ---@class NRSKNUI.DBProfile.HealerMana
 ---@field [string] any
@@ -2698,6 +2702,7 @@
 ---@field lineSpacing number
 ---@field maxFrameCount number
 ---@field perRow number
+---@field previewLimit number
 ---@field reverseSwipe boolean
 ---@field showApplicationCount boolean
 ---@field showDurationText boolean
@@ -2886,6 +2891,7 @@
 ---@field horizontalGrowthDirection string
 ---@field maxFrameCount number
 ---@field perRow number
+---@field previewLimit number
 ---@field size number
 ---@field verticalGrowthDirection string
 
