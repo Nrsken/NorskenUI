@@ -72,8 +72,10 @@ for _, preset in ipairs(AuraIndicators.Presets) do
 end
 
 AuraIndicators.AuraTypes = {
-    { value = AF.Helpful, text = L['Helpful'] },
-    { value = AF.Harmful, text = L['Harmful'] },
+    { value = AF.Helpful,                                text = L['Helpful'] },
+    { value = CreateFilterString(AF.Helpful, AF.Player), text = L['Helpful (Applied by You)'] },
+    { value = AF.Harmful,                                text = L['Harmful'] },
+    { value = CreateFilterString(AF.Harmful, AF.Player), text = L['Harmful (Applied by You)'] },
 }
 
 local function GetStore()
