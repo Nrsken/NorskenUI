@@ -44,7 +44,7 @@ UF.Elements.Indicators = {
         local container = CreateFrame('Frame', nil, self)
         container:NUISetPixelPoint("TOPLEFT", self, "TOPLEFT", 0, 0)
         container:NUISetPixelPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", 0, 0)
-        container:SetFrameLevel(1000)
+        container:SetFrameLevel(UF.TopLevels.Status)
         container:SetFrameStrata("MEDIUM")
         self.IndicatorContainer = container
 

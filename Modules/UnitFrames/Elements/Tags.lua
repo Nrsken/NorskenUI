@@ -61,7 +61,7 @@ UF.Elements.Tags = {
         local container = CreateFrame('Frame', nil, self)
         container:NUISetPixelPoint('TOPLEFT', self, 'TOPLEFT', 0, 0)
         container:NUISetPixelPoint('BOTTOMRIGHT', self, 'BOTTOMRIGHT', 0, 0)
-        container:SetFrameLevel(999)
+        container:SetFrameLevel(UF.TopLevels.Tags)
         container:SetFrameStrata('MEDIUM')
 
         self.TagContainer = container

@@ -134,25 +134,27 @@ function EditBox:SetFontJustify(source, parent, offsetX, offsetY, skip, bound, f
 ---@field SetOnUpdateMode fun(self: Frame, mode: number) Set the OnUpdateMode (Enum.OnUpdateMode) for this frame; see docs for details
 ---@field NUIFitBackdropToText fun(self: Frame, fontString: FontString, text: string, padX: number, padY: number): boolean Size the backdrop to the widest string sharing text's digit shape; returns true if it resized
 ---@field SetAlphaFromBoolean fun(self: Frame, value: boolean|number|nil, alphaIfTrue?: number, alphaIfFalse?: number)
----@field CreateAuraContainer fun(self: Frame, config: table): NUIAuraContainer?
+---@field CreateAuraContainer fun(self: Frame, config: table?): NUIAuraContainer?
 ---@field container NUIAuraContainer?
 ---@field _PixelGlow Frame? Attached by LibCustomGlow's PixelGlow_Start
 ---@field _AutoCastGlow Frame? Attached by LibCustomGlow's AutoCastGlow_Start
 local Frame
 
 ---@class NUIAuraContainer : Frame
----@field AddGroup fun(self: NUIAuraContainer, filter: string)
+---@field AddGroup fun(self: NUIAuraContainer, filter: string, options: table?)
+---@field AddSlot fun(self: NUIAuraContainer, filter: string, options: table?): table?
 ---@field AddFilteredGroup fun(self: NUIAuraContainer, filterName: string)
 ---@field ReapplyFilters fun(self: NUIAuraContainer)
 ---@field RebindFilteredGroups fun(self: NUIAuraContainer, filterName: string)
 ---@field SetItemEnchantLayout fun(self: NUIAuraContainer, config: table)
 ---@field AddItemEnchant fun(self: NUIAuraContainer, slot: number)
 ---@field SetUnit fun(self: NUIAuraContainer, unit: string)
+---@field UpdateAllAuras fun(self: NUIAuraContainer)
 ---@field ApplyLayout fun(self: NUIAuraContainer, config: table)
 
 ---@class NUIAuraHostFrame : Frame
 ---@field container NUIAuraContainer?
----@field CreateAuraContainer fun(self: NUIAuraHostFrame, config: table): NUIAuraContainer?
+---@field CreateAuraContainer fun(self: NUIAuraHostFrame, config: table?): NUIAuraContainer?
 
 ---Strip textures/atlases in a controlled way. `'Keyed'` recurses keyed children then clears own regions.
 ---

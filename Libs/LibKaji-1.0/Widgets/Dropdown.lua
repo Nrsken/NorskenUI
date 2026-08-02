@@ -50,6 +50,7 @@ local strlower, strfind = string.lower, string.find
 local tinsert, tsort, tremove = table.insert, table.sort, table.remove
 local IsMouseButtonDown = IsMouseButtonDown
 local Mixin = Mixin
+local pcall = pcall
 
 local C_Timer = C_Timer
 local UIParent = UIParent
@@ -70,9 +71,15 @@ local HOVER_DURATION = 0.12
 local STANDARD_BACKDROP = { bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1 }
 local BORDER_ONLY_BACKDROP = { edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1 }
 
--- A preview is a raw SetFont on a region the theme otherwise owns, so every path that
--- cannot produce one has to hand the region back to the theme font. Leaving it alone
--- keeps the last previewed face on a recycled dropdown.
+local function ClearPreviewFont(gui, fontString)
+    if not fontString then return end
+
+    gui:ApplyFont(fontString, "normal")
+
+    local path, size, flags = gui:GetThemeFont("normal")
+    if path then pcall(fontString.SetFont, fontString, path, size, flags) end
+end
+
 local function ApplyPreviewFont(gui, fontString, fontPath, size)
     if not fontString then return end
     fontString:SetShadowColor(0, 0, 0, 0)
@@ -82,7 +89,7 @@ local function ApplyPreviewFont(gui, fontString, fontPath, size)
         ok, valid = pcall(fontString.SetFont, fontString, fontPath, size or PREVIEW_SIZE, "OUTLINE")
     end
     if not ok or not valid then
-        gui:ApplyFont(fontString, "normal")
+        ClearPreviewFont(gui, fontString)
     end
 end
 
@@ -125,7 +132,7 @@ local function AcquireItemButton(gui, parent)
         btn:SetParent(parent)
         btn._hoverBg:SetAlpha(0)
         btn._hoverTarget = 0
-        gui:ApplyFont(btn._text, "normal")
+        ClearPreviewFont(gui, btn._text)
         btn:Show()
         return btn
     end
@@ -204,6 +211,8 @@ end
 ---@field _isStatusbarPreview boolean
 ---@field _callback? fun(value: any)
 ---@field _currentValue any
+---@field _multiSelect boolean
+---@field _selectedSet? table<any, boolean>
 ---@field _isOpen boolean
 ---@field _itemButtons table[]
 local DropdownMixin = {}
@@ -234,10 +243,30 @@ local function NormalizeOptions(row, options)
     end
 end
 
+--- Rebuilds the membership lookup a multi-select uses, from its array of chosen values.
+local function RebuildSelectedSet(row)
+    local set = {}
+    if row._multiSelect and type(row._currentValue) == "table" then
+        for _, value in ipairs(row._currentValue) do set[value] = true end
+    end
+    row._selectedSet = set
+end
+
+--- True when a value is part of the current selection, whichever mode the dropdown is in.
+local function IsValueSelected(row, value)
+    if row._multiSelect then
+        return row._selectedSet ~= nil and row._selectedSet[value] == true
+    end
+    return row._currentValue == value
+end
+
+---In multi-select mode `value` is an array of chosen values and is stored as given, so a caller keeps
+---whatever order it built. Single-select is unchanged.
 ---@param value any
 ---@param silent? boolean
 function DropdownMixin:SetValue(value, silent)
     self._currentValue = value
+    RebuildSelectedSet(self)
     self._applySelected(value)
     for _, btn in ipairs(self._itemButtons) do
         if btn._updateColor then btn._updateColor() end
@@ -286,6 +315,7 @@ DropdownMixin.SetOptions = DropdownMixin.UpdateOptions
 ---@field value? any
 ---@field callback? fun(value: any)
 ---@field searchable? boolean
+---@field multiSelect? boolean toggle several options at once; value becomes an array and the list stays open on click
 ---@field tooltip? string
 
 ---@param parent Frame
@@ -381,6 +411,31 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     local firstVisibleKey = nil
 
     local function ApplySelected(value)
+        if row._multiSelect then
+            -- Only a lone pick is named. Listing every one of them outgrew the button, and the label
+            -- reshuffled itself as the user toggled things on and off, so past one they collapse.
+            local count, firstName = 0, nil
+            for _, key in ipairs(row._orderedKeys or {}) do
+                if IsValueSelected(row, key) then
+                    count = count + 1
+                    firstName = firstName or row._normalizedOptions[key] or tostring(key)
+                end
+            end
+
+            local text = "Select..."
+            if count == 1 then
+                text = firstName
+            elseif count > 1 then
+                text = "Multiple Selected"
+            end
+
+            selectedText:SetText(text)
+            gui:ApplyFont(selectedText, "normal")
+            selectedText:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
+            selectedBar:Hide()
+            return
+        end
+
         if row._normalizedOptions[value] then
             selectedText:SetText(row._normalizedOptions[value])
         else
@@ -399,7 +454,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         if row._isFontPreview and value then
             ApplyPreviewFont(gui, selectedText, gui:ResolveMedia("font", value), PREVIEW_SIZE)
         else
-            gui:ApplyFont(selectedText, "normal")
+            ClearPreviewFont(gui, selectedText)
         end
 
         if row._isStatusbarPreview and value then
@@ -603,6 +658,32 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     end
 
     local function SelectValue(value)
+        if row._multiSelect then
+            -- Toggling keeps the list open, so the callback fires now rather than being deferred to the
+            -- close animation. A multi-select callback must therefore not rebuild its own widget.
+            local values = type(row._currentValue) == "table" and row._currentValue or {}
+            local removed = false
+
+            for index, existing in ipairs(values) do
+                if existing == value then
+                    tremove(values, index)
+                    removed = true
+                    break
+                end
+            end
+            if not removed then tinsert(values, value) end
+
+            row._currentValue = values
+            RebuildSelectedSet(row)
+            ApplySelected(values)
+            for _, btn in ipairs(row._itemButtons) do
+                if btn._updateColor then btn._updateColor() end
+            end
+
+            safecall(row._callback, values)
+            return
+        end
+
         row._currentValue = value
         ApplySelected(value)
         row._pendingValue = value
@@ -624,17 +705,25 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
             btn._index = i
             btn._text:SetText(displayText or key)
 
+            -- Independent, not an if/elseif chain: a pooled button carries whichever preview the dropdown
+            -- it last served applied, so each one has to be either set or cleared on every acquire.
             if row._isFontPreview then
                 ApplyPreviewFont(gui, btn._text, gui:ResolveMedia("font", key), PREVIEW_SIZE)
-            elseif row._isStatusbarPreview then
+            else
+                ClearPreviewFont(gui, btn._text)
+            end
+
+            if row._isStatusbarPreview then
                 ApplyPreviewTexture(btn._previewBar, gui:ResolveMedia(row._mediaType, key))
                 btn._previewBar:SetVertexColor(theme.accent[1], theme.accent[2], theme.accent[3], 0.4)
                 btn._previewBar:Show()
+            else
+                btn._previewBar:Hide()
             end
 
             local optionColor = row._optionColors and row._optionColors[key]
             local function UpdateItemColor()
-                local isSelected = row._currentValue == btn._itemValue
+                local isSelected = IsValueSelected(row, btn._itemValue)
                 if optionColor then
                     btn._text:SetTextColor(optionColor.r or optionColor[1], optionColor.g or optionColor[2], optionColor.b or optionColor[3], isSelected and 1 or 0.7)
                 elseif isSelected then
@@ -924,6 +1013,7 @@ function DropdownMixin:OnAcquire(parent, labelText, config)
     -- custom types registered by the host (sparks, borders) get a preview for free.
     self._isStatusbarPreview = mediaType ~= nil and not self._isFontPreview and mediaType ~= "sound"
     self._searchable = config.searchable == true
+    self._multiSelect = config.multiSelect == true
 
     self.label:SetText(labelText or "")
     lib.SetTooltip(self, self.gui, labelText, config.tooltip)
@@ -935,6 +1025,7 @@ function DropdownMixin:OnAcquire(parent, labelText, config)
     -- looks like the user just picked something.
     self._callback = nil
     self._currentValue = config.value
+    RebuildSelectedSet(self)
     if config.value ~= nil then
         self._applySelected(config.value)
     else
@@ -966,6 +1057,8 @@ function DropdownMixin:OnRelease()
 
     self._callback = nil
     self._currentValue = nil
+    self._multiSelect = false
+    self._selectedSet = nil
     self._mediaType = nil
     self._hasPending, self._pendingValue = false, nil
     self.label:SetText("")

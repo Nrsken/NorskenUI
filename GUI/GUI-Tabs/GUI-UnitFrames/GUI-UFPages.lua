@@ -6,6 +6,7 @@ local L = NRSKNUI.Libs.AL
 local GUI = NRSKNUI.GUI
 
 local ipairs = ipairs
+local type = type
 
 local UNITS = {
     'player',
@@ -20,15 +21,16 @@ local UNITS = {
 
 -- Mini sidebar, in order. Power and Castbar drop out for the units that never have them.
 local SECTIONS = {
-    { key = 'frame',       text = L['Frame'] },
-    { key = 'health',      text = L['Health'] },
-    { key = 'power',       text = L['Power'] },
-    { key = 'castbar',     text = L['Castbar'] },
-    { key = 'tags',        text = L['Tags'] },
-    { key = 'indicators',  text = L['Indicators'] },
-    { key = 'misc',        text = L['Miscellaneous'] },
-    { key = 'aurabuffs',   text = L['Aura Buffs'] },
-    { key = 'auradebuffs', text = L['Aura Debuffs'] },
+    { key = 'frame',          text = L['Frame'] },
+    { key = 'health',         text = L['Health'] },
+    { key = 'power',          text = L['Power'] },
+    { key = 'castbar',        text = L['Castbar'] },
+    { key = 'tags',           text = L['Tags'] },
+    { key = 'indicators',     text = L['Indicators'] },
+    { key = 'misc',           text = L['Miscellaneous'] },
+    { key = 'aurabuffs',      text = L['Aura Buffs'] },
+    { key = 'auradebuffs',    text = L['Aura Debuffs'] },
+    { key = 'auraindicators', text = L['Aura Indicators'] },
 }
 
 -- Only these sections carry a sub-tab strip.
@@ -37,6 +39,7 @@ local SECTION_TABS = {
     indicators = UF.GUIIndicatorTabs,
     aurabuffs = UF.GUIAuras.tabs,
     auradebuffs = UF.GUIAuras.tabs,
+    auraindicators = UF.GUIAuraIndicatorTabs,
 }
 
 ---@param unit string
@@ -89,6 +92,7 @@ local function SearchTerms()
     -- The aura terms apply to both displays
     terms[#terms + 1] = { text = L['Aura Buffs'], itemKey = 'aurabuffs' }
     terms[#terms + 1] = { text = L['Aura Debuffs'], itemKey = 'auradebuffs' }
+    terms[#terms + 1] = { text = L['Aura Indicators'], itemKey = 'auraindicators' }
     for _, term in ipairs(UF.GUIAuras.search) do
         terms[#terms + 1] = { text = term, itemKey = 'aurabuffs' }
     end
@@ -110,7 +114,9 @@ do
             search = SearchTerms(),
             sidebar = { items = SectionItems(unit), default = 'frame' },
             tabs = function(sectionKey)
-                return SECTION_TABS[sectionKey] or {}
+                local tabs = SECTION_TABS[sectionKey]
+                if type(tabs) == 'function' then return tabs(unit) end
+                return tabs or {}
             end,
             build = function(page, tabId, sectionKey)
                 if not sectionKey then return end

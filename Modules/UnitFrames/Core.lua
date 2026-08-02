@@ -13,6 +13,7 @@ local upper = string.upper
 local format = string.format
 local pairs = pairs
 local ipairs = ipairs
+local CreateFrame = CreateFrame
 local RegisterUnitWatch = RegisterUnitWatch
 local UnregisterUnitWatch = UnregisterUnitWatch
 
@@ -331,6 +332,7 @@ function UF:OnEnable()
     end
 
     NRSKNUI.AuraFilters:RegisterCallback(self, function(module) module:ReapplyAuraFilters() end)
+    NRSKNUI.AuraIndicators:RegisterCallback(self, function(module) module:ReapplyAuraIndicators() end)
 
     -- Deferring the spawn of units until combat has ended.
     NRSKNUI:RunWhenSafe(function()
@@ -353,6 +355,7 @@ end
 
 function UF:OnDisable()
     NRSKNUI.AuraFilters:UnregisterCallback(self)
+    NRSKNUI.AuraIndicators:UnregisterCallback(self)
     UF.Preview:ReleaseAll()
     NRSKNUI:RunWhenSafe(function()
         for _, frame in pairs(UF.frames) do

@@ -48,6 +48,7 @@ local Defaults = {
         AuraFilters = {},
         AuraBlocklist = {},
         AuraSpellLists = {},
+        AuraIndicators = {},
     },
     profile = {
         -- Shared color palette, pushed into oUF.colors + NRSKNUI.Colors by NRSKNUI:LoadCustomColors().
@@ -2628,12 +2629,14 @@ local Defaults = {
                     UseGlobalBar = false,
                     StatusBarTexture = "StripesThick",
                     Color = { 0.4, 0, 0.8, 0.5 },
+                    Layer = 5,
                 },
                 DamageAbsorb = {
                     Enabled = true,
                     UseGlobalBar = false,
                     StatusBarTexture = "StripesThick",
                     Color = { 0, 0.39, 0.88, 0.81 },
+                    Layer = 4,
                 },
                 Highlight = {
                     Enabled = false,
@@ -2680,6 +2683,7 @@ local Defaults = {
                             UseGlobalBar = false,
                             StatusBarTexture = "StripesThick",
                             Color = { 0.4, 0, 0.8, 0.5 },
+                            Layer = 5,
                         },
                         DamageAbsorb = {
                             UseGlobal = true,
@@ -2687,6 +2691,7 @@ local Defaults = {
                             UseGlobalBar = false,
                             StatusBarTexture = "StripesThick",
                             Color = { 0, 0.39, 0.88, 0.81 },
+                            Layer = 4,
                         },
                     },
                     Power = {
@@ -2781,6 +2786,7 @@ local Defaults = {
                             },
                         },
                     },
+                    AuraIndicators = {},
                     Indicators = {
                         Resting = {
                             Enabled = false,

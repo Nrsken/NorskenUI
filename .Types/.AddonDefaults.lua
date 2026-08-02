@@ -7,6 +7,7 @@
 ---@field [string] any
 ---@field AuraBlocklist NRSKNUI.DBGlobal.AuraBlocklist
 ---@field AuraFilters NRSKNUI.DBGlobal.AuraFilters
+---@field AuraIndicators NRSKNUI.DBGlobal.AuraIndicators
 ---@field AuraSpellLists NRSKNUI.DBGlobal.AuraSpellLists
 ---@field GUIState NRSKNUI.DBGlobal.GUIState
 ---@field GlobalProfile string
@@ -19,6 +20,9 @@
 ---@field [string] any
 
 ---@class NRSKNUI.DBGlobal.AuraFilters
+---@field [string] any
+
+---@class NRSKNUI.DBGlobal.AuraIndicators
 ---@field [string] any
 
 ---@class NRSKNUI.DBGlobal.AuraSpellLists
@@ -2820,6 +2824,7 @@
 ---@field [string] any
 ---@field Color table
 ---@field Enabled boolean
+---@field Layer number
 ---@field StatusBarTexture string
 ---@field UseGlobalBar boolean
 
@@ -2827,6 +2832,7 @@
 ---@field [string] any
 ---@field Color table
 ---@field Enabled boolean
+---@field Layer number
 ---@field StatusBarTexture string
 ---@field UseGlobalBar boolean
 

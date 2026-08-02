@@ -17,6 +17,7 @@
     <Script file='DynamicGroup.lua' />
     <Script file='AuraContainer.lua' />
     <Script file='AuraFilters.lua' />
+    <Script file='AuraIndicators.lua' />
     <Script file='AuraPreview.lua' />
     <Script file='PreviewManager.lua' />
     <Script file='Anchors.lua' />

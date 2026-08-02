@@ -3,43 +3,30 @@ local NRSKNUI = select(2, ...)
 ---@class AuraFilters
 local AuraFilters = {}
 NRSKNUI.AuraFilters = AuraFilters
-
 local L = NRSKNUI.Libs.AL
 
-local AuraUtil = AuraUtil
-local ipairs = ipairs
-local pairs = pairs
-local type = type
-local next = next
-local unpack = unpack
-local wipe = wipe
-local tinsert = table.insert
-local tconcat = table.concat
-local tsort = table.sort
+local tinsert, tsort, tconcat = table.insert, table.sort, table.concat
+local ipairs, pairs = ipairs, pairs
 local format = string.format
 local CopyTable = CopyTable
+local unpack = unpack
+local type = type
+local next = next
+local wipe = wipe
+
+local AuraUtil = AuraUtil
 
 --[[
 
 Centralized aura filter registry.
 
-A filter string is an intersection, not a union: 'HELPFUL|BIG_DEFENSIVE' means helpful AND
-big defensive, and includeSpellIDs narrows the same way. To express OR a filter is an ordered
-list of branches, each branch being one base type + tokens + candidates. The container adds
-one aura group per branch and every group feeds the same flow layout.
-
-Consumers never build these themselves, they just reference a filter by name:
-
 API: for _, branch in ipairs(NRSKNUI:GetAuraFilter(self.db.Filter)) do
 A!     container:AddGroup(branch.filterString, { candidateFilters = branch.candidateFilters })
-A! end
+A!   end
 
 or, via the container convenience that also remembers the binding for live updates:
 
 API: container:AddFilteredGroup(self.db.Filter)
-
-Note that groups do not deduplicate: an aura matching two branches is shown once per branch.
-Use a negated token ('!BIG_DEFENSIVE') on the later branch to keep the branches disjoint.
 
 --]]
 
@@ -48,26 +35,44 @@ local Filters = AuraUtil.AuraFilters
 local NEG = AuraUtil.AuraFilterNegationPrefix
 
 -- These two ignore negation, so we never emit '!' for them.
-local NON_NEGATABLE = { [Filters.IncludeNameplateOnly] = true, [Filters.Maw] = true }
+local NON_NEGATABLE = {
+    [Filters.IncludeNameplateOnly] = true,
+    [Filters.Maw] = true,
+}
 
 -- Boolean candidate fields that can be true, false or nil.
 local BOOL_CANDIDATE_FIELDS = {
-    'isBossAura', 'isBossOrRoleAura', 'isRoleAura', 'isPriorityAura', 'isStealable',
-    'isFromPlayerOrPlayerPet', 'canApplyAura', 'nameplateShowAll', 'nameplateShowPersonal',
+    'isBossAura',
+    'isBossOrRoleAura',
+    'isRoleAura',
+    'isPriorityAura',
+    'isStealable',
+    'isFromPlayerOrPlayerPet',
+    'canApplyAura',
+    'nameplateShowAll',
+    'nameplateShowPersonal',
 }
 
 -- Table candidate fields that can be a table or nil.
 local TABLE_CANDIDATE_FIELDS = {
-    'includeDispelTypes', 'excludeDispelTypes', 'includeSpellIDs', 'excludeSpellIDs',
+    'includeDispelTypes',
+    'excludeDispelTypes',
+    'includeSpellIDs',
+    'excludeSpellIDs',
 }
 
 -- The two candidate fields the client only applies in one direction, see BranchRestriction.
-local SPELLID_CANDIDATE_FIELDS = { 'includeSpellIDs', 'excludeSpellIDs' }
+local SPELLID_CANDIDATE_FIELDS = {
+    'includeSpellIDs',
+    'excludeSpellIDs',
+}
 
 local function GetStore()
     return NRSKNUI.db.global.AuraFilters
 end
 
+---@param name string
+---@return table? spec
 local function GetSpec(name)
     local store = GetStore()
     return store and store[name]
@@ -257,7 +262,9 @@ function AuraFilters:Migrate()
     if not store then return end
 
     for _, spec in pairs(store) do
-        if type(spec) == 'table' then MigrateSpec(spec) end
+        if type(spec) == 'table' then
+            MigrateSpec(spec)
+        end
     end
 end
 
@@ -279,7 +286,7 @@ function AuraFilters:GetBranches(name)
         return { { filterString = name } }
     end
 
-    MigrateSpec(spec) -- specs created before branches existed, and any imported from an older profile
+    MigrateSpec(spec) -- specs created before branches existed and any imported from an older profile
 
     local branches = {}
     for index, branch in ipairs(spec.branches) do
@@ -352,7 +359,8 @@ local function HasSecretSpellID(candidates)
     return false
 end
 
----Branch restriction text for the GUI's FilterCard summary, when the branch has a candidate filter that the client may ignore. Returns nil when there is no restriction.
+---Branch restriction text for the GUI's FilterCard summary, when the branch has a candidate filter that the client may ignore.
+---Returns nil when there is no restriction.
 ---@param branch table compiled branch
 ---@return string? line
 local function BranchRestriction(branch)
@@ -383,7 +391,11 @@ local function BranchQualifiers(branch)
     if branch.spellLists then
         for _, entry in ipairs(branch.spellLists) do
             local isInclude = entry.type == 'whitelist'
-            if isInclude then namedInclude = true else namedExclude = true end
+            if isInclude then
+                namedInclude = true
+            else
+                namedExclude = true
+            end
             tinsert(parts, format(isInclude and L['Including %s'] or L['Excluding %s'], entry.name))
         end
     end
@@ -419,14 +431,14 @@ local function BranchQualifiers(branch)
     return parts
 end
 
----Human-readable summary of what a named filter resolves to, for the GUI's FilterCard summary.
+---Readable summary of what a named filter resolves to, for the GUI's FilterCard summary.
 ---Compiled through :GetBranches, so it always reflects live edits made on the Aura Filters page.
 ---One bullet per branch, plus the heading that introduces them, which the card uses as its title.
 ---@param name string?
 ---@return string[] lines
 ---@return string heading
 function AuraFilters:Describe(name)
-    -- The heading carries the accent itself, since it lands in a title the card draws in body colour.
+    -- The heading carries the accent itself, since it lands in a title the card draws in body color.
     if not name or name == '' then
         return {}, NRSKNUI:ColorTextByTheme(L['No filter selected, every harmful aura is shown.'])
     end
@@ -440,7 +452,7 @@ function AuraFilters:Describe(name)
     for index, branch in ipairs(branches) do
         local qualifiers = BranchQualifiers(branch)
         tinsert(qualifiers, 1, branch.filterString)
-        -- Only the branch number stays in the body colour, so the eye lands on what each one matches.
+        -- Only the branch number stays in the body color, so the eye lands on what each one matches.
         tinsert(lines, format(L['Branch %d: %s'], index, NRSKNUI:ColorTextByTheme(tconcat(qualifiers, ', '))))
 
         -- Its own line under the branch it belongs to, since it contradicts what that line just said.
@@ -448,10 +460,28 @@ function AuraFilters:Describe(name)
         if restriction then tinsert(lines, restriction) end
     end
 
-    local heading = #branches == 1 and L['Matches auras in the branch:']
-        or format(L['Matches auras in any of %d branches, shown once per branch:'], #branches)
+    local heading = #branches == 1 and L['Matches auras in the branch:'] or format(L['Matches auras in any of %d branches, shown once per branch:'], #branches)
 
     return lines, NRSKNUI:ColorTextByTheme(heading)
+end
+
+---Returns a map of every spellID a named filter matches on.
+---@param name string?
+---@return table? spellIds { [spellId] = true }
+function AuraFilters:GetSpellIDs(name)
+    local branches = self:GetBranches(name)
+    if not branches then return nil end
+
+    local spellIds = {}
+    for _, branch in ipairs(branches) do
+        for _, field in ipairs(SPELLID_CANDIDATE_FIELDS) do
+            for spellId in pairs(branch.candidateFilters and branch.candidateFilters[field] or {}) do
+                spellIds[spellId] = true
+            end
+        end
+    end
+
+    return spellIds
 end
 
 -- Consumer callbacks for live updates when a spec changes. Keyed by consumer table, value is callback function.
@@ -469,7 +499,7 @@ function AuraFilters:UnregisterCallback(consumer)
 end
 
 ---Clear the compile cache for a filter (or all filters) and notify consumers.
----Call after editing a spec in place, or after any change to the global blocklist (pass no name).
+---Call after editing a spec in place or after any change to the global blocklist (pass no name).
 ---@param name string?
 function AuraFilters:Invalidate(name)
     if name then

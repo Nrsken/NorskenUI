@@ -25,6 +25,7 @@ function UF:BuildStyle(frame, unit)
     self:ConstructElement('Tags', frame, unit)
     self:ConstructElement('Indicators', frame, unit)
     self:ConstructElement('Auras', frame, unit)
+    self:ConstructElement('AuraIndicators', frame, unit)
     if hasPower then
         self:ConstructElement('Power', frame, unit)
         self:ConstructElement('Castbar', frame, unit)

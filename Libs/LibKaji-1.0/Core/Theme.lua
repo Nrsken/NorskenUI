@@ -413,6 +413,16 @@ end
 function InstanceMixin:ApplyFont(fontString, size)
     if not fontString or not fontString.SetFontObject then return end
 
+    fontString:SetFontObject(getFontObject(self:GetThemeFont(size)))
+    fontString:SetShadowOffset(0, 0)
+    fontString:SetShadowColor(0, 0, 0, 0)
+end
+
+---The resolved theme font, in the form FontString:SetFont takes. Only needed by callers that have to
+---undo a direct SetFont, since ApplyFont's font object cannot outrank one.
+---@param size? "small"|"normal"|"large"|number
+---@return string path, number size, string flags
+function InstanceMixin:GetThemeFont(size)
     local theme = self.theme
     local fontSize
     if type(size) == "number" then
@@ -425,9 +435,7 @@ function InstanceMixin:ApplyFont(fontString, size)
         fontSize = theme.fontSizeNormal or 12
     end
 
-    fontString:SetFontObject(getFontObject(resolveFont(theme.fontFace), fontSize, theme.fontOutline or "OUTLINE"))
-    fontString:SetShadowOffset(0, 0)
-    fontString:SetShadowColor(0, 0, 0, 0)
+    return resolveFont(theme.fontFace), fontSize, theme.fontOutline or "OUTLINE"
 end
 
 -- Preset / mode engine --

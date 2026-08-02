@@ -64,6 +64,7 @@ GUIFrame.SidebarConfig = {
             defaultExpanded = false,
             items = {
                 { id = 'unitFramesGeneral',       text = L['General'] },
+                { id = 'unitFramesIndicators',    text = L['Aura Indicators'] },
                 { id = 'unitFrames_player',       text = L['Player'] },
                 { id = 'unitFrames_target',       text = L['Target'] },
                 { id = 'unitFrames_targettarget', text = L['Target of Target'] },

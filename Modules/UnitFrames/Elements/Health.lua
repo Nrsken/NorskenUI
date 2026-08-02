@@ -31,13 +31,13 @@ UF.Elements.Health = {
 
         -- Backgroundbar
         local healthBackground = CreateFrame('StatusBar', nil, self)
-        healthBackground:SetFrameLevel(self:GetFrameLevel() + 1)
+        healthBackground:SetFrameLevel(self:GetFrameLevel() + UF.BaseLevels.Background)
         healthBackground:SetReverseFill(true)
         healthBackground:NUISetPixelSnap()
 
         -- Health bar
         local healthBar = CreateFrame('StatusBar', nil, self) --[[@as oUF.Health]]
-        healthBar:SetFrameLevel(self:GetFrameLevel() + 2)
+        healthBar:SetFrameLevel(self:GetFrameLevel() + UF.BaseLevels.Bar)
         healthBar:NUISetPixelSnap()
         healthBar:SetClipsChildren(true) -- Keep over-absorb overflow inside the bar.
         healthBar.healthBackground = healthBackground
@@ -46,27 +46,23 @@ UF.Elements.Health = {
 
         -- Heal absorb bar
         local HealAbsorb = CreateFrame('StatusBar', nil, healthBar)
-        HealAbsorb:SetFrameLevel(healthBar:GetFrameLevel() + 1)
         HealAbsorb:NUISetPixelSnap()
         HealAbsorb:NUISetPixelWidth(self:GetWidth())
         healthBar.HealAbsorb = HealAbsorb
 
         -- Damage absorb bar
         local DamageAbsorb = CreateFrame('StatusBar', nil, healthBar)
-        DamageAbsorb:SetFrameLevel(healthBar:GetFrameLevel() + 1)
         DamageAbsorb:NUISetPixelSnap()
         DamageAbsorb:NUISetPixelWidth(self:GetWidth())
         healthBar.DamageAbsorb = DamageAbsorb
 
         -- Over-absorb bar clip frame.
         local OverDamageAbsorbClip = CreateFrame('Frame', nil, healthBar)
-        OverDamageAbsorbClip:SetFrameLevel(healthBar:GetFrameLevel() + 1)
         OverDamageAbsorbClip:SetClipsChildren(true)
         healthBar.OverDamageAbsorbClip = OverDamageAbsorbClip
 
         -- Over-absorb bar.
         local OverDamageAbsorb = CreateFrame('StatusBar', nil, OverDamageAbsorbClip)
-        OverDamageAbsorb:SetFrameLevel(healthBar:GetFrameLevel() + 1)
         OverDamageAbsorb:NUISetPixelSnap()
         OverDamageAbsorb:NUISetPixelWidth(self:GetWidth())
 
@@ -79,20 +75,28 @@ UF.Elements.Health = {
         healthBar.nuiHealAbsorb = HealAbsorb
         healthBar.nuiDamageAbsorb = DamageAbsorb
 
-        -- Border frame
-        local healthBorderFrame = CreateFrame('Frame', nil, self)
-        healthBorderFrame:SetFrameLevel(self:GetFrameLevel() + 4)
-        healthBorderFrame:NUIAddBorders()
-        self.healthBorderFrame = healthBorderFrame
-
         -- Mouseover highlight
-        local highlight = healthBorderFrame:CreateTexture(nil, 'OVERLAY') --[[@as NUI.HighlightTexture]]
+        local highlightFrame = CreateFrame('Frame', nil, self)
+        highlightFrame:SetFrameLevel(UF.GetLayerLevel(self, UF.Layers.Highlight))
+        self.nuiHighlightFrame = highlightFrame
+
+        local highlight = highlightFrame:CreateTexture(nil, 'OVERLAY') --[[@as NUI.HighlightTexture]]
         highlight:SetBlendMode('ADD')
         highlight:Hide()
         self.nuiHighlight = highlight
 
+        -- Border frame
+        local healthBorderFrame = CreateFrame('Frame', nil, self)
+        healthBorderFrame:SetFrameLevel(UF.GetLayerLevel(self, UF.Layers.Border))
+        healthBorderFrame:NUIAddBorders()
+        self.healthBorderFrame = healthBorderFrame
+
         -- RaidIcon
-        local RaidIcon = healthBorderFrame:CreateTexture(nil, 'OVERLAY', nil, 1) --[[@as oUF.RaidTargetIndicator]] -- Higher than border textures.
+        local raidMarkFrame = CreateFrame('Frame', nil, self)
+        raidMarkFrame:SetFrameLevel(UF.TopLevels.RaidMark)
+        self.nuiRaidMarkFrame = raidMarkFrame
+
+        local RaidIcon = raidMarkFrame:CreateTexture(nil, 'OVERLAY') --[[@as oUF.RaidTargetIndicator]]
         self.RaidTargetIndicator = RaidIcon
 
         -- Leader indicator
@@ -195,6 +199,15 @@ UF.Elements.Health = {
         local healColor = haDB.Color
         local dmgColor = daDB.Color
         local shield = NRSKNUI:GetStatusbar(daDB)
+
+        -- Both absorbs draw inside the health rect, so they claim layers like anything else on it. The
+        -- over-absorb pair belongs to the damage absorb and rides its layer.
+        local healAbsorbLevel = UF.GetLayerLevel(self, haDB.Layer)
+        local damageAbsorbLevel = UF.GetLayerLevel(self, daDB.Layer)
+        HealAbsorb:SetFrameLevel(healAbsorbLevel)
+        DamageAbsorb:SetFrameLevel(damageAbsorbLevel)
+        OverClip:SetFrameLevel(damageAbsorbLevel)
+        OverDamageAbsorb:SetFrameLevel(damageAbsorbLevel)
 
         -- oUF only drives an absorb whose element field is set, so disabling clears it.
         healthBar.HealAbsorb = haDB.Enabled and HealAbsorb or nil
