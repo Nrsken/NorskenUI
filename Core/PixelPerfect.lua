@@ -39,18 +39,11 @@ function NRSKNUI:UpdateMult()
     self.Mult = Pixel.GetMult()
 end
 
----The inverse of UIParent's effective scale.
-function NRSKNUI:UpdateInverseScale()
-    self.InverseScale = 1 / UIParent:GetEffectiveScale()
-end
-
 ---Sets the UI scale based on the user's settings.
 function NRSKNUI:SetUIScale()
     if self.db.global.UIScale.Enabled and not self:GetConflictingScaleAddon() then
         UIParent:SetScale(self.db.global.UIScale.Scale)
     end
-
-    self:UpdateInverseScale()
 end
 
 ---Updates the physical and screen dimensions, as well as the perfect pixel size.
@@ -59,6 +52,7 @@ function NRSKNUI:UpdateValues()
     self.ScreenW, self.ScreenH = GetScreenWidth(), GetScreenHeight()
     self.Res = format('%dx%d', self.PhysW, self.PhysH)
     self.PerfectPixel = 768 / self.PhysH
+    self.InverseScale = 1 / UIParent:GetEffectiveScale()
 end
 
 ---Handles the UI scale change event, updating values and setting the UI scale accordingly.

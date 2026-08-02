@@ -127,6 +127,7 @@ function NRSKNUI:OnEnable()
     -- Delay setting up the minimap icon so that AddonTheme.lua can load first.
     C_Timer.After(1, function()
         SetupMinimapIcon()
+        self:UpdateValues() -- Delayed to ensure UIParent:GetEffectiveScale() is correct after all addons have loaded
     end)
 
     GUI:ApplyTheme()
