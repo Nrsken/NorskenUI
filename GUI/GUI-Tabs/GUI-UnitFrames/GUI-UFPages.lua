@@ -17,17 +17,18 @@ local UNITS = {
     'pet',
     'pettarget',
     'boss',
+    'party',
 }
 
--- Mini sidebar, in order. Power and Castbar drop out for the units that never have them.
+-- Mini sidebar, in order. Power, Castbar and Group drop out for the units that never have them.
 local SECTIONS = {
     { key = 'frame',          text = L['Frame'] },
+    { key = 'group',          text = L['Group'] },
     { key = 'health',         text = L['Health'] },
     { key = 'power',          text = L['Power'] },
     { key = 'castbar',        text = L['Castbar'] },
     { key = 'tags',           text = L['Tags'] },
     { key = 'indicators',     text = L['Indicators'] },
-    { key = 'misc',           text = L['Miscellaneous'] },
     { key = 'aurabuffs',      text = L['Aura Buffs'] },
     { key = 'auradebuffs',    text = L['Aura Debuffs'] },
     { key = 'auraindicators', text = L['Aura Indicators'] },
@@ -45,9 +46,13 @@ local SECTION_TABS = {
 ---@param unit string
 ---@return table items
 local function SectionItems(unit)
+    local isGroup = UF.GroupConfigs[unit]
     local items = {}
     for _, section in ipairs(SECTIONS) do
         local skip = UF.GUINoPower[unit] and (section.key == 'power' or section.key == 'castbar')
+        -- Group units are deliberately castbar-free, and only they have a header to configure.
+        skip = skip or (isGroup and section.key == 'castbar') or (not isGroup and section.key == 'group')
+
         if not skip then
             items[#items + 1] = { key = section.key, text = section.text }
         end
@@ -76,17 +81,17 @@ local function SearchTerms()
         { text = L['Safe Zone'],         itemKey = 'castbar' },
         { text = L['Tags'],              itemKey = 'tags' },
         { text = L['Tag Text'],          itemKey = 'tags' },
-        { text = L['Insert Tag'],        itemKey = 'tags' },
+        { text = L['Insert Health Tag'], itemKey = 'tags' },
+        { text = L['Insert Power Tag'],  itemKey = 'tags' },
+        { text = L['Insert Name Tag'],   itemKey = 'tags' },
+        { text = L['Insert Misc Tag'],   itemKey = 'tags' },
         { text = L['Bound To'],          itemKey = 'tags' },
         { text = L['Indicators'],        itemKey = 'indicators' },
-        { text = L['Miscellaneous'],     itemKey = 'misc' },
-        { text = L['Raid Icon'],         itemKey = 'misc' },
-        { text = L['Leader Indicator'],  itemKey = 'misc' },
     }
 
     -- Each indicator is its own tab, so name them all and land on the right one.
-    for _, tab in ipairs(UF.GUIIndicatorTabs) do
-        terms[#terms + 1] = { text = tab.text, itemKey = 'indicators', tabId = tab.id }
+    for _, name in ipairs(UF.GUIIndicatorNames()) do
+        terms[#terms + 1] = { text = name.text, itemKey = 'indicators', tabId = name.key }
     end
 
     -- The aura terms apply to both displays
@@ -95,6 +100,10 @@ local function SearchTerms()
     terms[#terms + 1] = { text = L['Aura Indicators'], itemKey = 'auraindicators' }
     for _, term in ipairs(UF.GUIAuras.search) do
         terms[#terms + 1] = { text = term, itemKey = 'aurabuffs' }
+    end
+
+    for _, term in ipairs(UF.GUIGroupSearch) do
+        terms[#terms + 1] = { text = term, itemKey = 'group' }
     end
 
     return terms
@@ -123,6 +132,9 @@ do
 
                 local db = NRSKNUI.db.profile.UnitFrames
                 local uDB = db.Units[unit]
+
+                UF:PreviewAuraIndicator(unit, sectionKey == 'auraindicators' and tonumber(tabId) or nil)
+                UF:PreviewIndicator(unit, sectionKey == 'indicators' and tabId or nil)
 
                 local auraDef = UF.GUIAuraSections[sectionKey]
                 if auraDef then

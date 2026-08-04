@@ -73,6 +73,7 @@ GUIFrame.SidebarConfig = {
                 { id = 'unitFrames_pet',          text = L['Pet'] },
                 { id = 'unitFrames_pettarget',    text = L['Pet Target'] },
                 { id = 'unitFrames_boss',         text = L['Boss'] },
+                { id = 'unitFrames_party',        text = L['Party'] },
             }
         },
         {

@@ -259,6 +259,7 @@ function nameplates:SetNumAuraContainers(numContainers) end
 ---@field nuiPreviewUnit? string Borrowed unit while the frame is previewing
 ---@field nuiPreviewIndex? number Position in the preview set
 ---@field nuiPreviewLabel? FontString Preview name label
+---@field nuiIsPreview? boolean Previewing, read by tags that draw a placeholder
 ---@field nuiCDMHooked? boolean Cooldown Manager anchoring hook applied
 --- Activate an element for the given unit frame.
 ---@field EnableElement fun(self: oUF.UnitFrame, name: string, unit?: string)
@@ -294,8 +295,8 @@ local frame
 -- Element base --
 
 ---@class oUF.Element
----@field __owner oUF.UnitFrame The parent unit frame
----@field ForceUpdate fun(self) Force an update of the element
+---@field __owner? oUF.UnitFrame The parent unit frame, set by oUF when the element is enabled
+---@field ForceUpdate? fun(self) Force an update of the element, set by oUF when the element is enabled
 ---@field Override? fun(self: oUF.UnitFrame, event: string, ...) Completely override the element's update
 
 -- Health --

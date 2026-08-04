@@ -15,6 +15,7 @@
     <Script file='Elements\Auras.lua' />
     <Script file='Elements\AuraIndicators.lua' />
     <Script file='Style.lua' />
+    <Script file='Groups.lua' />
     <Script file='Preview.lua' />
     <Script file='Core.lua' />
 </Ui>

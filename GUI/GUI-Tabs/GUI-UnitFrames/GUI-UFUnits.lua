@@ -21,6 +21,7 @@ local UNIT_LABELS = {
     pet = L['Pet'],
     pettarget = L['Pet Target'],
     boss = L['Boss'],
+    party = L['Party'],
 }
 
 -- These units don't have a power bar, so we hide the power section in their GUI.
@@ -42,27 +43,22 @@ local OutlineOptions = NRSKNUI:GetOutlineOptions(true)
 
 local TAG_SLOTS = { 'TagOne', 'TagTwo', 'TagThree', 'TagFour', 'TagFive' }
 
-local TagInsertOptions = {
-    { value = '[nrsknuf:name]',                text = L['Name'] },
-    { value = '[nrsknuf:unit:smartcolor]',     text = L['Smart Color'] },
-    { value = '[nrsknuf:curhp:perhp]',         text = L['Health + Percent'] },
-    { value = '[nrsknuf:perpower:smartcolor]', text = L['Power Percent (Colored)'] },
-    { value = '[curhp]',                       text = L['Current Health'] },
-    { value = '[perhp]',                       text = L['Health Percent'] },
-    { value = '[curpp]',                       text = L['Current Power'] },
-    { value = '[perpp]',                       text = L['Power Percent'] },
+-- Which indicators a unit gets is UF.UnitIndicators' call, so this is only their display names.
+local INDICATOR_LABELS = {
+    Resting    = L['Resting'],
+    Combat     = L['Combat'],
+    Quest      = L['Quest'],
+    ReadyCheck = L['Ready Check'],
+    Role       = L['Group Role'],
+    Summon     = L['Summon'],
+    Resurrect  = L['Resurrect'],
+    PvP        = L['PvP'],
+    Phase      = L['Phase'],
+    Leader     = L['Leader Indicator'],
+    RaidIcon   = L['Raid Icon'],
 }
 
-local IndicatorOptions = {
-    { value = 'Resting',    text = L['Resting'] },
-    { value = 'Combat',     text = L['Combat'] },
-    { value = 'ReadyCheck', text = L['Ready Check'] },
-    { value = 'Summon',     text = L['Summon'] },
-    { value = 'Resurrect',  text = L['Resurrect'] },
-    { value = 'Quest',      text = L['Quest'] },
-    { value = 'PvP',        text = L['PvP'] },
-    { value = 'Phase',      text = L['Phase'] },
-}
+local INDICATOR_MAX_SIZE = { RaidIcon = 64 }
 
 local function AddPositionRows(card, slotDB, conditions, lastSpacing)
     local anchorRow = card:Row(rowH)
@@ -721,7 +717,7 @@ local function BuildTagsSection(page, uDB, unit, selected)
         card:Row(rowH):EditBox(L['Tag Text'], {
             width = 1,
             conditions = { 'tagOn' },
-            tooltip = L['Any oUF tag string, e.g. [nrsknuf:name] or [perhp]%.'],
+            tooltip = L['Any oUF tag string, e.g. [NUF:name] or [perhp]%.'],
             value = slotDB.Tag,
             callback = function(val)
                 slotDB.Tag = val
@@ -735,19 +731,31 @@ local function BuildTagsSection(page, uDB, unit, selected)
                 boundOptions[#boundOptions + 1] = { value = other, text = format('%s %d', L['Tag'], j) }
             end
         end
+        -- One dropdown per category, so each list stays short enough to scan.
+        local function AddInsertDropdown(row, label, category)
+            row:Dropdown(label, {
+                width = 0.5,
+                conditions = { 'tagOn' },
+                tooltip = L['Appends the picked tag to the tag text above.'],
+                options = UF.TagOptions[category],
+                value = '',
+                callback = function(key)
+                    slotDB.Tag = slotDB.Tag == '' and key or slotDB.Tag .. key
+                    ApplySettings()
+                    card:Rebuild()
+                end,
+            })
+        end
+
+        local healthRow = card:Row(rowH)
+        AddInsertDropdown(healthRow, L['Insert Health Tag'], 'health')
+        AddInsertDropdown(healthRow, L['Insert Power Tag'], 'power')
+
+        local nameRow = card:Row(rowH)
+        AddInsertDropdown(nameRow, L['Insert Name Tag'], 'name')
+        AddInsertDropdown(nameRow, L['Insert Misc Tag'], 'misc')
+
         local styleRow = card:Row(rowH)
-        styleRow:Dropdown(L['Insert Tag'], {
-            width = 0.5,
-            conditions = { 'tagOn' },
-            tooltip = L['Appends the picked tag to the tag text above.'],
-            options = TagInsertOptions,
-            value = '',
-            callback = function(key)
-                slotDB.Tag = slotDB.Tag == '' and key or slotDB.Tag .. key
-                ApplySettings()
-                card:Rebuild()
-            end,
-        })
         styleRow:Dropdown(L['Bound To'], {
             width = 0.5,
             conditions = { 'tagOn' },
@@ -814,13 +822,36 @@ local function BuildTagsSection(page, uDB, unit, selected)
     end)
 end
 
--- The tab strip picks the indicator, so `selected` is a build-time constant here.
+-- Rows only one indicator has, added between its size row and its position rows.
+local INDICATOR_EXTRAS = {
+    Role = function(card, iDB)
+        card:Row(rowH):Checkbox(L['Tank and Healer Only'], {
+            width = 1,
+            conditions = { 'indicatorOn' },
+            value = iDB.TankHealerOnly,
+            tooltip = L['Hide the role icon on damage dealers.'],
+            callback = function(checked)
+                iDB.TankHealerOnly = checked
+                ApplySettings()
+            end,
+        })
+    end,
+}
+
+-- The tab strip picks the indicator, so `selected` is a build-time constant here. Tab memory is shared
+-- across units, so a key the open unit has no indicator for falls back to its first.
 local function BuildIndicatorsSection(page, uDB, unit, selected)
-    selected = selected or IndicatorOptions[1].value
+    local defs = UF.UnitIndicators(unit)
+    local found
+    for _, def in ipairs(defs) do
+        if def.key == selected then found = true break end
+    end
+    if not found then selected = defs[1].key end
+
     page:SetCondition('indicatorOn', function() return uDB.Indicators[selected].Enabled end)
 
     local iDB = uDB.Indicators[selected]
-    local card = page:Card(L['Indicators'], 'unitOn')
+    local card = page:Card(INDICATOR_LABELS[selected] or selected, 'unitOn')
 
     local headRow = card:Row(rowH)
     headRow:Checkbox(L['Enable'], {
@@ -836,7 +867,7 @@ local function BuildIndicatorsSection(page, uDB, unit, selected)
         width = 0.5,
         conditions = { 'indicatorOn' },
         min = 8,
-        max = 48,
+        max = INDICATOR_MAX_SIZE[selected] or 48,
         step = 1,
         value = iDB.Size,
         callback = function(val)
@@ -845,44 +876,10 @@ local function BuildIndicatorsSection(page, uDB, unit, selected)
         callbackOnRelease = true,
     })
 
+    local extra = INDICATOR_EXTRAS[selected]
+    if extra then extra(card, iDB) end
+
     AddPositionRows(card, iDB, { 'indicatorOn' })
-end
-
-local function BuildMiscSection(page, uDB, unit)
-    page:SetCondition('raidIconOn', function() return uDB.RaidIcon.Enabled end)
-    page:SetCondition('leaderOn', function() return uDB.LeaderIndicator.Enabled end)
-
-    local iconSlots = {
-        { db = uDB.RaidIcon,        title = L['Raid Icon'],        enableLabel = L['Enable Raid Icon'],        cond = 'raidIconOn', maxSize = 64 },
-        { db = uDB.LeaderIndicator, title = L['Leader Indicator'], enableLabel = L['Enable Leader Indicator'], cond = 'leaderOn',   maxSize = 32 },
-    }
-    for _, slot in ipairs(iconSlots) do
-        local card = page:Card(slot.title, 'unitOn')
-        local headRow = card:Row(rowH)
-        headRow:Checkbox(slot.enableLabel, {
-            width = 0.5,
-            value = slot.db.Enabled,
-            callback = function(checked)
-                slot.db.Enabled = checked
-                ApplySettings()
-                page:Refresh()
-            end,
-        })
-        headRow:Slider(L['Size'], {
-            width = 0.5,
-            conditions = { slot.cond },
-            min = 8,
-            max = slot.maxSize,
-            step = 1,
-            value = slot.db.Size,
-            callback = function(val)
-                slot.db.Size = val; ApplySettings()
-            end,
-            callbackOnRelease = true,
-        })
-
-        AddPositionRows(card, slot.db, { slot.cond })
-    end
 end
 
 -- Exposed for GUI-UFPages.lua, which assembles the per-unit pages.
@@ -894,7 +891,6 @@ UF.GUISections = {
     castbar = BuildCastbarSection,
     tags = BuildTagsSection,
     indicators = BuildIndicatorsSection,
-    misc = BuildMiscSection,
 }
 
 UF.GUIUnitLabels = UNIT_LABELS
@@ -909,10 +905,23 @@ for i, name in ipairs(TAG_SLOTS) do
     UF.GUITagTabs[i] = { id = name, text = format('%s %d', L['Tag'], i) }
 end
 
----@class UF.GUIIndicatorTab
----@field id string The indicator's DB key.
----@field text string The indicator's display name.
-UF.GUIIndicatorTabs = {}
-for i, option in ipairs(IndicatorOptions) do
-    UF.GUIIndicatorTabs[i] = { id = option.value, text = option.text }
+---One tab per indicator the unit can actually show, see UF.UnitIndicators.
+---@param unit string config key
+---@return { id: string, text: string }[] tabs
+function UF.GUIIndicatorTabs(unit)
+    local tabs = {}
+    for i, def in ipairs(UF.UnitIndicators(unit)) do
+        tabs[i] = { id = def.key, text = INDICATOR_LABELS[def.key] or def.key }
+    end
+    return tabs
+end
+
+---Every indicator name, for the page search index, which is built once rather than per unit.
+---@return { key: string, text: string }[]
+function UF.GUIIndicatorNames()
+    local names = {}
+    for i, def in ipairs(UF.IndicatorDefs) do
+        names[i] = { key = def.key, text = INDICATOR_LABELS[def.key] or def.key }
+    end
+    return names
 end

@@ -2,11 +2,15 @@
 local NRSKNUI = select(2, ...)
 ---@class UnitFramesModule
 ---@field Elements UnitFramesElements
+---@field PreviewTick number Advances while a preview runs, read by tags that rotate a placeholder
 local UF = NRSKNUI:GetModule('UnitFrames')
 
 local abs = math.abs
 local ipairs = ipairs
+local pairs = pairs
+local next = next
 local CreateFrame = CreateFrame
+local C_Timer = C_Timer
 
 -- Fixed slot set, iterated in order so layout is deterministic.
 local SLOTS = { 'TagOne', 'TagTwo', 'TagThree', 'TagFour', 'TagFive' }
@@ -45,6 +49,32 @@ local function BuildBound(slotDB, target, toFrame)
     local relPoint = toFrame and point or anchor                                                        -- Frame bound pins to the container's far/mirror edge, a slot bound pins to the sibling's near edge.
 
     return { relTo = target, point = point, relPoint = relPoint, offsetX = offsetX, offsetY = 0 }
+end
+
+-- Preview --
+
+local PREVIEW_INTERVAL = 10
+local previewFrames = {}
+local previewTicker
+
+UF.PreviewTick = 0
+
+local function AdvancePreview()
+    UF.PreviewTick = UF.PreviewTick + 1
+    for frame in pairs(previewFrames) do
+        frame:UpdateTags()
+    end
+end
+
+-- Update the ticker based on whether any frame is previewing.
+local function UpdatePreviewTicker()
+    local shouldRun = next(previewFrames) ~= nil
+    if shouldRun and not previewTicker then
+        previewTicker = C_Timer.NewTicker(PREVIEW_INTERVAL, AdvancePreview)
+    elseif not shouldRun and previewTicker then
+        previewTicker:Cancel()
+        previewTicker = nil
+    end
 end
 
 ---@class UnitFramesElements
@@ -127,7 +157,14 @@ UF.Elements.Tags = {
 
                 if fs.nuiTag ~= slotDB.Tag then
                     if fs.nuiTag then self:Untag(fs) end
-                    self:Tag(fs, slotDB.Tag)
+                    fs.extraUnits = nil -- oUF's Untag leaves extraUnits in place, so drop it before re-tagging.
+
+                    -- Target tags read <unit>target, which only refreshes if oUF is told to watch that unit too.
+                    if slotDB.Tag:find(':target', 1, true) then
+                        self:Tag(fs, slotDB.Tag, unit .. 'target')
+                    else
+                        self:Tag(fs, slotDB.Tag)
+                    end
                     fs.nuiTag = slotDB.Tag
                 end
 
@@ -140,5 +177,18 @@ UF.Elements.Tags = {
                 fs:Hide()
             end
         end
+    end,
+
+    ---@param self oUF.UnitFrame
+    ---@param unit string
+    ---@param uDB table
+    ---@param general table
+    ---@param previewing boolean
+    Preview = function(self, unit, uDB, general, previewing)
+        self.nuiIsPreview = previewing or nil
+        previewFrames[self] = previewing or nil
+
+        UpdatePreviewTicker()
+        self:UpdateTags()
     end,
 }

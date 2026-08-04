@@ -3,7 +3,7 @@ local NRSKNUI = select(2, ...)
 ---@class UnitFramesModule
 local UF = NRSKNUI:GetModule('UnitFrames')
 
--- Units that never get a power bar or castbar.
+-- Units that never get a power bar.
 local NO_POWER = {
     targettarget = true,
     focustarget = true,
@@ -12,23 +12,31 @@ local NO_POWER = {
 
 ---Build the oUF style for a unit frame, constructing and configuring elements as needed.
 ---@param frame oUF.UnitFrame
----@param unit string
+---@param unit string oUF's guessed unit; for a header child this is the archetype, not the config key
 function UF:BuildStyle(frame, unit)
     frame.nrsknUnit = unit
 
+    -- A header stamps its own config key, since oUF guesses 'raid' for every tier.
+    local parent = frame:GetParent()
+    local base = parent and parent.nrsknConfig or UF.ConfigKey(unit)
+
+    frame.nuiConfig = base
+    frame.nuiGroupChild = UF.GroupConfigs[base] or nil
+
     frame:RegisterForClicks('AnyUp') -- oUF doesn't register for clicks by default, so we do it here.
 
-    local base = UF.NormalizeUnit(unit)
-    local hasPower = not NO_POWER[base]
-
-    self:ConstructElement('Health', frame, unit)
-    self:ConstructElement('Tags', frame, unit)
-    self:ConstructElement('Indicators', frame, unit)
-    self:ConstructElement('Auras', frame, unit)
-    self:ConstructElement('AuraIndicators', frame, unit)
-    if hasPower then
-        self:ConstructElement('Power', frame, unit)
-        self:ConstructElement('Castbar', frame, unit)
+    self:ConstructElement('Health', frame, base)
+    self:ConstructElement('Tags', frame, base)
+    self:ConstructElement('Indicators', frame, base)
+    self:ConstructElement('Auras', frame, base)
+    self:ConstructElement('AuraIndicators', frame, base)
+    self:ConstructElement('Range', frame, base)
+    if not NO_POWER[base] then
+        self:ConstructElement('Power', frame, base)
+    end
+    -- Group units are deliberately castbar-free.
+    if not NO_POWER[base] and not frame.nuiGroupChild then
+        self:ConstructElement('Castbar', frame, base)
     end
 
     self:ConfigureFrame(frame, unit)

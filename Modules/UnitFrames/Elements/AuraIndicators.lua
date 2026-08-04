@@ -6,6 +6,7 @@ local UF = NRSKNUI:GetModule('UnitFrames')
 ---@class NorskenUF
 local oUF = NRSKNUI.oUF
 local AuraIndicators = NRSKNUI.AuraIndicators
+local AuraPreview = NRSKNUI.AuraPreview
 
 local CreateFrame = CreateFrame
 local ipairs = ipairs
@@ -167,7 +168,7 @@ UF.Elements.AuraIndicators = {
 
             if live[placement] then
                 -- Per-slot visibility is Apply's job, since a placement can hold several indicators and only some of them may still be assigned.
-                NRSKNUI:ApplyAuraIndicator(handle, placement, UF.db.General)
+                NRSKNUI:ApplyAuraIndicator(handle, placement)
                 handle.anchored = AnchorProxy(self, handle, placement)
             else
                 NRSKNUI:SetAuraIndicatorShown(handle, false)
@@ -176,5 +177,32 @@ UF.Elements.AuraIndicators = {
 
         -- self.unit is the live token, which a preview repoints away from the configured unit.
         self.nuiAuraIndicatorContainer:SetUnit(self.unit or unit)
+    end,
+
+    ---Show dummies for the placement the GUI has open, hiding that placement's real slots.
+    ---@param self oUF.UnitFrame
+    ---@param unit string
+    ---@param uDB table
+    Preview = function(self, unit, uDB)
+        local handles = self.nuiAuraIndicators
+        if not handles then return end
+
+        local previewed = UF.Preview:GetAuraIndicatorSlot(self.nuiConfig or unit)
+        local placement = previewed and uDB.AuraIndicators[previewed]
+
+        for _, handle in ipairs(handles) do
+            -- An unpreviewable style keeps its real slots: taking them over would draw nothing.
+            local on = placement ~= nil and handle.placement == placement
+                and AuraIndicators.Previewable[placement.Style] == true
+
+            if on then
+                AuraPreview:UpdateIndicator(handle, placement, UF.GetLayerLevel(self, placement.Layer), UF.db.General)
+                NRSKNUI:SetAuraIndicatorShown(handle, false)
+            elseif handle.nuiPreview then
+                NRSKNUI:ApplyAuraIndicator(handle, handle.placement) -- back to what Configure settled on
+            end
+
+            AuraPreview:SetIndicatorShown(handle, on)
+        end
     end,
 }

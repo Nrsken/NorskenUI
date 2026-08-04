@@ -3,21 +3,25 @@ local NRSKNUI = select(2, ...)
 ---@class Restricted
 local Restricted = NRSKNUI:GetModule('Restricted')
 
+local scrub = scrub
 local pairs = pairs
 local ipairs = ipairs
-local scrub = scrub
+local UnitIsDND = UnitIsDND
+local UnitIsAFK = UnitIsAFK
+local UnitExists = UnitExists
 local issecretvalue = issecretvalue
 local issecrettable = issecrettable
 local canaccessvalue = canaccessvalue
+local InCombatLockdown = InCombatLockdown
 local scrubsecretvalues = scrubsecretvalues
 local securecallfunction = securecallfunction
-local InCombatLockdown = InCombatLockdown
 local UnitAffectingCombat = UnitAffectingCombat
+local UnitGroupRolesAssigned = UnitGroupRolesAssigned
 
+local GetAddOnRestrictionState = C_RestrictedActions and C_RestrictedActions.GetAddOnRestrictionState
 local ShouldUnitIdentityBeSecret = C_Secrets and C_Secrets.ShouldUnitIdentityBeSecret
 local CanCompareUnitTokens = C_Secrets and C_Secrets.CanCompareUnitTokens
 local GetSpellAuraSecrecy = C_Secrets and C_Secrets.GetSpellAuraSecrecy
-local GetAddOnRestrictionState = C_RestrictedActions and C_RestrictedActions.GetAddOnRestrictionState
 
 local NeverSecret = Enum and Enum.SecrecyLevel.NeverSecret
 local RestrictionType = Enum and Enum.AddOnRestrictionType
@@ -115,10 +119,6 @@ function NRSKNUI:CanCompareUnits(unit1, unit2)
 end
 
 ---Pre-flight, can this spell hand back secrets when queried as an aura?
----Aura containers only honour includeSpellIDs/excludeSpellIDs on a harmful aura when the unit is one
----the player cannot assist and on a helpful aura when it is one they can (see
----AuraContainerUtil.CanApplyIdentityCandidateFilters). A never-secret spell is exempt and matches by
----ID in both directions, so this is what tells a filter whether its spellIDs can be ignored.
 ---@param spellID number
 ---@return boolean
 function NRSKNUI:IsSpellAuraSecret(spellID)
@@ -133,6 +133,31 @@ function NRSKNUI:SafeValue(value)
         return value
     end
     return nil
+end
+
+---@param unit string
+---@return boolean|nil
+function NRSKNUI:UnitIsAFK(unit)
+    local isAFK = UnitIsAFK(unit)
+
+    return NRSKNUI:NotSecretValue(isAFK) and isAFK or nil
+end
+
+---@param unit string
+---@return boolean|nil
+function NRSKNUI:UnitIsDND(unit)
+    local isDND = UnitIsDND(unit)
+
+    return NRSKNUI:NotSecretValue(isDND) and isDND or nil
+end
+
+---@param unit string
+---@return string|nil
+function NRSKNUI:GetSafeRole(unit)
+    if not unit or not UnitExists(unit) then return nil end
+    local role = UnitGroupRolesAssigned(unit)
+
+    return NRSKNUI:NotSecretValue(role) and role or nil
 end
 
 -- Combat Queue --

@@ -91,18 +91,6 @@ UF.Elements.Health = {
         healthBorderFrame:NUIAddBorders()
         self.healthBorderFrame = healthBorderFrame
 
-        -- RaidIcon
-        local raidMarkFrame = CreateFrame('Frame', nil, self)
-        raidMarkFrame:SetFrameLevel(UF.TopLevels.RaidMark)
-        self.nuiRaidMarkFrame = raidMarkFrame
-
-        local RaidIcon = raidMarkFrame:CreateTexture(nil, 'OVERLAY') --[[@as oUF.RaidTargetIndicator]]
-        self.RaidTargetIndicator = RaidIcon
-
-        -- Leader indicator
-        local LeaderIndicator = self:CreateTexture(nil, 'OVERLAY', nil, 1) --[[@as oUF.LeaderIndicator]]
-        self.LeaderIndicator = LeaderIndicator
-
         self.Health = healthBar
     end,
 
@@ -114,19 +102,7 @@ UF.Elements.Health = {
         local healthBar = self.Health
         local healthBorderFrame = self.healthBorderFrame
         local healthBackground = healthBar.healthBackground
-        local RaidIcon = self.RaidTargetIndicator
-        local LeaderIndicator = self.LeaderIndicator
         local hDB = uDB.Health
-
-        -- Position and size the raid icon.
-        RaidIcon:NUISetPixelSize(uDB.RaidIcon.Size, uDB.RaidIcon.Size)
-        RaidIcon:ClearAllPoints()
-        RaidIcon:NUISetPixelPoint(uDB.RaidIcon.Position.AnchorFrom, self, uDB.RaidIcon.Position.AnchorTo, uDB.RaidIcon.Position.XOffset, uDB.RaidIcon.Position.YOffset)
-
-        -- Position and size the leader indicator.
-        LeaderIndicator:NUISetPixelSize(uDB.LeaderIndicator.Size, uDB.LeaderIndicator.Size)
-        LeaderIndicator:ClearAllPoints()
-        LeaderIndicator:NUISetPixelPoint(uDB.LeaderIndicator.Position.AnchorFrom, self, uDB.LeaderIndicator.Position.AnchorTo, uDB.LeaderIndicator.Position.XOffset, uDB.LeaderIndicator.Position.YOffset)
 
         -- Foreground texture, background follows it unless a background texture is set (unit override first).
         local texture = NRSKNUI:GetStatusbar(general, hDB.StatusBarTexture)

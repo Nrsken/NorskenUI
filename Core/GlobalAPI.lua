@@ -4,12 +4,14 @@ local NRSKNUI = select(2, ...)
 -- Global API functions
 
 local GetNumGroupMembers = GetNumGroupMembers
-local IsInRaid = IsInRaid
-local select = select
+local UnitTokenFromGUID = UnitTokenFromGUID
+local UnitIsFeignDeath = UnitIsFeignDeath
+local GetUnitName = GetUnitName
+local UnitIsDead = UnitIsDead
 local UnitClass = UnitClass
 local UnitGUID = UnitGUID
-local UnitTokenFromGUID = UnitTokenFromGUID
-local GetUnitName = GetUnitName
+local IsInRaid = IsInRaid
+local select = select
 local type = type
 
 local EditModeManagerFrame = EditModeManagerFrame
@@ -92,6 +94,13 @@ function NRSKNUI:IsClassInGroup(classFilenameToCheck)
         end
     end
     return false
+end
+
+---Check if a unit is actually dead, ignoring hunters feign death.
+---@param unit string
+---@return boolean
+function NRSKNUI:IsUnitReallyDead(unit)
+    return UnitIsDead(unit) and not UnitIsFeignDeath(unit)
 end
 
 ---Safely get a unit token from a GUID.

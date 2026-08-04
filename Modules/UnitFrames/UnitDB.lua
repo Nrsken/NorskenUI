@@ -4,13 +4,19 @@ local NRSKNUI = select(2, ...)
 ---@field SoloUnits UnitFramesSoloUnits
 ---@field BossUnits UnitFramesBossUnits
 ---@field MAX_BOSS_FRAMES UnitFramesMaxBossFrames
+---@field GroupConfigs table<string, boolean>
+---@field GROUP_SIZE number
+---@field frames table<string, oUF.UnitFrame>
+---@field groups table<string, UnitFramesGroup>
 ---@field BaseLevels { Background: number, Bar: number }
 ---@field Layers { Min: number, Max: number, Highlight: number, Border: number }
 ---@field ReservedLayers table<number, boolean>
----@field TopLevels { Tags: number, RaidMark: number, Status: number }
+---@field TopLevels { Tags: number, Auras: number, RaidMark: number, Status: number }
 local UF = NRSKNUI:GetModule('UnitFrames')
 
 local tonumber = tonumber
+local pairs = pairs
+local ipairs = ipairs
 local min, max = math.min, math.max
 
 ---@class UnitFramesSoloUnits
@@ -49,6 +55,16 @@ for index = 1, UF.MAX_BOSS_FRAMES do
     UF.BossUnits[index] = 'boss' .. index
 end
 
+-- Header-driven units, keyed by config key: raid1..raid3 would collide with raid unit tokens.
+UF.GroupConfigs = {
+    party = true,
+}
+
+UF.GROUP_SIZE = 5 -- units per header column, i.e. one raid group
+
+UF.frames = UF.frames or {} -- unit token -> oUF object, singleton units only
+UF.groups = UF.groups or {} -- config key -> { container, headers }, see Groups.lua
+
 -- Below the layer scale and not user-selectable, relative to the unit frame.
 UF.BaseLevels = {
     Background = 1,
@@ -72,8 +88,9 @@ UF.ReservedLayers = {
 -- Absolute levels for what draws above every unit frame layer, in ascending order.
 UF.TopLevels = {
     Tags = 999,
-    RaidMark = 1000,
-    Status = 1001,
+    Auras = 1000,
+    RaidMark = 1001,
+    Status = 1002,
 }
 
 ---Resolve a layer on UF.Layers to a concrete frame level for a unit frame.
@@ -92,11 +109,45 @@ function UF.NormalizeUnit(unit)
     return (unit:gsub('%d+$', ''))
 end
 
----Get the unit DB for a given unit.
+---The config key a unit token or group config resolves to.
+---@param unit string
+---@return string
+function UF.ConfigKey(unit)
+    -- Normalizing would strip the digits that tell the raid tiers apart.
+    if UF.GroupConfigs[unit] then return unit end
+    return UF.NormalizeUnit(unit)
+end
+
+---Get the unit DB for a unit token or a group config key.
 ---@param unit string
 ---@return table
 function UF.GetUnitDB(unit)
-    return UF.db.Units[UF.NormalizeUnit(unit)]
+    return UF.db.Units[UF.ConfigKey(unit)]
+end
+
+---Visit every constructed frame, singletons then group header children.
+---@param fn fun(frame: oUF.UnitFrame, unit: string) unit is what ConfigureFrame takes: a token for singletons, a config key for header children
+---@param configKey string? restrict the walk to one config
+function UF:ForEachFrame(fn, configKey)
+    for unit, frame in pairs(UF.frames) do
+        if not configKey or UF.ConfigKey(unit) == configKey then
+            fn(frame, unit)
+        end
+    end
+
+    for key, group in pairs(UF.groups) do
+        if not configKey or key == configKey then
+            for _, header in ipairs(group.headers) do
+                local index = 1
+                local child = header:GetAttribute('child' .. index)
+                while child do
+                    fn(child, key)
+                    index = index + 1
+                    child = header:GetAttribute('child' .. index)
+                end
+            end
+        end
+    end
 end
 
 ---The 1-based position of a boss unit in the chain, nil for anything else.

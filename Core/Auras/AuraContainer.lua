@@ -605,12 +605,16 @@ Slots take no part in the flow layout, anchor them yourself.
 * filter  - aura filter string
 * options - optional per-slot options
 
-Returns the created slot frame.
+Returns the created slot frame and its generated key. The key is the only way to reach the slot again:
+its frame and everything built on it are closed to us whenever aura values are secret, so anything that
+has to change after creation goes through the container's own :SetAuraSlot* calls. Like a group key it
+is a secret string once another addon has tainted us, so it can be passed on but never compared.
 
 --]]
 ---@param filter string
 ---@param options table?
 ---@return table? slot
+---@return string key
 function ContainerMixin:AddSlot(filter, options)
     options = options or {}
 
@@ -619,7 +623,7 @@ function ContainerMixin:AddSlot(filter, options)
 
     self.__slotIndex = (self.__slotIndex or 0) + 1
     local key = (self:GetDebugName() or 'NRSKNUIAuraContainer') .. 'Slot' .. self.__slotIndex
-    return self:AddAuraSlot(key, filter, options)
+    return self:AddAuraSlot(key, filter, options), key
 end
 
 --[[

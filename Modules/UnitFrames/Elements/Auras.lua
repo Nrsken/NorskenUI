@@ -122,6 +122,7 @@ UF.Elements.Auras = {
             local cfg = uDB.Auras[kind]
             local container = self:CreateAuraContainer(GetContainerConfig(cfg, general))
             if container then
+                container:SetFrameLevel(UF.TopLevels.Auras)
                 container:AddFilteredGroup(cfg.Filter)
                 containers[kind] = container
             end
@@ -152,7 +153,7 @@ UF.Elements.Auras = {
             container:SetUnit(self.unit or unit)
             container:SetShown(cfg.Enabled)
 
-            AuraPreview:Attach(container, self, pos.AnchorTo, pos.XOffset, pos.YOffset)
+            AuraPreview:Attach(container, self, pos.AnchorTo, pos.XOffset, pos.YOffset, UF.TopLevels.Auras)
             AuraPreview:Update(container, config, PreviewCount(cfg), cfg.Filter)
         end
     end,
@@ -165,7 +166,9 @@ UF.Elements.Auras = {
         local containers = self.Auras
         if not containers then return end
 
-        local preview = UF.Preview:IsAuraPreviewActive(unit)
+        -- nuiConfig, not the token: a header child is styled with oUF's guessed archetype, which
+        -- cannot tell the raid tiers apart.
+        local preview = UF.Preview:IsAuraPreviewActive(self.nuiConfig or unit)
 
         for kind, container in pairs(containers) do
             local enabled = uDB.Auras[kind].Enabled

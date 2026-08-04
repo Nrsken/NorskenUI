@@ -2864,6 +2864,7 @@
 ---@field boss NRSKNUI.DBProfile.UnitFrames.Units.boss
 ---@field focus NRSKNUI.DBProfile.UnitFrames.Units.focus
 ---@field focustarget NRSKNUI.DBProfile.UnitFrames.Units.focustarget
+---@field party NRSKNUI.DBProfile.UnitFrames.Units.party
 ---@field pet NRSKNUI.DBProfile.UnitFrames.Units.pet
 ---@field pettarget NRSKNUI.DBProfile.UnitFrames.Units.pettarget
 ---@field player NRSKNUI.DBProfile.UnitFrames.Units.player
@@ -3023,6 +3024,135 @@
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.focustarget.Tags.TagTwo
 ---@field [string] any
 ---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party
+---@field [string] any
+---@field Auras NRSKNUI.DBProfile.UnitFrames.Units.party.Auras
+---@field Castbar NRSKNUI.DBProfile.UnitFrames.Units.party.Castbar
+---@field Group NRSKNUI.DBProfile.UnitFrames.Units.party.Group
+---@field Height number
+---@field Indicators NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators
+---@field LeaderIndicator NRSKNUI.DBProfile.UnitFrames.Units.party.LeaderIndicator
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.party.Position
+---@field Power NRSKNUI.DBProfile.UnitFrames.Units.party.Power
+---@field RaidIcon NRSKNUI.DBProfile.UnitFrames.Units.party.RaidIcon
+---@field Tags NRSKNUI.DBProfile.UnitFrames.Units.party.Tags
+---@field Width number
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Auras
+---@field [string] any
+---@field Buffs NRSKNUI.DBProfile.UnitFrames.Units.party.Auras.Buffs
+---@field Debuffs NRSKNUI.DBProfile.UnitFrames.Units.party.Auras.Debuffs
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Auras.Buffs
+---@field [string] any
+---@field maxFrameCount number
+---@field perRow number
+---@field size number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Auras.Debuffs
+---@field [string] any
+---@field maxFrameCount number
+---@field perRow number
+---@field size number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Castbar
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Group
+---@field [string] any
+---@field GrowthDirection string
+---@field HorizontalSpacing number
+---@field RoleOrder table
+---@field ShowPlayer boolean
+---@field SortBy string
+---@field SortDirection string
+---@field SortMethod string
+---@field StartFromCenter boolean
+---@field VerticalSpacing number
+---@field Visibility string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators
+---@field [string] any
+---@field Phase NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators.Phase
+---@field ReadyCheck NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators.ReadyCheck
+---@field Resurrect NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators.Resurrect
+---@field Role NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators.Role
+---@field Summon NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators.Summon
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators.Phase
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators.ReadyCheck
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators.Resurrect
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators.Role
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators.Summon
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.LeaderIndicator
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Power
+---@field [string] any
+---@field Height number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.RaidIcon
+---@field [string] any
+---@field Size number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Tags
+---@field [string] any
+---@field TagOne NRSKNUI.DBProfile.UnitFrames.Units.party.Tags.TagOne
+---@field TagThree NRSKNUI.DBProfile.UnitFrames.Units.party.Tags.TagThree
+---@field TagTwo NRSKNUI.DBProfile.UnitFrames.Units.party.Tags.TagTwo
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Tags.TagOne
+---@field [string] any
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.party.Tags.TagOne.Position
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Tags.TagOne.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Tags.TagThree
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Tags.TagTwo
+---@field [string] any
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.party.Tags.TagTwo.Position
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Tags.TagTwo.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.pet
 ---@field [string] any

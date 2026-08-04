@@ -16,8 +16,8 @@ local ipairs = ipairs
 local CreateFrame = CreateFrame
 local RegisterUnitWatch = RegisterUnitWatch
 local UnregisterUnitWatch = UnregisterUnitWatch
+local UnregisterStateDriver = UnregisterStateDriver
 
-UF.frames = UF.frames or {}     -- unit -> oUF object, used for global restyles.
 UF.Elements = UF.Elements or {} -- name -> { Construct, Configure }, populated by element files.
 
 function UF:UpdateDB()
@@ -91,13 +91,32 @@ function UF:ApplyElementStates(frame, unit, uDB)
     -- Handle castbar element
     SetElement(frame, 'Castbar', frame.Castbar, uDB.Castbar.Enabled)
 
-    -- Handle RaidTargetIndicator and LeaderIndicator elements
-    SetElement(frame, 'RaidTargetIndicator', frame.RaidTargetIndicator, uDB.RaidIcon.Enabled)
-    SetElement(frame, 'LeaderIndicator', frame.LeaderIndicator, uDB.LeaderIndicator.Enabled)
+    -- Handle the native indicator elements.
+    for _, def in ipairs(UF.UnitIndicators(frame.nuiConfig or unit)) do
+        local tex = frame[def.element]
+        local enabled = uDB.Indicators[def.key].Enabled
 
-    -- Handle the native indicator elements
-    for _, def in ipairs(UF.IndicatorDefs) do
-        SetElement(frame, def.element, frame[def.element], uDB.Indicators[def.key].Enabled)
+        if tex then
+            if not frame.nuiPreviewUnit then
+                if enabled then
+                    frame:EnableElement(def.element)
+                else
+                    frame:DisableElement(def.element)
+                end
+            end
+
+            if not enabled then tex:Hide() end
+        end
+    end
+
+    -- oUF's Range element is a plain options table rather than a widget, so it cannot go through
+    -- SetElement. Group frames are the only ones that carry it, see Elements/Range.lua.
+    if frame.Range and not frame.nuiPreviewUnit then
+        if self.db.General.Range.Enabled then
+            frame:EnableElement('Range')
+        else
+            frame:DisableElement('Range')
+        end
     end
 end
 
@@ -171,11 +190,15 @@ end
 ---@param frame oUF.UnitFrame
 ---@param unit string
 function UF:ConfigureFrame(frame, unit)
-    local uDB = UF.GetUnitDB(unit)
+    local uDB = UF.GetUnitDB(frame.nuiConfig or unit)
     local general = self.db.General
 
-    frame:NUISetPixelSize(uDB.Width, uDB.Height)
-    self:ApplyUnitPosition(frame, unit, uDB)
+    if not frame.nuiGroupChild then
+        frame:NUISetPixelSize(uDB.Width, uDB.Height)
+        self:ApplyUnitPosition(frame, unit, uDB)
+    elseif frame.nuiBuilt and not NRSKNUI:InCombat() then
+        frame:NUISetPixelSize(uDB.Width, uDB.Height)
+    end
 
     for _, def in pairs(UF.Elements) do
         if def.Configure then
@@ -183,12 +206,10 @@ function UF:ConfigureFrame(frame, unit)
         end
     end
 
-    -- oUF auto-enables elements on spawn, so ApplyElementStates is only needed for later DB changes.
     if frame.nuiBuilt then
         self:ApplyElementStates(frame, unit, uDB)
 
-        -- A previewing frame owns its own visibility until the preview is stopped.
-        if not frame.nuiPreviewUnit then
+        if not frame.nuiPreviewUnit and not frame.nuiGroupChild then
             if uDB.Enabled then
                 RegisterUnitWatch(frame)
             else
@@ -211,7 +232,7 @@ end
 ---@param unit string
 ---@param previewing boolean
 function UF:ApplyElementPreviews(frame, unit, previewing)
-    local uDB = UF.GetUnitDB(unit)
+    local uDB = UF.GetUnitDB(frame.nuiConfig or unit)
     local general = self.db.General
 
     for _, def in pairs(UF.Elements) do
@@ -259,10 +280,6 @@ function UF:SpawnUnit(unit, opts)
             })
         end
 
-        -- oUF auto-enables every constructed element during Spawn, and the PLAYER_ENTERING_WORLD
-        -- ApplySettings can land before this deferred spawn, so the disabled ones are backed out
-        -- here. The repaint settles the status-driven elements SetElement force-shows.
-        self:ApplyElementStates(frame, unit, UF.GetUnitDB(unit))
         frame:UpdateAllElements('ForceUpdate')
     elseif not frame.nuiPreviewUnit then
         RegisterUnitWatch(frame)
@@ -298,6 +315,7 @@ function UF:SpawnUnits()
     end
 
     self:UpdateBossSpan()
+    self:SpawnGroups()
 end
 
 function UF:OnEnable()
@@ -328,6 +346,15 @@ function UF:OnEnable()
 
     if not self.styleRegistered then
         oUF:RegisterStyle(self.styleName, function(frame, unit) UF:BuildStyle(frame, unit) end)
+        oUF:RegisterInitCallback(function(frame)
+            local key = frame.nuiConfig -- only our own style sets this
+            if key then
+                UF:ApplyElementStates(frame, key, UF.GetUnitDB(key))
+                -- Again after the auto-enable, since a preview forces elements off to hold an icon up.
+                UF:ApplyElementPreviews(frame, key, frame.nuiPreviewUnit ~= nil)
+            end
+        end)
+
         self.styleRegistered = true
     end
 
@@ -340,16 +367,24 @@ function UF:OnEnable()
     end)
 end
 
--- Universal re-read-and-apply entry point.
-function UF:ApplySettings()
+---Universal re-read-and-apply entry point.
+---@param configKey string? restrict the pass to one unit's frames, which is all the GUI ever changes
+function UF:ApplySettings(configKey)
     self:UpdateDB()
 
     self.TagSeparator = self.db.TagSettings.Separator
     NRSKNUI:RunWhenSafe(function()
-        for unit, frame in pairs(UF.frames) do
-            self:ConfigureFrame(frame, unit)
+        UF:ForEachFrame(function(frame, unit) self:ConfigureFrame(frame, unit) end, configKey)
+
+        if not configKey or configKey == 'boss' then
+            self:UpdateBossSpan() -- boss size, spacing and growth all move the group's footprint
         end
-        self:UpdateBossSpan() -- boss size, spacing and growth all move the group's footprint
+
+        for key in pairs(UF.GroupConfigs) do
+            if not configKey or configKey == key then
+                self:LayoutGroup(key)
+            end
+        end
     end)
 end
 
@@ -361,6 +396,10 @@ function UF:OnDisable()
         for _, frame in pairs(UF.frames) do
             UnregisterUnitWatch(frame)
             frame:Hide()
+        end
+        for _, group in pairs(UF.groups) do
+            UnregisterStateDriver(group.container, 'visibility')
+            group.container:Hide()
         end
     end)
 end

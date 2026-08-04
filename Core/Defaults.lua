@@ -2707,7 +2707,7 @@ local Defaults = {
                     Tags = {
                         TagOne = {
                             Enabled = true,
-                            Tag = "[nrsknuf:unit:smartcolor][nrsknuf:name<$|r]",
+                            Tag = "[NUF:name:smartcolor]",
                             UseGlobalFont = true,
                             FontFace = "Expressway",
                             FontSize = 12,
@@ -2723,7 +2723,7 @@ local Defaults = {
                         },
                         TagTwo = {
                             Enabled = true,
-                            Tag = "[nrsknuf:curhp:perhp]",
+                            Tag = "[NUF:curhp:perhp]",
                             UseGlobalFont = true,
                             FontFace = "Expressway",
                             FontSize = 12,
@@ -2739,7 +2739,7 @@ local Defaults = {
                         },
                         TagThree = {
                             Enabled = true,
-                            Tag = "[nrsknuf:perpower:smartcolor]",
+                            Tag = "[NUF:perpower:smartcolor]",
                             UseGlobalFont = true,
                             FontFace = "Expressway",
                             FontSize = 12,
@@ -2868,6 +2868,37 @@ local Defaults = {
                                 YOffset = 0
                             },
                         },
+                        Role = {
+                            Enabled = false,
+                            Size = 14,
+                            TankHealerOnly = false,
+                            Position = {
+                                AnchorFrom = "TOPLEFT",
+                                AnchorTo = "TOPLEFT",
+                                XOffset = 2,
+                                YOffset = -2
+                            },
+                        },
+                        Leader = {
+                            Enabled = false,
+                            Size = 14,
+                            Position = {
+                                AnchorFrom = "BOTTOMLEFT",
+                                AnchorTo = "TOPLEFT",
+                                XOffset = 0,
+                                YOffset = -2
+                            },
+                        },
+                        RaidIcon = {
+                            Enabled = true,
+                            Size = 24,
+                            Position = {
+                                AnchorFrom = "CENTER",
+                                AnchorTo = "TOP",
+                                XOffset = 0,
+                                YOffset = 0
+                            },
+                        },
                     },
                     Castbar = {
                         Enabled = true,
@@ -2989,26 +3020,6 @@ local Defaults = {
                             },
                         },
                     },
-                    RaidIcon = {
-                        Enabled = true,
-                        Size = 24,
-                        Position = {
-                            AnchorFrom = "CENTER",
-                            AnchorTo = "TOP",
-                            XOffset = 0,
-                            YOffset = 0
-                        },
-                    },
-                    LeaderIndicator = {
-                        Enabled = false,
-                        Size = 14,
-                        Position = {
-                            AnchorFrom = "BOTTOMLEFT",
-                            AnchorTo = "TOPLEFT",
-                            XOffset = 0,
-                            YOffset = -2
-                        },
-                    },
                 },
                 -- Per unit overrides, these will override the ["**"] settings above
                 player = {
@@ -3024,6 +3035,9 @@ local Defaults = {
                         Summon = {
                             Enabled = true,
                         },
+                        Leader = {
+                            Enabled = true,
+                        },
                     },
                     anchorFrameType = "SELECTFRAME",
                     ParentFrame = "NRSKNUF_CDMAnchor",
@@ -3032,9 +3046,6 @@ local Defaults = {
                         AnchorTo = "LEFT",
                         XOffset = -30,
                         YOffset = 0
-                    },
-                    LeaderIndicator = {
-                        Enabled = true,
                     },
                     Power = {
                         Enabled = false,
@@ -3055,6 +3066,9 @@ local Defaults = {
                         Quest = {
                             Enabled = true,
                         },
+                        Leader = {
+                            Enabled = true,
+                        },
                     },
                     anchorFrameType = "SELECTFRAME",
                     ParentFrame = "NRSKNUF_CDMAnchor",
@@ -3063,9 +3077,6 @@ local Defaults = {
                         AnchorTo = "RIGHT",
                         XOffset = 30,
                         YOffset = 0
-                    },
-                    LeaderIndicator = {
-                        Enabled = true,
                     },
                     Power = {
                         Enabled = false,
@@ -3290,6 +3301,78 @@ local Defaults = {
                                 XOffset = 0,
                                 YOffset = 1
                             },
+                        },
+                    },
+                },
+                party = {
+                    Width = 180,
+                    Height = 80,
+                    anchorFrameType = "UIPARENT",
+                    ParentFrame = "UIParent",
+                    Position = {
+                        AnchorFrom = "TOPLEFT",
+                        AnchorTo = "TOPLEFT",
+                        XOffset = 1,
+                        YOffset = -1
+                    },
+                    Group = {
+                        GrowthDirection = "DOWN",
+                        HorizontalSpacing = 1,
+                        VerticalSpacing = 1,
+                        ShowPlayer = true,
+                        StartFromCenter = false,
+                        SortBy = "INDEX",
+                        SortMethod = "INDEX",
+                        SortDirection = "ASC",
+                        RoleOrder = { "TANK", "HEALER", "DAMAGER" },
+                        Visibility = "[@raid6,exists][nogroup] hide;show",
+                    },
+                    Power = {
+                        Height = 6,
+                    },
+                    Castbar = {
+                        Enabled = false, -- never constructed on group units
+                    },
+                    Tags = {
+                        TagOne = {
+                            Position = {
+                                AnchorFrom = "TOP",
+                                AnchorTo = "TOP",
+                                XOffset = 0,
+                                YOffset = -4
+                            },
+                        },
+                        TagTwo = {
+                            Position = {
+                                AnchorFrom = "BOTTOM",
+                                AnchorTo = "BOTTOM",
+                                XOffset = 0,
+                                YOffset = 8
+                            },
+                        },
+                        TagThree = {
+                            Enabled = false,
+                        },
+                    },
+                    Indicators = {
+                        ReadyCheck = { Enabled = true },
+                        Summon = { Enabled = true },
+                        Resurrect = { Enabled = true },
+                        Phase = { Enabled = true },
+                        Role = { Enabled = true },
+                        Leader = { Enabled = true },
+                        RaidIcon = { Size = 16 },
+                    },
+                    Auras = {
+                        Buffs = {
+                            size = 22,
+                            perRow = 4,
+                            maxFrameCount = 4,
+                        },
+                        Debuffs = {
+                            size = 24,
+                            perRow = 3,
+                            maxFrameCount = 3,
                         },
                     },
                 },

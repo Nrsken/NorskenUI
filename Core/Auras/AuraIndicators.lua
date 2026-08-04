@@ -38,6 +38,14 @@ AuraIndicators.Sized = {
     [AuraIndicators.Styles.Icon] = true,
 }
 
+-- The dispel styles are left out: their artwork is whatever a live aura's dispel type gives them.
+AuraIndicators.Previewable = {
+    [AuraIndicators.Styles.Overlay] = true,
+    [AuraIndicators.Styles.Square] = true,
+    [AuraIndicators.Styles.Icon] = true,
+    [AuraIndicators.Styles.Duration] = true,
+}
+
 -- What an indicator's proxy can be anchored to. The element resolves these against its unit frame.
 AuraIndicators.Attach = {
     Frame = 'frame',
@@ -56,14 +64,15 @@ local AF = AuraUtil.AuraFilters
 local CreateFilterString = AuraUtil.CreateFilterString
 
 -- The categories worth a one-click entry. Anything outside this list is what the Filter match type and the full builder are for.
+-- type is the base the filter string was built from, which a compiled string no longer separates out.
 AuraIndicators.Presets = {
-    { value = 'BigDefensive',      text = L['Big Defensives'],        filterString = CreateFilterString(AF.Helpful, AF.BigDefensive), },
-    { value = 'ExternalDefensive', text = L['External Defensives'],   filterString = CreateFilterString(AF.Helpful, AF.ExternalDefensive), },
-    { value = 'DispelByYou',       text = L['Dispellable by You'],    filterString = CreateFilterString(AF.Harmful, AF.Raid), },
-    { value = 'DispelByAnyone',    text = L['Dispellable by Anyone'], filterString = CreateFilterString(AF.Harmful, AF.Dispellable), },
-    { value = 'CrowdControl',      text = L['Crowd Control'],         filterString = CreateFilterString(AF.Harmful, AF.CrowdControl), },
-    { value = 'OwnBuffs',          text = L['Your Own Buffs'],        filterString = CreateFilterString(AF.Helpful, AF.Player), },
-    { value = 'BossDebuffs',       text = L['Boss Debuffs'],          filterString = AF.Harmful,                                           candidateFilters = { isBossAura = true }, },
+    { value = 'BigDefensive',      text = L['Big Defensives'],        type = AF.Helpful, filterString = CreateFilterString(AF.Helpful, AF.BigDefensive), },
+    { value = 'ExternalDefensive', text = L['External Defensives'],   type = AF.Helpful, filterString = CreateFilterString(AF.Helpful, AF.ExternalDefensive), },
+    { value = 'DispelByYou',       text = L['Dispellable by You'],    type = AF.Harmful, filterString = CreateFilterString(AF.Harmful, AF.Raid), },
+    { value = 'DispelByAnyone',    text = L['Dispellable by Anyone'], type = AF.Harmful, filterString = CreateFilterString(AF.Harmful, AF.Dispellable), },
+    { value = 'CrowdControl',      text = L['Crowd Control'],         type = AF.Harmful, filterString = CreateFilterString(AF.Harmful, AF.CrowdControl), },
+    { value = 'OwnBuffs',          text = L['Your Own Buffs'],        type = AF.Helpful, filterString = CreateFilterString(AF.Helpful, AF.Player), },
+    { value = 'BossDebuffs',       text = L['Boss Debuffs'],          type = AF.Harmful, filterString = AF.Harmful,                                           candidateFilters = { isBossAura = true }, },
 }
 
 local PresetsByValue = {}
@@ -117,6 +126,7 @@ function AuraIndicators:GetBranches(spec)
         if not preset then return {} end
 
         return { {
+            type = preset.type,
             filterString = preset.filterString,
             candidateFilters = preset.candidateFilters and CopyTable(preset.candidateFilters) or nil,
         } }
@@ -125,7 +135,8 @@ function AuraIndicators:GetBranches(spec)
     -- Spell IDs. Note this only bites where the client honours identity filters: helpful auras on units
     -- you can assist and harmful ones on units you cannot. See AuraContainerUtil.CanApplyIdentityCandidateFilters.
     local spellIDs = ParseSpellIDs(spec.SpellIDs)
-    return { { filterString = spec.AuraType or AF.Helpful, candidateFilters = spellIDs and { includeSpellIDs = spellIDs } or nil, } }
+    local auraType = spec.AuraType or AF.Helpful
+    return { { type = auraType, filterString = auraType, candidateFilters = spellIDs and { includeSpellIDs = spellIDs } or nil, } }
 end
 
 ---Return true when the indicator is a SpellIDs match and at least one ID parses,
@@ -406,7 +417,7 @@ local function BuildTexture(slot, look)
     texture:SetAllPoints(slot)
     ApplyTextureLook(texture, look)
 
-    return { shown = { texture }, texture = texture }
+    return { texture = texture }
 end
 
 ---Fade a dispel indicator through its holder rather than its texture.
@@ -450,7 +461,7 @@ local function BuildDispel(slot, look, defaultAtlas, level)
         customDispelColorMap = NRSKNUI.Colors.dispel,
     })
 
-    local regions = { shown = { holder }, holder = holder, texture = texture }
+    local regions = { holder = holder, texture = texture }
     ApplyDispelAlpha(regions, look)
     return regions
 end
@@ -479,7 +490,7 @@ local function BuildIcon(slot, look, container)
         durationFont = look.DurationFont,
     }, slot)
 
-    return { shown = { slot.Icon, slot.Cooldown, slot.Count, slot.Time, slot.Border, slot.nuiAuraOverlay }, }
+    return {} -- the skin owns every region, and none can be touched again after build
 end
 
 ---Restyle a Duration indicator's text.
@@ -505,7 +516,7 @@ local function BuildDuration(slot, look)
     text:SetFontStyle(look.FontSource, look.Font.FontSize, look.FontOutline, nil, true)
     slot:SetDurationText(text, { textFormatter = NRSKNUI:GetAuraDurationFormatter(false, nil), })
 
-    local regions = { shown = { text }, text = text, parent = slot }
+    local regions = { text = text, parent = slot }
     ApplyDuration(regions, look)
     return regions
 end
@@ -521,14 +532,22 @@ local StyleBuilders = {
     [Styles.DispelBorder] = function(slot, look, _, level) return BuildDispel(slot, look, DISPEL_BORDER_ATLAS, level) end,
 }
 
--- Only what can genuinely change after the one-shot bind.
-local StyleAppliers = {
-    [Styles.Overlay] = function(regions, look) ApplyTextureLook(regions.texture, look) end,
-    [Styles.Duration] = ApplyDuration,
-    [Styles.DispelOverlay] = ApplyDispelAlpha,
-    [Styles.DispelBorder] = ApplyDispelAlpha,
-}
-StyleAppliers[Styles.Square] = StyleAppliers[Styles.Overlay]
+---Draw an indicator on a preview dummy, through the same builder its real slot runs. The dummy stands
+---in for the slot and owner for the container, so nothing here reaches a restricted object.
+---@param dummy table
+---@param owner table
+---@param placement table
+---@param spec table
+---@param level number
+---@param fontDB table?
+---@return boolean drawn
+function NRSKNUI:BuildAuraIndicatorPreview(dummy, owner, placement, spec, level, fontDB)
+    local build = AuraIndicators.Previewable[placement.Style] and StyleBuilders[placement.Style]
+    if not build then return false end
+
+    build(dummy, ResolveLook(spec, placement, fontDB), owner, level)
+    return true
+end
 
 ---Set up a unit's indicator slot for a spec or update it if it already exists.
 ---@param container table
@@ -542,7 +561,15 @@ function NRSKNUI:SyncAuraIndicator(container, handle, placement, proxy, level, f
     local build = StyleBuilders[placement.Style]
     if not build then return nil end
 
-    handle = handle or { proxy = proxy, builtStyle = placement.Style, slots = {}, regions = {}, builtKeys = {} }
+    handle = handle or {
+        proxy = proxy,
+        slots = {},
+        slotKeys = {},
+        filters = {}, -- restored when a slot is shown again
+        regions = {},
+        builtKeys = {},
+    }
+    handle.container = container
 
     for _, key in ipairs(placement.Keys) do
         local spec = not handle.builtKeys[key] and AuraIndicators:GetSpec(key)
@@ -554,7 +581,8 @@ function NRSKNUI:SyncAuraIndicator(container, handle, placement, proxy, level, f
             for _, branch in ipairs(AuraIndicators:GetBranches(spec)) do
                 local index = #handle.slots + 1
 
-                handle.slots[index] = container:AddSlot(branch.filterString, {
+                handle.filters[index] = branch.candidateFilters
+                handle.slots[index], handle.slotKeys[index] = container:AddSlot(branch.filterString, {
                     candidateFilters = branch.candidateFilters,
                     sortMethod = AuraContainerSortMethod[spec.sortMethod],
                     sortDirection = AuraContainerSortDirection[spec.sortDirection],
@@ -575,38 +603,47 @@ function NRSKNUI:SyncAuraIndicator(container, handle, placement, proxy, level, f
     return handle
 end
 
----Set all the regions of an indicator to shown or hidden.
+-- An empty include map matches nothing, and is not skipped the way a spellID map can be.
+local NEVER_MATCH = { includeDispelTypes = {} }
+
+---Show or hide a slot by starving it of candidates, since its regions cannot be touched after build.
+---@param handle table
+---@param index number
+---@param shown boolean
+local function SetSlotShown(handle, index, shown)
+    local key = handle.slotKeys[index]
+    if not key then return end
+
+    local filters = NEVER_MATCH
+    if shown then
+        filters = handle.filters[index] -- may be nil, which and/or would turn back into NEVER_MATCH
+    end
+
+    handle.container:SetAuraSlotCandidateFilters(key, filters)
+end
+
+---Hide every slot an indicator owns.
 ---@param handle table
 ---@param shown boolean
 function NRSKNUI:SetAuraIndicatorShown(handle, shown)
-    for _, regions in pairs(handle.regions) do
-        -- A style only builds the regions its options asked for, so this skips the gaps.
-        for _, region in pairs(regions.shown) do
-            region:SetShown(shown)
-        end
+    for index in ipairs(handle.slots) do
+        SetSlotShown(handle, index, shown)
     end
 end
 
----Apply the look of a spec to an indicator's regions, if the style matches.
+---Settle which of an indicator's slots are showing. Looks are not re-applied: the regions belong to
+---the slot's aura button, which the client closes to us once aura values are secret.
 ---@param handle table
 ---@param placement table
----@param fontDB table?
-function NRSKNUI:ApplyAuraIndicator(handle, placement, fontDB)
+function NRSKNUI:ApplyAuraIndicator(handle, placement)
     local assigned = {}
     for _, key in ipairs(placement.Keys) do
         assigned[key] = true
     end
 
-    local apply = handle.builtStyle == placement.Style and StyleAppliers[placement.Style]
-
-    for _, regions in pairs(handle.regions) do
+    for index, regions in ipairs(handle.regions) do
+        -- The spec behind an assigned key can have been deleted since.
         local spec = assigned[regions.key] and AuraIndicators:GetSpec(regions.key)
-
-        for _, region in pairs(regions.shown) do
-            region:SetShown(spec ~= nil)
-        end
-        if spec and apply then
-            apply(regions, ResolveLook(spec, placement, fontDB))
-        end
+        SetSlotShown(handle, index, spec ~= nil)
     end
 end

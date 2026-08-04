@@ -11,6 +11,7 @@ local tsort = table.sort
 local GetTime = GetTime
 local Mixin = Mixin
 local next = next
+local wipe = wipe
 
 local CreateDurationTextBinding = C_DurationUtil and C_DurationUtil.CreateDurationTextBinding
 local CreateDuration = C_DurationUtil and C_DurationUtil.CreateDuration
@@ -137,13 +138,11 @@ local function BranchSpells(branch)
 end
 
 ---What one display previews: its icons, the dispel types they carry and which way round they read.
----@param filterName string?
+---@param branches table[]? compiled filter branches
 ---@return number[]? spells nil to pick icons from the dispel type instead
 ---@return string[] dispels
 ---@return boolean harmful
-local function ResolveDisplay(filterName)
-    local branches = NRSKNUI:GetAuraFilter(filterName)
-
+local function ResolveDisplay(branches)
     -- Helpful only when every branch is, so a multi-branch buff filter still previews as buffs. Only a
     -- spec branch carries its base type, a bare HELPFUL/HARMFUL selection is the filter string itself.
     local harmful = true
@@ -165,13 +164,32 @@ local function ResolveDisplay(filterName)
     return spells, dispels or (harmful and HARMFUL_DISPELS or HELPFUL_DISPELS), harmful
 end
 
+---@param spells number[]?
+---@param harmful boolean
+---@return number[]? classSpells
+local function ClassSpells(spells, harmful)
+    if spells or harmful then return nil end
+    return CLASS_BUFF_SPELLS[NRSKNUI.MyClass] or CLASS_BUFF_SPELLS.PRIEST
+end
+
+---@param spells number[]?
+---@param classSpells number[]?
+---@param dispel string
+---@param slot number
+---@return number|string
+local function EntryIcon(spells, classSpells, dispel, slot)
+    if spells then return SpellIcon(spells[(slot - 1) % #spells + 1]) end
+    if classSpells then return SpellIcon(classSpells[(slot - 1) % #classSpells + 1]) end
+
+    -- Harmful with no whitelist, the icon follows the dispel type, so the art matches the border.
+    return SpellIcon(DEBUFF_SPELLS[dispel] or DEBUFF_SPELLS.None)
+end
+
 ---Fill in one display's fake auras, reusing the entry tables so a rebuild allocates nothing.
 ---@param state table
 local function BuildEntries(state)
-    local spells, dispels, harmful = ResolveDisplay(state.filter)
-    local classSpells = (not spells and not harmful)
-        and (CLASS_BUFF_SPELLS[NRSKNUI.MyClass] or CLASS_BUFF_SPELLS.PRIEST)
-        or nil
+    local spells, dispels, harmful = ResolveDisplay(NRSKNUI:GetAuraFilter(state.filter))
+    local classSpells = ClassSpells(spells, harmful)
 
     local lead = state.lead
     local leadCount = lead and lead.count or 0
@@ -195,13 +213,8 @@ local function BuildEntries(state)
 
         if slot < 1 then
             entry.icon = SpellIcon(lead.spells[(index - 1) % #lead.spells + 1])
-        elseif spells then
-            entry.icon = SpellIcon(spells[(slot - 1) % #spells + 1])
-        elseif classSpells then
-            entry.icon = SpellIcon(classSpells[(slot - 1) % #classSpells + 1])
         else
-            -- Harmful with no whitelist, the icon follows the dispel type, so the art matches the border.
-            entry.icon = SpellIcon(DEBUFF_SPELLS[dispel] or DEBUFF_SPELLS.None)
+            entry.icon = EntryIcon(spells, classSpells, dispel, slot)
         end
     end
 
@@ -339,11 +352,9 @@ local function AcquireButton(display, index)
     return button
 end
 
----Run the real skin over a dummy, after clearing whatever the previous pass left on it.
----@param owner table stand-in for the container, which a preview never touches
+---Clear whatever the previous pass left on a dummy, so a rebuild starts from bare regions.
 ---@param button table
----@param options table
-local function SkinButton(owner, button, options)
+local function ResetDummy(button)
     ResetPools(button)
     ResetPools(button.nuiAuraOverlay)
     button.Cooldown:Hide()
@@ -351,9 +362,11 @@ local function SkinButton(owner, button, options)
     button.nuiIcon, button.nuiCooldown, button.nuiCount = nil, nil, nil
     button.nuiTime, button.nuiTimeOptions = nil, nil
     button.nuiDispelCount = 0
+end
 
-    NRSKNUI:SkinAuraButton(owner, options, button)
-
+---Settle a dummy once something has drawn on it: whatever asked for duration text gets a live binding.
+---@param button table
+local function FinishDummy(button)
     button:EnableMouse(false) -- a dummy sits under the mover, it must never take the click
 
     if button.nuiCooldown then button.nuiCooldown:Show() end
@@ -373,6 +386,16 @@ local function SkinButton(owner, button, options)
     elseif button.nuiBinding then
         button.nuiBinding:SetEnabled(false)
     end
+end
+
+---Run the real skin over a dummy.
+---@param owner table stand-in for the container, which a preview never touches
+---@param button table
+---@param options table
+local function SkinButton(owner, button, options)
+    ResetDummy(button)
+    NRSKNUI:SkinAuraButton(owner, options, button)
+    FinishDummy(button)
 end
 
 ---The color curve a real button would color its duration text with, nil in every other mode since
@@ -538,7 +561,7 @@ local function Tick()
     for state in pairs(active) do
         -- Re-skinning is coalesced onto the tick, so a slider drag costs one pass per tick at most.
         if state.dirtySkin then
-            Refresh(state, true)
+            state.redraw(state, true)
         end
 
         for index = 1, state.count do
@@ -576,7 +599,7 @@ local function GetState(container)
     if not state then
         -- owner stands in for the container in the skin call, which resolves everything from the
         -- config anyway (see the Opt fallbacks in NRSKNUI:SkinAuraButton).
-        state = { entries = {}, owner = {} }
+        state = { entries = {}, owner = {}, redraw = Refresh }
         container.nuiPreview = state
     end
     return state
@@ -584,7 +607,7 @@ end
 
 --[[
 
-API: NRSKNUI.AuraPreview:Attach(container, relativeTo, relativePoint[, x, y])
+API: NRSKNUI.AuraPreview:Attach(container, relativeTo, relativePoint[, x, y, level])
 
 Where a container's preview lives, which is wherever the container itself was anchored: pass the same
 frame and point the container's own :SetPoint was given. The preview can never hang off the container,
@@ -594,6 +617,7 @@ since an AuraContainer carries forbidden aspects that an unrestricted frame is n
 * relativeTo    - the frame the container is anchored to, which also parents the preview
 * relativePoint - the point on that frame
 * x, y          - the container's own offsets
+* level         - the container's frame level, so the preview layers where the real display does
 
 --]]
 ---@param container table
@@ -601,14 +625,17 @@ since an AuraContainer carries forbidden aspects that an unrestricted frame is n
 ---@param relativePoint string
 ---@param x number?
 ---@param y number?
-function AuraPreview:Attach(container, relativeTo, relativePoint, x, y)
+---@param level number? frame level to match the container's, passed in rather than read off the container
+function AuraPreview:Attach(container, relativeTo, relativePoint, x, y, level)
     if not container then return end
 
     local state = GetState(container)
     state.anchorTo, state.anchorPoint, state.anchorX, state.anchorY = relativeTo, relativePoint, x or 0, y or 0
+    state.level = level
 
     if state.frame then
         state.frame:SetParent(relativeTo)
+        if level then state.frame:SetFrameLevel(level) end
         if state.frame:IsShown() then Layout(state) end
     end
 end
@@ -677,7 +704,170 @@ function AuraPreview:SetShown(container, shown)
         state.frame = frame
     end
 
+    if state.level then state.frame:SetFrameLevel(state.level) end
+
     Refresh(state, true)
+
+    state.frame:Show()
+    active[state] = true
+    UpdateTicker()
+end
+
+-- Indicator previews --
+
+---One preview slot per assigned key and branch, mirroring the slots the real indicator builds.
+---@param placement table
+---@param into table
+---@return table into
+local function IndicatorSpecs(placement, into)
+    wipe(into)
+
+    local indicators = NRSKNUI.AuraIndicators
+    for _, key in ipairs(placement.Keys) do
+        local spec = indicators:GetSpec(key)
+        if spec then
+            for _ = 1, #indicators:GetBranches(spec) do
+                into[#into + 1] = spec
+            end
+        end
+    end
+    return into
+end
+
+---@param state table
+local function BuildIndicatorEntries(state)
+    local indicators = NRSKNUI.AuraIndicators
+    local entries = state.entries
+
+    for index = 1, state.count do
+        local entry = entries[index]
+        if not entry then
+            entry = {}
+            entries[index] = entry
+        end
+
+        -- Resolved per slot: a placement can carry keys with completely different filters.
+        local spells, dispels, harmful = ResolveDisplay(indicators:GetBranches(state.specs[index]))
+        local timing = TIMINGS[(index - 1) % #TIMINGS + 1]
+        local dispel = dispels[(index - 1) % #dispels + 1]
+
+        entry.harmful = harmful
+        entry.dispel = dispel ~= 'None' and dispel or nil
+        entry.duration = timing.duration
+        entry.stacks = timing.stacks
+        entry.icon = EntryIcon(spells, ClassSpells(spells, harmful), dispel, index)
+    end
+
+    for index = state.count + 1, #entries do
+        entries[index] = nil
+    end
+end
+
+---@param state table
+---@param reskin boolean
+local function RefreshIndicator(state, reskin)
+    if reskin then state.dirtySkin = false end
+
+    IndicatorSpecs(state.placement, state.specs)
+    state.count = #state.specs
+    BuildIndicatorEntries(state)
+
+    local frame = state.frame
+    for index = 1, state.count do
+        local button = AcquireButton(frame, index)
+
+        if reskin or not button.nuiSkinned then
+            ResetDummy(button)
+            NRSKNUI:BuildAuraIndicatorPreview(button, state.owner, state.placement, state.specs[index], state.level, state.fontDB)
+            FinishDummy(button)
+            button.nuiSkinned = true
+        end
+
+        -- The real slots all cover the proxy, so the preview stacks them the same way.
+        button:ClearAllPoints()
+        button:SetAllPoints(frame)
+        button:Show()
+    end
+
+    for index = state.count + 1, #frame.buttons do
+        frame.buttons[index]:Hide()
+    end
+
+    local now = GetTime()
+    for index = 1, state.count do
+        StartAura(frame.buttons[index], state.entries[index], now)
+    end
+end
+
+---@param handle table
+---@return table state
+local function GetIndicatorState(handle)
+    local state = handle.nuiPreview
+    if not state then
+        state = { entries = {}, owner = {}, specs = {}, count = 0, redraw = RefreshIndicator }
+        handle.nuiPreview = state
+    end
+    return state
+end
+
+--[[
+
+API: NRSKNUI.AuraPreview:UpdateIndicator(handle, placement, level[, fontDB])
+
+Tell an indicator what its preview should look like. Cheap and safe to call from any settings pass:
+nothing is built until the preview is shown, and a preview that is already up redraws.
+
+* handle    - the handle NRSKNUI:SyncAuraIndicator returned
+* placement - that indicator's entry in uDB.AuraIndicators
+* level     - the frame level the real slots draw at
+* fontDB    - the host's shared font block
+
+--]]
+---@param handle table
+---@param placement table
+---@param level number
+---@param fontDB table?
+function AuraPreview:UpdateIndicator(handle, placement, level, fontDB)
+    local state = GetIndicatorState(handle)
+    state.placement, state.level, state.fontDB = placement, level, fontDB
+
+    if state.frame and state.frame:IsShown() then
+        state.dirtySkin = true
+        RefreshIndicator(state, false)
+    end
+end
+
+--[[
+
+API: NRSKNUI.AuraPreview:SetIndicatorShown(handle, shown)
+
+Show or hide an indicator's dummy. The real slots are the caller's to hide, since only the caller
+knows whether they should come back.
+
+--]]
+---@param handle table
+---@param shown boolean
+function AuraPreview:SetIndicatorShown(handle, shown)
+    local state = handle.nuiPreview
+    if not state or not state.placement then return end
+
+    if not shown then
+        if state.frame then state.frame:Hide() end
+        active[state] = nil
+        UpdateTicker()
+        return
+    end
+
+    if not state.frame then
+        local frame = CreateFrame('Frame', nil, handle.proxy)
+        frame.buttons = {}
+        frame:SetAllPoints(handle.proxy) -- the proxy already carries the placement's size and anchor
+        state.frame = frame
+    end
+
+    if state.level then state.frame:SetFrameLevel(state.level) end
+
+    RefreshIndicator(state, true)
 
     state.frame:Show()
     active[state] = true

@@ -15,10 +15,10 @@
     <Script file='Enums.lua' />
     <Script file='Curves.lua' />
     <Script file='DynamicGroup.lua' />
-    <Script file='AuraContainer.lua' />
-    <Script file='AuraFilters.lua' />
-    <Script file='AuraIndicators.lua' />
-    <Script file='AuraPreview.lua' />
+    <Script file='Auras/AuraContainer.lua' />
+    <Script file='Auras/AuraFilters.lua' />
+    <Script file='Auras/AuraIndicators.lua' />
+    <Script file='Auras/AuraPreview.lua' />
     <Script file='PreviewManager.lua' />
     <Script file='Anchors.lua' />
     <Script file='Commands.lua' />
