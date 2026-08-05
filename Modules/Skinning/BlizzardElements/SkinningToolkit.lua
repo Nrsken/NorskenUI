@@ -130,7 +130,8 @@ function BSKIN:HandleIcon(icon, createBackdrop)
         backdrop:SetPoint('TOPLEFT', icon, -1, 1)
         backdrop:SetPoint('BOTTOMRIGHT', icon, 1, -1)
         backdrop:NUIAddBorders()
-        backdrop:SetBorderColor(self:GetBorderColor())
+        local border = self:GetBorderColor()
+        backdrop:SetBorderColor(border[1], border[2], border[3], border[4])
 
         ---@cast backdrop Frame & PublicBackdropMixin & SkinnedIconBackdropMixin
         Mixin(backdrop, SkinnedIconBackdropMixin)

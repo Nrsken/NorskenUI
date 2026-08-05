@@ -1,48 +1,19 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 
-local CreateFrame = CreateFrame
-local Mixin = Mixin
+local UnitIsVisible, UnitCanAssist = UnitIsVisible, UnitCanAssist
+local min, huge, ceil = math.min, math.huge, math.ceil
 local GenerateClosure = GenerateClosure
+local CreateFrame = CreateFrame
 local CopyTable = CopyTable
 local ipairs = ipairs
+local Mixin = Mixin
 local type = type
-local huge = math.huge
-local min = math.min
-local ceil = math.ceil
 
--- Read from the live client rather than hardcoded, these tokens can change between patches.
 local AuraFilterTokens = AuraUtil.AuraFilters
 
---[[
-
-Option names in this file mirror Blizzard_AuraContainer 1:1 so config tables can be read straight against the source:
-
-* Blizzard_AuraContainerShared.lua:
-    * CustomAuraContainerLayoutDefaults
-    * CustomAuraContainerGroupDefaultOptions
-    * CustomAuraContainerGroupLayoutDefaultOptions
-    * CustomAuraContainerItemEnchantment
-    * CustomAuraContainerProcessAuraPolicyDefaultOptions
-
-* Blizzard_CustomAuraButton.lua:
-    * Set/AddDispelTypeTexture
-    * SetApplicationCount
-    * SetDurationText
-    * SetDurationCooldown
-
-* Blizzard_AuraButton.lua:
-    * SetTooltipAnchorPoint
-    * SetHideTooltipInCombat
-    * SetCancelAuraButtons
-
-* Native enums/constants, globals provided by Blizzard_AuraContainer:
-    * AuraContainerSortMethod / AuraContainerSortDirection
-    * AuraContainerItemEnchantmentSlot / AuraContainerItemEnchantmentSortMethod
-    * CustomAuraContainerAuraProcessingPolicy / CustomAuraContainerItemEnchantmentPlacement
-    * Enum.CustomAuraButtonDispelTypeTextureStyle
-
---]]
+-- We can use this to fully disable a slot/group, thanks P3lim for the idea.
+local NEVER_MATCH_FILTER = AuraUtil.CreateFilterString(AuraFilterTokens.Helpful, AuraFilterTokens.Harmful)
 
 -- Element-wide defaults copied onto the container. Group/slot options override them per group.
 local ELEMENT_OPTIONS = {
@@ -103,31 +74,16 @@ local function ResolveGrowthDirection(direction, default)
     return default
 end
 
---[[
-
-API: NRSKNUI:GetAuraGridSize(config, count)
-
-Extent of the largest grid a config can lay out: a full line wide and as many lines as the cap needs.
-
-A live container sizes itself down to the auras actually up (Blizzard does this in
-CustomAuraContainerFlowLayoutMixin:OnLayoutComplete), but that size is secret and cannot be read back,
-so anything that needs a real number, a mover in particular, has to describe the worst case instead.
-
-* config - carries .size, .perRow, .elementSpacing and .lineSpacing
-* count  - most buttons that can be placed
-
---]]
----@param config table
----@param count number
+---Extent of the largest grid a config can lay out.
+---@param config table .size, .perRow, .elementSpacing and .lineSpacing
+---@param count number most buttons that can be placed
 ---@return number width
 ---@return number height
 function NRSKNUI:GetAuraGridSize(config, count)
     local columns = min(config.perRow, count)
     local rows = ceil(count / config.perRow)
 
-    -- Trailing spacing is left out of both axes, matching the bounds AnchorUtil.ApplyFlowLayout reports.
-    return columns * config.size + (columns - 1) * config.elementSpacing,
-        rows * config.size + (rows - 1) * config.lineSpacing
+    return columns * config.size + (columns - 1) * config.elementSpacing, rows * config.size + (rows - 1) * config.lineSpacing
 end
 
 -- Check what type of duration text coloring is enabled in the global media settings.
@@ -154,25 +110,10 @@ local function GetGlobalDurationColorMode()
     return useBreakpointColors, useCurveColors, useSingleColor, singleColor
 end
 
---[[
-
-API: NRSKNUI:SkinAuraButton(container, options, button)
-
-Shared aura button constructor.
-Passed to the native container as `initializeFrame`, called for every aura button created by the container.
-
-Runs inside the container's securecallfunction context, so creating and anchoring regions on the
-forbidden button is permitted. We attach regions and hand them to the button's native Set methods.
-Tooltips, mouse handling and duration text are all driven natively.
-
-* container - the AuraContainer element
-* options   - the group/slot options (carries size/font/toggle overrides)
-* button    - the native AuraButton
-
---]]
----@param container table
----@param options table
----@param button table
+---Shared aura button constructor.
+---@param container table AuraContainer element
+---@param options table group/slot options (carries size/font/toggle overrides)
+---@param button table native AuraButton
 function NRSKNUI:SkinAuraButton(container, options, button)
     options = options or {}
 
@@ -324,7 +265,8 @@ function NRSKNUI:SkinAuraButton(container, options, button)
     end
 end
 
----Push the container-level flow layout settings. Shared by creation and :ApplyLayout, since every one of these can be changed on a live container.
+---Push the container-level flow layout settings.
+---Shared by creation and :ApplyLayout, since every one of these can be changed on a live container.
 ---@param container table
 ---@param config table
 local function ApplyFlowLayout(container, config)
@@ -372,22 +314,47 @@ local function ResolveDisplayOptions(container, options)
     end
 end
 
---[[
+---Which identity verdict a display's spellID matching hangs on.
+---@param filterString string
+---@param candidateFilters table?
+---@return boolean?
+local function ResolveIdentityDependence(filterString, candidateFilters)
+    if not NRSKNUI.AuraFilters:HasSecretSpellID(candidateFilters) then return nil end
 
-API: container:AddGroup(filter[, options])
+    for component in filterString:gmatch('[^| ]+') do
+        if component == AuraFilterTokens.Helpful then return true end
+        if component == AuraFilterTokens.Harmful then return false end
+    end
 
-Register a group of auras, can be called multiple times.
-Pads options with element-wide defaults and installs the NorskenUI skin as the default button constructor.
+    return nil
+end
 
-* filter  - aura filter string ('HELPFUL', 'HARMFUL', ...)
-* options - optional per-group options
+---Is this display's filtering untrustworthy right now, so that it should show nothing rather than the
+---wrong thing? Both gate axes are answered here, see :UpdateUnitGate for what they mean.
+---@param container table
+---@param identity boolean? this display's ResolveIdentityDependence verdict
+---@return boolean
+local function IsGated(container, identity)
+    if container.unitNotVisible then return true end
+    if identity == nil or container.unitCanAssist == nil then return false end
 
-Returns the generated group key and its slot in __groupKeys. The key is derived from GetDebugName,
-which is a secret once another addon has tainted us, so it can be passed on but never compared or used as a table key.
-Anything that needs to find a group again must remember the slot.
---]]
----@param filter string
----@param options table?
+    return identity ~= container.unitCanAssist
+end
+
+---What a group's frame cap should be right now.
+---@param container table
+---@param slot number
+---@return number
+local function ResolveMaxFrameCount(container, slot)
+    if container.parkedSlots and container.parkedSlots[slot] then return 0 end
+    if IsGated(container, container.groupIdentity and container.groupIdentity[slot]) then return 0 end
+
+    return container.maxFrameCount or huge
+end
+
+---Register a group of auras, can be called multiple times.
+---@param filter string aura filter string ('HELPFUL', 'HARMFUL', ...)
+---@param options table? optional per-group options
 ---@return string key
 ---@return number slot
 function ContainerMixin:AddGroup(filter, options)
@@ -397,14 +364,19 @@ function ContainerMixin:AddGroup(filter, options)
     options.layout = ResolveLayout(self, options.layout)
     ResolveDisplayOptions(self, options)
 
-    self.__groupIndex = (self.__groupIndex or 0) + 1
-    local key = (self:GetDebugName() or 'NRSKNUIAuraContainer') .. 'Group' .. self.__groupIndex
+    self.groupIndex = (self.groupIndex or 0) + 1
+    local key = (self:GetDebugName() or 'NRSKNUIAuraContainer') .. 'Group' .. self.groupIndex
     self:AddAuraGroup(key, filter, options)
 
     -- Remembered so :ApplyLayout can re-push per-group settings without the caller tracking keys.
-    self.__groupKeys = self.__groupKeys or {}
-    local slot = #self.__groupKeys + 1
-    self.__groupKeys[slot] = key
+    self.groupKeys = self.groupKeys or {}
+    self.groupIdentity = self.groupIdentity or {}
+    local slot = #self.groupKeys + 1
+    self.groupKeys[slot] = key
+    self.groupIdentity[slot] = ResolveIdentityDependence(filter, options.candidateFilters)
+
+    -- A group added while its gate is shut would otherwise come up live.
+    self:SetAuraGroupMaxFrameCount(key, ResolveMaxFrameCount(self, slot))
 
     return key, slot
 end
@@ -418,34 +390,20 @@ local function ResolveBranches(filterName)
     return { { filterString = AuraFilterTokens.Harmful } }
 end
 
---[[
-
-API: NRSKNUI:GetAuraFilterBranchCount(filterName)
-
-How many groups :AddFilteredGroup will build for a named filter, one per branch.
-maxFrameCount is a per-group cap, so callers sizing to a filtered display's worst case have to
-multiply by this.
-
-* filterName - key into db.global.AuraFilters (may be nil)
-
---]]
----@param filterName string?
+---How many groups :AddFilteredGroup will build for a named filter, one per branch.
+---@param filterName string? key into db.global.AuraFilters (may be nil)
 ---@return number
 function NRSKNUI:GetAuraFilterBranchCount(filterName)
     return #ResolveBranches(filterName)
 end
 
----Point a binding's groups at its filter's current branches: rebind the groups it already owns,
----grow for branches it has no group for, and park the surplus.
----
----Groups cannot be removed from a live container, so a branch that goes away leaves its group behind with maxFrameCount 0,
----which drops it on the first refresh pass without it ever claiming a frame. Parked groups are tracked by slot, since group keys
----are secret strings and cannot be compared (see :AddGroup).
+---Point a binding's groups at its filter's current branches.
 ---@param container table
 ---@param binding table
 local function SyncBinding(container, binding)
     local branches = ResolveBranches(binding.name)
-    container.__parkedSlots = container.__parkedSlots or {}
+    container.parkedSlots = container.parkedSlots or {}
+    container.groupIdentity = container.groupIdentity or {}
 
     for index, branch in ipairs(branches) do
         container:EnsureProcessAuraPolicy(branch.candidateFilters)
@@ -454,87 +412,52 @@ local function SyncBinding(container, binding)
         if key then
             container:SetAuraGroupFilterString(key, branch.filterString)
             container:SetAuraGroupCandidateFilters(key, branch.candidateFilters)
-            container:SetAuraGroupMaxFrameCount(key, container.maxFrameCount or huge) -- may be un-parking
         else
-            -- AddGroup mutates the options it is given, so each group gets its own copy. Going through
-            -- the same call the binding was created with keeps a live-added branch identical to an
-            -- original one (skin, layout, sort).
+            -- AddGroup mutates the options it is given, so each group gets its own copy.
             local groupOptions = binding.options and CopyTable(binding.options) or {}
             groupOptions.candidateFilters = branch.candidateFilters
             binding.keys[index], binding.slots[index] = container:AddGroup(branch.filterString, groupOptions)
         end
 
-        container.__parkedSlots[binding.slots[index]] = nil
+        local slot = binding.slots[index]
+        container.groupIdentity[slot] = ResolveIdentityDependence(branch.filterString, branch.candidateFilters)
+        container.parkedSlots[slot] = nil
+        container:SetAuraGroupMaxFrameCount(binding.keys[index], ResolveMaxFrameCount(container, slot))
     end
 
     for index = #branches + 1, #binding.keys do
         container:SetAuraGroupMaxFrameCount(binding.keys[index], 0)
-        container.__parkedSlots[binding.slots[index]] = true
+        container.parkedSlots[binding.slots[index]] = true
     end
 end
 
---[[
-
-API: container:AddFilteredGroup(filterName[, options])
-
-Register a named filter from db.global.AuraFilters, can be called multiple times.
-
-The filter's branches become one aura group each, so a filter that ORs several conditions together
-still lays out as a single grid. maxFrameCount applies per branch.
-
-* filterName - key into db.global.AuraFilters (may be nil)
-* options    - optional per-group options (candidateFilters is filled in from each branch)
-
-Returns the generated group keys, one per branch.
---]]
----@param filterName string?
----@param options table?
+---Register a named filter from db.global.AuraFilters, can be called multiple times.
+---@param filterName string? key into db.global.AuraFilters (may be nil)
+---@param options table? optional per-group options (candidateFilters is filled in from each branch)
 ---@return string[]
 function ContainerMixin:AddFilteredGroup(filterName, options)
     local binding = { name = filterName, keys = {}, slots = {}, options = options }
 
-    self.__filterBindings = self.__filterBindings or {}
-    self.__filterBindings[#self.__filterBindings + 1] = binding
+    self.filterBindings = self.filterBindings or {}
+    self.filterBindings[#self.filterBindings + 1] = binding
 
     SyncBinding(self, binding)
 
     return binding.keys
 end
 
---[[
-
-API: container:EnsureProcessAuraPolicy(candidateFilters)
-
-Turn on the ProcessAura policy when a filter asks to match on processedAuraType.
-Candidate filtering on that field hides every aura under any other policy, so this has to be on before the filter is applied.
-
-* candidateFilters - the resolved candidate filter table (may be nil)
-
---]]
----@param candidateFilters table?
+---Turn on the ProcessAura policy when a filter asks to match on processedAuraType.
+---@param candidateFilters table? the resolved candidate filter table (may be nil)
 function ContainerMixin:EnsureProcessAuraPolicy(candidateFilters)
     if not (candidateFilters and candidateFilters.processedAuraType) then return end
-    if self.__processAuraPolicy then return end
+    if self.processAuraPolicy then return end
 
     self:SetAuraProcessingPolicy(CustomAuraContainerAuraProcessingPolicy.ProcessAura, self.__processAuraPolicyOptions)
-    self.__processAuraPolicy = true
+    self.processAuraPolicy = true
 end
 
---[[
-
-API: container:ApplyLayout(config)
-
-Re-push everything the native container lets us change after creation:
-e.g the flow layout and each group's layout / frame cap / sort order.
-
-Button appearance (size, font, widget toggles, cooldown options) is baked in by initializeFrame when
-the button is created and Blizzard does not expose ClearAuraGroups, so those need a fresh container
-(i.e. a reload) to take effect. Callers should treat this as "layout is live, looks are not".
-
-* config - the same table accepted by frame:CreateAuraContainer
-
---]]
----@param config table?
+---Re-push everything the native container lets us change after creation.
+---@param config table? the same table accepted by frame:CreateAuraContainer
 function ContainerMixin:ApplyLayout(config)
     config = config or {}
 
@@ -544,75 +467,40 @@ function ContainerMixin:ApplyLayout(config)
         self[key] = config[key]
     end
 
-    local parked = self.__parkedSlots
-    for slot, key in ipairs(self.__groupKeys or {}) do
+    for slot, key in ipairs(self.groupKeys or {}) do
         self:SetAuraGroupLayout(key, ResolveLayout(self, nil))
-        if not (parked and parked[slot]) then -- parked groups outlived their branch, leave them at 0
-            self:SetAuraGroupMaxFrameCount(key, self.maxFrameCount or huge)
-        end
-        self:SetAuraGroupSortMethod(key,
-            self.sortMethod or AuraContainerSortMethod.ExpirationOnly,
-            self.sortDirection or AuraContainerSortDirection.Normal)
+        self:SetAuraGroupMaxFrameCount(key, ResolveMaxFrameCount(self, slot))
+        self:SetAuraGroupSortMethod(key, self.sortMethod or AuraContainerSortMethod.ExpirationOnly, self.sortDirection or AuraContainerSortDirection.Normal)
     end
 end
 
---[[
-
-API: container:ReapplyFilters()
-
-Reapply every binding registered through :AddFilteredGroup, picking up branches added or removed
-since the container was built. Deferred out of combat, since growing a binding creates groups.
-
---]]
+---Reapply every binding registered through :AddFilteredGroup
 function ContainerMixin:ReapplyFilters()
-    if not self.__filterBindings then return end
+    if not self.filterBindings then return end
 
     NRSKNUI:RunWhenSafe(function()
-        for _, binding in ipairs(self.__filterBindings) do
+        for _, binding in ipairs(self.filterBindings) do
             SyncBinding(self, binding)
         end
     end)
 end
 
---[[
-
-API: container:RebindFilteredGroups(filterName)
-
-Point every binding registered through :AddFilteredGroup at a different named filter and reapply.
-Used when the GUI switches which filter a module runs.
-
-* filterName - key into db.global.AuraFilters (may be nil)
-
---]]
----@param filterName string?
+---Point every binding registered through :AddFilteredGroup at a different named filter and reapply.
+---Used when the GUI switches which filter a module runs.
+---@param filterName string? key into db.global.AuraFilters (may be nil)
 function ContainerMixin:RebindFilteredGroups(filterName)
-    if not self.__filterBindings then return end
+    if not self.filterBindings then return end
 
-    for _, binding in ipairs(self.__filterBindings) do
+    for _, binding in ipairs(self.filterBindings) do
         binding.name = filterName
     end
 
     self:ReapplyFilters()
 end
 
---[[
-
-API: container:AddSlot(filter[, options])
-
-Register a single-aura slot (this can be called multiple times).
-Slots take no part in the flow layout, anchor them yourself.
-
-* filter  - aura filter string
-* options - optional per-slot options
-
-Returns the created slot frame and its generated key. The key is the only way to reach the slot again:
-its frame and everything built on it are closed to us whenever aura values are secret, so anything that
-has to change after creation goes through the container's own :SetAuraSlot* calls. Like a group key it
-is a secret string once another addon has tainted us, so it can be passed on but never compared.
-
---]]
----@param filter string
----@param options table?
+---Register a single-aura slot (this can be called multiple times).
+---@param filter string aura filter string
+---@param options table? optional per-slot options
 ---@return table? slot
 ---@return string key
 function ContainerMixin:AddSlot(filter, options)
@@ -621,128 +509,112 @@ function ContainerMixin:AddSlot(filter, options)
     self:EnsureProcessAuraPolicy(options.candidateFilters)
     ResolveDisplayOptions(self, options)
 
-    self.__slotIndex = (self.__slotIndex or 0) + 1
-    local key = (self:GetDebugName() or 'NRSKNUIAuraContainer') .. 'Slot' .. self.__slotIndex
-    return self:AddAuraSlot(key, filter, options), key
+    self.slotIndex = (self.slotIndex or 0) + 1
+    local key = (self:GetDebugName() or 'NRSKNUIAuraContainer') .. 'Slot' .. self.slotIndex
+
+    self.slotKeys = self.slotKeys or {}
+    self.slotFilters = self.slotFilters or {}
+    self.slotIdentity = self.slotIdentity or {}
+    self.slotKeys[self.slotIndex] = key
+    self.slotFilters[self.slotIndex] = filter
+    self.slotIdentity[self.slotIndex] = ResolveIdentityDependence(filter, options.candidateFilters)
+
+    local slot = self:AddAuraSlot(key, filter, options)
+
+    -- A slot added while its gate is shut would otherwise come up live.
+    if IsGated(self, self.slotIdentity[self.slotIndex]) then
+        self:SetAuraSlotFilterString(key, NEVER_MATCH_FILTER)
+    end
+
+    return slot, key
 end
 
---[[
+-- Events that can change the gate state for a unit.
+local UNIT_GATE_EVENTS = {
+    'UNIT_ENTERING_VEHICLE', 'UNIT_ENTERED_VEHICLE',
+    'UNIT_EXITING_VEHICLE', 'UNIT_EXITED_VEHICLE',
+    'UNIT_FLAGS', 'UNIT_TARGETABLE_CHANGED',
+    'UNIT_IN_RANGE_UPDATE', 'UNIT_CONNECTION',
+}
 
-API: container:AddItemEnchant(slot[, options])
+local GATE_EVENTS = {
+    'PLAYER_ENTERING_WORLD', 'ZONE_CHANGED',
+}
 
-Register a temporary weapon-enchant frame (main/off-hand).
-Uses the shared skin, marked with a purple border by default.
+---Re-run the gate whenever one of UNIT_GATE_EVENTS lands for the watched unit.
+---@param watcher Frame
+local function OnGateEvent(watcher)
+    local container = watcher.container
 
-* slot    - AuraContainerItemEnchantmentSlot value (MainHand / OffHand / Ranged)
-* options - optional per-frame options (.hidePermanent, .templateNames, ...)
+    container:UpdateUnitGate()
+    container:UpdateAllAuras()
+end
 
-Returns the created enchant frame.
+---Point a container's watcher at its current unit, building it on first use.
+---@param container table
+---@param unit string
+local function WatchUnit(container, unit)
+    local watcher = container.gateWatcher
 
---]]
----@param slot number
----@param options table?
+    if not watcher then
+        watcher = CreateFrame('Frame')
+        watcher.container = container
+        watcher:SetScript('OnEvent', OnGateEvent)
+        container.gateWatcher = watcher
+    end
+
+    if watcher.unit == unit then return end
+    watcher.unit = unit
+
+    for _, event in ipairs(UNIT_GATE_EVENTS) do watcher:RegisterUnitEvent(event, unit, unit ~= 'player' and 'player' or nil) end
+    for _, event in ipairs(GATE_EVENTS) do watcher:RegisterEvent(event) end
+end
+
+---Update the container's gate state for its current unit and reapply every group/slot's filter if it changed.
+function ContainerMixin:UpdateUnitGate()
+    local unit = self:GetUnit()
+    if not unit then return end
+
+    WatchUnit(self, unit)
+
+    local notVisible = not UnitIsVisible(unit)
+    local canAssist = UnitCanAssist('player', unit)
+    if self.unitNotVisible == notVisible and self.unitCanAssist == canAssist then return end
+
+    self.unitNotVisible = notVisible
+    self.unitCanAssist = canAssist
+
+    for slot, key in ipairs(self.groupKeys or {}) do
+        self:SetAuraGroupMaxFrameCount(key, ResolveMaxFrameCount(self, slot))
+    end
+
+    for index, key in ipairs(self.slotKeys or {}) do
+        local gated = IsGated(self, self.slotIdentity[index])
+        self:SetAuraSlotFilterString(key, gated and NEVER_MATCH_FILTER or self.slotFilters[index])
+    end
+end
+
+---Register a temporary weapon-enchant frame (main/off-hand).
+---@param slot number AuraContainerItemEnchantmentSlot value (MainHand / OffHand / Ranged)
+---@param options table? optional per-frame options (.hidePermanent, .templateNames, ...)
 ---@return table? enchant
 function ContainerMixin:AddItemEnchant(slot, options)
     options = options or {}
 
-    if options.borderColor == nil then
-        options.borderColor = NRSKNUI.Colors.enchantColor
-    end
-
-    if options.hidePermanent == nil then
-        options.hidePermanent = self.hidePermanent
-    end
-
-    if not options.initializeFrame then
-        options.initializeFrame = GenerateClosure(NRSKNUI.SkinAuraButton, NRSKNUI, self, options)
-    end
+    if options.borderColor == nil then options.borderColor = NRSKNUI.Colors.enchantColor end
+    if options.hidePermanent == nil then options.hidePermanent = self.hidePermanent end
+    if not options.initializeFrame then options.initializeFrame = GenerateClosure(NRSKNUI.SkinAuraButton, NRSKNUI, self, options) end
 
     return self:AddItemEnchantment(slot, options)
 end
 
---[[
-
-API: container:SetItemEnchantLayout([options])
-
-Set the flow layout for the item-enchant group, padded with the container's layout defaults.
-
-* options - optional layout overrides (.placement, .elementSpacing, .groupSpacing, .layoutIndex, ...)
-
---]]
----@param options table?
+---Set the flow layout for the item-enchant group, padded with the container's layout defaults.
+---@param options table? optional layout overrides (.placement, .elementSpacing, .groupSpacing, .layoutIndex, ...)
 function ContainerMixin:SetItemEnchantLayout(options)
     self:SetItemEnchantmentLayout(ResolveLayout(self, options))
 end
 
---[[
-
-API: frame:CreateAuraContainer([config])
-
-Create a native aura container parented to this frame and return it with the NorskenUI convenience API mixed in, e.g:
-API: :AddGroup / :AddSlot
-
-Aura containers cannot be created in combat, so callers must invoke this out of combat so we wrap in NRSKNUI:RunWhenSafe.
-Drive it by calling container:SetUnit(unit), once a group/slot exists the container self-registers for UNIT_AURA and updates itself.
-
-Config keys carry Blizzard's own option names, defaults are Blizzard's unless noted.
-
-* config - flow layout (CustomAuraContainerLayoutDefaults)
-*   .layoutAxis                - AnchorUtil.FlowLayoutAxis, defaults to Horizontal (number?)
-*   .anchorPoint               - layout anchor point, defaults to 'TOPLEFT' (string?)
-*   .horizontalGrowthDirection - AnchorUtil.FlowDirection value or 'LEFT'/'RIGHT', defaults to Right (string|number?)
-*   .verticalGrowthDirection   - AnchorUtil.FlowDirection value or 'UP'/'DOWN', defaults to Down (string|number?)
-*   .maximumLineSize           - wrap size along the primary axis (width on Horizontal, height on Vertical), defaults to infinite (number?)
-
-* layout padding (number?)
-*   .padding
-*   .paddingLeft
-*   .paddingRight
-*   .paddingTop
-*   .paddingBottom
-*
-* config - group defaults (CustomAuraContainerGroupDefaultOptions / GroupLayoutDefaultOptions)
-*   .maxFrameCount                  - max buttons per group; defaults to infinite (number?)
-*   .sortMethod                     - AuraContainerSortMethod; defaults to ExpirationOnly (number?)
-*   .sortDirection                  - AuraContainerSortDirection; defaults to Normal (number?)
-*   .elementSpacing                 - spacing between buttons along the primary axis (number?)
-*   .lineSpacing                    - spacing between button rows/columns (number?)
-*   .groupSpacing                   - spacing between groups along the primary axis (number?)
-*   .groupLineSpacing               - spacing between group rows/columns (number?)
-*   .forceNewLine                   - break to a new row/column between groups (boolean?)
-*   .elementWidth / .elementHeight  - override the size used for layout only (number?)
-*   (.layoutIndex is per-group only, pass it in the group's own .layout table)
-*
-* config - aura processing (CustomAuraContainerProcessAuraPolicyDefaultOptions)
-*   .auraProcessingPolicy       - CustomAuraContainerAuraProcessingPolicy; AddFilteredGroup turns ProcessAura on by itself when a filter needs it (number?)
-*   .processAuraPolicyOptions   - ProcessAura options (.ignoreBuffs, .ignoreDebuffs, .ignoreDispelDebuffs, .displayOnlyDispellableDebuffs) (table?)
-*
-* config - item enchantments (CustomAuraContainerItemEnchantment*)
-*   .hidePermanent                  - treat enchants without an expiration as inactive (boolean?)
-*   .itemEnchantmentSortMethod      - AuraContainerItemEnchantmentSortMethod; defaults to Slot (number?)
-*   .itemEnchantmentSortDirection   - AuraContainerSortDirection; defaults to Normal (number?)
-*
-* config - buttons (CustomAuraButton* option tables)
-*   .size / .width / .height                                    - button size, defaults to 24 (number?)
-*   .disableMouse / .disableCooldown                            - drop mouse handling / the cooldown spiral (boolean?)
-*   .drawSwipe / .drawEdge / .reverseSwipe                      - cooldown spiral options (boolean?)
-*   .showApplicationCount                                       - render the stack count (boolean?)
-*   .applicationCountFormatter                                  - NumericFormatter for the stack count (object?)
-*   .showDurationText                                           - render the remaining duration (boolean?)
-*   .durationTextFormatter                                      - NumericFormatter override; defaults to the global duration color mode (object?)
-*   .durationTextColorCurve                                     - color curve object, or true for NRSKNUI.curves.AuraDurationColor; only applies in curve mode (object|boolean?)
-*   .showBuffBorder / .showDebuffBorder                         - dispel-colored border for helpful/harmful auras (boolean?)
-*   .showWithoutDispelType                                      - keep the border visible on auras with no dispel type (boolean?)
-*   .borderStyle                                                - Enum.CustomAuraButtonDispelTypeTextureStyle; defaults to PreserveAsset (number?)
-*   .customDispelColorMap                                       - dispel name -> color, defaults to NRSKNUI.Colors.dispel (table?)
-*   .customDispelColorCurve                                     - color curve sampled per dispel type instead of the map (object?)
-*   .showBuffDispelIcon / .showDebuffDispelIcon                 - native dispel type icon in the corner (boolean?)
-*   .tooltipAnchorPoint / .tooltipOffsetX / .tooltipOffsetY     - tooltip anchor, defaults to 'ANCHOR_BOTTOMLEFT' (string?/number?)
-*   .tooltipHideInCombat                                        - suppress the tooltip while in combat (boolean?)
-*   .cancelAuraButtons                                          - click tokens that cancel the aura, e.g. 'RightButtonUp' (string?)
-*   .borderColor                                                - static border tint, used to mark weapon enchants (table?)
-*   .fontDB / .fontSize / .fontOutline                          - button font (NorskenUI)
-
---]]
+---Create a native aura container parented to this frame and return it with the NorskenUI convenience API mixed.
 ---@param config table?
 ---@return table? container
 local function CreateAuraContainer(self, config)
@@ -764,7 +636,7 @@ local function CreateAuraContainer(self, config)
     if policy then
         local isProcessAura = policy == CustomAuraContainerAuraProcessingPolicy.ProcessAura
         container:SetAuraProcessingPolicy(policy, isProcessAura and config.processAuraPolicyOptions or nil)
-        container.__processAuraPolicy = isProcessAura
+        container.processAuraPolicy = isProcessAura
     end
 
     if config.itemEnchantmentSortMethod then

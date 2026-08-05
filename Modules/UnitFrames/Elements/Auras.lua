@@ -70,6 +70,7 @@ end
 local function Update(frame)
     for _, container in pairs(frame.Auras) do
         container:SetUnit(frame.unit) -- early-outs when the token is unchanged
+        container:UpdateUnitGate()
         container:UpdateAllAuras()
     end
 end

@@ -165,6 +165,7 @@ function PlayerAuras:BuildContainer(kind)
     end
 
     container:SetUnit('player')
+    container:UpdateUnitGate() -- also starts the container watching what can move a gate verdict
 
     host.container = container
 

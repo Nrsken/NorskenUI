@@ -89,6 +89,7 @@ function Defensives:BuildContainer()
     container:AddFilteredGroup(self.db.Filter)
 
     container:SetUnit('player')
+    container:UpdateUnitGate() -- also starts the container watching what can move a gate verdict
     self.host.container = container
 
     AuraPreview:Attach(container, self.host, config.anchorPoint)

@@ -345,10 +345,11 @@ local function CountKeys(map)
     return count
 end
 
----Does this branch match on a spellID the client can refuse to look at?
+---Does this branch match on a spellID the client can refuse to look at? A list of nothing but
+---never-secret spells is exempt from CanApplyIdentityCandidateFilters and always honoured.
 ---@param candidates table? compiled candidateFilters
 ---@return boolean
-local function HasSecretSpellID(candidates)
+function AuraFilters:HasSecretSpellID(candidates)
     if not candidates then return false end
 
     for _, field in ipairs(SPELLID_CANDIDATE_FIELDS) do
@@ -364,7 +365,7 @@ end
 ---@param branch table compiled branch
 ---@return string? line
 local function BranchRestriction(branch)
-    if not HasSecretSpellID(branch.candidateFilters) then return nil end
+    if not AuraFilters:HasSecretSpellID(branch.candidateFilters) then return nil end
 
     local text
     if branch.type == Filters.Harmful then
