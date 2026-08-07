@@ -59,6 +59,7 @@
 ---@class SpeedModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class GearUtilityModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class AuraDisplayModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class BlizzardMessagesModule : NRSKNUI.ModuleBase, AceEvent-3.0
 
 -- The handles Core/Init.lua hangs off the addon table. Declared here so the field and the accessor
 -- that fills it agree on a type: without these the field takes whatever the assignment inferred.
@@ -91,6 +92,7 @@
 ---@field CombatRes CombatResModule
 ---@field CombatCursor CombatCursorModule
 ---@field FocusCastbar FocusCastbarModule
+---@field BlizzardMessages BlizzardMessagesModule
 
 -- Typed accessors. Overloads dispatch on the literal module name.
 
@@ -125,6 +127,7 @@ local NRSKNUI
 ---@overload fun(self: NRSKNUI, name: "FocusCastbar", silent?: boolean): FocusCastbarModule
 ---@overload fun(self: NRSKNUI, name: "GearUtility", silent?: boolean): GearUtilityModule
 ---@overload fun(self: NRSKNUI, name: "AuraDisplay", silent?: boolean): AuraDisplayModule
+---@overload fun(self: NRSKNUI, name: "BlizzardMessages", silent?: boolean): BlizzardMessagesModule
 ---@param name string
 ---@param silent? boolean
 ---@return AceModule
@@ -158,6 +161,7 @@ function NRSKNUI:GetModule(name, silent) end
 ---@overload fun(self: NRSKNUI, name: "FocusCastbar", ...: string): FocusCastbarModule
 ---@overload fun(self: NRSKNUI, name: "GearUtility", ...: string): GearUtilityModule
 ---@overload fun(self: NRSKNUI, name: "AuraDisplay", ...: string): AuraDisplayModule
+---@overload fun(self: NRSKNUI, name: "BlizzardMessages", ...: string): BlizzardMessagesModule
 ---@param name string
 ---@param ... string
 ---@return AceModule

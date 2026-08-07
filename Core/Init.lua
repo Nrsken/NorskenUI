@@ -150,12 +150,11 @@ NRSKNUI.GearUtility = NRSKNUI:NewModule('GearUtility', 'AceEvent-3.0')
 -- Class Util Modules
 NRSKNUI.BurningRush = NRSKNUI:NewModule('BurningRush', 'AceEvent-3.0')
 
--- Advanced Skinning Modules
-NRSKNUI.Tooltips = NRSKNUI:NewModule('Tooltips', 'AceEvent-3.0')
-NRSKNUI.Minimap = NRSKNUI:NewModule('Minimap', 'AceEvent-3.0')
-
 -- Skinning Modules
 NRSKNUI.Skinning = NRSKNUI:NewModule('Skinning', 'AceEvent-3.0')
+NRSKNUI.BlizzardMessages = NRSKNUI:NewModule('BlizzardMessages', 'AceEvent-3.0')
+NRSKNUI.Tooltips = NRSKNUI:NewModule('Tooltips', 'AceEvent-3.0')
+NRSKNUI.Minimap = NRSKNUI:NewModule('Minimap', 'AceEvent-3.0')
 
 -- Class Utility Modules
 NRSKNUI.Gateway = NRSKNUI:NewModule('Gateway', 'AceEvent-3.0')

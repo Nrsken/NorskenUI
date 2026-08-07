@@ -5,6 +5,10 @@ local GUI = NRSKNUI.GUI
 local Theme = NRSKNUI.Theme
 local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
+---@class BlizzardMessagesModule
+local BlizzardMessages = NRSKNUI:GetModule('BlizzardMessages')
+local function ApplySettings() BlizzardMessages:ApplySettings() end
+
 
 local ipairs = ipairs
 local format = string.format
@@ -72,6 +76,7 @@ local function BuildGlobalView(page)
         callback = function(checked)
             blizzDB.Enabled = checked
             NRSKNUI:ApplyBlizzardFonts(true)
+            ApplySettings()
             page:Refresh()
         end,
     })
@@ -137,12 +142,11 @@ local function BuildSpecialView(page, entry)
     local fontDB = media.profileFont
     local blizzDB = media.blizzardFonts
     local sdb = blizzDB.Specials[entry.key]
-    local BM = NRSKNUI:GetModule('BlizzardMessages', true)
 
     local function Apply()
         NRSKNUI:ApplySpecialFonts()
-        if (entry.position or entry.hideLabel) and BM then
-            BM:ApplySettings()
+        if (entry.position or entry.hideLabel) then
+            ApplySettings()
         end
     end
 
@@ -168,7 +172,9 @@ local function BuildSpecialView(page, entry)
             yOffset = -6,
             conditions = { 'spEnabled' },
             callback = function()
-                if BM and BM[entry.preview] then BM[entry.preview](BM) end
+                if BlizzardMessages and BlizzardMessages[entry.preview] then
+                    BlizzardMessages[entry.preview](BlizzardMessages)
+                end
             end,
         })
     end
