@@ -2717,7 +2717,19 @@
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Auras.Buffs
 ---@field [string] any
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.boss.Auras.Buffs.Position
 ---@field Trigger NRSKNUI.DBProfile.UnitFrames.Units.boss.Auras.Buffs.Trigger
+---@field horizontalGrowthDirection string
+---@field maxFrameCount number
+---@field perRow number
+---@field previewLimit number
+---@field size number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Auras.Buffs.Position
+---@field [string] any
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Auras.Buffs.Trigger
 ---@field [string] any
@@ -2726,7 +2738,19 @@
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Auras.Debuffs
 ---@field [string] any
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.boss.Auras.Debuffs.Position
 ---@field Trigger NRSKNUI.DBProfile.UnitFrames.Units.boss.Auras.Debuffs.Trigger
+---@field horizontalGrowthDirection string
+---@field maxFrameCount number
+---@field perRow number
+---@field previewLimit number
+---@field size number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Auras.Debuffs.Position
+---@field [string] any
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Auras.Debuffs.Trigger
 ---@field [string] any
@@ -2757,21 +2781,29 @@
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.focus
 ---@field [string] any
+---@field Auras NRSKNUI.DBProfile.UnitFrames.Units.focus.Auras
 ---@field Castbar NRSKNUI.DBProfile.UnitFrames.Units.focus.Castbar
+---@field ParentFrame string
 ---@field Position NRSKNUI.DBProfile.UnitFrames.Units.focus.Position
 ---@field Power NRSKNUI.DBProfile.UnitFrames.Units.focus.Power
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.focus.Auras
+---@field [string] any
+---@field Buffs NRSKNUI.DBProfile.UnitFrames.Units.focus.Auras.Buffs
+---@field Debuffs NRSKNUI.DBProfile.UnitFrames.Units.focus.Auras.Debuffs
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.focus.Auras.Buffs
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.focus.Auras.Debuffs
+---@field [string] any
+---@field Enabled boolean
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.focus.Castbar
 ---@field [string] any
 ---@field Enabled boolean
----@field Position NRSKNUI.DBProfile.UnitFrames.Units.focus.Castbar.Position
-
----@class NRSKNUI.DBProfile.UnitFrames.Units.focus.Castbar.Position
----@field [string] any
----@field AnchorFrom string
----@field AnchorTo string
----@field XOffset number
----@field YOffset number
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.focus.Position
 ---@field [string] any
@@ -2854,6 +2886,7 @@
 ---@field [string] any
 ---@field Auras NRSKNUI.DBProfile.UnitFrames.Units.party.Auras
 ---@field Castbar NRSKNUI.DBProfile.UnitFrames.Units.party.Castbar
+---@field Dispel NRSKNUI.DBProfile.UnitFrames.Units.party.Dispel
 ---@field Group NRSKNUI.DBProfile.UnitFrames.Units.party.Group
 ---@field Height number
 ---@field Indicators NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators
@@ -2871,7 +2904,18 @@
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Auras.Buffs
 ---@field [string] any
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.party.Auras.Buffs.Position
 ---@field Trigger NRSKNUI.DBProfile.UnitFrames.Units.party.Auras.Buffs.Trigger
+---@field maxFrameCount number
+---@field perRow number
+---@field previewLimit number
+---@field size number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Auras.Buffs.Position
+---@field [string] any
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Auras.Buffs.Trigger
 ---@field [string] any
@@ -2880,7 +2924,18 @@
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Auras.Debuffs
 ---@field [string] any
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.party.Auras.Debuffs.Position
 ---@field Trigger NRSKNUI.DBProfile.UnitFrames.Units.party.Auras.Debuffs.Trigger
+---@field maxFrameCount number
+---@field perRow number
+---@field previewLimit number
+---@field size number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Auras.Debuffs.Position
+---@field [string] any
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Auras.Debuffs.Trigger
 ---@field [string] any
@@ -2890,6 +2945,10 @@
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Castbar
 ---@field [string] any
 ---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Dispel
+---@field [string] any
+---@field UseGlobal boolean
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Group
 ---@field [string] any
@@ -2941,6 +3000,14 @@
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators.Summon
 ---@field [string] any
 ---@field Enabled boolean
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators.Summon.Position
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators.Summon.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Position
 ---@field [string] any
@@ -2951,7 +3018,7 @@
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Power
 ---@field [string] any
----@field Height number
+---@field Enabled boolean
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Tags
 ---@field [string] any
@@ -2973,10 +3040,20 @@
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Tags.TagThree
 ---@field [string] any
 ---@field Enabled boolean
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.party.Tags.TagThree.Position
+---@field Tag string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Tags.TagThree.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Tags.TagTwo
 ---@field [string] any
 ---@field Position NRSKNUI.DBProfile.UnitFrames.Units.party.Tags.TagTwo.Position
+---@field Tag string
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Tags.TagTwo.Position
 ---@field [string] any
@@ -3142,9 +3219,14 @@
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.player.Indicators
 ---@field [string] any
+---@field Combat NRSKNUI.DBProfile.UnitFrames.Units.player.Indicators.Combat
 ---@field Leader NRSKNUI.DBProfile.UnitFrames.Units.player.Indicators.Leader
 ---@field Resting NRSKNUI.DBProfile.UnitFrames.Units.player.Indicators.Resting
 ---@field Summon NRSKNUI.DBProfile.UnitFrames.Units.player.Indicators.Summon
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.player.Indicators.Combat
+---@field [string] any
+---@field Enabled boolean
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.player.Indicators.Leader
 ---@field [string] any
@@ -3171,7 +3253,13 @@
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.player.Tags
 ---@field [string] any
+---@field TagOne NRSKNUI.DBProfile.UnitFrames.Units.player.Tags.TagOne
 ---@field TagThree NRSKNUI.DBProfile.UnitFrames.Units.player.Tags.TagThree
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.player.Tags.TagOne
+---@field [string] any
+---@field Color table
+---@field Tag string
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.player.Tags.TagThree
 ---@field [string] any
