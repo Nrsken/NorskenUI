@@ -22,7 +22,8 @@
             "CustomAuraContainerItemEnchantmentPlacement",
             "AuraContainerInbound",
             "CustomAuraContainerAuraProcessingPolicy",
-            "LoadAddOnWithErrorHandling"
+            "LoadAddOnWithErrorHandling",
+            "TimeUtil"
         ],
         "write": [
             "NorskenUI",

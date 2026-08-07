@@ -160,25 +160,6 @@ function CHAT:OnInitialize()
     BuildShortChannelPatterns()
 end
 
-function CHAT:PlayWhisperSound(soundName)
-    if not soundName or soundName == "None" then return end
-    NRSKNUI:PlaySafeSound(soundName)
-end
-
-function CHAT:RegisterWhisperSounds()
-    local ws = self.db.WhisperSounds
-    if not ws or not ws.Enabled then return end
-    if self.whisperSoundsRegistered then return end
-    self.whisperSoundsRegistered = true
-
-    self:RegisterEvent("CHAT_MSG_WHISPER", function()
-        self:PlayWhisperSound(ws.WhisperSound)
-    end)
-    self:RegisterEvent("CHAT_MSG_BN_WHISPER", function()
-        self:PlayWhisperSound(ws.BNetWhisperSound)
-    end)
-end
-
 local canChangeMessage = function(arg1, id)
     if id and arg1 == "" then return id end
 end
@@ -538,7 +519,6 @@ function CHAT:OnEnable()
     self:SetupChat()
     self:RegisterAnchor()
     self:SetupBlizzardEditModeLock()
-    self:RegisterWhisperSounds()
     self:ForceInlineWhispers()
     self:AddWhisperModeWarning()
 
@@ -1285,8 +1265,7 @@ function CHAT:AddMessageEdits(frame, msg, isHistory, historyTime)
     return msg
 end
 
-function CHAT:AddMessage(msg, infoR, infoG, infoB, infoID, accessID, typeID, event, eventArgs, msgFormatter, isHistory,
-                         historyTime)
+function CHAT:AddMessage(msg, infoR, infoG, infoB, infoID, accessID, typeID, event, eventArgs, msgFormatter, isHistory, historyTime)
     local body = CHAT:AddMessageEdits(self, msg, isHistory, historyTime)
     self.OldAddMessage(self, body, infoR, infoG, infoB, infoID, accessID, typeID, event, eventArgs, msgFormatter)
 end
