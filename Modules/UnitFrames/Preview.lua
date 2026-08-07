@@ -428,38 +428,47 @@ function Preview:IsAuraPreviewActive(unit)
     return auraUnits[UF.ConfigKey(unit)] == true
 end
 
--- config key -> the placement index whose indicator is previewing, set from the GUI's open tab.
-local indicatorSlots = {}
+-- config key -> the placement tab the GUI has open on its aura indicator section, nil while closed.
+-- Everything but the tint styles previews whenever the section is open, so this only picks the tint.
+local indicatorTabs = {}
 
 ---@param key string config key
 local function RefreshIndicatorPreviews(key)
+    local element = UF.Elements.AuraIndicators
+
     UF:ForEachFrame(function(frame, unit)
-        UF.Elements.AuraIndicators.Preview(frame, unit, UF.GetUnitDB(unit))
+        local uDB = UF.GetUnitDB(unit)
+
+        -- Configure settles every handle, so a placement that stops previewing gets its real slots
+        -- back and the preview below only has to take over the ones it wants.
+        element.Configure(frame, unit, uDB)
+        element.Preview(frame, unit, uDB)
     end, key)
 end
 
----Preview one placement's indicator, replacing whatever the unit was previewing before.
+---Preview a unit's aura indicators, with `index` the placement tab the GUI has open.
 ---@param unit string
----@param index number?
+---@param index number? nil to stop previewing
 function Preview:RequestAuraIndicator(unit, index)
     local key = UF.ConfigKey(unit)
-    if indicatorSlots[key] == index then return end
+    if indicatorTabs[key] == index then return end
 
-    indicatorSlots[key] = index
+    indicatorTabs[key] = index
     RefreshIndicatorPreviews(key)
 end
 
 function Preview:ReleaseAllAuraIndicators()
-    for key in pairs(indicatorSlots) do
-        indicatorSlots[key] = nil
+    for key in pairs(indicatorTabs) do
+        indicatorTabs[key] = nil
         RefreshIndicatorPreviews(key)
     end
 end
 
+---The placement tab the GUI has open, nil while the unit's aura indicator section is closed.
 ---@param unit string config key or unit token
 ---@return number? index
-function Preview:GetAuraIndicatorSlot(unit)
-    return indicatorSlots[UF.ConfigKey(unit)]
+function Preview:GetAuraIndicatorTab(unit)
+    return indicatorTabs[UF.ConfigKey(unit)]
 end
 
 -- config key -> the uDB.Indicators key whose icon is force-shown, set from the GUI's open tab.
@@ -523,9 +532,9 @@ function UF:HidePreview()
     Preview:ReleaseAllGroups()
 end
 
----Preview the indicator on one placement, driven by the aura indicator tab the GUI has open.
+---Preview a unit's aura indicators, driven by the aura indicator section the GUI has open.
 ---@param unit string
----@param index number? nil to stop previewing
+---@param index number? the open placement tab, nil to stop previewing
 function UF:PreviewAuraIndicator(unit, index)
     Preview:RequestAuraIndicator(unit, index)
 end

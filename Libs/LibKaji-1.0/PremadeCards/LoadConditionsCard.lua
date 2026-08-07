@@ -64,7 +64,6 @@ local SIMPLE_CATEGORIES = {
 }
 
 local GREEN = { 0, 1, 0 }
-local RED = { 1, 0, 0 }
 
 local function HasAnyEnabled(tbl)
     if not tbl then return false end
@@ -99,13 +98,14 @@ local function GetActiveCount(db)
     return count
 end
 
+---A category only marks itself when it carries conditions.
 local function BuildCategoryOptions(db)
     return {
-        { key = "Instance", text = "Instance", indicator = IsCategoryActive(db, "Instance") and GREEN or RED },
-        { key = "Group",    text = "Group",    indicator = IsCategoryActive(db, "Group") and GREEN or RED },
-        { key = "Combat",   text = "Combat",   indicator = IsCategoryActive(db, "Combat") and GREEN or RED },
-        { key = "Role",     text = "Role",     indicator = IsCategoryActive(db, "Role") and GREEN or RED },
-        { key = "Position", text = "Position", indicator = IsCategoryActive(db, "Position") and GREEN or RED },
+        { key = "Instance", text = "Instance", indicator = IsCategoryActive(db, "Instance") and GREEN or nil },
+        { key = "Group",    text = "Group",    indicator = IsCategoryActive(db, "Group") and GREEN or nil },
+        { key = "Combat",   text = "Combat",   indicator = IsCategoryActive(db, "Combat") and GREEN or nil },
+        { key = "Role",     text = "Role",     indicator = IsCategoryActive(db, "Role") and GREEN or nil },
+        { key = "Position", text = "Position", indicator = IsCategoryActive(db, "Position") and GREEN or nil },
     }
 end
 

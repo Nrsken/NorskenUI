@@ -96,7 +96,7 @@ function SectionHeaderMixin:OnAcquire(parent, labelText, config)
 
     self._onToggle = config.onToggle
     -- Collapsed points right, expanded points down, matching the main sidebar's headers.
-    self.arrow:SetRotation(config.collapsed and -mpi / 2 or 0)
+    self.arrow:SetRotation(config.collapsed and mpi / 2 or 0)
 
     self.gui:ApplyFont(self.label, "normal")
     self.label:SetText(labelText or "")

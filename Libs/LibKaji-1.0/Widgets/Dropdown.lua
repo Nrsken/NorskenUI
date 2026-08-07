@@ -2,6 +2,9 @@
 # Dropdown
 
 * A dropdown with optional search, font/media preview and colorized options.
+* The selected options carry an accent dot on the right, so the selection still reads when the
+* option text brings a color of its own (a class-colored name, an embedded |c escape code).
+* An option passing an `indicator` color keeps it, since that says something other than selection.
 * The dropdown can be populated with:
 * - a simple key -> text table
 * - an array of strings
@@ -192,7 +195,7 @@ local function ReleaseItemButton(gui, btn)
     btn._hoverTarget = 0
     btn._itemValue = nil
     btn._itemText = nil
-    btn._updateColor = nil
+    btn._updateState = nil
     btn._index = nil
     if btn._previewBar then btn._previewBar:Hide() end
     if btn._indicator then btn._indicator:Hide() end
@@ -269,7 +272,7 @@ function DropdownMixin:SetValue(value, silent)
     RebuildSelectedSet(self)
     self._applySelected(value)
     for _, btn in ipairs(self._itemButtons) do
-        if btn._updateColor then btn._updateColor() end
+        if btn._updateState then btn._updateState() end
     end
     if not silent then safecall(self._callback, value) end
 end
@@ -677,7 +680,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
             RebuildSelectedSet(row)
             ApplySelected(values)
             for _, btn in ipairs(row._itemButtons) do
-                if btn._updateColor then btn._updateColor() end
+                if btn._updateState then btn._updateState() end
             end
 
             safecall(row._callback, values)
@@ -722,8 +725,14 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
             end
 
             local optionColor = row._optionColors and row._optionColors[key]
-            local function UpdateItemColor()
+            local indicatorColor = row._optionIndicators and row._optionIndicators[key]
+
+            local function UpdateItemState()
                 local isSelected = IsValueSelected(row, btn._itemValue)
+                local dot = indicatorColor or (isSelected and theme.accent or nil)
+                if dot then btn._indicator:SetTextColor(dot[1], dot[2], dot[3], 1) end
+                btn._indicator:SetShown(dot ~= nil)
+
                 if optionColor then
                     btn._text:SetTextColor(optionColor.r or optionColor[1], optionColor.g or optionColor[2], optionColor.b or optionColor[3], isSelected and 1 or 0.7)
                 elseif isSelected then
@@ -732,16 +741,8 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
                     btn._text:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
                 end
             end
-            btn._updateColor = UpdateItemColor
-            UpdateItemColor()
-
-            local indicatorColor = row._optionIndicators and row._optionIndicators[key]
-            if indicatorColor and btn._indicator then
-                btn._indicator:SetTextColor(indicatorColor[1], indicatorColor[2], indicatorColor[3], 1)
-                btn._indicator:Show()
-            elseif btn._indicator then
-                btn._indicator:Hide()
-            end
+            btn._updateState = UpdateItemState
+            UpdateItemState()
 
             btn:SetScript("OnClick", function() SelectValue(btn._itemValue) end)
             btn:SetScript("OnEnter", function(self)
@@ -758,7 +759,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
             end)
             btn:SetScript("OnLeave", function(self)
                 self._hoverTarget = 0
-                UpdateItemColor()
+                UpdateItemState()
                 GameTooltip:Hide()
             end)
 

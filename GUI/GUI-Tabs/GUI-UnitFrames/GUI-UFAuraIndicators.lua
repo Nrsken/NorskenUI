@@ -572,7 +572,7 @@ local function BuildUnitSection(page, uDB, unit, tabId)
         width = 1,
         options = STYLE_OPTIONS,
         value = placement.Style,
-        tooltip = L['Aura buttons are built once by the game, so a new style only appears after a reload.'],
+        tooltip = L['The preview follows straight away. Aura buttons are built once by the game, so the real indicator only picks a new style up after a reload.'],
         callback = function(value)
             placement.Style = value
             Changed(nil)

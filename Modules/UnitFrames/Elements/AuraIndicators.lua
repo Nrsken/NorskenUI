@@ -9,7 +9,11 @@ local AuraPreview = NRSKNUI.AuraPreview
 
 local CreateFrame = CreateFrame
 local ipairs = ipairs
-local pairs = pairs
+local wipe = wipe
+
+-- Which placements should be previewing, rebuilt from scratch on every Preview pass. Shared because
+-- nothing a pass calls reaches back into one.
+local previewing = {}
 
 ---Point a handle's proxy at its attach target.
 ---@param frame oUF.UnitFrame
@@ -101,14 +105,21 @@ local function SyncIndicators(frame, unit)
     end
 end
 
----Re-read every frame's indicators. Wired to the AuraIndicators callback in Core.lua.
----Adding is live, removing is not, so a dropped indicator is only hidden until the next reload.
+---Re-read every frame's indicators. Wired to the AuraIndicators callback in Core.lua, so every edit
+---the GUI makes lands here.
+---A real slot is a native aura button the client builds once, so adding one is live and restyling or
+---dropping one waits for a reload. A preview is ours end to end, so it follows every edit immediately.
 function UF:ReapplyAuraIndicators()
+    local element = UF.Elements.AuraIndicators
+
     NRSKNUI:RunWhenSafe(function()
-        for unit, frame in pairs(UF.frames) do
+        UF:ForEachFrame(function(frame, unit)
+            local uDB = UF.GetUnitDB(unit)
+
             SyncIndicators(frame, unit)
-            UF.Elements.AuraIndicators.Configure(frame, unit, UF.GetUnitDB(unit))
-        end
+            element.Configure(frame, unit, uDB)
+            element.Preview(frame, unit, uDB)
+        end)
     end)
 end
 
@@ -154,7 +165,9 @@ UF.Elements.AuraIndicators = {
         self.nuiAuraIndicatorContainer:SetUnit(self.unit or unit)
     end,
 
-    ---Show dummies for the placement the GUI has open, hiding that placement's real slots.
+    ---Show dummies while the GUI has the unit's aura indicator section open, hiding the real slots they
+    ---stand in for. Always runs straight after Configure, which is what settles every handle, so a
+    ---placement that stops being previewed is already back where it belongs by the time this sees it.
     ---@param self oUF.UnitFrame
     ---@param unit string
     ---@param uDB table
@@ -162,18 +175,29 @@ UF.Elements.AuraIndicators = {
         local handles = self.nuiAuraIndicators
         if not handles then return end
 
-        local previewed = UF.Preview:GetAuraIndicatorSlot(self.nuiConfig or unit)
-        local placement = previewed and uDB.AuraIndicators[previewed]
+        local selected = UF.Preview:GetAuraIndicatorTab(self.nuiConfig or unit)
+        wipe(previewing)
+
+        if selected then
+            for index, placement in ipairs(uDB.AuraIndicators) do
+                -- A tint covers its attach target whole, so several at once are just a wash: a tint
+                -- previews on its own tab alone, everything else previews together to show the layout.
+                local solo = AuraIndicators.FullCover[placement.Style]
+
+                if AuraIndicators.Previewable[placement.Style] and (not solo or index == selected) then
+                    previewing[placement] = true
+                end
+            end
+        end
 
         for _, handle in ipairs(handles) do
-            local on = placement ~= nil and handle.placement == placement
-                and AuraIndicators.Previewable[placement.Style] == true
+            local placement = handle.placement
+            -- A deleted placement keeps its handle until the next reload, and is never in the set.
+            local on = previewing[placement] == true
 
             if on then
                 AuraPreview:UpdateIndicator(handle, placement, UF.GetLayerLevel(self, placement.Layer), UF.db.General)
                 NRSKNUI:SetAuraIndicatorShown(handle, false)
-            elseif handle.nuiPreview then
-                NRSKNUI:ApplyAuraIndicator(handle, handle.placement) -- back to what Configure settled on
             end
 
             AuraPreview:SetIndicatorShown(handle, on)

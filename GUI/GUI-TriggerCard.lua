@@ -352,8 +352,10 @@ local function BuildBranches(card, trigger, onChange)
         end
     end
 
-    card:Row(rowHL, 0):Button(L['Add Branch'], {
-        width = 0.5,
+    card:Separator()
+
+    card:Row(24):Button(L['Add Branch'], {
+        width = 1,
         height = 24,
         callback = function()
             tinsert(branches, {})

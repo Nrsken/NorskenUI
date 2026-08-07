@@ -448,10 +448,16 @@ end
 ---@param entry table
 ---@param now number
 local function StartAura(button, entry, now)
-    button.nuiExpiration = now + entry.duration
+    local start = button.nuiStart
+    if not start or button.nuiLength ~= entry.duration or now >= start + entry.duration then
+        start = now
+    end
+
+    button.nuiStart, button.nuiLength = start, entry.duration
+    button.nuiExpiration = start + entry.duration
 
     if button.nuiIcon then button.nuiIcon:SetTexture(entry.icon) end
-    if button.nuiCooldown then button.nuiCooldown:SetCooldown(now, entry.duration) end
+    if button.nuiCooldown then button.nuiCooldown:SetCooldown(start, entry.duration) end
     if button.nuiCount then button.nuiCount:SetText(entry.stacks > 1 and entry.stacks or '') end
 
     if button.nuiBinding and CreateDuration then
@@ -460,7 +466,7 @@ local function StartAura(button, entry, now)
             duration = CreateDuration()
             button.nuiDuration = duration
         end
-        duration:SetTimeFromStart(now, entry.duration)
+        duration:SetTimeFromStart(start, entry.duration)
         button.nuiBinding:SetDuration(duration)
     end
 
@@ -773,6 +779,8 @@ local function RefreshIndicator(state, reskin)
     BuildIndicatorEntries(state)
 
     local frame = state.frame
+    if state.level then frame:SetFrameLevel(state.level) end
+
     for index = 1, state.count do
         local button = AcquireButton(frame, index)
 
@@ -865,9 +873,7 @@ function AuraPreview:SetIndicatorShown(handle, shown)
         state.frame = frame
     end
 
-    if state.level then state.frame:SetFrameLevel(state.level) end
-
-    RefreshIndicator(state, true)
+    RefreshIndicator(state, true) -- also where the frame level is applied
 
     state.frame:Show()
     active[state] = true
