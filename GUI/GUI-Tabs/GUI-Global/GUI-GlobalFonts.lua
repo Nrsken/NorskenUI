@@ -13,17 +13,7 @@ local tinsert = table.insert
 -- GUI-only inherit sentinel: dropdowns show it as 'Global (...)', the db stores nil.
 local GLOBAL = '__GLOBAL'
 
-local ANCHOR_POINTS = {
-    { key = 'TOPLEFT',     text = L['Top Left'] },
-    { key = 'TOP',         text = L['Top'] },
-    { key = 'TOPRIGHT',    text = L['Top Right'] },
-    { key = 'LEFT',        text = L['Left'] },
-    { key = 'CENTER',      text = L['Center'] },
-    { key = 'RIGHT',       text = L['Right'] },
-    { key = 'BOTTOMLEFT',  text = L['Bottom Left'] },
-    { key = 'BOTTOM',      text = L['Bottom'] },
-    { key = 'BOTTOMRIGHT', text = L['Bottom Right'] },
-}
+local ANCHOR_POINTS = NRSKNUI.AnchorOptions
 
 -- Slug is a separate axis here (a checkbox globally, unavailable on specials), so it stays out.
 -- globalLabel adds the inherit sentinel in front for the specials dropdown.

@@ -514,12 +514,13 @@ GUI:RegisterPage('unitFramesGeneral', {
     search = {
         L['Enable Unit Frames'], L['Smooth Bars'], L['Range Fade'], L['Class Colored Health'],
         L['Class Colored Castbar'], L['Heal Absorb'], L['Damage Absorb'], L['Mouseover Highlight'],
-        L['Separator'], L['Update Interval'],
+        L['Separator'], L['Update Interval'], L['Dispel Highlight'], L['Dispellable By'],
     },
     tabs = {
         { id = 'general',  text = L['General Settings'] },
         { id = 'colors',   text = L['Color Settings'] },
         { id = 'textures', text = L['Texture Settings'] },
+        { id = 'dispel',   text = L['Dispel'] },
         { id = 'fonts',    text = L['Font Settings'] },
         { id = 'tags',     text = L['Tag Settings'] },
     },
@@ -547,6 +548,8 @@ GUI:RegisterPage('unitFramesGeneral', {
             BuildColorsTab(page, db)
         elseif tabId == 'textures' then
             BuildTexturesTab(page, db)
+        elseif tabId == 'dispel' then
+            UF.GUIDispelTab(page, db)
         elseif tabId == 'fonts' then
             BuildFontsTab(page, db)
         elseif tabId == 'tags' then

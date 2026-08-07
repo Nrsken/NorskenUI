@@ -1,7 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 ---@class UnitFramesModule
----@field Elements UnitFramesElements
 local UF = NRSKNUI:GetModule('UnitFrames')
 
 local CreateFrame = CreateFrame
@@ -142,7 +141,7 @@ UF.Elements.Health = {
 
         -- oUF flags pick the hue, PostUpdateHealthColor enforces the alpha.
         healthBar.ForegroundAlphaWhenColorByClass = classAlpha
-        healthBar.nuiForeground = foreground
+        UF.CacheColor(healthBar, 'nuiForeground', foreground)
         healthBar.nuiColorByClass = classColor
         healthBar.colorClass = classColor
         healthBar.colorReaction = classColor
@@ -150,7 +149,7 @@ UF.Elements.Health = {
 
         -- Background coloring
         healthBackground:SetStatusBarColor(background[1], background[2], background[3], background[4])
-        healthBar.nuiBackground = classColor and backgroundClass or background
+        UF.CacheColor(healthBar, 'nuiBackground', classColor and backgroundClass or background)
 
         -- Mouseover highlight
         local highlight = self.nuiHighlight

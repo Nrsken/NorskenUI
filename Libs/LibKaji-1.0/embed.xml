@@ -28,6 +28,7 @@
 
     <!-- Widgets -->
     <Script file="Widgets\Separator.lua" />
+    <Script file="Widgets\SectionHeader.lua" />
     <Script file="Widgets\Checkbox.lua" />
     <Script file="Widgets\Slider.lua" />
     <Script file="Widgets\ColorPicker.lua" />
@@ -47,6 +48,5 @@
     <Script file="PremadeCards\DynamicGroupCard.lua" />
     <Script file="PremadeCards\GlowSettingsCard.lua" />
     <Script file="PremadeCards\LoadConditionsCard.lua" />
-    <Script file="PremadeCards\FilterCard.lua" />
 
 </Ui>

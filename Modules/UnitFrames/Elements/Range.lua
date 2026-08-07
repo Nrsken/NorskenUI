@@ -1,7 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 ---@class UnitFramesModule
----@field Elements UnitFramesElements
 local UF = NRSKNUI:GetModule('UnitFrames')
 
 ---@class UnitFramesElements

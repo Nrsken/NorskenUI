@@ -8,18 +8,6 @@ local GUI = NRSKNUI.GUI
 local ipairs = ipairs
 local type = type
 
-local UNITS = {
-    'player',
-    'target',
-    'targettarget',
-    'focus',
-    'focustarget',
-    'pet',
-    'pettarget',
-    'boss',
-    'party',
-}
-
 -- Mini sidebar, in order. Power, Castbar and Group drop out for the units that never have them.
 local SECTIONS = {
     { key = 'frame',          text = L['Frame'] },
@@ -28,6 +16,7 @@ local SECTIONS = {
     { key = 'power',          text = L['Power'] },
     { key = 'castbar',        text = L['Castbar'] },
     { key = 'tags',           text = L['Tags'] },
+    { key = 'dispel',         text = L['Dispel'] },
     { key = 'indicators',     text = L['Indicators'] },
     { key = 'aurabuffs',      text = L['Aura Buffs'] },
     { key = 'auradebuffs',    text = L['Aura Debuffs'] },
@@ -49,7 +38,7 @@ local function SectionItems(unit)
     local isGroup = UF.GroupConfigs[unit]
     local items = {}
     for _, section in ipairs(SECTIONS) do
-        local skip = UF.GUINoPower[unit] and (section.key == 'power' or section.key == 'castbar')
+        local skip = UF.NoPower[unit] and (section.key == 'power' or section.key == 'castbar')
         -- Group units are deliberately castbar-free, and only they have a header to configure.
         skip = skip or (isGroup and section.key == 'castbar') or (not isGroup and section.key == 'group')
 
@@ -98,6 +87,8 @@ local function SearchTerms()
     terms[#terms + 1] = { text = L['Aura Buffs'], itemKey = 'aurabuffs' }
     terms[#terms + 1] = { text = L['Aura Debuffs'], itemKey = 'auradebuffs' }
     terms[#terms + 1] = { text = L['Aura Indicators'], itemKey = 'auraindicators' }
+    terms[#terms + 1] = { text = L['Dispel'], itemKey = 'dispel' }
+    terms[#terms + 1] = { text = L['Dispel Highlight'], itemKey = 'dispel' }
     for _, term in ipairs(UF.GUIAuras.search) do
         terms[#terms + 1] = { text = term, itemKey = 'aurabuffs' }
     end
@@ -116,7 +107,7 @@ function UF.GUIPageID(unit)
 end
 
 do
-    for _, unit in ipairs(UNITS) do
+    for _, unit in ipairs(UF.Units) do
         GUI:RegisterPage(UF.GUIPageID(unit), {
             mode = 'tabs',
             noHarvest = true,

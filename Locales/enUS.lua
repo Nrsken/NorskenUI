@@ -113,7 +113,6 @@ L['Profile Settings'] = true
 L['Global Settings'] = true
 L['Combat Util'] = true
 L['Quality of Life'] = true
-L['Aura Filters'] = true
 L['Defensives'] = true
 L['Class Utility'] = true
 L['CVars'] = true
@@ -393,6 +392,7 @@ L['Bottom Right'] = true
 
 -- Profile messages & dialogs
 L['A UI reload is recommended to fully apply all settings.'] = true
+L['Profile changed. A UI reload is recommended to fully apply all settings.'] = true
 L['Unknown error'] = true
 L['Failed to switch profile: %s'] = true
 L["Profile switched to '%s'."] = true
@@ -717,6 +717,8 @@ L['Phase'] = true
 L['Group Role'] = true
 L['Tank and Healer Only'] = true
 L['Hide the role icon on damage dealers.'] = true
+L['Blizzard'] = true
+L['Which artwork the indicator draws.'] = true
 L['Use Global Smoothing'] = true
 L['Follow the smoothing setting from the general settings.'] = true
 L['Animate health and power bar changes. Units following the global setting inherit this.'] = true
@@ -737,7 +739,6 @@ L['Follow the safe zone settings from the general settings.'] = true
 
 -- Aura Filter Builder --
 
-L['Filter Builder'] = true
 L['No filters yet. Use New Filter to create one.'] = true
 L['New List'] = true
 L['Rename List'] = true
@@ -748,8 +749,6 @@ L['No spells yet'] = true
 L['%d spells'] = true
 L['Nameplate-only auras are included.'] = true
 L['Only Torghast auras are shown.'] = true
-L['Manage Filters'] = true
-L['SpellID Filters'] = true
 L['Create Filter'] = true
 L['New Filter'] = true
 L['Filter Name'] = true
@@ -899,7 +898,6 @@ L['Every indicator that can fill this spot. Assign one per spec and the same spo
 L['What to call this spot in the tab strip. Leave empty to number it.'] = true
 L['Add Indicator'] = true
 L['Indicator %d'] = true
-L['Keep the indicator up for matching auras that have no dispel type at all. The game colors these by dispel type, so the indicator color does not apply.'] = true
 L['Nothing placed on this unit yet. Use Add Indicator below.'] = true
 L['Pick an indicator above.'] = true
 L['Which indicator from the Aura Indicators page this one shows.'] = true
@@ -936,11 +934,10 @@ L['Aura Indicators'] = true
 L['Aura buttons are built once by the game, so a new style only appears after a reload.'] = true
 L['Cooldown Spiral'] = true
 L['Create Indicator'] = true
+L['Default Indicators'] = true
 L['Delete Indicator'] = true
-L['Dispel Border'] = true
 L['Dispel Colored Border'] = true
 L['Dispel Coloring'] = true
-L['Dispel Overlay'] = true
 L['Duration Text'] = true
 L['Fade With Duration'] = true
 L['Fade With Duration recolors the text as the aura runs out.'] = true
@@ -970,6 +967,28 @@ L['The game colors this by dispel type, using the dispel colors from the global 
 L['This style covers whatever it is attached to, so it has no size or offset of its own. Use Attach To on the General tab.'] = true
 L['Which aura wins the slot when several match at once.'] = true
 L['Whole Frame'] = true
+
+-- Dispel highlight (UnitFrames General + per unit)
+L['Alpha'] = true
+L['Dispel'] = true
+L['Dispel Highlight'] = true
+L['Enable Dispel Highlight'] = true
+L['Dispellable By'] = true
+L['Use Global Dispel Settings'] = true
+L['Colors the unit frame by the dispel type of a debuff on it. Only ever drawn on units you can help.'] = true
+L['Follow the dispel highlight from the general settings.'] = true
+L['The game answers this for your whole group, so Dispellable by You means anyone in it can remove the debuff. By Anyone is every debuff that carries a dispel type at all.'] = true
+L['Keep the highlight up for matching auras that have no dispel type at all. The game colors these by dispel type, so they draw in its no-type color.'] = true
+L['Style, border, icon, alpha and layer are read when the highlight is built, so they take a reload. Turning it on or off, the dispel source and what it attaches to apply straight away.'] = true
+L['Solid'] = true
+L['Gradient'] = true
+L['Solid tints the whole target evenly, Gradient fades it out across the target.'] = true
+L['Pixels of dispel-colored border drawn around the target, on top of whichever style is set. 0 turns the border off.'] = true
+L['Dispel Icon'] = true
+L['Icon Size'] = true
+L['Anchor Point'] = true
+L["The game's own icon for the dispel type, drawn over the highlight."] = true
+L['Which corner of the highlight the icon sits in.'] = true
 
 -- Sorting (AuraContainerSortMethod / AuraContainerSortDirection)
 L['Sorting'] = true
@@ -1037,3 +1056,42 @@ L['Ghost'] = true
 L['Offline'] = true
 L['DND'] = true
 L['AFK'] = true
+
+-- Premade Aura Filters --
+L['Defensive Buffs'] = true
+L['Speed Buffs'] = true
+L['Target Buffs'] = true
+L['Target Debuffs'] = true
+L['Boss Buffs'] = true
+L['Party Buffs'] = true
+L['Party Debuffs'] = true
+L['Raid Buffs'] = true
+L['Raid Debuffs'] = true
+L['Preset'] = true
+L['Duplicate'] = true
+
+-- Aura Triggers & Displays --
+L['A spell ID to match. Press Enter or use Add.'] = true
+L['Delete Display'] = true
+L["Delete the display '%s'? This cannot be undone."] = true
+L['Display %s'] = true
+L['Display Name'] = true
+L['Displays'] = true
+L['Move Down'] = true
+L['Move Up'] = true
+L['New Display'] = true
+L['No spells yet. Nothing is shown until at least one is added.'] = true
+L['Only My Auras'] = true
+L['Match only auras you cast yourself, so someone else applying the same spell does not light it up.'] = true
+L['Please enter a name'] = true
+L['Rename Display'] = true
+L['Speed'] = true
+L['This trigger matches nothing yet.'] = true
+L['Trigger'] = true
+L['Trigger Type'] = true
+L['Unit'] = true
+L['Add to %s'] = true
+L['Create New Group'] = true
+L['Group Name'] = true
+L['Remove from Group'] = true
+L['No container to preview for %s yet.'] = true

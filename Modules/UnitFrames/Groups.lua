@@ -1,8 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 ---@class UnitFramesModule
----@field groups table<string, UnitFramesGroup>
----@field styleName string
 local UF = NRSKNUI:GetModule('UnitFrames')
 ---@class NorskenUF
 local oUF = NRSKNUI.oUF
@@ -15,10 +13,6 @@ local RegisterStateDriver = RegisterStateDriver
 local ipairs, pairs = ipairs, pairs
 local CreateFrame = CreateFrame
 local concat = table.concat
-
----@class UnitFramesGroup
----@field container Frame
----@field headers Frame[]
 
 -- Unit growth within a header, mapped to the attributes SecureGroupHeaders reads.
 -- anchor is the corner of the container the header hangs off.
@@ -134,8 +128,7 @@ function UF:LayoutGroup(key)
         header:SetAttribute('xOffset', xOffset)
         header:SetAttribute('yOffset', yOffset)
         header:SetAttribute('showPlayer', gDB.ShowPlayer)
-        header:SetAttribute('oUF-initialConfigFunction',
-            format('self:SetWidth(%d) self:SetHeight(%d)', uDB.Width, uDB.Height))
+        header:SetAttribute('oUF-initialConfigFunction', format('self:SetWidth(%d) self:SetHeight(%d)', uDB.Width, uDB.Height))
         ApplySorting(header, gDB)
     end
 

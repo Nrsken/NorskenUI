@@ -141,15 +141,17 @@ function EditBox:SetFontJustify(source, parent, offsetX, offsetY, skip, bound, f
 local Frame
 
 ---@class NUIAuraContainer : Frame
----@field AddGroup fun(self: NUIAuraContainer, filter: string, options: table?)
----@field AddSlot fun(self: NUIAuraContainer, filter: string, options: table?): table?
----@field AddFilteredGroup fun(self: NUIAuraContainer, filterName: string)
+---@field AddGroup fun(self: NUIAuraContainer, filter: string, options: table?): string, number
+---@field AddSlot fun(self: NUIAuraContainer, filter: string, options: table?): table?, string
+---@field AddFilteredGroup fun(self: NUIAuraContainer, trigger: table?, options: table?): string[]
 ---@field ReapplyFilters fun(self: NUIAuraContainer)
----@field RebindFilteredGroups fun(self: NUIAuraContainer, filterName: string)
+---@field RebindFilteredGroups fun(self: NUIAuraContainer, trigger: table?)
+---@field EnsureProcessAuraPolicy fun(self: NUIAuraContainer, candidateFilters: table?)
 ---@field SetItemEnchantLayout fun(self: NUIAuraContainer, config: table)
 ---@field AddItemEnchant fun(self: NUIAuraContainer, slot: number)
 ---@field SetUnit fun(self: NUIAuraContainer, unit: string)
 ---@field UpdateAllAuras fun(self: NUIAuraContainer)
+---@field UpdateUnitGate fun(self: NUIAuraContainer)
 ---@field ApplyLayout fun(self: NUIAuraContainer, config: table)
 
 ---@class NUIAuraHostFrame : Frame

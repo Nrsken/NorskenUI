@@ -36,14 +36,8 @@ function MM:UpdateDB()
     self.db = NRSKNUI.db.profile.Skinning.MicroMenu
 end
 
-function MM:OnInitialize()
-    self:UpdateDB()
-    self:SetEnabledState(false)
-end
-
 function MM:OnEnable()
     if NRSKNUI:ShouldNotLoadModule() then return end
-    if not self.db.Enabled then return end
 
     NRSKNUI:RunWhenSafe(function()
         self:CreateMicroBar()

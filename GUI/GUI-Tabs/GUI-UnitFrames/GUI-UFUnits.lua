@@ -11,53 +11,10 @@ local ipairs = ipairs
 local format = string.format
 
 local function ApplySettings() UF:ApplySettings() end
-
-local UNIT_LABELS = {
-    player = L['Player'],
-    target = L['Target'],
-    targettarget = L['Target of Target'],
-    focus = L['Focus'],
-    focustarget = L['Focus Target'],
-    pet = L['Pet'],
-    pettarget = L['Pet Target'],
-    boss = L['Boss'],
-    party = L['Party'],
-}
-
--- These units don't have a power bar, so we hide the power section in their GUI.
-local NO_POWER = { targettarget = true, focustarget = true, pettarget = true }
-
-local GrowthOptions = {
-    { value = 'DOWN',  text = L['Down'] },
-    { value = 'UP',    text = L['Up'] },
-    { value = 'LEFT',  text = L['Left'] },
-    { value = 'RIGHT', text = L['Right'] },
-}
-
-local AnchorOptions = {}
-for _, point in ipairs({ 'TOPLEFT', 'TOP', 'TOPRIGHT', 'LEFT', 'CENTER', 'RIGHT', 'BOTTOMLEFT', 'BOTTOM', 'BOTTOMRIGHT' }) do
-    AnchorOptions[#AnchorOptions + 1] = { value = point, text = point }
-end
-
+local AnchorOptions = NRSKNUI.AnchorOptions
+local GrowthOptions = NRSKNUI.GrowthOptions
 local OutlineOptions = NRSKNUI:GetOutlineOptions(true)
-
 local TAG_SLOTS = { 'TagOne', 'TagTwo', 'TagThree', 'TagFour', 'TagFive' }
-
--- Which indicators a unit gets is UF.UnitIndicators' call, so this is only their display names.
-local INDICATOR_LABELS = {
-    Resting    = L['Resting'],
-    Combat     = L['Combat'],
-    Quest      = L['Quest'],
-    ReadyCheck = L['Ready Check'],
-    Role       = L['Group Role'],
-    Summon     = L['Summon'],
-    Resurrect  = L['Resurrect'],
-    PvP        = L['PvP'],
-    Phase      = L['Phase'],
-    Leader     = L['Leader Indicator'],
-    RaidIcon   = L['Raid Icon'],
-}
-
 local INDICATOR_MAX_SIZE = { RaidIcon = 64 }
 
 local function AddPositionRows(card, slotDB, conditions, lastSpacing)
@@ -124,7 +81,10 @@ local function AddTextureOverrideRow(page, row, elementDB, condName, conditions)
     })
 
     local dropConditions = { condName }
-    for _, condition in ipairs(conditions or {}) do dropConditions[#dropConditions + 1] = condition end
+    for _, condition in ipairs(conditions or {}) do
+        dropConditions[#dropConditions + 1] = condition
+    end
+
     row:Dropdown(L['Texture'], {
         width = 0.5,
         media = 'statusbar',
@@ -138,9 +98,10 @@ local function AddTextureOverrideRow(page, row, elementDB, condName, conditions)
     })
 end
 
+-- Frame Settings Page.
 local function BuildFrameSection(page, uDB, unit)
     -- Card 1: Enable
-    local enableCard = page:Card(UNIT_LABELS[unit], 'all')
+    local enableCard = page:Card(UF.UnitLabels[unit], 'all')
     enableCard:Row(rowHL, 0):Checkbox(L['Enable'], {
         width = 1,
         value = uDB.Enabled,
@@ -213,6 +174,7 @@ local function BuildFrameSection(page, uDB, unit)
     })
 end
 
+-- Healthbar Settings Page.
 local function BuildHealthSection(page, uDB, unit)
     local hDB = uDB.Health
     page:SetCondition('ownHealthColors', function() return not hDB.UseGlobalColors end)
@@ -393,6 +355,7 @@ local function BuildHealthSection(page, uDB, unit)
     end
 end
 
+-- Powerbar Settings Page.
 local function BuildPowerSection(page, uDB, unit)
     local pDB = uDB.Power
     page:SetCondition('powerOn', function() return pDB.Enabled end)
@@ -484,6 +447,7 @@ local function BuildPowerSection(page, uDB, unit)
     })
 end
 
+-- Castbar Settings Page.
 local function BuildCastbarSection(page, uDB, unit)
     local cDB = uDB.Castbar
     page:SetCondition('castbarOn', function() return cDB.Enabled end)
@@ -683,20 +647,19 @@ local function BuildCastbarSection(page, uDB, unit)
     })
 end
 
--- The tab strip picks the slot, so `selected` is a build-time constant here.
+-- Tag Settings Page.
 local function BuildTagsSection(page, uDB, unit, selected)
     selected = selected or TAG_SLOTS[1]
     page:SetCondition('tagOn', function() return uDB.Tags[selected].Enabled end)
     page:SetCondition('tagOwnFont', function() return not uDB.Tags[selected].UseGlobalFont end)
 
-    -- Still a Rebuild card: Insert Tag appends to the tag string and the EditBox has to re-read.
-    local card = page:Card(L['Tags'], 'unitOn')
-    card:Rebuild(function(card)
+    local c = page:Card(L['Tags'], 'unitOn')
+    c:Rebuild(function(card)
         local slotDB = uDB.Tags[selected]
 
         local headRow = card:Row(rowH)
         headRow:Checkbox(L['Enable'], {
-            width = 0.5,
+            width = 1,
             value = slotDB.Enabled,
             callback = function(checked)
                 slotDB.Enabled = checked
@@ -704,15 +667,8 @@ local function BuildTagsSection(page, uDB, unit, selected)
                 page:Refresh()
             end,
         })
-        headRow:ColorPicker(L['Color'], {
-            width = 0.5,
-            conditions = { 'tagOn' },
-            value = slotDB.Color,
-            callback = function(r, g, b)
-                slotDB.Color = { r, g, b }
-                ApplySettings()
-            end,
-        })
+
+        card:Separator()
 
         card:Row(rowH):EditBox(L['Tag Text'], {
             width = 1,
@@ -731,14 +687,14 @@ local function BuildTagsSection(page, uDB, unit, selected)
                 boundOptions[#boundOptions + 1] = { value = other, text = format('%s %d', L['Tag'], j) }
             end
         end
-        -- One dropdown per category, so each list stays short enough to scan.
-        local function AddInsertDropdown(row, label, category)
+
+        local function AddInsertDropdown(row, label, category, tooltip, w)
             row:Dropdown(label, {
-                width = 0.5,
+                width = w or 0.5,
                 conditions = { 'tagOn' },
-                tooltip = L['Appends the picked tag to the tag text above.'],
+                tooltip = tooltip,
                 options = UF.TagOptions[category],
-                value = '',
+                value = L['-- Select --'],
                 callback = function(key)
                     slotDB.Tag = slotDB.Tag == '' and key or slotDB.Tag .. key
                     ApplySettings()
@@ -748,31 +704,21 @@ local function BuildTagsSection(page, uDB, unit, selected)
         end
 
         local healthRow = card:Row(rowH)
-        AddInsertDropdown(healthRow, L['Insert Health Tag'], 'health')
-        AddInsertDropdown(healthRow, L['Insert Power Tag'], 'power')
+        AddInsertDropdown(healthRow, L['Insert Health Tag'], 'health', L['Inserts the picked health tag to the tag text above.'])
+        AddInsertDropdown(healthRow, L['Insert Power Tag'], 'power', L['Inserts the picked power tag to the tag text above.'])
 
         local nameRow = card:Row(rowH)
-        AddInsertDropdown(nameRow, L['Insert Name Tag'], 'name')
-        AddInsertDropdown(nameRow, L['Insert Misc Tag'], 'misc')
+        AddInsertDropdown(nameRow, L['Insert Name Tag'], 'name', L['Inserts the picked name tag to the tag text above.'])
+        AddInsertDropdown(nameRow, L['Insert Misc Tag'], 'misc', L['Inserts the picked misc tag to the tag text above.'])
 
         local styleRow = card:Row(rowH)
-        styleRow:Dropdown(L['Bound To'], {
-            width = 0.5,
-            conditions = { 'tagOn' },
-            tooltip = L['Pins the far edge so long text truncates instead of overflowing.'],
-            options = boundOptions,
-            value = slotDB.BoundTo,
-            callback = function(key)
-                slotDB.BoundTo = key
-                ApplySettings()
-            end,
-        })
+        AddInsertDropdown(styleRow, L['Insert Prefix Tag'], 'prefixes', L['Inserts the picked prefix tag to the tag text above, add these before a tag and ||r after to close it.'], 1)
 
         card:Separator()
 
         local fontRow = card:Row(rowH)
         fontRow:Checkbox(L['Use Global Font'], {
-            width = 0.5,
+            width = 1,
             conditions = { 'tagOn' },
             value = slotDB.UseGlobalFont,
             callback = function(checked)
@@ -781,7 +727,11 @@ local function BuildTagsSection(page, uDB, unit, selected)
                 page:Refresh()
             end,
         })
-        fontRow:Dropdown(L['Font'], {
+
+        card:Separator()
+
+        local globalRow = card:Row(rowH)
+        globalRow:Dropdown(L['Font'], {
             width = 0.5,
             media = 'font',
             searchable = true,
@@ -792,6 +742,17 @@ local function BuildTagsSection(page, uDB, unit, selected)
                 ApplySettings()
             end,
         })
+        globalRow:Dropdown(L['Outline'], {
+            width = 0.5,
+            conditions = { 'tagOn', 'tagOwnFont' },
+            options = OutlineOptions,
+            value = slotDB.FontOutline,
+            callback = function(key)
+                slotDB.FontOutline = key
+                ApplySettings()
+            end,
+        })
+
         local sizeRow = card:Row(rowH)
         sizeRow:Slider(L['Font Size'], {
             width = 0.5,
@@ -805,18 +766,30 @@ local function BuildTagsSection(page, uDB, unit, selected)
             end,
             callbackOnRelease = true,
         })
-        sizeRow:Dropdown(L['Outline'], {
+        sizeRow:ColorPicker(L['Baseline Color'], {
             width = 0.5,
-            conditions = { 'tagOn', 'tagOwnFont' },
-            options = OutlineOptions,
-            value = slotDB.FontOutline,
-            callback = function(key)
-                slotDB.FontOutline = key
+            conditions = { 'tagOn' },
+            value = slotDB.Color,
+            tooltip = L['The color of the text, unless a tag overrides it.'],
+            callback = function(r, g, b)
+                slotDB.Color = { r, g, b }
                 ApplySettings()
             end,
         })
 
         card:Separator()
+
+        card:Row(rowH):Dropdown(L['Bound To'], {
+            width = 1,
+            conditions = { 'tagOn' },
+            tooltip = L['Pins the far edge so long text truncates instead of overflowing.'],
+            options = boundOptions,
+            value = slotDB.BoundTo,
+            callback = function(key)
+                slotDB.BoundTo = key
+                ApplySettings()
+            end,
+        })
 
         AddPositionRows(card, slotDB, { 'tagOn' })
     end)
@@ -838,24 +811,29 @@ local INDICATOR_EXTRAS = {
     end,
 }
 
--- The tab strip picks the indicator, so `selected` is a build-time constant here. Tab memory is shared
--- across units, so a key the open unit has no indicator for falls back to its first.
+-- Indicator Settings Page.
 local function BuildIndicatorsSection(page, uDB, unit, selected)
     local defs = UF.UnitIndicators(unit)
-    local found
-    for _, def in ipairs(defs) do
-        if def.key == selected then found = true break end
+    local def
+    for _, entry in ipairs(defs) do
+        if entry.key == selected then
+            def = entry
+            break
+        end
     end
-    if not found then selected = defs[1].key end
+    if not def then
+        def = defs[1]
+        selected = def.key
+    end
 
     page:SetCondition('indicatorOn', function() return uDB.Indicators[selected].Enabled end)
 
     local iDB = uDB.Indicators[selected]
-    local card = page:Card(INDICATOR_LABELS[selected] or selected, 'unitOn')
 
+    local card = page:Card(def.label, 'unitOn')
     local headRow = card:Row(rowH)
     headRow:Checkbox(L['Enable'], {
-        width = 0.5,
+        width = 1,
         value = iDB.Enabled,
         callback = function(checked)
             iDB.Enabled = checked
@@ -863,8 +841,33 @@ local function BuildIndicatorsSection(page, uDB, unit, selected)
             page:Refresh()
         end,
     })
-    headRow:Slider(L['Size'], {
-        width = 0.5,
+
+    card:Separator()
+
+    local multipleArt = #def.art > 1
+    local sizeTypeRow = card:Row(rowH)
+
+    if multipleArt then
+        local artOptions = {}
+        for i, variant in ipairs(def.art) do
+            artOptions[i] = { value = variant.key, text = variant.label }
+        end
+
+        sizeTypeRow:Dropdown(L['Texture'], {
+            width = 0.5,
+            conditions = { 'indicatorOn' },
+            tooltip = L['Which artwork the indicator draws.'],
+            options = artOptions,
+            value = iDB.Texture,
+            callback = function(key)
+                iDB.Texture = key
+                ApplySettings()
+            end,
+        })
+    end
+
+    sizeTypeRow:Slider(L['Size'], {
+        width = multipleArt and 0.5 or 1,
         conditions = { 'indicatorOn' },
         min = 8,
         max = INDICATOR_MAX_SIZE[selected] or 48,
@@ -893,9 +896,6 @@ UF.GUISections = {
     indicators = BuildIndicatorsSection,
 }
 
-UF.GUIUnitLabels = UNIT_LABELS
-UF.GUINoPower = NO_POWER
-
 ---Sub-tab strips. Their ids are the DB keys the builders index with.
 ---@class UF.GUITagTab
 ---@field id string The tag slot's DB key.
@@ -911,7 +911,7 @@ end
 function UF.GUIIndicatorTabs(unit)
     local tabs = {}
     for i, def in ipairs(UF.UnitIndicators(unit)) do
-        tabs[i] = { id = def.key, text = INDICATOR_LABELS[def.key] or def.key }
+        tabs[i] = { id = def.key, text = def.label }
     end
     return tabs
 end
@@ -921,7 +921,7 @@ end
 function UF.GUIIndicatorNames()
     local names = {}
     for i, def in ipairs(UF.IndicatorDefs) do
-        names[i] = { key = def.key, text = INDICATOR_LABELS[def.key] or def.key }
+        names[i] = { key = def.key, text = def.label }
     end
     return names
 end

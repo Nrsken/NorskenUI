@@ -24,11 +24,6 @@ function PotionReady:UpdateDB()
     self.db = NRSKNUI.db.profile.PotionReady
 end
 
-function PotionReady:OnInitialize()
-    self:UpdateDB()
-    self:SetEnabledState(false)
-end
-
 function PotionReady:CreateAlertFrame()
     if self.alertFrame then return end
 
@@ -85,8 +80,6 @@ function PotionReady:UpdateCooldownState()
 end
 
 function PotionReady:OnEnable()
-    if not self.db.Enabled then return end
-
     self:CreateAlertFrame()
     self:ApplySettings()
     self:UpdateCooldownState()

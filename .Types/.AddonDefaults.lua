@@ -7,6 +7,7 @@
 ---@field [string] any
 ---@field AuraBlocklist NRSKNUI.DBGlobal.AuraBlocklist
 ---@field AuraFilters NRSKNUI.DBGlobal.AuraFilters
+---@field AuraIndicatorGroups NRSKNUI.DBGlobal.AuraIndicatorGroups
 ---@field AuraIndicators NRSKNUI.DBGlobal.AuraIndicators
 ---@field AuraSpellLists NRSKNUI.DBGlobal.AuraSpellLists
 ---@field GUIState NRSKNUI.DBGlobal.GUIState
@@ -22,6 +23,9 @@
 ---@class NRSKNUI.DBGlobal.AuraFilters
 ---@field [string] any
 
+---@class NRSKNUI.DBGlobal.AuraIndicatorGroups
+---@field [string] any
+
 ---@class NRSKNUI.DBGlobal.AuraIndicators
 ---@field [string] any
 
@@ -30,7 +34,6 @@
 
 ---@class NRSKNUI.DBGlobal.GUIState
 ---@field [string] any
----@field GUIFrameLayoutVersion number
 ---@field frame NRSKNUI.DBGlobal.GUIState.frame
 ---@field sidebarExpanded nil
 
@@ -68,7 +71,8 @@
 
 ---@class NRSKNUI.DBProfile
 ---@field [string] any
----@field AdvancedDebuffs NRSKNUI.DBProfile.AdvancedDebuffs
+---@field AuraDisplayGroups NRSKNUI.DBProfile.AuraDisplayGroups
+---@field AuraDisplays NRSKNUI.DBProfile.AuraDisplays
 ---@field Auras NRSKNUI.DBProfile.Auras
 ---@field BattleRes NRSKNUI.DBProfile.BattleRes
 ---@field BlizzardRM NRSKNUI.DBProfile.BlizzardRM
@@ -77,7 +81,6 @@
 ---@field CombatCross NRSKNUI.DBProfile.CombatCross
 ---@field CombatMessage NRSKNUI.DBProfile.CombatMessage
 ---@field CombatTimer NRSKNUI.DBProfile.CombatTimer
----@field Defensives NRSKNUI.DBProfile.Defensives
 ---@field DungeonCasts NRSKNUI.DBProfile.DungeonCasts
 ---@field DungeonTimers NRSKNUI.DBProfile.DungeonTimers
 ---@field GearUtility NRSKNUI.DBProfile.GearUtility
@@ -93,82 +96,17 @@
 ---@field ReckonTracker NRSKNUI.DBProfile.ReckonTracker
 ---@field RerollKeystone NRSKNUI.DBProfile.RerollKeystone
 ---@field Skinning NRSKNUI.DBProfile.Skinning
----@field Speed NRSKNUI.DBProfile.Speed
 ---@field TotemTracker NRSKNUI.DBProfile.TotemTracker
 ---@field UnitFrames NRSKNUI.DBProfile.UnitFrames
 ---@field UseElvUI NRSKNUI.DBProfile.UseElvUI
 ---@field UseOtherUF NRSKNUI.DBProfile.UseOtherUF
 ---@field globalMedia NRSKNUI.DBProfile.globalMedia
 
----@class NRSKNUI.DBProfile.AdvancedDebuffs
+---@class NRSKNUI.DBProfile.AuraDisplayGroups
 ---@field [string] any
----@field DurationFont NRSKNUI.DBProfile.AdvancedDebuffs.DurationFont
----@field Enabled boolean
----@field Filter string
----@field FontFace string
----@field FontOutline string
----@field FontShadow NRSKNUI.DBProfile.AdvancedDebuffs.FontShadow
----@field ParentFrame string
----@field Position NRSKNUI.DBProfile.AdvancedDebuffs.Position
----@field StackFont NRSKNUI.DBProfile.AdvancedDebuffs.StackFont
----@field UseGlobalFont boolean
----@field anchorFrameType string
----@field dispelIconSize number
----@field drawEdge boolean
----@field drawSwipe boolean
----@field elementSpacing number
----@field horizontalGrowthDirection string
----@field lineSpacing number
----@field maxFrameCount number
----@field perRow number
----@field previewLimit number
----@field reverseSwipe boolean
----@field showApplicationCount boolean
----@field showBorder boolean
----@field showBorderWithoutDispelType boolean
----@field showDebuffDispelIcon boolean
----@field showDurationText boolean
----@field size number
----@field sortDirection string
----@field sortMethod string
----@field tooltipHideInCombat boolean
----@field verticalGrowthDirection string
 
----@class NRSKNUI.DBProfile.AdvancedDebuffs.DurationFont
+---@class NRSKNUI.DBProfile.AuraDisplays
 ---@field [string] any
----@field FontSize number
----@field Position NRSKNUI.DBProfile.AdvancedDebuffs.DurationFont.Position
-
----@class NRSKNUI.DBProfile.AdvancedDebuffs.DurationFont.Position
----@field [string] any
----@field AnchorFrom string
----@field XOffset number
----@field YOffset number
-
----@class NRSKNUI.DBProfile.AdvancedDebuffs.FontShadow
----@field [string] any
----@field Color table
----@field Enabled boolean
----@field OffsetX number
----@field OffsetY number
-
----@class NRSKNUI.DBProfile.AdvancedDebuffs.Position
----@field [string] any
----@field AnchorFrom string
----@field AnchorTo string
----@field XOffset number
----@field YOffset number
-
----@class NRSKNUI.DBProfile.AdvancedDebuffs.StackFont
----@field [string] any
----@field FontSize number
----@field Position NRSKNUI.DBProfile.AdvancedDebuffs.StackFont.Position
-
----@class NRSKNUI.DBProfile.AdvancedDebuffs.StackFont.Position
----@field [string] any
----@field AnchorFrom string
----@field XOffset number
----@field YOffset number
 
 ---@class NRSKNUI.DBProfile.Auras
 ---@field [string] any
@@ -576,72 +514,6 @@
 ---@field [string] any
 ---@field AnchorFrom string
 ---@field AnchorTo string
----@field XOffset number
----@field YOffset number
-
----@class NRSKNUI.DBProfile.Defensives
----@field [string] any
----@field DurationFont NRSKNUI.DBProfile.Defensives.DurationFont
----@field Enabled boolean
----@field Filter string
----@field FontFace string
----@field FontOutline string
----@field FontShadow NRSKNUI.DBProfile.Defensives.FontShadow
----@field ParentFrame string
----@field Position NRSKNUI.DBProfile.Defensives.Position
----@field StackFont NRSKNUI.DBProfile.Defensives.StackFont
----@field UseGlobalFont boolean
----@field anchorFrameType string
----@field drawEdge boolean
----@field drawSwipe boolean
----@field elementSpacing number
----@field horizontalGrowthDirection string
----@field lineSpacing number
----@field maxFrameCount number
----@field perRow number
----@field previewLimit number
----@field reverseSwipe boolean
----@field showApplicationCount boolean
----@field showDurationText boolean
----@field size number
----@field sortDirection string
----@field sortMethod string
----@field tooltipHideInCombat boolean
----@field verticalGrowthDirection string
-
----@class NRSKNUI.DBProfile.Defensives.DurationFont
----@field [string] any
----@field FontSize number
----@field Position NRSKNUI.DBProfile.Defensives.DurationFont.Position
-
----@class NRSKNUI.DBProfile.Defensives.DurationFont.Position
----@field [string] any
----@field AnchorFrom string
----@field XOffset number
----@field YOffset number
-
----@class NRSKNUI.DBProfile.Defensives.FontShadow
----@field [string] any
----@field Color table
----@field Enabled boolean
----@field OffsetX number
----@field OffsetY number
-
----@class NRSKNUI.DBProfile.Defensives.Position
----@field [string] any
----@field AnchorFrom string
----@field AnchorTo string
----@field XOffset number
----@field YOffset number
-
----@class NRSKNUI.DBProfile.Defensives.StackFont
----@field [string] any
----@field FontSize number
----@field Position NRSKNUI.DBProfile.Defensives.StackFont.Position
-
----@class NRSKNUI.DBProfile.Defensives.StackFont.Position
----@field [string] any
----@field AnchorFrom string
 ---@field XOffset number
 ---@field YOffset number
 
@@ -2686,72 +2558,6 @@
 ---@field StyleText boolean
 ---@field Width number
 
----@class NRSKNUI.DBProfile.Speed
----@field [string] any
----@field DurationFont NRSKNUI.DBProfile.Speed.DurationFont
----@field Enabled boolean
----@field Filter string
----@field FontFace string
----@field FontOutline string
----@field FontShadow NRSKNUI.DBProfile.Speed.FontShadow
----@field ParentFrame string
----@field Position NRSKNUI.DBProfile.Speed.Position
----@field StackFont NRSKNUI.DBProfile.Speed.StackFont
----@field UseGlobalFont boolean
----@field anchorFrameType string
----@field drawEdge boolean
----@field drawSwipe boolean
----@field elementSpacing number
----@field horizontalGrowthDirection string
----@field lineSpacing number
----@field maxFrameCount number
----@field perRow number
----@field previewLimit number
----@field reverseSwipe boolean
----@field showApplicationCount boolean
----@field showDurationText boolean
----@field size number
----@field sortDirection string
----@field sortMethod string
----@field tooltipHideInCombat boolean
----@field verticalGrowthDirection string
-
----@class NRSKNUI.DBProfile.Speed.DurationFont
----@field [string] any
----@field FontSize number
----@field Position NRSKNUI.DBProfile.Speed.DurationFont.Position
-
----@class NRSKNUI.DBProfile.Speed.DurationFont.Position
----@field [string] any
----@field AnchorFrom string
----@field XOffset number
----@field YOffset number
-
----@class NRSKNUI.DBProfile.Speed.FontShadow
----@field [string] any
----@field Color table
----@field Enabled boolean
----@field OffsetX number
----@field OffsetY number
-
----@class NRSKNUI.DBProfile.Speed.Position
----@field [string] any
----@field AnchorFrom string
----@field AnchorTo string
----@field XOffset number
----@field YOffset number
-
----@class NRSKNUI.DBProfile.Speed.StackFont
----@field [string] any
----@field FontSize number
----@field Position NRSKNUI.DBProfile.Speed.StackFont.Position
-
----@class NRSKNUI.DBProfile.Speed.StackFont.Position
----@field [string] any
----@field AnchorFrom string
----@field XOffset number
----@field YOffset number
-
 ---@class NRSKNUI.DBProfile.TotemTracker
 ---@field [string] any
 ---@field Enabled boolean
@@ -2792,6 +2598,7 @@
 ---@field ColorByPower boolean
 ---@field Colors NRSKNUI.DBProfile.UnitFrames.General.Colors
 ---@field DamageAbsorb NRSKNUI.DBProfile.UnitFrames.General.DamageAbsorb
+---@field Dispel NRSKNUI.DBProfile.UnitFrames.General.Dispel
 ---@field FontFace string
 ---@field FontOutline string
 ---@field ForegroundAlphaWhenColorByClass number
@@ -2827,6 +2634,27 @@
 ---@field Layer number
 ---@field StatusBarTexture string
 ---@field UseGlobalBar boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.General.Dispel
+---@field [string] any
+---@field Alpha number
+---@field Attach string
+---@field BorderSize number
+---@field Enabled boolean
+---@field IconPosition NRSKNUI.DBProfile.UnitFrames.General.Dispel.IconPosition
+---@field IconSize number
+---@field Layer number
+---@field ShowIcon boolean
+---@field ShowWithoutDispelType boolean
+---@field Source string
+---@field Style string
+
+---@class NRSKNUI.DBProfile.UnitFrames.General.Dispel.IconPosition
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
 
 ---@class NRSKNUI.DBProfile.UnitFrames.General.HealAbsorb
 ---@field [string] any
@@ -2889,24 +2717,21 @@
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Auras.Buffs
 ---@field [string] any
----@field Enabled boolean
+---@field Trigger NRSKNUI.DBProfile.UnitFrames.Units.boss.Auras.Buffs.Trigger
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Auras.Buffs.Trigger
+---@field [string] any
+---@field Preset string
+---@field Type string
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Auras.Debuffs
 ---@field [string] any
----@field Enabled boolean
----@field Position NRSKNUI.DBProfile.UnitFrames.Units.boss.Auras.Debuffs.Position
----@field horizontalGrowthDirection string
----@field maxFrameCount number
----@field perRow number
----@field previewLimit number
----@field size number
----@field verticalGrowthDirection string
+---@field Trigger NRSKNUI.DBProfile.UnitFrames.Units.boss.Auras.Debuffs.Trigger
 
----@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Auras.Debuffs.Position
+---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Auras.Debuffs.Trigger
 ---@field [string] any
----@field AnchorTo string
----@field XOffset number
----@field YOffset number
+---@field Preset string
+---@field Type string
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.boss.Castbar
 ---@field [string] any
@@ -3032,11 +2857,9 @@
 ---@field Group NRSKNUI.DBProfile.UnitFrames.Units.party.Group
 ---@field Height number
 ---@field Indicators NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators
----@field LeaderIndicator NRSKNUI.DBProfile.UnitFrames.Units.party.LeaderIndicator
 ---@field ParentFrame string
 ---@field Position NRSKNUI.DBProfile.UnitFrames.Units.party.Position
 ---@field Power NRSKNUI.DBProfile.UnitFrames.Units.party.Power
----@field RaidIcon NRSKNUI.DBProfile.UnitFrames.Units.party.RaidIcon
 ---@field Tags NRSKNUI.DBProfile.UnitFrames.Units.party.Tags
 ---@field Width number
 ---@field anchorFrameType string
@@ -3048,15 +2871,21 @@
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Auras.Buffs
 ---@field [string] any
----@field maxFrameCount number
----@field perRow number
----@field size number
+---@field Trigger NRSKNUI.DBProfile.UnitFrames.Units.party.Auras.Buffs.Trigger
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Auras.Buffs.Trigger
+---@field [string] any
+---@field Preset string
+---@field Type string
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Auras.Debuffs
 ---@field [string] any
----@field maxFrameCount number
----@field perRow number
----@field size number
+---@field Trigger NRSKNUI.DBProfile.UnitFrames.Units.party.Auras.Debuffs.Trigger
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Auras.Debuffs.Trigger
+---@field [string] any
+---@field Preset string
+---@field Type string
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Castbar
 ---@field [string] any
@@ -3077,15 +2906,25 @@
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators
 ---@field [string] any
+---@field Leader NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators.Leader
 ---@field Phase NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators.Phase
+---@field RaidIcon NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators.RaidIcon
 ---@field ReadyCheck NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators.ReadyCheck
 ---@field Resurrect NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators.Resurrect
 ---@field Role NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators.Role
 ---@field Summon NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators.Summon
 
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators.Leader
+---@field [string] any
+---@field Enabled boolean
+
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators.Phase
 ---@field [string] any
 ---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators.RaidIcon
+---@field [string] any
+---@field Size number
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Indicators.ReadyCheck
 ---@field [string] any
@@ -3103,10 +2942,6 @@
 ---@field [string] any
 ---@field Enabled boolean
 
----@class NRSKNUI.DBProfile.UnitFrames.Units.party.LeaderIndicator
----@field [string] any
----@field Enabled boolean
-
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Position
 ---@field [string] any
 ---@field AnchorFrom string
@@ -3117,10 +2952,6 @@
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Power
 ---@field [string] any
 ---@field Height number
-
----@class NRSKNUI.DBProfile.UnitFrames.Units.party.RaidIcon
----@field [string] any
----@field Size number
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Tags
 ---@field [string] any
@@ -3286,7 +3117,6 @@
 ---@field Auras NRSKNUI.DBProfile.UnitFrames.Units.player.Auras
 ---@field Castbar NRSKNUI.DBProfile.UnitFrames.Units.player.Castbar
 ---@field Indicators NRSKNUI.DBProfile.UnitFrames.Units.player.Indicators
----@field LeaderIndicator NRSKNUI.DBProfile.UnitFrames.Units.player.LeaderIndicator
 ---@field ParentFrame string
 ---@field Position NRSKNUI.DBProfile.UnitFrames.Units.player.Position
 ---@field Power NRSKNUI.DBProfile.UnitFrames.Units.player.Power
@@ -3312,18 +3142,19 @@
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.player.Indicators
 ---@field [string] any
+---@field Leader NRSKNUI.DBProfile.UnitFrames.Units.player.Indicators.Leader
 ---@field Resting NRSKNUI.DBProfile.UnitFrames.Units.player.Indicators.Resting
 ---@field Summon NRSKNUI.DBProfile.UnitFrames.Units.player.Indicators.Summon
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.player.Indicators.Leader
+---@field [string] any
+---@field Enabled boolean
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.player.Indicators.Resting
 ---@field [string] any
 ---@field Enabled boolean
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.player.Indicators.Summon
----@field [string] any
----@field Enabled boolean
-
----@class NRSKNUI.DBProfile.UnitFrames.Units.player.LeaderIndicator
 ---@field [string] any
 ---@field Enabled boolean
 
@@ -3348,13 +3179,36 @@
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.target
 ---@field [string] any
+---@field Auras NRSKNUI.DBProfile.UnitFrames.Units.target.Auras
 ---@field Castbar NRSKNUI.DBProfile.UnitFrames.Units.target.Castbar
 ---@field Indicators NRSKNUI.DBProfile.UnitFrames.Units.target.Indicators
----@field LeaderIndicator NRSKNUI.DBProfile.UnitFrames.Units.target.LeaderIndicator
 ---@field ParentFrame string
 ---@field Position NRSKNUI.DBProfile.UnitFrames.Units.target.Position
 ---@field Power NRSKNUI.DBProfile.UnitFrames.Units.target.Power
 ---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.target.Auras
+---@field [string] any
+---@field Buffs NRSKNUI.DBProfile.UnitFrames.Units.target.Auras.Buffs
+---@field Debuffs NRSKNUI.DBProfile.UnitFrames.Units.target.Auras.Debuffs
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.target.Auras.Buffs
+---@field [string] any
+---@field Trigger NRSKNUI.DBProfile.UnitFrames.Units.target.Auras.Buffs.Trigger
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.target.Auras.Buffs.Trigger
+---@field [string] any
+---@field Preset string
+---@field Type string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.target.Auras.Debuffs
+---@field [string] any
+---@field Trigger NRSKNUI.DBProfile.UnitFrames.Units.target.Auras.Debuffs.Trigger
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.target.Auras.Debuffs.Trigger
+---@field [string] any
+---@field Preset string
+---@field Type string
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.target.Castbar
 ---@field [string] any
@@ -3369,18 +3223,19 @@
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.target.Indicators
 ---@field [string] any
+---@field Leader NRSKNUI.DBProfile.UnitFrames.Units.target.Indicators.Leader
 ---@field Quest NRSKNUI.DBProfile.UnitFrames.Units.target.Indicators.Quest
 ---@field Summon NRSKNUI.DBProfile.UnitFrames.Units.target.Indicators.Summon
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.target.Indicators.Leader
+---@field [string] any
+---@field Enabled boolean
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.target.Indicators.Quest
 ---@field [string] any
 ---@field Enabled boolean
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.target.Indicators.Summon
----@field [string] any
----@field Enabled boolean
-
----@class NRSKNUI.DBProfile.UnitFrames.Units.target.LeaderIndicator
 ---@field [string] any
 ---@field Enabled boolean
 

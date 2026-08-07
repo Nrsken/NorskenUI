@@ -15,11 +15,6 @@ function RangeChecker:UpdateDB()
     self.db = NRSKNUI.db.profile.RangeChecker
 end
 
-function RangeChecker:OnInitialize()
-    self:UpdateDB()
-    self:SetEnabledState(false)
-end
-
 function RangeChecker:BuildGradientPalette()
     local c1 = self.db.ColorOne
     local c2 = self.db.ColorTwo
@@ -123,8 +118,6 @@ function RangeChecker:OnUpdate(elapsed)
 end
 
 function RangeChecker:OnEnable()
-    if not self.db.Enabled then return end
-
     self:CreateFrame()
     self:ApplySettings()
     self:UpdateRange()

@@ -1,8 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 ---@class UnitFramesModule
----@field frames table<string, oUF.UnitFrame>
----@field Elements UnitFramesElements
 local UF = NRSKNUI:GetModule('UnitFrames')
 ---@class NorskenUF
 local oUF = NRSKNUI.oUF
@@ -18,7 +16,7 @@ local KINDS = { 'Buffs', 'Debuffs' }
 ---@param cfg table
 ---@return number
 local function PreviewCount(cfg)
-    return min(cfg.maxFrameCount * NRSKNUI:GetAuraFilterBranchCount(cfg.Filter), cfg.previewLimit)
+    return min(cfg.maxFrameCount * NRSKNUI:GetTriggerBranchCount(cfg.Trigger), cfg.previewLimit)
 end
 
 ---Layout anchor corner derived from growth direction.
@@ -124,7 +122,7 @@ UF.Elements.Auras = {
             local container = self:CreateAuraContainer(GetContainerConfig(cfg, general))
             if container then
                 container:SetFrameLevel(UF.TopLevels.Auras)
-                container:AddFilteredGroup(cfg.Filter)
+                container:AddFilteredGroup(cfg.Trigger)
                 containers[kind] = container
             end
         end
@@ -149,13 +147,13 @@ UF.Elements.Auras = {
             container:ClearAllPoints()
             container:SetPoint(config.anchorPoint, self, pos.AnchorTo, pos.XOffset, pos.YOffset)
             container:ApplyLayout(config)
-            container:RebindFilteredGroups(cfg.Filter)
+            container:RebindFilteredGroups(cfg.Trigger)
             -- self.unit is the live token, which a preview repoints away from the configured unit.
             container:SetUnit(self.unit or unit)
             container:SetShown(cfg.Enabled)
 
             AuraPreview:Attach(container, self, pos.AnchorTo, pos.XOffset, pos.YOffset, UF.TopLevels.Auras)
-            AuraPreview:Update(container, config, PreviewCount(cfg), cfg.Filter)
+            AuraPreview:Update(container, config, PreviewCount(cfg), cfg.Trigger)
         end
     end,
 
@@ -167,8 +165,7 @@ UF.Elements.Auras = {
         local containers = self.Auras
         if not containers then return end
 
-        -- nuiConfig, not the token: a header child is styled with oUF's guessed archetype, which
-        -- cannot tell the raid tiers apart.
+        -- nuiConfig, not the token, a header child is styled with oUF's guessed archetype, which cannot tell the raid tiers apart.
         local preview = UF.Preview:IsAuraPreviewActive(self.nuiConfig or unit)
 
         for kind, container in pairs(containers) do

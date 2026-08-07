@@ -46,7 +46,7 @@ function UF.PostUpdateHealth(element, unit, cur, max, lossPerc)
 
         -- Dead units sit at empty health, so the background bar fills the whole frame.
         local bg = UnitIsDeadOrGhost(unit) and NRSKNUI.Colors.status.Dead or element.nuiBackground
-        healthBackground:SetStatusBarColor(bg[1], bg[2], bg[3], bg[4])
+        if bg then healthBackground:SetStatusBarColor(bg[1], bg[2], bg[3], bg[4]) end
     end
 
     -- Overabsorb handling

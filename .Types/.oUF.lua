@@ -147,6 +147,12 @@ function Hex(r, g, b) end
 ---@field visibility string The current visibility macro conditional
 ---@field style string The style applied to the header's children
 ---@field prefix string Name prefix used for the header's children
+--- NorskenUI additions, set by the UnitFrames module rather than by oUF.
+---@field nrsknConfig string Config unit key the header spawns children for
+---@field nuiLabel string Localized display name, used for the preview labels
+---@field nuiShown table<string, boolean> The show* attributes to restore once a preview releases
+---@field nuiForced? boolean Preview is holding the header's children up
+---@field nuiHooked? boolean OnAttributeChanged hook applied, so the preview survives a re-layout
 local header
 
 --- Set the macro conditional(s) that control when the header is shown.
@@ -241,7 +247,9 @@ function nameplates:SetNumAuraContainers(numContainers) end
 ---@field ThreatIndicator? oUF.ThreatIndicator
 ---@field Auras? table<string, table> NorskenUI: native aura containers keyed by display name
 --- NorskenUI additions, set by the UnitFrames module rather than by oUF.
----@field nrsknUnit string Config unit key the frame was built for
+---@field nrsknUnit string oUF's guessed unit the frame was built for; a header child gets the archetype
+---@field nuiConfig string Config unit key the frame was built for; a header child inherits its header's key
+---@field nuiGroupChild? boolean Set when the frame is a child of a group header
 ---@field nuiBuilt? boolean Set once BuildStyle has finished; later Configure passes re-apply element states
 ---@field healthBorderFrame Frame Border overlay above the health bar
 ---@field nuiHighlight NUI.HighlightTexture Mouseover highlight
@@ -556,11 +564,13 @@ local auras
 ---@param filter string Aura filter (e.g. 'HELPFUL', 'HARMFUL')
 ---@param options? table Group options (fall back to element-wide options)
 ---@return string groupKey Unique identifier for the group
+---@return number slot Index of the group on the container, what the gate caps by frame count
 function auras:AddGroup(filter, options) end
 
 --- Define a slot for a single aura, using an aura filter.
 ---@param filter string Aura filter
 ---@param options? table Slot options
+---@return table? slot The slot the client made, if it made one
 ---@return string slotKey Unique identifier for the slot
 function auras:AddSlot(filter, options) end
 
@@ -705,3 +715,19 @@ function auras:AddSlot(filter, options) end
 ---@class NUI.TagFontString : FontString
 ---@field nuiTag? string The tag string currently registered on this font string
 ---@field frequentUpdates? number Update interval oUF binds at Tag() time
+
+---@class NUI.UnitFrames.GroupContainer : Frame
+---@field nuiPreviewing? boolean The preview owns the container's visibility until released
+
+-- One selectable look. Add another entry to a def's art list and its Texture dropdown appears.
+---@class UnitFramesIndicatorArt
+---@field key string what uDB.Indicators[*].Texture stores
+---@field label string dropdown text
+---@field atlas? string an atlas wins over texture, and brings its own tex coords
+---@field texture? string
+---@field coords? number[]
+---@field desaturated? boolean
+
+---@class UnitFramesGroup
+---@field container NUI.UnitFrames.GroupContainer
+---@field headers oUF.Header[]

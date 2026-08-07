@@ -72,11 +72,6 @@ function Gear:UpdateDB()
     self.db = NRSKNUI.db.profile.GearUtility
 end
 
-function Gear:OnInitialize()
-    self:UpdateDB()
-    self:SetEnabledState(false)
-end
-
 -- Item track resolution --
 
 -- The track name in the tooltip is localized game data with no enum behind it, so we have to resolve it by position in the track.
@@ -1082,8 +1077,6 @@ function Gear:ApplySettings()
 end
 
 function Gear:OnEnable()
-    if not self.db.Enabled then return end
-
     -- Initialize the socket bar and popups.
     if not self.hooked then
         if self.db.Sockets.Enabled or self.db.Enchants.Enabled then

@@ -2,21 +2,11 @@
 local NRSKNUI = select(2, ...)
 ---@class AuctionHouseFilterModule
 local AuctionHouseFilter = NRSKNUI:GetModule('AuctionHouseFilter')
+function AuctionHouseFilter:UpdateDB() self.db = NRSKNUI.db.profile.Miscellaneous.AuctionHouseFilter end
 
 local C_Timer = C_Timer
-
 local IsAddOnLoaded = C_AddOns and C_AddOns.IsAddOnLoaded
-
 local auctioneerEnum = Enum and Enum.PlayerInteractionType.Auctioneer
-
-function AuctionHouseFilter:UpdateDB()
-    self.db = NRSKNUI.db.profile.Miscellaneous.AuctionHouseFilter
-end
-
-function AuctionHouseFilter:OnInitialize()
-    self:UpdateDB()
-    self:SetEnabledState(false)
-end
 
 local displayModeHooked = false
 function AuctionHouseFilter:ApplyAuctionHouseFilter()
@@ -110,8 +100,6 @@ function AuctionHouseFilter:ApplySettings()
 end
 
 function AuctionHouseFilter:OnEnable()
-    if not self.db.Enabled then return end
-
     self:RegisterEvent('AUCTION_HOUSE_SHOW', 'ApplyAuctionHouseFilter')
     self:RegisterEvent('CRAFTINGORDERS_SHOW_CUSTOMER', 'ApplyCraftOrdersFilter')
     self:RegisterEvent('PLAYER_INTERACTION_MANAGER_FRAME_SHOW', function(_, interactionType)

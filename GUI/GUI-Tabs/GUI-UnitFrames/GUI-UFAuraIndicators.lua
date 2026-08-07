@@ -7,9 +7,8 @@ local GUI = NRSKNUI.GUI
 local Theme = NRSKNUI.Theme
 local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
-
 local AuraIndicators = NRSKNUI.AuraIndicators
-local AuraFilters = NRSKNUI.AuraFilters
+local TriggerCard = NRSKNUI.GUITriggerCard
 local AuraCards = NRSKNUI.GUIAuraCards
 local OutlineOptions = NRSKNUI:GetOutlineOptions(true)
 
@@ -18,39 +17,30 @@ local tonumber = tonumber
 local format = string.format
 
 local PAGE = 'unitFramesIndicators'
+local INDICATORS_SECTION = 'auraIndicators_section'
 local Styles = AuraIndicators.Styles
-local MatchTypes = AuraIndicators.MatchTypes
-
-local MATCH_TYPES = {
-    { value = MatchTypes.SpellIDs, text = L['Spell IDs'] },
-    { value = MatchTypes.Preset,   text = L['Preset'] },
-    { value = MatchTypes.Filter,   text = L['Named Filter'] },
-}
 
 local STYLE_OPTIONS = {
-    { value = Styles.Overlay,       text = L['Overlay Tint'] },
-    { value = Styles.Square,        text = L['Square Texture'] },
-    { value = Styles.Icon,          text = L['Aura Icon'] },
-    { value = Styles.Duration,      text = L['Duration Text'] },
-    { value = Styles.DispelBorder,  text = L['Dispel Border'] },
-    { value = Styles.DispelOverlay, text = L['Dispel Overlay'] },
+    { value = Styles.Overlay,  text = L['Overlay Tint'] },
+    { value = Styles.Square,   text = L['Square Texture'] },
+    { value = Styles.Icon,     text = L['Aura Icon'] },
+    { value = Styles.Duration, text = L['Duration Text'] },
 }
 
+-- Shared with the dispel pages, which hang off the same three things.
 local ATTACH_OPTIONS = {
     { value = AuraIndicators.Attach.Frame,      text = L['Whole Frame'] },
     { value = AuraIndicators.Attach.Health,     text = L['Health Bar'] },
     { value = AuraIndicators.Attach.HealthFill, text = L['Health Fill'] },
 }
-
-local UNITS = { 'player', 'target', 'targettarget', 'focus', 'focustarget', 'pet', 'pettarget', 'boss' }
+UF.GUIAttachOptions = ATTACH_OPTIONS
 
 local function Store() return NRSKNUI.db.global.AuraIndicators end
 local function Changed(key) AuraIndicators:Invalidate(key) end
 
----Layer choices. The two the frame's own chrome owns stay selectable but say so, since sharing a level
----with the border is a legitimate thing to want and hiding them would make the scale read wrong.
+---Layer choices.
 ---@return table[]
-local function LayerOptions()
+function UF.GUILayerOptions()
     local options = {}
 
     for layer = UF.Layers.Min, UF.Layers.Max do
@@ -128,7 +118,7 @@ local function RenameIndicatorPrompt(key)
             spec.name = new
             store[new] = spec
             store[key] = nil
-            for _, unit in ipairs(UNITS) do
+            for _, unit in ipairs(UF.Units) do
                 for _, placement in ipairs(UF.db.Units[unit].AuraIndicators) do
                     for i, assigned in ipairs(placement.Keys) do
                         if assigned == key then placement.Keys[i] = new end
@@ -144,6 +134,30 @@ local function RenameIndicatorPrompt(key)
     })
 end
 
+---Make a group and move this indicator into it.
+local function CreateGroupPrompt(key)
+    NRSKNUI:CreatePrompt({
+        title = L['Create New Group'],
+        text = '',
+        editBox = true,
+        editBoxLabel = L['Group Name'],
+        onAccept = function(name)
+            if not name or name == '' then
+                NRSKNUI:Print(L['Please enter a name'])
+                return
+            end
+
+            local groupId = AuraIndicators:CreateGroup(name)
+            if not groupId then return end
+
+            AuraIndicators:SetGroup(key, groupId)
+            Reopen(key)
+        end,
+        acceptText = L['Create'],
+        cancelText = L['Cancel'],
+    })
+end
+
 local function DeleteIndicatorPrompt(key)
     local spec = AuraIndicators:GetSpec(key)
     if not spec then return end
@@ -152,7 +166,7 @@ local function DeleteIndicatorPrompt(key)
         title = L['Delete Indicator'],
         text = format(L["Delete the indicator '%s'? This cannot be undone."], spec.name or key),
         onAccept = function()
-            for _, unit in ipairs(UNITS) do
+            for _, unit in ipairs(UF.Units) do
                 AuraIndicators:RemoveKeyEverywhere(UF.db.Units[unit], key)
             end
             AuraIndicators:Delete(key)
@@ -164,100 +178,8 @@ local function DeleteIndicatorPrompt(key)
 end
 
 local function BuildLibraryPage(page, key, spec)
-    local card = page:Card(format(L['Indicator: %s'], spec.name or key))
-
-    -- The match fields and the summary both change with the match type, so the whole card redraws.
-    card:Rebuild(function(c)
-        c:Row(rowH):Dropdown(L['Match Type'], {
-            width = 1,
-            options = MATCH_TYPES,
-            value = spec.MatchType,
-            callback = function(value)
-                spec.MatchType = value
-                Changed(key)
-                c:Rebuild()
-            end,
-        })
-
-        if spec.MatchType == MatchTypes.SpellIDs then
-            local spellRow = c:Row(rowH)
-            spellRow:EditBox(L['Spell IDs'], {
-                width = 0.5,
-                value = spec.SpellIDs,
-                tooltip = L['One or more spell IDs, separated by commas. The indicator shows while any of them is up.'],
-                callback = function(value)
-                    spec.SpellIDs = value
-                    Changed(key)
-                    c:Rebuild()
-                end,
-            })
-            spellRow:Dropdown(L['Aura Type'], {
-                width = 0.5,
-                options = AuraIndicators.AuraTypes,
-                value = spec.AuraType,
-                callback = function(value)
-                    spec.AuraType = value
-                    Changed(key)
-                    c:Rebuild()
-                end,
-            })
-
-            c:Separator()
-
-            for _, id in ipairs(AuraIndicators:GetSpellIDs(spec) or {}) do
-                local info = C_Spell.GetSpellInfo(id)
-                local row = c:Row(26)
-                local labelText = info and info.name and format('%s (%d)', info.name, id) or format(L['Unknown spell ID %d'], id)
-
-                row:Icon({
-                    width = 0.05,
-                    size = 24,
-                    texture = info and info.iconID,
-                    tooltip = function(t)
-                        t:SetSpellByID(id)
-                    end
-                })
-                row:Text(NRSKNUI:ColorTextByTheme(labelText), {
-                    yOffset = -2,
-                    width = 0.95,
-                    height = rowH,
-                    bgMode = 'hide',
-                })
-            end
-        elseif spec.MatchType == MatchTypes.Preset then
-            c:Row(rowH):Dropdown(L['Preset'], {
-                width = 1,
-                options = AuraIndicators.Presets,
-                value = spec.Preset,
-                callback = function(value)
-                    spec.Preset = value
-                    Changed(key)
-                    c:Rebuild()
-                end,
-            })
-        else
-            local filters = AuraFilters:GetList()
-            c:Row(rowH):Dropdown(L['Filter'], {
-                width = 0.7,
-                searchable = true,
-                options = filters,
-                value = spec.Filter,
-                callback = function(value)
-                    spec.Filter = value
-                    Changed(key)
-                    c:Rebuild()
-                end,
-            })
-            c:Row(rowH):Button(L['Manage Filters'], {
-                width = 0.3,
-                height = 24,
-                callback = function()
-                    local window = NRSKNUI.GUIFrame
-                    if window and window.content then window.content:ShowPage('filterBuilder') end
-                end,
-            })
-        end
-    end)
+    spec.Trigger = spec.Trigger or NRSKNUI.AuraTriggers:New()
+    TriggerCard:Build(page, spec.Trigger, { hideUnit = true, onChange = function() Changed(key) end })
 
     local look = page:Card(L['Appearance'])
     look:Row(rowHL, 0):ColorPicker(L['Color'], {
@@ -293,6 +215,58 @@ local function BuildLibraryPage(page, key, spec)
     })
 end
 
+---Indicator list.
+---@return table[]
+local function SidebarItems()
+    local items = {}
+
+    local shipped = {}
+    for _, entry in ipairs(AuraIndicators:GetList()) do
+        if AuraIndicators:IsBuiltin(entry.key) then
+            shipped[#shipped + 1] = { key = entry.key, text = entry.text }
+        end
+    end
+
+    if shipped[1] then
+        items[#items + 1] = {
+            type = 'header',
+            key = INDICATORS_SECTION,
+            text = L['Default Indicators'],
+            defaultExpanded = true,
+            items = shipped,
+        }
+    end
+
+    for _, group in ipairs(AuraIndicators:GetGroups()) do
+        local members = {}
+        for _, entry in ipairs(AuraIndicators:GetList()) do
+            local spec = AuraIndicators:GetSpec(entry.key)
+            if spec and spec.group == group.key then
+                members[#members + 1] = { key = entry.key, text = entry.text }
+            end
+        end
+
+        if members[1] then
+            items[#items + 1] = {
+                type = 'header',
+                key = group.key,
+                text = group.name,
+                defaultExpanded = true,
+                items = members,
+            }
+        end
+    end
+
+    for _, entry in ipairs(AuraIndicators:GetList()) do
+        local spec = AuraIndicators:GetSpec(entry.key)
+        if spec and not spec.group and not AuraIndicators:IsBuiltin(entry.key) then
+            items[#items + 1] = { key = entry.key, text = entry.text }
+        end
+    end
+
+    return items
+end
+
 GUI:RegisterPage(PAGE, {
     mode = 'clean',
     search = {},
@@ -300,21 +274,41 @@ GUI:RegisterPage(PAGE, {
         buttons = {
             { text = L['New Indicator'], onClick = CreateIndicatorPrompt },
         },
-        items = function()
-            local items = {}
-            for _, entry in ipairs(AuraIndicators:GetList()) do
-                items[#items + 1] = { key = entry.key, text = entry.text }
-            end
-            return items
-        end,
+        items = SidebarItems,
         onContextMenu = function(key)
-            if not AuraIndicators:Exists(key) then return end
+            local spec = not AuraIndicators:IsBuiltin(key) and AuraIndicators:GetSpec(key)
+            if not spec then return end
 
-            GUI:ShowContextMenu({
-                { text = L['Rename'], onClick = function() RenameIndicatorPrompt(key) end },
+            local entries = {
+                { text = L['Rename'],           onClick = function() RenameIndicatorPrompt(key) end },
+                { text = L['Delete'],           onClick = function() DeleteIndicatorPrompt(key) end },
                 { divider = true },
-                { text = L['Delete'], onClick = function() DeleteIndicatorPrompt(key) end },
-            })
+                { text = L['Create New Group'], onClick = function() CreateGroupPrompt(key) end },
+            }
+
+            for _, group in ipairs(AuraIndicators:GetGroups()) do
+                if group.key ~= spec.group then
+                    entries[#entries + 1] = {
+                        text = format(L['Add to %s'], group.name),
+                        onClick = function()
+                            AuraIndicators:SetGroup(key, group.key)
+                            Reopen(key)
+                        end,
+                    }
+                end
+            end
+
+            if spec.group then
+                entries[#entries + 1] = {
+                    text = L['Remove from Group'],
+                    onClick = function()
+                        AuraIndicators:SetGroup(key, nil)
+                        Reopen(key)
+                    end,
+                }
+            end
+
+            GUI:ShowContextMenu(entries)
         end,
     },
     build = function(page, _, itemKey)
@@ -344,8 +338,6 @@ function UF.GUIAuraIndicatorTabs(unit)
     for index, placement in ipairs(placements) do
         tabs[index] = { id = tostring(index), text = AuraIndicators:GetPlacementName(placement, index) }
     end
-
-    -- With nothing placed there is no tab to derive a strip from, so the strip carries the empty state.
     if not tabs[1] then
         tabs[1] = { id = '1', text = L['Aura Indicators'] }
     end
@@ -426,19 +418,6 @@ local function AddFontRows(page, card, font, sizes)
 end
 
 local function BuildStyleOptions(page, card, placement)
-    if placement.Style == Styles.DispelBorder or placement.Style == Styles.DispelOverlay then
-        card:Row(rowHL, 0):Checkbox(L['Show Without Dispel Type'], {
-            width = 1,
-            value = placement.ShowWithoutDispelType,
-            tooltip = L['Keep the indicator up for matching auras that have no dispel type at all. The game colors these by dispel type, so the indicator color does not apply.'],
-            callback = function(checked)
-                placement.ShowWithoutDispelType = checked
-                Changed(nil)
-            end,
-        })
-        return
-    end
-
     if placement.Style == Styles.Icon then
         local row1 = card:Row(rowH)
         row1:Checkbox(L['Cooldown Spiral'], {
@@ -513,6 +492,11 @@ local function BuildUnitSection(page, uDB, unit, tabId)
     local placements = uDB.AuraIndicators
     local index = tonumber(tabId) or 1
     local placement = placements[index]
+
+    if placement and not Styles[placement.Style] then
+        placement.Style = Styles.Overlay
+        Changed(nil)
+    end
 
     page:SetCondition('indicatorOwnFont', function()
         return placement ~= nil and not placement.Font.UseGlobalFont
@@ -608,7 +592,7 @@ local function BuildUnitSection(page, uDB, unit, tabId)
     })
     placeRow:Dropdown(L['Layer'], {
         width = 0.5,
-        options = LayerOptions(),
+        options = UF.GUILayerOptions(),
         value = placement.Layer,
         tooltip = L['Higher layers draw over lower ones. Damage absorb sits on 4 and heal absorb on 5 by default.'],
         callback = function(value)

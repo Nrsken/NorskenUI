@@ -17,7 +17,6 @@ end
 function CombatTimer:OnInitialize()
     self:UpdateDB()
     self.lastCombatDuration = 0
-    self:SetEnabledState(false)
 end
 
 function CombatTimer:CreateFrame()

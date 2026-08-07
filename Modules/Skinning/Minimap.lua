@@ -39,14 +39,8 @@ function Map:UpdateDB()
     self.db = NRSKNUI.db.profile.Skinning.Minimap
 end
 
-function Map:OnInitialize()
-    self:UpdateDB()
-    self:SetEnabledState(false)
-end
-
 function Map:OnEnable()
     if NRSKNUI:ShouldNotLoadModule() then return end
-    if not self.db.Enabled then return end
 
     self:StripBlizzMap()
     self:CreateBugSackButton()

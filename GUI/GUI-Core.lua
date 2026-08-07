@@ -3,6 +3,27 @@ local NRSKNUI = select(2, ...)
 ---@class GUIFrame
 NRSKNUI.GUIFrame = NRSKNUI.GUIFrame or {}
 local Theme = NRSKNUI.Theme
+local L = NRSKNUI.Libs.AL
+
+-- Dropdown option lists every tab shares. Dropdown.lua reads value or key, so value serves both.
+NRSKNUI.AnchorOptions = {
+    { value = 'TOPLEFT',     text = L['Top Left'] },
+    { value = 'TOP',         text = L['Top'] },
+    { value = 'TOPRIGHT',    text = L['Top Right'] },
+    { value = 'LEFT',        text = L['Left'] },
+    { value = 'CENTER',      text = L['Center'] },
+    { value = 'RIGHT',       text = L['Right'] },
+    { value = 'BOTTOMLEFT',  text = L['Bottom Left'] },
+    { value = 'BOTTOM',      text = L['Bottom'] },
+    { value = 'BOTTOMRIGHT', text = L['Bottom Right'] },
+}
+
+NRSKNUI.GrowthOptions = {
+    { value = 'DOWN',  text = L['Down'] },
+    { value = 'UP',    text = L['Up'] },
+    { value = 'LEFT',  text = L['Left'] },
+    { value = 'RIGHT', text = L['Right'] },
+}
 
 local LOGO = 'Interface\\AddOns\\NorskenUI\\Media\\Logo\\'
 local TEX = 'Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\'

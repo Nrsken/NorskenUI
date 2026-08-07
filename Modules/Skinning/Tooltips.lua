@@ -101,11 +101,6 @@ function Tooltips:UpdateDB()
     self.db = NRSKNUI.db.profile.Skinning.Tooltips
 end
 
-function Tooltips:OnInitialize()
-    self:UpdateDB()
-    self:SetEnabledState(false)
-end
-
 -- True while the configured override modifier is held.
 ---@return boolean
 local function IsModDown()
@@ -636,7 +631,6 @@ end
 local hooksDone = false
 function Tooltips:OnEnable()
     if NRSKNUI:ShouldNotLoadModule() then return end -- Don't enable module if ElvUI is enabled.
-    if not self.db.Enabled then return end
 
     -- Need to run this early during PLAYER_LOGIN.
     if self.db.SkinAuraContainer then

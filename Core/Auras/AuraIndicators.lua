@@ -10,26 +10,18 @@ local ipairs, pairs = ipairs, pairs
 local format = string.format
 local CopyTable = CopyTable
 local tonumber = tonumber
-local CreateFrame = CreateFrame
 local type = type
-local CheckSetAtlas = CheckSetAtlas
-
-local DISPEL_BORDER_ATLAS = 'RaidFrame-DispelHighlight'
 
 AuraIndicators.Styles = {
     Overlay = 'Overlay',
     Square = 'Square',
     Icon = 'Icon',
     Duration = 'Duration',
-    DispelBorder = 'DispelBorder',
-    DispelOverlay = 'DispelOverlay',
 }
 
 -- Styles that cover their attach target whole, so they have neither size nor offset of their own.
 AuraIndicators.FullCover = {
     [AuraIndicators.Styles.Overlay] = true,
-    [AuraIndicators.Styles.DispelOverlay] = true,
-    [AuraIndicators.Styles.DispelBorder] = true,
 }
 
 -- Styles with a width and height of their own.
@@ -38,7 +30,6 @@ AuraIndicators.Sized = {
     [AuraIndicators.Styles.Icon] = true,
 }
 
--- The dispel styles are left out: their artwork is whatever a live aura's dispel type gives them.
 AuraIndicators.Previewable = {
     [AuraIndicators.Styles.Overlay] = true,
     [AuraIndicators.Styles.Square] = true,
@@ -53,117 +44,29 @@ AuraIndicators.Attach = {
     HealthFill = 'healthFill',
 }
 
-AuraIndicators.MatchTypes = {
-    SpellIDs = 'SpellIDs',
-    Preset = 'Preset',
-    Filter = 'Filter',
-}
-
 -- Tokens are read from the live client rather than written out, since they can change between patches.
 local AF = AuraUtil.AuraFilters
-local CreateFilterString = AuraUtil.CreateFilterString
 
--- The categories worth a one-click entry. Anything outside this list is what the Filter match type and the full builder are for.
--- type is the base the filter string was built from, which a compiled string no longer separates out.
-AuraIndicators.Presets = {
-    { value = 'BigDefensive',      text = L['Big Defensives'],        type = AF.Helpful, filterString = CreateFilterString(AF.Helpful, AF.BigDefensive), },
-    { value = 'ExternalDefensive', text = L['External Defensives'],   type = AF.Helpful, filterString = CreateFilterString(AF.Helpful, AF.ExternalDefensive), },
-    { value = 'DispelByYou',       text = L['Dispellable by You'],    type = AF.Harmful, filterString = CreateFilterString(AF.Harmful, AF.Raid), },
-    { value = 'DispelByAnyone',    text = L['Dispellable by Anyone'], type = AF.Harmful, filterString = CreateFilterString(AF.Harmful, AF.Dispellable), },
-    { value = 'CrowdControl',      text = L['Crowd Control'],         type = AF.Harmful, filterString = CreateFilterString(AF.Harmful, AF.CrowdControl), },
-    { value = 'OwnBuffs',          text = L['Your Own Buffs'],        type = AF.Helpful, filterString = CreateFilterString(AF.Helpful, AF.Player), },
-    { value = 'BossDebuffs',       text = L['Boss Debuffs'],          type = AF.Harmful, filterString = AF.Harmful,                                           candidateFilters = { isBossAura = true }, },
-}
-
-local PresetsByValue = {}
-for _, preset in ipairs(AuraIndicators.Presets) do
-    PresetsByValue[preset.value] = preset
-end
-
-AuraIndicators.AuraTypes = {
-    { value = AF.Helpful,                                text = L['Helpful'] },
-    { value = CreateFilterString(AF.Helpful, AF.Player), text = L['Helpful (Applied by You)'] },
-    { value = AF.Harmful,                                text = L['Harmful'] },
-    { value = CreateFilterString(AF.Harmful, AF.Player), text = L['Harmful (Applied by You)'] },
-}
+local GROUP_PREFIX = 'group:'
+-- Indicators that ship with the addon, seeded into the defaults. Keyed the same way as a user's, so
+-- nothing placing or drawing one cares which it got.
+local BUILTIN_PREFIX = 'builtin:'
 
 local function GetStore()
     return NRSKNUI.db.global.AuraIndicators
 end
 
----Parse the spell ID box into the map candidateFilters wants. Anything that is not a positive integer is
----skipped, so a half-typed or comma-happy entry narrows the match rather than erroring.
----@param text string?
----@return table? map
-local function ParseSpellIDs(text)
-    if type(text) ~= 'string' then return nil end
-
-    local map, found = {}, false
-    for id in text:gmatch('%d+') do
-        local spellID = tonumber(id)
-        if spellID and spellID > 0 then
-            map[spellID] = true
-            found = true
-        end
-    end
-
-    return found and map or nil
+---Groups are only a way to organise the indicator list: a group holds a name, and an indicator points
+---at one through its `group` field. Nothing about what an indicator does depends on being in one.
+local function GetGroupStore()
+    return NRSKNUI.db.global.AuraIndicatorGroups
 end
 
----Compile an indicator's match settings into the branches its slots run, in the same shape
----NRSKNUI:GetAuraFilter returns so both paths feed the same machinery.
+---Compiled branches for an indicator, in the same shape a container binding consumes.
 ---@param spec table
 ---@return table[] branches
 function AuraIndicators:GetBranches(spec)
-    local matchType = spec.MatchType
-
-    if matchType == self.MatchTypes.Filter then
-        return NRSKNUI:GetAuraFilter(spec.Filter) or {}
-    end
-
-    if matchType == self.MatchTypes.Preset then
-        local preset = PresetsByValue[spec.Preset]
-        if not preset then return {} end
-
-        return { {
-            type = preset.type,
-            filterString = preset.filterString,
-            candidateFilters = preset.candidateFilters and CopyTable(preset.candidateFilters) or nil,
-        } }
-    end
-
-    -- Spell IDs. Note this only bites where the client honours identity filters: helpful auras on units
-    -- you can assist and harmful ones on units you cannot. See AuraContainerUtil.CanApplyIdentityCandidateFilters.
-    local spellIDs = ParseSpellIDs(spec.SpellIDs)
-    local auraType = spec.AuraType or AF.Helpful
-    return { { type = auraType, filterString = auraType, candidateFilters = spellIDs and { includeSpellIDs = spellIDs } or nil, } }
-end
-
----Return true when the indicator is a SpellIDs match and at least one ID parses,
----so the GUI can warn the user that the match is conditional.
----@param spec table
----@return boolean
-function AuraIndicators:HasConditionalSpellIDMatch(spec)
-    if spec.MatchType ~= self.MatchTypes.SpellIDs then return false end
-
-    return ParseSpellIDs(spec.SpellIDs) ~= nil
-end
-
----The spell IDs an indicator matches on, for the GUI to list back. Sorted rather than left in map order,
----so the list keeps the same order every time the card redraws.
----@param spec table
----@return number[]? ids nil unless the indicator matches on spell IDs and at least one parsed
-function AuraIndicators:GetSpellIDs(spec)
-    if spec.MatchType ~= self.MatchTypes.SpellIDs then return nil end
-
-    local map = ParseSpellIDs(spec.SpellIDs)
-    if not map then return nil end
-
-    local ids = {}
-    for id in pairs(map) do tinsert(ids, id) end
-    tsort(ids)
-
-    return ids
+    return NRSKNUI:GetTriggerBranches(spec.Trigger)
 end
 
 ---@param key string?
@@ -175,22 +78,87 @@ end
 
 ---@param key string?
 ---@return boolean
-function AuraIndicators:Exists(key)
-    return self:GetSpec(key) ~= nil
+function AuraIndicators:IsBuiltin(key)
+    return type(key) == 'string' and key:sub(1, #BUILTIN_PREFIX) == BUILTIN_PREFIX
 end
 
----Sorted { key, text } list for GUI sidebars and per-unit assignment lists.
+---Sorted { key, text } list for GUI sidebars and per-unit assignment lists. Shipped indicators come
+---first in a stable order, then the user's own by name.
 ---@return table[]
 function AuraIndicators:GetList()
-    local list = {}
+    local builtins, own = {}, {}
     local store = GetStore()
-    if store then
-        for key, spec in pairs(store) do
-            tinsert(list, { key = key, text = (type(spec) == 'table' and spec.name) or key })
-        end
-        tsort(list, function(a, b) return a.text < b.text end)
+
+    for key, spec in pairs(store or {}) do
+        local entry = { key = key, text = (type(spec) == 'table' and spec.name) or key }
+        tinsert(self:IsBuiltin(key) and builtins or own, entry)
     end
+
+    tsort(builtins, function(a, b) return a.text < b.text end)
+    tsort(own, function(a, b) return a.text < b.text end)
+
+    for _, entry in ipairs(own) do
+        tinsert(builtins, entry)
+    end
+
+    return builtins
+end
+
+---Sorted { key, name } groups, for the sidebar and the context menu.
+---@return table[]
+function AuraIndicators:GetGroups()
+    local list = {}
+
+    for id, group in pairs(GetGroupStore() or {}) do
+        list[#list + 1] = { key = id, name = group.name or id }
+    end
+    tsort(list, function(a, b) return a.name < b.name end)
+
     return list
+end
+
+---@param name string
+---@return string? id
+function AuraIndicators:CreateGroup(name)
+    local store = GetGroupStore()
+    if not store or not name or name == '' then return nil end
+
+    local index = 1
+    while store[GROUP_PREFIX .. index] do
+        index = index + 1
+    end
+
+    local id = GROUP_PREFIX .. index
+    store[id] = { name = name }
+
+    return id
+end
+
+---Move an indicator into a group, or out of one when groupId is nil. Emptied groups are dropped, since
+---a header with nothing under it is only clutter.
+---@param key string
+---@param groupId string?
+function AuraIndicators:SetGroup(key, groupId)
+    local spec = self:GetSpec(key)
+    if not spec then return end
+
+    spec.group = groupId
+    self:PruneGroups()
+end
+
+---Forget any group nothing points at.
+function AuraIndicators:PruneGroups()
+    local store, groups = GetStore(), GetGroupStore()
+    if not (store and groups) then return end
+
+    local used = {}
+    for _, spec in pairs(store) do
+        if type(spec) == 'table' and spec.group then used[spec.group] = true end
+    end
+
+    for id in pairs(groups) do
+        if not used[id] then groups[id] = nil end
+    end
 end
 
 ---Readable summary of what an indicator matches, for the GUI card.
@@ -203,21 +171,7 @@ function AuraIndicators:Describe(key)
         return {}, NRSKNUI:ColorTextByTheme(L['This indicator no longer exists.'])
     end
 
-    local matchTypes = self.MatchTypes
-    local lines = {}
-
-    if spec.MatchType == matchTypes.Filter then
-        -- The escape hatch, so hand the whole description back to the filter registry.
-        lines = NRSKNUI.AuraFilters:Describe(spec.Filter)
-    else
-        for _, branch in ipairs(self:GetBranches(spec)) do
-            tinsert(lines, NRSKNUI:ColorTextByTheme(branch.filterString))
-        end
-
-        if self:HasConditionalSpellIDMatch(spec) then
-            tinsert(lines, NRSKNUI:ColorText(L['Spell IDs are ignored for debuffs on friendly units and buffs on hostile units.'], NRSKNUI.Colors.warning))
-        end
-    end
+    local lines = NRSKNUI.AuraTriggers:Describe(spec.Trigger)
 
     if not lines[1] then
         return {}, NRSKNUI:ColorTextByTheme(L['This indicator matches nothing yet.'])
@@ -228,11 +182,7 @@ end
 
 -- What an indicator is: the aura it means and the colour it carries. Everything about how it is drawn lives per unit, in PlacementDefaults below.
 local SpecDefaults = {
-    MatchType = AuraIndicators.MatchTypes.SpellIDs,
-    SpellIDs = '',
-    AuraType = AF.Helpful,
-    Preset = 'BigDefensive',
-    Filter = '',
+    Trigger = nil, -- filled in by :Create, since every indicator needs its own table
     sortMethod = 'ExpirationOnly',
     sortDirection = 'Normal',
     Color = { 0, 0.9, 0.5, 1 },
@@ -249,7 +199,6 @@ local PlacementDefaults = {
     Position = { AnchorFrom = 'CENTER', AnchorTo = 'CENTER', XOffset = 0, YOffset = 0 },
     Size = { Width = 24, Height = 24 },
     Texture = '',
-    ShowWithoutDispelType = false,
     Font = {
         UseGlobalFont = true,
         FontFace = 'Expressway',
@@ -275,10 +224,16 @@ local PlacementDefaults = {
 ---@return table? spec
 function AuraIndicators:Create(key, name)
     local store = GetStore()
-    if not store or store[key] then return nil end
+    -- A user's key is whatever they named it, so the shipped prefix is off limits: an indicator
+    -- wearing it could never be deleted again.
+    if not store or store[key] or self:IsBuiltin(key) then return nil end
 
     local spec = CopyTable(SpecDefaults)
     spec.name = name
+    -- Its own table, not a shared default: an indicator's trigger is edited in place.
+    spec.Trigger = NRSKNUI.AuraTriggers:New({ Type = NRSKNUI.AuraTriggers.Types.SpellIDs })
+    -- The unit frame drawing the indicator decides the unit, so the trigger never carries one.
+    spec.Trigger.Unit = nil
 
     store[key] = spec
     self:Invalidate(key)
@@ -336,12 +291,15 @@ function AuraIndicators:RemoveKeyEverywhere(uDB, key)
     end
 end
 
+---Remove a user indicator. Shipped ones refuse: they are seeded from the defaults and would come
+---straight back on the next login.
 ---@param key string
 function AuraIndicators:Delete(key)
     local store = GetStore()
-    if not store or not store[key] then return end
+    if not store or not store[key] or self:IsBuiltin(key) then return end
 
     store[key] = nil
+    self:PruneGroups()
     self:Invalidate(key)
 end
 
@@ -387,7 +345,6 @@ local function ResolveLook(spec, placement, fontDB)
         DurationFont = placement.DurationFont,
         FontSource = (placement.Font.UseGlobalFont and fontDB) or placement.Font,
         FontOutline = (placement.Font.UseGlobalFont and fontDB and fontDB.FontOutline) or placement.Font.FontOutline,
-        ShowWithoutDispelType = placement.ShowWithoutDispelType,
     }
 end
 
@@ -418,52 +375,6 @@ local function BuildTexture(slot, look)
     ApplyTextureLook(texture, look)
 
     return { texture = texture }
-end
-
----Fade a dispel indicator through its holder rather than its texture.
----@param regions table
----@param look table
-local function ApplyDispelAlpha(regions, look)
-    regions.holder:SetAlpha(look.Alpha)
-end
-
----Put artwork on a dispel texture.
----@param texture Texture
----@param look table
----@param defaultAtlas string?
-local function ApplyDispelAsset(texture, look, defaultAtlas)
-    local asset = (look.Texture ~= '' and look.Texture) or defaultAtlas
-
-    if asset and CheckSetAtlas(texture, asset) then return end
-    texture:SetTexture(asset and NRSKNUI:ResolveMediaPath('statusbar', asset) or NRSKNUI.WhiteTexture)
-end
-
----Build a dispel indicator.
----@param slot table
----@param look table
----@param defaultAtlas string?
----@param level number
----@return table regions
-local function BuildDispel(slot, look, defaultAtlas, level)
-    local holder = CreateFrame('Frame', nil, slot)
-    holder:SetAllPoints(slot)
-    holder:SetFrameLevel(level)
-
-    local texture = holder:CreateTexture(nil, 'ARTWORK')
-    texture:SetAllPoints(holder)
-    ApplyDispelAsset(texture, look, defaultAtlas)
-
-    slot:AddDispelTypeTexture(texture, {
-        style = Enum.CustomAuraButtonDispelTypeTextureStyle.PreserveAsset,
-        showWhenHarmful = true,
-        showWhenHelpful = true,
-        showWithoutDispelType = look.ShowWithoutDispelType == true,
-        customDispelColorMap = NRSKNUI.Colors.dispel,
-    })
-
-    local regions = { holder = holder, texture = texture }
-    ApplyDispelAlpha(regions, look)
-    return regions
 end
 
 ---Icon is a whole aura button in one slot, so the existing skin does all of it. Sizing comes from the
@@ -528,8 +439,6 @@ local StyleBuilders = {
     [Styles.Square] = BuildTexture,
     [Styles.Icon] = BuildIcon,
     [Styles.Duration] = BuildDuration,
-    [Styles.DispelOverlay] = function(slot, look, _, level) return BuildDispel(slot, look, nil, level) end,
-    [Styles.DispelBorder] = function(slot, look, _, level) return BuildDispel(slot, look, DISPEL_BORDER_ATLAS, level) end,
 }
 
 ---Draw an indicator on a preview dummy, through the same builder its real slot runs. The dummy stands

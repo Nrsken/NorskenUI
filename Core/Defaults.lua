@@ -5,18 +5,13 @@ local NRSKNUI = select(2, ...)
 ---@type NRSKNUI.DBDefaults
 local Defaults = {
     global = {
-        UseGlobalProfile = false,  -- Switch to global profile
-        GlobalProfile = "Default", -- Name of global profile to use
-        XPTable = {},              -- Table i can store xp per level data for math.
-        -- Theme settings
-        -- Mode: "preset", "class", or "custom"
-        -- All theme presets are defined in Libs/LibKaji-1.0/Theme.lua
+        UseGlobalProfile = false,
+        GlobalProfile = "Default",
+        XPTable = {},
         Theme = {
-            mode           = "preset", -- Theme mode: preset, class, or custom
-            selectedPreset = "NUI v2", -- Selected preset theme name
-            customColors   = {},       -- Custom color overrides (used in custom mode)
-
-            -- Font settings (shared across all modes)
+            mode           = "preset",
+            selectedPreset = "NUI v3",
+            customColors   = {},
             fontFace       = "Interface\\AddOns\\NorskenUI\\Media\\Fonts\\Expressway.TTF",
             fontSizeNormal = 12,
             fontSizeSmall  = 12,
@@ -24,31 +19,43 @@ local Defaults = {
             fontOutline    = "OUTLINE",
             fontShadow     = false,
         },
-
         -- Global UIParent scale.
         UIScale = {
             Enabled = true,
             Scale   = 0.71,
         },
-
-        -- GUI State (only frame position/size persists across logins)
         GUIState = {
-            GUIFrameLayoutVersion = 67, -- Bump this to force a one-time frame size reset for all users
             frame = {
-                point = nil,            -- Anchor point
-                relativePoint = nil,    -- Relative anchor point
-                xOffset = nil,          -- Frame X offset
-                yOffset = nil,          -- Frame Y offset
-                width = nil,            -- Frame width
-                height = nil,           -- Frame height
+                point = nil,
+                relativePoint = nil,
+                xOffset = nil,
+                yOffset = nil,
+                width = nil,
+                height = nil,
             },
-            sidebarExpanded = nil,      -- Expanded sidebar groups
+            sidebarExpanded = nil,
         },
         -- Aura Filters
         AuraFilters = {},
         AuraBlocklist = {},
         AuraSpellLists = {},
-        AuraIndicators = {},
+        AuraIndicators = {
+            ['builtin:defensives'] = { name = "Defensives", Trigger = { Type = 'Preset', Preset = 'preset:defensives' }, sortMethod = "ExpirationOnly", sortDirection = "Normal", Color = { 0.25, 0.78, 0.92, 1 }, },
+            ['builtin:renewingmist'] = { name = "|cFF00ff96Renewing Mist|r", Trigger = { Base = 'HELPFUL', Type = 'SpellIDs', OnlyMine = true, SpellIDs = { [119611] = true } }, sortMethod = "ExpirationOnly", sortDirection = "Normal", Color = { 0, 0.9, 0.5, 1 }, },
+            ['builtin:envelopingmist'] = { name = "|cFF00ff96Enveloping Mist|r", Trigger = { Base = 'HELPFUL', Type = 'SpellIDs', OnlyMine = true, SpellIDs = { [124682] = true } }, sortMethod = "ExpirationOnly", sortDirection = "Normal", Color = { 0.9, 0.78, 0, 1 }, },
+            ['builtin:rejuvenation'] = { name = "|cFFff7c0aRejuvenation|r", Trigger = { Base = 'HELPFUL', Type = 'SpellIDs', OnlyMine = true, SpellIDs = { [774] = true } }, sortMethod = "ExpirationOnly", sortDirection = "Normal", Color = { 0.9, 0, 0.85, 1 }, },
+            ['builtin:rejuvgermination'] = { name = "|cFFff7c0aRejuvenation (Germination)|r", Trigger = { Base = 'HELPFUL', Type = 'SpellIDs', OnlyMine = true, SpellIDs = { [155777] = true } }, sortMethod = "ExpirationOnly", sortDirection = "Normal", Color = { 0.9, 0, 0.85, 1 }, },
+            ['builtin:regrowth'] = { name = "|cFFff7c0aRegrowth|r", Trigger = { Base = 'HELPFUL', Type = 'SpellIDs', OnlyMine = true, SpellIDs = { [8936] = true } }, sortMethod = "ExpirationOnly", sortDirection = "Normal", Color = { 0.7, 0.9, 0, 1 }, },
+            ['builtin:lifebloom'] = { name = "|cFFff7c0aLifebloom|r", Trigger = { Base = 'HELPFUL', Type = 'SpellIDs', OnlyMine = true, SpellIDs = { [33763] = true } }, sortMethod = "ExpirationOnly", sortDirection = "Normal", Color = { 0.47, 0.9, 0, 1 }, },
+            ['builtin:wildGrowth'] = { name = "|cFFff7c0aWild Growth|r", Trigger = { Base = 'HELPFUL', Type = 'SpellIDs', OnlyMine = true, SpellIDs = { [48438] = true } }, sortMethod = "ExpirationOnly", sortDirection = "Normal", Color = { 0, 0.9, 0.6, 1 }, },
+            ['builtin:echo'] = { name = "|cFF33937fEcho|r", Trigger = { Base = 'HELPFUL', Type = 'SpellIDs', OnlyMine = true, SpellIDs = { [364343] = true } }, sortMethod = "ExpirationOnly", sortDirection = "Normal", Color = { 0.9, 0.47, 0, 1 }, },
+            ['builtin:reversion'] = { name = "|cFF33937fReversion|r", Trigger = { Base = 'HELPFUL', Type = 'SpellIDs', OnlyMine = true, SpellIDs = { [367364] = true, [366155] = true } }, sortMethod = "ExpirationOnly", sortDirection = "Normal", Color = { 0.9, 0.79, 0, 1 }, },
+            ['builtin:lifebind'] = { name = "|cFF33937fLifebind|r", Trigger = { Base = 'HELPFUL', Type = 'SpellIDs', OnlyMine = true, SpellIDs = { [373267] = true } }, sortMethod = "ExpirationOnly", sortDirection = "Normal", Color = { 0.9, 0, 0, 1 }, },
+            ['builtin:dreambreath'] = { name = "|cFF33937fDream Breath|r", Trigger = { Base = 'HELPFUL', Type = 'SpellIDs', OnlyMine = true, SpellIDs = { [355941] = true, [376788] = true } }, sortMethod = "ExpirationOnly", sortDirection = "Normal", Color = { 0, 0.9, 0.6, 1 }, },
+            ['builtin:riptide'] = { name = "|cFF0070ddRiptide|r", Trigger = { Base = 'HELPFUL', Type = 'SpellIDs', OnlyMine = true, SpellIDs = { [61295] = true } }, sortMethod = "ExpirationOnly", sortDirection = "Normal", Color = { 0, 0.51, 0.9, 1 }, },
+            ['builtin:eternalflame'] = { name = "|cFFf48cbaEternal Flame|r", Trigger = { Base = 'HELPFUL', Type = 'SpellIDs', OnlyMine = true, SpellIDs = { [156322] = true } }, sortMethod = "ExpirationOnly", sortDirection = "Normal", Color = { 0.9, 0.7, 0, 1 }, },
+        },
+        AuraIndicatorGroups = {},
     },
     profile = {
         -- Shared color palette, pushed into oUF.colors + NRSKNUI.Colors by NRSKNUI:LoadCustomColors().
@@ -753,10 +760,9 @@ local Defaults = {
             Enabled = true,
             Buffs = {
                 Enabled = true,
-                -- Aura container options, names match Blizzard's (see Core/AuraContainer.lua).
                 size = 40,
                 perRow = 10,
-                maxFrameCount = 40,
+                maxFrameCount = 38,
                 previewLimit = 40,
                 elementSpacing = 1,
                 lineSpacing = 1,
@@ -764,8 +770,7 @@ local Defaults = {
                 groupLineSpacing = 0,
                 horizontalGrowthDirection = "LEFT",
                 verticalGrowthDirection = "DOWN",
-                -- Enum key names, resolved against AuraContainerSortMethod/SortDirection at use time.
-                sortMethod = "ExpirationOnly",
+                sortMethod = "AuraInstanceIDOnly",
                 sortDirection = "Normal",
                 showApplicationCount = true,
                 showDurationText = true,
@@ -783,7 +788,6 @@ local Defaults = {
                     OffsetX = 1,
                     OffsetY = -1,
                 },
-                -- Per-string size and placement inside the aura button, face/outline/shadow are shared.
                 StackFont = {
                     FontSize = 12,
                     Position = {
@@ -804,17 +808,17 @@ local Defaults = {
                 Position = {
                     AnchorFrom = "TOPRIGHT",
                     AnchorTo = "TOPRIGHT",
-                    XOffset = -233,
-                    YOffset = 0,
+                    XOffset = -234,
+                    YOffset = -1,
                 },
             },
             Debuffs = {
                 Enabled = true,
                 -- Aura container options, names match Blizzard's (see Core/AuraContainer.lua).
-                size = 50,
-                perRow = 10,
-                maxFrameCount = 10,
-                previewLimit = 40,
+                size = 46,
+                perRow = 8,
+                maxFrameCount = 8,
+                previewLimit = 8,
                 elementSpacing = 1,
                 lineSpacing = 1,
                 horizontalGrowthDirection = "LEFT",
@@ -830,7 +834,7 @@ local Defaults = {
                 showBorder = true,
                 showBorderWithoutDispelType = true,
                 showDebuffDispelIcon = true,
-                dispelIconSize = 12,
+                dispelIconSize = 16,
                 tooltipHideInCombat = false,
                 UseGlobalFont = true,
                 FontFace = "Expressway",
@@ -862,190 +866,9 @@ local Defaults = {
                 Position = {
                     AnchorFrom = "TOPRIGHT",
                     AnchorTo = "TOPRIGHT",
-                    XOffset = -13,
-                    YOffset = -120,
+                    XOffset = -234,
+                    YOffset = -218,
                 },
-            },
-        },
-
-        AdvancedDebuffs = {
-            Enabled = true,
-            -- Name into db.global.AuraFilters, or a bare filter string. That table ships empty, so the
-            -- default is the plain HARMFUL the GUI's "None" entry also stores (see Core/AuraFilters.lua).
-            Filter = 'HARMFUL',
-            -- Aura container options, names match Blizzard's (see Core/AuraContainer.lua).
-            size = 50,
-            perRow = 10,
-            maxFrameCount = 10,
-            previewLimit = 40,
-            elementSpacing = 1,
-            lineSpacing = 1,
-            horizontalGrowthDirection = "LEFT",
-            verticalGrowthDirection = "UP",
-            -- Enum key names, resolved against AuraContainerSortMethod/SortDirection at use time so
-            -- this table stays free of Blizzard load-order dependencies (same reason filters use strings).
-            sortMethod = "ExpirationOnly",
-            sortDirection = "Normal",
-            showApplicationCount = true,
-            showDurationText = true,
-            drawSwipe = false,
-            drawEdge = false,
-            reverseSwipe = true,
-            showBorder = true,
-            showBorderWithoutDispelType = true,
-            showDebuffDispelIcon = true,
-            dispelIconSize = 12,
-            tooltipHideInCombat = false,
-            UseGlobalFont = true,
-            FontFace = "Expressway",
-            FontOutline = "OUTLINE",
-
-            -- Per-string size and placement inside the aura button. Face/outline/shadow above are
-            -- shared by both. AnchorFrom doubles as the relative point (see FontCore SetFontJustify).
-            StackFont = {
-                FontSize = 14,
-                Position = {
-                    AnchorFrom = "BOTTOMRIGHT",
-                    XOffset = 0,
-                    YOffset = 2
-                },
-            },
-            DurationFont = {
-                FontSize = 18,
-                Position = {
-                    AnchorFrom = "CENTER",
-                    XOffset = 0,
-                    YOffset = 0
-                },
-            },
-
-            FontShadow = {
-                Enabled = false,
-                Color = { 0, 0, 0, 1 },
-                OffsetX = 1,
-                OffsetY = -1,
-            },
-            anchorFrameType = "SELECTFRAME",
-            ParentFrame = "NUF_Player",
-            Position = {
-                AnchorFrom = "BOTTOMRIGHT",
-                AnchorTo = "TOPRIGHT",
-                XOffset = 0,
-                YOffset = 120
-            },
-        },
-
-        Defensives = {
-            Enabled = true,
-            Filter = 'HELPFUL',
-            -- Aura container options, names match Blizzard's (see Core/AuraContainer.lua).
-            size = 50,
-            perRow = 10,
-            maxFrameCount = 10,
-            previewLimit = 40,
-            elementSpacing = 1,
-            lineSpacing = 1,
-            horizontalGrowthDirection = "LEFT",
-            verticalGrowthDirection = "UP",
-            -- Enum key names, resolved against AuraContainerSortMethod/SortDirection at use time so
-            -- this table stays free of Blizzard load-order dependencies (same reason filters use strings).
-            sortMethod = "ExpirationOnly",
-            sortDirection = "Normal",
-            showApplicationCount = true,
-            showDurationText = true,
-            drawSwipe = false,
-            drawEdge = false,
-            reverseSwipe = true,
-            tooltipHideInCombat = false,
-            UseGlobalFont = true,
-            FontFace = "Expressway",
-            FontOutline = "OUTLINE",
-
-            -- Per-string size and placement inside the aura button. Face/outline/shadow above are
-            -- shared by both. AnchorFrom doubles as the relative point (see FontCore SetFontJustify).
-            StackFont = {
-                FontSize = 14,
-                Position = {
-                    AnchorFrom = "BOTTOMRIGHT",
-                    XOffset = 0,
-                    YOffset = 2
-                },
-            },
-            DurationFont = {
-                FontSize = 18,
-                Position = {
-                    AnchorFrom = "CENTER",
-                    XOffset = 0,
-                    YOffset = 0
-                },
-            },
-
-            FontShadow = {
-                Enabled = false,
-                Color = { 0, 0, 0, 1 },
-                OffsetX = 1,
-                OffsetY = -1,
-            },
-            anchorFrameType = "SELECTFRAME",
-            ParentFrame = "NUF_Player",
-            Position = {
-                AnchorFrom = "BOTTOMRIGHT",
-                AnchorTo = "TOPRIGHT",
-                XOffset = 0,
-                YOffset = 90
-            },
-        },
-        Speed = {
-            Enabled = true,
-            Filter = 'HELPFUL',
-            size = 50,
-            perRow = 6,
-            maxFrameCount = 6,
-            previewLimit = 40,
-            elementSpacing = 1,
-            lineSpacing = 1,
-            horizontalGrowthDirection = "LEFT",
-            verticalGrowthDirection = "UP",
-            sortMethod = "ExpirationOnly",
-            sortDirection = "Normal",
-            showApplicationCount = true,
-            showDurationText = true,
-            drawSwipe = false,
-            drawEdge = false,
-            reverseSwipe = true,
-            tooltipHideInCombat = false,
-            UseGlobalFont = true,
-            FontFace = "Expressway",
-            FontOutline = "OUTLINE",
-            StackFont = {
-                FontSize = 14,
-                Position = {
-                    AnchorFrom = "BOTTOMRIGHT",
-                    XOffset = 0,
-                    YOffset = 2
-                },
-            },
-            DurationFont = {
-                FontSize = 18,
-                Position = {
-                    AnchorFrom = "CENTER",
-                    XOffset = 0,
-                    YOffset = 0
-                },
-            },
-            FontShadow = {
-                Enabled = false,
-                Color = { 0, 0, 0, 1 },
-                OffsetX = 1,
-                OffsetY = -1,
-            },
-            anchorFrameType = "SELECTFRAME",
-            ParentFrame = "NUF_Player",
-            Position = {
-                AnchorFrom = "RIGHT",
-                AnchorTo = "LEFT",
-                XOffset = -1,
-                YOffset = 0
             },
         },
 
@@ -1183,7 +1006,7 @@ local Defaults = {
                 UseGlobalFont = true,
                 FontFace = "Expressway",
                 FontOutline = "OUTLINE",
-                FontSize = 14,
+                FontSize = 12,
                 TextColor = { 1, 1, 1, 1 },
                 FontShadow = {
                     Enabled = false,
@@ -1202,18 +1025,18 @@ local Defaults = {
                     YOffset = -1,
                 },
                 width = 477,
-                height = 26,
+                height = 30,
                 -- Texture settings
-                UseGlobalBar = true,
+                UseGlobalBar = false,
                 StatusBarTexture = "NorskenUI",
-                RestedTexture = "NorskenUI",
-                QuestTexture = "NorskenUI",
+                RestedTexture = "StripesThick",
+                QuestTexture = "StripesThick",
                 -- Statusbar coloring
                 ColorMode = "theme",
                 StatusColor = { 0.58, 0, 0.55, 1 },
                 -- Quest coloring
                 ColorModeQuest = "custom",
-                QuestColor = { 1, 0.82, 0.12, 1 },
+                QuestColor = { 1, 0.82, 0.12, 0.8 },
                 QuestShow = true,
                 -- Rested Coloring
                 ColorModeRested = "theme",
@@ -2586,6 +2409,181 @@ local Defaults = {
                 },
             },
         },
+        -- Optional headers the display list groups user displays under. Created on demand from the
+        -- display's right-click menu and dropped again once nothing points at them.
+        AuraDisplayGroups = {},
+
+        -- Standalone aura displays, all run by the one AuraDisplay module. Built-ins are seeded
+        -- here; a user's own land beside them under a 'user:' key and are otherwise identical.
+        AuraDisplays = {
+            ['builtin:advancedDebuffs'] = {
+                name = "Advanced Debuffs",
+                Trigger = { Type = 'Preset', Unit = 'player', Preset = 'preset:advancedDebuffs' },
+                Enabled = true,
+                size = 50,
+                perRow = 6,
+                maxFrameCount = 6,
+                previewLimit = 6,
+                elementSpacing = 1,
+                lineSpacing = 1,
+                horizontalGrowthDirection = "LEFT",
+                verticalGrowthDirection = "UP",
+                sortMethod = "ExpirationOnly",
+                sortDirection = "Normal",
+                showApplicationCount = true,
+                showDurationText = true,
+                drawSwipe = false,
+                drawEdge = false,
+                reverseSwipe = true,
+                showBorder = true,
+                showBorderWithoutDispelType = true,
+                showDebuffDispelIcon = true,
+                dispelIconSize = 12,
+                tooltipHideInCombat = false,
+                UseGlobalFont = true,
+                FontFace = "Expressway",
+                FontOutline = "OUTLINE",
+                StackFont = {
+                    FontSize = 14,
+                    Position = {
+                        AnchorFrom = "BOTTOMRIGHT",
+                        XOffset = 0,
+                        YOffset = 2
+                    },
+                },
+                DurationFont = {
+                    FontSize = 18,
+                    Position = {
+                        AnchorFrom = "CENTER",
+                        XOffset = 0,
+                        YOffset = 0
+                    },
+                },
+                FontShadow = {
+                    Enabled = false,
+                    Color = { 0, 0, 0, 1 },
+                    OffsetX = 1,
+                    OffsetY = -1,
+                },
+                anchorFrameType = "SELECTFRAME",
+                ParentFrame = "NUF_Player",
+                Position = {
+                    AnchorFrom = "BOTTOMRIGHT",
+                    AnchorTo = "TOPRIGHT",
+                    XOffset = 0,
+                    YOffset = 120
+                },
+            },
+            ['builtin:defensives'] = {
+                name = "Defensives",
+                Trigger = { Type = 'Preset', Unit = 'player', Preset = 'preset:defensives' },
+                Enabled = true,
+                size = 50,
+                perRow = 6,
+                maxFrameCount = 6,
+                previewLimit = 6,
+                elementSpacing = 1,
+                lineSpacing = 1,
+                horizontalGrowthDirection = "LEFT",
+                verticalGrowthDirection = "UP",
+                sortMethod = "ExpirationOnly",
+                sortDirection = "Normal",
+                showApplicationCount = true,
+                showDurationText = true,
+                drawSwipe = false,
+                drawEdge = false,
+                reverseSwipe = true,
+                tooltipHideInCombat = false,
+                UseGlobalFont = true,
+                FontFace = "Expressway",
+                FontOutline = "OUTLINE",
+                StackFont = {
+                    FontSize = 14,
+                    Position = {
+                        AnchorFrom = "BOTTOMRIGHT",
+                        XOffset = 0,
+                        YOffset = 2
+                    },
+                },
+                DurationFont = {
+                    FontSize = 18,
+                    Position = {
+                        AnchorFrom = "CENTER",
+                        XOffset = 0,
+                        YOffset = 0
+                    },
+                },
+                FontShadow = {
+                    Enabled = false,
+                    Color = { 0, 0, 0, 1 },
+                    OffsetX = 1,
+                    OffsetY = -1,
+                },
+                anchorFrameType = "SELECTFRAME",
+                ParentFrame = "NUF_Player",
+                Position = {
+                    AnchorFrom = "BOTTOMRIGHT",
+                    AnchorTo = "TOPRIGHT",
+                    XOffset = 0,
+                    YOffset = 40
+                },
+            },
+            ['builtin:speed'] = {
+                name = "Speed",
+                Trigger = { Type = 'Preset', Unit = 'player', Preset = 'preset:speed' },
+                Enabled = true,
+                size = 42,
+                perRow = 6,
+                maxFrameCount = 6,
+                previewLimit = 6,
+                elementSpacing = 1,
+                lineSpacing = 1,
+                horizontalGrowthDirection = "LEFT",
+                verticalGrowthDirection = "UP",
+                sortMethod = "ExpirationOnly",
+                sortDirection = "Normal",
+                showApplicationCount = true,
+                showDurationText = true,
+                drawSwipe = false,
+                drawEdge = false,
+                reverseSwipe = true,
+                tooltipHideInCombat = false,
+                UseGlobalFont = true,
+                FontFace = "Expressway",
+                FontOutline = "OUTLINE",
+                StackFont = {
+                    FontSize = 14,
+                    Position = {
+                        AnchorFrom = "BOTTOMRIGHT",
+                        XOffset = 0,
+                        YOffset = 2
+                    },
+                },
+                DurationFont = {
+                    FontSize = 18,
+                    Position = {
+                        AnchorFrom = "CENTER",
+                        XOffset = 0,
+                        YOffset = 0
+                    },
+                },
+                FontShadow = {
+                    Enabled = false,
+                    Color = { 0, 0, 0, 1 },
+                    OffsetX = 1,
+                    OffsetY = -1,
+                },
+                anchorFrameType = "SELECTFRAME",
+                ParentFrame = "NUF_Player",
+                Position = {
+                    AnchorFrom = "RIGHT",
+                    AnchorTo = "LEFT",
+                    XOffset = -1,
+                    YOffset = 0
+                },
+            },
+        },
+
         UnitFrames = {
             Enabled = true,
             General = {
@@ -2595,7 +2593,7 @@ local Defaults = {
                 UseGlobalSpark = true,
                 SparkTexture = "Solid",
                 SparkScale = 1,
-                SparkWidth = 2,
+                SparkWidth = 1,
                 SparkColor = { 1, 1, 1, 1 },
                 UseGlobalFont = true,
                 FontFace = "Expressway",
@@ -2616,7 +2614,7 @@ local Defaults = {
                     BackgroundWhenColorByClass = { 0, 0, 0, 0.8 },
                     Power = { 0.3, 0.5, 0.8, 1 },
                     Castbar = { 0.35, 0.55, 0.85, 1 },
-                    CastbarNonInterruptible = { 0.7, 0.6, 0.2, 1 },
+                    CastbarNonInterruptible = { 0.78, 0.25, 0.25, 1 },
                     CastbarFail = { 0.8, 0.25, 0.2, 1 },
                     CastbarBackground = { 0, 0, 0, 0.8 },
                 },
@@ -2628,21 +2626,34 @@ local Defaults = {
                     Enabled = true,
                     UseGlobalBar = false,
                     StatusBarTexture = "StripesThick",
-                    Color = { 0.4, 0, 0.8, 0.5 },
+                    Color = { 0.8, 0, 0, 0.5 },
                     Layer = 5,
                 },
                 DamageAbsorb = {
                     Enabled = true,
                     UseGlobalBar = false,
                     StatusBarTexture = "StripesThick",
-                    Color = { 0, 0.39, 0.88, 0.81 },
+                    Color = { 0, 0.58, 0.88, 0.81 },
                     Layer = 4,
                 },
                 Highlight = {
-                    Enabled = false,
+                    Enabled = true,
                     UseGlobalBar = false,
-                    StatusBarTexture = "NorskenUI",
+                    StatusBarTexture = "StripesThick",
                     Color = { 1, 1, 1, 0.1 },
+                },
+                Dispel = {
+                    Enabled = true,
+                    Source = "raid",    -- raid = your raid can dispel it, any = dispellable at all
+                    Style = "Gradient", -- Overlay (flat fill) | Gradient
+                    BorderSize = 2,     -- 0 = no border, and it draws with either style
+                    ShowIcon = false,   -- the game's own dispel type icon
+                    IconSize = 16,
+                    IconPosition = { AnchorFrom = "TOPRIGHT", AnchorTo = "TOPRIGHT", XOffset = -2, YOffset = -2 },
+                    Attach = "frame",
+                    Layer = 3,
+                    Alpha = 0.6,
+                    ShowWithoutDispelType = false,
                 },
             },
             TagSettings = {
@@ -2787,30 +2798,47 @@ local Defaults = {
                         },
                     },
                     AuraIndicators = {},
+                    Dispel = {
+                        UseGlobal = false,
+                        Enabled = false,
+                        Source = "raid",
+                        Style = "Gradient",
+                        BorderSize = 2,
+                        ShowIcon = false,
+                        IconSize = 16,
+                        IconPosition = { AnchorFrom = "TOPRIGHT", AnchorTo = "TOPRIGHT", XOffset = -2, YOffset = -2 },
+                        Attach = "frame",
+                        Layer = 3,
+                        Alpha = 0.6,
+                        ShowWithoutDispelType = false,
+                    },
                     Indicators = {
+                        ["**"] = {
+                            Texture = "Blizzard",
+                        },
                         Resting = {
                             Enabled = false,
-                            Size = 20,
+                            Size = 16,
                             Position = {
-                                AnchorFrom = "TOPLEFT",
+                                AnchorFrom = "BOTTOMLEFT",
                                 AnchorTo = "TOPLEFT",
-                                XOffset = -4,
-                                YOffset = 16
+                                XOffset = 0,
+                                YOffset = 2
                             },
                         },
                         Combat = {
                             Enabled = false,
                             Size = 20,
                             Position = {
-                                AnchorFrom = "TOPRIGHT",
-                                AnchorTo = "TOPRIGHT",
-                                XOffset = 4,
-                                YOffset = 16
+                                AnchorFrom = "CENTER",
+                                AnchorTo = "CENTER",
+                                XOffset = 0,
+                                YOffset = 0
                             },
                         },
                         ReadyCheck = {
                             Enabled = false,
-                            Size = 20,
+                            Size = 30,
                             Position = {
                                 AnchorFrom = "CENTER",
                                 AnchorTo = "CENTER",
@@ -2822,10 +2850,10 @@ local Defaults = {
                             Enabled = false,
                             Size = 24,
                             Position = {
-                                AnchorFrom = "BOTTOMLEFT",
-                                AnchorTo = "BOTTOMLEFT",
-                                XOffset = 2,
-                                YOffset = 2
+                                AnchorFrom = "CENTER",
+                                AnchorTo = "CENTER",
+                                XOffset = 0,
+                                YOffset = 0
                             },
                         },
                         Resurrect = {
@@ -2871,12 +2899,12 @@ local Defaults = {
                         Role = {
                             Enabled = false,
                             Size = 14,
-                            TankHealerOnly = false,
+                            TankHealerOnly = true,
                             Position = {
                                 AnchorFrom = "TOPLEFT",
                                 AnchorTo = "TOPLEFT",
                                 XOffset = 2,
-                                YOffset = -2
+                                YOffset = -16
                             },
                         },
                         Leader = {
@@ -2929,7 +2957,7 @@ local Defaults = {
                     Auras = {
                         Buffs = {
                             Enabled = true,
-                            Filter = "HELPFUL",
+                            Trigger = { Type = 'AuraFilter', Base = 'HELPFUL', branches = { {} } },
                             size = 32,
                             perRow = 4,
                             maxFrameCount = 8,
@@ -2975,7 +3003,7 @@ local Defaults = {
                         },
                         Debuffs = {
                             Enabled = true,
-                            Filter = "HARMFUL",
+                            Trigger = { Type = 'AuraFilter', Base = 'HARMFUL', branches = { {} } },
                             size = 32,
                             perRow = 2,
                             maxFrameCount = 6,
@@ -3024,6 +3052,10 @@ local Defaults = {
                 -- Per unit overrides, these will override the ["**"] settings above
                 player = {
                     Tags = {
+                        TagOne = {
+                            Tag = "[NUF:absorb:abbr]",
+                            Color = { 0, 1, 0.86 },
+                        },
                         TagThree = {
                             Enabled = false,
                         },
@@ -3031,6 +3063,9 @@ local Defaults = {
                     Indicators = {
                         Resting = {
                             Enabled = true,
+                        },
+                        Combat = {
+                            Enabled = false,
                         },
                         Summon = {
                             Enabled = true,
@@ -3059,6 +3094,10 @@ local Defaults = {
                     },
                 },
                 target = {
+                    Auras = {
+                        Buffs = { Trigger = { Type = 'Preset', Preset = 'preset:targetBuffs' } },
+                        Debuffs = { Trigger = { Type = 'Preset', Preset = 'preset:targetDebuffs' } },
+                    },
                     Indicators = {
                         Summon = {
                             Enabled = true,
@@ -3131,23 +3170,27 @@ local Defaults = {
                     },
                 },
                 focus = {
+                    Auras = {
+                        Debuffs = {
+                            Enabled = false,
+                        },
+                        Buffs = {
+                            Enabled = false,
+                        },
+                    },
+                    anchorFrameType = "SELECTFRAME",
+                    ParentFrame = "NUF_Target",
                     Position = {
-                        AnchorFrom = "LEFT",
-                        AnchorTo = "CENTER",
-                        XOffset = 460,
-                        YOffset = -130
+                        AnchorFrom = "BOTTOMLEFT",
+                        AnchorTo = "TOPRIGHT",
+                        XOffset = 40,
+                        YOffset = 32
                     },
                     Power = {
                         Enabled = false,
                     },
                     Castbar = {
-                        Enabled = true,
-                        Position = {
-                            AnchorFrom = "TOPLEFT",
-                            AnchorTo = "BOTTOMLEFT",
-                            XOffset = 0,
-                            YOffset = -1,
-                        },
+                        Enabled = false,
                     },
                 },
                 focustarget = {
@@ -3265,7 +3308,35 @@ local Defaults = {
                     },
                 },
                 boss = {
-                    Spacing = 30,
+                    Auras = {
+                        Buffs = {
+                            Trigger = { Type = 'Preset', Preset = 'preset:bossBuffs' },
+                            size = 42,
+                            maxFrameCount = 4,
+                            previewLimit = 4,
+                            perRow = 4,
+                            horizontalGrowthDirection = "RIGHT",
+                            Position = {
+                                AnchorTo = "BOTTOMRIGHT",
+                                XOffset = 1,
+                                YOffset = 0
+                            },
+                        },
+                        Debuffs = {
+                            Trigger = { Type = 'Preset', Preset = 'preset:bossDebuffs' },
+                            size = 42,
+                            maxFrameCount = 4,
+                            previewLimit = 4,
+                            perRow = 4,
+                            horizontalGrowthDirection = "LEFT",
+                            Position = {
+                                AnchorTo = "BOTTOMLEFT",
+                                XOffset = -1,
+                                YOffset = 0
+                            },
+                        },
+                    },
+                    Spacing = 26,
                     GrowthDirection = "UP",
                     anchorFrameType = "UIPARENT",
                     ParentFrame = "UIParent",
@@ -3273,7 +3344,7 @@ local Defaults = {
                         AnchorFrom = "LEFT",
                         AnchorTo = "CENTER",
                         XOffset = 500,
-                        YOffset = -20,
+                        YOffset = -50,
                     },
                     Power = {
                         Enabled = false,
@@ -3286,34 +3357,46 @@ local Defaults = {
                             YOffset = -1,
                         },
                     },
+                },
+                party = {
+                    Dispel = {
+                        UseGlobal = true,
+                    },
                     Auras = {
-                        Buffs = { Enabled = false },
-                        Debuffs = {
-                            Enabled = true,
-                            size = 22,
-                            perRow = 5,
-                            maxFrameCount = 5,
-                            previewLimit = 40,
-                            horizontalGrowthDirection = "RIGHT",
-                            verticalGrowthDirection = "UP",
+                        Buffs = {
+                            Trigger = { Type = 'Preset', Preset = 'preset:partyBuffs' },
+                            size = 26,
+                            maxFrameCount = 2,
+                            previewLimit = 2,
+                            perRow = 2,
                             Position = {
-                                AnchorTo = "TOPLEFT",
+                                AnchorTo = "BOTTOMRIGHT",
                                 XOffset = 0,
-                                YOffset = 1
+                                YOffset = 0
+                            },
+                        },
+                        Debuffs = {
+                            Trigger = { Type = 'Preset', Preset = 'preset:partyDebuffs' },
+                            size = 30,
+                            maxFrameCount = 2,
+                            previewLimit = 2,
+                            perRow = 2,
+                            Position = {
+                                AnchorTo = "BOTTOMLEFT",
+                                XOffset = 0,
+                                YOffset = 0
                             },
                         },
                     },
-                },
-                party = {
-                    Width = 180,
+                    Width = 150,
                     Height = 80,
                     anchorFrameType = "UIPARENT",
                     ParentFrame = "UIParent",
                     Position = {
                         AnchorFrom = "TOPLEFT",
                         AnchorTo = "TOPLEFT",
-                        XOffset = 1,
-                        YOffset = -1
+                        XOffset = 558,
+                        YOffset = -484
                     },
                     Group = {
                         GrowthDirection = "DOWN",
@@ -3321,14 +3404,14 @@ local Defaults = {
                         VerticalSpacing = 1,
                         ShowPlayer = true,
                         StartFromCenter = false,
-                        SortBy = "INDEX",
+                        SortBy = "ROLE",
                         SortMethod = "INDEX",
                         SortDirection = "ASC",
                         RoleOrder = { "TANK", "HEALER", "DAMAGER" },
                         Visibility = "[@raid6,exists][nogroup] hide;show",
                     },
                     Power = {
-                        Height = 6,
+                        Enabled = false,
                     },
                     Castbar = {
                         Enabled = false, -- never constructed on group units
@@ -3336,44 +3419,48 @@ local Defaults = {
                     Tags = {
                         TagOne = {
                             Position = {
-                                AnchorFrom = "TOP",
-                                AnchorTo = "TOP",
-                                XOffset = 0,
-                                YOffset = -4
+                                AnchorFrom = "TOPLEFT",
+                                AnchorTo = "TOPLEFT",
+                                XOffset = 2,
+                                YOffset = -2
                             },
                         },
                         TagTwo = {
+                            Tag = "[NUF:healmana:smartcolor]",
                             Position = {
-                                AnchorFrom = "BOTTOM",
-                                AnchorTo = "BOTTOM",
-                                XOffset = 0,
-                                YOffset = 8
+                                AnchorFrom = "LEFT",
+                                AnchorTo = "LEFT",
+                                XOffset = 18,
+                                YOffset = 17
                             },
                         },
                         TagThree = {
-                            Enabled = false,
+                            Enabled = true,
+                            Tag = "[NUF:status]",
+                            Position = {
+                                AnchorFrom = "TOPLEFT",
+                                AnchorTo = "TOPLEFT",
+                                XOffset = 2,
+                                YOffset = -30
+                            },
                         },
                     },
                     Indicators = {
                         ReadyCheck = { Enabled = true },
-                        Summon = { Enabled = true },
+                        Summon = {
+                            Enabled = true,
+                            Position = {
+                                AnchorFrom = "TOPRIGHT",
+                                AnchorTo = "TOPRIGHT",
+                                XOffset = -2,
+                                YOffset = -2
+                            },
+                        },
                         Resurrect = { Enabled = true },
                         Phase = { Enabled = true },
                         Role = { Enabled = true },
                         Leader = { Enabled = true },
-                        RaidIcon = { Size = 16 },
-                    },
-                    Auras = {
-                        Buffs = {
-                            size = 22,
-                            perRow = 4,
-                            maxFrameCount = 4,
-                        },
-                        Debuffs = {
-                            size = 24,
-                            perRow = 3,
-                            maxFrameCount = 3,
-                        },
+                        RaidIcon = { Size = 20 },
                     },
                 },
             },

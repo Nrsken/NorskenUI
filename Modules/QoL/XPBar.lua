@@ -53,7 +53,6 @@ function XPBar:OnInitialize()
     self.QuestXPComplete = 0
     self.QuestXPIncomplete = 0
     self.QuestXPTotal = 0
-    self:SetEnabledState(false)
 end
 
 function XPBar:CreateBar()
@@ -492,8 +491,6 @@ function XPBar:QUEST_LOG_UPDATE()
 end
 
 function XPBar:OnEnable()
-    if not self.db.Enabled then return end
-
     if self.db.HideBlizzardBar and MainStatusTrackingBarContainer then
         MainStatusTrackingBarContainer:NUIBanish()
         MainStatusTrackingBarContainer:UnregisterAllEvents()

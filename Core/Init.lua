@@ -34,6 +34,15 @@ local GetAddOnMetadata = C_AddOns and C_AddOns.GetAddOnMetadata
 local AceAddon = _G.LibStub('AceAddon-3.0')
 AceAddon:NewAddon(NRSKNUI, addonName, 'AceEvent-3.0', 'AceTimer-3.0', 'AceHook-3.0')
 _G.NorskenUI = NRSKNUI
+_G.NorskenUIAPI = _G.NorskenUIAPI or {} -- Global API table for things we want to expose to other addons, like WagoUI Packs and profile installers.
+
+NRSKNUI:SetDefaultModuleState(false)
+local ModulePrototype = {}
+function ModulePrototype:OnInitialize()
+    if self.UpdateDB then self:UpdateDB() end
+end
+
+NRSKNUI:SetDefaultModulePrototype(ModulePrototype)
 
 -- Setup oUF library
 NRSKNUI.oUF = _G.NorskenUF
@@ -45,13 +54,11 @@ NRSKNUI.Locale = GetLocale()
 NRSKNUI.AddOnName = GetAddOnMetadata(addonName, 'Title')
 NRSKNUI.Version = GetAddOnMetadata(addonName, 'Version')
 NRSKNUI.Author = GetAddOnMetadata(addonName, 'Author')
-_, NRSKNUI.MyClass, NRSKNUI.MyClassID = UnitClass('player')
+NRSKNUI.MyClassLocale, NRSKNUI.MyClass, NRSKNUI.MyClassID = UnitClass('player')
 NRSKNUI.MyName, NRSKNUI.MyRealm = UnitFullName('player')
--- Texture and color constants
 NRSKNUI.ClearTexture = 0
 NRSKNUI.WhiteTexture = 'Interface\\Buttons\\WHITE8X8'
 NRSKNUI.GlobalZoom = 0.3
--- Supported separator types.
 NRSKNUI.Separators = {
     ['||'] = '|',
     ['-'] = '-',
@@ -62,7 +69,6 @@ NRSKNUI.Separators = {
     ['>>'] = '>>',
     ['»'] = '»',
 }
--- Time display formats.
 NRSKNUI.TimeFormats = {
     ['MM:SS']  = '01:30',
     ['M:SS']   = '1:30',
@@ -157,9 +163,7 @@ NRSKNUI.PetTexts = NRSKNUI:NewModule('PetTexts', 'AceEvent-3.0')
 
 -- Player Auras
 NRSKNUI.PlayerAuras = NRSKNUI:NewModule('PlayerAuras', 'AceEvent-3.0')
-NRSKNUI.AdvancedDebuffs = NRSKNUI:NewModule('AdvancedDebuffs', 'AceEvent-3.0')
-NRSKNUI.Defensives = NRSKNUI:NewModule('Defensives', 'AceEvent-3.0')
-NRSKNUI.Speed = NRSKNUI:NewModule('Speed', 'AceEvent-3.0')
+NRSKNUI.AuraDisplay = NRSKNUI:NewModule('AuraDisplay', 'AceEvent-3.0')
 
 -- Combat Modules
 NRSKNUI.CombatTimer = NRSKNUI:NewModule('CombatTimer', 'AceEvent-3.0')

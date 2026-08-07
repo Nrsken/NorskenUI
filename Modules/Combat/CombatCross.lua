@@ -23,11 +23,6 @@ function CombatCross:UpdateDB()
     self.db = NRSKNUI.db.profile.CombatCross
 end
 
-function CombatCross:OnInitialize()
-    self:UpdateDB()
-    self:SetEnabledState(false)
-end
-
 -- Line creation helper.
 local function CreateLines(pointFrom, frame, width, height)
     local lineFrame = CreateFrame('Frame', nil, frame)
@@ -321,8 +316,6 @@ function CombatCross:PLAYER_REGEN_ENABLED()
 end
 
 function CombatCross:OnEnable()
-    if not self.db.Enabled then return end
-
     self:CreateFrame()
 
     -- Grab preview state

@@ -90,11 +90,6 @@ function Skinning:UpdateDB()
     self.db = NRSKNUI.db.profile.Skinning.BlizzardElements
 end
 
-function Skinning:OnInitialize()
-    self:UpdateDB()
-    self:SetEnabledState(false)
-end
-
 ---@param entry SkinEntry
 function Skinning:RunSkin(entry)
     if entry.ran then return end
@@ -106,7 +101,6 @@ end
 function Skinning:OnEnable()
     if NRSKNUI:ShouldNotLoadModule() then return end
     self:UpdateDB()
-    if not self.db.Enabled then return end
 
     for _, entry in ipairs(self.skins) do
         if not entry.addonName or IsAddOnLoaded(entry.addonName) then

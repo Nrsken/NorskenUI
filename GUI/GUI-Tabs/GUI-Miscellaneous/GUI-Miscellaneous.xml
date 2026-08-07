@@ -4,6 +4,4 @@
     <Script file="GUI-HomePage.lua" />
     <Script file="GUI-Profiles.lua" />
     <Script file="GUI-ThemePage.lua" />
-    <Script file="GUI-AuraFilters.lua" />
-    <Script file="GUI-SpellIDFilters.lua" />
 </Ui>

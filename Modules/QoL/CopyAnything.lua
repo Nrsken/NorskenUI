@@ -27,11 +27,6 @@ function CopyAnything:UpdateDB()
     self.db = NRSKNUI.db.profile.Miscellaneous.CopyAnything
 end
 
-function CopyAnything:OnInitialize()
-    self:UpdateDB()
-    self:SetEnabledState(false)
-end
-
 local function CheckModifiers(modifier)
     if not modifier then return true end
 
@@ -219,7 +214,6 @@ function CopyAnything:ApplySettings()
 end
 
 function CopyAnything:OnEnable()
-    if not self.db.Enabled then return end
     NRSKNUI:RunWhenSafe(function()
         self:CreateKeyboardFrame()
         self:RegisterEvent('PLAYER_REGEN_DISABLED')

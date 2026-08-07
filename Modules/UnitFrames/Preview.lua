@@ -1,7 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 ---@class UnitFramesModule
----@field Preview UnitFramesPreview
 local UF = NRSKNUI:GetModule('UnitFrames')
 local Theme = NRSKNUI.Theme
 
@@ -68,18 +67,9 @@ local function ApplyFrame(entry)
     frame.nuiPreviewUnit = entry.unit
     frame.unit = entry.unit
     frame:EnableMouse(false)
-
-    -- asState keeps the watch from hiding the frame again the moment its real unit is missing.
     UnregisterUnitWatch(frame)
     RegisterUnitWatch(frame, true)
-
-    -- Show first: oUF repaints every element on OnShow, which would undo the preview overrides that
-    -- ConfigureFrame applies at the end of its pass.
     frame:Show()
-
-    -- Rebuild against the preview unit: the elements that bind a unit at configure time rather
-    -- than on every update (range, aura containers) only follow through here. ConfigureFrame ends
-    -- in a full element pass, so nothing else has to repaint the frame.
     UF:ConfigureFrame(frame, frame.nrsknUnit)
 
     ShowLabel(frame, entry.label)
@@ -257,8 +247,8 @@ local function RestoreChild(frame)
     UF:ConfigureFrame(frame, frame.nuiConfig)
 end
 
----@param header Frame
----@param fn fun(child: Frame, index: number)
+---@param header oUF.Header
+---@param fn fun(child: oUF.UnitFrame, index: number)
 local function ForEachChild(header, fn)
     local index = 1
     local child = header:GetAttribute('child' .. index)
@@ -271,7 +261,7 @@ end
 
 ---Drive a forced header back to the forced state. Also the OnAttributeChanged hook, since the header
 ---resets startingIndex whenever it re-runs its own layout.
----@param header Frame
+---@param header oUF.Header
 local function ForceHeader(header)
     if not header.nuiForced or not header:IsShown() then return end
 
@@ -342,9 +332,7 @@ local function RestoreGroup(key, state)
     end)
 end
 
----Stop honouring the forced state while a caller rewrites header attributes. Each write re-runs
----SecureGroupHeader_Update, which clears the points of every child it is not currently displaying,
----and re-forcing in that window shows them unanchored.
+---Stop honouring the forced state while a caller rewrites header attributes.
 ---@param key string config key
 ---@return boolean suspended whether ResumeGroup has to be called
 function Preview:SuspendGroup(key)
@@ -398,14 +386,9 @@ end
 
 -- Aura previews --
 
--- Kept per config key rather than per group: the GUI only ever configures one unit's auras at a time
--- and dummy buttons on every frame at once is what makes a preview expensive. Config keys rather than
--- normalized tokens, so the raid tiers stay apart, see UF.GroupConfigs.
 local auraUnits = {}
 
 ---Repaint the aura element on every frame a config renders, so 'boss' covers all eight of them.
----Goes through ForEachFrame: header children are not in UF.frames, and a walk that misses them
----leaves their dummies up with no way to take them back down.
 ---@param key string config key
 local function RefreshAuraPreviews(key)
     UF:ForEachFrame(function(frame, unit)

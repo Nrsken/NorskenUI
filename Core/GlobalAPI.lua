@@ -19,6 +19,9 @@ local EditModeManagerFrame = EditModeManagerFrame
 local IsAddonLoaded = C_AddOns and C_AddOns.IsAddOnLoaded
 local GetSpellCooldown = C_Spell and C_Spell.GetSpellCooldown
 
+---Simple no-op function, useful for replacing a function with a do-nothing placeholder.
+function NRSKNUI:NOP() end
+
 ---Check if ElvUI is loaded and ElvUI skinning is enabled, so a module should skip its own load.
 ---@return boolean
 function NRSKNUI:ShouldNotLoadModule()

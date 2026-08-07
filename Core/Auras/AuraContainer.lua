@@ -319,7 +319,7 @@ end
 ---@param candidateFilters table?
 ---@return boolean?
 local function ResolveIdentityDependence(filterString, candidateFilters)
-    if not NRSKNUI.AuraFilters:HasSecretSpellID(candidateFilters) then return nil end
+    if not NRSKNUI.AuraFilters:HasSpellIDCandidates(candidateFilters) then return nil end
 
     for component in filterString:gmatch('[^| ]+') do
         if component == AuraFilterTokens.Helpful then return true end
@@ -333,9 +333,13 @@ end
 ---wrong thing? Both gate axes are answered here, see :UpdateUnitGate for what they mean.
 ---@param container table
 ---@param identity boolean? this display's ResolveIdentityDependence verdict
+---@param assistOnly boolean? the display belongs on units the player can help, whatever it matches
 ---@return boolean
-local function IsGated(container, identity)
+local function IsGated(container, identity, assistOnly)
     if container.unitNotVisible then return true end
+    -- Not about trusting the filter: this display has no business on a unit the player cannot help,
+    -- which is what a dispel highlight on an enemy target would be.
+    if assistOnly and container.unitCanAssist == false then return true end
     if identity == nil or container.unitCanAssist == nil then return false end
 
     return identity ~= container.unitCanAssist
@@ -381,27 +385,20 @@ function ContainerMixin:AddGroup(filter, options)
     return key, slot
 end
 
----Compiled branches for a name, always at least one so a binding never ends up with no groups.
----@param filterName string?
+---Compiled branches for a trigger, always at least one so a binding never ends up with no groups.
+---@param trigger table?
 ---@return table[] branches
-local function ResolveBranches(filterName)
-    local branches = NRSKNUI:GetAuraFilter(filterName)
+local function ResolveBranches(trigger)
+    local branches = NRSKNUI:GetTriggerBranches(trigger)
     if branches and branches[1] then return branches end
     return { { filterString = AuraFilterTokens.Harmful } }
 end
 
----How many groups :AddFilteredGroup will build for a named filter, one per branch.
----@param filterName string? key into db.global.AuraFilters (may be nil)
----@return number
-function NRSKNUI:GetAuraFilterBranchCount(filterName)
-    return #ResolveBranches(filterName)
-end
-
----Point a binding's groups at its filter's current branches.
+---Point a binding's groups at its trigger's current branches.
 ---@param container table
 ---@param binding table
 local function SyncBinding(container, binding)
-    local branches = ResolveBranches(binding.name)
+    local branches = ResolveBranches(binding.trigger)
     container.parkedSlots = container.parkedSlots or {}
     container.groupIdentity = container.groupIdentity or {}
 
@@ -431,12 +428,12 @@ local function SyncBinding(container, binding)
     end
 end
 
----Register a named filter from db.global.AuraFilters, can be called multiple times.
----@param filterName string? key into db.global.AuraFilters (may be nil)
+---Register an inline trigger, can be called multiple times.
+---@param trigger table? an inline trigger (see Core/Auras/AuraTriggers.lua)
 ---@param options table? optional per-group options (candidateFilters is filled in from each branch)
 ---@return string[]
-function ContainerMixin:AddFilteredGroup(filterName, options)
-    local binding = { name = filterName, keys = {}, slots = {}, options = options }
+function ContainerMixin:AddFilteredGroup(trigger, options)
+    local binding = { trigger = trigger, keys = {}, slots = {}, options = options }
 
     self.filterBindings = self.filterBindings or {}
     self.filterBindings[#self.filterBindings + 1] = binding
@@ -485,14 +482,14 @@ function ContainerMixin:ReapplyFilters()
     end)
 end
 
----Point every binding registered through :AddFilteredGroup at a different named filter and reapply.
----Used when the GUI switches which filter a module runs.
----@param filterName string? key into db.global.AuraFilters (may be nil)
-function ContainerMixin:RebindFilteredGroups(filterName)
+---Point every binding registered through :AddFilteredGroup at a different trigger and reapply.
+---Used when the GUI edits or replaces the trigger a display runs.
+---@param trigger table? an inline trigger (see Core/Auras/AuraTriggers.lua)
+function ContainerMixin:RebindFilteredGroups(trigger)
     if not self.filterBindings then return end
 
     for _, binding in ipairs(self.filterBindings) do
-        binding.name = filterName
+        binding.trigger = trigger
     end
 
     self:ReapplyFilters()
@@ -500,11 +497,15 @@ end
 
 ---Register a single-aura slot (this can be called multiple times).
 ---@param filter string aura filter string
----@param options table? optional per-slot options
+---@param options table? optional per-slot options (.assistOnly keeps the slot to units the player can help)
 ---@return table? slot
 ---@return string key
 function ContainerMixin:AddSlot(filter, options)
     options = options or {}
+
+    -- Ours rather than the client's, so it comes back out before the table crosses over.
+    local assistOnly = options.assistOnly
+    options.assistOnly = nil
 
     self:EnsureProcessAuraPolicy(options.candidateFilters)
     ResolveDisplayOptions(self, options)
@@ -515,14 +516,16 @@ function ContainerMixin:AddSlot(filter, options)
     self.slotKeys = self.slotKeys or {}
     self.slotFilters = self.slotFilters or {}
     self.slotIdentity = self.slotIdentity or {}
+    self.slotAssistOnly = self.slotAssistOnly or {}
     self.slotKeys[self.slotIndex] = key
     self.slotFilters[self.slotIndex] = filter
     self.slotIdentity[self.slotIndex] = ResolveIdentityDependence(filter, options.candidateFilters)
+    self.slotAssistOnly[self.slotIndex] = assistOnly or nil
 
     local slot = self:AddAuraSlot(key, filter, options)
 
     -- A slot added while its gate is shut would otherwise come up live.
-    if IsGated(self, self.slotIdentity[self.slotIndex]) then
+    if IsGated(self, self.slotIdentity[self.slotIndex], assistOnly) then
         self:SetAuraSlotFilterString(key, NEVER_MATCH_FILTER)
     end
 
@@ -589,7 +592,7 @@ function ContainerMixin:UpdateUnitGate()
     end
 
     for index, key in ipairs(self.slotKeys or {}) do
-        local gated = IsGated(self, self.slotIdentity[index])
+        local gated = IsGated(self, self.slotIdentity[index], self.slotAssistOnly[index])
         self:SetAuraSlotFilterString(key, gated and NEVER_MATCH_FILTER or self.slotFilters[index])
     end
 end

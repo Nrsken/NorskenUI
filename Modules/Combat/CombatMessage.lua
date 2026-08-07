@@ -37,11 +37,6 @@ function CombatMessage:UpdateDB()
     self.db = NRSKNUI.db.profile.CombatMessage
 end
 
-function CombatMessage:OnInitialize()
-    self:UpdateDB()
-    self:SetEnabledState(false)
-end
-
 -- Replace {rtN} raidmarkers with their texture escape.
 local function ProcessRaidTargetIcons(text)
     local ICON_LIST = _G.ICON_LIST
@@ -278,8 +273,6 @@ function CombatMessage:PLAYER_REGEN_ENABLED()
 end
 
 function CombatMessage:OnEnable()
-    if not self.db.Enabled then return end
-
     self:CreateGroup()
 
     self.isPreview = (NRSKNUI.PreviewManager and NRSKNUI.PreviewManager:IsPreviewActive()) or false

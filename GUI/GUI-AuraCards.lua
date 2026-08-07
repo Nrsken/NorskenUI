@@ -38,18 +38,6 @@ AuraCards.GrowthY = {
     { value = 'DOWN', text = L['Down'] },
 }
 
-AuraCards.TextAnchors = {
-    { value = 'TOPLEFT',     text = L['Top Left'] },
-    { value = 'TOP',         text = L['Top'] },
-    { value = 'TOPRIGHT',    text = L['Top Right'] },
-    { value = 'LEFT',        text = L['Left'] },
-    { value = 'CENTER',      text = L['Center'] },
-    { value = 'RIGHT',       text = L['Right'] },
-    { value = 'BOTTOMLEFT',  text = L['Bottom Left'] },
-    { value = 'BOTTOM',      text = L['Bottom'] },
-    { value = 'BOTTOMRIGHT', text = L['Bottom Right'] },
-}
-
 -- The stack and duration strings take the same three controls, so TextPosition builds both from this.
 AuraCards.TextSlots = {
     { key = 'StackFont',    anchor = L['Stack Anchor'],    x = L['Stack X'],    y = L['Stack Y'] },
@@ -395,7 +383,7 @@ function AuraCards:TextPosition(page, db, ctx)
 
         row:Dropdown(slot.anchor, {
             width = 0.4,
-            options = self.TextAnchors,
+            options = NRSKNUI.AnchorOptions,
             value = position.AnchorFrom,
             callback = function(key)
                 position.AnchorFrom = key

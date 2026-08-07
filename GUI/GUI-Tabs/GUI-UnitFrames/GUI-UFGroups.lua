@@ -9,12 +9,7 @@ local rowHL = Theme.rowHeightLast
 
 local function ApplySettings(unit) UF:ApplySettings(unit) end
 
-local GrowthOptions = {
-    { value = 'DOWN',  text = L['Down'] },
-    { value = 'UP',    text = L['Up'] },
-    { value = 'LEFT',  text = L['Left'] },
-    { value = 'RIGHT', text = L['Right'] },
-}
+local GrowthOptions = NRSKNUI.GrowthOptions
 
 local SortByOptions = {
     { value = 'INDEX', text = L['Index'] },

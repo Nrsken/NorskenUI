@@ -38,7 +38,6 @@ end
 function PlayerAuras:OnInitialize()
     self:UpdateDB()
     self.hosts = {}
-    self:SetEnabledState(false)
 end
 
 ---Layout anchor corner derived from growth direction.
@@ -215,8 +214,6 @@ function PlayerAuras:ApplySettings()
 end
 
 function PlayerAuras:OnEnable()
-    if not self.db.Enabled then return end
-
     self:ApplySettings()
 
     NRSKNUI:RunWhenSafe(function()

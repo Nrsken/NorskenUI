@@ -188,7 +188,7 @@ end
 ---Fill in one display's fake auras, reusing the entry tables so a rebuild allocates nothing.
 ---@param state table
 local function BuildEntries(state)
-    local spells, dispels, harmful = ResolveDisplay(NRSKNUI:GetAuraFilter(state.filter))
+    local spells, dispels, harmful = ResolveDisplay(NRSKNUI:GetTriggerBranches(state.filter))
     local classSpells = ClassSpells(spells, harmful)
 
     local lead = state.lead

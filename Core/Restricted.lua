@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class Restricted
+---@class RestrictedModule
 local Restricted = NRSKNUI:GetModule('Restricted')
 
 local scrub = scrub
@@ -30,6 +30,7 @@ local RestrictionInactive = RestrictionState and RestrictionState.Inactive
 
 function Restricted:OnInitialize()
     self.debug = false
+    self:SetEnabledState(true)
 end
 
 -- Reverse map of the restriction type enum.

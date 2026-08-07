@@ -2,7 +2,34 @@
 
 -- Concrete module classes. Methods are defined in each module's own file.
 
+-- UnitDB.lua fills these by assignment. wowlua_ls only picks up an inferred field cross-file when the
+-- value is a number, string or string-keyed literal, and any file whose own ---@class block carries a
+-- ---@field stops seeing inferred fields entirely, so the shared data is declared here instead.
+
 ---@class UnitFramesModule : NRSKNUI.ModuleBase, AceEvent-3.0, AceTimer-3.0, AceHook-3.0
+---@field SoloUnits string[]
+---@field BossUnits string[]
+---@field GroupUnits string[]
+---@field Units string[]
+---@field MAX_BOSS_FRAMES number
+---@field GROUP_SIZE number
+---@field GroupConfigs table<string, boolean>
+---@field UnitLabels table<string, string>
+---@field NoPower table<string, boolean>
+---@field BaseLevels { Background: number, Bar: number }
+---@field Layers { Min: number, Max: number, Highlight: number, Border: number }
+---@field ReservedLayers table<number, boolean>
+---@field TopLevels { Tags: number, Auras: number, RaidMark: number, Status: number }
+---@field frames table<string, oUF.UnitFrame>
+---@field groups table<string, UnitFramesGroup>
+---@field styleName string
+---@field Elements UnitFramesElements
+---@field IndicatorDefs UnitFramesIndicatorDef[]
+---@field Preview UnitFramesPreview
+---@field PreviewTick number Advances while a preview runs, read by tags that rotate a placeholder
+---@field GUIAttachOptions table[] the shared Attach To dropdown options, set in GUI-UFAuraIndicators.lua
+---@field GUIGroupSearch string[] search terms for the group section, set in GUI-UFGroups.lua
+
 ---@class RestrictedModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class AuctionHouseFilterModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class AutomationModule : NRSKNUI.ModuleBase, AceEvent-3.0
@@ -31,6 +58,39 @@
 ---@class FocusCastbarModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class SpeedModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class GearUtilityModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class AuraDisplayModule : NRSKNUI.ModuleBase, AceEvent-3.0
+
+-- The handles Core/Init.lua hangs off the addon table. Declared here so the field and the accessor
+-- that fills it agree on a type: without these the field takes whatever the assignment inferred.
+
+---@class NRSKNUI
+---@field Restricted RestrictedModule
+---@field UnitFrames UnitFramesModule
+---@field AuctionHouseFilter AuctionHouseFilterModule
+---@field Automation AutomationModule
+---@field Tweaks TweaksModule
+---@field XPBar XPBarModule
+---@field CopyAnything CopyAnythingModule
+---@field Recuperate RecuperateModule
+---@field MiscVars MiscVarsModule
+---@field Durability DurabilityModule
+---@field GearUtility GearUtilityModule
+---@field BurningRush BurningRushModule
+---@field Tooltips TooltipsModule
+---@field Minimap MinimapModule
+---@field Skinning SkinningModule
+---@field Gateway GatewayModule
+---@field PetTexts PetTextsModule
+---@field PlayerAuras PlayerAurasModule
+---@field AuraDisplay AuraDisplayModule
+---@field CombatTimer CombatTimerModule
+---@field PotionReady PotionReadyModule
+---@field RangeChecker RangeCheckerModule
+---@field CombatCross CombatCrossModule
+---@field CombatMessage CombatMessageModule
+---@field CombatRes CombatResModule
+---@field CombatCursor CombatCursorModule
+---@field FocusCastbar FocusCastbarModule
 
 -- Typed accessors. Overloads dispatch on the literal module name.
 
@@ -38,70 +98,66 @@
 local NRSKNUI
 
 --- Fetch a registered module by name.
----@overload fun(self: NRSKNUI, name: "CombatTimer", silent?: boolean): CombatTimer
----@overload fun(self: NRSKNUI, name: "Gateway", silent?: boolean): Gateway
----@overload fun(self: NRSKNUI, name: "PotionReady", silent?: boolean): PotionReady
----@overload fun(self: NRSKNUI, name: "RangeChecker", silent?: boolean): RangeChecker
----@overload fun(self: NRSKNUI, name: "Skinning", silent?: boolean): Skinning
----@overload fun(self: NRSKNUI, name: "Tooltips", silent?: boolean): Tooltips
----@overload fun(self: NRSKNUI, name: "Minimap", silent?: boolean): Minimap
----@overload fun(self: NRSKNUI, name: "BurningRush", silent?: boolean): BurningRush
----@overload fun(self: NRSKNUI, name: "AuctionHouseFilter", silent?: boolean): AuctionHouseFilter
----@overload fun(self: NRSKNUI, name: "Automation", silent?: boolean): Automation
----@overload fun(self: NRSKNUI, name: "Tweaks", silent?: boolean): Tweaks
----@overload fun(self: NRSKNUI, name: "XPBar", silent?: boolean): XPBar
----@overload fun(self: NRSKNUI, name: "CopyAnything", silent?: boolean): CopyAnything
----@overload fun(self: NRSKNUI, name: "Recuperate", silent?: boolean): Recuperate
----@overload fun(self: NRSKNUI, name: "MiscVars", silent?: boolean): MiscVars
----@overload fun(self: NRSKNUI, name: "Durability", silent?: boolean): Durability
----@overload fun(self: NRSKNUI, name: "CombatCross", silent?: boolean): CombatCross
----@overload fun(self: NRSKNUI, name: "CombatMessage", silent?: boolean): CombatMessage
----@overload fun(self: NRSKNUI, name: "CombatRes", silent?: boolean): CombatRes
----@overload fun(self: NRSKNUI, name: "Restricted", silent?: boolean): Restricted
----@overload fun(self: NRSKNUI, name: "CursorCircle", silent?: boolean): CursorCircle
----@overload fun(self: NRSKNUI, name: "UnitFrames", silent?: boolean): UnitFrames
----@overload fun(self: NRSKNUI, name: "PlayerAuras", silent?: boolean): PlayerAuras
----@overload fun(self: NRSKNUI, name: "AdvancedDebuffs", silent?: boolean): AdvancedDebuffs
----@overload fun(self: NRSKNUI, name: "Defensives", silent?: boolean): Defensives
----@overload fun(self: NRSKNUI, name: "PetTexts", silent?: boolean): PetTexts
----@overload fun(self: NRSKNUI, name: "FocusCastbar", silent?: boolean): FocusCastbar
----@overload fun(self: NRSKNUI, name: "Speed", silent?: boolean): Speed
----@overload fun(self: NRSKNUI, name: "GearUtility", silent?: boolean): GearUtility
+---@overload fun(self: NRSKNUI, name: "CombatTimer", silent?: boolean): CombatTimerModule
+---@overload fun(self: NRSKNUI, name: "Gateway", silent?: boolean): GatewayModule
+---@overload fun(self: NRSKNUI, name: "PotionReady", silent?: boolean): PotionReadyModule
+---@overload fun(self: NRSKNUI, name: "RangeChecker", silent?: boolean): RangeCheckerModule
+---@overload fun(self: NRSKNUI, name: "Skinning", silent?: boolean): SkinningModule
+---@overload fun(self: NRSKNUI, name: "Tooltips", silent?: boolean): TooltipsModule
+---@overload fun(self: NRSKNUI, name: "Minimap", silent?: boolean): MinimapModule
+---@overload fun(self: NRSKNUI, name: "BurningRush", silent?: boolean): BurningRushModule
+---@overload fun(self: NRSKNUI, name: "AuctionHouseFilter", silent?: boolean): AuctionHouseFilterModule
+---@overload fun(self: NRSKNUI, name: "Automation", silent?: boolean): AutomationModule
+---@overload fun(self: NRSKNUI, name: "Tweaks", silent?: boolean): TweaksModule
+---@overload fun(self: NRSKNUI, name: "XPBar", silent?: boolean): XPBarModule
+---@overload fun(self: NRSKNUI, name: "CopyAnything", silent?: boolean): CopyAnythingModule
+---@overload fun(self: NRSKNUI, name: "Recuperate", silent?: boolean): RecuperateModule
+---@overload fun(self: NRSKNUI, name: "MiscVars", silent?: boolean): MiscVarsModule
+---@overload fun(self: NRSKNUI, name: "Durability", silent?: boolean): DurabilityModule
+---@overload fun(self: NRSKNUI, name: "CombatCross", silent?: boolean): CombatCrossModule
+---@overload fun(self: NRSKNUI, name: "CombatMessage", silent?: boolean): CombatMessageModule
+---@overload fun(self: NRSKNUI, name: "CombatRes", silent?: boolean): CombatResModule
+---@overload fun(self: NRSKNUI, name: "Restricted", silent?: boolean): RestrictedModule
+---@overload fun(self: NRSKNUI, name: "CursorCircle", silent?: boolean): CombatCursorModule
+---@overload fun(self: NRSKNUI, name: "UnitFrames", silent?: boolean): UnitFramesModule
+---@overload fun(self: NRSKNUI, name: "PlayerAuras", silent?: boolean): PlayerAurasModule
+---@overload fun(self: NRSKNUI, name: "PetTexts", silent?: boolean): PetTextsModule
+---@overload fun(self: NRSKNUI, name: "FocusCastbar", silent?: boolean): FocusCastbarModule
+---@overload fun(self: NRSKNUI, name: "GearUtility", silent?: boolean): GearUtilityModule
+---@overload fun(self: NRSKNUI, name: "AuraDisplay", silent?: boolean): AuraDisplayModule
 ---@param name string
 ---@param silent? boolean
 ---@return AceModule
 function NRSKNUI:GetModule(name, silent) end
 
 --- Register a new module. Trailing args are embedded library names (e.g. "AceEvent-3.0").
----@overload fun(self: NRSKNUI, name: "CombatTimer", ...: string): CombatTimer
----@overload fun(self: NRSKNUI, name: "Gateway", ...: string): Gateway
----@overload fun(self: NRSKNUI, name: "PotionReady", ...: string): PotionReady
----@overload fun(self: NRSKNUI, name: "RangeChecker", ...: string): RangeChecker
----@overload fun(self: NRSKNUI, name: "Skinning", ...: string): Skinning
----@overload fun(self: NRSKNUI, name: "Tooltips", ...: string): Tooltips
----@overload fun(self: NRSKNUI, name: "Minimap", ...: string): Minimap
----@overload fun(self: NRSKNUI, name: "BurningRush", ...: string): BurningRush
----@overload fun(self: NRSKNUI, name: "AuctionHouseFilter", ...: string): AuctionHouseFilter
----@overload fun(self: NRSKNUI, name: "Automation", ...: string): Automation
----@overload fun(self: NRSKNUI, name: "Tweaks", ...: string): Tweaks
----@overload fun(self: NRSKNUI, name: "XPBar", ...: string): XPBar
----@overload fun(self: NRSKNUI, name: "CopyAnything", ...: string): CopyAnything
----@overload fun(self: NRSKNUI, name: "Recuperate", ...: string): Recuperate
----@overload fun(self: NRSKNUI, name: "MiscVars", ...: string): MiscVars
----@overload fun(self: NRSKNUI, name: "Durability", ...: string): Durability
----@overload fun(self: NRSKNUI, name: "CombatCross", ...: string): CombatCross
----@overload fun(self: NRSKNUI, name: "CombatMessage", ...: string): CombatMessage
----@overload fun(self: NRSKNUI, name: "CombatRes", ...: string): CombatRes
----@overload fun(self: NRSKNUI, name: "Restricted", ...: string): Restricted
----@overload fun(self: NRSKNUI, name: "CursorCircle", ...: string): CursorCircle
----@overload fun(self: NRSKNUI, name: "UnitFrames", ...: string): UnitFrames
----@overload fun(self: NRSKNUI, name: "PlayerAuras", ...: string): PlayerAuras
----@overload fun(self: NRSKNUI, name: "AdvancedDebuffs", ...: string): AdvancedDebuffs
----@overload fun(self: NRSKNUI, name: "Defensives", ...: string): Defensives
----@overload fun(self: NRSKNUI, name: "PetTexts", ...: string): PetTexts
----@overload fun(self: NRSKNUI, name: "FocusCastbar", ...: string): FocusCastbar
----@overload fun(self: NRSKNUI, name: "Speed", ...: string): Speed
----@overload fun(self: NRSKNUI, name: "GearUtility", ...: string): GearUtility
+---@overload fun(self: NRSKNUI, name: "CombatTimer", ...: string): CombatTimerModule
+---@overload fun(self: NRSKNUI, name: "Gateway", ...: string): GatewayModule
+---@overload fun(self: NRSKNUI, name: "PotionReady", ...: string): PotionReadyModule
+---@overload fun(self: NRSKNUI, name: "RangeChecker", ...: string): RangeCheckerModule
+---@overload fun(self: NRSKNUI, name: "Skinning", ...: string): SkinningModule
+---@overload fun(self: NRSKNUI, name: "Tooltips", ...: string): TooltipsModule
+---@overload fun(self: NRSKNUI, name: "Minimap", ...: string): MinimapModule
+---@overload fun(self: NRSKNUI, name: "BurningRush", ...: string): BurningRushModule
+---@overload fun(self: NRSKNUI, name: "AuctionHouseFilter", ...: string): AuctionHouseFilterModule
+---@overload fun(self: NRSKNUI, name: "Automation", ...: string): AutomationModule
+---@overload fun(self: NRSKNUI, name: "Tweaks", ...: string): TweaksModule
+---@overload fun(self: NRSKNUI, name: "XPBar", ...: string): XPBarModule
+---@overload fun(self: NRSKNUI, name: "CopyAnything", ...: string): CopyAnythingModule
+---@overload fun(self: NRSKNUI, name: "Recuperate", ...: string): RecuperateModule
+---@overload fun(self: NRSKNUI, name: "MiscVars", ...: string): MiscVarsModule
+---@overload fun(self: NRSKNUI, name: "Durability", ...: string): DurabilityModule
+---@overload fun(self: NRSKNUI, name: "CombatCross", ...: string): CombatCrossModule
+---@overload fun(self: NRSKNUI, name: "CombatMessage", ...: string): CombatMessageModule
+---@overload fun(self: NRSKNUI, name: "CombatRes", ...: string): CombatResModule
+---@overload fun(self: NRSKNUI, name: "Restricted", ...: string): RestrictedModule
+---@overload fun(self: NRSKNUI, name: "CursorCircle", ...: string): CombatCursorModule
+---@overload fun(self: NRSKNUI, name: "UnitFrames", ...: string): UnitFramesModule
+---@overload fun(self: NRSKNUI, name: "PlayerAuras", ...: string): PlayerAurasModule
+---@overload fun(self: NRSKNUI, name: "PetTexts", ...: string): PetTextsModule
+---@overload fun(self: NRSKNUI, name: "FocusCastbar", ...: string): FocusCastbarModule
+---@overload fun(self: NRSKNUI, name: "GearUtility", ...: string): GearUtilityModule
+---@overload fun(self: NRSKNUI, name: "AuraDisplay", ...: string): AuraDisplayModule
 ---@param name string
 ---@param ... string
 ---@return AceModule

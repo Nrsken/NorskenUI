@@ -31,11 +31,6 @@ function PetTexts:UpdateDB()
     self.db = NRSKNUI.db.profile.PetTexts
 end
 
-function PetTexts:OnInitialize()
-    self:UpdateDB()
-    self:SetEnabledState(false)
-end
-
 -- Check if the player's pet is on passive mode.
 local function IsPetOnPassive()
     if not UnitExists('pet') or not PetHasActionBar() then return false end
@@ -175,8 +170,6 @@ function PetTexts:UNIT_PET(_, unit)
 end
 
 function PetTexts:OnEnable()
-    if not self.db.Enabled then return end
-
     self.petInfo = NRSKNUI.PET_CLASSES[NRSKNUI.MyClass]
 
     self:CreateGroup()

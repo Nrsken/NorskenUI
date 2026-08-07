@@ -107,11 +107,6 @@ function ACB:UpdateDB()
 end
 
 -- Module init
-function ACB:OnInitialize()
-    self:UpdateDB()
-    self:SetEnabledState(false)
-end
-
 -- Build configTable from DB, called on enable so DB is ready
 -- This way i only need to create defaults once in the Core/Defaults.lua
 -- skipBlizzToggle: if true, don't disable Blizzard bar mouse (used during combat)
@@ -1262,7 +1257,6 @@ end
 -- Module OnEnable
 function ACB:OnEnable()
     if NRSKNUI:ShouldNotLoadModule() then return end
-    if not self.db.Enabled then return end
     RunEdgeRelativeMigration(self.db)
 
     NRSKNUI:RunWhenSafe(function()

@@ -31,14 +31,8 @@ function BOT:UpdateDB()
     self.db = NRSKNUI.db.profile.Skinning.BlizzardElements
 end
 
-function BOT:OnInitialize()
-    self:UpdateDB()
-    self:SetEnabledState(false)
-end
-
 function BOT:OnEnable()
     if NRSKNUI:ShouldNotLoadModule() then return end
-    if not self.db.Enabled then return end
 
     self:SkinObjectiveTracker()
     self.themeSub = NRSKNUI.GUI:OnThemeChanged(function()
@@ -464,5 +458,10 @@ function BOT:ApplySettings()
 end
 
 function BOT:OnDisable()
-    -- Skinning changes are permanent once applied
+    -- Skinning changes are permanent once applied, but the theme subscription is not: leaving it
+    -- registered means a disabled module keeps reacting, and re-enabling stacks a second copy.
+    if self.themeSub then
+        self.themeSub()
+        self.themeSub = nil
+    end
 end

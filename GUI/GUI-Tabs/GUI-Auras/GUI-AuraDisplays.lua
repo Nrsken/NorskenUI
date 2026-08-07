@@ -1,140 +1,77 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
+---@class AuraDisplayModule
+local AuraDisplay = NRSKNUI:GetModule('AuraDisplay')
+---@class PlayerAurasModule
+local PlayerAuras = NRSKNUI:GetModule('PlayerAuras')
 local L = NRSKNUI.Libs.AL
 local GUI = NRSKNUI.GUI
 local Theme = NRSKNUI.Theme
 local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
-
-local AuraFilters = NRSKNUI.AuraFilters
 local AuraCards = NRSKNUI.GUIAuraCards
-local AF = AuraUtil.AuraFilters
+local TriggerCard = NRSKNUI.GUITriggerCard
 
 local ipairs = ipairs
+local format = string.format
 
---[[
-Every aura display is the same page, driven by one descriptor per sidebar item:
+local PAGE = 'auras'
+local DISPLAYS_SECTION = 'auraDisplays_section'
 
-* filtered - the advanced displays resolve a named filter from db.global.AuraFilters, so they get the Aura Filter card and keep Sorting beside it on a Filter tab.
-* The standard displays run a hardcoded HELPFUL/HARMFUL group, so they lose the tab and Sorting moves to Layout.
-* harmful  - only harmful displays get the dispel border/icon toggles.
-* enchants - standard buffs additionally flow the temporary weapon enchants.
-
-The cards themselves live in GUI/GUI-AuraCards.lua, shared with the per-unit containers under GUI-UnitFrames.
---]]
-
-local function Apply(display)
-    local module = NRSKNUI:GetModule(display.moduleName, true)
-    if module then module:ApplySettings() end
-end
-
----Both standard displays live on PlayerAuras, so the module stays on while either one is enabled and
----Auras.Enabled has to track that, it is what Main.lua's bootstrap reads.
----@param checked boolean
-local function TogglePlayerAuras(checked)
-    local auras = NRSKNUI.db.profile.Auras
-    local anyEnabled = auras.Buffs.Enabled or auras.Debuffs.Enabled
-
-    auras.Enabled = anyEnabled
-    NRSKNUI:ToggleModule('PlayerAuras', anyEnabled)
-
-    ---@class PlayerAurasModule
-    local module = NRSKNUI:GetModule('PlayerAuras', true)
-    if module and module:IsEnabled() then module:ApplySettings() end
-
-    -- Blizzard's own frame is reparented away for good once banished, so giving it back needs a reload.
-    if not checked then
-        NRSKNUI:CreateReloadPrompt(L['Restoring the Blizzard aura frame requires a reload to take full effect.'])
-    end
-end
-
-local DISPLAYS = {
-    {
-        pageId = 'advancedDebuffs',
-        moduleName = 'AdvancedDebuffs',
-        title = L['Advanced Debuffs'],
-        enableText = L['Enable Advanced Debuffs'],
-        harmful = true,
-        filtered = true,
-        GetDB = function() return NRSKNUI.db.profile.AdvancedDebuffs end,
-        Toggle = function(checked) NRSKNUI:ToggleModule('AdvancedDebuffs', checked) end,
-    },
-    {
-        pageId = 'defensives',
-        moduleName = 'Defensives',
-        title = L['Defensives'],
-        enableText = L['Enable Defensives'],
-        harmful = false,
-        filtered = true,
-        GetDB = function() return NRSKNUI.db.profile.Defensives end,
-        Toggle = function(checked) NRSKNUI:ToggleModule('Defensives', checked) end,
-    },
-    {
-        pageId = 'speed',
-        moduleName = 'Speed',
-        title = L['Speed'],
-        enableText = L['Enable Speed'],
-        harmful = true,
-        filtered = true,
-        GetDB = function() return NRSKNUI.db.profile.Speed end,
-        Toggle = function(checked) NRSKNUI:ToggleModule('Speed', checked) end,
-    },
-    {
-        pageId = 'standardBuffs',
-        moduleName = 'PlayerAuras',
-        title = L['Standard Buffs'],
-        enableText = L['Enable Standard Buffs'],
-        harmful = false,
-        filtered = false,
-        enchants = true,
-        GetDB = function() return NRSKNUI.db.profile.Auras.Buffs end,
-        Toggle = TogglePlayerAuras,
-    },
-    {
-        pageId = 'standardDebuffs',
-        moduleName = 'PlayerAuras',
-        title = L['Standard Debuffs'],
-        enableText = L['Enable Standard Debuffs'],
-        harmful = true,
-        filtered = false,
-        GetDB = function() return NRSKNUI.db.profile.Auras.Debuffs end,
-        Toggle = TogglePlayerAuras,
-    },
+-- For convenience, these two are kept from the old per tracker modules.
+local STANDARD = {
+    { key = 'standard:buffs',   title = L['Standard Buffs'],   enableText = L['Enable Standard Buffs'],   harmful = false, GetDB = function() return NRSKNUI.db.profile.Auras.Buffs end,   enchants = true, },
+    { key = 'standard:debuffs', title = L['Standard Debuffs'], enableText = L['Enable Standard Debuffs'], harmful = true,  GetDB = function() return NRSKNUI.db.profile.Auras.Debuffs end, },
 }
+for _, entry in ipairs(STANDARD) do STANDARD[entry.key] = entry end
 
--- Filter Tab
-local function BuildFilterTab(page, display, db, ctx)
-    -- Card 1
-    page:FilterCard({
-        title = L['Aura Filter'],
-        label = L['Filter'],
-        db = db,
-        dbKey = 'Filter',
-        filters = function() return AuraFilters:GetList() end,
-        noneText = display.harmful and L['None (all harmful)'] or L['None (all helpful)'],
-        noneValue = display.harmful and AF.Harmful or AF.Helpful,
-        summaryTitle = NRSKNUI:ColorTextByTheme(L['Resolves To']),
-        emptyText = L['No filters defined yet. Create one under Aura Filters.'],
-        describe = function(name) return AuraFilters:Describe(name) end,
-        manageText = L['Manage Filters'],
-        onManage = function()
-            local window = NRSKNUI.GUIFrame
-            if window and window.content then window.content:ShowPage('filterBuilder') end
-        end,
-        onChangeCallback = function()
-            ---@type NRSKNUI.AuraModule
-            local module = NRSKNUI:GetModule(display.moduleName, true)
-            if module then module:ApplyFilter() end
-        end,
-    })
+---Resolve a mini sidebar key to what the page needs to build it.
+---@param key string?
+---@return table? display
+local function Resolve(key)
+    -- Default built in trackers.
+    local standard = key and STANDARD[key]
+    if standard then
+        return {
+            key = key,
+            title = standard.title,
+            enableText = standard.enableText,
+            harmful = standard.harmful,
+            enchants = standard.enchants,
+            db = standard.GetDB(),
+            Apply = function() PlayerAuras:ApplySettings() end,
+            Toggle = function(checked)
+                local auras = NRSKNUI.db.profile.Auras
+                auras.Enabled = auras.Buffs.Enabled or auras.Debuffs.Enabled
 
-    -- Card 2
-    AuraCards:Sorting(page, db, ctx)
+                NRSKNUI:ToggleModule('PlayerAuras', auras.Enabled)
+                if auras.Enabled then PlayerAuras:ApplySettings() end
+            end,
+        }
+    end
+
+    local instance = AuraDisplay:Get(key)
+    if not instance then return nil end
+
+    -- Custom user trackers.
+    return {
+        key = key,
+        isInstance = true,
+        isBuiltin = AuraDisplay:IsBuiltin(key),
+        title = instance.name or key,
+        enableText = L['Enable'],
+        harmful = instance.Trigger == nil or instance.Trigger.Base ~= AuraUtil.AuraFilters.Helpful,
+        db = instance,
+        Apply = function() AuraDisplay:ApplySettings(key) end,
+        Toggle = function()
+            NRSKNUI:ToggleModule('AuraDisplay', AuraDisplay:AnyEnabled())
+            AuraDisplay:ApplySettings(key)
+        end,
+    }
 end
 
 -- Layout Tab
 local function BuildLayoutTab(page, display, db, ctx)
-    -- Card 1
     local enableCard = page:Card(display.title)
     enableCard:Row(rowHL, 0):Checkbox(display.enableText, {
         width = 1,
@@ -149,13 +86,9 @@ local function BuildLayoutTab(page, display, db, ctx)
         end,
     })
 
-    -- Card 2
     AuraCards:Grid(page, db, ctx)
-
-    -- Card 3
     AuraCards:Growth(page, db, ctx)
 
-    -- Card 4
     if display.enchants then
         local enchantCard = page:Card(L['Weapon Enchants'], 'all')
         enchantCard:Row(rowH):Checkbox(L['Show Weapon Enchants'], {
@@ -178,7 +111,7 @@ local function BuildLayoutTab(page, display, db, ctx)
             value = db.groupSpacing,
             callback = function(val)
                 db.groupSpacing = val
-                Apply(display)
+                display.Apply()
             end,
         })
         groupRow:Slider(L['Group Line Spacing'], {
@@ -190,43 +123,33 @@ local function BuildLayoutTab(page, display, db, ctx)
             value = db.groupLineSpacing,
             callback = function(val)
                 db.groupLineSpacing = val
-                Apply(display)
+                display.Apply()
             end,
         })
     end
 
-    -- Card 5: no Filter tab to host it on the standard displays.
-    if not display.filtered then
-        AuraCards:Sorting(page, db, ctx)
-    end
+    AuraCards:Sorting(page, db, ctx)
+end
+
+-- Trigger Tab
+local function BuildTriggerTab(page, display, db)
+    db.Trigger = db.Trigger or NRSKNUI.AuraTriggers:New()
+
+    TriggerCard:Build(page, db.Trigger, { onChange = display.Apply })
 end
 
 -- Appearance Tab
 local function BuildAppearanceTab(page, display, db, ctx)
-    -- Card 1
     AuraCards:Icons(page, db, ctx)
-
-    -- Card 2
     AuraCards:Text(page, db, ctx)
-
-    -- Card 3
     AuraCards:Cooldown(page, db, ctx)
-
-    -- Card 4
-    if display.harmful then
-        AuraCards:Dispel(page, db, ctx)
-    end
-
-    -- Card 5
+    if display.harmful then AuraCards:Dispel(page, db, ctx) end
     AuraCards:Tooltip(page, db, ctx)
-
-    -- Card 6
     AuraCards:Reload(page)
 end
 
--- Font Settings Tab
+-- Font Tab
 local function BuildFontTab(page, display, db, ctx)
-    -- Card 1
     page:FontSettingsCard({
         db = db,
         includeSoftOutline = true,
@@ -235,57 +158,246 @@ local function BuildFontTab(page, display, db, ctx)
             { label = L['Stack Size'],    dbKey = 'StackFont.FontSize' },
             { label = L['Duration Size'], dbKey = 'DurationFont.FontSize' },
         },
-        onChangeCallback = function() Apply(display) end,
+        onChangeCallback = display.Apply,
     })
 
-    -- Card 2
     AuraCards:TextPosition(page, db, ctx)
-
-    -- Card 3
     AuraCards:Reload(page)
 end
 
-for _, display in ipairs(DISPLAYS) do
-    local tabs = { { id = 'layout', text = L['Layout'] } }
-    if display.filtered then
-        tabs[#tabs + 1] = { id = 'filter', text = L['Filter'] }
-    end
-    tabs[#tabs + 1] = { id = 'appearance', text = L['Appearance'] }
-    tabs[#tabs + 1] = { id = 'font', text = L['Font Settings'] }
-    tabs[#tabs + 1] = { id = 'position', text = L['Position Settings'] }
+-- Sidebar --
 
-    GUI:RegisterPage(display.pageId, {
-        mode = 'tabs',
-        search = {},
-        tabs = tabs,
-        build = function(page, tabId)
-            local db = display.GetDB()
-            if not db then return end
-            page:SetEnabled(function() return db.Enabled end)
+local function Reopen(selectKey)
+    local window = NRSKNUI.GUIFrame
+    if not (window and window.content) then return end
 
-            local ctx = {
-                Apply = function() Apply(display) end,
-                filtered = display.filtered,
-                dispelIconKey = 'showDebuffDispelIcon',
-                withoutDispelType = true,
-            }
+    window.content:ShowPage(PAGE, selectKey and { itemKey = selectKey } or nil)
+end
 
-            if tabId == 'layout' then
-                BuildLayoutTab(page, display, db, ctx)
-            elseif tabId == 'filter' then
-                BuildFilterTab(page, display, db, ctx)
-            elseif tabId == 'appearance' then
-                BuildAppearanceTab(page, display, db, ctx)
-            elseif tabId == 'font' then
-                BuildFontTab(page, display, db, ctx)
-            elseif tabId == 'position' then
-                page:PositionCard({
-                    db = db,
-                    showAnchorFrameType = true,
-                    showStrata = true,
-                    onChangeCallback = function() Apply(display) end,
-                })
+local function CreateDisplayPrompt()
+    NRSKNUI:CreatePrompt({
+        title = L['New Tracker'],
+        text = '',
+        editBox = true,
+        editBoxLabel = L['Tracker Name'],
+        onAccept = function(name)
+            if not name or name == '' then
+                NRSKNUI:Print(L['Please enter a name'])
+                return
             end
+
+            local id = AuraDisplay:Create(name)
+            if not id then return end
+
+            NRSKNUI:ToggleModule('AuraDisplay', true)
+            AuraDisplay:ApplySettings(id)
+            Reopen(id)
         end,
+        acceptText = L['Create'],
+        cancelText = L['Cancel'],
     })
 end
+
+local function RenameDisplayPrompt(key)
+    NRSKNUI:CreatePrompt({
+        title = L['Rename Tracker'],
+        text = AuraDisplay:GetName(key),
+        editBox = true,
+        editBoxLabel = L['Tracker Name'],
+        onAccept = function(name)
+            if not name or name == '' then return end
+
+            AuraDisplay:Rename(key, name)
+            Reopen(key)
+        end,
+        acceptText = L['Rename'],
+        cancelText = L['Cancel'],
+    })
+end
+
+local function CreateGroupPrompt(key)
+    NRSKNUI:CreatePrompt({
+        title = L['Create New Group'],
+        text = '',
+        editBox = true,
+        editBoxLabel = L['Group Name'],
+        onAccept = function(name)
+            if not name or name == '' then
+                NRSKNUI:Print(L['Please enter a name'])
+                return
+            end
+
+            local groupId = AuraDisplay:CreateGroup(name)
+            if not groupId then return end
+
+            AuraDisplay:SetGroup(key, groupId)
+            Reopen(key)
+        end,
+        acceptText = L['Create'],
+        cancelText = L['Cancel'],
+    })
+end
+
+local function DeleteDisplayPrompt(key)
+    NRSKNUI:CreatePrompt({
+        title = L['Delete Tracker'],
+        text = format(L["Delete the display '%s'? This cannot be undone."], AuraDisplay:GetName(key)),
+        onAccept = function()
+            if not AuraDisplay:Delete(key) then return end
+
+            NRSKNUI:ToggleModule('AuraDisplay', AuraDisplay:AnyEnabled())
+            Reopen()
+        end,
+        acceptText = L['Delete'],
+        cancelText = L['Cancel'],
+    })
+end
+
+---Sidebar items for the mini sidebar.
+---@return table[]
+local function SidebarItems()
+    local items = {}
+
+    -- Default built in trackers.
+    local shipped = {}
+    for _, entry in ipairs(AuraDisplay:GetList()) do
+        if AuraDisplay:IsBuiltin(entry.key) then
+            shipped[#shipped + 1] = { key = entry.key, text = entry.text }
+        end
+    end
+    for _, entry in ipairs(STANDARD) do
+        shipped[#shipped + 1] = { key = entry.key, text = entry.title }
+    end
+
+    items[#items + 1] = {
+        type = 'header',
+        key = DISPLAYS_SECTION,
+        text = L['Default Trackers'],
+        defaultExpanded = true,
+        items = shipped,
+    }
+
+    -- Grouped user trackers.
+    for _, group in ipairs(AuraDisplay:GetGroups()) do
+        local members = {}
+        for _, entry in ipairs(AuraDisplay:GetList()) do
+            local instance = AuraDisplay:Get(entry.key)
+            if instance and instance.group == group.key then
+                members[#members + 1] = { key = entry.key, text = entry.text }
+            end
+        end
+
+        if members[1] then
+            items[#items + 1] = {
+                type = 'header',
+                key = group.key,
+                text = group.name,
+                defaultExpanded = true,
+                items = members,
+            }
+        end
+    end
+
+    -- Ungrouped user trackers.
+    for _, entry in ipairs(AuraDisplay:GetList()) do
+        local instance = AuraDisplay:Get(entry.key)
+        if instance and not AuraDisplay:IsBuiltin(entry.key) and not instance.group then
+            items[#items + 1] = { key = entry.key, text = entry.text }
+        end
+    end
+
+    return items
+end
+
+GUI:RegisterPage(PAGE, {
+    mode = 'tabs',
+    search = {
+        L['Advanced Debuffs'], L['Defensives'], L['Speed'],
+        L['Standard Buffs'], L['Standard Debuffs'], L['Trigger'],
+    },
+    sidebar = {
+        buttons = { { text = L['New Tracker'], onClick = CreateDisplayPrompt }, },
+        items = SidebarItems,
+        onContextMenu = function(key)
+            if STANDARD[key] or AuraDisplay:IsBuiltin(key) then return end -- no context menu for the built in trackers
+
+            local instance = AuraDisplay:Get(key)
+            if not instance then return end
+
+            local entries = {
+                { text = L['Rename'],           onClick = function() RenameDisplayPrompt(key) end },
+                { text = L['Delete'],           onClick = function() DeleteDisplayPrompt(key) end },
+                { divider = true },
+                { text = L['Create New Group'], onClick = function() CreateGroupPrompt(key) end },
+            }
+
+            for _, group in ipairs(AuraDisplay:GetGroups()) do
+                if group.key ~= instance.group then
+                    entries[#entries + 1] = {
+                        text = format(L['Add to %s'], group.name),
+                        onClick = function()
+                            AuraDisplay:SetGroup(key, group.key)
+                            Reopen(key)
+                        end,
+                    }
+                end
+            end
+
+            if instance.group then
+                entries[#entries + 1] = {
+                    text = L['Remove from Group'],
+                    onClick = function()
+                        AuraDisplay:SetGroup(key, nil)
+                        Reopen(key)
+                    end,
+                }
+            end
+
+            GUI:ShowContextMenu(entries)
+        end,
+    },
+    tabs = function(itemKey)
+        local tabs = { { id = 'layout', text = L['Layout'] } }
+
+        local display = Resolve(itemKey)
+        if display and display.isInstance and not display.isBuiltin then
+            tabs[#tabs + 1] = { id = 'trigger', text = L['Trigger'] }
+        end
+        tabs[#tabs + 1] = { id = 'appearance', text = L['Appearance'] }
+        tabs[#tabs + 1] = { id = 'font', text = L['Font Settings'] }
+        tabs[#tabs + 1] = { id = 'position', text = L['Position Settings'] }
+
+        return tabs
+    end,
+    build = function(page, tabId, itemKey)
+        local display = Resolve(itemKey)
+        if not display or not display.db then return end
+
+        AuraDisplay:SetPreviewTarget(display.isInstance and itemKey or nil)
+        page:SetEnabled(function() return display.db.Enabled end)
+
+        local ctx = {
+            Apply = display.Apply,
+            filtered = display.isInstance,
+            dispelIconKey = 'showDebuffDispelIcon',
+            withoutDispelType = true,
+        }
+
+        if tabId == 'layout' then
+            BuildLayoutTab(page, display, display.db, ctx)
+        elseif tabId == 'trigger' then
+            BuildTriggerTab(page, display, display.db)
+        elseif tabId == 'appearance' then
+            BuildAppearanceTab(page, display, display.db, ctx)
+        elseif tabId == 'font' then
+            BuildFontTab(page, display, display.db, ctx)
+        elseif tabId == 'position' then
+            page:PositionCard({
+                db = display.db,
+                showAnchorFrameType = true,
+                showStrata = true,
+                onChangeCallback = display.Apply,
+            })
+        end
+    end,
+})

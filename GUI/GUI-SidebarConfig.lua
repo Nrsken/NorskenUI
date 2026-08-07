@@ -35,27 +35,9 @@ GUIFrame.SidebarConfig = {
             text = L['Font Settings'],
         },
         {
-            id = 'aurafilters_section',
-            type = 'header',
-            text = L['Aura Filters'],
-            defaultExpanded = false,
-            items = {
-                { id = 'filterBuilder',  text = L['Filter Builder'] },
-                { id = 'spellIDFilters', text = L['SpellID Filters'] },
-            }
-        },
-        {
-            id = 'auras_section',
-            type = 'header',
+            id = 'auras',
+            type = 'item',
             text = L['Auras'],
-            defaultExpanded = false,
-            items = {
-                { id = 'advancedDebuffs', text = L['Advanced Debuffs'] },
-                { id = 'defensives',      text = L['Defensives'] },
-                { id = 'speed',           text = L['Speed'] },
-                { id = 'standardBuffs',   text = L['Standard Buffs'] },
-                { id = 'standardDebuffs', text = L['Standard Debuffs'] },
-            }
         },
         {
             id = 'unitframes_section',

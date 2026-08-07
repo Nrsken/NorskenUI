@@ -22,6 +22,7 @@ local Mixin = Mixin
 local ipairs = ipairs
 local type = type
 local rad = math.rad
+local max = math.max
 local InCombatLockdown = InCombatLockdown
 
 local C_Timer = C_Timer
@@ -432,7 +433,10 @@ function WindowMixin:RestorePosition()
         local f = data.frame
         self.frame:ClearAllPoints()
         pixel.SetPixelPoint(self.frame, f.point or "CENTER", UIParent, f.relativePoint or "CENTER", f.xOffset or 0, f.yOffset or 50)
-        if f.width and f.height then pixel.SetPixelSize(self.frame, f.width, f.height) end
+        -- Clamped so a size saved under an older/smaller layout can never restore below the current minimum.
+        if f.width and f.height then
+            pixel.SetPixelSize(self.frame, max(f.width, self._minW or 0), max(f.height, self._minH or 0))
+        end
     end
     if data.currentPage then self._currentId = data.currentPage end
     if self.sidebar then
@@ -500,6 +504,7 @@ function InstanceMixin:CreateGUIWindow(opts)
     window._onClose = opts.onClose
     window._onCombatDefer = opts.onCombatDefer
     window._currentId = opts.defaultPage
+    window._minW, window._minH = minW, minH
     window._headerCursor = -(theme.paddingSmall + 2) -- running right edge for header buttons
     window._footerCursor = theme.paddingMedium       -- running left edge for footer socials
     window.inCombat = InCombatLockdown() and true or false

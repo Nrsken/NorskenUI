@@ -1,8 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 ---@class UnitFramesModule
----@field Elements UnitFramesElements
----@field PreviewTick number Advances while a preview runs, read by tags that rotate a placeholder
 local UF = NRSKNUI:GetModule('UnitFrames')
 
 local abs = math.abs
@@ -144,9 +142,6 @@ UF.Elements.Tags = {
                     end
                 end
 
-                -- Font chain: slot -> UnitFrames General -> global media. Passing `general` as the
-                -- source is what makes the General font tab reach the tags at all, the slot only
-                -- supplies the face and outline once it opts out of the shared font.
                 local useGlobal = slotDB.UseGlobalFont
                 fs:SetFontStyle(useGlobal and general or slotDB, slotDB.FontSize,
                     useGlobal and general.FontOutline or slotDB.FontOutline)

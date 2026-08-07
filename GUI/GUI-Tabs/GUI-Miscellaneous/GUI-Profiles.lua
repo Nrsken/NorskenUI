@@ -13,8 +13,6 @@ local GetNumSpecializations = GetNumSpecializations
 local GetSpecializationInfo = GetSpecializationInfo
 local GetSpecialization = GetSpecialization
 
-local RELOAD_NOTE = "\n\n" .. L['A UI reload is recommended to fully apply all settings.']
-
 local function BuildProfileOptions()
     local PM = NRSKNUI.ProfileManager
     local options = {}
@@ -53,20 +51,14 @@ local function BuildProfilesTab(page, PM)
         conditions = { 'notGlobal', 'notSpec' },
         options = BuildProfileOptions(),
         value = PM:GetCurrentProfile(),
+        -- No reload prompt here: ProfileManager raises one for any change to the active profile,
+        -- including the resets, copies and spec swaps that never passed through this page.
         callback = function(key)
             if key == PM:GetCurrentProfile() then return end
             local success, err = PM:SetProfile(key)
             if not success then
                 NRSKNUI:Print(format(L['Failed to switch profile: %s'], err or L['Unknown error']))
-                return
             end
-            NRSKNUI:CreatePrompt({
-                title = L['Profile Changed'],
-                text = format(L["Profile switched to '%s'."], key) .. RELOAD_NOTE,
-                onAccept = function() ReloadUI() end,
-                acceptText = L['Reload Now'],
-                cancelText = L['Later'],
-            })
         end,
     })
 
@@ -75,41 +67,23 @@ local function BuildProfilesTab(page, PM)
     local globalRow = globalCard:Row(rowHL, 0)
     globalRow:Checkbox(L['Use Global Profile'], {
         width = 0.5,
-        master = true,
+        conditions = { 'notSpec' },
         value = PM:GetUseGlobalProfile(),
         callback = function(checked)
             if not PM:SetUseGlobalProfile(checked) then return end
             page:Refresh()
-            if checked then
-                NRSKNUI:CreatePrompt({
-                    title = L['Global Profile Enabled'],
-                    text = L['Global profile mode enabled.'] .. RELOAD_NOTE,
-                    onAccept = function() ReloadUI() end,
-                    acceptText = L['Reload Now'],
-                    cancelText = L['Later'],
-                })
-            else
-                NRSKNUI:Print(L['Global profile mode disabled'])
-            end
+            NRSKNUI:Print(checked and L['Global profile mode enabled.'] or L['Global profile mode disabled'])
         end,
     })
     globalRow:Dropdown(L['Global Profile'], {
         width = 0.5,
-        conditions = { 'globalOn' },
+        conditions = { 'globalOn', 'notSpec' },
         options = BuildProfileOptions(),
         value = PM:GetGlobalProfile(),
         callback = function(key)
             local success, err = PM:SetGlobalProfile(key)
             if not success then
                 NRSKNUI:Print(format(L['Failed to set global profile: %s'], err or L['Unknown error']))
-            elseif PM:GetUseGlobalProfile() then
-                NRSKNUI:CreatePrompt({
-                    title = L['Global Profile Changed'],
-                    text = format(L["Global profile switched to '%s'."], key) .. RELOAD_NOTE,
-                    onAccept = function() ReloadUI() end,
-                    acceptText = L['Reload Now'],
-                    cancelText = L['Later'],
-                })
             else
                 NRSKNUI:Print(format(L['Global profile set to: %s'], key))
             end
@@ -125,7 +99,7 @@ local function BuildProfilesTab(page, PM)
             conditions = { 'notGlobal' },
             value = db:IsDualSpecEnabled(),
             callback = function(checked)
-                db:SetDualSpecEnabled(checked)
+                PM:SetSpecProfilesEnabled(checked)
                 page:Refresh()
             end,
         })

@@ -23,7 +23,6 @@ end
 function Gateway:OnInitialize()
     self:UpdateDB()
     self.wasUsable = nil
-    self:SetEnabledState(false)
 end
 
 -- Check if the player is a warlock or if there is a warlock in the group/raid.
@@ -118,8 +117,6 @@ function Gateway:ApplySettings()
 end
 
 function Gateway:OnEnable()
-    if not self.db.Enabled then return end
-
     self:CreateAlertFrame()
     self:ApplySettings()
     self:FullUpdate()

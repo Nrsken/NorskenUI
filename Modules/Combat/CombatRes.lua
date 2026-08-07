@@ -22,11 +22,6 @@ function CombatRes:UpdateDB()
     self.db = NRSKNUI.db.profile.BattleRes
 end
 
-function CombatRes:OnInitialize()
-    self:UpdateDB()
-    self:SetEnabledState(false)
-end
-
 -- Cache/refresh a ColorMixin from a {r,g,b,a} db table so segments can use WrapTextInColorCode.
 ---@param existing ColorMixin|nil
 ---@param t colorRGBA|nil
@@ -198,8 +193,6 @@ function CombatRes:ApplySettings()
 end
 
 function CombatRes:OnEnable()
-    if not self.db.Enabled then return end
-
     self.lastText = nil
     self.isPreview = false
 

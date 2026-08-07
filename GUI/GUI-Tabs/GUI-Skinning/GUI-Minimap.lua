@@ -8,17 +8,7 @@ local Theme = NRSKNUI.Theme
 local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
 
-local anchorOptions = {
-    { key = 'TOPLEFT',     text = L['Top Left'] },
-    { key = 'TOP',         text = L['Top'] },
-    { key = 'TOPRIGHT',    text = L['Top Right'] },
-    { key = 'LEFT',        text = L['Left'] },
-    { key = 'CENTER',      text = L['Center'] },
-    { key = 'RIGHT',       text = L['Right'] },
-    { key = 'BOTTOMLEFT',  text = L['Bottom Left'] },
-    { key = 'BOTTOM',      text = L['Bottom'] },
-    { key = 'BOTTOMRIGHT', text = L['Bottom Right'] },
-}
+local anchorOptions = NRSKNUI.AnchorOptions
 
 local function ApplySettings()
     if MAP then MAP:ApplySettings() end

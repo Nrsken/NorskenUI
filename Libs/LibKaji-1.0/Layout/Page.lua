@@ -190,6 +190,28 @@ function FluentCard:OnExternalRefresh(fn)
     return self
 end
 
+---Adds a collapsible section header and reports whether its body should be built.
+---
+---A section owns no rows: the header is a plain row in the card's flow, and collapsing is this
+---returning false so the caller simply does not emit the body. That keeps repeating lists working
+---with :Rebuild and needs nothing from the card's layout.
+---
+---    if card:Section('1. Buffs', { collapsed = state.closed, onToggle = Toggle, onDelete = Delete }) then
+---        card:Row(rowH):Dropdown('Base', {...})
+---    end
+---
+---@param title string
+---@param config? { collapsed?: boolean, onToggle?: fun(), onMoveUp?: fun(), onMoveDown?: fun(), onDuplicate?: fun(), onDelete?: fun() }
+---@return boolean expanded
+function FluentCard:Section(title, config)
+    config = config or {}
+
+    local header = self.page.gui:CreateSectionHeader(self.real.content, title, config)
+    self.real:AddRow(header, header.layoutHeight)
+
+    return not config.collapsed
+end
+
 ---Adds a full-width separator row.
 ---@return self
 function FluentCard:Separator()
@@ -335,11 +357,6 @@ function Page:TextFormatCard(config, group) return self:PremadeCard("TextFormatC
 ---@param group? string
 ---@return KajiGUIFluentCard
 function Page:GlowSettingsCard(config, group) return self:PremadeCard("GlowSettingsCard", config, group) end
-
----@param config table
----@param group? string
----@return KajiGUIFluentCard
-function Page:FilterCard(config, group) return self:PremadeCard("FilterCard", config, group) end
 
 ---@param config table
 ---@param group? string

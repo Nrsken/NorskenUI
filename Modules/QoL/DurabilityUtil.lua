@@ -15,11 +15,6 @@ function Durability:UpdateDB()
     self.db = NRSKNUI.db.profile.Miscellaneous.Durability
 end
 
-function Durability:OnInitialize()
-    self:UpdateDB()
-    self:SetEnabledState(false)
-end
-
 -- Returns the lowest durability percentage of the player's equipped gear.
 local InvDurability = {}
 local SLOTS = { 1, 3, 5, 6, 7, 8, 9, 10, 16, 17, 18 }
@@ -95,8 +90,6 @@ function Durability:OnEvent()
 end
 
 function Durability:OnEnable()
-    if not self.db.Enabled then return end
-
     self:CreateFrame()
     self:ApplySettings()
 

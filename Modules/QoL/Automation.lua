@@ -98,11 +98,6 @@ function Automation:UpdateDB()
     self.db = NRSKNUI.db.profile.Miscellaneous.Automation
 end
 
-function Automation:OnInitialize()
-    self:UpdateDB()
-    self:SetEnabledState(false)
-end
-
 function Automation:GetBonusrollMode()
     if not self.db.AutoBonusRollQuest then return nil end
 
@@ -626,8 +621,6 @@ function Automation:ApplySettings()
 end
 
 function Automation:OnEnable()
-    if not self.db.Enabled then return end
-
     self:RegisterEvent('ADDON_LOADED')
     self:ApplySettings()
 end

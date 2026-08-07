@@ -6,9 +6,8 @@ local L = NRSKNUI.Libs.AL
 local Theme = NRSKNUI.Theme
 local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
-local AuraFilters = NRSKNUI.AuraFilters
 local AuraCards = NRSKNUI.GUIAuraCards
-local AF = AuraUtil.AuraFilters
+local TriggerCard = NRSKNUI.GUITriggerCard
 
 local ipairs = ipairs
 
@@ -20,14 +19,11 @@ local KINDS = {
     { kind = 'Debuffs', sectionKey = 'auradebuffs', title = L['Aura Debuffs'], label = L['Debuffs'], harmful = true },
 }
 
-local AnchorOptions = {}
-for _, point in ipairs({ 'TOPLEFT', 'TOP', 'TOPRIGHT', 'LEFT', 'CENTER', 'RIGHT', 'BOTTOMLEFT', 'BOTTOM', 'BOTTOMRIGHT' }) do
-    AnchorOptions[#AnchorOptions + 1] = { value = point, text = point }
-end
+local AnchorOptions = NRSKNUI.AnchorOptions
 
 local TABS = {
     { id = 'layout',     text = L['Layout'] },
-    { id = 'filter',     text = L['Filter'] },
+    { id = 'trigger',    text = L['Trigger'] },
     { id = 'appearance', text = L['Appearance'] },
     { id = 'font',       text = L['Font Settings'] },
     { id = 'position',   text = L['Position Settings'] },
@@ -48,29 +44,17 @@ local function BuildLayoutTab(page, def, cfg, unit, ctx)
     })
     AuraCards:Grid(page, cfg, ctx)
     AuraCards:Growth(page, cfg, ctx)
+    AuraCards:Sorting(page, cfg, ctx)
 end
 
--- Filter Tab
-local function BuildFilterTab(page, def, cfg, unit, ctx)
-    page:FilterCard({
-        title = L['Aura Filter'],
-        label = L['Filter'],
-        db = cfg,
-        dbKey = 'Filter',
-        filters = function() return AuraFilters:GetList() end,
-        noneText = def.harmful and L['None (all harmful)'] or L['None (all helpful)'],
-        noneValue = def.harmful and AF.Harmful or AF.Helpful,
-        summaryTitle = NRSKNUI:ColorTextByTheme(L['Resolves To']),
-        emptyText = L['No filters defined yet. Create one under Aura Filters.'],
-        describe = function(name) return AuraFilters:Describe(name) end,
-        manageText = L['Manage Filters'],
-        onManage = function()
-            local window = NRSKNUI.GUIFrame
-            if window and window.content then window.content:ShowPage('filterBuilder') end
-        end,
-        onChangeCallback = ApplySettings,
+-- Trigger Tab
+local function BuildTriggerTab(page, def, cfg, unit, ctx)
+    cfg.Trigger = cfg.Trigger or NRSKNUI.AuraTriggers:New({
+        Base = def.harmful and AuraUtil.AuraFilters.Harmful or AuraUtil.AuraFilters.Helpful,
     })
-    AuraCards:Sorting(page, cfg, ctx)
+
+    -- hideUnit: the frame this display sits on already decides the unit.
+    TriggerCard:Build(page, cfg.Trigger, { hideUnit = true, onChange = ApplySettings })
 end
 
 -- Appearance Tab
@@ -159,7 +143,7 @@ end
 
 local TAB_BUILDERS = {
     layout = BuildLayoutTab,
-    filter = BuildFilterTab,
+    trigger = BuildTriggerTab,
     appearance = BuildAppearanceTab,
     font = BuildFontTab,
     position = BuildPositionTab,
@@ -170,7 +154,7 @@ UF.GUIAuras = {
     tabs = TABS,
     search = {
         L['Grid'], L['Growth'], L['Sorting'], L['Icons'], L['Cooldown'], L['Tooltip'],
-        L['Aura Filter'], L['Dispel Indicators'], L['Text Position'], L['Font Sizes'],
+        L['Trigger'], L['Dispel Indicators'], L['Text Position'], L['Font Sizes'],
         L['Max Auras'], L['Per Row'], L['Element Spacing'], L['Line Spacing'],
         L['Horizontal Growth'], L['Vertical Growth'], L['Sort Method'], L['Sort Direction'],
         L['Show Count'], L['Show Duration'], L['Draw Swipe'], L['Reverse Swipe'], L['Draw Edge'],

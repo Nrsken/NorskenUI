@@ -10,11 +10,6 @@ function Tweaks:UpdateDB()
     self.db = NRSKNUI.db.profile.Miscellaneous.Tweaks
 end
 
-function Tweaks:OnInitialize()
-    self:UpdateDB()
-    self:SetEnabledState(false)
-end
-
 -- Confirm Popups with Enter
 function Tweaks:SetEnterAccept()
     if self.db.EnterAccept then
@@ -97,7 +92,5 @@ function Tweaks:ApplySettings()
 end
 
 function Tweaks:OnEnable()
-    if not self.db.Enabled then return end
-
     self:ApplySettings()
 end

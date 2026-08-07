@@ -15,11 +15,6 @@ function MiscVars:UpdateDB()
     self.db = NRSKNUI.db.profile.Miscellaneous.MiscVars
 end
 
-function MiscVars:OnInitialize()
-    self:UpdateDB()
-    self:SetEnabledState(false)
-end
-
 ---@type table
 MiscVars.DEFS = {
     {

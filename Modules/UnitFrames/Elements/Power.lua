@@ -1,7 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 ---@class UnitFramesModule
----@field Elements UnitFramesElements
 local UF = NRSKNUI:GetModule('UnitFrames')
 
 local CreateFrame = CreateFrame
@@ -84,7 +83,7 @@ UF.Elements.Power = {
         powerBar.colorPower = colorByPower
         powerBar.colorClass = false
         powerBar.colorReaction = false
-        powerBar.nuiColor = color
+        UF.CacheColor(powerBar, 'nuiColor', color)
         powerBar.nuiColorByPower = colorByPower
     end,
 }

@@ -79,11 +79,6 @@ function CursorCircle:UpdateDB()
     self.db = NRSKNUI.db.profile.Miscellaneous.CursorCircle
 end
 
-function CursorCircle:OnInitialize()
-    self:UpdateDB()
-    self:SetEnabledState(false)
-end
-
 function CursorCircle:CreateFrames()
     if self.follower then return end
 
@@ -284,8 +279,6 @@ function CursorCircle:UNIT_SPELLCAST_SUCCEEDED(_, unit)
 end
 
 function CursorCircle:OnEnable()
-    if not self.db.Enabled then return end
-
     self:CreateFrames()
     self.inCombat = NRSKNUI:InCombat() -- Get initial combat state.
     self:ApplySettings()

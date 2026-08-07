@@ -157,7 +157,6 @@ end
 
 function CHAT:OnInitialize()
     self:UpdateDB()
-    self:SetEnabledState(false)
     BuildShortChannelPatterns()
 end
 
@@ -533,7 +532,6 @@ end
 
 function CHAT:OnEnable()
     if NRSKNUI:ShouldNotLoadModule() then return end
-    if not self.db.Enabled then return end
     self:UpdateDB()
     self:BuildCopyChatFrame()
     self:CreateChatPanel()

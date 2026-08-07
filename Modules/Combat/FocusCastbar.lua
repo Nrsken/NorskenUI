@@ -57,11 +57,6 @@ function FocusCastbar:UpdateDB()
     self.db = NRSKNUI.db.profile.Miscellaneous.FocusCastbar
 end
 
-function FocusCastbar:OnInitialize()
-    self:UpdateDB()
-    self:SetEnabledState(false)
-end
-
 function FocusCastbar:CreateFrame()
     if self.coreFrame then return end
 
@@ -762,8 +757,6 @@ function FocusCastbar:OnUpdate(elapsed)
 end
 
 function FocusCastbar:OnEnable()
-    if not self.db.Enabled then return end
-
     self.textElapsed = 0
     self.kickElapsed = 0
     self.pips = {}

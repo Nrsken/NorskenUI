@@ -18,11 +18,6 @@ function Recuperate:UpdateDB()
     self.db = NRSKNUI.db.profile.Miscellaneous.Recuperate
 end
 
-function Recuperate:OnInitialize()
-    self:UpdateDB()
-    self:SetEnabledState(false)
-end
-
 function Recuperate:CreateButton()
     if self.button then return end
 
@@ -103,8 +98,6 @@ function Recuperate:UNIT_HEALTH(_, unit)
 end
 
 function Recuperate:OnEnable()
-    if not self.db.Enabled then return end
-
     -- Dealing with a secure button, so don't do anything until combat is over.
     NRSKNUI:RunWhenSafe(function()
         self:CreateButton()

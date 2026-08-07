@@ -1,8 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 ---@class UnitFramesModule
----@field frames table<string, oUF.UnitFrame>
----@field IndicatorDefs { key: string, element: string }[]
 local UF = NRSKNUI:GetModule('UnitFrames')
 ---@class NorskenUF
 local oUF = NRSKNUI.oUF
@@ -20,13 +18,26 @@ local UnregisterStateDriver = UnregisterStateDriver
 
 UF.Elements = UF.Elements or {} -- name -> { Construct, Configure }, populated by element files.
 
-function UF:UpdateDB()
-    self.db = NRSKNUI.db.profile.UnitFrames
+---Copies a colour out of the DB onto a frame field, reusing the frame's own table.
+---Never store the DB table itself: AceDB strips default-valued keys out of the old profile in place
+---during SetProfile, so a captured colour becomes an empty table the moment the profile changes and
+---every read of it after that hands nil to SetStatusBarColor.
+---@param owner table frame or element the colour is cached on
+---@param key string field name to cache under
+---@param src table {r, g, b, a} read from the DB
+---@return table cached
+function UF.CacheColor(owner, key, src)
+    local cached = owner[key]
+    if not cached then
+        cached = {}
+        owner[key] = cached
+    end
+    cached[1], cached[2], cached[3], cached[4] = src[1], src[2], src[3], src[4]
+    return cached
 end
 
-function UF:OnInitialize()
-    self:UpdateDB()
-    self:SetEnabledState(false)
+function UF:UpdateDB()
+    self.db = NRSKNUI.db.profile.UnitFrames
 end
 
 ---Global show tooltip handler for all unit frames.
@@ -358,7 +369,7 @@ function UF:OnEnable()
         self.styleRegistered = true
     end
 
-    NRSKNUI.AuraFilters:RegisterCallback(self, function(module) module:ReapplyAuraFilters() end)
+    NRSKNUI.AuraTriggers:RegisterCallback(self, function(module) module:ReapplyAuraFilters() end)
     NRSKNUI.AuraIndicators:RegisterCallback(self, function(module) module:ReapplyAuraIndicators() end)
 
     -- Deferring the spawn of units until combat has ended.
@@ -389,7 +400,7 @@ function UF:ApplySettings(configKey)
 end
 
 function UF:OnDisable()
-    NRSKNUI.AuraFilters:UnregisterCallback(self)
+    NRSKNUI.AuraTriggers:UnregisterCallback(self)
     NRSKNUI.AuraIndicators:UnregisterCallback(self)
     UF.Preview:ReleaseAll()
     NRSKNUI:RunWhenSafe(function()

@@ -1,97 +1,38 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 ---@class UnitFramesModule
----@field SoloUnits UnitFramesSoloUnits
----@field BossUnits UnitFramesBossUnits
----@field MAX_BOSS_FRAMES UnitFramesMaxBossFrames
----@field GroupConfigs table<string, boolean>
----@field GROUP_SIZE number
----@field frames table<string, oUF.UnitFrame>
----@field groups table<string, UnitFramesGroup>
----@field BaseLevels { Background: number, Bar: number }
----@field Layers { Min: number, Max: number, Highlight: number, Border: number }
----@field ReservedLayers table<number, boolean>
----@field TopLevels { Tags: number, Auras: number, RaidMark: number, Status: number }
 local UF = NRSKNUI:GetModule('UnitFrames')
+local L = NRSKNUI.Libs.AL
 
 local tonumber = tonumber
 local pairs = pairs
 local ipairs = ipairs
 local min, max = math.min, math.max
 
----@class UnitFramesSoloUnits
----@field player string
----@field target string
----@field targettarget string
----@field focus string
----@field focustarget string
----@field pet string
----@field pettarget string
-UF.SoloUnits = {
-    'player',
-    'target',
-    'targettarget',
-    'focus',
-    'focustarget',
-    'pet',
-    'pettarget',
-}
-
----@class UnitFramesMaxBossFrames
----@field MAX_BOSS_FRAMES number
 UF.MAX_BOSS_FRAMES = 8
-
----@class UnitFramesBossUnits
----@field boss1 string
----@field boss2 string
----@field boss3 string
----@field boss4 string
----@field boss5 string
----@field boss6 string
----@field boss7 string
----@field boss8 string
 UF.BossUnits = {}
-for index = 1, UF.MAX_BOSS_FRAMES do
-    UF.BossUnits[index] = 'boss' .. index
-end
+for index = 1, UF.MAX_BOSS_FRAMES do UF.BossUnits[index] = 'boss' .. index end
 
--- Header-driven units, keyed by config key: raid1..raid3 would collide with raid unit tokens.
-UF.GroupConfigs = {
-    party = true,
-}
+UF.GroupUnits = { 'party' }
+UF.GroupConfigs = {}
+for _, unit in ipairs(UF.GroupUnits) do UF.GroupConfigs[unit] = true end
 
-UF.GROUP_SIZE = 5 -- units per header column, i.e. one raid group
+UF.SoloUnits = { 'player', 'target', 'targettarget', 'focus', 'focustarget', 'pet', 'pettarget' }
+UF.Units = {}
+for _, unit in ipairs(UF.SoloUnits) do UF.Units[#UF.Units + 1] = unit end
 
-UF.frames = UF.frames or {} -- unit token -> oUF object, singleton units only
-UF.groups = UF.groups or {} -- config key -> { container, headers }, see Groups.lua
+UF.Units[#UF.Units + 1] = 'boss'
+for _, unit in ipairs(UF.GroupUnits) do UF.Units[#UF.Units + 1] = unit end
 
--- Below the layer scale and not user-selectable, relative to the unit frame.
-UF.BaseLevels = {
-    Background = 1,
-    Bar = 2,
-}
-
--- The user-selectable band. Layer N resolves to the unit frame's level + BaseLevels.Bar + N.
-UF.Layers = {
-    Min = 1,
-    Max = 12,
-    Highlight = 9, -- reserved, mouseover highlight
-    Border = 10,   -- reserved, frame border
-}
-
--- Layers the user must not claim, since the frame's own chrome owns them.
-UF.ReservedLayers = {
-    [UF.Layers.Highlight] = true,
-    [UF.Layers.Border] = true,
-}
-
--- Absolute levels for what draws above every unit frame layer, in ascending order.
-UF.TopLevels = {
-    Tags = 999,
-    Auras = 1000,
-    RaidMark = 1001,
-    Status = 1002,
-}
+UF.UnitLabels = { player = L['Player'], target = L['Target'], targettarget = L['Target of Target'], focus = L['Focus'], focustarget = L['Focus Target'], pet = L['Pet'], pettarget = L['Pet Target'], boss = L['Boss'], party = L['Party'], }
+UF.NoPower = { targettarget = true, focustarget = true, pettarget = true, }
+UF.GROUP_SIZE = 5
+UF.frames = UF.frames or {}
+UF.groups = UF.groups or {}
+UF.BaseLevels = { Background = 1, Bar = 2, }
+UF.Layers = { Min = 1, Max = 12, Highlight = 9, Border = 10, }
+UF.ReservedLayers = { [UF.Layers.Highlight] = true, [UF.Layers.Border] = true, }
+UF.TopLevels = { Tags = 999, Auras = 1000, RaidMark = 1001, Status = 1002, }
 
 ---Resolve a layer on UF.Layers to a concrete frame level for a unit frame.
 ---@param frame oUF.UnitFrame
@@ -100,6 +41,22 @@ UF.TopLevels = {
 function UF.GetLayerLevel(frame, layer)
     local layers = UF.Layers
     return frame:GetFrameLevel() + UF.BaseLevels.Bar + min(max(layer, layers.Min), layers.Max)
+end
+
+---Resolve an aura attach target to a region on a frame.
+---@param frame oUF.UnitFrame
+---@param attach string
+---@return Region?
+function UF.ResolveAttachTarget(frame, attach)
+    local targets = NRSKNUI.AuraIndicators.Attach
+
+    if attach == targets.Health then
+        return frame.Health
+    elseif attach == targets.HealthFill then
+        return frame.Health and frame.Health:GetStatusBarTexture()
+    end
+
+    return frame
 end
 
 ---Normalize a unit string to its base archetype, stripping any numeric suffixes.

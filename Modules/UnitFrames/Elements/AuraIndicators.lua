@@ -1,7 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 ---@class UnitFramesModule
----@field Elements UnitFramesElements
 local UF = NRSKNUI:GetModule('UnitFrames')
 ---@class NorskenUF
 local oUF = NRSKNUI.oUF
@@ -12,29 +11,13 @@ local CreateFrame = CreateFrame
 local ipairs = ipairs
 local pairs = pairs
 
----Resolve an indicator's attach target to a region on this frame.
----@param frame oUF.UnitFrame
----@param attach string
----@return Region?
-local function ResolveAttach(frame, attach)
-    local targets = AuraIndicators.Attach
-
-    if attach == targets.Health then
-        return frame.Health
-    elseif attach == targets.HealthFill then
-        return frame.Health and frame.Health:GetStatusBarTexture()
-    end
-
-    return frame
-end
-
 ---Point a handle's proxy at its attach target.
 ---@param frame oUF.UnitFrame
 ---@param handle table
 ---@param placement table
 ---@return boolean anchored
 local function AnchorProxy(frame, handle, placement)
-    local target = ResolveAttach(frame, placement.Attach)
+    local target = UF.ResolveAttachTarget(frame, placement.Attach)
     if not target then return false end
 
     local proxy = handle.proxy
@@ -57,8 +40,6 @@ local function Update(frame)
     local container = frame.nuiAuraIndicatorContainer
     if not container then return end
 
-    -- A healthFill attach resolves to nothing until Health's Configure has built the fill, so retry here
-    -- until it takes rather than leaving the indicator anchored to nothing.
     for _, handle in ipairs(frame.nuiAuraIndicators) do
         if not handle.anchored then
             handle.anchored = AnchorProxy(frame, handle, handle.placement)
@@ -70,17 +51,12 @@ local function Update(frame)
     container:UpdateAllAuras()
 end
 
----Enable the element on a frame.
 ---@param frame oUF.UnitFrame
 ---@return boolean
-local function Enable(frame)
-    return true
-end
+local function Enable(frame) return true end
 
 ---@param frame oUF.UnitFrame
-local function Disable(frame)
-    if frame.nuiAuraIndicatorContainer then frame.nuiAuraIndicatorContainer:Hide() end
-end
+local function Disable(frame) if frame.nuiAuraIndicatorContainer then frame.nuiAuraIndicatorContainer:Hide() end end
 
 oUF:AddElement('NRSKNAuraIndicators', Update, Enable, Disable)
 
@@ -103,9 +79,7 @@ local function SyncIndicators(frame, unit)
     local handles = frame.nuiAuraIndicators
 
     for _, placement in ipairs(placements) do
-        -- A spot with nothing assigned yet costs nothing until it has something to show.
         if placement.Keys[1] then
-            -- Deferred so a unit with no indicators never pays for a container.
             local container = frame.nuiAuraIndicatorContainer
             if not container then
                 container = frame:CreateAuraContainer()
@@ -192,7 +166,6 @@ UF.Elements.AuraIndicators = {
         local placement = previewed and uDB.AuraIndicators[previewed]
 
         for _, handle in ipairs(handles) do
-            -- An unpreviewable style keeps its real slots: taking them over would draw nothing.
             local on = placement ~= nil and handle.placement == placement
                 and AuraIndicators.Previewable[placement.Style] == true
 

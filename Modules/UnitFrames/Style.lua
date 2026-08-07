@@ -3,12 +3,7 @@ local NRSKNUI = select(2, ...)
 ---@class UnitFramesModule
 local UF = NRSKNUI:GetModule('UnitFrames')
 
--- Units that never get a power bar.
-local NO_POWER = {
-    targettarget = true,
-    focustarget = true,
-    pettarget = true,
-}
+local NO_POWER = UF.NoPower
 
 ---Build the oUF style for a unit frame, constructing and configuring elements as needed.
 ---@param frame oUF.UnitFrame
@@ -30,6 +25,7 @@ function UF:BuildStyle(frame, unit)
     self:ConstructElement('Indicators', frame, base)
     self:ConstructElement('Auras', frame, base)
     self:ConstructElement('AuraIndicators', frame, base)
+    self:ConstructElement('Dispel', frame, base)
     self:ConstructElement('Range', frame, base)
     if not NO_POWER[base] then
         self:ConstructElement('Power', frame, base)

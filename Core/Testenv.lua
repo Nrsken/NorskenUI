@@ -1,12 +1,31 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 
-function NRSKNUI:TestEnv()
-    --local frame = CreateFrame('Frame', 'NRSKNUI_TestenvFrame', UIParent)
-    --frame:NUISetPixelSize(300, 300)
-    --frame:NUISetPixelPoint('CENTER', UIParent, 'CENTER', 0, 0)
-    --frame:Show()
+--[[ do
+    local frame = CreateFrame('Frame', 'NRSKNUI_TestenvFrame', UIParent)
+    frame:RegisterEvent("ADDON_LOADED")
+    frame:RegisterEvent("PLAYER_LOGIN")
+    frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+    frame:RegisterEvent("LOADING_SCREEN_ENABLED")
+    frame:RegisterEvent("LOADING_SCREEN_DISABLED")
 
+    frame:SetScript("OnEvent", function(_, event, ...)
+        if event == "ADDON_LOADED" then
+            local addonName = ...
+            print("ADDON_LOADED", addonName)
+        elseif event == "PLAYER_LOGIN" then
+            print("PLAYER_LOGIN")
+        elseif event == "PLAYER_ENTERING_WORLD" then
+            print("PLAYER_ENTERING_WORLD")
+        elseif event == "LOADING_SCREEN_ENABLED" then
+            print("LOADING_SCREEN_ENABLED")
+        elseif event == "LOADING_SCREEN_DISABLED" then
+            print("LOADING_SCREEN_DISABLED")
+        end
+    end)
+end ]]
+
+function NRSKNUI:TestEnvB()
     --[[ Safe auras
         [160455] = true, -- Hunter Pet Fatigued
         [26013] = true,  -- Deserter
