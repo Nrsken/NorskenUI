@@ -2,6 +2,8 @@
 local NRSKNUI = select(2, ...)
 ---@class MinimapModule
 local Map = NRSKNUI:GetModule('Minimap')
+function Map:UpdateDB() self.db = NRSKNUI.db.profile.Skinning.Minimap end
+
 local Theme = NRSKNUI.Theme
 local Anchors = NRSKNUI.Anchors
 
@@ -33,11 +35,6 @@ local hooked = {
 
 local lastAppliedSize = nil
 local pendingSizeRefresh = false
-local pendingCombatUpdate = false
-
-function Map:UpdateDB()
-    self.db = NRSKNUI.db.profile.Skinning.Minimap
-end
 
 function Map:OnEnable()
     if NRSKNUI:ShouldNotLoadModule() then return end

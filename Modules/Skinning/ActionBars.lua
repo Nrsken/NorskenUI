@@ -1,13 +1,9 @@
--- NRSKNUI namespace
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
+---@class ActionBarsModule
+local ACB = NRSKNUI:GetModule('ActionBars')
+function ACB:UpdateDB() self.db = NRSKNUI.db.profile.Skinning.ActionBars end
 
--- Check for addon object
--- Create module
----@class ActionBars: AceModule, AceEvent-3.0
-local ACB = NRSKNUI:NewModule("ActionBars", "AceEvent-3.0")
-
--- Localization
 local CreateFrame = CreateFrame
 local ipairs = ipairs
 local pairs = pairs
@@ -99,11 +95,6 @@ local function BuildBarConfig(barKey, barDB, globalMouseover)
             alpha = mouseoverAlpha,
         }
     }
-end
-
--- Update db, used for profile changes
-function ACB:UpdateDB()
-    self.db = NRSKNUI.db.profile.Skinning.ActionBars
 end
 
 -- Module init

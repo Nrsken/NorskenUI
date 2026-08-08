@@ -56,6 +56,49 @@ local function BuildHideMiscElementsTab(page, db)
     })
 end
 
+-- Whisper Sounds Tab.
+local function BuildWhisperSoundsTab(page, db)
+    local ws = db.WhisperSounds
+    page:SetCondition('whisperSounds', function() return ws.Enabled end)
+
+    local enableCard = page:Card(L['Whisper Sound Alerts'], 'all')
+    local enableRow = enableCard:Row(rowHL, 0)
+    enableRow:Checkbox(L['Enable Whisper Sounds'], {
+        width = 1,
+        value = ws.Enabled,
+        callback = function(checked)
+            ws.Enabled = checked
+            ApplySettings()
+            page:Refresh()
+        end,
+    })
+
+    local soundCard = page:Card(L['Sound Selection'], 'all')
+    local sounds = {
+        { label = L['Whisper Sound'],          dbKey = 'WhisperSound' },
+        { label = L['Battle.net Whisper Sound'], dbKey = 'BNetWhisperSound', last = true },
+    }
+
+    for _, sound in ipairs(sounds) do
+        local row = soundCard:Row(sound.last and rowHL or rowH, sound.last and 0 or nil)
+        row:Dropdown(sound.label, {
+            width = 0.6,
+            media = 'sound',
+            searchable = true,
+            conditions = { 'whisperSounds' },
+            value = ws[sound.dbKey],
+            callback = function(key) ws[sound.dbKey] = key end,
+        })
+        row:Button(L['Test'], {
+            width = 0.4,
+            yOffset = -14,
+            height = 24,
+            conditions = { 'whisperSounds' },
+            callback = function() NRSKNUI:PlaySafeSound(ws[sound.dbKey]) end,
+        })
+    end
+end
+
 -- Misc Tweaks Tab.
 local function BuildMiscTweaksTab(page, db)
     local miscCard = page:Card(L['Misc Tweaks'], 'all')
@@ -80,6 +123,7 @@ GUI:RegisterPage('tweaks', {
         { id = 'general', text = L['General Settings'] },
         { id = 'hide',    text = L['Hide Misc Elements'] },
         { id = 'misc',    text = L['Misc Tweaks'] },
+        { id = 'whisper', text = L['Whisper Sounds'] },
     },
     build = function(page, tabId)
         local db = NRSKNUI.db.profile.Miscellaneous.Tweaks
@@ -92,6 +136,8 @@ GUI:RegisterPage('tweaks', {
             BuildHideMiscElementsTab(page, db)
         elseif tabId == 'misc' then
             BuildMiscTweaksTab(page, db)
+        elseif tabId == 'whisper' then
+            BuildWhisperSoundsTab(page, db)
         end
     end,
 })

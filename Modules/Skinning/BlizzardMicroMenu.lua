@@ -1,8 +1,8 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
-
----@class MicroMenu: AceModule, AceEvent-3.0
-local MM = NRSKNUI:NewModule("MicroMenu", "AceEvent-3.0")
+---@class MicroMenuModule
+local MM = NRSKNUI:GetModule('MicroMenu')
+function MM:UpdateDB() self.db = NRSKNUI.db.profile.Skinning.MicroMenu end
 
 local UIFrameFadeOut = UIFrameFadeOut
 local UIFrameFadeIn = UIFrameFadeIn
@@ -31,10 +31,6 @@ local microButtons = {
 
 local hooksApplied = false
 local microBar
-
-function MM:UpdateDB()
-    self.db = NRSKNUI.db.profile.Skinning.MicroMenu
-end
 
 function MM:OnEnable()
     if NRSKNUI:ShouldNotLoadModule() then return end

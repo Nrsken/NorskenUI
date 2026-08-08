@@ -1,6 +1,5 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
-
 ---@class ChatMessageHandler
 local CMH = {}
 NRSKNUI.ChatMessageHandler = CMH

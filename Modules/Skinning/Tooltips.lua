@@ -2,6 +2,8 @@
 local NRSKNUI = select(2, ...)
 ---@class TooltipsModule
 local Tooltips = NRSKNUI:GetModule('Tooltips')
+function Tooltips:UpdateDB() self.db = NRSKNUI.db.profile.Skinning.Tooltips end
+
 local Anchors = NRSKNUI.Anchors
 
 local EnumerateFrames = EnumerateFrames
@@ -96,10 +98,6 @@ local guildRankFormat = '<%s> [%s]'
 
 local skinnedFrames = {}     -- Every frame we put a backdrop on, so GUI color changes can be reapplied.
 local statusBarTooltips = {} -- Tooltips with a StatusBar
-
-function Tooltips:UpdateDB()
-    self.db = NRSKNUI.db.profile.Skinning.Tooltips
-end
 
 -- True while the configured override modifier is held.
 ---@return boolean

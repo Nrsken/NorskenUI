@@ -1340,6 +1340,7 @@ local Defaults = {
                 TabSelectedTextEnabled = true,                    -- Use custom color for selected tab text
                 TabSelectedTextColor = { r = 1, g = 0.5, b = 0 }, -- Selected tab text color
                 TabTextColor = { r = 0.57, g = 0.57, b = 0.57 },  -- Default tab text color
+                TabTextColorMode = "custom",                      -- class | custom | theme
                 TabFontFace = nil,                                -- Tab font face (nil = use STANDARD_TEXT_FONT)
                 TabFontOutline = "OUTLINE",                       -- Tab font outline
                 anchorFrameType = "UIPARENT",

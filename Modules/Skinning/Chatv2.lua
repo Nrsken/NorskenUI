@@ -1,10 +1,7 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
-
----@class Chatv2: AceModule, AceEvent-3.0, AceHook-3.0
-local CHAT = NRSKNUI:NewModule("Chatv2", "AceEvent-3.0", "AceHook-3.0")
-
-local LSM = NRSKNUI.Libs.LSM
+---@class Chatv2Module
+local CHAT = NRSKNUI:GetModule('Chatv2')
 local Theme = NRSKNUI.Theme
 
 local CreateFrame = CreateFrame

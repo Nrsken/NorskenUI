@@ -60,6 +60,9 @@
 ---@class GearUtilityModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class AuraDisplayModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class BlizzardMessagesModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class ActionBarsModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class Chatv2Module : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class MicroMenuModule : NRSKNUI.ModuleBase, AceEvent-3.0
 
 -- The handles Core/Init.lua hangs off the addon table. Declared here so the field and the accessor
 -- that fills it agree on a type: without these the field takes whatever the assignment inferred.
@@ -93,6 +96,9 @@
 ---@field CombatCursor CombatCursorModule
 ---@field FocusCastbar FocusCastbarModule
 ---@field BlizzardMessages BlizzardMessagesModule
+---@field ActionBars ActionBarsModule
+---@field Chatv2 Chatv2Module
+---@field MicroMenu MicroMenuModule
 
 -- Typed accessors. Overloads dispatch on the literal module name.
 
@@ -128,6 +134,9 @@ local NRSKNUI
 ---@overload fun(self: NRSKNUI, name: "GearUtility", silent?: boolean): GearUtilityModule
 ---@overload fun(self: NRSKNUI, name: "AuraDisplay", silent?: boolean): AuraDisplayModule
 ---@overload fun(self: NRSKNUI, name: "BlizzardMessages", silent?: boolean): BlizzardMessagesModule
+---@overload fun(self: NRSKNUI, name: "ActionBars", silent?: boolean): ActionBarsModule
+---@overload fun(self: NRSKNUI, name: "Chatv2", silent?: boolean): Chatv2Module
+---@overload fun(self: NRSKNUI, name: "MicroMenu", silent?: boolean): MicroMenuModule
 ---@param name string
 ---@param silent? boolean
 ---@return AceModule
@@ -162,6 +171,9 @@ function NRSKNUI:GetModule(name, silent) end
 ---@overload fun(self: NRSKNUI, name: "GearUtility", ...: string): GearUtilityModule
 ---@overload fun(self: NRSKNUI, name: "AuraDisplay", ...: string): AuraDisplayModule
 ---@overload fun(self: NRSKNUI, name: "BlizzardMessages", ...: string): BlizzardMessagesModule
+---@overload fun(self: NRSKNUI, name: "ActionBars", ...: string): ActionBarsModule
+---@overload fun(self: NRSKNUI, name: "Chatv2", ...: string): Chatv2Module
+---@overload fun(self: NRSKNUI, name: "MicroMenu", ...: string): MicroMenuModule
 ---@param name string
 ---@param ... string
 ---@return AceModule
