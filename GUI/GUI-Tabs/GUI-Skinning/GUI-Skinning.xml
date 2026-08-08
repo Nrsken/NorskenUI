@@ -3,6 +3,7 @@
 
     <Script file='GUI-ActionBars.lua'/>
     <Script file='GUI-Chat.lua'/>
+    <Script file='GUI-DetailsBackdrop.lua'/>
     <Script file='GUI-MicroMenu.lua'/>
     <Script file='GUI-Minimap.lua'/>
     <Script file='GUI-Tooltips.lua'/>

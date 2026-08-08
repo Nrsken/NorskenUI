@@ -169,7 +169,9 @@ function Frame:NUIStripTextures(stripType, a, b) end
 ---Build a pixel-perfect backdrop (bg + 4 border edges) and mix in the backdrop API.
 ---
 ---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#createbackdrop)
-function Frame:NUICreateBackdrop(noBorders) end
+---@param noBorders? boolean skip the four border edges, for frames that draw their own
+---@param inset? number pixel inset of the bg and edges from the frame's rect, defaults to 1
+function Frame:NUICreateBackdrop(noBorders, inset) end
 
 ---Return true if a NorskenUI backdrop was already added.
 ---
@@ -237,7 +239,9 @@ function Button:NUIStripTextures(stripType, a, b) end
 ---Build a pixel-perfect backdrop (bg + 4 border edges) and mix in the backdrop API.
 ---
 ---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#createbackdrop)
-function Button:NUICreateBackdrop(noBorders) end
+---@param noBorders? boolean skip the four border edges, for frames that draw their own
+---@param inset? number pixel inset of the bg and edges from the frame's rect, defaults to 1
+function Button:NUICreateBackdrop(noBorders, inset) end
 
 ---Return true if a NorskenUI backdrop was already added.
 ---
@@ -291,7 +295,9 @@ function StatusBar:NUIStripTextures(stripType, a, b) end
 ---Build a pixel-perfect backdrop (bg + 4 border edges) and mix in the backdrop API.
 ---
 ---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#createbackdrop)
-function StatusBar:NUICreateBackdrop(noBorders) end
+---@param noBorders? boolean skip the four border edges, for frames that draw their own
+---@param inset? number pixel inset of the bg and edges from the frame's rect, defaults to 1
+function StatusBar:NUICreateBackdrop(noBorders, inset) end
 
 ---Return true if a NorskenUI backdrop was already added.
 ---

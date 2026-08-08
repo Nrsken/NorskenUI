@@ -10,4 +10,5 @@
     <Script file='BlizzardMicroMenu.lua' />
     <Script file='ChatMessageHandler.lua' />
     <Script file='Chatv2.lua' />
+    <Script file='DetailsBackdrop.lua' />
 </Ui>

@@ -2356,7 +2356,6 @@
 ---@field [string] any
 ---@field Enabled boolean
 ---@field backdrops NRSKNUI.DBProfile.Skinning.DetailsBackdrop.backdrops
----@field currentEdit number
 
 ---@class NRSKNUI.DBProfile.Skinning.DetailsBackdrop.backdrops
 ---@field [string] any

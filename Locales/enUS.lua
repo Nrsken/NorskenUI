@@ -1217,3 +1217,21 @@ L['Enable Whisper Sounds'] = true
 L['Sound Selection'] = true
 L['Whisper Sound'] = true
 L['Battle.net Whisper Sound'] = true
+
+-- Skinning: Details Backdrop --
+L['Details Backdrop'] = true
+L['Details Backdrop %d'] = true
+L['Enable Details Backdrop'] = true
+L['Enable This Backdrop'] = true
+L['About Details Backdrops'] = true
+L['Draws a NorskenUI backdrop behind each of your Details windows'] = true
+L['Each backdrop is configured on its own page and can be moved with the anchors'] = true
+L['Auto size resizes the Details window itself to sit inside the backdrop'] = true
+L['Size Mode'] = true
+L['Auto Size To Details Window'] = true
+L['Amount Of Bars To Show'] = true
+L['Backdrop Width'] = true
+L['Backdrop Height'] = true
+L['Details Override'] = true
+L['This will override your current Details sizing. Are you sure?'] = true
+L['Yes'] = true

@@ -96,11 +96,12 @@ GUIFrame.SidebarConfig = {
             text = L['Skinning'],
             defaultExpanded = false,
             items = {
-                { id = 'actionBars', text = L['Action Bars'] },
-                { id = 'chat',       text = L['Chat'] },
-                { id = 'microMenu',  text = L['Micro Menu'] },
-                { id = 'minimap',    text = L['Minimap'] },
-                { id = 'tooltip',    text = L['Tooltips'] },
+                { id = 'actionBars',      text = L['Action Bars'] },
+                { id = 'chat',            text = L['Chat'] },
+                { id = 'detailsBackdrop', text = L['Details Backdrop'] },
+                { id = 'microMenu',       text = L['Micro Menu'] },
+                { id = 'minimap',         text = L['Minimap'] },
+                { id = 'tooltip',         text = L['Tooltips'] },
             }
         },
         {

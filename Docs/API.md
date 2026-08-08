@@ -65,11 +65,15 @@ tooltip.CompareHeader:NUIStripTextures('Atlas', 'tooltip-compare-label')
 ## NUICreateBackdrop
 
 ```lua
-frame:NUICreateBackdrop(template?)
+frame:NUICreateBackdrop(noBorders?, inset?)
 ```
 
 Mixes `PublicBackdropMixin` onto `frame` and builds a pixel-perfect backdrop:
 a `BACKGROUND` fill plus four `BORDER` edge textures.
+
+`noBorders` skips the four edges, for frames that draw their own. `inset` is how far
+the fill and edges sit inside the frame's rect, in pixels; it defaults to `1`, and `0`
+makes them flush with the frame.
 
 Installs `SetBackgroundColor`, `SetBorderColor`, `UpdateBackdropFromDB`, `ToggleBackdrop`.
 

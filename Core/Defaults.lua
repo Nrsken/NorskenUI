@@ -2091,7 +2091,6 @@ local Defaults = {
             -- Details Backdrop Settings
             DetailsBackdrop = {
                 Enabled = true,
-                currentEdit = 1,
                 backdrops = {
                     [1] = {
                         Enabled = true,

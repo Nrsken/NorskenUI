@@ -158,6 +158,7 @@ NRSKNUI.Minimap = NRSKNUI:NewModule('Minimap', 'AceEvent-3.0')
 NRSKNUI.ActionBars = NRSKNUI:NewModule('ActionBars', 'AceEvent-3.0')
 NRSKNUI.Chatv2 = NRSKNUI:NewModule('Chatv2', 'AceEvent-3.0', 'AceHook-3.0')
 NRSKNUI.MicroMenu = NRSKNUI:NewModule('MicroMenu', 'AceEvent-3.0')
+NRSKNUI.DetailsBackdrop = NRSKNUI:NewModule('DetailsBackdrop', 'AceEvent-3.0')
 
 -- Class Utility Modules
 NRSKNUI.Gateway = NRSKNUI:NewModule('Gateway', 'AceEvent-3.0')
