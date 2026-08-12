@@ -36,6 +36,21 @@ function NRSKNUI:PrintPoolStats()
     end
 end
 
+---Wipes the saved GUI window position/size and snaps the live window back to its defaults.
+function NRSKNUI:ResetGUIState()
+    -- Rebuild the saved state rather than nil it, AceDB only refills defaults on load.
+    if self.db and self.db.global then
+        self.db.global.GUIState = { frame = {} }
+    end
+
+    local GUIFrame = self.GUIFrame
+    if GUIFrame and GUIFrame.ResetPosition then
+        GUIFrame:ResetPosition()
+    end
+
+    self:Print('GUI position and size reset to defaults.')
+end
+
 -- Setup slash commands
 function NRSKNUI:SetupSlashCommands()
     SLASH_NRSKNUI1 = '/nui'
@@ -54,6 +69,8 @@ function NRSKNUI:SetupSlashCommands()
             end
         elseif msg == 'poolstats' then
             NRSKNUI:PrintPoolStats()
+        elseif msg == 'guireset' then
+            NRSKNUI:ResetGUIState()
         end
     end
 

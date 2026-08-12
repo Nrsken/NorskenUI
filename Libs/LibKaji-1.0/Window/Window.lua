@@ -447,6 +447,17 @@ function WindowMixin:RestorePosition()
     end
 end
 
+---Snaps the window back to the anchor and size it was created with, then persists that.
+---The frame is not clamped to the screen, so this is the escape hatch for one dragged out of view.
+function WindowMixin:ResetPosition()
+    self.frame:ClearAllPoints()
+    pixel.SetPixelPoint(self.frame, "CENTER", UIParent, "CENTER", 0, 50)
+    pixel.SetPixelSize(self.frame, self._defW, self._defH)
+    -- The saved position is now the default one, so a later Show has nothing left to restore.
+    self._restored = true
+    self:SavePosition()
+end
+
 -- Constructor --
 
 ---@class KajiGUIWindowOptions
@@ -505,6 +516,7 @@ function InstanceMixin:CreateGUIWindow(opts)
     window._onCombatDefer = opts.onCombatDefer
     window._currentId = opts.defaultPage
     window._minW, window._minH = minW, minH
+    window._defW, window._defH = w, h
     window._headerCursor = -(theme.paddingSmall + 2) -- running right edge for header buttons
     window._footerCursor = theme.paddingMedium       -- running left edge for footer socials
     window.inCombat = InCombatLockdown() and true or false

@@ -92,12 +92,15 @@ local function SetupMinimapIcon()
                 if NRSKNUI.Anchors then
                     NRSKNUI.Anchors:Toggle()
                 end
+            elseif button == 'MiddleButton' then
+                NRSKNUI:ResetGUIState()
             end
         end,
         OnTooltipShow = function(tt)
             tt:AddLine(NRSKNUI:ColorTextByTheme('Norsken') .. '|cffb3b3b3UI|r')
             tt:AddLine('Left-Click to open options', 0.70, 0.70, 0.70)
             tt:AddLine('Right-Click to toggle anchors', 0.70, 0.70, 0.70)
+            tt:AddLine('Middle-Click to reset the options window position', 0.70, 0.70, 0.70)
         end,
     })
     local minimapDB = NRSKNUI.db.profile.Minimap
