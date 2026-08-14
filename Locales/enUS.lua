@@ -571,6 +571,23 @@ L['Broken Text'] = true
 L['Broken Color'] = true
 L['Threshold %'] = true
 
+-- QoL: Gear Util
+L['Gear Util'] = true
+L['Enable Gear Util'] = true
+L['Adds upgrade track letters to the character panel gear slots.'] = true
+L['Adds a bar next to the character tabs for socketing gems and applying enchants from your bags.'] = true
+L['Item Track Indicators'] = true
+L['Show Item Track Letters'] = true
+L['Shows |cffFF8000M|r / |cffC74DC7H|r / |cff00B3FFC|r / |cff00CC00V|r / |cffFFFFFFA|r on the equipped gear slots for the Myth, Hero, Champion, Veteran and Adventurer tracks.'] = true
+L['Gem Sockets'] = true
+L['Enable Gem Socket Helper'] = true
+L['Shows the sockets of your equipped gear, click one to pick a gem from your bags.'] = true
+L['Show Only Empty Sockets'] = true
+L['Hide sockets that already have a gem in them.'] = true
+L['Enchants'] = true
+L['Enable Enchant Helper'] = true
+L['Adds a button to the socket bar that applies enchants from your bags, highlighting the slots each one fits.'] = true
+
 -- Unit Frames GUI
 L['Unit Frames'] = true
 L['General'] = true

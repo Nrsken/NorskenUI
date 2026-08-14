@@ -9,4 +9,5 @@
     <Script file='GUI-Recuperate.lua'/>
     <Script file='GUI-Tweaks.lua'/>
     <Script file='GUI-DurabilityUtil.lua'/>
+    <Script file='GUI-GearUtil.lua'/>
 </Ui>

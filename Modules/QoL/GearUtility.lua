@@ -1070,8 +1070,16 @@ end
 function Gear:ApplySettings()
     if not self.db.Enabled then return end
 
+    if self.db.Sockets.Enabled or self.db.Enchants.Enabled then self:CreateSocketBar() end
+    if self.db.Sockets.Enabled then self:CreateGemPopup() end
+    if self.db.Enchants.Enabled then self:CreateEnchantPopup() end
+
     if PaperDollFrame and PaperDollFrame:IsShown() then
-        self:UpdateAllTrackIndicators()
+        if self.db.TrackIndicators.Enabled then
+            self:UpdateAllTrackIndicators()
+        else
+            self:HideAllTrackIndicators()
+        end
         self:RefreshSocketBar()
     end
 end

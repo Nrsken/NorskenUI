@@ -88,6 +88,7 @@ GUIFrame.SidebarConfig = {
                 { id = 'recuperate',         text = L['Recuperate Button'] },
                 { id = 'tweaks',             text = L['Tweaks'] },
                 { id = 'durabilityUtil',     text = L['Durability Util'] },
+                { id = 'gearUtil',           text = L['Gear Util'] },
             }
         },
         {
