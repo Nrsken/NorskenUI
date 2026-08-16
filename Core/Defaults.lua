@@ -1097,7 +1097,68 @@ local Defaults = {
                 AutoBonusRollQuest = false,
                 AutoBonusRollMode = 'Gold', -- 'Gold' | 'Marl' | 'Crest'
             },
-
+            SkyRiding = {
+                -- General Settings
+                Enabled = true,
+                -- Frame settings
+                Strata = "MEDIUM",
+                Position = {
+                    AnchorFrom = "BOTTOM",
+                    AnchorTo = "CENTER",
+                    XOffset = 0,
+                    YOffset = 345,
+                },
+                Width = 314,
+                BarHeight = 6,
+                Grow = "UP",
+                Spacing = 3,
+                PillSpacing = 3,
+                -- Texture settings
+                UseGlobalBar = true,
+                StatusBarTexture = "NorskenUI",
+                -- Backdrop
+                BackgroundColor = { 0, 0, 0, 0.8 },
+                BorderEnabled = true,
+                BorderColor = { 0, 0, 0, 1 },
+                -- Vigor row
+                Vigor = {
+                    Enabled = true,
+                    ColorMode = "custom",
+                    Color = { 0.898, 0.063, 0.224, 1 },
+                    ThrillEnabled = true,
+                    ThrillColorMode = "custom",
+                    ThrillColor = { 0, 1, 0.137, 1 },
+                },
+                -- Whirling Surge row
+                WhirlingSurge = {
+                    Enabled = true,
+                    ColorMode = "custom",
+                    Color = { 0.411, 0.8, 0.941, 1 },
+                },
+                -- Second Wind row
+                SecondWind = {
+                    Enabled = true,
+                    ColorMode = "custom",
+                    Color = { 0.917, 0.168, 0.901, 1 },
+                },
+                -- Speed text
+                SpeedText = {
+                    Enabled = true,
+                    UseGlobalFont = true,
+                    FontFace = "Expressway",
+                    FontSize = 16,
+                    FontOutline = "OUTLINE",
+                    TextColor = { 1, 1, 1, 1 },
+                    XOffset = 0,
+                    YOffset = 2,
+                    FontShadow = {
+                        Enabled = false,
+                        Color = { 0, 0, 0, 1 },
+                        OffsetX = 1,
+                        OffsetY = -1,
+                    },
+                },
+            },
             Tweaks = {
                 Enabled = true,
                 HideTalkingHead = true,

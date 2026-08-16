@@ -588,6 +588,30 @@ L['Enchants'] = true
 L['Enable Enchant Helper'] = true
 L['Adds a button to the socket bar that applies enchants from your bags, highlighting the slots each one fits.'] = true
 
+-- QoL: Skyriding UI
+L['Skyriding UI'] = true
+L['Enable Skyriding UI'] = true
+L['Bars'] = true
+L['Show Vigor'] = true
+L['Show Whirling Surge'] = true
+L['Show Second Wind'] = true
+L['Recolor On Thrill Of The Skies'] = true
+L['Row Spacing'] = true
+L['Pill Spacing'] = true
+L['Grow Direction'] = true
+L['Bar Colors'] = true
+L['Vigor Color Mode'] = true
+L['Custom Vigor Color'] = true
+L['Thrill Color Mode'] = true
+L['Custom Thrill Color'] = true
+L['Whirling Surge Color Mode'] = true
+L['Custom Whirling Surge Color'] = true
+L['Second Wind Color Mode'] = true
+L['Custom Second Wind Color'] = true
+L['Speed Text'] = true
+L['Show Speed Text'] = true
+L['Speed Text Font'] = true
+
 -- Unit Frames GUI
 L['Unit Frames'] = true
 L['General'] = true

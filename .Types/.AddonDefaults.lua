@@ -914,6 +914,7 @@
 ---@field Gateway NRSKNUI.DBProfile.Miscellaneous.Gateway
 ---@field MiscVars NRSKNUI.DBProfile.Miscellaneous.MiscVars
 ---@field Recuperate NRSKNUI.DBProfile.Miscellaneous.Recuperate
+---@field SkyRiding NRSKNUI.DBProfile.Miscellaneous.SkyRiding
 ---@field SpellAlert NRSKNUI.DBProfile.Miscellaneous.SpellAlert
 ---@field Tweaks NRSKNUI.DBProfile.Miscellaneous.Tweaks
 ---@field WayFinder NRSKNUI.DBProfile.Miscellaneous.WayFinder
@@ -1185,6 +1186,73 @@
 ---@field AnchorTo string
 ---@field XOffset number
 ---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Miscellaneous.SkyRiding
+---@field [string] any
+---@field BackgroundColor table
+---@field BarHeight number
+---@field BorderColor table
+---@field BorderEnabled boolean
+---@field Enabled boolean
+---@field Grow string
+---@field PillSpacing number
+---@field Position NRSKNUI.DBProfile.Miscellaneous.SkyRiding.Position
+---@field SecondWind NRSKNUI.DBProfile.Miscellaneous.SkyRiding.SecondWind
+---@field Spacing number
+---@field SpeedText NRSKNUI.DBProfile.Miscellaneous.SkyRiding.SpeedText
+---@field StatusBarTexture string
+---@field Strata string
+---@field UseGlobalBar boolean
+---@field Vigor NRSKNUI.DBProfile.Miscellaneous.SkyRiding.Vigor
+---@field WhirlingSurge NRSKNUI.DBProfile.Miscellaneous.SkyRiding.WhirlingSurge
+---@field Width number
+
+---@class NRSKNUI.DBProfile.Miscellaneous.SkyRiding.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Miscellaneous.SkyRiding.SecondWind
+---@field [string] any
+---@field Color table
+---@field ColorMode string
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.Miscellaneous.SkyRiding.SpeedText
+---@field [string] any
+---@field Enabled boolean
+---@field FontFace string
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.Miscellaneous.SkyRiding.SpeedText.FontShadow
+---@field FontSize number
+---@field TextColor table
+---@field UseGlobalFont boolean
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Miscellaneous.SkyRiding.SpeedText.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field OffsetY number
+
+---@class NRSKNUI.DBProfile.Miscellaneous.SkyRiding.Vigor
+---@field [string] any
+---@field Color table
+---@field ColorMode string
+---@field Enabled boolean
+---@field ThrillColor table
+---@field ThrillColorMode string
+---@field ThrillEnabled boolean
+
+---@class NRSKNUI.DBProfile.Miscellaneous.SkyRiding.WhirlingSurge
+---@field [string] any
+---@field Color table
+---@field ColorMode string
+---@field Enabled boolean
 
 ---@class NRSKNUI.DBProfile.Miscellaneous.SpellAlert
 ---@field [string] any
@@ -2289,6 +2357,7 @@
 ---@field TabSelector string
 ---@field TabSelectorColor NRSKNUI.DBProfile.Skinning.Chatv2.TabSelectorColor
 ---@field TabTextColor NRSKNUI.DBProfile.Skinning.Chatv2.TabTextColor
+---@field TabTextColorMode string
 ---@field TimestampColor NRSKNUI.DBProfile.Skinning.Chatv2.TimestampColor
 ---@field TimestampColorEnabled boolean
 ---@field TimestampFormat string

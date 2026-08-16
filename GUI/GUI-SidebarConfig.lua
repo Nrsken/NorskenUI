@@ -89,6 +89,7 @@ GUIFrame.SidebarConfig = {
                 { id = 'tweaks',             text = L['Tweaks'] },
                 { id = 'durabilityUtil',     text = L['Durability Util'] },
                 { id = 'gearUtil',           text = L['Gear Util'] },
+                { id = 'skyRiding',          text = L['Skyriding UI'] },
             }
         },
         {

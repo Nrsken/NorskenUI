@@ -10,4 +10,5 @@
     <Script file="AuctionHouseFilter.lua"/>
     <Script file="Recuperate.lua"/>
     <Script file="GearUtility.lua"/>
+    <Script file="SkyRiding.lua"/>
 </Ui>

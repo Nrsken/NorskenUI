@@ -10,4 +10,5 @@
     <Script file='GUI-Tweaks.lua'/>
     <Script file='GUI-DurabilityUtil.lua'/>
     <Script file='GUI-GearUtil.lua'/>
+    <Script file='GUI-SkyRiding.lua'/>
 </Ui>

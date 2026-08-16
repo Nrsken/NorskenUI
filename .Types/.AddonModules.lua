@@ -64,6 +64,7 @@
 ---@class Chatv2Module : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class MicroMenuModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class DetailsBackdropModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class SkyRidingModule : NRSKNUI.ModuleBase, AceEvent-3.0
 
 -- The handles Core/Init.lua hangs off the addon table. Declared here so the field and the accessor
 -- that fills it agree on a type: without these the field takes whatever the assignment inferred.
@@ -101,6 +102,7 @@
 ---@field Chatv2 Chatv2Module
 ---@field MicroMenu MicroMenuModule
 ---@field DetailsBackdrop DetailsBackdropModule
+---@field SkyRiding SkyRidingModule
 
 -- Typed accessors. Overloads dispatch on the literal module name.
 
@@ -140,6 +142,7 @@ local NRSKNUI
 ---@overload fun(self: NRSKNUI, name: "Chatv2", silent?: boolean): Chatv2Module
 ---@overload fun(self: NRSKNUI, name: "MicroMenu", silent?: boolean): MicroMenuModule
 ---@overload fun(self: NRSKNUI, name: "DetailsBackdrop", silent?: boolean): DetailsBackdropModule
+---@overload fun(self: NRSKNUI, name: "SkyRiding", silent?: boolean): SkyRidingModule
 ---@param name string
 ---@param silent? boolean
 ---@return AceModule
@@ -178,6 +181,7 @@ function NRSKNUI:GetModule(name, silent) end
 ---@overload fun(self: NRSKNUI, name: "Chatv2", ...: string): Chatv2Module
 ---@overload fun(self: NRSKNUI, name: "MicroMenu", ...: string): MicroMenuModule
 ---@overload fun(self: NRSKNUI, name: "DetailsBackdrop", ...: string): DetailsBackdropModule
+---@overload fun(self: NRSKNUI, name: "SkyRiding", ...: string): SkyRidingModule
 ---@param name string
 ---@param ... string
 ---@return AceModule
