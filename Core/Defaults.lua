@@ -513,46 +513,6 @@ local Defaults = {
             BackdropHeight = 4,
         },
 
-        -- Burning Rush Tracker (Warlock)
-        BurningRush = {
-            Enabled = false,
-            IconSize = 40,
-
-            -- Glow
-            GlowEnabled = true,
-            GlowType = "pixel",
-            GlowColor = { 1, 0.5, 0, 1 },
-
-            -- Glow Shared Settings
-            GlowXOffset = 0,
-            GlowYOffset = 0,
-
-            -- Pixel Glow Specific
-            GlowLines = 5,
-            GlowFrequency = 0.25,
-            GlowLength = 10,
-            GlowThickness = 2,
-            GlowBorder = true,
-
-            -- AutoCast Specific
-            GlowScale = 1,
-
-            -- Proc Specific
-            GlowDuration = 1,
-            GlowStartAnim = false,
-
-            -- Position
-            Strata = "HIGH",
-            anchorFrameType = "UIPARENT",
-            ParentFrame = "UIParent",
-            Position = {
-                AnchorFrom = "CENTER",
-                AnchorTo = "CENTER",
-                XOffset = 0,
-                YOffset = -50,
-            },
-        },
-
         -- Reap Free Cast
         ReckonTracker = {
             Enabled = false,
@@ -637,34 +597,6 @@ local Defaults = {
                 AnchorTo = "CENTER",
                 XOffset = 0,
                 YOffset = -50,
-            },
-        },
-
-        -- Totem Tracker
-        TotemTracker = {
-            Enabled = true,
-            IconSize = 44,
-            IconSpacing = 1,
-            GrowDirection = "RIGHT",
-            ShowTimer = true,
-            Swipe = false,
-            Reverse = false,
-
-            -- Font settings
-            UseGlobalFont = true,
-            FontFace = "Expressway",
-            FontOutline = "OUTLINE",
-            TimerFontSize = 18,
-
-            -- Position
-            Strata = "HIGH",
-            anchorFrameType = "UIPARENT",
-            ParentFrame = "UIParent",
-            Position = {
-                AnchorFrom = "CENTER",
-                AnchorTo = "CENTER",
-                XOffset = -500,
-                YOffset = -450,
             },
         },
 
@@ -876,35 +808,6 @@ local Defaults = {
 
         -- Miscellaneous Settings
         Miscellaneous = {
-            BenchAlert = {
-                Enabled = false,
-                Text = "BENCH CUH",
-                Color = { 1, 0.3, 0.3, 1 },
-                UseGlobalFont = true,
-                FontFace = "Expressway",
-                FontSize = 36,
-                FontOutline = "SOFTOUTLINE",
-                FontShadow = {
-                    Enabled = false,
-                    Color = { 0, 0, 0, 1 },
-                    OffsetX = 1,
-                    YOffset = -1,
-                },
-                Strata = "HIGH",
-                anchorFrameType = "UIPARENT",
-                ParentFrame = "UIParent",
-                Position = {
-                    AnchorFrom = "CENTER",
-                    AnchorTo = "CENTER",
-                    XOffset = 0,
-                    YOffset = 41,
-                },
-            },
-
-            WayFinder = {
-                Enabled = true,
-            },
-
             SpellAlert = {
                 Enabled = false,
                 UseGlobal = true,

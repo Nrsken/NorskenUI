@@ -39,7 +39,6 @@
 ---@class RecuperateModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class MiscVarsModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class DurabilityModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class BurningRushModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class TooltipsModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class MinimapModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class SkinningModule : NRSKNUI.ModuleBase, AceEvent-3.0
@@ -82,7 +81,6 @@
 ---@field MiscVars MiscVarsModule
 ---@field Durability DurabilityModule
 ---@field GearUtility GearUtilityModule
----@field BurningRush BurningRushModule
 ---@field Tooltips TooltipsModule
 ---@field Minimap MinimapModule
 ---@field Skinning SkinningModule
@@ -119,7 +117,6 @@ local NRSKNUI
 ---@overload fun(self: NRSKNUI, name: "Skinning", silent?: boolean): SkinningModule
 ---@overload fun(self: NRSKNUI, name: "Tooltips", silent?: boolean): TooltipsModule
 ---@overload fun(self: NRSKNUI, name: "Minimap", silent?: boolean): MinimapModule
----@overload fun(self: NRSKNUI, name: "BurningRush", silent?: boolean): BurningRushModule
 ---@overload fun(self: NRSKNUI, name: "AuctionHouseFilter", silent?: boolean): AuctionHouseFilterModule
 ---@overload fun(self: NRSKNUI, name: "Automation", silent?: boolean): AutomationModule
 ---@overload fun(self: NRSKNUI, name: "Tweaks", silent?: boolean): TweaksModule
@@ -159,7 +156,6 @@ function NRSKNUI:GetModule(name, silent) end
 ---@overload fun(self: NRSKNUI, name: "Skinning", ...: string): SkinningModule
 ---@overload fun(self: NRSKNUI, name: "Tooltips", ...: string): TooltipsModule
 ---@overload fun(self: NRSKNUI, name: "Minimap", ...: string): MinimapModule
----@overload fun(self: NRSKNUI, name: "BurningRush", ...: string): BurningRushModule
 ---@overload fun(self: NRSKNUI, name: "AuctionHouseFilter", ...: string): AuctionHouseFilterModule
 ---@overload fun(self: NRSKNUI, name: "Automation", ...: string): AutomationModule
 ---@overload fun(self: NRSKNUI, name: "Tweaks", ...: string): TweaksModule

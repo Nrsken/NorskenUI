@@ -149,9 +149,6 @@ NRSKNUI.GearUtility = NRSKNUI:NewModule('GearUtility', 'AceEvent-3.0')
 NRSKNUI.SkyRiding = NRSKNUI:NewModule('SkyRiding', 'AceEvent-3.0')
 NRSKNUI.SpellAlert = NRSKNUI:NewModule('SpellAlert', 'AceEvent-3.0')
 
--- Class Util Modules
-NRSKNUI.BurningRush = NRSKNUI:NewModule('BurningRush', 'AceEvent-3.0')
-
 -- Skinning Modules
 NRSKNUI.Skinning = NRSKNUI:NewModule('Skinning', 'AceEvent-3.0')
 NRSKNUI.BlizzardMessages = NRSKNUI:NewModule('BlizzardMessages', 'AceEvent-3.0')
