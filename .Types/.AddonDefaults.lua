@@ -12,6 +12,7 @@
 ---@field AuraSpellLists NRSKNUI.DBGlobal.AuraSpellLists
 ---@field GUIState NRSKNUI.DBGlobal.GUIState
 ---@field GlobalProfile string
+---@field SpellAlertCVars table<string, string?>
 ---@field Theme NRSKNUI.DBGlobal.Theme
 ---@field UIScale NRSKNUI.DBGlobal.UIScale
 ---@field UseGlobalProfile boolean

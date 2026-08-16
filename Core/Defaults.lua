@@ -24,6 +24,8 @@ local Defaults = {
             Enabled = true,
             Scale   = 0.71,
         },
+        -- CVars the SpellAlert module captured before it started overriding them, put back when it is turned off.
+        SpellAlertCVars = {},
         GUIState = {
             frame = {
                 point = nil,
@@ -904,7 +906,7 @@ local Defaults = {
             },
 
             SpellAlert = {
-                Enabled = true,
+                Enabled = false,
                 UseGlobal = true,
                 Global = {
                     Scale = 1.0,

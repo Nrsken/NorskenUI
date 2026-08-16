@@ -11,4 +11,5 @@
     <Script file='GUI-DurabilityUtil.lua'/>
     <Script file='GUI-GearUtil.lua'/>
     <Script file='GUI-SkyRiding.lua'/>
+    <Script file='GUI-SpellAlert.lua'/>
 </Ui>

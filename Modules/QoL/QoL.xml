@@ -11,4 +11,5 @@
     <Script file="Recuperate.lua"/>
     <Script file="GearUtility.lua"/>
     <Script file="SkyRiding.lua"/>
+    <Script file="SpellAlerts.lua"/>
 </Ui>

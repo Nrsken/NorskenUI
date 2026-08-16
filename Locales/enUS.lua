@@ -612,6 +612,21 @@ L['Speed Text'] = true
 L['Show Speed Text'] = true
 L['Speed Text Font'] = true
 
+-- QoL: Spell Alerts
+L['Spell Alerts'] = true
+L['Enable Spell Alerts'] = true
+L['Alert Settings'] = true
+L['Alert Scale'] = true
+L['Alert Opacity'] = true
+L['Settings Scope'] = true
+L['Now Editing'] = true
+L['Scales and fades the spell activation overlays, the glow that frames your screen when a proc lights up.'] = true
+L['While enabled it takes over the Blizzard overlay CVars, your own values are stored and put back when you turn it off.'] = true
+L['One set of values, shared by every specialization.'] = true
+L['A separate set of values for this specialization only.'] = true
+L['Every specialization uses these values. Pick %s above to give it a set of its own.'] = true
+L['Only %s uses these values. Your other specializations keep their own.'] = true
+
 -- Unit Frames GUI
 L['Unit Frames'] = true
 L['General'] = true
