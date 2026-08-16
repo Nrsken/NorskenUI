@@ -308,7 +308,7 @@ function NRSKNUI:ApplyBlizzardFonts(force)
     self:SetFont(_G.Game30Font, true)               -- Spec choice / Mission Level
     self:SetFont(_G.Game27Font, true)               -- Omnium Folio title text
     self:SetFont(_G.Game32Font_Shadow2, true, true) -- Looks bad with slug, too big.
-    self:SetFont(_G.Game40Font, true, true)         -- New Season! text in lfg.
+    self:SetFont(_G.Game40Font, false, true)         -- New Season! text in lfg.
     self:SetFont(_G.Game40Font_Shadow2, true, true) -- Looks bad with slug, too big.
     self:SetFont(_G.Game48Font, true, true)
     self:SetFont(_G.Game60Font, true, true)         -- Looks bad with slug, too big.
