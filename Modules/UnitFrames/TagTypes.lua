@@ -31,7 +31,6 @@ local PREVIEW_STATUSES = { DEAD, L['Ghost'], L['Offline'], L['DND'], L['AFK'], D
 
 -- Generally used events for different tag types.
 local POWER_EVENTS = 'UNIT_POWER_FREQUENT UNIT_POWER_UPDATE UNIT_MAXPOWER UNIT_DISPLAYPOWER'
--- Offline state only reaches party/raid units, and UNIT_CONNECTION alone misses members who drop out of range.
 local CONNECTION_EVENTS = 'UNIT_CONNECTION PARTY_MEMBER_ENABLE PARTY_MEMBER_DISABLE'
 local NAME_COLOR_EVENTS = 'UNIT_NAME_UPDATE UNIT_FACTION PLAYER_FLAGS_CHANGED ' .. CONNECTION_EVENTS
 local HEALTH_EVENTS = 'UNIT_HEALTH UNIT_MAXHEALTH'
