@@ -135,7 +135,6 @@ function AuraDisplay:OnInitialize()
             return nil
         end,
     })
-
 end
 
 ---Layout anchor corner derived from growth direction.
@@ -209,6 +208,23 @@ function AuraDisplay:CreateHost(id)
     return self.hosts[id]
 end
 
+---The unit an instance's trigger watches. Saved variables outlive the unit list the GUI offers,
+---so a profile from an older schema can still hold a token the event system won't take.
+---@param db table
+---@param id string
+---@return string
+local function ResolveTriggerUnit(db, id)
+    local unit = db.Trigger and db.Trigger.Unit
+    if not unit then return 'player' end
+
+    if not NRSKNUI:IsValidUnitToken(unit) then
+        NRSKNUI:Print(format('Aura display "%s" has an unusable unit (%s), falling back to player.', id, tostring(unit)))
+        return 'player'
+    end
+
+    return unit
+end
+
 ---Attach the native aura container to an instance's host.
 ---@param id string
 function AuraDisplay:BuildContainer(id)
@@ -225,7 +241,7 @@ function AuraDisplay:BuildContainer(id)
     container:AddFilteredGroup(db.Trigger)
 
     -- An instance says which unit it watches, unlike the three fixed displays this replaced.
-    container:SetUnit(db.Trigger and db.Trigger.Unit or 'player')
+    container:SetUnit(ResolveTriggerUnit(db, id))
     container:UpdateUnitGate() -- also starts the container watching what can move a gate verdict
     host.container = container
 
@@ -242,7 +258,7 @@ function AuraDisplay:ApplyTrigger(id)
     if not (db and container) then return end
 
     self:ResizeHost(id) -- editing a trigger can add or drop branches, which moves the worst case
-    container:SetUnit(db.Trigger and db.Trigger.Unit or 'player')
+    container:SetUnit(ResolveTriggerUnit(db, id))
     container:RebindFilteredGroups(db.Trigger)
     container:UpdateUnitGate()
 end

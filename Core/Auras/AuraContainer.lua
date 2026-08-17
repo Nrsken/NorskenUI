@@ -572,6 +572,13 @@ local function WatchUnit(container, unit)
     if watcher.unit == unit then return end
     watcher.unit = unit
 
+    -- A token the event system doesn't recognise turns every RegisterUnitEvent below into a
+    -- unitless one, so the watcher would fire for the whole roster on the noisiest events we listen to.
+    if not NRSKNUI:IsValidUnitToken(unit) then
+        watcher:UnregisterAllEvents()
+        return
+    end
+
     for _, event in ipairs(UNIT_GATE_EVENTS) do watcher:RegisterUnitEvent(event, unit, unit ~= 'player' and 'player' or nil) end
     for _, event in ipairs(GATE_EVENTS) do watcher:RegisterEvent(event) end
 end

@@ -4,8 +4,13 @@ local NRSKNUI = select(2, ...)
 local Restricted = NRSKNUI:GetModule('Restricted')
 
 local scrub = scrub
+local type = type
+local pcall = pcall
 local pairs = pairs
 local ipairs = ipairs
+local xpcall = xpcall
+local CreateFrame = CreateFrame
+local geterrorhandler = geterrorhandler
 local UnitIsDND = UnitIsDND
 local UnitIsAFK = UnitIsAFK
 local UnitExists = UnitExists
@@ -161,6 +166,32 @@ function NRSKNUI:GetSafeRole(unit)
     return NRSKNUI:NotSecretValue(role) and role or nil
 end
 
+-- Unit Token Validation --
+
+-- Own frame, never a live handler, probing registers and unregisters UNIT_HEALTH on it.
+local unitValidator = CreateFrame('Frame')
+local validTokens = {}
+
+---Is this a unit token the event system recognises?
+---@param unit string?
+---@return boolean
+function NRSKNUI:IsValidUnitToken(unit)
+    if type(unit) ~= 'string' then return false end
+
+    local cached = validTokens[unit]
+    if cached ~= nil then return cached end
+
+    local valid = false
+    if pcall(unitValidator.RegisterUnitEvent, unitValidator, 'UNIT_HEALTH', unit) then
+        local registered, registeredUnit = unitValidator:IsEventRegistered('UNIT_HEALTH')
+        unitValidator:UnregisterEvent('UNIT_HEALTH')
+        valid = registered and registeredUnit ~= nil
+    end
+
+    validTokens[unit] = valid
+    return valid
+end
+
 -- Combat Queue --
 
 local combatQueue = {}
@@ -244,7 +275,8 @@ local function Recompute()
             end
         end
         pending = keep -- Swap first so callbacks may re-queue safely.
-        for i = 1, #run do run[i]() end
+        -- One erroring callback must not abandon the rest of the queue.
+        for i = 1, #run do xpcall(run[i], geterrorhandler()) end
     end
 end
 
@@ -263,8 +295,9 @@ function Restricted:PLAYER_REGEN_ENABLED()
     if #combatQueue > 0 then
         local snapshot = combatQueue
         combatQueue = {}
+        -- One erroring callback must not strand the protected work queued behind it.
         for i = 1, #snapshot do
-            snapshot[i]()
+            xpcall(snapshot[i], geterrorhandler())
         end
     end
 end
