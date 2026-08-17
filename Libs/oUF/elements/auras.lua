@@ -1,8 +1,8 @@
 --[[
 # Element: Auras
 
-Handles creation of [aura containers](https://warcraft.wiki.gg/wiki/UIOBJECT_AuraContainer), groups,
-slots, and [buttons](https://warcraft.wiki.gg/wiki/UIOBJECT_AuraButton).
+Handles creation of [aura containers](https://warcraft.wiki.gg/wiki/INTRINSIC_AuraContainer), groups,
+slots, and [buttons](https://warcraft.wiki.gg/wiki/INTRINSIC_AuraButton).
 
 ## Notes
 
@@ -21,10 +21,11 @@ groups and slots for each element.
 .height                 - Aura button height. Takes priority over `size` (number?)
 .showBuffBorder         - Show dispel border texture when it's a buff (boolean?)
 .showDebuffBorder       - Show dispel border texture when it's a debuff (boolean?)
-.showDefaultBorder      - Whether to show the border even when there's no dispel type (boolean?)
-.borderStyle            - Which style to use for the border, one of Enum.CustomAuraButtonDispelTypeTextureStyle (number?)
+.dispelBorderStyle      - Which style to use for the dispel border ([Enum.CustomAuraButtonDispelTypeTextureStyle](https://warcraft.wiki.gg/wiki/Enum.CustomAuraButtonDispelTypeTextureStyle)?)
 .showBuffIndicator      - Show dispel indicator texture when it's a buff (boolean?)
 .showDebuffIndicator    - Show dispel indicator texture when it's a debuff (boolean?)
+.showStealableBorder    - Show a border texture when it's a stealable buff (boolean?)
+.stealableBorderFilter  - Filter to use for the stealable border. Defaults to `Enum.CustomAuraButtonDispelTypeStealableFilter.Stealable` ([Enum.CustomAuraButtonDispelTypeTextureStyle](https://warcraft.wiki.gg/wiki/Enum.CustomAuraButtonDispelTypeStealableFilter)?)
 .showCount              - Show Count fontstring representing aura applications (boolean?)
 .countFormatter         - Formatter used to adjust the text displayed on the Count fontstring ([NumericFormatter](https://warcraft.wiki.gg/wiki/ScriptObject_NumericFormatter)?)
 .showDuration           - Show Duration fontstring representing time remaining of the aura (boolean?)
@@ -143,10 +144,9 @@ local function CreateButton(element, options, button)
 		border:SetAllPoints()
 		button.Border = border
 		button:AddDispelTypeTexture(border, {
-			style = options.borderStyle or element.borderStyle or Enum.CustomAuraButtonDispelTypeTextureStyle.Border,
+			style = options.dispelBorderStyle or element.dispelBorderStyle or Enum.CustomAuraButtonDispelTypeTextureStyle.Border,
 			showWhenHarmful = options.showDebuffBorder or element.showDebuffBorder,
 			showWhenHelpful = options.showBuffBorder or element.showBuffBorder,
-			showWithoutDispelType = options.showDefaultBorder or element.showDefaultBorder,
 			customDispelColorMap = element.__owner.colors.dispel,
 		})
 	end
@@ -160,6 +160,21 @@ local function CreateButton(element, options, button)
 			style = Enum.CustomAuraButtonDispelTypeTextureStyle.Icon,
 			showWhenHarmful = options.showDebuffIndicator or element.showDebuffIndicator,
 			showWhenHelpful = options.showBuffIndicator or element.showBuffIndicator,
+		})
+	end
+
+	if(options.showStealableBorder or element.showStealableBorder) then
+		local stealable = button:CreateTexture(nil, 'OVERLAY')
+		stealable:SetPoint('TOPLEFT', -3, 3)
+		stealable:SetPoint('BOTTOMRIGHT', 3, -3)
+		stealable:SetTexture([[Interface\TargetingFrame\UI-TargetingFrame-Stealable]])
+		stealable:SetBlendMode('ADD')
+		button.Stealable = stealable
+		button:AddDispelTypeTexture(stealable, {
+			style = Enum.CustomAuraButtonDispelTypeTextureStyle.PreserveAsset, -- since we use a texture
+			showWhenHelpful = true, -- this is required for stealableFilter option
+			showWithoutDispelType = true, -- this is _probably_ required for stealableFilter option
+			stealableFilter = options.stealableBorderFilter or element.stealableBorderFilter or Enum.CustomAuraButtonDispelTypeStealableFilter.Stealable
 		})
 	end
 
@@ -194,8 +209,8 @@ local elementMixin = {}
 Defines a group of auras to display on the element.  
 This can be defined multiple times.
 
-* filter  - aura filter for this group ([AuraFilter](https://warcraft.wiki.gg/wiki/API_type/AuraFilters))
-* options - options for this group (TODO: link to wiki)
+* filter  - aura filter for this group ([AuraFilter](https://warcraft.wiki.gg/wiki/API_types/AuraFilters))
+* options - options for this group ([CustomAuraContainerGroupDefaultOptions](https://warcraft.wiki.gg/wiki/FrameXML_types/CustomAuraContainerGroupDefaultOptions))
 
 ## Notes
 
@@ -251,11 +266,9 @@ function elementMixin:AddGroup(filter, options)
 
 	-- keep track of how many groups we've created, for key generation purposes
 	local frame = self.__owner
-	local index = (STATE[frame].groupIndex or 0) + 1
-	STATE[frame].groupIndex = index
+	STATE[frame].groupIndex = STATE[frame].groupIndex + 1
 
-	local key = 'Group' .. index
-	STATE[frame].elementGroups[self][key] = filter
+	local key = 'Group' .. STATE[frame].groupIndex
 	self:AddAuraGroup(key, filter, options)
 
 	return key
@@ -266,8 +279,8 @@ Defines a slot for a single buff or debuff to create from the element.
 The slot can be manually positioned if necessary.  
 This can be defined multiple times.
 
-* filter  - aura filter for this group ([AuraFilter](https://warcraft.wiki.gg/wiki/API_type/AuraFilters))
-* options - options for this group (TODO: link to wiki)
+* filter  - aura filter for this group ([AuraFilter](https://warcraft.wiki.gg/wiki/API_types/AuraFilters))
+* options - options for this group ([CustomAuraContainerSlotDefaultOptions](https://warcraft.wiki.gg/wiki/FrameXML_types/CustomAuraContainerSlotDefaultOptions))
 
 ## Notes
 
@@ -300,11 +313,9 @@ function elementMixin:AddSlot(filter, options)
 
 	-- keep track of how many groups we've created, for key generation purposes
 	local frame = self.__owner
-	local index = (STATE[frame].slotIndex or 0) + 1
-	STATE[frame].slotIndex = index
+	STATE[frame].slotIndex = STATE[frame].slotIndex + 1
 
-	local key = 'Slot' .. index
-	STATE[frame].elementSlots[self][key] = filter
+	local key = 'Slot' .. STATE[frame].slotIndex
 	self:AddAuraSlot(key, filter, options)
 
 	return key
@@ -315,12 +326,6 @@ Forcefully update all auras within groups and slots on the element.
 --]]
 function elementMixin:ForceUpdate()
 	self:UpdateAllAuras()
-end
-
-local function hookFilterChange(tbl, element, key, filter)
-	if(filter ~= 'HELPFUL|HARMFUL') then -- noone should need to do this
-		STATE[element.__owner][tbl][element][key] = filter
-	end
 end
 
 --[[ Auras: frame:CreateAuras([options])
@@ -344,7 +349,7 @@ methods on the element.
 .paddingRight  - Padding on the right side of the element. Takes priority over `padding` (number?)
 .paddingTop    - Padding on the top side of the element. Takes priority over `padding` (number?)
 .paddingBottom - Padding on the bottom side of the element. Takes priority over `padding` (number?)
-.policy        - Policy for how auras should be processed. See CustomAuraContainerProcessAuraPolicyDefaultOptions (table?)
+.policy        - Policy for how auras should be processed. See [CustomAuraContainerProcessAuraPolicyDefaultOptions](https://warcraft.wiki.gg/wiki/FrameXML_types/CustomAuraContainerProcessAuraPolicyDefaultOptions) (table?)
 .templates     - Extra templates to use for the aura element (string?)
 
 ## Returns
@@ -352,14 +357,13 @@ methods on the element.
 * auras - the element used to represent the aura buttons
 --]]
 local function Create(self, options)
-	-- keep a local state of each element created for each frame
+	-- keep a local state of elements created for each frame
 	if(not STATE[self]) then
 		STATE[self] = {
-			index = 1,
+			index = 0,
 			elements = {},
-			-- we also need to keep track of each individual group and slot for each element
-			elementGroups = {},
-			elementSlots = {},
+			groupIndex = 0,
+			slotIndex = 0,
 		}
 	end
 
@@ -368,19 +372,11 @@ local function Create(self, options)
 		templates = templates .. ',' .. options.templates
 	end
 
+	STATE[self].index = STATE[self].index + 1
 	local element = CreateFrame('AuraContainer', '$parentAuras' .. STATE[self].index, self, templates)
 	STATE[self].elements[STATE[self].index] = element
-	STATE[self].index = STATE[self].index + 1
 
 	element.__owner = self
-
-	-- inject into each group/slot state table
-	STATE[self].elementGroups[element] = {}
-	STATE[self].elementSlots[element] = {}
-
-	-- hook filter methods so we can keep the aformentioned tables updated with the current filters
-	hooksecurefunc(element, 'SetAuraGroupFilterString', GenerateClosure(hookFilterChange, 'elementGroups'))
-	hooksecurefunc(element, 'SetAuraSlotFilterString', GenerateClosure(hookFilterChange, 'elementSlots'))
 
 	if(options) then
 		-- element-wide options we'll just set directly from options
@@ -406,9 +402,9 @@ local function Create(self, options)
 		local paddingBottom = options.paddingBottom or options.padding or 0
 		element:SetFlowLayoutPadding(paddingLeft, paddingRight, paddingTop, paddingBottom)
 
-		if(options.policy  ) then
+		if(options.policy) then
 			-- just expose it easily for layouts in case they want to use it
-			element:SetAuraProcessingPolicy(CustomAuraContainerAuraProcessingPolicy.ProcessAura, options.policy  )
+			element:SetAuraProcessingPolicy(CustomAuraContainerAuraProcessingPolicy.ProcessAura, options.policy)
 		end
 	end
 
@@ -418,8 +414,8 @@ end
 local function Update(self)
 	if(STATE[self] and STATE[self].elements) then
 		for _, element in next, STATE[self].elements do
-			if element:GetUnit() ~= self.unit then
-				element:SetUnit(self.unit) -- triggers a full update
+			if element:GetUnit() ~= self.__unit then
+				element:SetUnit(self.__unit) -- triggers a full update
 			else
 				element:ForceUpdate()
 			end
@@ -430,16 +426,6 @@ end
 local function Enable(self)
 	if(STATE[self] and STATE[self].elements) then
 		for _, element in next, STATE[self].elements do
-			-- when enabling a container we have to also reset the filters for each group and slot
-			-- to their last known state
-			for groupKey, filter in next, STATE[self].elementGroups[element] do
-				element:SetAuraGroupFilterString(groupKey, filter)
-			end
-
-			for slotKey, filter in next, STATE[self].elementSlots[element] do
-				element:SetAuraSlotFilterString(slotKey, filter)
-			end
-
 			element:SetEnabled(true) -- triggers a full update
 		end
 
@@ -451,19 +437,6 @@ local function Disable(self)
 	if(STATE[self] and STATE[self].elements) then
 		for _, element in next, STATE[self].elements do
 			element:SetEnabled(false)
-
-			-- disabling a container does not "reset" the groups and slots within, so we have to
-			-- temporarily disable them ourselves. there are however no methods to simply disable groups
-			-- and slots. the best workaround is to set invalid/conflicting filters that would always
-			-- result in no aura buttons
-
-			for groupKey in next, STATE[self].elementGroups[element] do
-				element:SetAuraGroupFilterString(groupKey, 'HELPFUL|HARMFUL')
-			end
-
-			for slotKey in next, STATE[self].elementSlots[element] do
-				element:SetAuraSlotFilterString(slotKey, 'HELPFUL|HARMFUL')
-			end
 		end
 	end
 end

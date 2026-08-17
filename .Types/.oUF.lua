@@ -209,8 +209,9 @@ function nameplates:SetNumAuraContainers(numContainers) end
 ---@alias oUF.ToggleWidget oUF.Castbar|oUF.Power|oUF.Health|oUF.RaidTargetIndicator|oUF.LeaderIndicator|oUF.Element|Frame|Texture|StatusBar
 
 ---@class oUF.UnitFrame : Button
----@field unit string The frame's unit token
----@field id string? The frame's unit id when part of a header
+---@field __unit string The frame's unit token. Renamed from `unit` in oUF 14.0.0
+---@field __realUnit? string The real unit behind a vehicle swap. Renamed from `realUnit` in oUF 14.0.0
+---@field __unitIndex? number Numeric suffix of the unit token. Replaced `id` in oUF 14.0.0
 ---@field style string The active style name
 ---@field colors oUF.Colors Copy of the shared color table
 ---@field PreUpdate? fun(self: oUF.UnitFrame, event: string) Called before the frame updates
@@ -275,6 +276,16 @@ function nameplates:SetNumAuraContainers(numContainers) end
 ---@field DisableElement fun(self: oUF.UnitFrame, name: string, unit?: string)
 --- Check if an element is enabled on the frame.
 ---@field IsElementEnabled fun(self: oUF.UnitFrame, name: string): boolean?
+--- Stop an enabled element updating without disabling it. Runs the element's disable function.
+---@field PauseElement fun(self: oUF.UnitFrame, name: string, unit?: string)
+--- Resume a paused element, provided it is still enabled.
+---@field ResumeElement fun(self: oUF.UnitFrame, name: string, unit?: string)
+--- Check if an element is paused on the frame.
+---@field IsElementPaused fun(self: oUF.UnitFrame, name: string): boolean?
+--- Pause every active element on the frame.
+---@field PauseAllElements fun(self: oUF.UnitFrame)
+--- Resume every paused element on the frame.
+---@field ResumeAllElements fun(self: oUF.UnitFrame)
 --- Toggle visibility based on unit existence (wraps RegisterUnitWatch).
 ---@field Enable fun(self: oUF.UnitFrame, asState?: boolean)
 --- UnregisterUnitWatch and hide the frame.
@@ -731,3 +742,10 @@ function auras:AddSlot(filter, options) end
 ---@class UnitFramesGroup
 ---@field container NUI.UnitFrames.GroupContainer
 ---@field headers oUF.Header[]
+---@field shownGroups? string the subgroups the headers currently draw, as a comparable signature; set by LayoutGroup
+
+---@class UnitFramesGrowth
+---@field point string child anchor SecureGroupHeaders stacks units from
+---@field x number horizontal offset sign
+---@field y number vertical offset sign
+---@field anchor string container corner a lone header hangs off
