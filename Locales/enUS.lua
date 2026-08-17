@@ -1308,3 +1308,10 @@ L['Show Spell Target'] = true
 L['Class Color Target'] = true
 L['After Spell Name'] = true
 L['Before Timer'] = true
+
+-- Dungeons: Reroll Keystone --
+L['Reroll Keystone'] = true
+L['Enable Reroll Keystone'] = true
+L['Text Size'] = true
+L['Key Text Color'] = true
+L['Key Text Size'] = true

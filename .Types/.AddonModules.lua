@@ -66,6 +66,14 @@
 ---@class SkyRidingModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class SpellAlertModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class DungeonCastsModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class RerollKeystoneModule : NRSKNUI.ModuleBase, AceEvent-3.0, AceTimer-3.0
+---@field frame Frame?
+---@field timer AceTimerObj? nil while no prompt is pending or up
+---@field rerollTimer AceTimerObj? nil while no keystone re-read is pending
+---@field initialKeyMapID number? the owned key when the prompt opened, nil while it is closed
+---@field displayActive boolean?
+---@field hasRerolled boolean?
+---@field isPreview boolean?
 
 -- The handles Core/Init.lua hangs off the addon table. Declared here so the field and the accessor
 -- that fills it agree on a type: without these the field takes whatever the assignment inferred.
@@ -105,6 +113,7 @@
 ---@field SkyRiding SkyRidingModule
 ---@field SpellAlert SpellAlertModule
 ---@field DungeonCasts DungeonCastsModule
+---@field RerollKeystone RerollKeystoneModule
 
 -- Typed accessors. Overloads dispatch on the literal module name.
 
@@ -146,6 +155,7 @@ local NRSKNUI
 ---@overload fun(self: NRSKNUI, name: "SkyRiding", silent?: boolean): SkyRidingModule
 ---@overload fun(self: NRSKNUI, name: "SpellAlert", silent?: boolean): SpellAlertModule
 ---@overload fun(self: NRSKNUI, name: "DungeonCasts", silent?: boolean): DungeonCastsModule
+---@overload fun(self: NRSKNUI, name: "RerollKeystone", silent?: boolean): RerollKeystoneModule
 ---@param name string
 ---@param silent? boolean
 ---@return AceModule
@@ -186,6 +196,7 @@ function NRSKNUI:GetModule(name, silent) end
 ---@overload fun(self: NRSKNUI, name: "SkyRiding", ...: string): SkyRidingModule
 ---@overload fun(self: NRSKNUI, name: "SpellAlert", ...: string): SpellAlertModule
 ---@overload fun(self: NRSKNUI, name: "DungeonCasts", ...: string): DungeonCastsModule
+---@overload fun(self: NRSKNUI, name: "RerollKeystone", ...: string): RerollKeystoneModule
 ---@param name string
 ---@param ... string
 ---@return AceModule

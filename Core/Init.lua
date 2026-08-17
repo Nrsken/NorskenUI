@@ -179,3 +179,4 @@ NRSKNUI.FocusCastbar = NRSKNUI:NewModule('FocusCastbar', 'AceEvent-3.0')
 
 -- Dungeon Modules
 NRSKNUI.DungeonCasts = NRSKNUI:NewModule('DungeonCasts', 'AceEvent-3.0')
+NRSKNUI.RerollKeystone = NRSKNUI:NewModule('RerollKeystone', 'AceEvent-3.0', 'AceTimer-3.0')

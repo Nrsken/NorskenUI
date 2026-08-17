@@ -113,7 +113,8 @@ GUIFrame.SidebarConfig = {
             text = L['Dungeons'],
             defaultExpanded = false,
             items = {
-                { id = 'dungeonCasts', text = L['Dungeon Casts'] },
+                { id = 'dungeonCasts',    text = L['Dungeon Casts'] },
+                { id = 'rerollKeystone',  text = L['Reroll Keystone'] },
             }
         },
         {

@@ -188,30 +188,26 @@ local Defaults = {
                 },
             },
         },
-
+        -- Reroll Keystone
         RerollKeystone = {
             Enabled = true,
             Size = 60,
             UseGlobalFont = true,
             FontFace = "Expressway",
-
             FontSize = 18,
-            FontColor = { 1, 1, 1, 1 },
-
-            FontColorKey = { 1, 1, 1, 1 },
-            FontSizeKey = 20,
-
-            FontOutline = "SOFTOUTLINE",
+            FontColor = { 1, 0.58, 0, 1 },
+            FontColorKey = { 1, 0.83, 0.69, 1 },
+            FontSizeKey = 18,
+            FontOutline = "OUTLINE",
             Strata = "HIGH",
             anchorFrameType = "UIPARENT",
             ParentFrame = "UIParent",
             Position = {
                 AnchorFrom = "CENTER",
                 AnchorTo = "CENTER",
-                XOffset = 0,
-                YOffset = -200,
+                XOffset = 300,
+                YOffset = 0,
             },
-
             GlowEnabled = true,
             GlowType = "pixel",
             GlowColor = { 0, 1, 0, 1 },
