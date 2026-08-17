@@ -489,72 +489,73 @@
 
 ---@class NRSKNUI.DBProfile.DungeonCasts
 ---@field [string] any
----@field BackgroundColor table
----@field BarDisplay NRSKNUI.DBProfile.DungeonCasts.BarDisplay
+---@field BackdropColor table
 ---@field BorderColor table
----@field CastingColor table
----@field ChannelingColor table
+---@field CastColor table
+---@field ChannelColor table
+---@field Config NRSKNUI.DynamicGroupConfig
 ---@field Enabled boolean
----@field Frame NRSKNUI.DBProfile.DungeonCasts.Frame
----@field Icon NRSKNUI.DBProfile.DungeonCasts.Icon
----@field NotInterruptibleColor table
----@field RaidIcon NRSKNUI.DBProfile.DungeonCasts.RaidIcon
----@field Target NRSKNUI.DBProfile.DungeonCasts.Target
----@field Text NRSKNUI.DBProfile.DungeonCasts.Text
-
----@class NRSKNUI.DBProfile.DungeonCasts.BarDisplay
----@field [string] any
 ---@field FontFace string
 ---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.DungeonCasts.FontShadow
 ---@field FontSize number
----@field SparkEnabled boolean
+---@field Height number
+---@field Icon NRSKNUI.DBProfile.DungeonCasts.Icon
+---@field NotInterruptibleColor table
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.DungeonCasts.Position
+---@field RaidIcon NRSKNUI.DBProfile.DungeonCasts.RaidIcon
+---@field ShowTime boolean
+---@field SparkColor table
+---@field SparkScale number
+---@field SparkTexture string
+---@field SparkWidth number
 ---@field StatusBarTexture string
+---@field Strata string
+---@field Target NRSKNUI.DBProfile.DungeonCasts.Target
+---@field TextColor table
 ---@field UseGlobalBar boolean
 ---@field UseGlobalFont boolean
-
----@class NRSKNUI.DBProfile.DungeonCasts.Frame
----@field [string] any
----@field GrowthDirection string
----@field Height number
----@field MaxBars number
----@field ParentFrame string
----@field Position NRSKNUI.DBProfile.DungeonCasts.Frame.Position
----@field Spacing number
----@field Strata string
+---@field UseGlobalSpark boolean
 ---@field Width number
 ---@field anchorFrameType string
 
----@class NRSKNUI.DBProfile.DungeonCasts.Frame.Position
+---@class NRSKNUI.DBProfile.DungeonCasts.Config
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.DungeonCasts.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field OffsetY number
+
+---@class NRSKNUI.DBProfile.DungeonCasts.Icon
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.DungeonCasts.Position
 ---@field [string] any
 ---@field AnchorFrom string
 ---@field AnchorTo string
 ---@field XOffset number
 ---@field YOffset number
 
----@class NRSKNUI.DBProfile.DungeonCasts.Icon
----@field [string] any
----@field Enabled boolean
----@field Size number
----@field Zoom number
-
 ---@class NRSKNUI.DBProfile.DungeonCasts.RaidIcon
 ---@field [string] any
+---@field Anchor string
 ---@field Enabled boolean
 ---@field Size number
+---@field XOffset number
+---@field YOffset number
 
 ---@class NRSKNUI.DBProfile.DungeonCasts.Target
 ---@field [string] any
 ---@field Enabled boolean
+---@field FontSize number
 ---@field Position string
 ---@field Separator string
 ---@field ShowClassColor boolean
-
----@class NRSKNUI.DBProfile.DungeonCasts.Text
----@field [string] any
----@field NameAlign string
----@field ShowTime boolean
----@field TextColor table
----@field TimeAlign string
 
 ---@class NRSKNUI.DBProfile.DungeonTimers
 ---@field [string] any

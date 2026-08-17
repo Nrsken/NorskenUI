@@ -1291,3 +1291,20 @@ L['Backdrop Height'] = true
 L['Details Override'] = true
 L['This will override your current Details sizing. Are you sure?'] = true
 L['Yes'] = true
+
+-- Dungeons: Dungeon Casts --
+L['Dungeons'] = true
+L['Dungeon Casts'] = true
+L['Enable Dungeon Casts'] = true
+L['Casting'] = true
+L['Channeling'] = true
+L['Display Settings'] = true
+L['Icon & Timer'] = true
+L['Show Spell Icon'] = true
+L['Show Cast Timer'] = true
+L['Show Raid Marker'] = true
+L['Spell Target'] = true
+L['Show Spell Target'] = true
+L['Class Color Target'] = true
+L['After Spell Name'] = true
+L['Before Timer'] = true

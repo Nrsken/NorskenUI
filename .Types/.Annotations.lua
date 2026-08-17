@@ -81,7 +81,7 @@ function Font:SetFontStyle(source, size, outline, shadow, skip, setOwner) end
 ---@param offsetX? number
 ---@param offsetY? number
 ---@param skip? boolean internal: set during RefreshFontStyles to avoid re-registering
----@param bound? table optional second edge { relTo, point, relPoint, offsetX, offsetY } so the string gets a fixed width and truncates
+---@param bound? table a second edge { relTo, point, relPoint, offsetX, offsetY } so the string gets a fixed width and truncates, or a list of such edges that replaces the anchor point
 ---@param flip? boolean true to flip the X offset when the anchor is on the right side of the parent
 ---@return boolean applied
 function Font:SetFontJustify(source, parent, offsetX, offsetY, skip, bound, flip) end
@@ -106,7 +106,7 @@ function EditBox:SetFontStyle(source, size, outline, shadow, skip, setOwner) end
 ---@param offsetX? number
 ---@param offsetY? number
 ---@param skip? boolean internal: set during RefreshFontStyles to avoid re-registering
----@param bound? table optional second edge { relTo, point, relPoint, offsetX, offsetY } so the string gets a fixed width and truncates
+---@param bound? table a second edge { relTo, point, relPoint, offsetX, offsetY } so the string gets a fixed width and truncates, or a list of such edges that replaces the anchor point
 ---@param flip? boolean true to flip the X offset when the anchor is on the right side of the parent
 ---@return boolean applied
 function EditBox:SetFontJustify(source, parent, offsetX, offsetY, skip, bound, flip) end
@@ -377,7 +377,7 @@ function FontString:SetFontStyle(source, size, outline, shadow, skip, setOwner) 
 ---@param offsetX? number
 ---@param offsetY? number
 ---@param skip? boolean internal: set during RefreshFontStyles to avoid re-registering
----@param bound? table optional second edge { relTo, point, relPoint, offsetX, offsetY } so the string gets a fixed width and truncates
+---@param bound? table a second edge { relTo, point, relPoint, offsetX, offsetY } so the string gets a fixed width and truncates, or a list of such edges that replaces the anchor point
 ---@param flip? boolean true to flip the X offset when the anchor is on the right side of the parent
 ---@return boolean applied
 function FontString:SetFontJustify(source, parent, offsetX, offsetY, skip, bound, flip) end

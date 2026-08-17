@@ -108,6 +108,15 @@ GUIFrame.SidebarConfig = {
             }
         },
         {
+            id = 'dungeons_section',
+            type = 'header',
+            text = L['Dungeons'],
+            defaultExpanded = false,
+            items = {
+                { id = 'dungeonCasts', text = L['Dungeon Casts'] },
+            }
+        },
+        {
             id = 'class_section',
             type = 'header',
             text = L['Class Utility'],

@@ -2281,74 +2281,73 @@ local Defaults = {
                 actionOnHideSound = "None",
             },
         },
-
-        -- Dungeon Casts (Enemy Nameplate Casting Monitor)
+        -- Dungeon enemy cast bars
         DungeonCasts = {
             Enabled = true,
-
-            -- Frame settings
-            Frame = {
-                MaxBars = 5,
-                Width = 265,
-                Height = 28,
+            Width = 266,
+            Height = 28,
+            -- Layout
+            Config = {
+                Grow = "UP",
+                Align = "CENTER",
                 Spacing = 1,
-                GrowthDirection = "UP", -- UP or DOWN
-                Strata = "HIGH",
-                anchorFrameType = "UIPARENT",
-                ParentFrame = "UIParent",
-                Position = {
-                    AnchorFrom = "CENTER",
-                    AnchorTo = "CENTER",
-                    XOffset = -360,
-                    YOffset = 90,
-                },
+                UseLimit = true,
+                Limit = 5,
             },
-
-            -- Bar appearance
-            BarDisplay = {
-                StatusBarTexture = "NorskenUI",
-                UseGlobalFont = true,
-                UseGlobalBar = true,
-                FontFace = "Expressway",
-                FontSize = 13,
-                FontOutline = "OUTLINE",
-                SparkEnabled = false,
+            Strata = "HIGH",
+            anchorFrameType = "UIPARENT",
+            ParentFrame = "UIParent",
+            Position = {
+                AnchorFrom = "CENTER",
+                AnchorTo = "CENTER",
+                XOffset = -360,
+                YOffset = 90,
             },
-
-            -- Icon settings
+            -- Font
+            UseGlobalFont = true,
+            FontFace = "Expressway",
+            FontSize = 12,
+            FontOutline = "OUTLINE",
+            FontShadow = {
+                Enabled = false,
+                Color = { 0, 0, 0, 1 },
+                OffsetX = 1,
+                OffsetY = -1,
+            },
+            -- Statusbar
+            UseGlobalBar = true,
+            StatusBarTexture = "NorskenUI",
+            -- Spark
+            UseGlobalSpark = true,
+            SparkTexture = "Solid",
+            SparkScale = 1,
+            SparkWidth = 2,
+            SparkColor = { 1, 1, 1, 1 },
+            -- Colors
+            CastColor = { 0.623, 0.749, 1.0, 1 },
+            ChannelColor = { 0.8, 0.4, 1.0, 1 },
+            NotInterruptibleColor = { 0.780, 0.250, 0.250, 1 },
+            TextColor = { 1, 1, 1, 1 },
+            BackdropColor = { 0, 0, 0, 0.8 },
+            BorderColor = { 0, 0, 0, 1 },
+            ShowTime = true,
             Icon = {
                 Enabled = true,
-                Size = 28,
-                Zoom = 0.3,
             },
-
-            -- Colors
-            CastingColor = { 0.623, 0.749, 1.0, 1 },
-            ChannelingColor = { 0.8, 0.4, 1.0, 1 },
-            NotInterruptibleColor = { 0.780, 0.250, 0.250, 1 },
-            BackgroundColor = { 0, 0, 0, 0.8 },
-            BorderColor = { 0, 0, 0, 1 },
-
             -- Raid target icon
             RaidIcon = {
                 Enabled = true,
                 Size = 21,
+                Anchor = "LEFT",
+                XOffset = -25,
+                YOffset = 0,
             },
-
-            -- Text settings
-            Text = {
-                NameAlign = "LEFT",
-                TimeAlign = "RIGHT",
-                ShowTime = true,
-                TextColor = { 1, 1, 1, 1 },
-            },
-
-            -- Target display settings
+            -- Spell target
             Target = {
                 Enabled = true,
                 ShowClassColor = true,
-                Position = "LEFT", -- LEFT or RIGHT
-                Separator = "»",   -- Separator between spell name and target
+                Position = "LEFT",
+                Separator = "»",
             },
         },
         -- Missing Items Tracker (bag item warnings)

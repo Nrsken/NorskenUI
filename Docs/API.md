@@ -162,7 +162,7 @@ Returns `true` when applied, `false` if the target has no `SetFontObject`.
 ## SetFontJustify
 
 ```lua
-fontString:SetFontJustify(source, parent?, offsetX?, offsetY?, skip?, flip?)
+fontString:SetFontJustify(source, parent?, offsetX?, offsetY?, skip?, bound?, flip?)
 ```
 
 Anchor a `FontString` to its config anchor and align **both** axes from that same point, then
@@ -174,6 +174,26 @@ alignment would otherwise revert on a profile change.
 encodes both axes: `TOPRIGHT` → point `TOPRIGHT`, H `RIGHT`, V `TOP`. `flip` Makes the X offset flipped when
 the anchor is on the right side, useful on texts with backdrops and need to have a slight inset. `parent` defaults to `self:GetParent()`, offsets default to `0`,
 and `skip` is the same internal re-apply flag as `SetFontStyle`. Returns `true` when applied.
+
+`bound` pins a second edge to another widget, giving the string a fixed width so it truncates
+(`text...`) instead of overrunning its neighbour:
+
+```lua
+castText:SetFontJustify('LEFT', castBar, 4, 0, nil, {
+    relTo = castTimeText, point = 'RIGHT', relPoint = 'LEFT', offsetX = -4,
+})
+```
+
+Pass a **list** of those edge tables instead and they replace the anchor point entirely, which boxes
+a string between two neighbours where neither edge sits on the parent. `source` then only drives
+justification:
+
+```lua
+targetText:SetFontJustify(db.Target.Position, castBar, 0, 0, nil, {
+    { relTo = nameText, point = 'LEFT',  relPoint = 'RIGHT', offsetX = 4 },
+    { relTo = timeText, point = 'RIGHT', relPoint = 'LEFT',  offsetX = -4 },
+})
+```
 
 ---
 

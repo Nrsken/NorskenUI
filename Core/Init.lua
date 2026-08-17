@@ -176,3 +176,6 @@ NRSKNUI.CombatMessage = NRSKNUI:NewModule('CombatMessage', 'AceEvent-3.0', 'AceT
 NRSKNUI.CombatRes = NRSKNUI:NewModule('CombatRes', 'AceEvent-3.0', 'AceTimer-3.0')
 NRSKNUI.CombatCursor = NRSKNUI:NewModule('CursorCircle', 'AceEvent-3.0')
 NRSKNUI.FocusCastbar = NRSKNUI:NewModule('FocusCastbar', 'AceEvent-3.0')
+
+-- Dungeon Modules
+NRSKNUI.DungeonCasts = NRSKNUI:NewModule('DungeonCasts', 'AceEvent-3.0')
