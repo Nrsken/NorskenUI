@@ -505,6 +505,7 @@
 ---@field ParentFrame string
 ---@field Position NRSKNUI.DBProfile.DungeonCasts.Position
 ---@field RaidIcon NRSKNUI.DBProfile.DungeonCasts.RaidIcon
+---@field RequireCombat boolean
 ---@field ShowTime boolean
 ---@field SparkColor table
 ---@field SparkScale number
@@ -552,7 +553,6 @@
 ---@class NRSKNUI.DBProfile.DungeonCasts.Target
 ---@field [string] any
 ---@field Enabled boolean
----@field FontSize number
 ---@field Position string
 ---@field Separator string
 ---@field ShowClassColor boolean
@@ -2566,6 +2566,7 @@
 ---@field [string] any
 ---@field Enabled boolean
 ---@field General NRSKNUI.DBProfile.UnitFrames.General
+---@field HideBlizzardRaidFrames boolean
 ---@field TagSettings NRSKNUI.DBProfile.UnitFrames.TagSettings
 ---@field Units NRSKNUI.DBProfile.UnitFrames.Units
 
@@ -2675,6 +2676,9 @@
 ---@field pet NRSKNUI.DBProfile.UnitFrames.Units.pet
 ---@field pettarget NRSKNUI.DBProfile.UnitFrames.Units.pettarget
 ---@field player NRSKNUI.DBProfile.UnitFrames.Units.player
+---@field raid1 NRSKNUI.DBProfile.UnitFrames.Units.raid1
+---@field raid2 NRSKNUI.DBProfile.UnitFrames.Units.raid2
+---@field raid3 NRSKNUI.DBProfile.UnitFrames.Units.raid3
 ---@field target NRSKNUI.DBProfile.UnitFrames.Units.target
 ---@field targettarget NRSKNUI.DBProfile.UnitFrames.Units.targettarget
 
@@ -3243,6 +3247,561 @@
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.player.Tags.TagThree
 ---@field [string] any
 ---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1
+---@field [string] any
+---@field Auras NRSKNUI.DBProfile.UnitFrames.Units.raid1.Auras
+---@field Castbar NRSKNUI.DBProfile.UnitFrames.Units.raid1.Castbar
+---@field Dispel NRSKNUI.DBProfile.UnitFrames.Units.raid1.Dispel
+---@field Group NRSKNUI.DBProfile.UnitFrames.Units.raid1.Group
+---@field Height number
+---@field Indicators NRSKNUI.DBProfile.UnitFrames.Units.raid1.Indicators
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.raid1.Position
+---@field Power NRSKNUI.DBProfile.UnitFrames.Units.raid1.Power
+---@field Tags NRSKNUI.DBProfile.UnitFrames.Units.raid1.Tags
+---@field Width number
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Auras
+---@field [string] any
+---@field Buffs NRSKNUI.DBProfile.UnitFrames.Units.raid1.Auras.Buffs
+---@field Debuffs NRSKNUI.DBProfile.UnitFrames.Units.raid1.Auras.Debuffs
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Auras.Buffs
+---@field [string] any
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.raid1.Auras.Buffs.Position
+---@field Trigger NRSKNUI.DBProfile.UnitFrames.Units.raid1.Auras.Buffs.Trigger
+---@field maxFrameCount number
+---@field perRow number
+---@field previewLimit number
+---@field size number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Auras.Buffs.Position
+---@field [string] any
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Auras.Buffs.Trigger
+---@field [string] any
+---@field Preset string
+---@field Type string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Auras.Debuffs
+---@field [string] any
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.raid1.Auras.Debuffs.Position
+---@field Trigger NRSKNUI.DBProfile.UnitFrames.Units.raid1.Auras.Debuffs.Trigger
+---@field maxFrameCount number
+---@field perRow number
+---@field previewLimit number
+---@field size number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Auras.Debuffs.Position
+---@field [string] any
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Auras.Debuffs.Trigger
+---@field [string] any
+---@field Preset string
+---@field Type string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Castbar
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Dispel
+---@field [string] any
+---@field UseGlobal boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Group
+---@field [string] any
+---@field AutoGroups boolean
+---@field GroupGrowthDirection string
+---@field GroupSpacing number
+---@field GroupsPerRowColumn number
+---@field GrowthDirection string
+---@field HorizontalSpacing number
+---@field NumGroups number
+---@field RoleOrder table
+---@field ShowPlayer boolean
+---@field SortBy string
+---@field SortDirection string
+---@field SortMethod string
+---@field StartFromCenter boolean
+---@field VerticalSpacing number
+---@field Visibility string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Indicators
+---@field [string] any
+---@field Leader NRSKNUI.DBProfile.UnitFrames.Units.raid1.Indicators.Leader
+---@field Phase NRSKNUI.DBProfile.UnitFrames.Units.raid1.Indicators.Phase
+---@field RaidIcon NRSKNUI.DBProfile.UnitFrames.Units.raid1.Indicators.RaidIcon
+---@field ReadyCheck NRSKNUI.DBProfile.UnitFrames.Units.raid1.Indicators.ReadyCheck
+---@field Resurrect NRSKNUI.DBProfile.UnitFrames.Units.raid1.Indicators.Resurrect
+---@field Role NRSKNUI.DBProfile.UnitFrames.Units.raid1.Indicators.Role
+---@field Summon NRSKNUI.DBProfile.UnitFrames.Units.raid1.Indicators.Summon
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Indicators.Leader
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Indicators.Phase
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Indicators.RaidIcon
+---@field [string] any
+---@field Size number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Indicators.ReadyCheck
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Indicators.Resurrect
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Indicators.Role
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Indicators.Summon
+---@field [string] any
+---@field Enabled boolean
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.raid1.Indicators.Summon.Position
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Indicators.Summon.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Power
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Tags
+---@field [string] any
+---@field TagOne NRSKNUI.DBProfile.UnitFrames.Units.raid1.Tags.TagOne
+---@field TagThree NRSKNUI.DBProfile.UnitFrames.Units.raid1.Tags.TagThree
+---@field TagTwo NRSKNUI.DBProfile.UnitFrames.Units.raid1.Tags.TagTwo
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Tags.TagOne
+---@field [string] any
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.raid1.Tags.TagOne.Position
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Tags.TagOne.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Tags.TagThree
+---@field [string] any
+---@field Enabled boolean
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.raid1.Tags.TagThree.Position
+---@field Tag string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Tags.TagThree.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Tags.TagTwo
+---@field [string] any
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.raid1.Tags.TagTwo.Position
+---@field Tag string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Tags.TagTwo.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2
+---@field [string] any
+---@field Auras NRSKNUI.DBProfile.UnitFrames.Units.raid2.Auras
+---@field Castbar NRSKNUI.DBProfile.UnitFrames.Units.raid2.Castbar
+---@field Dispel NRSKNUI.DBProfile.UnitFrames.Units.raid2.Dispel
+---@field Group NRSKNUI.DBProfile.UnitFrames.Units.raid2.Group
+---@field Height number
+---@field Indicators NRSKNUI.DBProfile.UnitFrames.Units.raid2.Indicators
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.raid2.Position
+---@field Power NRSKNUI.DBProfile.UnitFrames.Units.raid2.Power
+---@field Tags NRSKNUI.DBProfile.UnitFrames.Units.raid2.Tags
+---@field Width number
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Auras
+---@field [string] any
+---@field Buffs NRSKNUI.DBProfile.UnitFrames.Units.raid2.Auras.Buffs
+---@field Debuffs NRSKNUI.DBProfile.UnitFrames.Units.raid2.Auras.Debuffs
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Auras.Buffs
+---@field [string] any
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.raid2.Auras.Buffs.Position
+---@field Trigger NRSKNUI.DBProfile.UnitFrames.Units.raid2.Auras.Buffs.Trigger
+---@field maxFrameCount number
+---@field perRow number
+---@field previewLimit number
+---@field size number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Auras.Buffs.Position
+---@field [string] any
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Auras.Buffs.Trigger
+---@field [string] any
+---@field Preset string
+---@field Type string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Auras.Debuffs
+---@field [string] any
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.raid2.Auras.Debuffs.Position
+---@field Trigger NRSKNUI.DBProfile.UnitFrames.Units.raid2.Auras.Debuffs.Trigger
+---@field maxFrameCount number
+---@field perRow number
+---@field previewLimit number
+---@field size number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Auras.Debuffs.Position
+---@field [string] any
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Auras.Debuffs.Trigger
+---@field [string] any
+---@field Preset string
+---@field Type string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Castbar
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Dispel
+---@field [string] any
+---@field UseGlobal boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Group
+---@field [string] any
+---@field AutoGroups boolean
+---@field GroupGrowthDirection string
+---@field GroupSpacing number
+---@field GroupsPerRowColumn number
+---@field GrowthDirection string
+---@field HorizontalSpacing number
+---@field NumGroups number
+---@field RoleOrder table
+---@field ShowPlayer boolean
+---@field SortBy string
+---@field SortDirection string
+---@field SortMethod string
+---@field StartFromCenter boolean
+---@field VerticalSpacing number
+---@field Visibility string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Indicators
+---@field [string] any
+---@field Leader NRSKNUI.DBProfile.UnitFrames.Units.raid2.Indicators.Leader
+---@field Phase NRSKNUI.DBProfile.UnitFrames.Units.raid2.Indicators.Phase
+---@field RaidIcon NRSKNUI.DBProfile.UnitFrames.Units.raid2.Indicators.RaidIcon
+---@field ReadyCheck NRSKNUI.DBProfile.UnitFrames.Units.raid2.Indicators.ReadyCheck
+---@field Resurrect NRSKNUI.DBProfile.UnitFrames.Units.raid2.Indicators.Resurrect
+---@field Role NRSKNUI.DBProfile.UnitFrames.Units.raid2.Indicators.Role
+---@field Summon NRSKNUI.DBProfile.UnitFrames.Units.raid2.Indicators.Summon
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Indicators.Leader
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Indicators.Phase
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Indicators.RaidIcon
+---@field [string] any
+---@field Size number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Indicators.ReadyCheck
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Indicators.Resurrect
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Indicators.Role
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Indicators.Summon
+---@field [string] any
+---@field Enabled boolean
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.raid2.Indicators.Summon.Position
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Indicators.Summon.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Power
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Tags
+---@field [string] any
+---@field TagOne NRSKNUI.DBProfile.UnitFrames.Units.raid2.Tags.TagOne
+---@field TagThree NRSKNUI.DBProfile.UnitFrames.Units.raid2.Tags.TagThree
+---@field TagTwo NRSKNUI.DBProfile.UnitFrames.Units.raid2.Tags.TagTwo
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Tags.TagOne
+---@field [string] any
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.raid2.Tags.TagOne.Position
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Tags.TagOne.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Tags.TagThree
+---@field [string] any
+---@field Enabled boolean
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.raid2.Tags.TagThree.Position
+---@field Tag string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Tags.TagThree.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Tags.TagTwo
+---@field [string] any
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.raid2.Tags.TagTwo.Position
+---@field Tag string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Tags.TagTwo.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3
+---@field [string] any
+---@field Auras NRSKNUI.DBProfile.UnitFrames.Units.raid3.Auras
+---@field Castbar NRSKNUI.DBProfile.UnitFrames.Units.raid3.Castbar
+---@field Dispel NRSKNUI.DBProfile.UnitFrames.Units.raid3.Dispel
+---@field Group NRSKNUI.DBProfile.UnitFrames.Units.raid3.Group
+---@field Height number
+---@field Indicators NRSKNUI.DBProfile.UnitFrames.Units.raid3.Indicators
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.raid3.Position
+---@field Power NRSKNUI.DBProfile.UnitFrames.Units.raid3.Power
+---@field Tags NRSKNUI.DBProfile.UnitFrames.Units.raid3.Tags
+---@field Width number
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Auras
+---@field [string] any
+---@field Buffs NRSKNUI.DBProfile.UnitFrames.Units.raid3.Auras.Buffs
+---@field Debuffs NRSKNUI.DBProfile.UnitFrames.Units.raid3.Auras.Debuffs
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Auras.Buffs
+---@field [string] any
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.raid3.Auras.Buffs.Position
+---@field Trigger NRSKNUI.DBProfile.UnitFrames.Units.raid3.Auras.Buffs.Trigger
+---@field maxFrameCount number
+---@field perRow number
+---@field previewLimit number
+---@field size number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Auras.Buffs.Position
+---@field [string] any
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Auras.Buffs.Trigger
+---@field [string] any
+---@field Preset string
+---@field Type string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Auras.Debuffs
+---@field [string] any
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.raid3.Auras.Debuffs.Position
+---@field Trigger NRSKNUI.DBProfile.UnitFrames.Units.raid3.Auras.Debuffs.Trigger
+---@field maxFrameCount number
+---@field perRow number
+---@field previewLimit number
+---@field size number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Auras.Debuffs.Position
+---@field [string] any
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Auras.Debuffs.Trigger
+---@field [string] any
+---@field Preset string
+---@field Type string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Castbar
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Dispel
+---@field [string] any
+---@field UseGlobal boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Group
+---@field [string] any
+---@field AutoGroups boolean
+---@field GroupGrowthDirection string
+---@field GroupSpacing number
+---@field GroupsPerRowColumn number
+---@field GrowthDirection string
+---@field HorizontalSpacing number
+---@field NumGroups number
+---@field RoleOrder table
+---@field ShowPlayer boolean
+---@field SortBy string
+---@field SortDirection string
+---@field SortMethod string
+---@field StartFromCenter boolean
+---@field VerticalSpacing number
+---@field Visibility string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Indicators
+---@field [string] any
+---@field Leader NRSKNUI.DBProfile.UnitFrames.Units.raid3.Indicators.Leader
+---@field Phase NRSKNUI.DBProfile.UnitFrames.Units.raid3.Indicators.Phase
+---@field RaidIcon NRSKNUI.DBProfile.UnitFrames.Units.raid3.Indicators.RaidIcon
+---@field ReadyCheck NRSKNUI.DBProfile.UnitFrames.Units.raid3.Indicators.ReadyCheck
+---@field Resurrect NRSKNUI.DBProfile.UnitFrames.Units.raid3.Indicators.Resurrect
+---@field Role NRSKNUI.DBProfile.UnitFrames.Units.raid3.Indicators.Role
+---@field Summon NRSKNUI.DBProfile.UnitFrames.Units.raid3.Indicators.Summon
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Indicators.Leader
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Indicators.Phase
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Indicators.RaidIcon
+---@field [string] any
+---@field Size number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Indicators.ReadyCheck
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Indicators.Resurrect
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Indicators.Role
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Indicators.Summon
+---@field [string] any
+---@field Enabled boolean
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.raid3.Indicators.Summon.Position
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Indicators.Summon.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Power
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Tags
+---@field [string] any
+---@field TagOne NRSKNUI.DBProfile.UnitFrames.Units.raid3.Tags.TagOne
+---@field TagThree NRSKNUI.DBProfile.UnitFrames.Units.raid3.Tags.TagThree
+---@field TagTwo NRSKNUI.DBProfile.UnitFrames.Units.raid3.Tags.TagTwo
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Tags.TagOne
+---@field [string] any
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.raid3.Tags.TagOne.Position
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Tags.TagOne.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Tags.TagThree
+---@field [string] any
+---@field Enabled boolean
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.raid3.Tags.TagThree.Position
+---@field Tag string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Tags.TagThree.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Tags.TagTwo
+---@field [string] any
+---@field Position NRSKNUI.DBProfile.UnitFrames.Units.raid3.Tags.TagTwo.Position
+---@field Tag string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Tags.TagTwo.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.target
 ---@field [string] any
