@@ -1,19 +1,8 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
-
 local BSKIN = NRSKNUI.BlizzSkin
 
 local ipairs = ipairs
-
---[[
-Taint rules for this file:
-Spellbook buttons feed secure cast/pickup paths and the talent tree is the
-canonical addon-taint source ("can't change talents in combat"). Hard rules:
-- Talent node buttons, edge/connector pools, selection frames, the commit
-  flow and PvP talent slots are never touched — static frame art only.
-- Spellbook item buttons keep their OnClick/OnDrag and spell data untouched.
-- Textures, alpha and our own backdrop children only; hooks stay visual-only.
-]]
 
 local function SkinTabSystem(S, tabSystem)
     if not tabSystem then return end

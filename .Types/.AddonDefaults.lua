@@ -77,13 +77,13 @@
 ---@field Auras NRSKNUI.DBProfile.Auras
 ---@field BattleRes NRSKNUI.DBProfile.BattleRes
 ---@field BlizzardRM NRSKNUI.DBProfile.BlizzardRM
+---@field CharacterPanel NRSKNUI.DBProfile.CharacterPanel
 ---@field Colors NRSKNUI.DBProfile.Colors
 ---@field CombatCross NRSKNUI.DBProfile.CombatCross
 ---@field CombatMessage NRSKNUI.DBProfile.CombatMessage
 ---@field CombatTimer NRSKNUI.DBProfile.CombatTimer
 ---@field DungeonCasts NRSKNUI.DBProfile.DungeonCasts
 ---@field DungeonTimers NRSKNUI.DBProfile.DungeonTimers
----@field GearUtility NRSKNUI.DBProfile.GearUtility
 ---@field HealerMana NRSKNUI.DBProfile.HealerMana
 ---@field IncarnStacks NRSKNUI.DBProfile.IncarnStacks
 ---@field InstanceReset NRSKNUI.DBProfile.InstanceReset
@@ -304,6 +304,49 @@
 ---@class NRSKNUI.DBProfile.BlizzardRM.Position
 ---@field [string] any
 ---@field YOffset number
+
+---@class NRSKNUI.DBProfile.CharacterPanel
+---@field [string] any
+---@field CategoryColor table
+---@field CategoryColorMode string
+---@field CategoryFontSize number
+---@field DecimalItemLevel boolean
+---@field Enabled boolean
+---@field Enchants NRSKNUI.DBProfile.CharacterPanel.Enchants
+---@field FactionTag boolean
+---@field FontFace string
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.CharacterPanel.FontShadow
+---@field IlvlValueSize number
+---@field LevelTextSize number
+---@field NameTextSize number
+---@field ShowRaceText boolean
+---@field Sockets NRSKNUI.DBProfile.CharacterPanel.Sockets
+---@field StatsFontSize number
+---@field TrackIndicators NRSKNUI.DBProfile.CharacterPanel.TrackIndicators
+---@field UseGlobalFont boolean
+
+---@class NRSKNUI.DBProfile.CharacterPanel.Enchants
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.CharacterPanel.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field OffsetY number
+
+---@class NRSKNUI.DBProfile.CharacterPanel.Sockets
+---@field [string] any
+---@field ButtonSize number
+---@field ButtonSpacing number
+---@field Enabled boolean
+---@field ShowOnlyEmpty boolean
+
+---@class NRSKNUI.DBProfile.CharacterPanel.TrackIndicators
+---@field [string] any
+---@field Enabled boolean
 
 ---@class NRSKNUI.DBProfile.Colors
 ---@field [string] any
@@ -753,28 +796,6 @@
 ---@field textJustify string
 ---@field triggerType string
 ---@field useBigWigsColors boolean
-
----@class NRSKNUI.DBProfile.GearUtility
----@field [string] any
----@field Enabled boolean
----@field Enchants NRSKNUI.DBProfile.GearUtility.Enchants
----@field Sockets NRSKNUI.DBProfile.GearUtility.Sockets
----@field TrackIndicators NRSKNUI.DBProfile.GearUtility.TrackIndicators
-
----@class NRSKNUI.DBProfile.GearUtility.Enchants
----@field [string] any
----@field Enabled boolean
-
----@class NRSKNUI.DBProfile.GearUtility.Sockets
----@field [string] any
----@field ButtonSize number
----@field ButtonSpacing number
----@field Enabled boolean
----@field ShowOnlyEmpty boolean
-
----@class NRSKNUI.DBProfile.GearUtility.TrackIndicators
----@field [string] any
----@field Enabled boolean
 
 ---@class NRSKNUI.DBProfile.HealerMana
 ---@field [string] any

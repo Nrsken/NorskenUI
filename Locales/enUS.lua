@@ -571,9 +571,12 @@ L['Broken Text'] = true
 L['Broken Color'] = true
 L['Threshold %'] = true
 
--- QoL: Gear Util
-L['Gear Util'] = true
-L['Enable Gear Util'] = true
+-- QoL: Character Panel
+L['Character Panel'] = true
+L['Enable Character Panel'] = true
+L['Gear'] = true
+L['Panel Texts'] = true
+L['Fonts'] = true
 L['Adds upgrade track letters to the character panel gear slots.'] = true
 L['Adds a bar next to the character tabs for socketing gems and applying enchants from your bags.'] = true
 L['Item Track Indicators'] = true
@@ -586,6 +589,21 @@ L['Show Only Empty Sockets'] = true
 L['Hide sockets that already have a gem in them.'] = true
 L['Enchants'] = true
 L['Enable Enchant Helper'] = true
+L['Item Level'] = true
+L['Show Decimal Item Level'] = true
+L['Shows your average item level with 2 decimals instead of a rounded value.'] = true
+L['Name & Level'] = true
+L['Show Faction Tag'] = true
+L['Appends |cff3399ff(A)|r or |cffe63333(H)|r to the level text.'] = true
+L['Show Realm & Race'] = true
+L['Adds a line with your realm and race under the level text.'] = true
+L['Category Titles'] = true
+L['Colors the Item Level, Attributes and Enhancements headers in the stats pane.'] = true
+L['Name Text Size'] = true
+L['Level Text Size'] = true
+L['Category Size'] = true
+L['Item Level Size'] = true
+L['Stats Size'] = true
 L['Adds a button to the socket bar that applies enchants from your bags, highlighting the slots each one fits.'] = true
 
 -- QoL: Skyriding UI

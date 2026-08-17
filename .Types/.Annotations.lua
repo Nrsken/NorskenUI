@@ -395,6 +395,7 @@ function FontString:GetWidestDigit() end
 ---@field SystemFont16_Shadow_ThickOutline Font
 ---@field SystemFont22_Shadow_ThickOutline Font
 ---@field UserScaledFontSystem15Shadow Font
+---@field CharacterFrameTitleText FontString
 
 ---@class SkinColors
 ---@field border RGBA
@@ -478,6 +479,14 @@ function FontString:GetWidestDigit() end
 
 ---@class NUIStatsPane : CharacterStatsPane
 ---@field statsFramePool { EnumerateActive: fun(self): (fun(): NUIStatFrame?) }?
+
+---The flyout's pooled item buttons are absent from the generated stub. They carry the
+---packed equipment location and, once HandleItemButton has run, the item button mixin.
+---@class NUIEquipmentFlyoutButton : NUIItemButton, SkinnedItemButtonMixin
+---@field location integer?
+
+---@class NUIEquipmentFlyout : EquipmentFlyoutFrame
+---@field buttons NUIEquipmentFlyoutButton[]
 
 ---@class NUIGearManagerBorderBox : Frame
 ---@field IconSelectorEditBox EditBox?

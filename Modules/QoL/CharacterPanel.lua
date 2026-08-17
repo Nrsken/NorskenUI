@@ -1,22 +1,30 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
----@class GearUtilityModule
-local Gear = NRSKNUI:GetModule('GearUtility')
+---@class CharacterPanelModule
+local CharacterPanel = NRSKNUI:GetModule('CharacterPanel')
+function CharacterPanel:UpdateDB() self.db = NRSKNUI.db.profile.CharacterPanel end
+
 local Theme = NRSKNUI.Theme
 
 local string_match, string_gsub, string_find = string.match, string.gsub, string.find
 local math_abs, math_max, math_min = math.abs, math.max, math.min
+local math_floor, string_format = math.floor, string.format
+local GetAverageItemLevel = GetAverageItemLevel
 local GetInventoryItemLink = GetInventoryItemLink
 local SocketInventoryItem = SocketInventoryItem
 local tinsert, twipe = table.insert, table.wipe
+local UnitFactionGroup = UnitFactionGroup
 local CloseSocketInfo = CloseSocketInfo
+local hooksecurefunc = hooksecurefunc
 local AcceptSockets = AcceptSockets
 local ipairs, pairs = ipairs, pairs
 local RunNextFrame = RunNextFrame
+local GetRealmName = GetRealmName
 local CreateFrame = CreateFrame
 local ClearCursor = ClearCursor
 local HideUIPanel = HideUIPanel
 local tonumber = tonumber
+local UnitRace = UnitRace
 local unpack = unpack
 local select = select
 local type = type
@@ -68,8 +76,106 @@ local gemCache = {}
 local socketCache = {}
 local enchantCache = {}
 
-function Gear:UpdateDB()
-    self.db = NRSKNUI.db.profile.GearUtility
+-- Panel texts --
+
+local FACTION_TAGS = {
+    Alliance = ' |cff3399ff(A)|r',
+    Horde = ' |cffe63333(H)|r',
+}
+local FACTION_TAG_PATTERN = ' |c%x%x%x%x%x%x%x%x%([AH]%)|r$'
+local RACE_TEXT_GAP = 2
+local LEVEL_TEXT_GAP = -4
+
+local function UpdateItemLevelText()
+    local value = _G.CharacterStatsPane.ItemLevelFrame.Value
+    value:SetFontStyle(CharacterPanel.db, CharacterPanel.db.IlvlValueSize)
+
+    local _, avgItemLevelEquipped = GetAverageItemLevel()
+    if CharacterPanel.db.DecimalItemLevel then
+        value:SetText(string_format('%.2f', avgItemLevelEquipped))
+    else
+        value:SetText(string_format('%d', math_floor(avgItemLevelEquipped)))
+    end
+end
+
+local function StyleCategory(category, db, r, g, b)
+    if not category or not category.Title then return end
+
+    category.Title:SetFontStyle(db, db.CategoryFontSize)
+    category.Title:SetTextColor(r, g, b)
+end
+
+local function UpdateLevelTextWithFaction()
+    local levelText = _G.CharacterLevelText
+    local text = levelText:GetText()
+    if not text then return end
+
+    text = string_gsub(text, FACTION_TAG_PATTERN, '')
+    if CharacterPanel.db.FactionTag then
+        text = text .. (FACTION_TAGS[UnitFactionGroup('player')] or '')
+    end
+
+    levelText:SetText(text)
+end
+
+local function RaceTextLabel()
+    return string_format('%s / %s', GetRealmName(), UnitRace('player'))
+end
+
+function CharacterPanel:ShowRaceText()
+    if not self.raceText then
+        self.raceText = PaperDollFrame:CreateFontString(nil, 'OVERLAY')
+        self.raceText:SetPoint('TOP', _G.CharacterLevelText, 'BOTTOM', 0, RACE_TEXT_GAP)
+    end
+
+    self.raceText:SetFontStyle(self.db, self.db.LevelTextSize)
+    self.raceText:SetText(RaceTextLabel())
+    self.raceText:SetJustifyH('CENTER')
+    self.raceText:Show()
+end
+
+function CharacterPanel:HideRaceText()
+    if self.raceText then
+        self.raceText:Hide()
+    end
+end
+
+function CharacterPanel:StyleCharacterTexts()
+    -- Character name + title, drawn on the frame header.
+    local nameText = _G.CharacterFrameTitleText
+    if nameText then
+        nameText:SetFontStyle(self.db, self.db.NameTextSize)
+        nameText:ClearAllPoints()
+        nameText:SetPoint('TOP', PaperDollFrame, 'TOP', 0, -6)
+        nameText:SetJustifyH('CENTER')
+    end
+
+    -- Level + class/spec line, this is also what carries the faction tag.
+    local levelText = _G.CharacterLevelText
+    if levelText then
+        levelText:SetFontStyle(self.db, self.db.LevelTextSize)
+        levelText:SetWidth(0)
+        levelText:SetWordWrap(true)
+        levelText:ClearAllPoints()
+        levelText:SetPoint('TOP', _G.CharacterFrameTitleText, 'BOTTOM', 0, self.db.ShowRaceText and RACE_TEXT_GAP or LEVEL_TEXT_GAP)
+        levelText:SetJustifyH('CENTER')
+    end
+
+    -- Category headers for item level, attributes and enhancements.
+    local pane = _G.CharacterStatsPane
+    local r, g, b = NRSKNUI:GetAccentColor(self.db.CategoryColorMode, self.db.CategoryColor)
+    StyleCategory(pane.ItemLevelCategory, self.db, r, g, b)
+    StyleCategory(pane.AttributesCategory, self.db, r, g, b)
+    StyleCategory(pane.EnhancementsCategory, self.db, r, g, b)
+
+    UpdateItemLevelText()
+    UpdateLevelTextWithFaction()
+
+    if self.db.ShowRaceText then
+        self:ShowRaceText()
+    else
+        self:HideRaceText()
+    end
 end
 
 -- Item track resolution --
@@ -196,7 +302,7 @@ end
 
 -- Track indicators --
 
-function Gear:CreateTrackOverlay(slotInfo)
+function CharacterPanel:CreateTrackOverlay(slotInfo)
     local slotFrame = slotInfo.frame
     if slotFrame.NUITrackOverlay then return slotFrame.NUITrackOverlay end
 
@@ -223,7 +329,7 @@ function Gear:CreateTrackOverlay(slotInfo)
     return overlay
 end
 
-function Gear:UpdateSlotTrackIndicator(slotID)
+function CharacterPanel:UpdateSlotTrackIndicator(slotID)
     local slotInfo = NRSKNUI.ITEM_SLOT_INFO[slotID]
     if not slotInfo or not slotInfo.frame then return end
 
@@ -246,7 +352,7 @@ function Gear:UpdateSlotTrackIndicator(slotID)
     overlay:Show()
 end
 
-function Gear:UpdateAllTrackIndicators()
+function CharacterPanel:UpdateAllTrackIndicators()
     if not self.db.TrackIndicators.Enabled then return end
 
     local slotT = NRSKNUI.ITEM_SLOTS
@@ -255,7 +361,7 @@ function Gear:UpdateAllTrackIndicators()
     end
 end
 
-function Gear:HideAllTrackIndicators()
+function CharacterPanel:HideAllTrackIndicators()
     local slotT = NRSKNUI.ITEM_SLOTS
     for _, slotInfo in ipairs(slotT) do
         local overlay = slotInfo.frame and slotInfo.frame.NUITrackOverlay
@@ -310,7 +416,7 @@ local function GetItemName(itemLink)
     return StripColorCodes(data.lines[1].leftText)
 end
 
-function Gear:ScanItemSockets(slotID)
+function CharacterPanel:ScanItemSockets(slotID)
     local itemLink = GetInventoryItemLink('player', slotID)
     if not itemLink then return end
 
@@ -379,7 +485,7 @@ function Gear:ScanItemSockets(slotID)
     return result.totalCount > 0 and result or nil
 end
 
-function Gear:ScanAllEquippedSockets()
+function CharacterPanel:ScanAllEquippedSockets()
     twipe(socketCache)
 
     local socketableSlots = NRSKNUI.SOCKETABLE_SLOTS
@@ -436,7 +542,7 @@ local function ScanBags(classID, build)
     end
 end
 
-function Gear:ScanBagsForGems()
+function CharacterPanel:ScanBagsForGems()
     twipe(gemCache)
 
     ScanBags(ITEM_CLASS_GEM, function(info, bag, slot)
@@ -459,7 +565,7 @@ function Gear:ScanBagsForGems()
     return gemCache
 end
 
-function Gear:ScanBagsForEnchants()
+function CharacterPanel:ScanBagsForEnchants()
     twipe(enchantCache)
 
     ScanBags(ITEM_CLASS_ENHANCEMENT, function(info, bag, slot)
@@ -486,7 +592,7 @@ function Gear:ScanBagsForEnchants()
     return enchantCache
 end
 
-function Gear:FindBestEnchantSlot(targetSlots)
+function CharacterPanel:FindBestEnchantSlot(targetSlots)
     if not targetSlots then return end
 
     for _, slotID in ipairs(targetSlots) do
@@ -498,7 +604,7 @@ end
 
 -- Slot highlights --
 
-function Gear:CreateSlotHighlight()
+function CharacterPanel:CreateSlotHighlight()
     local frame = CreateFrame('Frame', nil, UIParent)
     frame:SetFrameStrata('DIALOG')
 
@@ -515,7 +621,7 @@ function Gear:CreateSlotHighlight()
     return frame
 end
 
-function Gear:ShowSlotHighlight(slotIDs)
+function CharacterPanel:ShowSlotHighlight(slotIDs)
     self:HideSlotHighlight()
     if not slotIDs then return end
 
@@ -535,7 +641,7 @@ function Gear:ShowSlotHighlight(slotIDs)
     end
 end
 
-function Gear:HideSlotHighlight()
+function CharacterPanel:HideSlotHighlight()
     if not self.slotHighlights then return end
 
     for _, highlight in pairs(self.slotHighlights) do
@@ -559,20 +665,20 @@ local function IsHovered(frame, children)
 end
 
 local function IsMouseOverUI()
-    local gemPopup, enchantPopup, bar = Gear.gemPopup, Gear.enchantPopup, Gear.socketBar
+    local gemPopup, enchantPopup, bar = CharacterPanel.gemPopup, CharacterPanel.enchantPopup, CharacterPanel.socketBar
 
     return IsHovered(gemPopup, gemPopup and gemPopup.rows)
         or IsHovered(enchantPopup, enchantPopup and enchantPopup.rows)
         or IsHovered(bar, bar and bar.buttons)
-        or IsHovered(Gear.enchantButton)
+        or IsHovered(CharacterPanel.enchantButton)
 end
 
 local function CloseAfterLeave()
     C_Timer.After(LEAVE_DELAY, function()
         if IsMouseOverUI() then return end
-        Gear:HideGemPopup()
-        Gear:HideEnchantPopup()
-        Gear:HideSlotHighlight()
+        CharacterPanel:HideGemPopup()
+        CharacterPanel:HideEnchantPopup()
+        CharacterPanel:HideSlotHighlight()
     end)
 end
 
@@ -679,7 +785,7 @@ local function CreateListRow(popup, index)
 
     row:SetScript('OnEnter', function(button)
         button.hoverTarget = 1
-        if button.highlightSlots then Gear:ShowSlotHighlight(button.highlightSlots) end
+        if button.highlightSlots then CharacterPanel:ShowSlotHighlight(button.highlightSlots) end
         if button.data and button.data.link then
             GameTooltip:SetOwner(button, 'ANCHOR_RIGHT', 40, 0)
             GameTooltip:SetHyperlink(button.data.link)
@@ -754,7 +860,7 @@ end
 
 -- Gem popup --
 
-function Gear:CreateGemPopup()
+function CharacterPanel:CreateGemPopup()
     if self.gemPopup then return self.gemPopup end
 
     self.gemPopup = CreateListPopup('NRSKNUI_GemPopup', 'Gems', function(row)
@@ -773,26 +879,26 @@ function Gear:CreateGemPopup()
 
         if ItemSocketingFrame then HideUIPanel(ItemSocketingFrame) end
 
-        Gear:HideGemPopup()
-        Gear:HideSlotHighlight()
+        CharacterPanel:HideGemPopup()
+        CharacterPanel:HideSlotHighlight()
 
         RunNextFrame(function()
             if NRSKNUI:InCombat() then return end
-            Gear:RefreshSocketBar()
+            CharacterPanel:RefreshSocketBar()
         end)
     end)
 
     self.gemPopup:SetScript('OnEnter', function()
-        local button = Gear.activeSocketButton
+        local button = CharacterPanel.activeSocketButton
         if button and button.socketInfo then
-            Gear:ShowSlotHighlight(button.socketInfo.slotID)
+            CharacterPanel:ShowSlotHighlight(button.socketInfo.slotID)
         end
     end)
 
     return self.gemPopup
 end
 
-function Gear:ShowGemPopup(socketButton)
+function CharacterPanel:ShowGemPopup(socketButton)
     if not socketButton.socket then
         self:HideGemPopup()
         return
@@ -821,13 +927,13 @@ function Gear:ShowGemPopup(socketButton)
     AnchorPopup(popup, socketButton)
 end
 
-function Gear:HideGemPopup()
+function CharacterPanel:HideGemPopup()
     if self.gemPopup then self.gemPopup:Hide() end
 end
 
 -- Enchant popup --
 
-function Gear:CreateEnchantPopup()
+function CharacterPanel:CreateEnchantPopup()
     if self.enchantPopup then return self.enchantPopup end
 
     self.enchantPopup = CreateListPopup('NRSKNUI_EnchantPopup', 'Enchants', function(row)
@@ -838,8 +944,8 @@ function Gear:CreateEnchantPopup()
         if not row.data then return end
 
         UseContainerItem(row.data.bagID, row.data.slotID)
-        Gear:HideEnchantPopup()
-        Gear:HideSlotHighlight()
+        CharacterPanel:HideEnchantPopup()
+        CharacterPanel:HideSlotHighlight()
     end)
 
     self.enchantPopup.empty:SetText('No enchants in bags')
@@ -847,7 +953,7 @@ function Gear:CreateEnchantPopup()
     return self.enchantPopup
 end
 
-function Gear:ShowEnchantPopup(anchor)
+function CharacterPanel:ShowEnchantPopup(anchor)
     local popup = self:CreateEnchantPopup()
     local entries = {}
 
@@ -869,13 +975,13 @@ function Gear:ShowEnchantPopup(anchor)
     AnchorPopup(popup, anchor)
 end
 
-function Gear:HideEnchantPopup()
+function CharacterPanel:HideEnchantPopup()
     if self.enchantPopup then self.enchantPopup:Hide() end
 end
 
 -- Socket bar --
 
-function Gear:CreateSocketBar()
+function CharacterPanel:CreateSocketBar()
     if self.socketBar then return self.socketBar end
 
     local bar = CreateFrame('Frame', 'NRSKNUI_SocketBar', PaperDollFrame)
@@ -888,7 +994,7 @@ function Gear:CreateSocketBar()
     return bar
 end
 
-function Gear:CreateSocketButton(index)
+function CharacterPanel:CreateSocketButton(index)
     local bar = self.socketBar
     if bar.buttons[index] then return bar.buttons[index] end
 
@@ -911,11 +1017,11 @@ function Gear:CreateSocketButton(index)
     button.qualityFrame, button.quality = CreateQualityOverlay(button)
 
     button:SetScript('OnEnter', function(btn)
-        Gear:HideEnchantPopup()
-        Gear.activeSocketButton = btn
-        Gear:ShowGemPopup(btn)
+        CharacterPanel:HideEnchantPopup()
+        CharacterPanel.activeSocketButton = btn
+        CharacterPanel:ShowGemPopup(btn)
 
-        if btn.socketInfo then Gear:ShowSlotHighlight(btn.socketInfo.slotID) end
+        if btn.socketInfo then CharacterPanel:ShowSlotHighlight(btn.socketInfo.slotID) end
 
         if btn.socket and btn.socket.filled and btn.socket.gemLink then
             GameTooltip:SetOwner(btn, 'ANCHOR_RIGHT', 40, 0)
@@ -941,7 +1047,7 @@ function Gear:CreateSocketButton(index)
     return button
 end
 
-function Gear:CreateEnchantButton()
+function CharacterPanel:CreateEnchantButton()
     if self.enchantButton then return self.enchantButton end
 
     local size = self.db.Sockets.ButtonSize
@@ -962,9 +1068,9 @@ function Gear:CreateEnchantButton()
     button.highlight:SetBlendMode('ADD')
 
     button:SetScript('OnEnter', function(btn)
-        Gear:HideGemPopup()
-        Gear:HideSlotHighlight()
-        Gear:ShowEnchantPopup(btn)
+        CharacterPanel:HideGemPopup()
+        CharacterPanel:HideSlotHighlight()
+        CharacterPanel:ShowEnchantPopup(btn)
     end)
 
     button:SetScript('OnLeave', CloseAfterLeave)
@@ -974,7 +1080,7 @@ function Gear:CreateEnchantButton()
     return button
 end
 
-function Gear:RefreshEnchantButton()
+function CharacterPanel:RefreshEnchantButton()
     if not self.db.Enchants.Enabled then
         if self.enchantButton then self.enchantButton:Hide() end
         return false
@@ -1005,7 +1111,7 @@ function Gear:RefreshEnchantButton()
 end
 
 ---The bar hosts both features, so it stays alive while either one is on.
-function Gear:RefreshSocketBar()
+function CharacterPanel:RefreshSocketBar()
     if not self.socketBar then return end
 
     local db = self.db.Sockets
@@ -1060,15 +1166,19 @@ function Gear:RefreshSocketBar()
     self.socketBar:Show()
 end
 
-function Gear:OnPaperDollHidden()
+function CharacterPanel:OnPaperDollHidden()
     if self.socketBar then self.socketBar:Hide() end
     self:HideGemPopup()
     self:HideEnchantPopup()
     self:HideSlotHighlight()
 end
 
-function Gear:ApplySettings()
+function CharacterPanel:ApplySettings()
     if not self.db.Enabled then return end
+    -- The GUI and profile refreshes can reach us before Blizzard_UIPanels_Game has loaded.
+    if not PaperDollFrame then return end
+
+    self:StyleCharacterTexts()
 
     if self.db.Sockets.Enabled or self.db.Enchants.Enabled then self:CreateSocketBar() end
     if self.db.Sockets.Enabled then self:CreateGemPopup() end
@@ -1084,7 +1194,9 @@ function Gear:ApplySettings()
     end
 end
 
-function Gear:OnEnable()
+-- Everything here reaches into PaperDollFrame, which lives in the load-on-demand
+-- Blizzard_UIPanels_Game. Callers come in through OnEnable's ContinueOnAddOnLoaded.
+function CharacterPanel:SetupPanel()
     -- Initialize the socket bar and popups.
     if not self.hooked then
         if self.db.Sockets.Enabled or self.db.Enchants.Enabled then
@@ -1102,19 +1214,48 @@ function Gear:OnEnable()
             if self.socketBar and self.socketBar:IsShown() then self:RefreshSocketBar() end
         end)
 
-        if PaperDollFrame then
-            PaperDollFrame:HookScript('OnShow', function()
-                self:UpdateAllTrackIndicators()
-                self:RefreshSocketBar()
-            end)
-            PaperDollFrame:HookScript('OnHide', function() self:OnPaperDollHidden() end)
-        end
+        PaperDollFrame:HookScript('OnShow', function()
+            self:UpdateAllTrackIndicators()
+            self:RefreshSocketBar()
+        end)
+        PaperDollFrame:HookScript('OnHide', function() self:OnPaperDollHidden() end)
+
+        -- Blizzard rebuilds these texts on its own schedule, so restyle from its own updates.
+        -- hooksecurefunc can never be removed, hence the Enabled gate inside each one.
+        hooksecurefunc('PaperDollFrame_SetItemLevel', function(_, unit)
+            if not self.db.Enabled or unit ~= 'player' then return end
+            UpdateItemLevelText()
+        end)
+
+        hooksecurefunc('PaperDollFrame_SetLabelAndText', function(statFrame)
+            if not self.db.Enabled then return end
+            -- The item level frame owns its own size setting, handled by UpdateItemLevelText.
+            if statFrame == _G.CharacterStatsPane.ItemLevelFrame then return end
+
+            statFrame.Label:SetFontStyle(self.db, self.db.StatsFontSize)
+            statFrame.Value:SetFontStyle(self.db, self.db.StatsFontSize)
+        end)
+
+        hooksecurefunc('PaperDollFrame_SetLevel', function()
+            if not self.db.Enabled then return end
+            UpdateLevelTextWithFaction()
+            if self.db.ShowRaceText then self:ShowRaceText() end
+        end)
+
         self.hooked = true
     end
     self:ApplySettings()
 end
 
-function Gear:OnDisable()
+function CharacterPanel:OnEnable()
+    -- Fires immediately when the addon is already loaded, defers when it is not.
+    EventUtil.ContinueOnAddOnLoaded('Blizzard_UIPanels_Game', function()
+        if self:IsEnabled() then self:SetupPanel() end
+    end)
+end
+
+function CharacterPanel:OnDisable()
     self:HideAllTrackIndicators()
+    self:HideRaceText()
     self:OnPaperDollHidden()
 end

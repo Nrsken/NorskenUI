@@ -43,6 +43,7 @@ local SkinnedCloseButtonMixin = {}
 local SkinnedTabMixin = {}
 local SkinnedThumbMixin = {}
 local SkinnedCheckMixin = {}
+---@class SkinnedItemButtonMixin
 local SkinnedItemButtonMixin = {}
 local SkinnedStatusBarMixin = {}
 local NUICollapseButtonMixin = {}

@@ -9,7 +9,7 @@
     <Script file='GUI-Recuperate.lua'/>
     <Script file='GUI-Tweaks.lua'/>
     <Script file='GUI-DurabilityUtil.lua'/>
-    <Script file='GUI-GearUtil.lua'/>
+    <Script file='GUI-CharacterPanel.lua'/>
     <Script file='GUI-SkyRiding.lua'/>
     <Script file='GUI-SpellAlert.lua'/>
 </Ui>

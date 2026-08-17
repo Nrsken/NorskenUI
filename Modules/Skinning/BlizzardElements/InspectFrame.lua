@@ -12,43 +12,27 @@ local select = select
 local GetSpecializationInfoByID = GetSpecializationInfoByID
 local GetInspectSpecialization = GetInspectSpecialization
 
---[[
-Taint rules for this file:
-InspectFrame is UIPanel-managed — textures, alpha and our own backdrop children
-only. Inspect data arrives async; the IconBorder hooks installed by
-HandleItemButton keep quality colors self-updating between inspects.
-The talents tab gets static art stripping only — never touch trait-tree nodes.
-]]
-
 local SLOT_NAMES = {
-    "Head",
-    "Neck",
-    "Shoulder",
-    "Back",
-    "Chest",
-    "Shirt",
-    "Tabard",
-    "Wrist",
-    "Hands",
-    "Waist",
-    "Legs",
-    "Feet",
-    "Finger0",
-    "Finger1",
-    "Trinket0",
-    "Trinket1",
-    "MainHand",
-    "SecondaryHand",
+    'Head', 'Neck',
+    'Shoulder', 'Back',
+    'Chest', 'Shirt',
+    'Tabard', 'Wrist',
+    'Hands', 'Waist',
+    'Legs', 'Feet',
+    'Finger0', 'Finger1',
+    'Trinket0', 'Trinket1',
+    'MainHand', 'SecondaryHand',
 }
 
 local function SetupCustomPortrait()
     if BSKIN.CustomPortraitFrame then return end
+
     local frame = CreateFrame('Frame', nil, InspectFrame)
     frame:SetSize(45, 45)
     frame:SetPoint('TOPLEFT', InspectFrame, 'TOPLEFT', 7, -7)
     frame:NUIAddBorders()
 
-    frame.icon = frame:CreateTexture(nil, "ARTWORK")
+    frame.icon = frame:CreateTexture(nil, 'ARTWORK')
     frame.icon:SetAllPoints(frame)
     frame.icon:NUISetZoom()
     BSKIN.CustomPortraitFrame = frame
@@ -105,7 +89,7 @@ local function SkinTabs(S)
     end
 end
 
-BSKIN:RegisterSkin("Blizzard_InspectUI", "InspectFrame", function(S)
+BSKIN:RegisterSkin('Blizzard_InspectUI', 'InspectFrame', function(S)
     if not InspectFrame then return end
     local db = BSKIN:GetDB()
 
@@ -127,12 +111,12 @@ BSKIN:RegisterSkin("Blizzard_InspectUI", "InspectFrame", function(S)
     end)
 
     for i = 1, (InspectFrame.numTabs or 5) do
-        local tab = _G["InspectFrameTab" .. i]
+        local tab = _G['InspectFrameTab' .. i]
         if tab then S:HandleTab(tab) end
     end
 
     for _, name in ipairs(SLOT_NAMES) do
-        local slot = _G["Inspect" .. name .. "Slot"]
+        local slot = _G['Inspect' .. name .. 'Slot']
         if slot then S:HandleItemButton(slot) end
     end
 

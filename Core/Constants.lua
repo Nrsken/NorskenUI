@@ -163,7 +163,7 @@ NRSKNUI.PET_CLASSES = {
     },
 }
 
--- Gear Utility Constants
+-- Character Panel Constants
 
 ---@class NRSKNUI.ItemSlotInfo
 ---@field slot number

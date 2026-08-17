@@ -220,8 +220,32 @@ local Defaults = {
             GlowStartAnim = false,
             GlowDuration = 1,
         },
-        GearUtility = {
+        CharacterPanel = {
             Enabled = true,
+
+            -- Panel texts
+            DecimalItemLevel = true,
+            FactionTag = true,
+            ShowRaceText = false,
+            CategoryColorMode = "class",
+            CategoryColor = { 1, 1, 1, 1 },
+
+            -- Fonts
+            UseGlobalFont = true,
+            FontFace = "Expressway",
+            FontOutline = "OUTLINE",
+            FontShadow = {
+                Enabled = false,
+                Color = { 0, 0, 0, 1 },
+                OffsetX = 1,
+                OffsetY = -1,
+            },
+            NameTextSize = 16,
+            LevelTextSize = 14,
+            CategoryFontSize = 14,
+            IlvlValueSize = 14,
+            StatsFontSize = 12,
+
             TrackIndicators = {
                 Enabled = true,
             },

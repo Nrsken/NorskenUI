@@ -56,7 +56,7 @@
 ---@class CombatCursorModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class FocusCastbarModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class SpeedModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class GearUtilityModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class CharacterPanelModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class AuraDisplayModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class BlizzardMessagesModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class ActionBarsModule : NRSKNUI.ModuleBase, AceEvent-3.0
@@ -89,7 +89,7 @@
 ---@field Recuperate RecuperateModule
 ---@field MiscVars MiscVarsModule
 ---@field Durability DurabilityModule
----@field GearUtility GearUtilityModule
+---@field CharacterPanel CharacterPanelModule
 ---@field Tooltips TooltipsModule
 ---@field Minimap MinimapModule
 ---@field Skinning SkinningModule
@@ -145,7 +145,7 @@ local NRSKNUI
 ---@overload fun(self: NRSKNUI, name: "PlayerAuras", silent?: boolean): PlayerAurasModule
 ---@overload fun(self: NRSKNUI, name: "PetTexts", silent?: boolean): PetTextsModule
 ---@overload fun(self: NRSKNUI, name: "FocusCastbar", silent?: boolean): FocusCastbarModule
----@overload fun(self: NRSKNUI, name: "GearUtility", silent?: boolean): GearUtilityModule
+---@overload fun(self: NRSKNUI, name: "CharacterPanel", silent?: boolean): CharacterPanelModule
 ---@overload fun(self: NRSKNUI, name: "AuraDisplay", silent?: boolean): AuraDisplayModule
 ---@overload fun(self: NRSKNUI, name: "BlizzardMessages", silent?: boolean): BlizzardMessagesModule
 ---@overload fun(self: NRSKNUI, name: "ActionBars", silent?: boolean): ActionBarsModule
@@ -186,7 +186,7 @@ function NRSKNUI:GetModule(name, silent) end
 ---@overload fun(self: NRSKNUI, name: "PlayerAuras", ...: string): PlayerAurasModule
 ---@overload fun(self: NRSKNUI, name: "PetTexts", ...: string): PetTextsModule
 ---@overload fun(self: NRSKNUI, name: "FocusCastbar", ...: string): FocusCastbarModule
----@overload fun(self: NRSKNUI, name: "GearUtility", ...: string): GearUtilityModule
+---@overload fun(self: NRSKNUI, name: "CharacterPanel", ...: string): CharacterPanelModule
 ---@overload fun(self: NRSKNUI, name: "AuraDisplay", ...: string): AuraDisplayModule
 ---@overload fun(self: NRSKNUI, name: "BlizzardMessages", ...: string): BlizzardMessagesModule
 ---@overload fun(self: NRSKNUI, name: "ActionBars", ...: string): ActionBarsModule

@@ -91,7 +91,7 @@ GUIFrame.SidebarConfig = {
                 { id = 'recuperate',         text = L['Recuperate Button'] },
                 { id = 'tweaks',             text = L['Tweaks'] },
                 { id = 'durabilityUtil',     text = L['Durability Util'] },
-                { id = 'gearUtil',           text = L['Gear Util'] },
+                { id = 'characterPanel',     text = L['Character Panel'] },
                 { id = 'skyRiding',          text = L['Skyriding UI'] },
                 { id = 'spellAlert',         text = L['Spell Alerts'] },
             }

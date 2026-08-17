@@ -145,7 +145,7 @@ NRSKNUI.CopyAnything = NRSKNUI:NewModule('CopyAnything', 'AceEvent-3.0')
 NRSKNUI.Recuperate = NRSKNUI:NewModule('Recuperate', 'AceEvent-3.0')
 NRSKNUI.MiscVars = NRSKNUI:NewModule('MiscVars', 'AceEvent-3.0')
 NRSKNUI.Durability = NRSKNUI:NewModule('Durability', 'AceEvent-3.0')
-NRSKNUI.GearUtility = NRSKNUI:NewModule('GearUtility', 'AceEvent-3.0')
+NRSKNUI.CharacterPanel = NRSKNUI:NewModule('CharacterPanel', 'AceEvent-3.0')
 NRSKNUI.SkyRiding = NRSKNUI:NewModule('SkyRiding', 'AceEvent-3.0')
 NRSKNUI.SpellAlert = NRSKNUI:NewModule('SpellAlert', 'AceEvent-3.0')
 

@@ -2,19 +2,19 @@
 local NRSKNUI = select(2, ...)
 local BSKIN = NRSKNUI.BlizzSkin
 
-local _G = _G
+local PaperDollFrame_UpdateSidebarTabs = PaperDollFrame_UpdateSidebarTabs
+local PaperDollItemSlotButton_Update = PaperDollItemSlotButton_Update
+local PaperDollFrame_UpdateStats = PaperDollFrame_UpdateStats
+local GetSpecialization = C_SpecializationInfo.GetSpecialization
+local GetSpecializationInfo = C_SpecializationInfo.GetSpecializationInfo
 local hooksecurefunc = hooksecurefunc
 local ipairs, pairs = ipairs, pairs
-local select = select
 local CreateColor = CreateColor
-local GetSpecializationInfoByID = GetSpecializationInfoByID
 local CreateFrame = CreateFrame
 local unpack = unpack
+local select = select
 local next = next
-
-local PaperDollFrame_UpdateStats = PaperDollFrame_UpdateStats
-local PaperDollItemSlotButton_Update = PaperDollItemSlotButton_Update
-local PaperDollFrame_UpdateSidebarTabs = PaperDollFrame_UpdateSidebarTabs
+local _G = _G
 
 local SLOT_NAMES = {
     'Head', 'Neck', 'Shoulder', 'Back', 'Chest', 'Shirt', 'Tabard',
@@ -28,17 +28,14 @@ local FLYOUT_POS = {
     [0xFFFFFFFD] = true, -- UNIGNORESLOT
 }
 
--- FileID of the "+ New Set" (Character-Plus) icon; this row never gets an icon border.
+-- FileID of the '+ New Set' (Character-Plus) icon, this row never gets an icon border.
 local NEW_SET_ICON = 514607
 
 local EXPAND_BUTTON_ATLAS = 'UI-QuestTrackerButton-Secondary-Expand'
 local COLLAPSE_BUTTON_ATLAS = 'UI-QuestTrackerButton-Secondary-Collapse'
 local EXPAND_ARROW_ATLAS = 'Soulbinds_Collection_CategoryHeader_Expand'
 local COLLAPSE_ARROW_ATLAS = 'Soulbinds_Collection_CategoryHeader_Collapse'
-local OLD_ARROW_ATLASES = {
-    ['Options_ListExpand_Right'] = true,
-    ['Options_ListExpand_Right_Expanded'] = true,
-}
+local OLD_ARROW_ATLASES = { ['Options_ListExpand_Right'] = true, ['Options_ListExpand_Right_Expanded'] = true, }
 
 ---@param texture Texture
 ---@param atlas string?
@@ -108,9 +105,9 @@ local function SkinEquipSetRow(row)
         end
 
         -- Build the icon border once and keep it on the row. Rows are pooled and
-        -- recycled between gear sets and the "+ New Set" button, so its visibility
+        -- recycled between gear sets and the '+ New Set' button, so its visibility
         -- is toggled per update below instead of baked in at skin time.
-        local frame = CreateFrame("Frame", nil, row)
+        local frame = CreateFrame('Frame', nil, row)
         frame:NUISetPixelPoint('TOPLEFT', row.icon, 'TOPLEFT', 0, 0)
         frame:NUISetPixelPoint('BOTTOMRIGHT', row.icon, 'BOTTOMRIGHT', 0, 0)
         frame:NUIAddBorders()
@@ -137,7 +134,7 @@ local function SkinEquipSetRow(row)
         end
     end
 
-    -- Border on the spec icons, but never on the new set "+" icon.
+    -- Border on the spec icons, but never on the new set '+' icon.
     row.NUIIconBorder:SetBorderShown(row.icon:GetTexture() ~= NEW_SET_ICON)
 end
 
@@ -175,21 +172,34 @@ local function SkinTransferLogRow(row)
     if row.CurrencyIcon then BSKIN:HandleIcon(row.CurrencyIcon) end
 end
 
-local function SetupCustomPortrait()
+local customPortrait
+local function UpdateCustomPortrait()
+    local index = GetSpecialization()
     local icon
-    if NRSKNUI.MySpec.id ~= nil then
-        icon = select(4, GetSpecializationInfoByID(NRSKNUI.MySpec.id))
+    if index and index > 0 then
+        icon = select(4, GetSpecializationInfo(index))
     end
 
-    local frame = CreateFrame('Frame', nil, PaperDollFrame)
-    frame:NUISetPixelSize(45, 45)
-    frame:NUISetPixelPoint('TOPLEFT', PaperDollFrame, 'TOPLEFT', 7, -7)
-    frame:NUIAddBorders()
+    customPortrait.icon:SetTexture(icon)
+end
 
-    frame.icon = frame:CreateTexture(nil, "ARTWORK")
-    frame.icon:SetAllPoints(frame)
-    frame.icon:SetTexture(icon)
-    frame.icon:NUISetZoom()
+local function SetupCustomPortrait()
+    -- The sidebar tab hook that builds this fires on every paperdoll update
+    if customPortrait then return end
+
+    customPortrait = CreateFrame('Frame', nil, PaperDollFrame)
+    customPortrait:NUISetPixelSize(45, 45)
+    customPortrait:NUISetPixelPoint('TOPLEFT', PaperDollFrame, 'TOPLEFT', 7, -7)
+    customPortrait:NUIAddBorders()
+
+    customPortrait.icon = customPortrait:CreateTexture(nil, 'ARTWORK')
+    customPortrait.icon:SetAllPoints(customPortrait)
+    customPortrait.icon:NUISetZoom()
+
+    customPortrait:RegisterUnitEvent('PLAYER_SPECIALIZATION_CHANGED', 'player')
+    customPortrait:SetScript('OnEvent', UpdateCustomPortrait)
+
+    UpdateCustomPortrait()
 end
 
 -- Current search text, lowercased. Shared between the edit box handler and the data provider filter hook below.
@@ -226,9 +236,9 @@ local function TitleSearch(S)
     local db = BSKIN:GetDB()
     local r, g, b, a = BSKIN:GetAccentColor()
 
-    local editBox = CreateFrame("EditBox", nil, frame)
-    editBox:SetPoint("TOPLEFT", frame, "TOPLEFT", 6, -4)
-    editBox:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -6, 4)
+    local editBox = CreateFrame('EditBox', nil, frame)
+    editBox:SetPoint('TOPLEFT', frame, 'TOPLEFT', 6, -4)
+    editBox:SetPoint('BOTTOMRIGHT', frame, 'BOTTOMRIGHT', -6, 4)
     editBox:SetFontStyle(db, db.FontEditBoxSize)
     editBox:SetTextColor(r, g, b, a)
     editBox:SetAutoFocus(false)
@@ -442,7 +452,7 @@ local function ReassertTabTexCoord(tex, x1)
     end
 end
 
--- Skins the 3 topright buttons, "Character stats", "Titles" and "Equipment Manager".
+-- Skins the 3 topright buttons, 'Character stats', 'Titles' and 'Equipment Manager'.
 local function SkinSidebarTabs(S)
     local i = 1
     local tab = _G['PaperDollSidebarTab' .. i]
@@ -550,7 +560,8 @@ local function SkinReputation(S)
 end
 
 local function UpdateItemButtons(S)
-    local flyoutButtonFrame = _G.EquipmentFlyoutFrame.buttonFrame
+    local flyout = _G.EquipmentFlyoutFrame --[[@as NUIEquipmentFlyout]]
+    local flyoutButtonFrame = flyout.buttonFrame
 
     flyoutButtonFrame:NUIStripTextures('Keyed')
     S:CreatePanelBackdrop(flyoutButtonFrame)
@@ -558,7 +569,7 @@ local function UpdateItemButtons(S)
     local w, h = flyoutButtonFrame:GetSize()
     flyoutButtonFrame:NUISetPixelSize(w + 3, h)
 
-    local flyoutButtons = _G.EquipmentFlyoutFrame.buttons
+    local flyoutButtons = flyout.buttons
 
     for _, button in next, flyoutButtons do
         S:HandleItemButton(button)
@@ -636,7 +647,9 @@ BSKIN:RegisterSkin('Blizzard_UIPanels_Game', 'CharacterFrame', function(S)
     if PaperDollItemSlotButton_Update then
         hooksecurefunc('PaperDollItemSlotButton_Update', function(slot)
             local highlight = slot:GetHighlightTexture()
-            if highlight then highlight:SetColorTexture(unpack(NRSKNUI.Colors.highlightColor)) end
+            if highlight then
+                highlight:SetColorTexture(unpack(NRSKNUI.Colors.highlightColor))
+            end
         end)
     end
 end)
