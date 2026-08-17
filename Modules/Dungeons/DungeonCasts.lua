@@ -13,6 +13,7 @@ local UnitChannelInfo, UnitChannelDuration = UnitChannelInfo, UnitChannelDuratio
 local UnitShouldDisplaySpellTargetName = UnitShouldDisplaySpellTargetName
 local UnitEmpoweredChannelDuration = UnitEmpoweredChannelDuration
 local UnitExists, UnitCanAttack = UnitExists, UnitCanAttack
+local UnitAffectingCombat = UnitAffectingCombat
 local pairs, ipairs, next = pairs, ipairs, next
 local IsInInstance = IsInInstance
 local CreateFrame = CreateFrame
@@ -58,7 +59,12 @@ local CAST_EVENTS = {
 }
 
 -- The nameplate events are handled separately because they don't carry a cast id, so they can't be processed by the generic cast event handler.
-local EVENT_HANDLERS = { NAME_PLATE_UNIT_ADDED = 'NameplateAdded', NAME_PLATE_UNIT_REMOVED = 'NameplateRemoved', }
+local EVENT_HANDLERS = {
+    NAME_PLATE_UNIT_ADDED = 'NameplateAdded',
+    NAME_PLATE_UNIT_REMOVED = 'NameplateRemoved',
+    UNIT_FLAGS = 'CombatFlagsChanged',
+    UNIT_THREAT_LIST_UPDATE = 'CombatFlagsChanged',
+}
 for event, handler in pairs(CAST_EVENTS) do EVENT_HANDLERS[event] = handler end
 
 ---@param unit string?
@@ -69,9 +75,11 @@ end
 
 ---Checks if the unit is a valid nameplate that can be attacked, which is the only type of cast we care about.
 ---@param unit string
+---@param requireCombat boolean
 ---@return boolean
-local function IsValidUnit(unit)
-    return UnitExists(unit) and UnitCanAttack('player', unit) and true or false
+local function IsValidUnit(unit, requireCombat)
+    if not UnitExists(unit) or not UnitCanAttack('player', unit) then return false end
+    return not requireCombat or UnitAffectingCombat(unit)
 end
 
 ---How many bars the stack is allowed to hold, the group caps what it draws at the same number.
@@ -89,6 +97,7 @@ function DungeonCasts:CreateFrames()
     self.byUnit = {}
 
     self.group = NRSKNUI:CreateDynamicGroup('NRSKNUI_DungeonCasts', UIParent)
+    self.group:SetRolesets('encounterUI')
 
     local eventFrame = CreateFrame('Frame')
     eventFrame:SetScript('OnEvent', function(_, event, unit, ...)
@@ -233,16 +242,14 @@ function DungeonCasts:ApplySettings()
     if not self.group then return end
 
     self.durationFormatter = NRSKNUI:GetAuraDurationFormatter() --TODO: Add a cast specifc formatter to the API so it can be used here.
-
-    -- Target text config is read once per bar per tick otherwise, so it is resolved here instead.
-    local target = self.db.Target
-    self.targetEnabled = target.Enabled
-    self.targetClassColor = target.ShowClassColor
+    self.requireCombat = self.db.RequireCombat
+    self.targetEnabled = self.db.Target.Enabled
+    self.targetClassColor = self.db.Target.ShowClassColor
     self.targetPrefix, self.targetSuffix = nil, nil
 
-    local separator = NRSKNUI.Separators[target.Separator] and target.Separator
+    local separator = NRSKNUI.Separators[self.db.Target.Separator] and self.db.Target.Separator
     if separator then
-        if target.Position == 'LEFT' then
+        if self.db.Target.Position == 'LEFT' then
             self.targetPrefix = separator .. ' '
         else
             self.targetSuffix = ' ' .. separator
@@ -279,6 +286,9 @@ function DungeonCasts:ApplySettings()
 
     if self.isPreview then
         self:BuildPreviewBars()
+    elseif self.active then
+        -- Toggling the combat gate has to re-evaluate every live nameplate, no cast event will fire for it.
+        self:ScanNameplates()
     end
 
     self.group:ForceLayout()
@@ -424,7 +434,14 @@ end
 
 function DungeonCasts:CastStart(_, unit)
     if self.isPreview then return end
-    if not IsValidUnit(unit) then return end
+
+    if not IsValidUnit(unit, self.requireCombat) then
+        self:ReleaseBar(unit)
+        if not next(self.byUnit) then
+            self:SetUpdaterRunning(false)
+        end
+        return
+    end
 
     local _, isEmpowered, duration, direction, channeling
     local name, displayName, textureID, notInterruptible, spellID, castBarID
@@ -532,6 +549,24 @@ function DungeonCasts:CastInterruptible(event, unit)
     self:UpdateBarColor(bar)
 end
 
+---Un-pulled mobs channel indefinitely or cast on random mobs, so their bar only appears once they are actually engaged.
+---@param unit string
+function DungeonCasts:CombatFlagsChanged(_, unit)
+    if self.isPreview or not self.requireCombat then return end
+
+    if UnitAffectingCombat(unit) then
+        -- Only on the transition, a re-entry would reset the start time the stack is sorted on.
+        if not self.byUnit[unit] then
+            self:CastStart(nil, unit)
+        end
+    else
+        self:ReleaseBar(unit)
+        if not next(self.byUnit) then
+            self:SetUpdaterRunning(false)
+        end
+    end
+end
+
 function DungeonCasts:NameplateAdded(_, unit)
     self:CastStart(nil, unit)
 end
@@ -574,6 +609,8 @@ function DungeonCasts:SetActive(active)
     if active then
         self.eventFrame:RegisterEvent('NAME_PLATE_UNIT_ADDED')
         self.eventFrame:RegisterEvent('NAME_PLATE_UNIT_REMOVED')
+        self.eventFrame:RegisterEvent('UNIT_FLAGS')
+        self.eventFrame:RegisterEvent('UNIT_THREAT_LIST_UPDATE')
         for event in pairs(CAST_EVENTS) do
             self.eventFrame:RegisterEvent(event)
         end
