@@ -151,7 +151,7 @@ local Frame
 ---@field AddItemEnchant fun(self: NUIAuraContainer, slot: number)
 ---@field SetUnit fun(self: NUIAuraContainer, unit: string)
 ---@field UpdateAllAuras fun(self: NUIAuraContainer)
----@field UpdateUnitGate fun(self: NUIAuraContainer)
+---@field UpdateUnitGate fun(self: NUIAuraContainer): boolean
 ---@field ApplyLayout fun(self: NUIAuraContainer, config: table)
 
 ---@class NUIAuraHostFrame : Frame

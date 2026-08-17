@@ -551,8 +551,9 @@ local GATE_EVENTS = {
 local function OnGateEvent(watcher)
     local container = watcher.container
 
-    container:UpdateUnitGate()
-    container:UpdateAllAuras()
+    -- UNIT_FLAGS/UNIT_IN_RANGE_UPDATE and friends fire constantly in group content, and the gate
+    -- verdict almost never moves with them. Only rebuild the auras when it actually did.
+    if container:UpdateUnitGate() then container:UpdateAllAuras() end
 end
 
 ---Point a container's watcher at its current unit, building it on first use.
@@ -576,15 +577,16 @@ local function WatchUnit(container, unit)
 end
 
 ---Update the container's gate state for its current unit and reapply every group/slot's filter if it changed.
+---@return boolean changed true when the gate verdict moved and the filters were reapplied
 function ContainerMixin:UpdateUnitGate()
     local unit = self:GetUnit()
-    if not unit then return end
+    if not unit then return false end
 
     WatchUnit(self, unit)
 
     local notVisible = not UnitIsVisible(unit)
     local canAssist = UnitCanAssist('player', unit)
-    if self.unitNotVisible == notVisible and self.unitCanAssist == canAssist then return end
+    if self.unitNotVisible == notVisible and self.unitCanAssist == canAssist then return false end
 
     self.unitNotVisible = notVisible
     self.unitCanAssist = canAssist
@@ -597,6 +599,8 @@ function ContainerMixin:UpdateUnitGate()
         local gated = IsGated(self, self.slotIdentity[index], self.slotAssistOnly[index])
         self:SetAuraSlotFilterString(key, gated and NEVER_MATCH_FILTER or self.slotFilters[index])
     end
+
+    return true
 end
 
 ---Register a temporary weapon-enchant frame (main/off-hand).

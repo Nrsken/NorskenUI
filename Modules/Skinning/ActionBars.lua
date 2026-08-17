@@ -586,17 +586,22 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
         hooksecurefunc(button, "UpdateAction", UpdateBackdropVisibility)
     end
 
-    -- Register for action bar updates (individual handlers to avoid taint)
+    -- Register for content changes only
     backdrop:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
-    backdrop:RegisterEvent("ACTIONBAR_UPDATE_STATE")
+    backdrop:RegisterEvent("ACTIONBAR_PAGE_CHANGED")
+    backdrop:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
+    if barName == "PetBar" then
+        backdrop:RegisterEvent("PET_BAR_UPDATE")
+    elseif barName == "StanceBar" then
+        backdrop:RegisterEvent("UPDATE_SHAPESHIFT_FORMS")
+    end
     backdrop:SetScript("OnEvent", function(_, event, slot)
-        if event == "ACTIONBAR_SLOT_CHANGED" then
-            if slot == button.action then
-                UpdateBackdropVisibility()
-            end
-        else
-            UpdateBackdropVisibility()
+        -- ACTIONBAR_SLOT_CHANGED passes slot 0 to mean "every slot", so only filter a real slot.
+        if event == "ACTIONBAR_SLOT_CHANGED" and slot and slot ~= 0 and slot ~= button.action then
+            return
         end
+
+        UpdateBackdropVisibility()
     end)
 
     -- Initial update

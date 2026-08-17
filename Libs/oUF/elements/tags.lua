@@ -577,7 +577,9 @@ eventFrame:SetScript('OnEvent', function(self, event, unit)
 	local strings = eventFontStrings[event]
 	if(strings) then
 		for fs in next, strings do
-			if(not stringsToUpdate[fs] and fs:IsVisible() and (unitlessEvents[event] or fs.__owner.__unit == unit or (fs.extraUnits and fs.extraUnits[unit]))) then
+			--* NorskenUI: unit match is a table/field compare, IsVisible() is a C call -- test the cheap
+			--* predicates first so a unit event only pays IsVisible() for the strings it can affect.
+			if(not stringsToUpdate[fs] and (unitlessEvents[event] or fs.__owner.__unit == unit or (fs.extraUnits and fs.extraUnits[unit])) and fs:IsVisible()) then
 				stringsToUpdate[fs] = true
 			end
 		end
