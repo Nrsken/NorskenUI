@@ -31,7 +31,9 @@ local PREVIEW_STATUSES = { DEAD, L['Ghost'], L['Offline'], L['DND'], L['AFK'], D
 
 -- Generally used events for different tag types.
 local POWER_EVENTS = 'UNIT_POWER_FREQUENT UNIT_POWER_UPDATE UNIT_MAXPOWER UNIT_DISPLAYPOWER'
-local NAME_COLOR_EVENTS = 'UNIT_NAME_UPDATE UNIT_FACTION UNIT_CONNECTION PLAYER_FLAGS_CHANGED PARTY_MEMBER_ENABLE PARTY_MEMBER_DISABLE'
+-- Offline state only reaches party/raid units, and UNIT_CONNECTION alone misses members who drop out of range.
+local CONNECTION_EVENTS = 'UNIT_CONNECTION PARTY_MEMBER_ENABLE PARTY_MEMBER_DISABLE'
+local NAME_COLOR_EVENTS = 'UNIT_NAME_UPDATE UNIT_FACTION PLAYER_FLAGS_CHANGED ' .. CONNECTION_EVENTS
 local HEALTH_EVENTS = 'UNIT_HEALTH UNIT_MAXHEALTH'
 
 -- Tag categories for the GUI dropdowns.
@@ -213,7 +215,7 @@ end)
 -- Health Tags --
 
 --* Unit health as an abbreviated raw value and percentage, falls back to unit state if dead, ghost or offline.
-UF:RegisterTag('NUF:curhp:perhp', L['Health + Health %'], 'health', HEALTH_EVENTS .. ' UNIT_CONNECTION', function(unit)
+UF:RegisterTag('NUF:curhp:perhp', L['Health + Health %'], 'health', HEALTH_EVENTS .. ' ' .. CONNECTION_EVENTS, function(unit)
 	if not unit or not UnitExists(unit) then return '' end
 	local unitStatus = UnitIsDead(unit) and DEAD or UnitIsGhost(unit) and L['Ghost'] or not UnitIsConnected(unit) and L['Offline']
 
@@ -255,7 +257,7 @@ end)
 -- Status Tags --
 
 --* Unit status, returns dead, ghost, offline, dnd or afk. If the unit is dead and afk, both are returned.
-UF:RegisterTag('NUF:status', L['Status'], 'misc', HEALTH_EVENTS .. ' PLAYER_FLAGS_CHANGED', function(unit)
+UF:RegisterTag('NUF:status', L['Status'], 'misc', HEALTH_EVENTS .. ' PLAYER_FLAGS_CHANGED ' .. CONNECTION_EVENTS, function(unit)
 	if not unit or not UnitExists(unit) then return '' end
 	if _FRAME and _FRAME.nuiIsPreview then
 		local step = UF.PreviewTick + (_FRAME.nuiPreviewIndex or 0)
