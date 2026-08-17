@@ -539,11 +539,15 @@ local UNIT_GATE_EVENTS = {
     'UNIT_FLAGS', 'UNIT_TARGETABLE_CHANGED',
     'UNIT_IN_RANGE_UPDATE', 'UNIT_CONNECTION',
     'UNIT_PHASE', 'UNIT_AREA_CHANGED',
+    'UNIT_DISTANCE_CHECK_UPDATE',
+    'UNIT_FACTION',    -- The canAssist axis, UNIT_FLAGS alone misses reaction changes
+    'UNIT_NAME_UPDATE' -- Fires when the client learns a unit, the closest thing to an entering-visibility signal off-group
 }
 
 local GATE_EVENTS = {
     'PLAYER_ENTERING_WORLD', 'ZONE_CHANGED',
-    'GROUP_ROSTER_UPDATE',
+    'GROUP_ROSTER_UPDATE', 'PARTY_MEMBER_ENABLE',
+    'PARTY_MEMBER_DISABLE', 'PLAYER_FLAGS_CHANGED'
 }
 
 ---Re-run the gate whenever one of UNIT_GATE_EVENTS lands for the watched unit.
