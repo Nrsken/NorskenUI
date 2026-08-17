@@ -11,8 +11,6 @@ local TriggerCard = NRSKNUI.GUITriggerCard
 
 local ipairs = ipairs
 
-local function ApplySettings() UF:ApplySettings() end
-
 -- sectionKey is the mini sidebar item each kind hangs off on a unit page.
 local KINDS = {
     { kind = 'Buffs',   sectionKey = 'aurabuffs',   title = L['Aura Buffs'],   label = L['Buffs'],   harmful = false },
@@ -38,7 +36,7 @@ local function BuildLayoutTab(page, def, cfg, unit, ctx)
         value = cfg.Enabled,
         callback = function(checked)
             cfg.Enabled = checked
-            ApplySettings()
+            ctx.Apply()
             page:Refresh()
         end,
     })
@@ -54,7 +52,7 @@ local function BuildTriggerTab(page, def, cfg, unit, ctx)
     })
 
     -- hideUnit: the frame this display sits on already decides the unit.
-    TriggerCard:Build(page, cfg.Trigger, { hideUnit = true, onChange = ApplySettings })
+    TriggerCard:Build(page, cfg.Trigger, { hideUnit = true, onChange = ctx.Apply })
 end
 
 -- Appearance Tab
@@ -80,7 +78,7 @@ local function BuildFontTab(page, def, cfg, unit, ctx)
         value = cfg.StackFont.FontSize,
         callback = function(val)
             cfg.StackFont.FontSize = val
-            ApplySettings()
+            ctx.Apply()
         end,
     })
     sizeRow:Slider(L['Duration Size'], {
@@ -91,7 +89,7 @@ local function BuildFontTab(page, def, cfg, unit, ctx)
         value = cfg.DurationFont.FontSize,
         callback = function(val)
             cfg.DurationFont.FontSize = val
-            ApplySettings()
+            ctx.Apply()
         end,
     })
     AuraCards:TextPosition(page, cfg, ctx)
@@ -110,7 +108,7 @@ local function BuildPositionTab(page, def, cfg, unit, ctx)
         value = pos.AnchorTo,
         callback = function(key)
             pos.AnchorTo = key
-            ApplySettings()
+            ctx.Apply()
         end,
     })
 
@@ -123,7 +121,7 @@ local function BuildPositionTab(page, def, cfg, unit, ctx)
         value = pos.XOffset,
         callback = function(val)
             pos.XOffset = val
-            ApplySettings()
+            ctx.Apply()
         end,
         callbackOnRelease = true,
     })
@@ -135,7 +133,7 @@ local function BuildPositionTab(page, def, cfg, unit, ctx)
         value = pos.YOffset,
         callback = function(val)
             pos.YOffset = val
-            ApplySettings()
+            ctx.Apply()
         end,
         callbackOnRelease = true,
     })
@@ -188,7 +186,8 @@ function UF.GUIAuras.Build(page, def, tabId, unit)
     end)
 
     local ctx = {
-        Apply = ApplySettings,
+        -- Scoped to this unit: a full pass reconfigures every group child on every other unit too.
+        Apply = function() UF:ApplySettings(unit) end,
         filtered = true,
         dispelIconKey = 'showDispelIcon',
         withoutDispelType = true,

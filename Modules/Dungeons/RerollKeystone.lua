@@ -51,6 +51,7 @@ function RerollKeystone:CreateFrame()
     if self.frame then return end
 
     local frame = CreateFrame('Frame', 'NRSKNUI_RerollKeystone', UIParent)
+    frame:SetRolesets('encounterUI')
     frame:NUISetPixelSize(self.db.Size, self.db.Size)
     frame:NUIAddBorders()
 

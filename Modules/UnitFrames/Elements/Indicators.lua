@@ -4,12 +4,21 @@ local NRSKNUI = select(2, ...)
 local UF = NRSKNUI:GetModule('UnitFrames')
 local L = NRSKNUI.Libs.AL
 
-local ipairs = ipairs
+local ipairs, pairs = ipairs, pairs
 local CreateFrame = CreateFrame
+local format = string.format
 local unpack = unpack
 
-local PLAYER_UNITS = { player = true, target = true, targettarget = true, focus = true, focustarget = true, party = true }
-local GROUPED = { player = true, party = true }
+local GROUP_UNITS = {}
+for _, unit in ipairs(UF.GroupUnits) do GROUP_UNITS[unit] = true end
+
+local PLAYER_UNITS = { player = true, target = true, targettarget = true, focus = true, focustarget = true }
+local GROUPED = { player = true }
+for unit in pairs(GROUP_UNITS) do
+    PLAYER_UNITS[unit] = true
+    GROUPED[unit] = true
+end
+
 local unitDefs = {}
 
 ---@class UnitFramesIndicatorDef
@@ -54,7 +63,7 @@ UF.IndicatorDefs = {
         key = 'ReadyCheck',
         label = L['Ready Check'],
         element = 'ReadyCheckIndicator',
-        units = { party = true },
+        units = GROUP_UNITS,
         art = {
             { key = 'Blizzard', label = L['Blizzard'], atlas = 'UI-LFG-ReadyMark-Raid' },
         },
@@ -63,7 +72,7 @@ UF.IndicatorDefs = {
         key = 'Role',
         label = L['Group Role'],
         element = 'GroupRoleIndicator',
-        units = { party = true },
+        units = GROUP_UNITS,
         art = {
             { key = 'Blizzard', label = L['Blizzard'], atlas = 'UI-LFG-RoleIcon-Healer-Micro-Raid' },
         },
@@ -146,6 +155,23 @@ function UF.UnitIndicators(unit)
 
     unitDefs[key] = defs
     return defs
+end
+
+-- Previewed group frames cycle these instead of repeating the player's own role.
+local PREVIEW_ROLES = { 'Tank', 'Healer', 'DPS' }
+local PREVIEW_ROLES_NO_DPS = { 'Tank', 'Healer' }
+
+---@param frame oUF.UnitFrame
+---@param db table
+---@return string atlas
+local function PreviewRoleAtlas(frame, db)
+    local roles = db.TankHealerOnly and PREVIEW_ROLES_NO_DPS or PREVIEW_ROLES
+
+    -- Offset by subgroup so columns do not repeat the same run.
+    local header = frame:GetParent()
+    local slot = (frame.nuiPreviewIndex or 1) + ((header and header.nuiGroup or 0))
+
+    return format('UI-LFG-RoleIcon-%s-Micro-Raid', roles[slot % #roles + 1])
 end
 
 ---@param tex Texture
@@ -239,10 +265,18 @@ UF.Elements.Indicators = {
         local previewed = UF.Preview:GetIndicatorKey(self.nuiConfig or unit)
         local restore = false
 
+        -- Previewed group frames have no real role, so this ignores the open sub-tab.
+        local groupRoles = self.nuiGroupChild and self.nuiPreviewUnit ~= nil
+
         for _, def in ipairs(UF.UnitIndicators(unit)) do
             local tex = self[def.element]
 
-            if def.key == previewed then
+            if groupRoles and def.key == 'Role' and uDB.Indicators.Role.Enabled then
+                tex.Override = function() NRSKNUI:NOP() end
+                tex:SetAtlas(PreviewRoleAtlas(self, uDB.Indicators.Role))
+                tex:SetDesaturated(nil)
+                tex:Show()
+            elseif def.key == previewed then
                 tex.Override = function() NRSKNUI:NOP() end
                 ApplyArt(tex, def, uDB.Indicators[def.key]) -- oUF only applies art on enable, so a disabled one has none yet
                 tex:Show()

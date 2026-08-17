@@ -96,6 +96,7 @@ function Gateway:CreateAlertFrame()
     if self.alertFrame then return end
 
     local frame = CreateFrame('Frame', 'NRSKNUI_GatewayAlert', UIParent)
+    frame:SetRolesets('encounterUI')
     frame:SetSize(300, 40)
 
     frame.text = frame:CreateFontString(nil, 'OVERLAY')

@@ -10,8 +10,6 @@ local rowHL = Theme.rowHeightLast
 local ReloadUI = ReloadUI
 local ipairs = ipairs
 
-local function ApplySettings() UF:ApplySettings() end
-
 local STYLE_OPTIONS = {
     { value = 'Overlay',  text = L['Solid'] },
     { value = 'Gradient', text = L['Gradient'] },
@@ -68,7 +66,7 @@ local function BuildDispelCards(page, dDB, ctx)
             value = unitDB.UseGlobal,
             callback = function(checked)
                 unitDB.UseGlobal = checked
-                ApplySettings()
+                ctx.Apply()
                 page:Refresh()
             end,
         })
@@ -84,7 +82,7 @@ local function BuildDispelCards(page, dDB, ctx)
         value = dDB.Enabled,
         callback = function(checked)
             dDB.Enabled = checked
-            ApplySettings()
+            ctx.Apply()
             page:Refresh()
         end,
     })
@@ -96,7 +94,7 @@ local function BuildDispelCards(page, dDB, ctx)
         value = dDB.Source,
         callback = function(value)
             dDB.Source = value
-            ApplySettings()
+            ctx.Apply()
         end,
     })
 
@@ -110,7 +108,7 @@ local function BuildDispelCards(page, dDB, ctx)
         value = dDB.Style,
         callback = function(value)
             dDB.Style = value
-            ApplySettings()
+            ctx.Apply()
         end,
     })
     styleRow:Slider(L['Border Size'], {
@@ -123,7 +121,7 @@ local function BuildDispelCards(page, dDB, ctx)
         value = dDB.BorderSize,
         callback = function(value)
             dDB.BorderSize = value
-            ApplySettings()
+            ctx.Apply()
         end,
     })
 
@@ -135,7 +133,7 @@ local function BuildDispelCards(page, dDB, ctx)
         value = dDB.Attach,
         callback = function(value)
             dDB.Attach = value
-            ApplySettings()
+            ctx.Apply()
         end,
     })
     placeRow:Dropdown(L['Layer'], {
@@ -146,7 +144,7 @@ local function BuildDispelCards(page, dDB, ctx)
         value = dDB.Layer,
         callback = function(value)
             dDB.Layer = value
-            ApplySettings()
+            ctx.Apply()
         end,
     })
 
@@ -161,7 +159,7 @@ local function BuildDispelCards(page, dDB, ctx)
         value = dDB.Alpha,
         callback = function(value)
             dDB.Alpha = value
-            ApplySettings()
+            ctx.Apply()
         end,
     })
     lastRow:Checkbox(L['Show Without Dispel Type'], {
@@ -171,7 +169,7 @@ local function BuildDispelCards(page, dDB, ctx)
         value = dDB.ShowWithoutDispelType,
         callback = function(checked)
             dDB.ShowWithoutDispelType = checked
-            ApplySettings()
+            ctx.Apply()
         end,
     })
 
@@ -190,7 +188,7 @@ local function BuildDispelCards(page, dDB, ctx)
         value = dDB.ShowIcon,
         callback = function(checked)
             dDB.ShowIcon = checked
-            ApplySettings()
+            ctx.Apply()
             page:Refresh()
         end,
     })
@@ -203,7 +201,7 @@ local function BuildDispelCards(page, dDB, ctx)
         value = dDB.IconSize,
         callback = function(value)
             dDB.IconSize = value
-            ApplySettings()
+            ctx.Apply()
         end,
     })
 
@@ -216,7 +214,7 @@ local function BuildDispelCards(page, dDB, ctx)
         callback = function(value)
             dDB.IconPosition.AnchorFrom = value
             dDB.IconPosition.AnchorTo = value
-            ApplySettings()
+            ctx.Apply()
         end,
     })
 
@@ -231,7 +229,7 @@ local function BuildDispelCards(page, dDB, ctx)
         value = dDB.IconPosition.XOffset,
         callback = function(value)
             dDB.IconPosition.XOffset = value
-            ApplySettings()
+            ctx.Apply()
         end,
     })
     offsetRow:Slider(L['Y Offset'], {
@@ -244,7 +242,7 @@ local function BuildDispelCards(page, dDB, ctx)
         value = dDB.IconPosition.YOffset,
         callback = function(value)
             dDB.IconPosition.YOffset = value
-            ApplySettings()
+            ctx.Apply()
         end,
     })
 
@@ -255,17 +253,25 @@ end
 ---@param page KajiGUIPage
 ---@param db table db.profile.UnitFrames
 function UF.GUIDispelTab(page, db)
-    BuildDispelCards(page, db.General.Dispel, { group = 'all' })
+    -- The shared block really does reach every unit, so this pass stays unscoped.
+    BuildDispelCards(page, db.General.Dispel, { group = 'all', Apply = function() UF:ApplySettings() end })
 end
 
 ---Builds the dispel section for a unit.
 ---@param page KajiGUIPage
 ---@param uDB table
-local function BuildUnitSection(page, uDB)
+---@param unit string config key
+local function BuildUnitSection(page, uDB, unit)
     local dDB = uDB.Dispel
     page:SetCondition('ownDispel', function() return not dDB.UseGlobal end)
 
-    BuildDispelCards(page, dDB, { group = 'unitOn', conditions = { 'ownDispel' }, useGlobal = dDB, })
+    BuildDispelCards(page, dDB, {
+        group = 'unitOn',
+        conditions = { 'ownDispel' },
+        useGlobal = dDB,
+        -- Scoped to this unit: an unscoped pass reconfigures every other unit's frames as well.
+        Apply = function() UF:ApplySettings(unit) end,
+    })
 end
 
 UF.GUISections.dispel = BuildUnitSection

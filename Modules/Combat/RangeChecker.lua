@@ -42,6 +42,7 @@ function RangeChecker:CreateFrame()
     if self.frame then return end
 
     local frame = CreateFrame('Frame', 'NRSKNUI_RangeCheckerFrame', UIParent)
+    frame:SetRolesets('unitFrames')
     frame:SetSize(100, 25)
     frame:EnableMouse(false)
     frame:SetMouseClickEnabled(false)

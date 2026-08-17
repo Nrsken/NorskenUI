@@ -62,6 +62,7 @@ function XPBar:CreateBar()
 
     -- Create the main frame for the Experience Bar
     local coreFrame = CreateFrame('Frame', 'NRSKNUI_XPBar', UIParent)
+    coreFrame:SetRolesets('statusBars')
     coreFrame:NUISetPixelSize(width, height)
     coreFrame:NUIApplyPosition(self.db)
     coreFrame:NUICreateBackdrop(true)

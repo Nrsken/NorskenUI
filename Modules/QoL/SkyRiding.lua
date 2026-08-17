@@ -84,6 +84,7 @@ function SkyRiding:CreateFrames()
     self.rows = {}
 
     local host = CreateFrame('Frame', nil, UIParent, 'SecureHandlerStateTemplate')
+    host:SetRolesets('actionBars')
     host:Hide()
     self.host = host
 

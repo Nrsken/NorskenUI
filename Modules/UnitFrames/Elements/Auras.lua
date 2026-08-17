@@ -67,7 +67,7 @@ end
 ---@param frame oUF.UnitFrame
 local function Update(frame)
     for _, container in pairs(frame.Auras) do
-        container:SetUnit(frame.unit) -- early-outs when the token is unchanged
+        container:SetUnit(frame.__unit) -- early-outs when the token is unchanged
         container:UpdateUnitGate()
         container:UpdateAllAuras()
     end
@@ -148,8 +148,8 @@ UF.Elements.Auras = {
             container:SetPoint(config.anchorPoint, self, pos.AnchorTo, pos.XOffset, pos.YOffset)
             container:ApplyLayout(config)
             container:RebindFilteredGroups(cfg.Trigger)
-            -- self.unit is the live token, which a preview repoints away from the configured unit.
-            container:SetUnit(self.unit or unit)
+            -- self.__unit is the live token, which a preview repoints away from the configured unit.
+            container:SetUnit(self.__unit or unit)
             container:SetShown(cfg.Enabled)
 
             AuraPreview:Attach(container, self, pos.AnchorTo, pos.XOffset, pos.YOffset, UF.TopLevels.Auras)

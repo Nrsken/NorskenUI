@@ -56,6 +56,9 @@ GUIFrame.SidebarConfig = {
                 { id = 'unitFrames_pettarget',    text = L['Pet Target'] },
                 { id = 'unitFrames_boss',         text = L['Boss'] },
                 { id = 'unitFrames_party',        text = L['Party'] },
+                { id = 'unitFrames_raid1',        text = L['Raid 1'] },
+                { id = 'unitFrames_raid2',        text = L['Raid 2'] },
+                { id = 'unitFrames_raid3',        text = L['Raid 3'] },
             }
         },
         {

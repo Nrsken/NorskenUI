@@ -21,7 +21,7 @@ UF.Elements.Health = {
         -- Setup tooltip + highlight handlers for the frame.
         self:SetScript('OnEnter', function()
             if self.nuiHighlight.nuiEnabled then self.nuiHighlight:Show() end
-            UF:ShowTooltip(self.unit)
+            UF:ShowTooltip(self.__unit)
         end)
         self:SetScript('OnLeave', function()
             self.nuiHighlight:Hide()

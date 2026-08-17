@@ -54,13 +54,27 @@ local function BuildGeneralTab(page, db)
 
     -- Card 2: Behaviour
     local behaviourCard = page:Card(L['Behaviour'], 'all')
-    behaviourCard:Row(rowHL, 0):Checkbox(L['Smooth Bars'], {
+    local behaviourRow = behaviourCard:Row(rowHL, 0)
+    behaviourRow:Checkbox(L['Smooth Bars'], {
         width = 0.5,
         tooltip = L['Animate health and power bar changes. Units following the global setting inherit this.'],
         value = db.General.Smooth,
         callback = function(checked)
             db.General.Smooth = checked
             ApplySettings()
+        end,
+    })
+    behaviourRow:Checkbox(L['Hide Blizzard Raid Frames'], {
+        width = 0.5,
+        tooltip = L["Takes Blizzard's compact raid frames and the raid utility off screen. The party ones already go with the party header, and only the raid half is left."],
+        value = db.HideBlizzardRaidFrames,
+        callback = function(checked)
+            db.HideBlizzardRaidFrames = checked
+            if checked then
+                UF:HideBlizzardRaidFrames()
+            else
+                NRSKNUI:CreateReloadPrompt(L['Blizzard only builds its raid frames once, so handing them back needs a reload.'])
+            end
         end,
     })
 
@@ -512,7 +526,7 @@ end
 GUI:RegisterPage('unitFramesGeneral', {
     mode = 'tabs',
     search = {
-        L['Enable Unit Frames'], L['Smooth Bars'], L['Range Fade'], L['Class Colored Health'],
+        L['Enable Unit Frames'], L['Smooth Bars'], L['Hide Blizzard Raid Frames'], L['Range Fade'], L['Class Colored Health'],
         L['Class Colored Castbar'], L['Heal Absorb'], L['Damage Absorb'], L['Mouseover Highlight'],
         L['Separator'], L['Update Interval'], L['Dispel Highlight'], L['Dispellable By'],
     },

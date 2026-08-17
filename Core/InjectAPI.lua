@@ -42,8 +42,10 @@ end
 local hideFrame = CreateFrame('Frame')
 hideFrame:Hide()
 
----Hide objects safely and reparent them to a hidden frame
----@param object Frame|string The frame (or its global name) to hide.
+---Take an object off screen for good.
+---Frames go through the UI mode system, which outlives anything Blizzard does to them afterwards and
+---takes their Edit Mode selection overlay with it. Everything else falls back to the hidden parent.
+---@param object Frame|string The frame (or its global name) to hide; a traversed child may be a texture.
 ---@param ... string? Optional keys to traverse the frame's children, e.g. 'Inset'.
 local function Banish(object, ...)
     if type(object) == 'string' then
@@ -73,6 +75,12 @@ local function Banish(object, ...)
             object:UnregisterAllEvents()
             -- Useful for hiding secure template based objects
             object:SetAttribute('statehidden', true)
+        end
+
+        -- Nothing below is needed once a roleset is on.
+        if object.SetRolesets then
+            object:SetRolesets('alwaysBlocked')
+            return
         end
 
         -- Useful for hiding blizzard objects that respect user placement

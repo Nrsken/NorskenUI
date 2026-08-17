@@ -57,6 +57,7 @@ function MM:CreateMicroBar()
     if self.microBar then return end
 
     microBar = CreateFrame("Frame", "NRSKNUI_MicroBar", UIParent)
+    microBar:SetRolesets("microMenu")
     microBar:SetSize(250, 40)
     self.microBar = microBar
 

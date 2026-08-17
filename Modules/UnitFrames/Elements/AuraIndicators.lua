@@ -50,7 +50,7 @@ local function Update(frame)
         end
     end
 
-    container:SetUnit(frame.unit) -- early-outs when the token is unchanged
+    container:SetUnit(frame.__unit) -- early-outs when the token is unchanged
     container:UpdateUnitGate()
     container:UpdateAllAuras()
 end
@@ -161,8 +161,8 @@ UF.Elements.AuraIndicators = {
             end
         end
 
-        -- self.unit is the live token, which a preview repoints away from the configured unit.
-        self.nuiAuraIndicatorContainer:SetUnit(self.unit or unit)
+        -- self.__unit is the live token, which a preview repoints away from the configured unit.
+        self.nuiAuraIndicatorContainer:SetUnit(self.__unit or unit)
     end,
 
     ---Show dummies while the GUI has the unit's aura indicator section open, hiding the real slots they

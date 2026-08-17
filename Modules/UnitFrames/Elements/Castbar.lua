@@ -56,7 +56,7 @@ end
 ---@param element table Castbar element
 ---@param unit string
 ---@param notInterruptible boolean
-local function PostCastStart(element, unit, _, _, _, notInterruptible)
+local function PostCastStart(element, unit, _, notInterruptible)
     element.nuiNotInterruptible = notInterruptible
     element.nuiContainer:Show() -- Runs on every cast start, before oUF shows the bar
     ApplyCastColor(element, unit)
@@ -66,7 +66,7 @@ end
 ---@param element table Castbar element
 ---@param unit string
 ---@param notInterruptible boolean
-local function PostCastInterruptible(element, unit, notInterruptible)
+local function PostCastInterruptible(element, unit, _, notInterruptible)
     element.nuiNotInterruptible = notInterruptible
     ApplyCastColor(element, unit)
 end
@@ -295,7 +295,7 @@ UF.Elements.Castbar = {
 
         -- No duration API means no synthetic cast, the rest of the preview still works.
         if previewing and uDB.Castbar.Enabled and CreateDuration then
-            castBar.nuiCastPreviewUnit = self.unit
+            castBar.nuiCastPreviewUnit = self.__unit
             -- Alternating frames preview a shielded cast, so both configured colours are on screen.
             castBar.nuiNotInterruptible = (self.nuiPreviewIndex or 1) % 2 == 0
 

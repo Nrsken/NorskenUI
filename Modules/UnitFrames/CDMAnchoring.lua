@@ -20,8 +20,11 @@ local function GetCDMFrames()
     return _G['EssentialCooldownViewer'], _G['UtilityCooldownViewer']
 end
 
--- Making sure values are safe to access before using them, just in case because i dont trust WoW API :)
-local function UpdateCDMAnchorSize(anchor)
+-- Our anchor is in the CDM frames protected anchor family, so sizing it is a protected call.
+local function ApplyCDMAnchorSize()
+    local anchor = UF.CDMAnchor
+    if not anchor then return end
+
     local essential, utility = GetCDMFrames()
     if not essential then return end
 
@@ -30,7 +33,7 @@ local function UpdateCDMAnchorSize(anchor)
     if not width or not height then return end
 
     if utility then
-        UF:HookCDMFrame(utility, anchor) -- Picks up lazy spawns + all future resizes.
+        UF:HookCDMFrame(utility) -- Picks up lazy spawns + all future resizes.
         if NRSKNUI:SafeValue(utility:IsShown()) then
             local utilWidth = NRSKNUI:SafeValue(utility:GetWidth())
             if utilWidth then width = max(width, utilWidth) end
@@ -43,40 +46,41 @@ local function UpdateCDMAnchorSize(anchor)
     anchor:NUISetGridPoint('CENTER', essential, 'CENTER', 0, 0) -- Without this we would need to use .1 offsets to avoid scuffed pixels.
 end
 
-function UF:HookCDMFrame(frame, anchor)
+local function ScheduleCDMAnchorUpdate()
+    if UF.CDMAnchor then
+        UF.CDMAnchor:NUIScheduleUpdate()
+    end
+end
+
+function UF:HookCDMFrame(frame)
     if not frame or frame.nuiCDMHooked then return end
     frame.nuiCDMHooked = true
 
-    local function refresh() UpdateCDMAnchorSize(anchor) end
-    frame:HookScript('OnSizeChanged', refresh)
-    frame:HookScript('OnShow', refresh)
-    frame:HookScript('OnHide', refresh)
+    frame:HookScript('OnSizeChanged', ScheduleCDMAnchorUpdate)
+    frame:HookScript('OnShow', ScheduleCDMAnchorUpdate)
+    frame:HookScript('OnHide', ScheduleCDMAnchorUpdate)
 end
 
 -- Re-evaluate the anchor span on CDM layout changes.
 function UF:CDMLayoutEvent()
-    local anchor = self.CDMAnchor
-    if not anchor then return end
-
-    UpdateCDMAnchorSize(anchor)
-    C_Timer.After(0.5, function()
-        UpdateCDMAnchorSize(anchor)
-    end)
+    ScheduleCDMAnchorUpdate()
+    C_Timer.After(0.5, ScheduleCDMAnchorUpdate)
 end
 
 function UF:CreateCDMAnchor()
-    local essential, utility = GetCDMFrames()
+    local essential = GetCDMFrames()
     if not (essential and NRSKNUI:SafeValue(essential:IsShown())) then return end
 
     local anchor = _G['NRSKNUF_CDMAnchor'] or CreateFrame('Frame', 'NRSKNUF_CDMAnchor', UIParent)
     UF.CDMAnchor = anchor
-    anchor:ClearAllPoints()
-    anchor:NUISetPixelPoint('CENTER', essential, 'CENTER', 0, 0)
+    anchor:NUISetScheduledUpdate(function()
+        NRSKNUI:RunWhenSafe(ApplyCDMAnchorSize)
+    end)
 
-    UF:HookCDMFrame(essential, anchor)
+    UF:HookCDMFrame(essential)
     UF:RegisterEvent('PLAYER_ENTERING_WORLD', 'CDMLayoutEvent')
     UF:RegisterEvent('ACTIVE_PLAYER_SPECIALIZATION_CHANGED', 'CDMLayoutEvent')
     UF:RegisterEvent('TRAIT_CONFIG_UPDATED', 'CDMLayoutEvent')
     UF:RegisterEvent('EDIT_MODE_LAYOUTS_UPDATED', 'CDMLayoutEvent')
-    UpdateCDMAnchorSize(anchor)
+    ScheduleCDMAnchorUpdate()
 end

@@ -23,6 +23,7 @@ function CombatTimer:CreateFrame()
     if self.frame then return end
 
     local frame = CreateFrame('Frame', 'NRSKNUI_CombatTimerFrame', UIParent)
+    frame:SetRolesets('statusBars')
     frame:NUISetPixelSize(100, 25)
     frame:SetFrameLevel(100)
     frame:EnableMouse(false)

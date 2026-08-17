@@ -47,6 +47,7 @@ function CombatRes:CreateFrame()
     if self.coreFrame then return end
 
     local coreFrame = CreateFrame("Frame", "NRSKNUI_CombatResFrame", UIParent)
+    coreFrame:SetRolesets("unitFrames")
     coreFrame:NUISetPixelSize(100, 25)
     coreFrame:SetFrameLevel(100)
     coreFrame:EnableMouse(false)

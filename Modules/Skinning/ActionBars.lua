@@ -517,6 +517,7 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
 
     -- Create backdrop frame with raw integer size (pixel-perfect approach)
     local backdrop = CreateFrame("Frame", "NRSKNUI_" .. barName .. "Backdrop" .. index, UIParent, "BackdropTemplate")
+    backdrop:SetRolesets("actionBars")
     backdrop:NUISetPixelSnap()
     backdrop:SetSize(buttonSize, buttonSize)
     backdrop:SetFrameStrata("BACKGROUND")
@@ -837,6 +838,7 @@ local function SkinBar(cfg)
 
     -- Create container with size and position
     local container = CreateFrame("Frame", "NRSKNUI_" .. cfg.name .. "_Container", UIParent)
+    container:SetRolesets("actionBars")
     container:NUISetPixelSnap()
     container:SetFrameStrata("LOW")
     container:SetSize(containerWidth, containerHeight)

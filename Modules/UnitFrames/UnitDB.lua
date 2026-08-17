@@ -4,6 +4,8 @@ local NRSKNUI = select(2, ...)
 local UF = NRSKNUI:GetModule('UnitFrames')
 local L = NRSKNUI.Libs.AL
 
+local GetNumGroupMembers = GetNumGroupMembers
+local GetRaidRosterInfo = GetRaidRosterInfo
 local tonumber = tonumber
 local pairs = pairs
 local ipairs = ipairs
@@ -11,20 +13,40 @@ local min, max = math.min, math.max
 
 UF.MAX_BOSS_FRAMES = 8
 UF.BossUnits = {}
-for index = 1, UF.MAX_BOSS_FRAMES do UF.BossUnits[index] = 'boss' .. index end
+for index = 1, UF.MAX_BOSS_FRAMES do
+    UF.BossUnits[index] = 'boss' .. index
+end
+
+UF.RaidTiers = { 'raid1', 'raid2', 'raid3' }
 
 UF.GroupUnits = { 'party' }
+for _, tier in ipairs(UF.RaidTiers) do
+    UF.GroupUnits[#UF.GroupUnits + 1] = tier
+end
+
 UF.GroupConfigs = {}
-for _, unit in ipairs(UF.GroupUnits) do UF.GroupConfigs[unit] = true end
+for _, unit in ipairs(UF.GroupUnits) do
+    UF.GroupConfigs[unit] = true
+end
+
+UF.MAX_RAID_GROUPS = 8
+UF.GroupCounts = { party = 1 }
+for _, tier in ipairs(UF.RaidTiers) do
+    UF.GroupCounts[tier] = UF.MAX_RAID_GROUPS
+end
 
 UF.SoloUnits = { 'player', 'target', 'targettarget', 'focus', 'focustarget', 'pet', 'pettarget' }
 UF.Units = {}
-for _, unit in ipairs(UF.SoloUnits) do UF.Units[#UF.Units + 1] = unit end
+for _, unit in ipairs(UF.SoloUnits) do
+    UF.Units[#UF.Units + 1] = unit
+end
 
 UF.Units[#UF.Units + 1] = 'boss'
-for _, unit in ipairs(UF.GroupUnits) do UF.Units[#UF.Units + 1] = unit end
+for _, unit in ipairs(UF.GroupUnits) do
+    UF.Units[#UF.Units + 1] = unit
+end
 
-UF.UnitLabels = { player = L['Player'], target = L['Target'], targettarget = L['Target of Target'], focus = L['Focus'], focustarget = L['Focus Target'], pet = L['Pet'], pettarget = L['Pet Target'], boss = L['Boss'], party = L['Party'], }
+UF.UnitLabels = { player = L['Player'], target = L['Target'], targettarget = L['Target of Target'], focus = L['Focus'], focustarget = L['Focus Target'], pet = L['Pet'], pettarget = L['Pet Target'], boss = L['Boss'], party = L['Party'], raid1 = L['Raid 1'], raid2 = L['Raid 2'], raid3 = L['Raid 3'], }
 UF.NoPower = { targettarget = true, focustarget = true, pettarget = true, }
 UF.GROUP_SIZE = 5
 UF.frames = UF.frames or {}
@@ -80,6 +102,52 @@ end
 ---@return table
 function UF.GetUnitDB(unit)
     return UF.db.Units[UF.ConfigKey(unit)]
+end
+
+---The first `count` subgroups, for the layouts that draw a fixed number of them.
+---@param count number
+---@return number[] subgroups
+local function FirstSubgroups(count)
+    local subgroups = {}
+    for subgroup = 1, count do
+        subgroups[subgroup] = subgroup
+    end
+    return subgroups
+end
+
+---Which subgroups a group's headers draw, in ascending order and one header each.
+---@param key string config key
+---@param gDB table the config's Group block
+---@return number[] subgroups
+function UF.ActiveSubgroups(key, gDB)
+    local built = UF.GroupCounts[key] or 1
+    if built == 1 then return FirstSubgroups(1) end
+
+    if not gDB.AutoGroups then
+        return FirstSubgroups(min(max(gDB.NumGroups or built, 1), built))
+    end
+
+    -- No roster to read, so fall back to the wrap width: the tier's expected subgroup count.
+    if UF:IsGroupSizedFull(key) then
+        return FirstSubgroups(min(max(gDB.GroupsPerRowColumn or built, 1), built))
+    end
+
+    local occupied = {}
+    for index = 1, GetNumGroupMembers() do
+        local _, _, subgroup = GetRaidRosterInfo(index)
+        -- nil outside a raid, where the party config draws the group instead.
+        if subgroup then occupied[subgroup] = true end
+    end
+
+    local subgroups = {}
+    for subgroup = 1, built do
+        if occupied[subgroup] then subgroups[#subgroups + 1] = subgroup end
+    end
+
+    -- Nothing to read yet, on a roster event that beat the roster in. One header keeps the layout alive.
+    if not subgroups[1] then subgroups[1] = 1 end
+
+    return subgroups
 end
 
 ---Visit every constructed frame, singletons then group header children.

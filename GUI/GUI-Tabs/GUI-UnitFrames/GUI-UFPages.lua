@@ -23,6 +23,11 @@ local SECTIONS = {
     { key = 'auraindicators', text = L['Aura Indicators'] },
 }
 
+-- Only these sections answer a right-click in the mini sidebar.
+local SECTION_MENUS = {
+    auraindicators = UF.GUIAuraIndicatorContext,
+}
+
 -- Only these sections carry a sub-tab strip.
 local SECTION_TABS = {
     tags = UF.GUITagTabs,
@@ -112,7 +117,14 @@ do
             mode = 'tabs',
             noHarvest = true,
             search = SearchTerms(),
-            sidebar = { items = SectionItems(unit), default = 'frame' },
+            sidebar = {
+                items = SectionItems(unit),
+                default = 'frame',
+                onContextMenu = function(sectionKey)
+                    local menu = SECTION_MENUS[sectionKey]
+                    if menu then menu(unit) end
+                end,
+            },
             tabs = function(sectionKey)
                 local tabs = SECTION_TABS[sectionKey]
                 if type(tabs) == 'function' then return tabs(unit) end
@@ -128,6 +140,8 @@ do
                 UF:PreviewIndicator(unit, sectionKey == 'indicators' and tabId or nil)
 
                 local auraDef = UF.GUIAuraSections[sectionKey]
+                UF:PreviewAuras(unit, auraDef ~= nil)
+
                 if auraDef then
                     -- The aura sections own their SetEnabled chain, which gates on the display too.
                     UF.GUIAuras.Build(page, auraDef, tabId, unit)

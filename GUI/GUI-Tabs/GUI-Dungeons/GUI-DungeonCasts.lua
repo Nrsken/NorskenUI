@@ -27,7 +27,7 @@ local function BuildGeneralSettingsTab(page, db)
 
     -- Card 1: Enable
     local enableCard = page:Card(L['Dungeon Casts'])
-    local enableRow = enableCard:Row(rowHL, 0)
+    local enableRow = enableCard:Row(rowH)
     enableRow:Checkbox(L['Enable Dungeon Casts'], {
         width = 1,
         master = true,
@@ -38,6 +38,16 @@ local function BuildGeneralSettingsTab(page, db)
             db.Enabled = checked
             NRSKNUI:ToggleModule('DungeonCasts', checked)
             page:Refresh()
+        end,
+    })
+
+    enableCard:Separator()
+
+    enableCard:Row(rowHL, 0):Checkbox(L['Hide Un-Pulled Mobs'], {
+        width = 1,
+        value = db.RequireCombat,
+        callback = function(checked)
+            db.RequireCombat = checked; ApplySettings()
         end,
     })
 

@@ -17,6 +17,7 @@
     <Script file='Elements\Dispel.lua' />
     <Script file='Style.lua' />
     <Script file='Groups.lua' />
+    <Script file='BlizzardFrames.lua' />
     <Script file='Preview.lua' />
     <Script file='Core.lua' />
 </Ui>

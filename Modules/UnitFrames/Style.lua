@@ -27,9 +27,7 @@ function UF:BuildStyle(frame, unit)
     self:ConstructElement('AuraIndicators', frame, base)
     self:ConstructElement('Dispel', frame, base)
     self:ConstructElement('Range', frame, base)
-    if not NO_POWER[base] then
-        self:ConstructElement('Power', frame, base)
-    end
+    self:ConstructElement('Power', frame, base)
     -- Group units are deliberately castbar-free.
     if not NO_POWER[base] and not frame.nuiGroupChild then
         self:ConstructElement('Castbar', frame, base)

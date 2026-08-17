@@ -65,7 +65,7 @@ local function ApplyFrame(entry)
     if frame.nuiPreviewUnit then return end
 
     frame.nuiPreviewUnit = entry.unit
-    frame.unit = entry.unit
+    frame.__unit = entry.unit
     frame:EnableMouse(false)
     UnregisterUnitWatch(frame)
     RegisterUnitWatch(frame, true)
@@ -81,7 +81,7 @@ local function RestoreFrame(entry)
     if not frame.nuiPreviewUnit then return end
 
     frame.nuiPreviewUnit = nil
-    frame.unit = frame.nrsknUnit
+    frame.__unit = frame.nrsknUnit
     frame:EnableMouse(true)
 
     HideLabel(frame)
@@ -200,7 +200,13 @@ end
 
 -- A header with no show* attribute matching builds children from startingIndex alone, so a negative
 -- one makes it lay out a full column of unit-less frames. See SecureGroupHeaders configureChildren.
-local FORCED_START = -(UF.GROUP_SIZE - 1)
+---@param header oUF.Header
+---@return number
+local function ForcedStart(header)
+    local perColumn = header:GetAttribute('unitsPerColumn') or UF.GROUP_SIZE
+    local columns = header:GetAttribute('maxColumns') or 1
+    return -(perColumn * columns - 1)
+end
 
 ---@param key string
 ---@return table
@@ -217,18 +223,22 @@ end
 ---@param index number
 ---@param label string
 local function ForceChild(frame, index, label)
+    -- ForceHeader is an OnAttributeChanged hook, so only a newly forced child pays the reconfigure.
     if not frame.nuiPreviewUnit then
         frame.nuiPreviewUnit = 'player'
-        frame.unit = 'player'
-        frame.nuiPreviewIndex = index
+        frame.__unit = 'player'
         frame:EnableMouse(false)
 
         UnregisterUnitWatch(frame)
         RegisterUnitWatch(frame, true)
+
+        frame:Show()
+        UF:ConfigureFrame(frame, frame.nuiConfig)
+    else
+        frame:Show()
     end
 
-    frame:Show()
-    UF:ConfigureFrame(frame, frame.nuiConfig)
+    frame.nuiPreviewIndex = index
     ShowLabel(frame, label)
 end
 
@@ -238,7 +248,7 @@ local function RestoreChild(frame)
 
     frame.nuiPreviewUnit = nil
     -- The forced children past the real roster carry no unit, so fall back rather than nil it out.
-    frame.unit = frame:GetAttribute('unit') or frame.nrsknUnit
+    frame.__unit = frame:GetAttribute('unit') or frame.nrsknUnit
     frame:EnableMouse(true)
 
     HideLabel(frame)
@@ -265,13 +275,20 @@ end
 local function ForceHeader(header)
     if not header.nuiForced or not header:IsShown() then return end
 
+    local start = ForcedStart(header)
+
     -- Comparing first is what stops the SetAttribute below from recursing forever.
-    if header:GetAttribute('startingIndex') ~= FORCED_START then
-        header:SetAttribute('startingIndex', FORCED_START)
+    if header:GetAttribute('startingIndex') ~= start then
+        header:SetAttribute('startingIndex', start)
     end
 
+    -- Numbering restarts per header so dummies read as subgroup members.
     ForEachChild(header, function(child, index)
-        ForceChild(child, index, format('%s %d', header.nuiLabel, index))
+        local label = header.nuiGroup
+            and format('%s %d-%d', header.nuiLabel, header.nuiGroup, index)
+            or format('%s %d', header.nuiLabel, index)
+
+        ForceChild(child, index, label)
     end)
 end
 
@@ -287,17 +304,19 @@ local function ApplyGroup(key, state)
     UnregisterStateDriver(group.container, 'visibility')
     group.container:Show()
 
+    UF:PrimeGroupChildren(key)
+
     for _, header in ipairs(group.headers) do
         if not header.nuiHooked then
             header.nuiHooked = true
             header:HookScript('OnAttributeChanged', ForceHeader)
         end
 
-        header.nuiForced = true
         for attr in pairs(header.nuiShown) do
             header:SetAttribute(attr, nil)
         end
 
+        header.nuiForced = true
         ForceHeader(header)
     end
 end
@@ -504,32 +523,85 @@ function Preview:GetIndicatorKey(unit)
     return indicatorKeys[UF.ConfigKey(unit)]
 end
 
+local previewTier
+local anchorsShown = false
+
+---Whether a group ignores the live roster and lays out at full size.
+---@param key string config key
+---@return boolean
+function UF:IsGroupSizedFull(key)
+    return previewTier == key or anchorsShown
+end
+
+---@param shown boolean
+local function SetAnchorLayout(shown)
+    if anchorsShown == shown then return end
+    anchorsShown = shown
+
+    NRSKNUI:RunWhenSafe(function()
+        for key in pairs(UF.GroupConfigs) do
+            if UF.GroupCounts[key] > 1 then UF:LayoutGroup(key) end
+        end
+    end)
+end
+
 ---Show a preview for a page. The page is responsible for calling Release when it closes or switches away.
+---Raid tiers sit out the everything view and only preview from their own page.
 ---@param pageId string? the page asking, e.g. 'unitFrames_target'
 ---@param showAll boolean? whether everything is being previewed
 function UF:ShowPreview(pageId, showAll)
+    SetAnchorLayout(NRSKNUI.Anchors.isActive == true)
+
     if showAll then
         Preview:Request('boss')
         for key in pairs(UF.GroupConfigs) do
-            Preview:RequestGroup(key)
+            if UF.GroupCounts[key] == 1 then Preview:RequestGroup(key) end
         end
     end
 
     local unit = pageId and pageId:match('^unitFrames_(.+)$')
     if not unit then return end
 
-    Preview:RequestAuras(unit)
     if unit == 'boss' then Preview:Request('boss') end
-    if UF.GroupConfigs[unit] then Preview:RequestGroup(unit) end
+
+    if UF.GroupConfigs[unit] then
+        if UF.GroupCounts[unit] > 1 then
+            previewTier = unit
+            UF:LayoutGroup(unit)
+        end
+        Preview:RequestGroup(unit)
+    end
 end
 
 ---Called by PreviewManager when the page changes or the window closes.
 function UF:HidePreview()
+    SetAnchorLayout(NRSKNUI.Anchors.isActive == true)
+
     Preview:ReleaseAllAuras()
     Preview:ReleaseAllAuraIndicators()
     Preview:ReleaseAllIndicators()
     Preview:ReleaseAll()
     Preview:ReleaseAllGroups()
+
+    -- Back to the live roster's count, so it relayouts rather than just hiding.
+    if previewTier then
+        local previous = previewTier
+        previewTier = nil
+        NRSKNUI:RunWhenSafe(function()
+            UF:LayoutGroup(previous)
+        end)
+    end
+end
+
+---Show a unit's dummy auras, driven by the aura section the GUI has open.
+---@param unit string
+---@param shown boolean
+function UF:PreviewAuras(unit, shown)
+    if shown then
+        Preview:RequestAuras(unit)
+    else
+        Preview:ReleaseAuras(unit)
+    end
 end
 
 ---Preview a unit's aura indicators, driven by the aura indicator section the GUI has open.

@@ -62,6 +62,7 @@ function FocusCastbar:CreateFrame()
 
     -- Create the coreFrame and register cast events to it.
     local coreFrame = CreateFrame('Frame', 'NRSKNUI_FocusCastbar', UIParent)
+    coreFrame:SetRolesets('unitFrames')
     coreFrame:EnableMouse(false)
     coreFrame:NUICreateBackdrop(true)
     coreFrame:NUISetPixelSnap()

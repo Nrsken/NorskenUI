@@ -2,6 +2,8 @@
 local NRSKNUI = select(2, ...)
 ---@class UnitFramesModule
 local UF = NRSKNUI:GetModule('UnitFrames')
+function UF:UpdateDB() self.db = NRSKNUI.db.profile.UnitFrames end
+
 ---@class NorskenUF
 local oUF = NRSKNUI.oUF
 local Anchors = NRSKNUI.Anchors
@@ -18,10 +20,6 @@ local UnregisterStateDriver = UnregisterStateDriver
 
 UF.Elements = UF.Elements or {} -- name -> { Construct, Configure }, populated by element files.
 
----Copies a colour out of the DB onto a frame field, reusing the frame's own table.
----Never store the DB table itself: AceDB strips default-valued keys out of the old profile in place
----during SetProfile, so a captured colour becomes an empty table the moment the profile changes and
----every read of it after that hands nil to SetStatusBarColor.
 ---@param owner table frame or element the colour is cached on
 ---@param key string field name to cache under
 ---@param src table {r, g, b, a} read from the DB
@@ -34,10 +32,6 @@ function UF.CacheColor(owner, key, src)
     end
     cached[1], cached[2], cached[3], cached[4] = src[1], src[2], src[3], src[4]
     return cached
-end
-
-function UF:UpdateDB()
-    self.db = NRSKNUI.db.profile.UnitFrames
 end
 
 ---Global show tooltip handler for all unit frames.
@@ -127,6 +121,7 @@ function UF:ApplyElementStates(frame, unit, uDB)
             frame:EnableElement('Range')
         else
             frame:DisableElement('Range')
+            frame:SetAlpha(1) -- oUF's Disable leaves the frame at insideAlpha, which is not always opaque
         end
     end
 end
@@ -139,8 +134,7 @@ local BOSS_GROWTH = {
     RIGHT = { from = 'TOPLEFT', to = 'TOPRIGHT', x = 1, y = 0 },
 }
 
--- Corner of boss1 the chain grows away from, and the axis it grows along. Mirrors BOSS_GROWTH: the
--- overlay span starts at the frame that holds the position and extends over the rest of the chain.
+-- Corner of boss1 the chain grows away from, and the axis it grows along.
 local BOSS_SPAN = {
     UP    = { point = 'BOTTOMLEFT', vertical = true },
     DOWN  = { point = 'TOPLEFT', vertical = true },
@@ -369,13 +363,15 @@ function UF:OnEnable()
         self.styleRegistered = true
     end
 
-    NRSKNUI.AuraTriggers:RegisterCallback(self, function(module) module:ReapplyAuraFilters() end)
-    NRSKNUI.AuraIndicators:RegisterCallback(self, function(module) module:ReapplyAuraIndicators() end)
+    NRSKNUI.AuraTriggers:RegisterCallback(self, function(aceModule) aceModule:ReapplyAuraFilters() end)
+    NRSKNUI.AuraIndicators:RegisterCallback(self, function(aceModule) aceModule:ReapplyAuraIndicators() end)
+
+    self:RegisterEvent('GROUP_ROSTER_UPDATE')
 
     -- Deferring the spawn of units until combat has ended.
-    NRSKNUI:RunWhenSafe(function()
-        self:SpawnUnits()
-    end)
+    NRSKNUI:RunWhenSafe(function() self:SpawnUnits() end)
+
+    self:HideBlizzardRaidFrames()
 end
 
 ---Universal re-read-and-apply entry point.

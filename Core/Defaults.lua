@@ -2327,6 +2327,7 @@ local Defaults = {
             BackdropColor = { 0, 0, 0, 0.8 },
             BorderColor = { 0, 0, 0, 1 },
             ShowTime = true,
+            RequireCombat = true,
             Icon = {
                 Enabled = true,
             },
@@ -2547,6 +2548,7 @@ local Defaults = {
 
         UnitFrames = {
             Enabled = true,
+            HideBlizzardRaidFrames = true, -- oUF only ever disables the party ones
             General = {
                 UseGlobalBar = true,
                 statusBar = "NorskenUI",
@@ -3369,7 +3371,338 @@ local Defaults = {
                         SortMethod = "INDEX",
                         SortDirection = "ASC",
                         RoleOrder = { "TANK", "HEALER", "DAMAGER" },
-                        Visibility = "[@raid6,exists][nogroup] hide;show",
+                        Visibility = "[@raid1,exists][nogroup] hide;show",
+                    },
+                    Power = {
+                        Enabled = false,
+                    },
+                    Castbar = {
+                        Enabled = false, -- never constructed on group units
+                    },
+                    Tags = {
+                        TagOne = {
+                            Position = {
+                                AnchorFrom = "TOPLEFT",
+                                AnchorTo = "TOPLEFT",
+                                XOffset = 2,
+                                YOffset = -2
+                            },
+                        },
+                        TagTwo = {
+                            Tag = "[NUF:healmana:smartcolor]",
+                            Position = {
+                                AnchorFrom = "LEFT",
+                                AnchorTo = "LEFT",
+                                XOffset = 18,
+                                YOffset = 17
+                            },
+                        },
+                        TagThree = {
+                            Enabled = true,
+                            Tag = "[NUF:status]",
+                            Position = {
+                                AnchorFrom = "TOPLEFT",
+                                AnchorTo = "TOPLEFT",
+                                XOffset = 2,
+                                YOffset = -30
+                            },
+                        },
+                    },
+                    Indicators = {
+                        ReadyCheck = { Enabled = true },
+                        Summon = {
+                            Enabled = true,
+                            Position = {
+                                AnchorFrom = "TOPRIGHT",
+                                AnchorTo = "TOPRIGHT",
+                                XOffset = -2,
+                                YOffset = -2
+                            },
+                        },
+                        Resurrect = { Enabled = true },
+                        Phase = { Enabled = true },
+                        Role = { Enabled = true },
+                        Leader = { Enabled = true },
+                        RaidIcon = { Size = 20 },
+                    },
+                },
+                raid1 = {
+                    Dispel = {
+                        UseGlobal = true,
+                    },
+                    Auras = {
+                        Buffs = {
+                            Trigger = { Type = 'Preset', Preset = 'preset:partyBuffs' },
+                            size = 26,
+                            maxFrameCount = 2,
+                            previewLimit = 2,
+                            perRow = 2,
+                            Position = {
+                                AnchorTo = "BOTTOMRIGHT",
+                                XOffset = 0,
+                                YOffset = 0
+                            },
+                        },
+                        Debuffs = {
+                            Trigger = { Type = 'Preset', Preset = 'preset:partyDebuffs' },
+                            size = 30,
+                            maxFrameCount = 2,
+                            previewLimit = 2,
+                            perRow = 2,
+                            Position = {
+                                AnchorTo = "BOTTOMLEFT",
+                                XOffset = 0,
+                                YOffset = 0
+                            },
+                        },
+                    },
+                    Width = 120,
+                    Height = 75,
+                    anchorFrameType = "UIPARENT",
+                    ParentFrame = "UIParent",
+                    Position = {
+                        AnchorFrom = "TOPLEFT",
+                        AnchorTo = "TOPLEFT",
+                        XOffset = 1,
+                        YOffset = -1
+                    },
+                    Group = {
+                        GrowthDirection = "DOWN",
+                        HorizontalSpacing = 1,
+                        VerticalSpacing = 1,
+                        ShowPlayer = true,
+                        StartFromCenter = false,
+                        SortBy = "GROUP",
+                        SortMethod = "INDEX",
+                        SortDirection = "ASC",
+                        RoleOrder = { "TANK", "HEALER", "DAMAGER" },
+                        -- Every raid up to twenty, down to the two-man ones the party frames used to take.
+                        Visibility = "[@raid21,exists][@raid1,noexists] hide;show",
+                        GroupGrowthDirection = "RIGHT",
+                        GroupsPerRowColumn = 4,
+                        GroupSpacing = 1,
+                        AutoGroups = true,
+                        NumGroups = 8,
+                    },
+                    Power = {
+                        Enabled = false,
+                    },
+                    Castbar = {
+                        Enabled = false, -- never constructed on group units
+                    },
+                    Tags = {
+                        TagOne = {
+                            Position = {
+                                AnchorFrom = "TOPLEFT",
+                                AnchorTo = "TOPLEFT",
+                                XOffset = 2,
+                                YOffset = -2
+                            },
+                        },
+                        TagTwo = {
+                            Tag = "[NUF:healmana:smartcolor]",
+                            Position = {
+                                AnchorFrom = "LEFT",
+                                AnchorTo = "LEFT",
+                                XOffset = 18,
+                                YOffset = 17
+                            },
+                        },
+                        TagThree = {
+                            Enabled = true,
+                            Tag = "[NUF:status]",
+                            Position = {
+                                AnchorFrom = "TOPLEFT",
+                                AnchorTo = "TOPLEFT",
+                                XOffset = 2,
+                                YOffset = -30
+                            },
+                        },
+                    },
+                    Indicators = {
+                        ReadyCheck = { Enabled = true },
+                        Summon = {
+                            Enabled = true,
+                            Position = {
+                                AnchorFrom = "TOPRIGHT",
+                                AnchorTo = "TOPRIGHT",
+                                XOffset = -2,
+                                YOffset = -2
+                            },
+                        },
+                        Resurrect = { Enabled = true },
+                        Phase = { Enabled = true },
+                        Role = { Enabled = true },
+                        Leader = { Enabled = true },
+                        RaidIcon = { Size = 20 },
+                    },
+                },
+                raid2 = {
+                    Dispel = {
+                        UseGlobal = true,
+                    },
+                    Auras = {
+                        Buffs = {
+                            Trigger = { Type = 'Preset', Preset = 'preset:partyBuffs' },
+                            size = 26,
+                            maxFrameCount = 2,
+                            previewLimit = 2,
+                            perRow = 2,
+                            Position = {
+                                AnchorTo = "BOTTOMRIGHT",
+                                XOffset = 0,
+                                YOffset = 0
+                            },
+                        },
+                        Debuffs = {
+                            Trigger = { Type = 'Preset', Preset = 'preset:partyDebuffs' },
+                            size = 30,
+                            maxFrameCount = 2,
+                            previewLimit = 2,
+                            perRow = 2,
+                            Position = {
+                                AnchorTo = "BOTTOMLEFT",
+                                XOffset = 0,
+                                YOffset = 0
+                            },
+                        },
+                    },
+                    Width = 120,
+                    Height = 75,
+                    anchorFrameType = "UIPARENT",
+                    ParentFrame = "UIParent",
+                    Position = {
+                        AnchorFrom = "TOPLEFT",
+                        AnchorTo = "TOPLEFT",
+                        XOffset = 1,
+                        YOffset = -1
+                    },
+                    Group = {
+                        GrowthDirection = "DOWN",
+                        HorizontalSpacing = 1,
+                        VerticalSpacing = 1,
+                        ShowPlayer = true,
+                        StartFromCenter = false,
+                        SortBy = "GROUP",
+                        SortMethod = "INDEX",
+                        SortDirection = "ASC",
+                        RoleOrder = { "TANK", "HEALER", "DAMAGER" },
+                        Visibility = "[@raid31,exists][@raid21,noexists] hide;show",
+                        GroupGrowthDirection = "RIGHT",
+                        GroupsPerRowColumn = 6,
+                        GroupSpacing = 1,
+                        AutoGroups = true,
+                        NumGroups = 8,
+                    },
+                    Power = {
+                        Enabled = false,
+                    },
+                    Castbar = {
+                        Enabled = false, -- never constructed on group units
+                    },
+                    Tags = {
+                        TagOne = {
+                            Position = {
+                                AnchorFrom = "TOPLEFT",
+                                AnchorTo = "TOPLEFT",
+                                XOffset = 2,
+                                YOffset = -2
+                            },
+                        },
+                        TagTwo = {
+                            Tag = "[NUF:healmana:smartcolor]",
+                            Position = {
+                                AnchorFrom = "LEFT",
+                                AnchorTo = "LEFT",
+                                XOffset = 18,
+                                YOffset = 17
+                            },
+                        },
+                        TagThree = {
+                            Enabled = true,
+                            Tag = "[NUF:status]",
+                            Position = {
+                                AnchorFrom = "TOPLEFT",
+                                AnchorTo = "TOPLEFT",
+                                XOffset = 2,
+                                YOffset = -30
+                            },
+                        },
+                    },
+                    Indicators = {
+                        ReadyCheck = { Enabled = true },
+                        Summon = {
+                            Enabled = true,
+                            Position = {
+                                AnchorFrom = "TOPRIGHT",
+                                AnchorTo = "TOPRIGHT",
+                                XOffset = -2,
+                                YOffset = -2
+                            },
+                        },
+                        Resurrect = { Enabled = true },
+                        Phase = { Enabled = true },
+                        Role = { Enabled = true },
+                        Leader = { Enabled = true },
+                        RaidIcon = { Size = 20 },
+                    },
+                },
+                raid3 = {
+                    Dispel = {
+                        UseGlobal = true,
+                    },
+                    Auras = {
+                        Buffs = {
+                            Trigger = { Type = 'Preset', Preset = 'preset:partyBuffs' },
+                            size = 26,
+                            maxFrameCount = 2,
+                            previewLimit = 2,
+                            perRow = 2,
+                            Position = {
+                                AnchorTo = "BOTTOMRIGHT",
+                                XOffset = 0,
+                                YOffset = 0
+                            },
+                        },
+                        Debuffs = {
+                            Trigger = { Type = 'Preset', Preset = 'preset:partyDebuffs' },
+                            size = 30,
+                            maxFrameCount = 2,
+                            previewLimit = 2,
+                            perRow = 2,
+                            Position = {
+                                AnchorTo = "BOTTOMLEFT",
+                                XOffset = 0,
+                                YOffset = 0
+                            },
+                        },
+                    },
+                    Width = 120,
+                    Height = 75,
+                    anchorFrameType = "UIPARENT",
+                    ParentFrame = "UIParent",
+                    Position = {
+                        AnchorFrom = "TOPLEFT",
+                        AnchorTo = "TOPLEFT",
+                        XOffset = 1,
+                        YOffset = -1
+                    },
+                    Group = {
+                        GrowthDirection = "DOWN",
+                        HorizontalSpacing = 1,
+                        VerticalSpacing = 1,
+                        ShowPlayer = true,
+                        StartFromCenter = false,
+                        SortBy = "GROUP",
+                        SortMethod = "INDEX",
+                        SortDirection = "ASC",
+                        RoleOrder = { "TANK", "HEALER", "DAMAGER" },
+                        Visibility = "[@raid31,noexists] hide;show",
+                        GroupGrowthDirection = "RIGHT",
+                        GroupsPerRowColumn = 8,
+                        GroupSpacing = 1,
+                        AutoGroups = true,
+                        NumGroups = 8,
                     },
                     Power = {
                         Enabled = false,

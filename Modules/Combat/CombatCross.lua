@@ -44,6 +44,7 @@ function CombatCross:CreateFrame()
 
     -- Core base frame, all lines and dot are children of this.
     local coreFrame = CreateFrame('Frame', 'NRSKNUI_CombatCrossCoreFrame', UIParent)
+    coreFrame:SetRolesets('unitFrames')
     coreFrame:NUISetPixelSize(40)
     coreFrame:SetFrameStrata('HIGH')
     coreFrame:SetFrameLevel(100)

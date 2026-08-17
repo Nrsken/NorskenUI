@@ -129,6 +129,7 @@ function PlayerAuras:GetHost(kind)
     if self.hosts[kind] then return self.hosts[kind] end
 
     self.hosts[kind] = CreateFrame('Frame', 'NRSKNUI_Player' .. kind, UIParent)
+    self.hosts[kind]:SetRolesets('buffs')
     self:ResizeHost(kind)
 
     return self.hosts[kind]

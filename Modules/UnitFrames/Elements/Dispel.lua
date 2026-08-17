@@ -184,7 +184,7 @@ local function Update(frame)
         dispel.anchored = AnchorProxy(frame, dispel.config)
     end
 
-    container:SetUnit(frame.unit) -- early-outs when the token is unchanged
+    container:SetUnit(frame.__unit) -- early-outs when the token is unchanged
     container:UpdateUnitGate()
     container:UpdateAllAuras()
 end
@@ -246,7 +246,7 @@ UF.Elements.Dispel = {
             end
 
             dispel.anchored = AnchorProxy(self, cfg)
-            dispel.container:SetUnit(self.unit or unit)
+            dispel.container:SetUnit(self.__unit or unit)
             dispel.container:UpdateUnitGate()
             dispel.container:UpdateAllAuras()
         end)

@@ -22,6 +22,7 @@ function Recuperate:CreateButton()
     if self.button then return end
 
     local button = CreateFrame('Button', 'NRSKNUI_RecuperateButton', UIParent, 'SecureActionButtonTemplate, SecureHandlerStateTemplate')
+    button:SetRolesets('actionBars')
     button:NUISetPixelSize(self.db.Size, self.db.Size)
     button:RegisterForClicks('AnyUp', 'AnyDown')
     button:SetAttribute('type', 'spell')

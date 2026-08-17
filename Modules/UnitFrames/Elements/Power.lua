@@ -5,7 +5,42 @@ local UF = NRSKNUI:GetModule('UnitFrames')
 
 local CreateFrame = CreateFrame
 
+local NO_POWER = UF.NoPower
+
 local Interpolation = Enum and Enum.StatusBarInterpolation
+
+---Whether a frame should carry a power bar at all.
+---@param self oUF.UnitFrame
+---@param unit string
+---@param pDB table the unit's Power block
+---@return boolean
+local function Wanted(self, unit, pDB)
+    return pDB.Enabled and not NO_POWER[self.nuiConfig or unit]
+end
+
+---Build the bar and its chrome.
+---@param self oUF.UnitFrame
+local function BuildPower(self)
+    -- Power bar background frame
+    local powerBackground = CreateFrame('Frame', nil, self)
+    powerBackground:NUICreateBackdrop(true)
+    self.powerBackground = powerBackground
+
+    -- Power bar border frame
+    local powerBorderFrame = CreateFrame('Frame', nil, self)
+    powerBorderFrame:NUIAddBorders()
+    powerBorderFrame:SetFrameLevel(self:GetFrameLevel() + 3)
+    self.powerBorderFrame = powerBorderFrame
+
+    -- Power bar
+    local powerBar = CreateFrame('StatusBar', nil, self) --[[@as oUF.Power]]
+    powerBar:SetFrameLevel(self:GetFrameLevel() + 2)
+    powerBar:NUISetPixelSnap()
+    powerBar.PostUpdate = UF.PostUpdatePower
+    powerBar.PostUpdateColor = UF.PostUpdatePowerColor
+
+    self.Power = powerBar
+end
 
 ---@class UnitFramesElements
 ---@field Power UnitFramesPowerElement
@@ -17,26 +52,9 @@ UF.Elements.Power = {
     ---@param unit string
     Construct = function(self, unit)
         if self.Power then return end
+        if not Wanted(self, unit, UF.GetUnitDB(unit).Power) then return end
 
-        -- Power bar background frame
-        local powerBackground = CreateFrame('Frame', nil, self)
-        powerBackground:NUICreateBackdrop(true)
-        self.powerBackground = powerBackground
-
-        -- Power bar border frame
-        local powerBorderFrame = CreateFrame('Frame', nil, self)
-        powerBorderFrame:NUIAddBorders()
-        powerBorderFrame:SetFrameLevel(self:GetFrameLevel() + 3)
-        self.powerBorderFrame = powerBorderFrame
-
-        -- Power bar
-        local powerBar = CreateFrame('StatusBar', nil, self) --[[@as oUF.Power]]
-        powerBar:SetFrameLevel(self:GetFrameLevel() + 2)
-        powerBar:NUISetPixelSnap()
-        powerBar.PostUpdate = UF.PostUpdatePower
-        powerBar.PostUpdateColor = UF.PostUpdatePowerColor
-
-        self.Power = powerBar
+        BuildPower(self)
     end,
 
     ---@param self oUF.UnitFrame
@@ -44,12 +62,16 @@ UF.Elements.Power = {
     ---@param uDB table
     ---@param general table
     Configure = function(self, unit, uDB, general)
+        local pDB = uDB.Power
+
+        if not self.Power then
+            if not Wanted(self, unit, pDB) then return end
+            BuildPower(self)
+        end
+
         local powerBar = self.Power
-        if not powerBar then return end
         local powerBackground = self.powerBackground
         local powerBorderFrame = self.powerBorderFrame
-
-        local pDB = uDB.Power
 
         -- Set power bar texture and sizing
         powerBar:SetStatusBarTexture(NRSKNUI:GetStatusbar(general, pDB.StatusBarTexture))

@@ -15,6 +15,8 @@ local OutlineOptions = NRSKNUI:GetOutlineOptions(true)
 local ipairs = ipairs
 local tonumber = tonumber
 local format = string.format
+local CopyTable = CopyTable
+local wipe = wipe
 
 local PAGE = 'unitFramesIndicators'
 local INDICATORS_SECTION = 'auraIndicators_section'
@@ -484,6 +486,93 @@ local function BuildStyleOptions(page, card, placement)
     })
 end
 
+---Reopen a unit's Aura Indicators section, optionally on a given placement.
+---@param unit string
+---@param index number? 1-based placement to select
+local function ReloadUnit(unit, index)
+    local window = NRSKNUI.GUIFrame
+    if not (window and window.content) then return end
+
+    window.content:ShowPage(UF.GUIPageID(unit), { itemKey = 'auraindicators', tabId = index and tostring(index) or nil })
+end
+
+---The last copied setup. Held as its own deep copy, so editing the source unit afterwards, or
+---switching profiles, leaves what was copied alone.
+local clipboard
+
+---@param unit string
+---@return string
+local function UnitLabel(unit)
+    return UF.UnitLabels[unit] or unit
+end
+
+---@param unit string
+---@param uDB table
+---@param replace boolean wipe what the unit has, rather than appending to it
+local function Paste(unit, uDB, replace)
+    if not clipboard then return end
+
+    local placements = uDB.AuraIndicators
+    local first = replace and 1 or #placements + 1
+
+    if replace then wipe(placements) end
+    -- Copied again on the way out, so pasting the same setup onto two units never shares tables.
+    for _, placement in ipairs(clipboard.placements) do
+        placements[#placements + 1] = CopyTable(placement)
+    end
+
+    Changed(nil)
+    ReloadUnit(unit, first)
+end
+
+---Right-click menu on a unit page's Aura Indicators section, for moving a whole setup between units.
+---@param unit string
+function UF.GUIAuraIndicatorContext(unit)
+    local uDB = NRSKNUI.db.profile.UnitFrames.Units[unit]
+    local placements = uDB.AuraIndicators
+
+    local entries = {
+        {
+            text = L['Copy Aura Indicators'],
+            disabled = not placements[1],
+            onClick = function()
+                clipboard = { unit = unit, placements = CopyTable(placements) }
+                NRSKNUI:Print(format(L['Copied %d aura indicators from %s'], #placements, UnitLabel(unit)))
+            end,
+        },
+    }
+
+    if clipboard then
+        local from = UnitLabel(clipboard.unit)
+
+        entries[#entries + 1] = { divider = true }
+        entries[#entries + 1] = {
+            text = format(L['Paste from %s'], from),
+            onClick = function()
+                if not placements[1] then
+                    Paste(unit, uDB, true)
+                    return
+                end
+
+                NRSKNUI:CreatePrompt({
+                    title = L['Paste Aura Indicators'],
+                    text = format(L['Replace the %d aura indicators on %s with the %d copied from %s?'],
+                        #placements, UnitLabel(unit), #clipboard.placements, from),
+                    onAccept = function() Paste(unit, uDB, true) end,
+                    acceptText = L['Replace'],
+                    cancelText = L['Cancel'],
+                })
+            end,
+        }
+        entries[#entries + 1] = {
+            text = format(L['Paste from %s (Add)'], from),
+            onClick = function() Paste(unit, uDB, false) end,
+        }
+    end
+
+    GUI:ShowContextMenu(entries)
+end
+
 ---@param page KajiGUIPage
 ---@param uDB table
 ---@param unit string
@@ -502,12 +591,7 @@ local function BuildUnitSection(page, uDB, unit, tabId)
         return placement ~= nil and not placement.Font.UseGlobalFont
     end)
 
-    local function Reload()
-        local window = NRSKNUI.GUIFrame
-        if window and window.content then
-            window.content:ShowPage(UF.GUIPageID(unit), { itemKey = 'auraindicators' })
-        end
-    end
+    local function Reload() ReloadUnit(unit) end
 
     local card = page:Card(placement and AuraIndicators:GetPlacementName(placement, index) or L['Aura Indicators'])
 
