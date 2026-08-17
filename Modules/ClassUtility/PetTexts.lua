@@ -145,8 +145,13 @@ function PetTexts:GetState()
 end
 
 function PetTexts:UpdateStateText()
-    if not self.parentGroup or self.isPreview then return end
+    if not self.parentGroup or self.isPreview or self.updateQueued then return end
+    self.updateQueued = true
     RunNextFrame(function() -- Slight delay to avoid text flicker when the pet state changes.
+        self.updateQueued = false
+        -- The preview can start between scheduling and running, and it owns the children while it does.
+        if not self.parentGroup or self.isPreview then return end
+
         local state = self:GetState()
         for _, petType in ipairs(petStates) do
             if state == petType.key then
