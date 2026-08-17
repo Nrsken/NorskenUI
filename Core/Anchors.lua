@@ -15,6 +15,7 @@ local math_floor, math_ceil, math_abs, math_rad = math.floor, math.ceil, math.ab
 local GetPhysicalScreenSize = GetPhysicalScreenSize
 local GetCursorPosition = GetCursorPosition
 local IsShiftKeyDown = IsShiftKeyDown
+local GetCurrentKeyBoardFocus = GetCurrentKeyBoardFocus
 local pairs, ipairs = pairs, ipairs
 local CreateFrame = CreateFrame
 local format = string.format
@@ -603,7 +604,10 @@ end
 
 -- Session handlers --
 
+-- Above the nudge panel, its offset boxes take the keyboard the moment an anchor is selected.
 local keyHandler = CreateFrame('Frame', 'NRSKNUI_AnchorsKeys', UIParent)
+keyHandler:SetFrameStrata('TOOLTIP')
+keyHandler:SetFrameLevel(10000)
 keyHandler:Hide()
 keyHandler:EnableKeyboard(true)
 keyHandler:SetPropagateKeyboardInput(true)
@@ -616,6 +620,12 @@ local NUDGE_KEYS = {
 }
 
 keyHandler:SetScript('OnKeyDown', function(self, key)
+    -- Typing in an offset box owns the keyboard, arrows move its cursor there.
+    if GetCurrentKeyBoardFocus() then
+        self:SetPropagateKeyboardInput(true)
+        return
+    end
+
     if key == 'ESCAPE' then
         self:SetPropagateKeyboardInput(false)
         if Anchors.selectedKey then

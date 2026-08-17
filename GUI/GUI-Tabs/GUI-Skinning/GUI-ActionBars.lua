@@ -430,7 +430,7 @@ local function BuildBarLayoutTab(page, db, barKey, barDB)
     -- Card 3: Position
     local positionCard = page:Card(L['Position'], 'bar')
     local anchorRow = positionCard:Row(rowH)
-    anchorRow:Dropdown(L['Screen Anchor'], {
+    local anchorDropdown = anchorRow:Dropdown(L['Screen Anchor'], {
         width = 1,
         options = anchorOptions,
         value = barDB.Position.AnchorPoint,
@@ -442,7 +442,7 @@ local function BuildBarLayoutTab(page, db, barKey, barDB)
     positionCard:Separator()
 
     local offsetRow = positionCard:Row(rowHL, 0)
-    offsetRow:Slider(L['X Offset'], {
+    local xSlider = offsetRow:Slider(L['X Offset'], {
         width = 0.5,
         min = -2000,
         max = 2000,
@@ -452,7 +452,7 @@ local function BuildBarLayoutTab(page, db, barKey, barDB)
             barDB.Position.XOffset = val; ApplyBar(barKey)
         end,
     })
-    offsetRow:Slider(L['Y Offset'], {
+    local ySlider = offsetRow:Slider(L['Y Offset'], {
         width = 0.5,
         min = -2000,
         max = 2000,
@@ -462,6 +462,13 @@ local function BuildBarLayoutTab(page, db, barKey, barDB)
             barDB.Position.YOffset = val; ApplyBar(barKey)
         end,
     })
+
+    -- Silent, the sliders are being told what the anchor drag already wrote and applied.
+    positionCard:OnExternalRefresh(function()
+        anchorDropdown:SetValue(barDB.Position.AnchorPoint, true)
+        xSlider:SetValueSilent(barDB.Position.XOffset)
+        ySlider:SetValueSilent(barDB.Position.YOffset)
+    end)
 
     -- Card 4: Mouseover
     local mouseoverCard = page:Card(L['Mouseover'], 'bar')

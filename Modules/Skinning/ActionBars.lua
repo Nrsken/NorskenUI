@@ -841,8 +841,9 @@ local function SkinBar(cfg)
     local containerWidth = columns * buttonSize + (columns - 1) * buttonSpacing
     local containerHeight = rows * buttonSize + (rows - 1) * buttonSpacing
 
-    -- Create container with size and position
-    local container = CreateFrame("Frame", "NRSKNUI_" .. cfg.name .. "_Container", UIParent)
+    -- Reused, re-enabling the module would otherwise leave the first container behind, still shown.
+    local containerName = "NRSKNUI_" .. cfg.name .. "_Container"
+    local container = _G[containerName] or CreateFrame("Frame", containerName, UIParent)
     container:SetRolesets("actionBars")
     container:NUISetPixelSnap()
     container:SetFrameStrata("LOW")
@@ -1200,19 +1201,14 @@ local function SetupStanceBarVisibility(container)
     )
 end
 
--- Register each bar as a draggable anchor.
-local function RegisterBarAnchor(barName, barDB, barContainer)
-    local db = barDB
-    local frame = barContainer
-
-    NRSKNUI.Anchors:Register(ACB, "ActionBars_" .. barName, frame, nil, {
-        displayName = barName,
-        db = db,
-        apply = function()
-            local pos = db.Position
-            if not pos then return end
-            ApplyEdgePosition(frame, pos.AnchorPoint or "BOTTOM", pos.XOffset or 0, pos.YOffset or 0)
-        end,
+-- Everything resolves live, a profile switch guts the captured bar table and drags write into it.
+local function RegisterBarAnchor(barKey)
+    NRSKNUI.Anchors:Register(ACB, "ActionBars_" .. barKey, nil, "actionBars", {
+        displayName = barKey,
+        frameName = "NRSKNUI_" .. barKey .. "_Container",
+        guiContext = barKey,
+        db = function(aceModule) return aceModule.db.Bars[barKey] end,
+        apply = function(aceModule) aceModule:UpdateBarPosition(barKey) end,
     })
 end
 
@@ -1276,11 +1272,7 @@ function ACB:InitializeBars()
         SetupMouseoverScript(cfg.nrsknui_container)
 
         if cfg.enabled then
-            RegisterBarAnchor(
-                cfg.name,
-                cfg.dbReference,
-                cfg.nrsknui_container
-            )
+            RegisterBarAnchor(cfg.name)
         end
 
         if cfg.name == "Bar1" and cfg.nrsknui_container then
@@ -1659,7 +1651,7 @@ function ACB:UpdateAllFlyoutDirections()
     end
 end
 
--- Toggle bar visibility and edit mode registration
+-- Toggle bar visibility and anchor registration
 function ACB:UpdateBarEnabled(barKey)
     local barDB, container = GetBarData(barKey)
     if not barDB or not container then return end
@@ -1671,8 +1663,8 @@ function ACB:UpdateBarEnabled(barKey)
         else
             container:Show()
         end
-        -- Register with edit mode when enabled
-        RegisterBarAnchor(barKey, barDB, container)
+        -- Register the anchor when enabled
+        RegisterBarAnchor(barKey)
     else
         -- For pet/stance bars, trigger visibility update (will set alpha to 0)
         if container._updatePetVisibility then
@@ -1796,22 +1788,8 @@ function ACB:ApplySettings()
             -- Rebuild config with new profile settings
             self:BuildConfigTable()
 
-            -- Update existing containers and handle enabled state
             for barKey, _ in pairs(BAR_FRAME_MAP) do
-                local barDB = self.db.Bars and self.db.Bars[barKey]
-                local container = _G["NRSKNUI_" .. barKey .. "_Container"]
-
-                if container then
-                    -- For pet/stance bars (which use alpha-based visibility), trigger their visibility update
-                    if container._updatePetVisibility then
-                        container._updatePetVisibility()
-                    elseif barDB and barDB.Enabled then
-                        -- Regular bars: show/hide based on enabled state
-                        container:Show()
-                    else
-                        container:Hide()
-                    end
-                end
+                self:UpdateBarEnabled(barKey)
             end
 
             self:UpdateSettings("all")
