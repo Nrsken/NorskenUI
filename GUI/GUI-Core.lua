@@ -47,7 +47,6 @@ function NRSKNUI:GetGUI()
     ---@type KajiGUIInstance
     local GUI = self.GUI
     GUI.services.positionSync = positionSync
-    GUI.services.frameChooser = self.FrameChooser
     return GUI
 end
 

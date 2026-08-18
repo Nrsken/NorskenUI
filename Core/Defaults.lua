@@ -21,7 +21,7 @@ local Defaults = {
         },
         -- Global UIParent scale.
         UIScale = {
-            Enabled = true,
+            Enabled = false,
             Scale   = 0.71,
         },
         -- CVars the SpellAlert module captured before it started overriding them, put back when it is turned off.
@@ -1031,13 +1031,13 @@ local Defaults = {
                     AnchorFrom = "BOTTOM",
                     AnchorTo = "CENTER",
                     XOffset = 0,
-                    YOffset = 345,
+                    YOffset = 346,
                 },
-                Width = 314,
-                BarHeight = 6,
+                Width = 270,
+                BarHeight = 8,
                 Grow = "UP",
-                Spacing = 3,
-                PillSpacing = 3,
+                Spacing = 1,
+                PillSpacing = 1,
                 -- Texture settings
                 UseGlobalBar = true,
                 StatusBarTexture = "NorskenUI",
@@ -1048,27 +1048,27 @@ local Defaults = {
                 -- Vigor row
                 Vigor = {
                     Enabled = true,
-                    ColorMode = "custom",
+                    ColorMode = "class",
                     Color = { 0.898, 0.063, 0.224, 1 },
                     ThrillEnabled = true,
                     ThrillColorMode = "custom",
-                    ThrillColor = { 0, 1, 0.137, 1 },
+                    ThrillColor = { 0, 1, 0.14, 1 },
                 },
                 -- Whirling Surge row
                 WhirlingSurge = {
                     Enabled = true,
                     ColorMode = "custom",
-                    Color = { 0.411, 0.8, 0.941, 1 },
+                    Color = { 0.74, 0.74, 0.74, 1 },
                 },
                 -- Second Wind row
                 SecondWind = {
                     Enabled = true,
                     ColorMode = "custom",
-                    Color = { 0.917, 0.168, 0.901, 1 },
+                    Color = { 1, 1, 1, 1 },
                 },
                 -- Speed text
                 SpeedText = {
-                    Enabled = true,
+                    Enabled = false,
                     UseGlobalFont = true,
                     FontFace = "Expressway",
                     FontSize = 16,
@@ -1220,14 +1220,10 @@ local Defaults = {
 
                 ObjectiveTracker = {
                     Enabled = true,
-                    SkinHeaders = true,
-                    SkinProgressBars = true,
-                    SkinMinimizeButton = true,
-                    SkinQuestIcons = true,
                     FontStyling = true,
                     QuestTextSize = 12,
                     QuestTitleSize = 13,
-                    ColorMode = "Theme",
+                    ColorMode = "theme",
                     CustomColor = { 0, 1, 0.17, 1 },
                 },
                 General = {
@@ -1236,7 +1232,7 @@ local Defaults = {
                     WidgetColor = { 0.078, 0.078, 0.078, 1 },
                     PanelColor = { 0.2, 0.2, 0.2, 1 },
                     DisabledColor = { 0, 0, 0, 0.4 },
-                    AccentMode = "Theme", -- "Theme" | "Class" | "Custom"
+                    AccentMode = "theme", -- "theme" | "class" | "custom"
                     CustomAccentColor = { 0, 1, 0.17, 1 },
                     HighlightColor = { 0.5, 0.5, 0.5, 0.1 },
                 },
@@ -2571,7 +2567,7 @@ local Defaults = {
         },
 
         UnitFrames = {
-            Enabled = true,
+            Enabled = false,
             HideBlizzardRaidFrames = true, -- oUF only ever disables the party ones
             General = {
                 UseGlobalBar = true,

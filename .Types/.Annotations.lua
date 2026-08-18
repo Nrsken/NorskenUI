@@ -397,11 +397,8 @@ function FontString:GetWidestDigit() end
 ---@field UserScaledFontSystem15Shadow Font
 ---@field CharacterFrameTitleText FontString
 
----@class SkinColors
----@field border RGBA
----@field background RGBA
----@field panel RGBA
----@field accent RGBA
+---@class InspectFrame
+---@field unit string
 
 ---@class SkinnedBackdropMixin : PublicBackdropMixin
 ---@field NUIBgAlpha number?
@@ -410,13 +407,17 @@ function FontString:GetWidestDigit() end
 
 ---@class SkinnedButtonMixin : Button
 ---@field NUIBackdrop Frame & PublicBackdropMixin
+---@field NUIHighlight Texture?
+---@field NUIMenuOpen boolean?
 
 ---@class SkinnedCloseButtonMixin : Button
 ---@field NUIBtnCross Texture
 
 ---@class SkinnedTabMixin : Button
 ---@field NUIBackdrop Frame & PublicBackdropMixin
+---@field NUIHighlight Texture?
 ---@field NUISelected boolean?
+---@field NUIDisabled boolean?
 
 ---@class SkinnedThumbMixin : Frame
 ---@field NUIBackdrop Frame & PublicBackdropMixin
@@ -428,9 +429,15 @@ function FontString:GetWidestDigit() end
 ---@field Update fun(self: ScrollBox)
 ---@field NUIHooked? boolean
 
----@class NUIEditBox : EditBox
----@field searchIcon? Texture
----@field NUISkinned? boolean
+-- TabSystemTemplate: TabSystemMixin on a HorizontalLayoutFrame, so it owns its tabs' anchors.
+---@class NUITabSystem : Frame
+---@field tabs Button[] Ordered by tabID, unlike the unordered tabPool
+---@field spacing number? Gap the layout leaves between tabs
+---@field MarkDirty fun(self: NUITabSystem) From LayoutMixin, schedules a re-layout
+
+---@class SkinnedEditBoxMixin : EditBox
+---@field NUIBackdrop Frame & PublicBackdropMixin
+---@field NUIFocused boolean?
 
 ---@class SkinnedCheckMixin : CheckButton
 
@@ -443,11 +450,11 @@ function FontString:GetWidestDigit() end
 ---@field NUIKeepColor boolean?
 
 ---@class NUICollapseButtonMixin: Button
----@field __texture Texture
----@field __highlight Texture
----@field bg Frame
----@field settingTexture boolean?
----@field styled boolean?
+---@field NUICollapseIcon Texture
+---@field NUICollapseHighlight Texture
+---@field NUIContainer Frame
+---@field NUISettingTexture boolean?
+---@field NUISkinned boolean?
 
 ---Blizzard ItemButton/paperdoll slot fields we touch (all optional per template)
 ---@class NUIItemButton : Button

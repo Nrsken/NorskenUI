@@ -193,13 +193,13 @@ lib.premadeCards.PositionCard = {
                     callback = function(val) setValue(keys.anchorFrameFrame, val ~= "" and val or nil) end,
                 })
 
-                local frameChooser = gui.services.frameChooser
+                -- The host may inject its own picker; otherwise the library's is used.
+                local frameChooser = gui.services.frameChooser or gui:GetFrameChooser()
                 row2:Button("Select Frame", {
                     width = 0.5,
                     height = 24,
                     yOffset = -14,
                     callback = function()
-                        if not frameChooser then return end
                         frameChooser:Start(function(frameName, isPreview)
                             if frameName then
                                 frameInput:SetValue(frameName)

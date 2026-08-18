@@ -1,6 +1,7 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
-local BSKIN = NRSKNUI.BlizzSkin
+---@class SkinningModule
+local Skinning = NRSKNUI:GetModule('Skinning')
 
 local PaperDollFrame_UpdateSidebarTabs = PaperDollFrame_UpdateSidebarTabs
 local PaperDollItemSlotButton_Update = PaperDollItemSlotButton_Update
@@ -64,7 +65,7 @@ end
 local function SkinHeaderRow(row)
     if row.Right and row.HighlightRight then
         row:NUIStripTextures('Keyed')
-        BSKIN:CreatePanelBackdrop(row, 'Transparent')
+        Skinning:CreatePanelBackdrop(row, 'Transparent')
 
         UpdateCollapseArrow(row.Right)
         UpdateCollapseArrow(row.HighlightRight)
@@ -94,7 +95,7 @@ local function SkinEquipSetRow(row)
 
     if not row.NUISkinned then
         row.NUISkinned = true
-        local db = BSKIN:GetDB()
+        local db = Skinning.db
 
         for _, key in ipairs({ 'BgTop', 'BgMiddle', 'BgBottom' }) do
             local tex = row[key]
@@ -148,7 +149,7 @@ local function SkinReputationRow(row)
     if content.Background then content.Background:SetAlpha(0) end
     local bar = content.ReputationBar
     if bar and bar.SetStatusBarTexture then
-        BSKIN:HandleStatusBar(bar, true)
+        Skinning:HandleStatusBar(bar, true)
     end
 end
 
@@ -161,7 +162,7 @@ local function SkinTokenRow(row)
     local content = row.Content or row
     if content.Background then content.Background:SetAlpha(0) end
     local icon = content.CurrencyIcon or content.Icon or content.icon
-    if icon then BSKIN:HandleIcon(icon) end
+    if icon then Skinning:HandleIcon(icon) end
 end
 
 ---@param row NUIListRow
@@ -169,7 +170,7 @@ local function SkinTransferLogRow(row)
     if row.NUISkinned then return end
     row.NUISkinned = true
 
-    if row.CurrencyIcon then BSKIN:HandleIcon(row.CurrencyIcon) end
+    if row.CurrencyIcon then Skinning:HandleIcon(row.CurrencyIcon) end
 end
 
 local customPortrait
@@ -233,8 +234,8 @@ local function TitleSearch(S)
     frame:NUICreateBackdrop()
     frame:SetBackgroundColor(0, 0, 0, 0.5)
 
-    local db = BSKIN:GetDB()
-    local r, g, b, a = BSKIN:GetAccentColor()
+    local db = Skinning.db
+    local r, g, b, a = Skinning:GetAccentColor()
 
     local editBox = CreateFrame('EditBox', nil, frame)
     editBox:SetPoint('TOPLEFT', frame, 'TOPLEFT', 6, -4)
@@ -286,26 +287,6 @@ local function SkinShell(S)
         insetRight:NUIStripTextures('Keyed')
         if insetRight.NineSlice then insetRight.NineSlice:NUIStripTextures('Keyed') end
         if insetRight.Bg then insetRight.Bg:SetAlpha(0) end
-    end
-end
-
--- Skin and re-position the bottom tabs.
-local function SkinTabs(S)
-    local i = 1
-    local tab, prev = _G['CharacterFrameTab' .. i], nil
-    while tab do
-        S:HandleTab(tab)
-
-        tab:ClearAllPoints()
-        if prev then
-            tab:NUISetPixelPoint('TOPLEFT', prev, 'TOPRIGHT', -1, 0)
-        else
-            tab:NUISetPixelPoint('TOPLEFT', CharacterFrame, 'BOTTOMLEFT', 0, 1)
-        end
-        prev = tab
-
-        i = i + 1
-        tab = _G['CharacterFrameTab' .. i]
     end
 end
 
@@ -617,11 +598,11 @@ local function SkinEquipmentFlyout(S)
     hooksecurefunc('EquipmentFlyout_UpdateItems', function() UpdateItemButtons(S) end)
 end
 
-BSKIN:RegisterSkin('Blizzard_UIPanels_Game', 'CharacterFrame', function(S)
+Skinning:RegisterSkin('Blizzard_UIPanels_Game', 'CharacterFrame', function(S)
     if not _G.CharacterFrame then return end
 
     SkinShell(S)
-    SkinTabs(S)
+    S:HandleTabRow('CharacterFrameTab', CharacterFrame)
     SkinSlots(S)
     HookFlyoutArrows()
     SkinModelScene(S)
@@ -655,7 +636,7 @@ BSKIN:RegisterSkin('Blizzard_UIPanels_Game', 'CharacterFrame', function(S)
 end)
 
 -- The currency tab lives in the LoadOnDemand Blizzard_TokenUI addon
-BSKIN:RegisterSkin('Blizzard_TokenUI', 'CharacterFrame', function(S)
+Skinning:RegisterSkin('Blizzard_TokenUI', 'CharacterFrame', function(S)
     local token = _G.TokenFrame
     if not token then return end
 

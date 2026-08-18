@@ -1,7 +1,7 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
-
-local BSKIN = NRSKNUI.BlizzSkin
+---@class SkinningModule
+local Skinning = NRSKNUI:GetModule('Skinning')
 
 local ipairs = ipairs
 local CreateFrame = CreateFrame
@@ -25,7 +25,7 @@ local SLOT_NAMES = {
 }
 
 local function SetupCustomPortrait()
-    if BSKIN.CustomPortraitFrame then return end
+    if Skinning.CustomPortraitFrame then return end
 
     local frame = CreateFrame('Frame', nil, InspectFrame)
     frame:SetSize(45, 45)
@@ -35,7 +35,7 @@ local function SetupCustomPortrait()
     frame.icon = frame:CreateTexture(nil, 'ARTWORK')
     frame.icon:SetAllPoints(frame)
     frame.icon:NUISetZoom()
-    BSKIN.CustomPortraitFrame = frame
+    Skinning.CustomPortraitFrame = frame
 end
 
 -- Update the custom portrait icon with spec icon texture.
@@ -89,9 +89,9 @@ local function SkinTabs(S)
     end
 end
 
-BSKIN:RegisterSkin('Blizzard_InspectUI', 'InspectFrame', function(S)
+Skinning:RegisterSkin('Blizzard_InspectUI', 'InspectFrame', function(S)
     if not InspectFrame then return end
-    local db = BSKIN:GetDB()
+    local db = Skinning.db
 
     S:HandlePortraitFrame(InspectFrame)
     S:HandleButton(_G.InspectPaperDollFrame.ViewButton, 'Transparent')
@@ -101,8 +101,8 @@ BSKIN:RegisterSkin('Blizzard_InspectUI', 'InspectFrame', function(S)
 
     hooksecurefunc('InspectPaperDollItemSlotButton_Update', function()
         SetupCustomPortrait()
-        if BSKIN.CustomPortraitFrame then
-            UpdateCustomPortrait(BSKIN.CustomPortraitFrame)
+        if Skinning.CustomPortraitFrame then
+            UpdateCustomPortrait(Skinning.CustomPortraitFrame)
         end
         S:HandleButton(_G.InspectPaperDollItemsFrame.InspectTalents)
         _G.InspectPaperDollItemsFrame.InspectTalents:ClearAllPoints()

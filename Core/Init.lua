@@ -1,6 +1,5 @@
 ---@class NRSKNUI : AceAddon-3.0, AceEvent-3.0, AceTimer-3.0, AceHook-3.0
 ---@field db NRSKNUI.DBObject
----@field FrameChooser table?
 ---@field Locale string
 ---@field AddOnName string?
 ---@field Version string?
@@ -158,6 +157,7 @@ NRSKNUI.ActionBars = NRSKNUI:NewModule('ActionBars', 'AceEvent-3.0')
 NRSKNUI.Chatv2 = NRSKNUI:NewModule('Chatv2', 'AceEvent-3.0', 'AceHook-3.0')
 NRSKNUI.MicroMenu = NRSKNUI:NewModule('MicroMenu', 'AceEvent-3.0')
 NRSKNUI.DetailsBackdrop = NRSKNUI:NewModule('DetailsBackdrop', 'AceEvent-3.0')
+NRSKNUI.BlizzObjectiveTracker = NRSKNUI:NewModule('BlizzObjectiveTracker', 'AceEvent-3.0')
 
 -- Class Utility Modules
 NRSKNUI.Gateway = NRSKNUI:NewModule('Gateway', 'AceEvent-3.0')

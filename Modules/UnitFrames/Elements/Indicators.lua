@@ -56,7 +56,7 @@ UF.IndicatorDefs = {
         element = 'QuestIndicator',
         units = { target = true },
         art = {
-            { key = 'Blizzard', label = L['Blizzard'], texture = [[Interface\TargetingFrame\PortraitQuestBadge]] },
+            { key = 'Blizzard', label = L['Blizzard'], atlas = 'UI-HUD-UnitFrame-Target-PortraitOn-Boss-Quest' },
         },
     },
     {

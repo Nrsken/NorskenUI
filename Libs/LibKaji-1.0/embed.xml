@@ -9,6 +9,7 @@
     <Script file="Core\Util.lua" />
     <Script file="Core\Pool.lua" />
     <Script file="Core\Dialog.lua" />
+    <Script file="Core\FrameChooser.lua" />
     <Script file="Core\ContextMenu.lua" />
     <Script file="Core\Animations.lua" />
 

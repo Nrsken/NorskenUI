@@ -1,42 +1,36 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
-local Theme = NRSKNUI.Theme
+---@class BlizzObjectiveTrackerModule
+local ObjectiveTracker = NRSKNUI:GetModule('BlizzObjectiveTracker')
+function ObjectiveTracker:UpdateDB() self.db = NRSKNUI.db.profile.Skinning.BlizzardElements end
 
----@class BlizzObjectiveTracker: AceModule, AceEvent-3.0
-local BOT = NRSKNUI:NewModule("BlizzObjectiveTracker", "AceEvent-3.0")
+---@class SkinningModule
+local Skinning = NRSKNUI:GetModule('Skinning')
 
 local hooksecurefunc = hooksecurefunc
-local pairs = pairs
 local CreateFrame = CreateFrame
-local C_ChallengeMode = C_ChallengeMode
+local pairs = pairs
+
 local CHALLENGE_MODE_EXTRA_AFFIX_INFO = CHALLENGE_MODE_EXTRA_AFFIX_INFO
+local C_ChallengeMode = C_ChallengeMode
 
-local BSKIN = NRSKNUI.BlizzSkin
+ObjectiveTracker.coloredHeaders = {}
+ObjectiveTracker.coloredProgressBars = {}
 
-BOT.coloredHeaders = {}
-BOT.coloredProgressBars = {}
-
-local function GetAccentColor(objDb)
-    local mode = objDb.ColorMode or "Theme"
-    if mode == "Class" then
-        return NRSKNUI:GetPlayerClassColor()
-    elseif mode == "Custom" then
-        return objDb.CustomColor or { 0, 1, 0.17, 1 }
-    else
-        return { Theme.accent[1], Theme.accent[2], Theme.accent[3], 1 }
-    end
+-- The tracker only ever colors by RGB, so the alpha is dropped here rather than at every call.
+---@return number r, number g, number b
+local function GetAccentColor()
+    local objDb = ObjectiveTracker.db.ObjectiveTracker
+    local r, g, b = NRSKNUI:GetAccentColor(objDb.ColorMode, objDb.CustomColor)
+    return r, g, b
 end
 
-function BOT:UpdateDB()
-    self.db = NRSKNUI.db.profile.Skinning.BlizzardElements
-end
-
-function BOT:OnEnable()
+function ObjectiveTracker:OnEnable()
     if NRSKNUI:ShouldNotLoadModule() then return end
 
     self:SkinObjectiveTracker()
     self.themeSub = NRSKNUI.GUI:OnThemeChanged(function()
-        if self.db.General.AccentMode ~= "Theme" then return end
+        if self.db.ObjectiveTracker.ColorMode ~= "theme" then return end
         self:ApplySettings()
     end)
 end
@@ -66,10 +60,8 @@ local function ReskinQuestIcons(_, block)
     ReskinQuestIcon(block.rightEdgeFrame, true)
 end
 
-local function ReskinHeader(header, color)
+local function ReskinHeader(header, r, g, b)
     if not header then return end
-
-    local r, g, b = color[1], color[2], color[3]
 
     if header.styled then
         if header.Text then header.Text:SetTextColor(r, g, b) end
@@ -99,38 +91,38 @@ local function ReskinHeader(header, color)
     bg:SetRotation(math.pi / 2)
     header.bg = bg
 
-    BOT.coloredHeaders[header] = true
+    ObjectiveTracker.coloredHeaders[header] = true
     header.styled = true
 end
 
-local function ReskinProgressBar(bar, color)
+local function ReskinProgressBar(bar, r, g, b)
     if not bar then return end
 
     if bar.styled then
-        bar:SetStatusBarColor(color[1], color[2], color[3])
+        bar:SetStatusBarColor(r, g, b)
         return
     end
 
     bar:NUIStripTextures()
-    BSKIN:CreateStatusBarBackdrop(bar)
+    Skinning:CreateStatusBarBackdrop(bar)
 
     bar:SetStatusBarTexture(NRSKNUI.Media.Statusbars.NorskenUI)
-    bar:SetStatusBarColor(color[1], color[2], color[3])
+    bar:SetStatusBarColor(r, g, b)
 
-    BOT.coloredProgressBars[bar] = true
+    ObjectiveTracker.coloredProgressBars[bar] = true
     bar.styled = true
 end
 
 local function ApplyLabelFont(label)
-    local fontDB = BOT.db.ObjectiveTracker
+    local fontDB = ObjectiveTracker.db.ObjectiveTracker
     if not fontDB or not fontDB.FontStyling then return end
 
-    local fontPath = NRSKNUI:GetFont(BOT.db)
+    local fontPath = NRSKNUI:GetFont(ObjectiveTracker.db)
     local outline = 'OUTLINE'
 
     label:SetFont(fontPath, fontDB.QuestTextSize or 12, outline)
 
-    local shadowDb = BOT.db.FontShadow
+    local shadowDb = ObjectiveTracker.db.FontShadow
     if shadowDb and shadowDb.Enabled then
         local c = shadowDb.Color or { 0, 0, 0, 1 }
         label:SetShadowColor(c[1] or 0, c[2] or 0, c[3] or 0, c[4] or 1)
@@ -145,13 +137,12 @@ local function ProgressBarHook(tracker, key)
     local progressBar = tracker.usedProgressBars and tracker.usedProgressBars[key]
     local bar = progressBar and progressBar.Bar
     if bar then
-        local color = GetAccentColor(BOT.db.ObjectiveTracker)
-        ReskinProgressBar(bar, color)
+        ReskinProgressBar(bar, GetAccentColor())
 
         local icon = bar.Icon
         if icon and icon:IsShown() and not icon.styled then
             icon:SetMask("")
-            BSKIN:HandleIcon(icon, true)
+            Skinning:HandleIcon(icon, true)
 
             icon:SetSize(24, 24)
             icon:ClearAllPoints()
@@ -160,8 +151,8 @@ local function ProgressBarHook(tracker, key)
             icon.styled = true
         end
 
-        if icon and icon.backdrop then
-            icon.backdrop:SetShown(icon:IsShown() and icon:GetTexture() ~= nil)
+        if icon and icon.NUIBackdrop then
+            icon.NUIBackdrop:SetShown(icon:IsShown() and icon:GetTexture() ~= nil)
         end
 
         local label = bar.Label
@@ -177,42 +168,37 @@ local function TimerBarHook(tracker, key)
     local timerBar = tracker.usedTimerBars and tracker.usedTimerBars[key]
     local bar = timerBar and timerBar.Bar
     if bar then
-        local color = GetAccentColor(BOT.db.ObjectiveTracker)
-        ReskinProgressBar(bar, color)
+        ReskinProgressBar(bar, GetAccentColor())
     end
 end
 
-function BOT:SkinObjectiveTracker()
+function ObjectiveTracker:SkinObjectiveTracker()
     if self.skinned then return end
     if not ObjectiveTrackerFrame then return end
 
     local objDb = self.db.ObjectiveTracker
     if not objDb or not objDb.Enabled then return end
 
-    local color = GetAccentColor(objDb)
+    local r, g, b = GetAccentColor()
 
     local mainHeader = ObjectiveTrackerFrame.Header
     if mainHeader then
-        if objDb.SkinHeaders then
-            for i = 1, mainHeader:GetNumRegions() do
-                local region = select(i, mainHeader:GetRegions())
-                if region and region:IsObjectType("Texture") then
-                    region:SetTexture(nil)
-                end
+        for i = 1, mainHeader:GetNumRegions() do
+            local region = select(i, mainHeader:GetRegions())
+            if region and region:IsObjectType("Texture") then
+                region:SetTexture(nil)
             end
         end
 
-        if objDb.SkinMinimizeButton then
-            local mainMinimize = mainHeader.MinimizeButton
-            if mainMinimize then
-                BSKIN:ReskinCollapse(mainMinimize)
-                if mainHeader.SetCollapsed then
-                    hooksecurefunc(mainHeader, "SetCollapsed", function(_, collapsed)
-                        if mainMinimize.DoCollapse then
-                            mainMinimize:DoCollapse(collapsed)
-                        end
-                    end)
-                end
+        local mainMinimize = mainHeader.MinimizeButton
+        if mainMinimize then
+            Skinning:ReskinCollapse(mainMinimize)
+            if mainHeader.SetCollapsed then
+                hooksecurefunc(mainHeader, "SetCollapsed", function(_, collapsed)
+                    if mainMinimize.NUIDoCollapse then
+                        mainMinimize:NUIDoCollapse(collapsed)
+                    end
+                end)
             end
         end
     end
@@ -233,27 +219,21 @@ function BOT:SkinObjectiveTracker()
 
     for _, tracker in pairs(trackers) do
         if tracker then
-            if objDb.SkinHeaders and tracker.Header then
-                ReskinHeader(tracker.Header, color)
+            if tracker.Header then
+                ReskinHeader(tracker.Header, r, g, b)
             end
-            if objDb.SkinQuestIcons then
-                hooksecurefunc(tracker, "AddBlock", ReskinQuestIcons)
-            end
-            if objDb.SkinProgressBars then
-                hooksecurefunc(tracker, "GetProgressBar", ProgressBarHook)
-                hooksecurefunc(tracker, "GetTimerBar", TimerBarHook)
-            end
+            hooksecurefunc(tracker, "AddBlock", ReskinQuestIcons)
+            hooksecurefunc(tracker, "GetProgressBar", ProgressBarHook)
+            hooksecurefunc(tracker, "GetTimerBar", TimerBarHook)
         end
     end
 
-    if objDb.SkinProgressBars then
-        self:SkinScenarioTracker()
-    end
+    self:SkinScenarioTracker()
 
     self.skinned = true
 end
 
-function BOT:SkinScenarioTracker()
+function ObjectiveTracker:SkinScenarioTracker()
     if not ScenarioObjectiveTracker then return end
 
     local stageBlock = ScenarioObjectiveTracker.StageBlock
@@ -352,7 +332,7 @@ function BOT:SkinScenarioTracker()
 
             if block.StatusBar then
                 block.StatusBar:SetStatusBarTexture(NRSKNUI.Media.Statusbars.NorskenUI)
-                block.StatusBar:SetStatusBarColor(Theme.accent[1], Theme.accent[2], Theme.accent[3])
+                block.StatusBar:SetStatusBarColor(GetAccentColor())
                 block.StatusBar:SetHeight(10)
             end
 
@@ -395,7 +375,7 @@ function BOT:SkinScenarioTracker()
     end)
 end
 
-function BOT:StyleFonts()
+function ObjectiveTracker:StyleFonts()
     local fontDB = self.db.ObjectiveTracker
     if not fontDB or not fontDB.Enabled or not fontDB.FontStyling then return end
 
@@ -427,28 +407,28 @@ function BOT:StyleFonts()
     end
 end
 
-function BOT:UpdateColors()
+function ObjectiveTracker:UpdateColors()
     local objDb = self.db.ObjectiveTracker
     if not objDb then return end
 
-    local color = GetAccentColor(objDb)
+    local r, g, b = GetAccentColor()
 
     for header in pairs(self.coloredHeaders) do
-        if header.Text then header.Text:SetTextColor(color[1], color[2], color[3]) end
-        if header.bg then header.bg:SetVertexColor(color[1], color[2], color[3], 1) end
+        if header.Text then header.Text:SetTextColor(r, g, b) end
+        if header.bg then header.bg:SetVertexColor(r, g, b, 1) end
     end
 
     for bar in pairs(self.coloredProgressBars) do
-        bar:SetStatusBarColor(color[1], color[2], color[3])
+        bar:SetStatusBarColor(r, g, b)
     end
 
     local challengeBlock = ScenarioObjectiveTracker and ScenarioObjectiveTracker.ChallengeModeBlock
     if challengeBlock and challengeBlock.StatusBar then
-        challengeBlock.StatusBar:SetStatusBarColor(color[1], color[2], color[3])
+        challengeBlock.StatusBar:SetStatusBarColor(r, g, b)
     end
 end
 
-function BOT:ApplySettings()
+function ObjectiveTracker:ApplySettings()
     if NRSKNUI:ShouldNotLoadModule() then return end
     if not self.db.Enabled then return end
 
@@ -457,9 +437,7 @@ function BOT:ApplySettings()
     self:StyleFonts()
 end
 
-function BOT:OnDisable()
-    -- Skinning changes are permanent once applied, but the theme subscription is not: leaving it
-    -- registered means a disabled module keeps reacting, and re-enabling stacks a second copy.
+function ObjectiveTracker:OnDisable()
     if self.themeSub then
         self.themeSub()
         self.themeSub = nil

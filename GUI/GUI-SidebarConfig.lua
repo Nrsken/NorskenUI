@@ -102,12 +102,13 @@ GUIFrame.SidebarConfig = {
             text = L['Skinning'],
             defaultExpanded = false,
             items = {
-                { id = 'actionBars',      text = L['Action Bars'] },
-                { id = 'chat',            text = L['Chat'] },
-                { id = 'detailsBackdrop', text = L['Details Backdrop'] },
-                { id = 'microMenu',       text = L['Micro Menu'] },
-                { id = 'minimap',         text = L['Minimap'] },
-                { id = 'tooltip',         text = L['Tooltips'] },
+                { id = 'actionBars',       text = L['Action Bars'] },
+                { id = 'blizzardElements', text = L['Blizzard Frames'], elvUIDisabled = true },
+                { id = 'chat',             text = L['Chat'] },
+                { id = 'detailsBackdrop',  text = L['Details Backdrop'] },
+                { id = 'microMenu',        text = L['Micro Menu'] },
+                { id = 'minimap',          text = L['Minimap'] },
+                { id = 'tooltip',          text = L['Tooltips'] },
             }
         },
         {
@@ -116,8 +117,9 @@ GUIFrame.SidebarConfig = {
             text = L['Dungeons'],
             defaultExpanded = false,
             items = {
-                { id = 'dungeonCasts',    text = L['Dungeon Casts'] },
-                { id = 'rerollKeystone',  text = L['Reroll Keystone'] },
+                { id = 'dungeonCasts',   text = L['Dungeon Casts'] },
+                { id = 'rerollKeystone', text = L['Reroll Keystone'] },
+                { id = 'bwTimers',       text = L['BigWigs Timers'] },
             }
         },
         {
@@ -128,6 +130,15 @@ GUIFrame.SidebarConfig = {
             items = {
                 { id = 'petTexts', text = L['Pet Status Texts'] },
                 { id = 'gateway',  text = L['Gateway Alert'] },
+            }
+        },
+        {
+            id = 'missingBuffs_section',
+            type = 'header',
+            text = L['Missing Buffs'],
+            defaultExpanded = false,
+            items = {
+                { id = 'missingBuffs', text = L['Missing Buffs'] },
             }
         },
     },

@@ -667,7 +667,7 @@ function CHAT:OnDisable()
 end
 
 function CHAT:RegisterAnchor()
-    NRSKNUI.Anchors:Register(self, "Chatv2", self.panel, nil, {
+    NRSKNUI.Anchors:Register(self, "Chatv2", self.panel, "chat", {
         displayName = "Chat Panel",
         apply = "UpdatePanel",
     })

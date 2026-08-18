@@ -576,5 +576,6 @@ function InstanceMixin:CreateGUIWindow(opts)
     end)
 
     lib.window = window
+    gui._window = window -- instance-scoped handle, so lib code can reach the window it belongs to
     return window
 end

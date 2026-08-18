@@ -44,3 +44,4 @@ GUI/GUI-Tabs/GUI-QoL/GUI-QoL.xml
 GUI/GUI-Tabs/GUI-Skinning/GUI-Skinning.xml
 GUI/GUI-Tabs/GUI-Dungeons/GUI-Dungeons.xml
 GUI/GUI-Tabs/GUI-Miscellaneous/GUI-Miscellaneous.xml
+GUI/GUI-Tabs/GUI-MissingBuffs/GUI-MissingBuffs.xml

@@ -74,6 +74,7 @@
 ---@field displayActive boolean?
 ---@field hasRerolled boolean?
 ---@field isPreview boolean?
+---@class BlizzObjectiveTrackerModule : NRSKNUI.ModuleBase, AceEvent-3.0
 
 -- The handles Core/Init.lua hangs off the addon table. Declared here so the field and the accessor
 -- that fills it agree on a type: without these the field takes whatever the assignment inferred.
@@ -114,6 +115,7 @@
 ---@field SpellAlert SpellAlertModule
 ---@field DungeonCasts DungeonCastsModule
 ---@field RerollKeystone RerollKeystoneModule
+---@field BlizzObjectiveTracker BlizzObjectiveTrackerModule
 
 -- Typed accessors. Overloads dispatch on the literal module name.
 
@@ -156,6 +158,7 @@ local NRSKNUI
 ---@overload fun(self: NRSKNUI, name: "SpellAlert", silent?: boolean): SpellAlertModule
 ---@overload fun(self: NRSKNUI, name: "DungeonCasts", silent?: boolean): DungeonCastsModule
 ---@overload fun(self: NRSKNUI, name: "RerollKeystone", silent?: boolean): RerollKeystoneModule
+---@overload fun(self: NRSKNUI, name: "BlizzObjectiveTracker", silent?: boolean): BlizzObjectiveTrackerModule
 ---@param name string
 ---@param silent? boolean
 ---@return AceModule
@@ -197,6 +200,7 @@ function NRSKNUI:GetModule(name, silent) end
 ---@overload fun(self: NRSKNUI, name: "SpellAlert", ...: string): SpellAlertModule
 ---@overload fun(self: NRSKNUI, name: "DungeonCasts", ...: string): DungeonCastsModule
 ---@overload fun(self: NRSKNUI, name: "RerollKeystone", ...: string): RerollKeystoneModule
+---@overload fun(self: NRSKNUI, name: "BlizzObjectiveTracker", ...: string): BlizzObjectiveTrackerModule
 ---@param name string
 ---@param ... string
 ---@return AceModule
