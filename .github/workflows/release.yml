@@ -20,18 +20,25 @@ jobs:
           set -euo pipefail
           git fetch --tags --force
 
+          if [ ! -f VERSION ]; then
+            echo "VERSION file is missing from the repository root" >&2
+            exit 1
+          fi
+
           base=$(tr -d ' \t\r\n' < VERSION)
           if ! echo "$base" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
             echo "VERSION must contain a base like 12.1.0, got '$base'" >&2
             exit 1
           fi
+          echo "Base version: $base"
 
           escaped=$(echo "$base" | sed 's/\./\./g')
           build=$(git tag --list "v$base.*" \
-            | grep -E "^v$escaped\.[0-9]+$" \
+            | { grep -E "^v$escaped\.[0-9]+$" || true; } \
             | sed "s/^v$base\.//" \
             | sort -n \
             | tail -n 1)
+          echo "Highest existing build: ${build:-none}"
           build=$(( ${build:-0} + 1 ))
 
           new_tag="v$base.$build"
