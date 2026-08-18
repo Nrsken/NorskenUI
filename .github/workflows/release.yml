@@ -14,24 +14,28 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get latest tag
-        id: get_tag
-        run: |
-          git fetch --tags
-          latest_tag=$(git tag --list "v*" --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
-          if [ -z "$latest_tag" ]; then
-            latest_tag="v0.0.0"
-          fi
-          echo "tag=$latest_tag" >> $GITHUB_OUTPUT
-
-      - name: Bump version and tag
+      - name: Determine next tag
         id: new_tag
         run: |
-          tag=${{ steps.get_tag.outputs.tag }}
-          version=${tag#v}
-          IFS='.' read -r major minor patch <<< "$version"
-          patch=$((patch + 1))
-          new_tag="v$major.$minor.$patch"
+          set -euo pipefail
+          git fetch --tags --force
+
+          base=$(tr -d ' \t\r\n' < VERSION)
+          if ! echo "$base" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "VERSION must contain a base like 12.1.0, got '$base'" >&2
+            exit 1
+          fi
+
+          escaped=$(echo "$base" | sed 's/\./\./g')
+          build=$(git tag --list "v$base.*" \
+            | grep -E "^v$escaped\.[0-9]+$" \
+            | sed "s/^v$base\.//" \
+            | sort -n \
+            | tail -n 1)
+          build=$(( ${build:-0} + 1 ))
+
+          new_tag="v$base.$build"
+          echo "Tagging $new_tag"
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git tag "$new_tag"
