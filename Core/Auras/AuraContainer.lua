@@ -2,18 +2,21 @@
 local NRSKNUI = select(2, ...)
 
 local UnitIsVisible, UnitCanAssist = UnitIsVisible, UnitCanAssist
+local UnitIsConnected, UnitIsDeadOrGhost = UnitIsConnected, UnitIsDeadOrGhost
+local UnitInVehicle, UnitHasVehicleUI = UnitInVehicle, UnitHasVehicleUI
+local C_Timer, GetTime = C_Timer, GetTime
 local min, huge, ceil = math.min, math.huge, math.ceil
 local GenerateClosure = GenerateClosure
 local CreateFrame = CreateFrame
 local CopyTable = CopyTable
-local ipairs = ipairs
+local ipairs, pairs = ipairs, pairs
 local Mixin = Mixin
 local type = type
 
 local AuraFilterTokens = AuraUtil.AuraFilters
 
--- We can use this to fully disable a slot/group, thanks P3lim for the idea.
-local NEVER_MATCH_FILTER = AuraUtil.CreateFilterString(AuraFilterTokens.Helpful, AuraFilterTokens.Harmful)
+-- An empty include map matches nothing, and unlike a filter string it survives an untrusted unit.
+local NEVER_MATCH_CANDIDATES = { includeDispelTypes = {} }
 
 -- Element-wide defaults copied onto the container. Group/slot options override them per group.
 local ELEMENT_OPTIONS = {
@@ -329,6 +332,16 @@ local function ResolveIdentityDependence(filterString, candidateFilters)
     return nil
 end
 
+---Whether the client has stopped resolving this unit's filter-string components.
+---@param unit string
+---@return boolean
+local function IsUnitUntrusted(unit)
+    -- Piloting one moves the player's own frame of reference, so it voids every unit, not just theirs.
+    if UnitInVehicle('player') or UnitHasVehicleUI('player') then return true end
+
+    return not UnitIsVisible(unit) or not UnitIsConnected(unit) or UnitIsDeadOrGhost(unit) or false
+end
+
 ---Is this display's filtering untrustworthy right now, so that it should show nothing rather than the
 ---wrong thing? Both gate axes are answered here, see :UpdateUnitGate for what they mean.
 ---@param container table
@@ -336,7 +349,7 @@ end
 ---@param assistOnly boolean? the display belongs on units the player can help, whatever it matches
 ---@return boolean
 local function IsGated(container, identity, assistOnly)
-    if container.unitNotVisible then return true end
+    if container.unitUntrusted then return true end
     -- Not about trusting the filter: this display has no business on a unit the player cannot help,
     -- which is what a dispel highlight on an enemy target would be.
     if assistOnly and container.unitCanAssist == false then return true end
@@ -354,6 +367,51 @@ local function ResolveMaxFrameCount(container, slot)
     if IsGated(container, container.groupIdentity and container.groupIdentity[slot]) then return 0 end
 
     return container.maxFrameCount or huge
+end
+
+---Sole writer of a group's frame cap, so the value it caches can never go stale behind another path.
+---@param container table
+---@param slot number
+---@param key string
+local function PushGroupCap(container, slot, key)
+    local cap = ResolveMaxFrameCount(container, slot)
+    local pushed = container.groupCaps
+
+    if pushed[slot] == cap then return end
+    pushed[slot] = cap
+
+    container:SetAuraGroupMaxFrameCount(key, cap)
+end
+
+---Sole writer of a slot's candidate filters, see PushGroupCap. The gate cannot use the slot's filter
+---string: an untrusted unit is exactly where the client stops honouring one.
+---@param container table
+---@param index number
+---@param key string
+local function PushSlotCandidates(container, index, key)
+    local filters = NEVER_MATCH_CANDIDATES
+    if container.slotShown[index] and not IsGated(container, container.slotIdentity[index], container.slotAssistOnly[index]) then
+        filters = container.slotCandidates[index] -- may be nil, meaning this slot filters on tokens alone
+    end
+
+    local pushed = container.slotPushed
+    if pushed[index] == filters then return end
+    pushed[index] = filters
+
+    container:SetAuraSlotCandidateFilters(key, filters)
+end
+
+---Mark that this container gates on the canAssist axis. Sticky, it can only ever over-read.
+---@param container table
+local function MarkNeedsAssist(container)
+    if container.needsAssist then return end
+    container.needsAssist = true
+
+    local watcher = container.gateWatcher
+    if not watcher then return end
+
+    watcher.assistCount = watcher.assistCount + 1
+    if watcher.canAssist == nil then watcher.canAssist = UnitCanAssist('player', watcher.unit) end -- never sampled before now
 end
 
 ---Register a group of auras, can be called multiple times.
@@ -378,9 +436,10 @@ function ContainerMixin:AddGroup(filter, options)
     local slot = #self.groupKeys + 1
     self.groupKeys[slot] = key
     self.groupIdentity[slot] = ResolveIdentityDependence(filter, options.candidateFilters)
+    if self.groupIdentity[slot] ~= nil then MarkNeedsAssist(self) end
 
     -- A group added while its gate is shut would otherwise come up live.
-    self:SetAuraGroupMaxFrameCount(key, ResolveMaxFrameCount(self, slot))
+    PushGroupCap(self, slot, key)
 
     return key, slot
 end
@@ -418,13 +477,14 @@ local function SyncBinding(container, binding)
 
         local slot = binding.slots[index]
         container.groupIdentity[slot] = ResolveIdentityDependence(branch.filterString, branch.candidateFilters)
+        if container.groupIdentity[slot] ~= nil then MarkNeedsAssist(container) end
         container.parkedSlots[slot] = nil
-        container:SetAuraGroupMaxFrameCount(binding.keys[index], ResolveMaxFrameCount(container, slot))
+        PushGroupCap(container, slot, binding.keys[index])
     end
 
     for index = #branches + 1, #binding.keys do
-        container:SetAuraGroupMaxFrameCount(binding.keys[index], 0)
         container.parkedSlots[binding.slots[index]] = true
+        PushGroupCap(container, binding.slots[index], binding.keys[index])
     end
 end
 
@@ -466,7 +526,7 @@ function ContainerMixin:ApplyLayout(config)
 
     for slot, key in ipairs(self.groupKeys or {}) do
         self:SetAuraGroupLayout(key, ResolveLayout(self, nil))
-        self:SetAuraGroupMaxFrameCount(key, ResolveMaxFrameCount(self, slot))
+        PushGroupCap(self, slot, key)
         self:SetAuraGroupSortMethod(key, self.sortMethod or AuraContainerSortMethod.ExpirationOnly, self.sortDirection or AuraContainerSortDirection.Normal)
     end
 end
@@ -513,24 +573,48 @@ function ContainerMixin:AddSlot(filter, options)
     self.slotIndex = (self.slotIndex or 0) + 1
     local key = (self:GetDebugName() or 'NRSKNUIAuraContainer') .. 'Slot' .. self.slotIndex
 
-    self.slotKeys = self.slotKeys or {}
-    self.slotFilters = self.slotFilters or {}
-    self.slotIdentity = self.slotIdentity or {}
-    self.slotAssistOnly = self.slotAssistOnly or {}
-    self.slotKeys[self.slotIndex] = key
-    self.slotFilters[self.slotIndex] = filter
-    self.slotIdentity[self.slotIndex] = ResolveIdentityDependence(filter, options.candidateFilters)
-    self.slotAssistOnly[self.slotIndex] = assistOnly or nil
+    local index = self.slotIndex
+    self.slotKeys[index] = key
+    self.slotCandidates[index] = options.candidateFilters
+    self.slotShown[index] = true
+    self.slotIdentity[index] = ResolveIdentityDependence(filter, options.candidateFilters)
+    self.slotAssistOnly[index] = assistOnly or nil
+    if self.slotIdentity[index] ~= nil or assistOnly then MarkNeedsAssist(self) end
 
     local slot = self:AddAuraSlot(key, filter, options)
 
-    -- A slot added while its gate is shut would otherwise come up live.
-    if IsGated(self, self.slotIdentity[self.slotIndex], assistOnly) then
-        self:SetAuraSlotFilterString(key, NEVER_MATCH_FILTER)
-    end
+    self.slotPushed[index] = options.candidateFilters -- AddAuraSlot has just installed these
 
-    return slot, key
+    -- A slot added while its gate is shut would otherwise come up live.
+    PushSlotCandidates(self, index, key)
+
+    return slot, key, index
 end
+
+---Show or hide a slot, which the gate can still override.
+---@param index number the third return of :AddSlot
+---@param shown boolean
+function ContainerMixin:SetSlotShown(index, shown)
+    local key = self.slotKeys[index]
+    if not key then return end
+
+    self.slotShown[index] = shown
+    PushSlotCandidates(self, index, key)
+end
+
+--[[
+* Temporary section that handles events and states that break aura containers filters, causing them to show ALL auras on a unit.
+
+* States that break the gate, confirmed by dev discord:
+- Entering a vehicle.
+- Exiting a cut scene.
+- Changing zone/indoor area.
+- Dead units.
+- Units really far away or in another zone.
+- A disconnected unit.
+- Getting mind controlled although will likely be solved in 12.1.5 when we get the isFriendly candidate filter.
+
+]]
 
 -- Events that can change the gate state for a unit.
 local UNIT_GATE_EVENTS = {
@@ -546,72 +630,205 @@ local UNIT_GATE_EVENTS = {
 
 local GATE_EVENTS = {
     'PLAYER_ENTERING_WORLD', 'ZONE_CHANGED',
+    'ZONE_CHANGED_INDOORS', 'ZONE_CHANGED_NEW_AREA',
     'GROUP_ROSTER_UPDATE', 'PARTY_MEMBER_ENABLE',
-    'PARTY_MEMBER_DISABLE', 'PLAYER_FLAGS_CHANGED'
+    'PARTY_MEMBER_DISABLE', 'PLAYER_FLAGS_CHANGED',
+    'CINEMATIC_START', 'CINEMATIC_STOP', 'PLAY_MOVIE', 'STOP_MOVIE', -- no UNIT_* event marks either edge
+    'PLAYER_DEAD', 'PLAYER_ALIVE', 'PLAYER_UNGHOST'                  -- quieter than the UNIT_HEALTH other units need
 }
 
----Re-run the gate whenever one of UNIT_GATE_EVENTS lands for the watched unit.
----@param watcher Frame
-local function OnGateEvent(watcher)
-    local container = watcher.container
+-- Transitions whose unit state is still mid-flight at event time, so a synchronous read latches stale.
+local SETTLE_EVENTS = {
+    UNIT_ENTERING_VEHICLE = true,
+    UNIT_ENTERED_VEHICLE = true,
+    UNIT_EXITING_VEHICLE = true,
+    UNIT_EXITED_VEHICLE = true,
+    PLAYER_ENTERING_WORLD = true,
+    ZONE_CHANGED = true,
+    ZONE_CHANGED_INDOORS = true,
+    ZONE_CHANGED_NEW_AREA = true,
+    CINEMATIC_START = true,
+    CINEMATIC_STOP = true,
+    PLAY_MOVIE = true,
+    STOP_MOVIE = true
+}
 
-    -- UNIT_FLAGS/UNIT_IN_RANGE_UPDATE and friends fire constantly in group content, and the gate
-    -- verdict almost never moves with them. Only rebuild the auras when it actually did.
-    if container:UpdateUnitGate() then container:UpdateAllAuras() end
+local SETTLE_DELAY = 0.5 -- outlasts a vehicle swap or a cutscene fade
+
+-- One watcher per unit token: the four containers a unit frame builds all want the same verdict.
+---@type table<string, Frame>
+local watchers = {}
+local globalWatcher
+
+---Push a watcher's verdict onto one container.
+---@param container table
+---@param watcher Frame
+---@return boolean changed
+local function ApplyGate(container, watcher)
+    local untrusted = watcher.untrusted
+    local canAssist = container.needsAssist and watcher.canAssist or nil -- unread otherwise and moving it would rebuild every button for nothing
+
+    if container.unitUntrusted == untrusted and container.unitCanAssist == canAssist then return false end
+
+    container.unitUntrusted = untrusted
+    container.unitCanAssist = canAssist
+
+    for slot, key in ipairs(container.groupKeys or {}) do PushGroupCap(container, slot, key) end
+    for index, key in ipairs(container.slotKeys or {}) do PushSlotCandidates(container, index, key) end
+
+    return true
 end
 
----Point a container's watcher at its current unit, building it on first use.
----@param container table
----@param unit string
-local function WatchUnit(container, unit)
-    local watcher = container.gateWatcher
+---Re-read a watcher's unit into its cached verdict.
+---@param watcher Frame
+local function SampleWatcher(watcher)
+    watcher.sampled = GetTime()
+    watcher.untrusted = IsUnitUntrusted(watcher.unit)
+    watcher.canAssist = watcher.assistCount > 0 and UnitCanAssist('player', watcher.unit) or nil
+end
 
-    if not watcher then
-        watcher = CreateFrame('Frame')
-        watcher.container = container
-        watcher:SetScript('OnEvent', OnGateEvent)
-        container.gateWatcher = watcher
+---Re-read a watcher's unit and push the result to every container on it.
+---@param watcher Frame
+local function RefreshWatcher(watcher)
+    if not watcher.unit then return end
+    SampleWatcher(watcher)
+
+    -- UNIT_FLAGS and friends fire constantly in group content but almost never move the verdict.
+    for container in pairs(watcher.containers) do
+        if ApplyGate(container, watcher) then container:UpdateAllAuras() end
+    end
+end
+
+local function RefreshAll()
+    for _, watcher in pairs(watchers) do
+        if watcher.count > 0 then RefreshWatcher(watcher) end
+    end
+end
+
+---Re-read next frame and again after SETTLE_DELAY, since a load screen outlasts a frame.
+---@param frame Frame
+---@param callback fun()
+local function ScheduleSettle(frame, callback)
+    frame:NUIScheduleUpdate()
+
+    if frame.settling then return end
+    frame.settling = true
+
+    C_Timer.After(SETTLE_DELAY, function()
+        frame.settling = nil
+        callback()
+    end)
+end
+
+---@param watcher Frame
+---@param event string
+local function OnGateEvent(watcher, event)
+    -- The only per-unit death signal, and it also fires on every heal and tick.
+    if event == 'UNIT_HEALTH' then
+        local dead = UnitIsDeadOrGhost(watcher.unit) or false
+        if dead == watcher.unitDead then return end
+        watcher.unitDead = dead
     end
 
-    if watcher.unit == unit then return end
-    watcher.unit = unit
+    RefreshWatcher(watcher)
 
-    -- A token the event system doesn't recognise turns every RegisterUnitEvent below into a
-    -- unitless one, so the watcher would fire for the whole roster on the noisiest events we listen to.
-    if not NRSKNUI:IsValidUnitToken(unit) then
-        watcher:UnregisterAllEvents()
-        return
-    end
+    if SETTLE_EVENTS[event] then ScheduleSettle(watcher, watcher.refresh) end
+end
+
+---@param _ Frame
+---@param event string
+local function OnGlobalGateEvent(_, event)
+    RefreshAll()
+
+    if SETTLE_EVENTS[event] then ScheduleSettle(globalWatcher, RefreshAll) end
+end
+
+---@param watcher Frame
+local function RegisterWatcher(watcher)
+    local unit = watcher.unit
+
+    -- An unrecognised token turns every RegisterUnitEvent into a unitless one, firing for the whole roster.
+    if not NRSKNUI:IsValidUnitToken(unit) then return end
 
     for _, event in ipairs(UNIT_GATE_EVENTS) do watcher:RegisterUnitEvent(event, unit, unit ~= 'player' and 'player' or nil) end
-    for _, event in ipairs(GATE_EVENTS) do watcher:RegisterEvent(event) end
+
+    -- Unit-only: the player dying cannot change whether the target's filters resolve.
+    if unit ~= 'player' then
+        watcher:RegisterUnitEvent('UNIT_HEALTH', unit)
+        watcher.unitDead = UnitIsDeadOrGhost(unit) or false
+    end
 end
 
----Update the container's gate state for its current unit and reapply every group/slot's filter if it changed.
----@return boolean changed true when the gate verdict moved and the filters were reapplied
+---The shared watcher for a unit, built on first use.
+---@param unit string
+---@return Frame watcher
+local function GetWatcher(unit)
+    local watcher = watchers[unit]
+    if watcher then return watcher end
+
+    watcher = CreateFrame('Frame')
+    watcher.unit = unit
+    watcher.containers = {}
+    watcher.count = 0
+    watcher.assistCount = 0
+    watcher.refresh = GenerateClosure(RefreshWatcher, watcher)
+    watcher:SetScript('OnEvent', OnGateEvent)
+    watcher:NUISetScheduledUpdate(RefreshWatcher)
+    watchers[unit] = watcher
+
+    if not globalWatcher then
+        globalWatcher = CreateFrame('Frame')
+        globalWatcher:SetScript('OnEvent', OnGlobalGateEvent)
+        globalWatcher:NUISetScheduledUpdate(RefreshAll)
+        for _, event in ipairs(GATE_EVENTS) do globalWatcher:RegisterEvent(event) end
+    end
+
+    return watcher
+end
+
+---Move a container onto the shared watcher for a unit, dropping the one it was on.
+---@param container table
+---@param unit string
+---@return Frame watcher
+local function WatchUnit(container, unit)
+    local current = container.gateWatcher
+
+    if current then
+        current.containers[container] = nil
+        current.count = current.count - 1
+        if container.needsAssist then current.assistCount = current.assistCount - 1 end
+
+        -- Frames cannot be destroyed, so an idle watcher is kept for reuse but stops listening.
+        if current.count == 0 then current:UnregisterAllEvents() end
+    end
+
+    local watcher = GetWatcher(unit)
+    if watcher.count == 0 then RegisterWatcher(watcher) end
+
+    watcher.containers[container] = true
+    watcher.count = watcher.count + 1
+    if container.needsAssist then watcher.assistCount = watcher.assistCount + 1 end
+    container.gateWatcher = watcher
+
+    SampleWatcher(watcher)
+
+    return watcher
+end
+
+---Reapply this container's gate for its current unit.
+---@return boolean changed true when the verdict moved and the filters were reapplied
 function ContainerMixin:UpdateUnitGate()
     local unit = self:GetUnit()
     if not unit then return false end
 
-    WatchUnit(self, unit)
-
-    local notVisible = not UnitIsVisible(unit)
-    local canAssist = UnitCanAssist('player', unit)
-    if self.unitNotVisible == notVisible and self.unitCanAssist == canAssist then return false end
-
-    self.unitNotVisible = notVisible
-    self.unitCanAssist = canAssist
-
-    for slot, key in ipairs(self.groupKeys or {}) do
-        self:SetAuraGroupMaxFrameCount(key, ResolveMaxFrameCount(self, slot))
+    local watcher = self.gateWatcher
+    if not watcher or watcher.unit ~= unit then
+        watcher = WatchUnit(self, unit)
+    elseif watcher.sampled ~= GetTime() then
+        SampleWatcher(watcher) -- once per frame, however many containers on the unit ask
     end
 
-    for index, key in ipairs(self.slotKeys or {}) do
-        local gated = IsGated(self, self.slotIdentity[index], self.slotAssistOnly[index])
-        self:SetAuraSlotFilterString(key, gated and NEVER_MATCH_FILTER or self.slotFilters[index])
-    end
-
-    return true
+    return ApplyGate(self, watcher)
 end
 
 ---Register a temporary weapon-enchant frame (main/off-hand).
@@ -651,6 +868,15 @@ local function CreateAuraContainer(self, config)
 
     -- Kept addon-side, the container's own processAuraPolicyOptions live in the restricted environment.
     container.__processAuraPolicyOptions = config.processAuraPolicyOptions
+
+    -- Last value PushGroupCap / PushSlotFilter handed the client, so an idempotent re-push stays addon-side.
+    container.groupCaps = {}
+    container.slotPushed = {}
+    container.slotKeys = {}
+    container.slotCandidates = {}
+    container.slotShown = {}
+    container.slotIdentity = {}
+    container.slotAssistOnly = {}
 
     local policy = config.auraProcessingPolicy
     if policy then

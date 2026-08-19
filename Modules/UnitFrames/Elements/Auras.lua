@@ -150,6 +150,7 @@ UF.Elements.Auras = {
             container:RebindFilteredGroups(cfg.Trigger)
             -- self.__unit is the live token, which a preview repoints away from the configured unit.
             container:SetUnit(self.__unit or unit)
+            if container:UpdateUnitGate() then container:UpdateAllAuras() end
             container:SetShown(cfg.Enabled)
 
             AuraPreview:Attach(container, self, pos.AnchorTo, pos.XOffset, pos.YOffset, UF.TopLevels.Auras)

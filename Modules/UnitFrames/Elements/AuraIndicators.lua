@@ -162,7 +162,9 @@ UF.Elements.AuraIndicators = {
         end
 
         -- self.__unit is the live token, which a preview repoints away from the configured unit.
-        self.nuiAuraIndicatorContainer:SetUnit(self.__unit or unit)
+        local container = self.nuiAuraIndicatorContainer
+        container:SetUnit(self.__unit or unit)
+        if container:UpdateUnitGate() then container:UpdateAllAuras() end
     end,
 
     ---Show dummies while the GUI has the unit's aura indicator section open, hiding the real slots they

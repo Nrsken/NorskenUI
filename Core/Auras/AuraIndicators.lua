@@ -473,8 +473,7 @@ function NRSKNUI:SyncAuraIndicator(container, handle, placement, proxy, level, f
     handle = handle or {
         proxy = proxy,
         slots = {},
-        slotKeys = {},
-        filters = {}, -- restored when a slot is shown again
+        slotIndex = {},
         regions = {},
         builtKeys = {},
     }
@@ -490,8 +489,7 @@ function NRSKNUI:SyncAuraIndicator(container, handle, placement, proxy, level, f
             for _, branch in ipairs(AuraIndicators:GetBranches(spec)) do
                 local index = #handle.slots + 1
 
-                handle.filters[index] = branch.candidateFilters
-                handle.slots[index], handle.slotKeys[index] = container:AddSlot(branch.filterString, {
+                local slot, _, slotIndex = container:AddSlot(branch.filterString, {
                     candidateFilters = branch.candidateFilters,
                     sortMethod = AuraContainerSortMethod[spec.sortMethod],
                     sortDirection = AuraContainerSortDirection[spec.sortDirection],
@@ -503,6 +501,8 @@ function NRSKNUI:SyncAuraIndicator(container, handle, placement, proxy, level, f
                     end,
                 })
 
+                handle.slots[index], handle.slotIndex[index] = slot, slotIndex
+
                 local regions = handle.regions[index]
                 regions.key, regions.spec = key, spec
             end
@@ -512,31 +512,12 @@ function NRSKNUI:SyncAuraIndicator(container, handle, placement, proxy, level, f
     return handle
 end
 
--- An empty include map matches nothing, and is not skipped the way a spellID map can be.
-local NEVER_MATCH = { includeDispelTypes = {} }
-
----Show or hide a slot by starving it of candidates, since its regions cannot be touched after build.
----@param handle table
----@param index number
----@param shown boolean
-local function SetSlotShown(handle, index, shown)
-    local key = handle.slotKeys[index]
-    if not key then return end
-
-    local filters = NEVER_MATCH
-    if shown then
-        filters = handle.filters[index] -- may be nil, which and/or would turn back into NEVER_MATCH
-    end
-
-    handle.container:SetAuraSlotCandidateFilters(key, filters)
-end
-
 ---Hide every slot an indicator owns.
 ---@param handle table
 ---@param shown boolean
 function NRSKNUI:SetAuraIndicatorShown(handle, shown)
     for index in ipairs(handle.slots) do
-        SetSlotShown(handle, index, shown)
+        handle.container:SetSlotShown(handle.slotIndex[index], shown)
     end
 end
 
@@ -553,6 +534,6 @@ function NRSKNUI:ApplyAuraIndicator(handle, placement)
     for index, regions in ipairs(handle.regions) do
         -- The spec behind an assigned key can have been deleted since.
         local spec = assigned[regions.key] and AuraIndicators:GetSpec(regions.key)
-        SetSlotShown(handle, index, spec ~= nil)
+        handle.container:SetSlotShown(handle.slotIndex[index], spec ~= nil)
     end
 end

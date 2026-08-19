@@ -23,7 +23,6 @@ local SOURCE_TOKENS = {
     any = AF.Dispellable,
 }
 
-local NEVER_MATCH = { includeDispelTypes = {} }
 
 ---The compiled branch one Source resolves to, through the same compiler every trigger runs.
 ---@param source string
@@ -112,13 +111,10 @@ end
 ---@param source string
 ---@param shown boolean
 local function SetSlotShown(dispel, source, shown)
-    local key = dispel.keys[source]
-    if not key then return end
+    local index = dispel.slotIndex[source]
+    if not index then return end
 
-    local filters
-    if not shown then filters = NEVER_MATCH end
-
-    dispel.container:SetAuraSlotCandidateFilters(key, filters)
+    dispel.container:SetSlotShown(index, shown)
 end
 
 ---Point the proxy at whatever the config attaches to.
@@ -156,7 +152,7 @@ local function EnsureSlot(frame, cfg)
     local branch = SourceBranch(cfg.Source)
     local proxy = dispel.proxy
 
-    local _, key = container:AddSlot(branch.filterString, {
+    local _, key, index = container:AddSlot(branch.filterString, {
         candidateFilters = branch.candidateFilters,
         assistOnly = true,
         initializeFrame = function(button)
@@ -170,6 +166,7 @@ local function EnsureSlot(frame, cfg)
     })
 
     dispel.keys[cfg.Source] = key
+    dispel.slotIndex[cfg.Source] = index
 end
 
 ---@param frame oUF.UnitFrame
@@ -216,7 +213,7 @@ UF.Elements.Dispel = {
     Construct = function(self, unit)
         if self.nuiDispel then return end
 
-        self.nuiDispel = { keys = {} }
+        self.nuiDispel = { keys = {}, slotIndex = {} }
     end,
 
     ---@param self oUF.UnitFrame

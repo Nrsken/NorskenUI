@@ -660,6 +660,7 @@ function Tooltips:OnEnable()
         -- Hook when blizzard tries to set backdrop style, this catches and styles any tooltip that we might have missed in the initial check.
         hooksecurefunc('SharedTooltip_SetBackdropStyle', function(tooltip)
             if not Tooltips.db.Enabled then return end
+            if not tooltip or tooltip:IsForbidden() then return end -- widget tooltips reach here forbidden, via OnLeave -> Hide
             if tooltip:GetObjectType() == 'GameTooltip' then
                 SetupSkinning(tooltip)
             end
