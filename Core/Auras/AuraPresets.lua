@@ -56,11 +56,13 @@ Premade.Presets = {
                         [207771] = true,  -- Fiery Brand
                         -- Druid
                         [22812] = true,   -- Barkskin
+                        [1261872] = true, -- Heart of the wild bearform
                         -- Evoker
                         [413984] = true,  -- Shifting Sands
                         [363916] = true,  -- Obsidian Scales
                         -- Hunter
                         [186265] = true,  -- Aspect of the Turtle
+                        [264735] = true,  -- Survival of the Fittest
                         -- Mage
                         [114267] = true,  -- Ice Barrier
                         [414658] = true,  -- Ice Cold
@@ -143,6 +145,7 @@ Premade.Presets = {
                         [389847] = true,  -- Felfire Haste
                         -- Druid
                         [61684] = true,   -- Dash
+                        [1850] = true,    -- Dash
                         [77761] = true,   -- Stampeding Roar
                         [106898] = true,  -- Stampeding Roar
                         -- Evoker
