@@ -62,12 +62,11 @@ local function BuildProfilesTab(page, PM)
         end,
     })
 
-    -- Global profile
+    -- Global profile.
     local globalCard = page:Card(L['Global Profile'])
     local globalRow = globalCard:Row(rowHL, 0)
     globalRow:Checkbox(L['Use Global Profile'], {
         width = 0.5,
-        conditions = { 'notSpec' },
         value = PM:GetUseGlobalProfile(),
         callback = function(checked)
             if not PM:SetUseGlobalProfile(checked) then return end
@@ -77,7 +76,7 @@ local function BuildProfilesTab(page, PM)
     })
     globalRow:Dropdown(L['Global Profile'], {
         width = 0.5,
-        conditions = { 'globalOn', 'notSpec' },
+        conditions = { 'globalOn' },
         options = BuildProfileOptions(),
         value = PM:GetGlobalProfile(),
         callback = function(key)

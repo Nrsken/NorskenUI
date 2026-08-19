@@ -53,6 +53,7 @@ Premade.Presets = {
                         [203819] = true,  -- Demon Spikes
                         [1266616] = true, -- Demon Muzzle
                         [212800] = true,  -- Blur
+                        [207771] = true,  -- Fiery Brand
                         -- Druid
                         [22812] = true,   -- Barkskin
                         -- Evoker
@@ -68,7 +69,7 @@ Premade.Presets = {
                         -- Monk
                         [132578] = true,  -- Invoke Niuzao, the Black Ox
                         [1241059] = true, -- Celestial Infusion
-                        [122470] = true,  -- Touch of karma
+                        [125174] = true,  -- Touch of karma
                         [120954] = true,  -- Fortifying Brew
                         -- Paladin
                         [432607] = true,  -- Holy Bulwark
