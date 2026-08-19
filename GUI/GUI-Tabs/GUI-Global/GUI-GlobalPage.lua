@@ -133,8 +133,8 @@ local function BuildGlobalUIScaleTab(page, db)
 
     uiScaleRow1:Slider(L['Scale'], {
         width = 0.5,
-        min = 0.4,
-        max = 1.15,
+        min = 0.1,
+        max = 2,
         step = 0.01,
         value = db.Scale,
         conditions = { 'uiScaleOn' },
