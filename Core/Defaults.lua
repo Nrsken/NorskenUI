@@ -222,14 +222,12 @@ local Defaults = {
         },
         CharacterPanel = {
             Enabled = true,
-
             -- Panel texts
             DecimalItemLevel = true,
             FactionTag = true,
             ShowRaceText = false,
             CategoryColorMode = "class",
             CategoryColor = { 1, 1, 1, 1 },
-
             -- Fonts
             UseGlobalFont = true,
             FontFace = "Expressway",
@@ -240,12 +238,11 @@ local Defaults = {
                 OffsetX = 1,
                 OffsetY = -1,
             },
-            NameTextSize = 16,
-            LevelTextSize = 14,
-            CategoryFontSize = 14,
-            IlvlValueSize = 14,
-            StatsFontSize = 12,
-
+            NameTextSize = 12,
+            LevelTextSize = 12,
+            CategoryFontSize = 13,
+            IlvlValueSize = 18,
+            StatsFontSize = 11,
             TrackIndicators = {
                 Enabled = true,
             },
