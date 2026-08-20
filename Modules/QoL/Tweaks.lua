@@ -34,27 +34,15 @@ end
 -- Hide Talking Head Frame
 function Tweaks:SetupTalkingHeadHider()
     if not self.db.HideTalkingHead or self._talkingHeadHooked then return end
+
+    local talkingHead = _G.TalkingHeadFrame
+    if not talkingHead then return end
     self._talkingHeadHooked = true
 
-    local function HideTalkingHeadFrame(frame)
-        if Tweaks.db.HideTalkingHead and frame then
-            frame:Hide()
-        end
-    end
-
-    -- If the TalkingHeadFrame is already loaded, hook it immediately. Otherwise, wait for it to load.
-    local TalkingHeadFrame = _G.TalkingHeadFrame
-    if TalkingHeadFrame then
-        self:SecureHook(TalkingHeadFrame, 'PlayCurrent', HideTalkingHeadFrame)
-        self:SecureHook(TalkingHeadFrame, 'Reset', HideTalkingHeadFrame)
-    else
-        self:SecureHook('TalkingHead_LoadUI', function()
-            if TalkingHeadFrame then
-                self:SecureHook(TalkingHeadFrame, 'PlayCurrent', HideTalkingHeadFrame)
-                self:SecureHook(TalkingHeadFrame, 'Reset', HideTalkingHeadFrame)
-            end
-        end)
-    end
+    -- CloseImmediately over Hide(), it also stops the voice-over and clears isPlaying.
+    self:SecureHook(talkingHead, 'PlayCurrent', function(frame)
+        if Tweaks.db.HideTalkingHead then frame:CloseImmediately() end
+    end)
 end
 
 -- Hide Boss Banner
