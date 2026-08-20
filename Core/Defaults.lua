@@ -1977,15 +1977,19 @@ local Defaults = {
                     FadeOutDuration = 0.2,
                 },
             },
-
             -- Blizzard Element Mouseover
             BlizzardMouseover = {
-                Enabled = true,       -- Master toggle for bags bar skinning
-                Alpha = 0.0,          -- Alpha when not hovered (0 = fully hidden)
-                FadeInDuration = 0.2, -- Fade in duration
-                FadeOutDuration = 1,  -- Fade out duration
-                BagMouseover = {
-                    Enabled = true,   -- Enable mouseover fading
+                -- General Settings
+                Enabled = true,
+                Alpha = 0.0,
+                FadeInDuration = 0.2,
+                FadeOutDuration = 1,
+                -- Elements
+                mouseoverElements = {
+                    Bags = {
+                        Enabled = true,
+                        Hide = false,
+                    },
                 },
             },
 

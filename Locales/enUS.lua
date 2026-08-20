@@ -1380,3 +1380,12 @@ L['Font Styling'] = true
 L['Enable Font Styling'] = true
 L['Quest Title Size'] = true
 L['Quest Text Size'] = true
+
+-- Skinning: Blizzard Mouseover --
+L['Blizzard Mouseover'] = true
+L['Enable Blizzard Mouseover'] = true
+L['Alpha When Not Hovered'] = true
+L['Alpha the element rests at while the mouse is away from it.'] = true
+L['Hide'] = true
+L['Fully hides the element instead of fading it in on mouseover.'] = true
+L['Bag Bar'] = true

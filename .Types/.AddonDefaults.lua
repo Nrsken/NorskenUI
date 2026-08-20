@@ -2253,22 +2253,23 @@
 ---@field FontStyling boolean
 ---@field QuestTextSize number
 ---@field QuestTitleSize number
----@field SkinHeaders boolean
----@field SkinMinimizeButton boolean
----@field SkinProgressBars boolean
----@field SkinQuestIcons boolean
 
 ---@class NRSKNUI.DBProfile.Skinning.BlizzardMouseover
 ---@field [string] any
 ---@field Alpha number
----@field BagMouseover NRSKNUI.DBProfile.Skinning.BlizzardMouseover.BagMouseover
 ---@field Enabled boolean
 ---@field FadeInDuration number
 ---@field FadeOutDuration number
+---@field mouseoverElements NRSKNUI.DBProfile.Skinning.BlizzardMouseover.mouseoverElements
 
----@class NRSKNUI.DBProfile.Skinning.BlizzardMouseover.BagMouseover
+---@class NRSKNUI.DBProfile.Skinning.BlizzardMouseover.mouseoverElements
+---@field [string] any
+---@field Bags NRSKNUI.DBProfile.Skinning.BlizzardMouseover.mouseoverElements.Bags
+
+---@class NRSKNUI.DBProfile.Skinning.BlizzardMouseover.mouseoverElements.Bags
 ---@field [string] any
 ---@field Enabled boolean
+---@field Hide boolean
 
 ---@class NRSKNUI.DBProfile.Skinning.BlizzardRM
 ---@field [string] any

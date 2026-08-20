@@ -63,6 +63,7 @@
 ---@class Chatv2Module : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class MicroMenuModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class DetailsBackdropModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class BlizzardMouseoverModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class SkyRidingModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class SpellAlertModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class DungeonCastsModule : NRSKNUI.ModuleBase, AceEvent-3.0

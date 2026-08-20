@@ -3,6 +3,7 @@
 
     <Script file='GUI-ActionBars.lua'/>
     <Script file='GUI-BlizzardElements.lua'/>
+    <Script file='GUI-BlizzardMouseover.lua'/>
     <Script file='GUI-Chat.lua'/>
     <Script file='GUI-DetailsBackdrop.lua'/>
     <Script file='GUI-MicroMenu.lua'/>
