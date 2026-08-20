@@ -496,7 +496,9 @@ function CMH:ChatFrame_MessageEventHandler(frame, event, arg1, arg2, arg3, arg4,
                     info.g, info.b, info.id)
             end
         elseif chatType == 'PING' then
-            frame:AddMessage(arg1, info.r, info.g, info.b, info.id)
+            local pingFormat = _G.CHAT_PING_GET
+            local message = pingFormat and (format(pingFormat, arg2 or UNKNOWN) .. (arg1 or '')) or arg1
+            frame:AddMessage(message, info.r, info.g, info.b, info.id)
         elseif chatType == 'IGNORED' then
             if NRSKNUI:NotSecretValue(arg2) then
                 frame:AddMessage(format(_G.CHAT_IGNORED, arg2), info.r, info.g, info.b, info.id)
