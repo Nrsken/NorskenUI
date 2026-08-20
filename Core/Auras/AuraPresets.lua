@@ -31,7 +31,7 @@ Premade.Presets = {
                 tokens = { [Filters.Player] = false },
                 candidates = {
                     excludeSpellIDs = BL_DEBUFFS,
-                    maxDuration = 200000,
+                    --maxDuration = 200000,
                 }
             },
         },
@@ -58,7 +58,6 @@ Premade.Presets = {
                         [22812] = true,   -- Barkskin
                         [1261872] = true, -- Heart of the wild bearform
                         -- Evoker
-                        [413984] = true,  -- Shifting Sands
                         [363916] = true,  -- Obsidian Scales
                         -- Hunter
                         [186265] = true,  -- Aspect of the Turtle
