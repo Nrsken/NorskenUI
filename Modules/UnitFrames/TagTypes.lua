@@ -130,6 +130,14 @@ UF:RegisterTag('NUF:perpower:smartcolor', L['Power % (Colored)'], 'power', POWER
 	return Colored(percent, PowerColor(_FRAME, UnitPowerType(unit)))
 end)
 
+--* Unit power percentage, smart colored w/ % symbol.
+UF:RegisterTag('NUF:perpower:smartcolorpct', L['Power % (Colored) w/ %'], 'power', POWER_EVENTS, function(unit)
+	if not unit or not UnitExists(unit) then return '' end
+
+	local percent = format('%.f%%', UnitPowerPercent(unit, nil, true, CurveConstants.ScaleTo100))
+	return Colored(percent, PowerColor(_FRAME, UnitPowerType(unit)))
+end)
+
 --* Unit power as a raw value.
 UF:RegisterTag('NUF:curpower', L['Power'], 'power', POWER_EVENTS, function(unit)
 	if not unit or not UnitExists(unit) then return '' end
@@ -156,6 +164,14 @@ UF:RegisterTag('NUF:healmana:smartcolor', L['Mana % (Healer, Colored)'], 'power'
 	if NRSKNUI:GetSafeRole(unit) ~= 'HEALER' then return '' end
 
 	local percent = format('%.f', UnitPowerPercent(unit, Enum.PowerType.Mana, true, CurveConstants.ScaleTo100))
+	return Colored(percent, PowerColor(_FRAME, Enum.PowerType.Mana))
+end)
+
+--* Unit mana percentage for healers, always shows mana, even if unit is other druid forms, smart colored w/ % symbol.
+UF:RegisterTag('NUF:healmana:smartcolorpct', L['Mana % (Healer, Colored) w/ %'], 'power', POWER_EVENTS, function(unit)
+	if NRSKNUI:GetSafeRole(unit) ~= 'HEALER' then return '' end
+
+	local percent = format('%.f%%', UnitPowerPercent(unit, Enum.PowerType.Mana, true, CurveConstants.ScaleTo100))
 	return Colored(percent, PowerColor(_FRAME, Enum.PowerType.Mana))
 end)
 
