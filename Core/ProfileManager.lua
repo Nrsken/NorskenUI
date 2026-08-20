@@ -656,21 +656,26 @@ function NorskenUIAPI:ExportProfile(profileKey)
     return encoded or ''
 end
 
----Import a profile from string
----@param profileString string The encoded profile string
----@param profileKey string The name for the imported profile
-function NorskenUIAPI:ImportProfile(profileString, profileKey)
-    if not profileString or profileString == '' then return end
+---Import a profile from string.
+---@param profileString string|table The encoded profile string, or self on a method-style call
+---@param profileKey string|nil Profile name, or the string on a method-style call
+---@param methodKey string|nil Profile name on a method-style call
+function NorskenUIAPI.ImportProfile(profileString, profileKey, methodKey)
+    if type(profileString) == 'table' then profileString, profileKey = profileKey, methodKey end -- colon call
+    if type(profileString) ~= 'string' or profileString == '' then return end
     if not NRSKNUI.db then return end
 
-    local decoded = DecodeBase64(profileString)
-    if not decoded then return end
+    -- Prefixed strings carry the metadata envelope, so they need the full import path.
+    if profileString:sub(1, #EXPORT_PREFIX) == EXPORT_PREFIX
+        or profileString:sub(1, #LEGACY_PREFIX) == LEGACY_PREFIX then
+        return ProfileManager:ImportProfile(profileString, profileKey, true)
+    end
 
-    local decompressed = DecompressString(decoded, Enum.CompressionMethod.Deflate)
-    if not decompressed then return end
+    local profileData = NorskenUIAPI:DecodeProfileString(profileString)
+    if not next(profileData) then return end
 
-    local profileData = DeserializeCBOR(decompressed)
-    if not profileData or type(profileData) ~= 'table' then return end
+    -- WagoUI re-imports into the same key on every pack update, so the key is used as given.
+    profileKey = (type(profileKey) == 'string' and profileKey ~= '') and profileKey or 'Imported'
 
     -- Store profile and switch to it. SetProfile fires OnProfileChanged, which refreshes without a
     -- ReloadUI, switching to the profile we are already on does not, so cover that case.
@@ -768,6 +773,3 @@ end
 
 * Profile imports done by a profile installer automatically switch to the imported profile and sets it as the global profile.
 ]]
-NorskenUIAPI.ImportProfile = function(profileString, targetName)
-    return ProfileManager:ImportProfile(profileString, targetName, true)
-end
