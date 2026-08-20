@@ -63,7 +63,6 @@
 ---@class Chatv2Module : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class MicroMenuModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class DetailsBackdropModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class BlizzardMouseoverModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class SkyRidingModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class SpellAlertModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class DungeonCastsModule : NRSKNUI.ModuleBase, AceEvent-3.0
@@ -76,6 +75,7 @@
 ---@field hasRerolled boolean?
 ---@field isPreview boolean?
 ---@class BlizzObjectiveTrackerModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class BlizzardMouseoverModule : NRSKNUI.ModuleBase, AceEvent-3.0
 
 -- The handles Core/Init.lua hangs off the addon table. Declared here so the field and the accessor
 -- that fills it agree on a type: without these the field takes whatever the assignment inferred.
@@ -117,6 +117,7 @@
 ---@field DungeonCasts DungeonCastsModule
 ---@field RerollKeystone RerollKeystoneModule
 ---@field BlizzObjectiveTracker BlizzObjectiveTrackerModule
+---@field BlizzardMouseover BlizzardMouseoverModule
 
 -- Typed accessors. Overloads dispatch on the literal module name.
 
@@ -160,6 +161,7 @@ local NRSKNUI
 ---@overload fun(self: NRSKNUI, name: "DungeonCasts", silent?: boolean): DungeonCastsModule
 ---@overload fun(self: NRSKNUI, name: "RerollKeystone", silent?: boolean): RerollKeystoneModule
 ---@overload fun(self: NRSKNUI, name: "BlizzObjectiveTracker", silent?: boolean): BlizzObjectiveTrackerModule
+---@overload fun(self: NRSKNUI, name: "BlizzardMouseover", silent?: boolean): BlizzardMouseoverModule
 ---@param name string
 ---@param silent? boolean
 ---@return AceModule
@@ -202,6 +204,7 @@ function NRSKNUI:GetModule(name, silent) end
 ---@overload fun(self: NRSKNUI, name: "DungeonCasts", ...: string): DungeonCastsModule
 ---@overload fun(self: NRSKNUI, name: "RerollKeystone", ...: string): RerollKeystoneModule
 ---@overload fun(self: NRSKNUI, name: "BlizzObjectiveTracker", ...: string): BlizzObjectiveTrackerModule
+---@overload fun(self: NRSKNUI, name: "BlizzardMouseover", ...: string): BlizzardMouseoverModule
 ---@param name string
 ---@param ... string
 ---@return AceModule
