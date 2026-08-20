@@ -350,8 +350,6 @@ end
 ---@return boolean
 local function IsGated(container, identity, assistOnly)
     if container.unitUntrusted then return true end
-    -- Not about trusting the filter: this display has no business on a unit the player cannot help,
-    -- which is what a dispel highlight on an enemy target would be.
     if assistOnly and container.unitCanAssist == false then return true end
     if identity == nil or container.unitCanAssist == nil then return false end
 
@@ -560,6 +558,7 @@ end
 ---@param options table? optional per-slot options (.assistOnly keeps the slot to units the player can help)
 ---@return table? slot
 ---@return string key
+---@return number index
 function ContainerMixin:AddSlot(filter, options)
     options = options or {}
 
@@ -660,6 +659,9 @@ local SETTLE_DELAY = 0.5 -- outlasts a vehicle swap or a cutscene fade
 local watchers = {}
 local globalWatcher
 
+---@type table<table, true> containers holding item enchants
+local enchantContainers = {}
+
 ---Push a watcher's verdict onto one container.
 ---@param container table
 ---@param watcher Frame
@@ -705,6 +707,15 @@ local function RefreshAll()
     end
 end
 
+local function SettleAll()
+    RefreshAll()
+
+    -- Item enchants sit outside the gate, so a verdict that never moved leaves them dead after a loading screen.
+    for container in pairs(enchantContainers) do
+        container:UpdateAllAuras()
+    end
+end
+
 ---Re-read next frame and again after SETTLE_DELAY, since a load screen outlasts a frame.
 ---@param frame Frame
 ---@param callback fun()
@@ -740,7 +751,9 @@ end
 local function OnGlobalGateEvent(_, event)
     RefreshAll()
 
-    if SETTLE_EVENTS[event] then ScheduleSettle(globalWatcher, RefreshAll) end
+    if SETTLE_EVENTS[event] then
+        ScheduleSettle(globalWatcher, SettleAll)
+    end
 end
 
 ---@param watcher Frame
@@ -841,6 +854,8 @@ function ContainerMixin:AddItemEnchant(slot, options)
     if options.borderColor == nil then options.borderColor = NRSKNUI.Colors.enchantColor end
     if options.hidePermanent == nil then options.hidePermanent = self.hidePermanent end
     if not options.initializeFrame then options.initializeFrame = GenerateClosure(NRSKNUI.SkinAuraButton, NRSKNUI, self, options) end
+
+    enchantContainers[self] = true
 
     return self:AddItemEnchantment(slot, options)
 end
