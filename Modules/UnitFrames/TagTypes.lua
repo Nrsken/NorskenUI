@@ -32,6 +32,7 @@ local PREVIEW_STATUSES = { DEAD, L['Ghost'], L['Offline'], L['DND'], L['AFK'], D
 
 -- Generally used events for different tag types.
 local POWER_EVENTS = 'UNIT_POWER_FREQUENT UNIT_POWER_UPDATE UNIT_MAXPOWER UNIT_DISPLAYPOWER'
+local POWER_EVENTS_SLOW = 'UNIT_POWER_UPDATE UNIT_MAXPOWER UNIT_DISPLAYPOWER'
 local CONNECTION_EVENTS = 'UNIT_CONNECTION PARTY_MEMBER_ENABLE PARTY_MEMBER_DISABLE'
 local NAME_COLOR_EVENTS = 'UNIT_NAME_UPDATE UNIT_FACTION PLAYER_FLAGS_CHANGED ' .. CONNECTION_EVENTS
 local HEALTH_EVENTS = 'UNIT_HEALTH UNIT_MAXHEALTH'
@@ -162,14 +163,14 @@ UF:RegisterTag('NUF:curpower:smartcolor', L['Power (Colored)'], 'power', POWER_E
 end)
 
 --* Mana percentage for healers. Blank while the unit's mana is unreadable, see CanReadMana.
-UF:RegisterTag('NUF:healmana', L['Mana % (Healer)'], 'power', POWER_EVENTS, function(unit)
+UF:RegisterTag('NUF:healmana', L['Mana % (Healer)'], 'power', POWER_EVENTS_SLOW, function(unit)
 	if NRSKNUI:GetSafeRole(unit) ~= 'HEALER' or not CanReadMana(unit) then return '' end
 
 	return format('%.f', UnitPowerPercent(unit, Enum.PowerType.Mana, true, CurveConstants.ScaleTo100))
 end)
 
 --* Mana percentage for healers, smart colored.
-UF:RegisterTag('NUF:healmana:smartcolor', L['Mana % (Healer, Colored)'], 'power', POWER_EVENTS, function(unit)
+UF:RegisterTag('NUF:healmana:smartcolor', L['Mana % (Healer, Colored)'], 'power', POWER_EVENTS_SLOW, function(unit)
 	if NRSKNUI:GetSafeRole(unit) ~= 'HEALER' or not CanReadMana(unit) then return '' end
 
 	local percent = format('%.f', UnitPowerPercent(unit, Enum.PowerType.Mana, true, CurveConstants.ScaleTo100))
@@ -177,7 +178,7 @@ UF:RegisterTag('NUF:healmana:smartcolor', L['Mana % (Healer, Colored)'], 'power'
 end)
 
 --* Mana percentage for healers, smart colored w/ % symbol.
-UF:RegisterTag('NUF:healmana:smartcolorpct', L['Mana % (Healer, Colored) w/ %'], 'power', POWER_EVENTS, function(unit)
+UF:RegisterTag('NUF:healmana:smartcolorpct', L['Mana % (Healer, Colored) w/ %'], 'power', POWER_EVENTS_SLOW, function(unit)
 	if NRSKNUI:GetSafeRole(unit) ~= 'HEALER' or not CanReadMana(unit) then return '' end
 
 	local percent = format('%.f%%', UnitPowerPercent(unit, Enum.PowerType.Mana, true, CurveConstants.ScaleTo100))
