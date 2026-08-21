@@ -117,8 +117,8 @@ local function BuildFrameSection(page, uDB, unit)
     local sizeRow = sizeCard:Row(rowHL, 0)
     sizeRow:Slider(L['Width'], {
         width = 0.5,
-        min = 40,
-        max = 400,
+        min = 1,
+        max = 1000,
         step = 1,
         value = uDB.Width,
         callback = function(val)
@@ -128,8 +128,8 @@ local function BuildFrameSection(page, uDB, unit)
     })
     sizeRow:Slider(L['Height'], {
         width = 0.5,
-        min = 10,
-        max = 150,
+        min = 1,
+        max = 1000,
         step = 1,
         value = uDB.Height,
         callback = function(val)
