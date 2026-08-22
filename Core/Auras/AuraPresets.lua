@@ -64,9 +64,13 @@ Premade.Presets = {
                         [264735] = true,  -- Survival of the Fittest
                         -- Mage
                         [114267] = true,  -- Ice Barrier
+                        [235450] = true,  -- Prismatic Barrier
+                        [235313] = true,  -- Blazing Barrier
                         [414658] = true,  -- Ice Cold
+                        [45438] = true,   -- Ice Block
                         [342246] = true,  -- Alter Time
-                        [55342] = true,   -- Mirror Image
+                        [1309793] = true, -- Amplified Refraction
+                        [449336] = true,  -- Merely a Setback
                         -- Monk
                         [132578] = true,  -- Invoke Niuzao, the Black Ox
                         [1241059] = true, -- Celestial Infusion
