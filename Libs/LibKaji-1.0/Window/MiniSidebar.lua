@@ -5,16 +5,19 @@
 * Owns only the list column: an optional button area on top, then a scrollable flat list of items.
 * Items are plain data: { key, text, icon? }. renderItem(itemFrame, item, selected) can override the default rendering.
 * An item may instead be a section: { type = 'header', key, text, defaultExpanded?, items = { ... } }, which
-  renders a collapsible header with its children indented beneath. Sections are one level deep.
+* renders a collapsible header with its children indented beneath. Sections are one level deep.
+* An item may also be a caption: { type = 'label', key, text }, an inert row that titles the sections
+* below it, for a flat list whose sections come from more than one source.
 * :SetConfig returns only the *selectable leaves*, flattened in display order, so a host can pick an
-  initial selection by key without knowing the tree exists.
+* initial selection by key without knowing the tree exists.
 * Fires opts.onSelect(key, item) when an item is clicked. Self-restyles on theme change.
-* A descriptor may add onContextMenu(key, item, itemFrame), fired on right-click. The sidebar has no
-  opinion on what that means; the host decides (typically gui:ShowContextMenu).
+* A descriptor may add onContextMenu(key, item, itemFrame), fired on right-click of an item or a
+* section header. The sidebar has no opinion on what that means; the host decides (typically
+* gui:ShowContextMenu) and tells the two apart with item.type == 'header'.
 
 --]]
 
-local lib = LibStub and LibStub("LibKaji-1.0", true)
+local lib = LibStub and LibStub('LibKaji-1.0', true)
 if not lib then return end
 ---@class KajiGUIInstanceMixin
 local InstanceMixin = lib.InstanceMixin
@@ -30,12 +33,13 @@ local mpi = math.pi
 
 local DEFAULT_WIDTH = 192
 local HEADER_HEIGHT = 26
-local ITEM_INDENT = 10
+local LABEL_HEIGHT = 24
+local ITEM_INDENT = 2
 local ITEM_HEIGHT = 28
 local ITEM_SPACING = 1
 local HOVER_DURATION = 0.12
 local ACCENT_BAR_WIDTH = 2
-local ICON_SIZE = 16
+local ICON_SIZE = 22
 local BUTTON_HEIGHT = 26
 local BUTTON_SPACING = 4
 
@@ -50,43 +54,43 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
     local onSelect = opts.onSelect
     local pad = theme.paddingSmall
 
-    local frame = CreateFrame("Frame", nil, parent, "BackdropTemplate")
-    frame:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8" })
+    local frame = CreateFrame('Frame', nil, parent, 'BackdropTemplate')
+    frame:SetBackdrop({ bgFile = 'Interface\\Buttons\\WHITE8X8' })
     pixel.SetPixelWidth(frame, DEFAULT_WIDTH)
 
-    local rightBorder = frame:CreateTexture(nil, "BORDER")
+    local rightBorder = frame:CreateTexture(nil, 'BORDER')
     pixel.SetPixelWidth(rightBorder, theme.borderSize)
-    pixel.SetPixelPoint(rightBorder, "TOPRIGHT", frame, "TOPRIGHT", 0, 0)
-    pixel.SetPixelPoint(rightBorder, "BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
+    pixel.SetPixelPoint(rightBorder, 'TOPRIGHT', frame, 'TOPRIGHT', 0, 0)
+    pixel.SetPixelPoint(rightBorder, 'BOTTOMRIGHT', frame, 'BOTTOMRIGHT', 0, 0)
 
     -- Button area: anchored to the top, height set in SetConfig; the list scrolls below it.
-    local buttonArea = CreateFrame("Frame", nil, frame)
-    pixel.SetPixelPoint(buttonArea, "TOPLEFT", frame, "TOPLEFT", pad, -pad)
-    pixel.SetPixelPoint(buttonArea, "TOPRIGHT", frame, "TOPRIGHT", -pad - theme.borderSize, -pad)
+    local buttonArea = CreateFrame('Frame', nil, frame)
+    pixel.SetPixelPoint(buttonArea, 'TOPLEFT', frame, 'TOPLEFT', pad, -pad)
+    pixel.SetPixelPoint(buttonArea, 'TOPRIGHT', frame, 'TOPRIGHT', -pad - theme.borderSize, -pad)
     pixel.SetPixelHeight(buttonArea, 1)
     buttonArea:Hide()
 
-    local buttonSeparator = buttonArea:CreateTexture(nil, "ARTWORK")
+    local buttonSeparator = buttonArea:CreateTexture(nil, 'ARTWORK')
     pixel.SetPixelHeight(buttonSeparator, theme.borderSize)
-    pixel.SetPixelPoint(buttonSeparator, "BOTTOMLEFT", buttonArea, "BOTTOMLEFT", 0, 0)
-    pixel.SetPixelPoint(buttonSeparator, "BOTTOMRIGHT", buttonArea, "BOTTOMRIGHT", 0, 0)
+    pixel.SetPixelPoint(buttonSeparator, 'BOTTOMLEFT', buttonArea, 'BOTTOMLEFT', 0, 0)
+    pixel.SetPixelPoint(buttonSeparator, 'BOTTOMRIGHT', buttonArea, 'BOTTOMRIGHT', 0, 0)
 
-    local scrollFrame = CreateFrame("ScrollFrame", nil, frame)
+    local scrollFrame = CreateFrame('ScrollFrame', nil, frame)
     scrollFrame:SetFrameLevel(frame:GetFrameLevel() + 5)
     scrollFrame:SetClipsChildren(true)
 
     local function AnchorScroll(belowButtons)
         scrollFrame:ClearAllPoints()
         if belowButtons then
-            pixel.SetPixelPoint(scrollFrame, "TOPLEFT", buttonArea, "BOTTOMLEFT", -pad, -pad)
+            pixel.SetPixelPoint(scrollFrame, 'TOPLEFT', buttonArea, 'BOTTOMLEFT', -pad, -pad)
         else
-            pixel.SetPixelPoint(scrollFrame, "TOPLEFT", frame, "TOPLEFT", 0, 0)
+            pixel.SetPixelPoint(scrollFrame, 'TOPLEFT', frame, 'TOPLEFT', 0, 0)
         end
-        pixel.SetPixelPoint(scrollFrame, "BOTTOMRIGHT", frame, "BOTTOMRIGHT", -theme.borderSize, pad)
+        pixel.SetPixelPoint(scrollFrame, 'BOTTOMRIGHT', frame, 'BOTTOMRIGHT', -theme.borderSize, pad)
     end
     AnchorScroll(false)
 
-    local scrollChild = CreateFrame("Frame", nil, scrollFrame)
+    local scrollChild = CreateFrame('Frame', nil, scrollFrame)
     pixel.SetPixelHeight(scrollChild, 1)
     scrollChild:SetFrameLevel(scrollFrame:GetFrameLevel() + 1)
     scrollFrame:SetScrollChild(scrollChild)
@@ -94,8 +98,9 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
     local scrollbar = gui:CreateScrollbar(scrollFrame, {
         width = 16,
         thumbHeight = 40,
-        padding = { top = -1, bottom = -1, right = 0 },
+        padding = { top = -1, bottom = -4, right = -1 },
         scrollStep = 40,
+        anchorToScrollFrame = true, -- so the track starts below the button area, not at the column top
     })
 
     local scrollbarVisible = false
@@ -108,10 +113,10 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
         scrollbarVisible = scrollbar:UpdateVisibility(scrollChild:GetHeight(), scrollFrame:GetHeight())
         UpdateScrollChildWidth()
     end
-    scrollChild:HookScript("OnSizeChanged", UpdateScrollbar)
-    scrollFrame:HookScript("OnSizeChanged", UpdateScrollbar)
-    scrollFrame:HookScript("OnShow", function() UpdateScrollbar() end)
-    frame:HookScript("OnSizeChanged", UpdateScrollChildWidth)
+    scrollChild:HookScript('OnSizeChanged', UpdateScrollbar)
+    scrollFrame:HookScript('OnSizeChanged', UpdateScrollbar)
+    scrollFrame:HookScript('OnShow', function() UpdateScrollbar() end)
+    frame:HookScript('OnSizeChanged', UpdateScrollChildWidth)
 
     local ms = {
         frame = frame,
@@ -124,6 +129,7 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
 
     local itemPool, activeItems = {}, {}
     local headerPool, activeHeaders = {}, {}
+    local labelPool, activeLabels = {}, {}
     local buttonPool = {}
 
     local function ApplyItemState(item)
@@ -139,61 +145,61 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
     end
 
     local function CreateItem()
-        local item = CreateFrame("Button", nil, scrollChild)
+        local item = CreateFrame('Button', nil, scrollChild)
         pixel.SetPixelHeight(item, ITEM_HEIGHT)
-        item:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+        item:RegisterForClicks('LeftButtonUp', 'RightButtonUp')
 
-        local hoverBg = item:CreateTexture(nil, "BACKGROUND")
+        local hoverBg = item:CreateTexture(nil, 'BACKGROUND')
         hoverBg:SetAllPoints()
         hoverBg:SetColorTexture(1, 1, 1, 0.05)
         hoverBg:SetAlpha(0)
         item.hoverBg = hoverBg
 
-        local selectedBg = item:CreateTexture(nil, "BACKGROUND", nil, 1)
+        local selectedBg = item:CreateTexture(nil, 'BACKGROUND', nil, 1)
         selectedBg:SetAllPoints()
         selectedBg:Hide()
         item.selectedBg = selectedBg
 
-        local accentBar = item:CreateTexture(nil, "OVERLAY")
+        local accentBar = item:CreateTexture(nil, 'OVERLAY')
         pixel.SetPixelWidth(accentBar, ACCENT_BAR_WIDTH)
-        pixel.SetPixelPoint(accentBar, "TOPLEFT", item, "TOPLEFT", 0, 0)
-        pixel.SetPixelPoint(accentBar, "BOTTOMLEFT", item, "BOTTOMLEFT", 0, 0)
+        pixel.SetPixelPoint(accentBar, 'TOPLEFT', item, 'TOPLEFT', 0, 0)
+        pixel.SetPixelPoint(accentBar, 'BOTTOMLEFT', item, 'BOTTOMLEFT', 0, 0)
         accentBar:Hide()
         item.accentBar = accentBar
 
-        local icon = item:CreateTexture(nil, "ARTWORK")
+        local icon = item:CreateTexture(nil, 'ARTWORK')
         pixel.SetPixelSize(icon, ICON_SIZE, ICON_SIZE)
-        pixel.SetPixelPoint(icon, "LEFT", item, "LEFT", 10, 0)
+        pixel.SetPixelPoint(icon, 'LEFT', item, 'LEFT', 10, 0)
         icon:Hide()
         item.icon = icon
 
-        local label = item:CreateFontString(nil, "OVERLAY")
-        label:SetJustifyH("LEFT")
+        local label = item:CreateFontString(nil, 'OVERLAY')
+        label:SetJustifyH('LEFT')
         label:SetWordWrap(false)
         item.label = label
 
         item.hoverTarget = 0
-        item:SetScript("OnUpdate", function(self, elapsed)
+        item:SetScript('OnUpdate', function(self, elapsed)
             local cur = hoverBg:GetAlpha()
             if mabs(cur - self.hoverTarget) > 0.01 then
                 local speed = elapsed / HOVER_DURATION
                 hoverBg:SetAlpha(self.hoverTarget > cur and mmin(cur + speed, self.hoverTarget) or mmax(cur - speed, self.hoverTarget))
             end
         end)
-        item:SetScript("OnEnter", function(self)
+        item:SetScript('OnEnter', function(self)
             self.hoverTarget = 1
             if self.key ~= ms.selected then
                 self.label:SetTextColor(theme.textPrimary[1], theme.textPrimary[2], theme.textPrimary[3], 1)
             end
         end)
-        item:SetScript("OnLeave", function(self)
+        item:SetScript('OnLeave', function(self)
             self.hoverTarget = 0
             if self.key ~= ms.selected then
                 self.label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
             end
         end)
-        item:SetScript("OnClick", function(self, button)
-            if button == "RightButton" then
+        item:SetScript('OnClick', function(self, button)
+            if button == 'RightButton' then
                 if ms.onContextMenu then safecall(ms.onContextMenu, self.key, self.item, self) end
                 return
             end
@@ -204,37 +210,67 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
     end
 
     local function CreateHeader()
-        local header = CreateFrame("Button", nil, scrollChild)
+        local header = CreateFrame('Button', nil, scrollChild)
         pixel.SetPixelHeight(header, HEADER_HEIGHT)
-        header:RegisterForClicks("LeftButtonUp")
+        header:RegisterForClicks('LeftButtonUp', 'RightButtonUp')
 
-        local hoverBg = header:CreateTexture(nil, "BACKGROUND")
+        local hoverBg = header:CreateTexture(nil, 'BACKGROUND')
         hoverBg:SetAllPoints()
         hoverBg:SetColorTexture(1, 1, 1, 0.05)
         hoverBg:SetAlpha(0)
         header.hoverBg = hoverBg
 
-        local arrow = header:CreateTexture(nil, "OVERLAY")
+        local arrow = header:CreateTexture(nil, 'OVERLAY')
         pixel.SetPixelSize(arrow, 10, 10)
         arrow:SetTexture(theme.stepperTexture)
-        pixel.SetPixelPoint(arrow, "LEFT", header, "LEFT", pad, 0)
+        pixel.SetPixelPoint(arrow, 'LEFT', header, 'LEFT', pad, 0)
         header.arrow = arrow
 
-        local label = header:CreateFontString(nil, "OVERLAY")
-        label:SetJustifyH("LEFT")
+        local label = header:CreateFontString(nil, 'OVERLAY')
+        label:SetJustifyH('LEFT')
         label:SetWordWrap(false)
-        pixel.SetPixelPoint(label, "LEFT", arrow, "RIGHT", 6, 0)
-        pixel.SetPixelPoint(label, "RIGHT", header, "RIGHT", -pad, 0)
+        pixel.SetPixelPoint(label, 'LEFT', arrow, 'RIGHT', 6, 0)
+        pixel.SetPixelPoint(label, 'RIGHT', header, 'RIGHT', -pad, 0)
         header.label = label
 
-        header:SetScript("OnEnter", function(self) self.hoverBg:SetAlpha(1) end)
-        header:SetScript("OnLeave", function(self) self.hoverBg:SetAlpha(0) end)
-        header:SetScript("OnClick", function(self)
+        header:SetScript('OnEnter', function(self) self.hoverBg:SetAlpha(1) end)
+        header:SetScript('OnLeave', function(self) self.hoverBg:SetAlpha(0) end)
+        header:SetScript('OnClick', function(self, button)
+            if button == 'RightButton' then
+                if ms.onContextMenu then safecall(ms.onContextMenu, self.key, self.item, self) end
+                return
+            end
             ms.expanded[self.key] = not ms.expanded[self.key]
             ms:Render()
         end)
 
         return header
+    end
+
+    local function CreateLabel()
+        local label = CreateFrame('Frame', nil, scrollChild)
+        pixel.SetPixelHeight(label, LABEL_HEIGHT)
+
+        local text = label:CreateFontString(nil, 'OVERLAY')
+        text:SetJustifyH('LEFT')
+        text:SetWordWrap(false)
+        pixel.SetPixelPoint(text, 'BOTTOMLEFT', label, 'BOTTOMLEFT', pad, 2)
+        pixel.SetPixelPoint(text, 'RIGHT', label, 'RIGHT', -pad, 0)
+        label.text = text
+
+        return label
+    end
+
+    local function AcquireLabel()
+        for _, l in ipairs(labelPool) do
+            if not l.inUse then
+                l.inUse = true; l:Show(); return l
+            end
+        end
+        local l = CreateLabel()
+        l.inUse = true
+        labelPool[#labelPool + 1] = l
+        return l
     end
 
     local function AcquireHeader()
@@ -263,7 +299,7 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
 
     local function ReleaseAll()
         for _, h in ipairs(headerPool) do
-            h.inUse = false; h.key = nil
+            h.inUse = false; h.key = nil; h.item = nil
             h.hoverBg:SetAlpha(0)
             h:Hide(); h:ClearAllPoints()
         end
@@ -274,42 +310,60 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
             it:Hide(); it:ClearAllPoints()
         end
         wipe(activeItems)
+        for _, l in ipairs(labelPool) do
+            l.inUse = false
+            l:Hide(); l:ClearAllPoints()
+        end
+        wipe(activeLabels)
     end
 
     local function ConfigureItem(item, data, yOffset, indent)
         item:ClearAllPoints()
-        pixel.SetPixelPoint(item, "TOPLEFT", scrollChild, "TOPLEFT", pad + (indent or 0), -yOffset)
-        pixel.SetPixelPoint(item, "TOPRIGHT", scrollChild, "TOPRIGHT", -pad, -yOffset)
+        pixel.SetPixelPoint(item, 'TOPLEFT', scrollChild, 'TOPLEFT', pad + (indent or 0), -yOffset)
+        pixel.SetPixelPoint(item, 'TOPRIGHT', scrollChild, 'TOPRIGHT', -pad, -yOffset)
         item.key = data.key
         item.item = data
 
-        gui:ApplyFont(item.label, "normal")
-        item.label:SetText(data.text or "")
+        gui:ApplyFont(item.label, 'normal')
+        item.label:SetText(data.text or '')
         item.label:ClearAllPoints()
         if data.icon then
             item.icon:SetTexture(data.icon)
             item.icon:Show()
-            pixel.SetPixelPoint(item.icon, "LEFT", item, "LEFT", 10, 0)
-            pixel.SetPixelPoint(item.label, "LEFT", item.icon, "RIGHT", 6, 0)
+            pixel.SetPixelPoint(item.icon, 'LEFT', item, 'LEFT', 4, 0)
+            pixel.SetPixelPoint(item.label, 'LEFT', item.icon, 'RIGHT', 4, 0)
         else
             item.icon:Hide()
-            pixel.SetPixelPoint(item.label, "LEFT", item, "LEFT", 10, 0)
+            pixel.SetPixelPoint(item.label, 'LEFT', item, 'LEFT', 4, 0)
         end
-        pixel.SetPixelPoint(item.label, "RIGHT", item, "RIGHT", -pad, 0)
+        pixel.SetPixelPoint(item.label, 'RIGHT', item, 'RIGHT', -pad, 0)
 
         ApplyItemState(item)
         if ms.renderItem then safecall(ms.renderItem, item, data, data.key == ms.selected) end
         activeItems[#activeItems + 1] = item
     end
 
+    local function ConfigureLabel(label, data, yOffset)
+        label:ClearAllPoints()
+        pixel.SetPixelPoint(label, 'TOPLEFT', scrollChild, 'TOPLEFT', pad, -yOffset)
+        pixel.SetPixelPoint(label, 'TOPRIGHT', scrollChild, 'TOPRIGHT', -pad, -yOffset)
+
+        gui:ApplyFont(label.text, 'large')
+        label.text:SetText(data.text or '')
+        label.text:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
+
+        activeLabels[#activeLabels + 1] = label
+    end
+
     local function ConfigureHeader(header, data, yOffset)
         header:ClearAllPoints()
-        pixel.SetPixelPoint(header, "TOPLEFT", scrollChild, "TOPLEFT", pad, -yOffset)
-        pixel.SetPixelPoint(header, "TOPRIGHT", scrollChild, "TOPRIGHT", -pad, -yOffset)
+        pixel.SetPixelPoint(header, 'TOPLEFT', scrollChild, 'TOPLEFT', pad, -yOffset)
+        pixel.SetPixelPoint(header, 'TOPRIGHT', scrollChild, 'TOPRIGHT', -pad, -yOffset)
         header.key = data.key
+        header.item = data
 
-        gui:ApplyFont(header.label, "normal")
-        header.label:SetText(data.text or "")
+        gui:ApplyFont(header.label, 'normal')
+        header.label:SetText(data.text or '')
         header.label:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
         header.arrow:SetVertexColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 0.7)
         header.arrow:SetRotation(ms.expanded[data.key] and 0 or mpi / 2)
@@ -324,7 +378,7 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
         local y = pad
 
         for _, data in ipairs(ms.items or {}) do
-            if data.type == "header" then
+            if data.type == 'header' then
                 ConfigureHeader(AcquireHeader(), data, y)
                 y = y + HEADER_HEIGHT + ITEM_SPACING
 
@@ -341,6 +395,9 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
                         leaves[#leaves + 1] = child
                     end
                 end
+            elseif data.type == 'label' then
+                ConfigureLabel(AcquireLabel(), data, y)
+                y = y + LABEL_HEIGHT + ITEM_SPACING
             else
                 ConfigureItem(AcquireItem(), data, y)
                 leaves[#leaves + 1] = data
@@ -384,8 +441,8 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
             btn:Show()
             btn:ClearAllPoints()
             local y = (i - 1) * (BUTTON_HEIGHT + BUTTON_SPACING)
-            pixel.SetPixelPoint(btn, "TOPLEFT", buttonArea, "TOPLEFT", 0, -y)
-            pixel.SetPixelPoint(btn, "TOPRIGHT", buttonArea, "TOPRIGHT", 0, -y)
+            pixel.SetPixelPoint(btn, 'TOPLEFT', buttonArea, 'TOPLEFT', 0, -y)
+            pixel.SetPixelPoint(btn, 'TOPRIGHT', buttonArea, 'TOPRIGHT', 0, -y)
         end
 
         pixel.SetPixelHeight(buttonArea, #buttons * (BUTTON_HEIGHT + BUTTON_SPACING) + pad)
@@ -397,7 +454,7 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
     ---honoured once and the user's own collapsing survives a re-render.
     local function SeedExpansion(items)
         for _, data in ipairs(items or {}) do
-            if data.type == "header" and ms.expanded[data.key] == nil then
+            if data.type == 'header' and ms.expanded[data.key] == nil then
                 ms.expanded[data.key] = data.defaultExpanded ~= false
             end
         end
@@ -405,7 +462,7 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
 
     ---Applies a sidebar descriptor and renders the list. Returns the selectable leaves, flattened in
     ---display order, so a host can resolve an initial selection by key without walking the tree.
-    ---@param sd table { items: table|fun(): table, width?: number, buttons?: table[], renderItem?: fun(itemFrame, item, selected), onContextMenu?: fun(key, item, itemFrame) }
+    ---@param sd table { items: table|fun(): table, width?: number, buttons?: table[], renderItem?: fun(itemFrame, item, selected), onContextMenu?: fun(key, item, itemFrame) fired for items and section headers alike }
     ---@return table leaves
     function ms:SetConfig(sd)
         pixel.SetPixelWidth(frame, sd.width or DEFAULT_WIDTH)
@@ -415,7 +472,7 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
             self._buttonsRef = sd.buttons
             LayoutButtons(sd.buttons)
         end
-        self.items = type(sd.items) == "function" and sd.items() or sd.items
+        self.items = type(sd.items) == 'function' and sd.items() or sd.items
         SeedExpansion(self.items)
         RenderList()
         return self.leaves
@@ -428,6 +485,16 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
         SeedExpansion(items)
         RenderList()
         return self.leaves
+    end
+
+    ---Opens or closes a section from outside, so a host that just added a child can reveal it.
+    ---@param key any
+    ---@param expanded boolean
+    function ms:SetExpanded(key, expanded)
+        if self.expanded[key] == expanded then return end
+
+        self.expanded[key] = expanded
+        self:Render()
     end
 
     ---Marks an item selected visually without firing onSelect.

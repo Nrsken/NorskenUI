@@ -4,4 +4,5 @@
     <Script file='GUI-DungeonCasts.lua'/>
     <Script file='GUI-RerollKeystone.lua'/>
     <Script file='GUI-BigWigsTimers.lua'/>
+    <Script file='GUI-BigWigsTimerTriggers.lua'/>
 </Ui>

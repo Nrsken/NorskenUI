@@ -2174,128 +2174,113 @@ local Defaults = {
             Enabled = true,
             Message = "Instance reset!",
         },
-
-        -- Dungeon Timers (BigWigs Integration)
-        DungeonTimers = {
-            Enabled = true,
-
-            -- Global display settings for Bars
-            BarDisplay = {
-                barWidth = 220,
-                barHeight = 24,
-                barTexture = "NorskenUI", -- LSM statusbar texture key
-                FontFace = "Expressway",
-                FontSize = 14,
-                FontOutline = "OUTLINE", -- NONE, OUTLINE, THICKOUTLINE, SOFTOUTLINE, SLUG, SLUG,OUTLINE
-                FontShadow = {
-                    Enabled = false,
-                    Color = { 0, 0, 0, 1 },
-                    OffsetX = 1,
-                    OffsetY = -1,
+        BigWigsTimers = {
+            Enabled = false,
+            -- Bar group
+            Bars = {
+                Width = 180,
+                Height = 22,
+                Config = {
+                    Grow = "UP",
+                    Align = "CENTER",
+                    Spacing = 1,
+                    UseLimit = true,
+                    Limit = 2,
                 },
-                iconEnabled = true,
-                UseGlobalFont = true,
-                UseGlobalBar = true,
-            },
-
-            -- Global display settings for Texts
-            TextDisplay = {
-                UseGlobalFont = true,
-                FontFace = "Expressway",
-                FontSize = 24,
-                FontOutline = "SOFTOUTLINE", -- NONE, OUTLINE, THICKOUTLINE, SOFTOUTLINE, SLUG, SLUG,OUTLINE
-                FontShadow = {
-                    Enabled = false,
-                    Color = { 0, 0, 0, 1 },
-                    OffsetX = 1,
-                    OffsetY = -1,
-                },
-                textAlign = "CENTER", -- LEFT, CENTER, RIGHT
-            },
-
-            -- Global group settings (applies to all dungeons)
-            BarGroup = {
+                Strata = "HIGH",
+                anchorFrameType = "UIPARENT",
+                ParentFrame = "UIParent",
                 Position = {
                     AnchorFrom = "CENTER",
                     AnchorTo = "CENTER",
                     XOffset = 0,
                     YOffset = -128,
                 },
-                GrowthDirection = "UP",
-                Spacing = 1,
+                UseGlobalFont = true,
+                FontFace = "Expressway",
+                FontSize = 12,
+                FontOutline = "OUTLINE",
+                FontShadow = {
+                    Enabled = false,
+                    Color = { 0, 0, 0, 1 },
+                    OffsetX = 1,
+                    OffsetY = -1,
+                },
+                UseGlobalBar = true,
+                StatusBarTexture = "NorskenUI",
+                Icon = {
+                    Enabled = true,
+                },
+                BackdropColor = { 0, 0, 0, 0.8 },
+                BorderColor = { 0, 0, 0, 1 },
             },
-            TextGroup = {
+            -- Text group
+            Texts = {
+                Config = {
+                    Grow = "DOWN",
+                    Align = "CENTER",
+                    Spacing = 0,
+                    UseLimit = true,
+                    Limit = 3,
+                },
+                Strata = "HIGH",
+                anchorFrameType = "UIPARENT",
+                ParentFrame = "UIParent",
                 Position = {
                     AnchorFrom = "CENTER",
                     AnchorTo = "CENTER",
                     XOffset = 0,
-                    YOffset = 75,
+                    YOffset = 136,
                 },
-                GrowthDirection = "DOWN",
-                Spacing = 0,
+                UseGlobalFont = true,
+                FontFace = "Expressway",
+                FontSize = 20,
+                FontOutline = "OUTLINE",
+                FontShadow = {
+                    Enabled = false,
+                    Color = { 0, 0, 0, 1 },
+                    OffsetX = 1,
+                    OffsetY = -1,
+                },
             },
-
-            -- Per-dungeon triggers (instanceId maps to BigWigs/LittleWigs boss modules)
-            Dungeons = {
-                MagistersTerrace  = { Enabled = true, instanceId = 2811, Triggers = {} },
-                MaisaraCaverns    = { Enabled = true, instanceId = 2874, Triggers = {} },
-                NexusPointXenas   = { Enabled = true, instanceId = 2915, Triggers = {} },
-                WindrunnerSpire   = { Enabled = true, instanceId = 2805, Triggers = {} },
-                AlgetharAcademy   = { Enabled = true, instanceId = 2526, Triggers = {} },
-                PitOfSaron        = { Enabled = true, instanceId = 658, Triggers = {} },
-                SeatOfTriumvirate = { Enabled = true, instanceId = 1753, Triggers = {} },
-                Skyreach          = { Enabled = true, instanceId = 1209, Triggers = {} },
-            },
-
-            -- Default values for new triggers (template)
-            -- Per-trigger defaults (text content, colors)
+            -- Per-instance triggers, keyed by the instance ID BigWigs menus use
+            Instances = {},
+            -- Template copied on every new trigger
             TriggerDefaults = {
-                enabled = true,
-                triggerType = "timer",
-                spellId = "",
-                message = "",
-                messageOperator = "find",
-                remainingEnabled = true,
-                remainingOperator = "<=",
-                remainingValue = 5,
-                countEnabled = false,
-                countOperator = "==",
-                countValue = 1,
-                extendTimer = 0,
-                displayType = "bar",
-                -- Colors
-                useBigWigsColors = true,
-                barColor = { 0.772, 0.168, 0.168, 1 },
-                backgroundColor = { 0, 0, 0, 0.8 },
-                textColor = { 1, 1, 1, 1 },
-                -- Bar text settings
-                barText1Format = "Tank Hit",
-                barText1Justify = "LEFT",
-                barText1XOffset = 3,
-                barText1YOffset = 0,
-                barText2Format = "%p",
-                barText2Justify = "RIGHT",
-                barText2XOffset = -3,
-                barText2YOffset = 0,
-                -- Text mode settings
-                textFormat = "%n » %p",
-                textJustify = "LEFT",
-                showDecimals = true,
-                decimalThreshold = 1,
-                -- Custom text (Lua code for %c placeholder)
-                -- Function signature: function(expirationTime, duration, remaining, name, icon, stacks)
-                customText = "",
-                -- Load conditions
-                loadRoleEnabled = false,
-                loadRoleTank = true,
-                loadRoleHealer = true,
-                loadRoleDPS = true,
-                loadPosEnabled = false,
-                loadPosMelee = true,
-                loadPosRanged = true,
+                Enabled = true,
+                Name = "New Timer",
+                -- Match
+                BossId = 0,
+                SpellId = "",
+                Message = "",
+                MessageOperator = "find",
+                UseRemaining = true,
+                RemainingOperator = "<",
+                Remaining = 5,
+                Offset = 0,
+                Count = "",
+                -- Display
+                DisplayType = "bar",
+                UseBigWigsColors = true,
+                BarColor = { 0.772, 0.168, 0.168, 1 },
+                TextColor = { 1, 1, 1, 1 },
+                LeftText = "%n",
+                RightText = "%t",
+                Text = "%n » %t",
+                ShowDecimals = true,
+                DecimalThreshold = 1,
                 -- Actions
-                actionOnShowSound = "None",
-                actionOnHideSound = "None",
+                ActionOnShowSound = "None",
+                ActionOnHideSound = "None",
+                LoadConditions = {
+                    Enabled = false,
+                    SelectedCategory = "Instance",
+                    Instance = { Types = {} },
+                    Group = { Types = {} },
+                    Combat = {},
+                    Role = { Types = {} },
+                    Position = { Types = {} },
+                },
             },
         },
         -- Dungeon enemy cast bars

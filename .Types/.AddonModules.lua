@@ -76,6 +76,27 @@
 ---@field isPreview boolean?
 ---@class BlizzObjectiveTrackerModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class BlizzardMouseoverModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class BigWigsTimersModule : NRSKNUI.ModuleBase, AceEvent-3.0, AceTimer-3.0, AceHook-3.0
+---@field db NRSKNUI.DBProfile.BigWigsTimers
+---@field bars table<string, BigWigsTimers.Bar>
+---@field textByEventId table<number, string>
+---@field eventIdByText table<string, number>
+---@field spellCache table<number, BigWigsTimers.SpellEntry[]>
+---@field bossCache table<number, BigWigsTimers.BossEntry[]>
+---@field groups table<string, NRSKNUI.DynamicGroup>?
+---@field displays table<string, Frame[]>
+---@field displayByTrigger table<table, Frame>
+---@field activeTriggers table[]
+---@field triggerOrder table<table, number>
+---@field matched table<table, BigWigsTimers.Bar[]>
+---@field previewEntries { trigger: table, bar: BigWigsTimers.Bar }[]
+---@field updater Frame?
+---@field currentInstanceId number?
+---@field previewTrigger table?
+---@field previewSamples table[]?
+---@field active boolean?
+---@field isPreview boolean?
+---@field matchDirty boolean?
 
 -- The handles Core/Init.lua hangs off the addon table. Declared here so the field and the accessor
 -- that fills it agree on a type: without these the field takes whatever the assignment inferred.
@@ -118,6 +139,7 @@
 ---@field RerollKeystone RerollKeystoneModule
 ---@field BlizzObjectiveTracker BlizzObjectiveTrackerModule
 ---@field BlizzardMouseover BlizzardMouseoverModule
+---@field BigWigsTimers BigWigsTimersModule
 
 -- Typed accessors. Overloads dispatch on the literal module name.
 
@@ -162,6 +184,7 @@ local NRSKNUI
 ---@overload fun(self: NRSKNUI, name: "RerollKeystone", silent?: boolean): RerollKeystoneModule
 ---@overload fun(self: NRSKNUI, name: "BlizzObjectiveTracker", silent?: boolean): BlizzObjectiveTrackerModule
 ---@overload fun(self: NRSKNUI, name: "BlizzardMouseover", silent?: boolean): BlizzardMouseoverModule
+---@overload fun(self: NRSKNUI, name: "BigWigsTimers", silent?: boolean): BigWigsTimersModule
 ---@param name string
 ---@param silent? boolean
 ---@return AceModule
@@ -205,6 +228,7 @@ function NRSKNUI:GetModule(name, silent) end
 ---@overload fun(self: NRSKNUI, name: "RerollKeystone", ...: string): RerollKeystoneModule
 ---@overload fun(self: NRSKNUI, name: "BlizzObjectiveTracker", ...: string): BlizzObjectiveTrackerModule
 ---@overload fun(self: NRSKNUI, name: "BlizzardMouseover", ...: string): BlizzardMouseoverModule
+---@overload fun(self: NRSKNUI, name: "BigWigsTimers", ...: string): BigWigsTimersModule
 ---@param name string
 ---@param ... string
 ---@return AceModule

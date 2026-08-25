@@ -120,7 +120,19 @@ GUIFrame.SidebarConfig = {
             items = {
                 { id = 'dungeonCasts',   text = L['Dungeon Casts'] },
                 { id = 'rerollKeystone', text = L['Reroll Keystone'] },
-                { id = 'bwTimers',       text = L['BigWigs Timers'] },
+            }
+        },
+        {
+            id = 'bwtimers_section',
+            type = 'header',
+            text = L['BigWigs Timers'],
+            defaultExpanded = false,
+            items = {
+                { id = 'bwTimers',         text = L['General'] },
+                { id = 'bwTimersBars',     text = L['Bar Settings'] },
+                { id = 'bwTimersTexts',    text = L['Text Settings'] },
+                { id = 'bwTimersDungeons', text = L['Dungeons'] },
+                { id = 'bwTimersRaids',    text = L['Raids'] },
             }
         },
         {

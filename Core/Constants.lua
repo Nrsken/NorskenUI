@@ -114,35 +114,6 @@ NRSKNUI.CLASS_INTERRUPTS = {
     [13] = { 351338 },                               -- Evoker
 }
 
-NRSKNUI.BIGWIGS_EVENTS = {
-    'BigWigs_Timer',
-    'BigWigs_TargetTimer',
-    'BigWigs_CastTimer',
-    'BigWigs_StartBreak',
-    'BigWigs_StartPull',
-    'BigWigs_StopBar',
-    'BigWigs_StopBars',
-    'BigWigs_PauseBar',
-    'BigWigs_ResumeBar',
-    'BigWigs_OnBossDisable',
-}
-
-NRSKNUI.DUNGEON_INFO = {
-    -- Dungeons
-    MagistersTerrace  = { instanceId = 2811, name = 'Magisters\' Terrace', type = 'dungeon' },
-    MaisaraCaverns    = { instanceId = 2874, name = 'Maisara Caverns', type = 'dungeon' },
-    NexusPointXenas   = { instanceId = 2915, name = 'Nexus-Point Xenas', type = 'dungeon' },
-    WindrunnerSpire   = { instanceId = 2805, name = 'Windrunner Spire', type = 'dungeon' },
-    AlgetharAcademy   = { instanceId = 2526, name = 'Algeth\'ar Academy', type = 'dungeon' },
-    PitOfSaron        = { instanceId = 658, name = 'Pit of Saron', type = 'dungeon' },
-    SeatOfTriumvirate = { instanceId = 1753, name = 'Seat of the Triumvirate', type = 'dungeon' },
-    Skyreach          = { instanceId = 1209, name = 'Skyreach', type = 'dungeon' },
-    -- Raids
-    TheVoidspire      = { instanceId = 2912, name = 'The Voidspire', type = 'raid' },
-    MarchOnQuelDanas  = { instanceId = 2913, name = 'March on Quel\'Danas', type = 'raid' },
-    TheDreamrift      = { instanceId = 2939, name = 'The Dreamrift', type = 'raid' },
-}
-
 -- A nil specId means every spec of the class has a pet, a number restricts it to that one spec.
 NRSKNUI.PET_CLASSES = {
     HUNTER = {

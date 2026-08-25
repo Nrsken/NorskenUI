@@ -23,7 +23,8 @@
             "AuraContainerInbound",
             "CustomAuraContainerAuraProcessingPolicy",
             "LoadAddOnWithErrorHandling",
-            "TimeUtil"
+            "TimeUtil",
+            "BigWigsLoader"
         ],
         "write": [
             "NorskenUI",

@@ -76,6 +76,7 @@
 ---@field AuraDisplays NRSKNUI.DBProfile.AuraDisplays
 ---@field Auras NRSKNUI.DBProfile.Auras
 ---@field BattleRes NRSKNUI.DBProfile.BattleRes
+---@field BigWigsTimers NRSKNUI.DBProfile.BigWigsTimers
 ---@field BlizzardRM NRSKNUI.DBProfile.BlizzardRM
 ---@field CharacterPanel NRSKNUI.DBProfile.CharacterPanel
 ---@field Colors NRSKNUI.DBProfile.Colors
@@ -83,7 +84,6 @@
 ---@field CombatMessage NRSKNUI.DBProfile.CombatMessage
 ---@field CombatTimer NRSKNUI.DBProfile.CombatTimer
 ---@field DungeonCasts NRSKNUI.DBProfile.DungeonCasts
----@field DungeonTimers NRSKNUI.DBProfile.DungeonTimers
 ---@field HealerMana NRSKNUI.DBProfile.HealerMana
 ---@field IncarnStacks NRSKNUI.DBProfile.IncarnStacks
 ---@field InstanceReset NRSKNUI.DBProfile.InstanceReset
@@ -290,6 +290,155 @@
 ---@field AnchorTo string
 ---@field XOffset number
 ---@field YOffset number
+
+---@class NRSKNUI.DBProfile.BigWigsTimers
+---@field [string] any
+---@field Bars NRSKNUI.DBProfile.BigWigsTimers.Bars
+---@field Enabled boolean
+---@field Instances NRSKNUI.DBProfile.BigWigsTimers.Instances
+---@field Texts NRSKNUI.DBProfile.BigWigsTimers.Texts
+---@field TriggerDefaults NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults
+
+---@class NRSKNUI.DBProfile.BigWigsTimers.Bars
+---@field [string] any
+---@field BackdropColor table
+---@field BorderColor table
+---@field Config NRSKNUI.DynamicGroupConfig
+---@field FontFace string
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.BigWigsTimers.Bars.FontShadow
+---@field FontSize number
+---@field Height number
+---@field Icon NRSKNUI.DBProfile.BigWigsTimers.Bars.Icon
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.BigWigsTimers.Bars.Position
+---@field StatusBarTexture string
+---@field Strata string
+---@field UseGlobalBar boolean
+---@field UseGlobalFont boolean
+---@field Width number
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.BigWigsTimers.Bars.Config
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.BigWigsTimers.Bars.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field OffsetY number
+
+---@class NRSKNUI.DBProfile.BigWigsTimers.Bars.Icon
+---@field [string] any
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.BigWigsTimers.Bars.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.BigWigsTimers.Instances
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.BigWigsTimers.Texts
+---@field [string] any
+---@field Config NRSKNUI.DynamicGroupConfig
+---@field FontFace string
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.BigWigsTimers.Texts.FontShadow
+---@field FontSize number
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.BigWigsTimers.Texts.Position
+---@field Strata string
+---@field UseGlobalFont boolean
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.BigWigsTimers.Texts.Config
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.BigWigsTimers.Texts.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field OffsetY number
+
+---@class NRSKNUI.DBProfile.BigWigsTimers.Texts.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults
+---@field [string] any
+---@field ActionOnHideSound string
+---@field ActionOnShowSound string
+---@field BarColor table
+---@field BossId number
+---@field Count string
+---@field DecimalThreshold number
+---@field DisplayType string
+---@field Enabled boolean
+---@field LeftText string
+---@field LoadConditions NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults.LoadConditions
+---@field Message string
+---@field MessageOperator string
+---@field Name string
+---@field Offset number
+---@field Remaining number
+---@field RemainingOperator string
+---@field RightText string
+---@field ShowDecimals boolean
+---@field SpellId string
+---@field Text string
+---@field TextColor table
+---@field UseBigWigsColors boolean
+---@field UseRemaining boolean
+
+---@class NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults.LoadConditions
+---@field [string] any
+---@field Combat NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults.LoadConditions.Combat
+---@field Enabled boolean
+---@field Group NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults.LoadConditions.Group
+---@field Instance NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults.LoadConditions.Instance
+---@field Position NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults.LoadConditions.Position
+---@field Role NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults.LoadConditions.Role
+---@field SelectedCategory string
+
+---@class NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults.LoadConditions.Combat
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults.LoadConditions.Group
+---@field [string] any
+---@field Types NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults.LoadConditions.Group.Types
+
+---@class NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults.LoadConditions.Group.Types
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults.LoadConditions.Instance
+---@field [string] any
+---@field Types NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults.LoadConditions.Instance.Types
+
+---@class NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults.LoadConditions.Instance.Types
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults.LoadConditions.Position
+---@field [string] any
+---@field Types NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults.LoadConditions.Position.Types
+
+---@class NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults.LoadConditions.Position.Types
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults.LoadConditions.Role
+---@field [string] any
+---@field Types NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults.LoadConditions.Role.Types
+
+---@class NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults.LoadConditions.Role.Types
+---@field [string] any
 
 ---@class NRSKNUI.DBProfile.BlizzardRM
 ---@field [string] any
@@ -599,203 +748,6 @@
 ---@field Position string
 ---@field Separator string
 ---@field ShowClassColor boolean
-
----@class NRSKNUI.DBProfile.DungeonTimers
----@field [string] any
----@field BarDisplay NRSKNUI.DBProfile.DungeonTimers.BarDisplay
----@field BarGroup NRSKNUI.DBProfile.DungeonTimers.BarGroup
----@field Dungeons NRSKNUI.DBProfile.DungeonTimers.Dungeons
----@field Enabled boolean
----@field TextDisplay NRSKNUI.DBProfile.DungeonTimers.TextDisplay
----@field TextGroup NRSKNUI.DBProfile.DungeonTimers.TextGroup
----@field TriggerDefaults NRSKNUI.DBProfile.DungeonTimers.TriggerDefaults
-
----@class NRSKNUI.DBProfile.DungeonTimers.BarDisplay
----@field [string] any
----@field FontFace string
----@field FontOutline string
----@field FontShadow NRSKNUI.DBProfile.DungeonTimers.BarDisplay.FontShadow
----@field FontSize number
----@field UseGlobalBar boolean
----@field UseGlobalFont boolean
----@field barHeight number
----@field barTexture string
----@field barWidth number
----@field iconEnabled boolean
-
----@class NRSKNUI.DBProfile.DungeonTimers.BarDisplay.FontShadow
----@field [string] any
----@field Color table
----@field Enabled boolean
----@field OffsetX number
----@field OffsetY number
-
----@class NRSKNUI.DBProfile.DungeonTimers.BarGroup
----@field [string] any
----@field GrowthDirection string
----@field Position NRSKNUI.DBProfile.DungeonTimers.BarGroup.Position
----@field Spacing number
-
----@class NRSKNUI.DBProfile.DungeonTimers.BarGroup.Position
----@field [string] any
----@field AnchorFrom string
----@field AnchorTo string
----@field XOffset number
----@field YOffset number
-
----@class NRSKNUI.DBProfile.DungeonTimers.Dungeons
----@field [string] any
----@field AlgetharAcademy NRSKNUI.DBProfile.DungeonTimers.Dungeons.AlgetharAcademy
----@field MagistersTerrace NRSKNUI.DBProfile.DungeonTimers.Dungeons.MagistersTerrace
----@field MaisaraCaverns NRSKNUI.DBProfile.DungeonTimers.Dungeons.MaisaraCaverns
----@field NexusPointXenas NRSKNUI.DBProfile.DungeonTimers.Dungeons.NexusPointXenas
----@field PitOfSaron NRSKNUI.DBProfile.DungeonTimers.Dungeons.PitOfSaron
----@field SeatOfTriumvirate NRSKNUI.DBProfile.DungeonTimers.Dungeons.SeatOfTriumvirate
----@field Skyreach NRSKNUI.DBProfile.DungeonTimers.Dungeons.Skyreach
----@field WindrunnerSpire NRSKNUI.DBProfile.DungeonTimers.Dungeons.WindrunnerSpire
-
----@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.AlgetharAcademy
----@field [string] any
----@field Enabled boolean
----@field Triggers NRSKNUI.DBProfile.DungeonTimers.Dungeons.AlgetharAcademy.Triggers
----@field instanceId number
-
----@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.AlgetharAcademy.Triggers
----@field [string] any
-
----@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.MagistersTerrace
----@field [string] any
----@field Enabled boolean
----@field Triggers NRSKNUI.DBProfile.DungeonTimers.Dungeons.MagistersTerrace.Triggers
----@field instanceId number
-
----@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.MagistersTerrace.Triggers
----@field [string] any
-
----@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.MaisaraCaverns
----@field [string] any
----@field Enabled boolean
----@field Triggers NRSKNUI.DBProfile.DungeonTimers.Dungeons.MaisaraCaverns.Triggers
----@field instanceId number
-
----@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.MaisaraCaverns.Triggers
----@field [string] any
-
----@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.NexusPointXenas
----@field [string] any
----@field Enabled boolean
----@field Triggers NRSKNUI.DBProfile.DungeonTimers.Dungeons.NexusPointXenas.Triggers
----@field instanceId number
-
----@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.NexusPointXenas.Triggers
----@field [string] any
-
----@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.PitOfSaron
----@field [string] any
----@field Enabled boolean
----@field Triggers NRSKNUI.DBProfile.DungeonTimers.Dungeons.PitOfSaron.Triggers
----@field instanceId number
-
----@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.PitOfSaron.Triggers
----@field [string] any
-
----@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.SeatOfTriumvirate
----@field [string] any
----@field Enabled boolean
----@field Triggers NRSKNUI.DBProfile.DungeonTimers.Dungeons.SeatOfTriumvirate.Triggers
----@field instanceId number
-
----@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.SeatOfTriumvirate.Triggers
----@field [string] any
-
----@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.Skyreach
----@field [string] any
----@field Enabled boolean
----@field Triggers NRSKNUI.DBProfile.DungeonTimers.Dungeons.Skyreach.Triggers
----@field instanceId number
-
----@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.Skyreach.Triggers
----@field [string] any
-
----@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.WindrunnerSpire
----@field [string] any
----@field Enabled boolean
----@field Triggers NRSKNUI.DBProfile.DungeonTimers.Dungeons.WindrunnerSpire.Triggers
----@field instanceId number
-
----@class NRSKNUI.DBProfile.DungeonTimers.Dungeons.WindrunnerSpire.Triggers
----@field [string] any
-
----@class NRSKNUI.DBProfile.DungeonTimers.TextDisplay
----@field [string] any
----@field FontFace string
----@field FontOutline string
----@field FontShadow NRSKNUI.DBProfile.DungeonTimers.TextDisplay.FontShadow
----@field FontSize number
----@field UseGlobalFont boolean
----@field textAlign string
-
----@class NRSKNUI.DBProfile.DungeonTimers.TextDisplay.FontShadow
----@field [string] any
----@field Color table
----@field Enabled boolean
----@field OffsetX number
----@field OffsetY number
-
----@class NRSKNUI.DBProfile.DungeonTimers.TextGroup
----@field [string] any
----@field GrowthDirection string
----@field Position NRSKNUI.DBProfile.DungeonTimers.TextGroup.Position
----@field Spacing number
-
----@class NRSKNUI.DBProfile.DungeonTimers.TextGroup.Position
----@field [string] any
----@field AnchorFrom string
----@field AnchorTo string
----@field XOffset number
----@field YOffset number
-
----@class NRSKNUI.DBProfile.DungeonTimers.TriggerDefaults
----@field [string] any
----@field actionOnHideSound string
----@field actionOnShowSound string
----@field backgroundColor table
----@field barColor table
----@field barText1Format string
----@field barText1Justify string
----@field barText1XOffset number
----@field barText1YOffset number
----@field barText2Format string
----@field barText2Justify string
----@field barText2XOffset number
----@field barText2YOffset number
----@field countEnabled boolean
----@field countOperator string
----@field countValue number
----@field customText string
----@field decimalThreshold number
----@field displayType string
----@field enabled boolean
----@field extendTimer number
----@field loadPosEnabled boolean
----@field loadPosMelee boolean
----@field loadPosRanged boolean
----@field loadRoleDPS boolean
----@field loadRoleEnabled boolean
----@field loadRoleHealer boolean
----@field loadRoleTank boolean
----@field message string
----@field messageOperator string
----@field remainingEnabled boolean
----@field remainingOperator string
----@field remainingValue number
----@field showDecimals boolean
----@field spellId string
----@field textColor table
----@field textFormat string
----@field textJustify string
----@field triggerType string
----@field useBigWigsColors boolean
 
 ---@class NRSKNUI.DBProfile.HealerMana
 ---@field [string] any
