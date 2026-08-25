@@ -575,13 +575,23 @@ local function BuildTriggerTab(page, instanceId, trigger, kind)
         local remainingRow = c:Row(trigger.UseRemaining and rowH or rowHL, trigger.UseRemaining and nil or 0)
 
         remainingRow:Checkbox(L['Remaining Time'], {
-            width = 1,
+            width = 0.5,
             tooltip = L['Only show while the time left passes this test.'],
             value = trigger.UseRemaining,
             callback = function(checked)
                 trigger.UseRemaining = checked
                 Apply()
                 c:Rebuild()
+            end,
+        })
+        remainingRow:Dropdown(L['Casts'], {
+            width = 0.5,
+            tooltip = L['BigWigs sends a cast bar alongside the cooldown timer for the same spell.'],
+            value = trigger.ShowCasts,
+            options = NRSKNUI.BigWigsCast,
+            callback = function(val)
+                trigger.ShowCasts = val
+                Apply()
             end,
         })
 

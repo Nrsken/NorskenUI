@@ -2259,6 +2259,7 @@ local Defaults = {
                 Remaining = 5,
                 Offset = 0,
                 Count = "",
+                ShowCasts = "show",
                 -- Display
                 DisplayType = "bar",
                 UseBigWigsColors = true,

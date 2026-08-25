@@ -392,6 +392,7 @@
 ---@field Remaining number
 ---@field RemainingOperator string
 ---@field RightText string
+---@field ShowCasts string
 ---@field ShowDecimals boolean
 ---@field SpellId string
 ---@field Text string

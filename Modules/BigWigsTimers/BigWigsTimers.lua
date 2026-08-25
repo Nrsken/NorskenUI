@@ -518,6 +518,7 @@ function BigWigsTimers:RepairTriggers()
             end
 
             trigger.BossId = trigger.BossId or 0
+            trigger.ShowCasts = trigger.ShowCasts or self.db.TriggerDefaults.ShowCasts
         end
     end
 end

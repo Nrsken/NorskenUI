@@ -113,6 +113,12 @@ NRSKNUI.BigWigsRemainingOperators = {
     { key = '>=', text = '>=' },
 }
 
+NRSKNUI.BigWigsCast = {
+    { key = 'show', text = 'Show' },
+    { key = 'hide', text = 'Hide' },
+    { key = 'only', text = 'Only Show Cast' },
+}
+
 -- Matching --
 
 ---Fields that cannot change for as long as a bar is on screen, so they are only re-tested when the
@@ -125,6 +131,12 @@ function BigWigsTimers:BarMatchesTrigger(trigger, bar)
     if trigger.BossId ~= 0 and (not bar.addon or bar.addon.journalId ~= trigger.BossId) then return false end
 
     if trigger.SpellId ~= '' and trigger.SpellId ~= bar.spellId then return false end
+
+    -- BigWigs sends the cooldown timer and the cast bar under the same key.
+    local isCast = bar.timerType == 'cast'
+
+    if isCast and trigger.ShowCasts == 'hide' then return false end
+    if not isCast and trigger.ShowCasts == 'only' then return false end
 
     if trigger.Message ~= '' then
         local test = MESSAGE_TESTS[trigger.MessageOperator]
