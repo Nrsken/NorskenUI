@@ -382,6 +382,7 @@
 ---@field Count string
 ---@field DecimalThreshold number
 ---@field DisplayType string
+---@field Duration number
 ---@field Enabled boolean
 ---@field LeftText string
 ---@field LoadConditions NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults.LoadConditions
@@ -397,6 +398,7 @@
 ---@field SpellId string
 ---@field Text string
 ---@field TextColor table
+---@field TriggerType string
 ---@field UseBigWigsColors boolean
 ---@field UseRemaining boolean
 

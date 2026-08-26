@@ -4,16 +4,20 @@ local NRSKNUI = select(2, ...)
 local BigWigsTimers = NRSKNUI:GetModule('BigWigsTimers')
 
 BigWigsTimers.bars = {}
+BigWigsTimers.announces = {}
 BigWigsTimers.textByEventId = {}
 BigWigsTimers.eventIdByText = {}
 
 local hasanysecretvalues = hasanysecretvalues
+local insert, remove = table.insert, table.remove
 local pairs, next = pairs, next
 local tostring = tostring
 local GetTime = GetTime
+local tonumber = tonumber
 local wipe = wipe
 
 local HANDLERS = {
+    BigWigs_Message = 'OnMessage',
     BigWigs_StartBar = 'OnStartBar',
     BigWigs_Timer = 'OnTimer',
     BigWigs_TargetTimer = 'OnTargetTimer',
@@ -67,6 +71,7 @@ end
 
 function BigWigsTimers:WipeBars()
     wipe(self.bars)
+    wipe(self.announces)
     wipe(self.textByEventId)
     wipe(self.eventIdByText)
     self:OnBarsChanged()
@@ -107,7 +112,37 @@ function BigWigsTimers:StoreBar(addon, spellId, duration, text, count, icon, tim
     self:OnBarsChanged()
 end
 
+---Kept only for announceWindow, past which no trigger's Duration can still be running it out.
+---@param addon BigWigs.Module?
+---@param spellId number|string|nil the BigWigs option key, absent on the loader's own messages
+---@param text string
+---@param color string|number[]|nil
+---@param icon number|string|nil
+function BigWigsTimers:StoreAnnounce(addon, spellId, text, color, icon)
+    insert(self.announces, {
+        addon = addon,
+        spellId = tostring(spellId or ''),
+        text = text,
+        -- A message carries no count, only the "(N)" BigWigs wrote into it.
+        count = tonumber(text:match('%((%d+)%)') or text:match('（(%d+)）')) or 0,
+        icon = icon,
+        timerType = 'announce',
+        time = GetTime(),
+        bwTextColor = self:GetBigWigsMessageColor(addon, spellId, color),
+    })
+
+    self:OnBarsChanged()
+end
+
 -- Handlers --
+
+function BigWigsTimers:OnMessage(...)
+    local _, addon, spellId, text, color, icon = ...
+    if not text or self.announceWindow == 0 then return end
+    if hasanysecretvalues(spellId, text) then return end
+
+    self:StoreAnnounce(addon, spellId, text, color, icon)
+end
 
 ---The only message carrying the timeline event ID and it arrives before its BigWigs_Timer.
 function BigWigsTimers:OnStartBar(...)
@@ -204,6 +239,12 @@ function BigWigsTimers:OnModuleStop(...)
         end
     end
 
+    for index = #self.announces, 1, -1 do
+        if self.announces[index].addon == addon then
+            remove(self.announces, index)
+        end
+    end
+
     self:OnBarsChanged()
 end
 
@@ -224,9 +265,17 @@ function BigWigsTimers:SweepExpiredBars()
         end
     end
 
+    -- Appended in arrival order, so the front of the list is always the oldest.
+    local cutoff = now - self.announceWindow
+
+    while self.announces[1] and self.announces[1].time <= cutoff do
+        remove(self.announces, 1)
+        changed = true
+    end
+
     if changed then
         self:OnBarsChanged()
     end
 
-    return next(self.bars) ~= nil
+    return next(self.bars) ~= nil or self.announces[1] ~= nil
 end

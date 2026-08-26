@@ -36,6 +36,7 @@ BigWigsTimers.activeTriggers = {}
 BigWigsTimers.triggerOrder = {}
 BigWigsTimers.matched = {}
 BigWigsTimers.previewEntries = {}
+BigWigsTimers.announceWindow = 0
 
 -- Anchors only resolve the two group settings pages, so the trigger pages are claimed directly.
 BigWigsTimers.previewPages = {
@@ -279,7 +280,7 @@ function BigWigsTimers:UpdateDisplay(display, trigger, bar, remaining)
     display.rightText:SetTextColor(text[1], text[2], text[3], text[4])
 
     -- The offset shifts what "full" means, so the fill is measured against the same shifted window.
-    local total = bar.duration + trigger.Offset
+    local total = trigger.TriggerType == 'announce' and trigger.Duration or (bar.duration + trigger.Offset)
     display.statusBar:SetValue(total > 0 and min(remaining / total, 1) or 0)
 end
 
@@ -291,6 +292,7 @@ function BigWigsTimers:RebuildMatches()
 
     for _, trigger in ipairs(self.activeTriggers) do
         local bars = self.matched[trigger]
+        local isAnnounce = trigger.TriggerType == 'announce'
 
         if not bars then
             bars = {}
@@ -298,12 +300,12 @@ function BigWigsTimers:RebuildMatches()
         end
         wipe(bars)
 
-        for _, bar in pairs(self.bars) do
+        for _, bar in pairs(isAnnounce and self.announces or self.bars) do
             if self:BarMatchesTrigger(trigger, bar) then
                 insert(bars, bar)
 
                 -- A positive offset has to keep the bar in the registry past its own expiry.
-                if trigger.Offset > 0 then
+                if not isAnnounce and trigger.Offset > 0 then
                     bar.keepUntil = max(bar.keepUntil or 0, bar.expirationTime + trigger.Offset)
                 end
             end
@@ -347,7 +349,7 @@ end
 function BigWigsTimers:OnBarsChanged()
     self.matchDirty = true
 
-    if next(self.bars) then
+    if next(self.bars) or self.announces[1] then
         self:SetUpdaterRunning(true)
     end
 end
@@ -405,6 +407,7 @@ function BigWigsTimers:RebuildActiveTriggers()
     wipe(self.activeTriggers)
     wipe(self.triggerOrder)
     wipe(self.matched)
+    self.announceWindow = 0
 
     if self.isPreview then
         if self.previewTrigger then
@@ -419,6 +422,10 @@ function BigWigsTimers:RebuildActiveTriggers()
                 if trigger.Enabled then
                     insert(self.activeTriggers, trigger)
                     self.triggerOrder[trigger] = index
+
+                    if trigger.TriggerType == 'announce' then
+                        self.announceWindow = max(self.announceWindow, trigger.Duration)
+                    end
                 end
             end
         end
@@ -519,6 +526,8 @@ function BigWigsTimers:RepairTriggers()
 
             trigger.BossId = trigger.BossId or 0
             trigger.ShowCasts = trigger.ShowCasts or self.db.TriggerDefaults.ShowCasts
+            trigger.TriggerType = trigger.TriggerType or self.db.TriggerDefaults.TriggerType
+            trigger.Duration = trigger.Duration or self.db.TriggerDefaults.Duration
         end
     end
 end
@@ -645,16 +654,23 @@ function BigWigsTimers:SyncPreview()
 
     for _, source in ipairs(wanted) do
         local entry = existing[source.trigger]
+        local duration = source.trigger.TriggerType == 'announce' and source.trigger.Duration or PREVIEW_DURATION
 
         if entry then
             existing[source.trigger] = nil
         else
-            entry = { trigger = source.trigger, bar = { duration = PREVIEW_DURATION, expirationTime = now + PREVIEW_DURATION } }
+            entry = {
+                trigger = source.trigger,
+                bar = {
+                    expirationTime = now + duration,
+                }
+            }
         end
 
-        -- Everything config can change is refreshed; the countdown itself is left alone.
+        -- Everything config can change is refreshed, the countdown itself is left alone.
         local bar = entry.bar
 
+        bar.duration = duration
         bar.spellId = source.trigger.SpellId
         bar.text = source.text
         bar.icon = source.icon
@@ -684,8 +700,8 @@ function BigWigsTimers:UpdatePreview()
         local remaining = entry.bar.expirationTime - now
 
         if remaining <= 0 then
-            entry.bar.expirationTime = now + PREVIEW_DURATION
-            remaining = PREVIEW_DURATION
+            remaining = entry.bar.duration
+            entry.bar.expirationTime = now + remaining
         end
 
         local display = self:AcquireDisplay(entry.trigger)

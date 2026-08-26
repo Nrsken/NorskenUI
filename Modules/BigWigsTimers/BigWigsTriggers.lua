@@ -119,10 +119,14 @@ NRSKNUI.BigWigsCast = {
     { key = 'only', text = 'Only Show Cast' },
 }
 
+NRSKNUI.BigWigsTriggerTypes = {
+    { key = 'timer',    text = 'BigWigs Timer' },
+    { key = 'announce', text = 'BigWigs Announce' },
+}
+
 -- Matching --
 
----Fields that cannot change for as long as a bar is on screen, so they are only re-tested when the
----bar registry changes.
+---Fields that cannot change while an entry is on screen, re-tested only when its registry changes.
 ---@param trigger table
 ---@param bar BigWigsTimers.Bar
 ---@return boolean
@@ -132,11 +136,13 @@ function BigWigsTimers:BarMatchesTrigger(trigger, bar)
 
     if trigger.SpellId ~= '' and trigger.SpellId ~= bar.spellId then return false end
 
-    -- BigWigs sends the cooldown timer and the cast bar under the same key.
-    local isCast = bar.timerType == 'cast'
+    -- BigWigs sends the cooldown timer and the cast bar under the same key; announces have neither.
+    if trigger.TriggerType ~= 'announce' then
+        local isCast = bar.timerType == 'cast'
 
-    if isCast and trigger.ShowCasts == 'hide' then return false end
-    if not isCast and trigger.ShowCasts == 'only' then return false end
+        if isCast and trigger.ShowCasts == 'hide' then return false end
+        if not isCast and trigger.ShowCasts == 'only' then return false end
+    end
 
     if trigger.Message ~= '' then
         local test = MESSAGE_TESTS[trigger.MessageOperator]
@@ -157,6 +163,7 @@ end
 ---@param bar BigWigsTimers.Bar
 ---@return number
 function BigWigsTimers:TriggerRemaining(trigger, bar)
+    if trigger.TriggerType == 'announce' then return bar.time + trigger.Duration - GetTime() end
     if bar.paused then return bar.remaining + trigger.Offset end
 
     return bar.expirationTime - GetTime() + trigger.Offset
@@ -167,23 +174,34 @@ end
 ---@return boolean
 function BigWigsTimers:TriggerPasses(trigger, remaining)
     if remaining <= 0 then return false end
-    if not trigger.UseRemaining then return true end
+    if not trigger.UseRemaining or trigger.TriggerType == 'announce' then return true end
 
     return REMAINING_TESTS[trigger.RemainingOperator](remaining, trigger.Remaining)
 end
 
----The soonest-expiring bar a trigger currently matches, if any of them pass its remaining-time test.
+---The most urgent entry a trigger matches: the soonest-expiring bar, but the newest announce.
 ---@param trigger table
 ---@param bars BigWigsTimers.Bar[]
 ---@return BigWigsTimers.Bar? bar, number? remaining
 function BigWigsTimers:ResolveTrigger(trigger, bars)
+    local newestWins = trigger.TriggerType == 'announce'
     local best, bestRemaining
 
     for _, bar in ipairs(bars) do
         local remaining = self:TriggerRemaining(trigger, bar)
 
-        if self:TriggerPasses(trigger, remaining) and (not best or bar.expirationTime < best.expirationTime) then
-            best, bestRemaining = bar, remaining
+        if self:TriggerPasses(trigger, remaining) then
+            local better
+
+            if not best then
+                better = true
+            elseif newestWins then
+                better = remaining >= bestRemaining
+            else
+                better = remaining < bestRemaining
+            end
+
+            if better then best, bestRemaining = bar, remaining end
         end
     end
 

@@ -74,20 +74,25 @@ BigWigsLoader = {}
 -- eventId is the timeline event ID, the only message that carries one.
 ---@alias BigWigs.OnStartBar fun(event: "BigWigs_StartBar", module: BigWigs.Module?, key: number|string|nil, text: string, time: number, icon: number|string, isApprox: boolean, maxTime: number?, eventId: number?, spellIndicators: any?)
 
+-- color is the name of a color for BigWigs to look up, not a color.
+---@alias BigWigs.OnMessage fun(event: "BigWigs_Message", module: BigWigs.Module?, key: number|string|nil, text: string, color: string|number[]|nil, icon: number|string|nil, isEmphasized: boolean?, customDisplayTime: number?)
+
+-- Also an announce, which has no clock of its own and so none of the timer fields.
 ---@class BigWigsTimers.Bar
 ---@field addon BigWigs.Module? the module that started it, so its own messages can clear it
 ---@field spellId string stringified so the pull/break sentinels compare against user input
----@field text string also the registry key
----@field duration number
----@field expirationTime number
+---@field text string also the registry key, except for announces which are kept in arrival order
 ---@field icon number|string
----@field count number parsed out of the "(N)" in the bar text by BigWigs
----@field isCooldown boolean true for :CDBar, an estimated duration
----@field isBarEnabled boolean the user's BAR flag, the messages fire either way
----@field timerType 'timer'|'cast'|'break'|'pull'
----@field bwBarColor number[]
----@field bwTextColor number[]
----@field bwBgColor number[]
+---@field count number parsed out of the "(N)" in the text by BigWigs
+---@field timerType 'timer'|'cast'|'break'|'pull'|'announce'
+---@field bwTextColor number[]?
+---@field time number? when an announce arrived, its only fixed point
+---@field duration number? bar only
+---@field expirationTime number? bar only
+---@field isCooldown boolean? true for :CDBar, an estimated duration
+---@field isBarEnabled boolean? the user's BAR flag, the messages fire either way
+---@field bwBarColor number[]?
+---@field bwBgColor number[]?
 ---@field paused boolean?
 ---@field remaining number? frozen countdown while paused
 ---@field keepUntil number? a positive trigger offset holds the bar past its own expiry

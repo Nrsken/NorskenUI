@@ -34,6 +34,28 @@ function BigWigsTimers:GetBigWigsColors(bwModule, key)
     return barColor, textColor, bgColor
 end
 
+---Resolves a message color, which arrives as the name of one and carries no alpha once looked up.
+---@param bwModule BigWigs.Module?
+---@param key number|string|nil
+---@param color string|number[]|nil
+---@return number[]? textColor
+function BigWigsTimers:GetBigWigsMessageColor(bwModule, key, color)
+    if type(color) == 'table' then
+        if color.r then return { color.r, color.g, color.b, color.a or 1 } end
+
+        return { color[1], color[2], color[3], color[4] or 1 }
+    end
+
+    if not color or not BigWigs or not BigWigs.GetPlugin then return nil end
+
+    local colorModule = BigWigs:GetPlugin('Colors', true) --[[@as BigWigs.ColorsPlugin?]]
+    if not colorModule or not colorModule.GetColorTable then return nil end
+
+    local resolved = colorModule:GetColorTable(color, bwModule, key)
+
+    return { resolved[1], resolved[2], resolved[3], resolved[4] or 1 }
+end
+
 ---Creates a bar data table for a given addon, spell ID, duration, text, count and icon.
 ---@param bwModule BigWigs.Module?
 ---@param key number|string|nil

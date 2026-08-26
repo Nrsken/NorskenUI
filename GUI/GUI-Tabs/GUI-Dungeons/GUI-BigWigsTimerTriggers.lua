@@ -465,16 +465,9 @@ local function BuildTriggerTab(page, instanceId, trigger, kind)
     local browser -- built below, the boss dropdown redraws it
 
     card:Rebuild(function(c)
+        local isAnnounce = trigger.TriggerType == 'announce'
         local nameRow = c:Row(rowH)
 
-        nameRow:Checkbox(L['Enabled'], {
-            width = 0.5,
-            value = trigger.Enabled,
-            callback = function(checked)
-                trigger.Enabled = checked
-                Apply()
-            end,
-        })
         nameRow:EditBox(L['Timer Name'], {
             width = 0.5,
             value = trigger.Name,
@@ -484,6 +477,16 @@ local function BuildTriggerTab(page, instanceId, trigger, kind)
                 trigger.Name = text
                 Apply()
                 RefreshSidebar(kind)
+            end,
+        })
+        nameRow:Dropdown(L['Trigger Type'], {
+            width = 0.5,
+            options = NRSKNUI.BigWigsTriggerTypes,
+            value = trigger.TriggerType,
+            callback = function(key)
+                trigger.TriggerType = key
+                Apply()
+                c:Rebuild()
             end,
         })
 
@@ -543,7 +546,8 @@ local function BuildTriggerTab(page, instanceId, trigger, kind)
 
         msgRow:EditBox(L['Message'], {
             width = 0.5,
-            tooltip = L['Matched against the bar text BigWigs shows.'],
+            tooltip = isAnnounce and L['Matched against the announce text BigWigs shows.'] or
+                L['Matched against the bar text BigWigs shows.'],
             value = trigger.Message,
             callback = function(text)
                 trigger.Message = text
@@ -571,6 +575,23 @@ local function BuildTriggerTab(page, instanceId, trigger, kind)
         })
 
         c:Separator()
+
+        if isAnnounce then
+            c:Row(rowHL, 0):Slider(L['Duration'], {
+                width = 1,
+                tooltip = L['How long the display stays up after the announce fires.'],
+                min = 0.5,
+                max = 30,
+                step = 0.5,
+                value = trigger.Duration,
+                callback = function(val)
+                    trigger.Duration = val
+                    Apply()
+                end,
+            })
+
+            return
+        end
 
         local remainingRow = c:Row(trigger.UseRemaining and rowH or rowHL, trigger.UseRemaining and nil or 0)
 

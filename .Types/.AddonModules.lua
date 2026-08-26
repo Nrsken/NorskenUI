@@ -79,6 +79,8 @@
 ---@class BigWigsTimersModule : NRSKNUI.ModuleBase, AceEvent-3.0, AceTimer-3.0, AceHook-3.0
 ---@field db NRSKNUI.DBProfile.BigWigsTimers
 ---@field bars table<string, BigWigsTimers.Bar>
+---@field announces BigWigsTimers.Bar[] in arrival order, so the oldest is always the first
+---@field announceWindow number the longest Duration any active announce trigger asks for
 ---@field textByEventId table<number, string>
 ---@field eventIdByText table<string, number>
 ---@field spellCache table<number, BigWigsTimers.SpellEntry[]>

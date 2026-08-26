@@ -2249,6 +2249,7 @@ local Defaults = {
             TriggerDefaults = {
                 Enabled = true,
                 Name = "New Timer",
+                TriggerType = "timer",
                 -- Match
                 BossId = 0,
                 SpellId = "",
@@ -2260,6 +2261,8 @@ local Defaults = {
                 Offset = 0,
                 Count = "",
                 ShowCasts = "show",
+                -- Announce
+                Duration = 3,
                 -- Display
                 DisplayType = "bar",
                 UseBigWigsColors = true,
