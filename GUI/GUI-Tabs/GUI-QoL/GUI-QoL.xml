@@ -12,4 +12,5 @@
     <Script file='GUI-CharacterPanel.lua'/>
     <Script file='GUI-SkyRiding.lua'/>
     <Script file='GUI-SpellAlert.lua'/>
+    <Script file='GUI-CDMStrings.lua'/>
 </Ui>

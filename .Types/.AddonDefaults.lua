@@ -10,6 +10,7 @@
 ---@field AuraIndicatorGroups NRSKNUI.DBGlobal.AuraIndicatorGroups
 ---@field AuraIndicators NRSKNUI.DBGlobal.AuraIndicators
 ---@field AuraSpellLists NRSKNUI.DBGlobal.AuraSpellLists
+---@field CDMLayoutCache NRSKNUI.DBGlobal.CDMLayoutCache
 ---@field GUIState NRSKNUI.DBGlobal.GUIState
 ---@field GlobalProfile string
 ---@field SpellAlertCVars table<string, string?>
@@ -31,6 +32,9 @@
 ---@field [string] any
 
 ---@class NRSKNUI.DBGlobal.AuraSpellLists
+---@field [string] any
+
+---@class NRSKNUI.DBGlobal.CDMLayoutCache
 ---@field [string] any
 
 ---@class NRSKNUI.DBGlobal.GUIState

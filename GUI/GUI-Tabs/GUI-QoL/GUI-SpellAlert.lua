@@ -14,10 +14,9 @@ local function ApplySettings() SpellAlert:ApplySettings() end
 
 ---@param name string
 ---@param icon number|string
----@param size number font size of the text the label is going into
 ---@return string
-local function SpecLabel(name, icon, size)
-    return format('|T%s:%d:%d:0:0:64:64:5:59:5:59|t %s', icon, size, size, NRSKNUI:ColorTextByClass(name))
+local function SpecLabel(name, icon)
+    return format('|T%s:0:0:0:-2:64:64:5:59:5:59|t %s', icon, NRSKNUI:ColorTextByClass(name))
 end
 
 local function BuildTab(page, db)
@@ -58,7 +57,7 @@ local function BuildTab(page, db)
     local settingsCard = page:Card(L['Alert Settings'], 'all')
     settingsCard:Rebuild(function(card)
         local specID, specName, specIcon = SpellAlert:GetSpecInfo()
-        local specOption = specID and SpecLabel(specName, specIcon, Theme.fontSizeNormal) or nil
+        local specOption = specID and SpecLabel(specName, specIcon) or nil
         local specText = specID and NRSKNUI:ColorTextByClass(specName) or nil
         local useGlobal = db.UseGlobal or not specID
         local scopeDesc

@@ -94,6 +94,7 @@ GUIFrame.SidebarConfig = {
                 { id = 'characterPanel',     text = L['Character Panel'] },
                 { id = 'skyRiding',          text = L['Skyriding UI'] },
                 { id = 'spellAlert',         text = L['Spell Alerts'] },
+                { id = 'cdmStrings',         text = L['CDM Profile Backup'] },
             }
         },
         {

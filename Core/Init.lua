@@ -147,6 +147,7 @@ NRSKNUI.Durability = NRSKNUI:NewModule('Durability', 'AceEvent-3.0')
 NRSKNUI.CharacterPanel = NRSKNUI:NewModule('CharacterPanel', 'AceEvent-3.0')
 NRSKNUI.SkyRiding = NRSKNUI:NewModule('SkyRiding', 'AceEvent-3.0')
 NRSKNUI.SpellAlert = NRSKNUI:NewModule('SpellAlert', 'AceEvent-3.0')
+NRSKNUI.CooldownStrings = NRSKNUI:NewModule('CooldownStrings', 'AceEvent-3.0')
 
 -- Skinning Modules
 NRSKNUI.Skinning = NRSKNUI:NewModule('Skinning', 'AceEvent-3.0')
