@@ -19,6 +19,7 @@ local UnitIsDeadOrGhost = UnitIsDeadOrGhost
 local RunNextFrame = RunNextFrame
 
 local IsSpellKnown = C_SpellBook and C_SpellBook.IsSpellKnown
+local IsSpellInSpellBook = C_SpellBook and C_SpellBook.IsSpellInSpellBook
 
 local petStates = {
     { key = 'petMissing', order = 1, textKey = 'PetMissing', colorKey = 'MissingColor' },
@@ -44,6 +45,7 @@ end
 -- Demonology is the only spec locked to a specific pet, identified by Felstorm on the pet bar.
 local function IsWrongWarlockPet()
     if NRSKNUI.MyClass ~= 'WARLOCK' or NRSKNUI.MySpec.id ~= 266 then return false end
+    if not IsSpellInSpellBook(30146) then return false end
     if not UnitExists('pet') or not PetHasActionBar() then return false end
 
     for slot = 1, 10 do
