@@ -2,6 +2,7 @@
 local NRSKNUI = select(2, ...)
 ---@class MiscVarsModule
 local MiscVars = NRSKNUI:GetModule('MiscVars')
+function MiscVars:UpdateDB() self.db = NRSKNUI.db.profile.Miscellaneous.MiscVars end
 
 local ipairs = ipairs
 local tonumber = tonumber
@@ -11,12 +12,9 @@ local C_Timer = C_Timer
 local SetCVar = C_CVar and C_CVar.SetCVar
 local GetCVar = C_CVar and C_CVar.GetCVar
 
-function MiscVars:UpdateDB()
-    self.db = NRSKNUI.db.profile.Miscellaneous.MiscVars
-end
-
 ---@type table
 MiscVars.DEFS = {
+    -- General CVars
     {
         key = 'nameplateUseClassColorForFriendlyPlayerUnitNames',
         label = 'Class Colored Friendly Nameplates',
@@ -55,6 +53,7 @@ MiscVars.DEFS = {
         type = 'boolean',
         default = true,
     },
+    -- Dev CVars
     {
         key = 'addonPvPMatchRestrictionsForced',
         label = 'Force PvP Match Addon Restrictions',
@@ -110,7 +109,51 @@ MiscVars.DEFS = {
         type = 'boolean',
         default = false,
         category = 'dev',
-    }
+    },
+    -- Combat text CVars
+    {
+        key = 'floatingCombatTextCombatDamage_v2',
+        label = 'Floating Combat Text Damage',
+        description = 'Show floating combat text for damage.',
+        type = 'boolean',
+        default = true,
+        category = 'combatTexts',
+    },
+    {
+        key = 'floatingCombatTextCombatHealing_v2',
+        label = 'Floating Combat Text Healing',
+        description = 'Show floating combat text for healing.',
+        type = 'boolean',
+        default = true,
+        category = 'combatTexts',
+    },
+    {
+        key = 'enableFloatingCombatText',
+        label = 'Enable Floating Combat Text',
+        description = 'Enable floating combat text for damage and healing.',
+        type = 'boolean',
+        default = true,
+        category = 'combatTexts',
+    },
+    {
+        key = 'floatingCombatTextReactives_v2',
+        label = 'Floating Combat Text Reactives',
+        description = 'Show floating combat text for reactives.',
+        type = 'boolean',
+        default = true,
+        category = 'combatTexts',
+    },
+    {
+        key = 'WorldTextScale_v2',
+        label = 'World Text Scale',
+        description = 'Adjust the scale of world text.',
+        type = 'number',
+        min = 0.1,
+        max = 100000,
+        step = 0.1,
+        default = 1.0,
+        category = 'combatTexts',
+    },
 }
 
 ---@type table

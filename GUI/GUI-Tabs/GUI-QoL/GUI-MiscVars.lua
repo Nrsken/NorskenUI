@@ -97,6 +97,7 @@ local function BuildSQWCVarSettingsTab(page, db)
         text =
         "The spell queue window determines how early you can\nqueue your next ability before your current cast finishes.\nVisit |cff8788EEXerwo|r's maxroll guide for more information.",
         height = infoHeight,
+        autoHeight = true,
         bgMode = 'hide',
     })
     infoRow:Button(L['Open Guide'], {
@@ -110,6 +111,22 @@ local function BuildSQWCVarSettingsTab(page, db)
             )
         end,
     })
+end
+
+-- Combat Text CVars Tab.
+local function BuildCombatTextCVarSettingsTab(page, db)
+    local combatTextDefs = {}
+    for _, def in ipairs(MiscVars.DEFS) do
+        if def.category == 'combatTexts' then
+            combatTextDefs[#combatTextDefs + 1] = def
+        end
+    end
+
+    local card = page:Card(L['Combat Text CVars'])
+    for i, def in ipairs(combatTextDefs) do
+        AddCVarWidget(card, def, i == #combatTextDefs)
+        if i < #combatTextDefs then card:Separator() end
+    end
 end
 
 -- Dev CVars Tab.
@@ -132,9 +149,10 @@ GUI:RegisterPage('miscVars', {
     mode = 'tabs',
     search = {},
     tabs = {
-        { id = 'general',  text = L['General CVars'] },
-        { id = 'sqwCvars', text = L['SQW CVar'] },
-        { id = 'devCvars', text = L['Dev CVars'] },
+        { id = 'general',         text = L['General CVars'] },
+        { id = 'sqwCvars',        text = L['SQW CVar'] },
+        { id = 'combatTextCvars', text = L['Combat Text CVars'] },
+        { id = 'devCvars',        text = L['Dev CVars'] },
     },
     build = function(page, tabId)
         local db = NRSKNUI.db.profile.Miscellaneous.MiscVars
@@ -145,6 +163,8 @@ GUI:RegisterPage('miscVars', {
             BuildGeneralSettingsTab(page, db)
         elseif tabId == 'sqwCvars' then
             BuildSQWCVarSettingsTab(page, db)
+        elseif tabId == 'combatTextCvars' then
+            BuildCombatTextCVarSettingsTab(page, db)
         elseif tabId == 'devCvars' then
             BuildDevCVarSettingsTab(page, db)
         end
