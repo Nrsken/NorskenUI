@@ -65,10 +65,24 @@ local function BuildGlobalView(page)
         end,
     })
 
+    globalCard:Separator()
+
+    local infoHeight = 50
+    globalCard:Row(infoHeight, 0):Text(NRSKNUI:ColorTextByTheme(L['Global Font Info']), {
+        width = 1,
+        height = infoHeight,
+        autoHeight = true,
+        bgMode = 'hide',
+        text = {
+            L['Font selected above is applied to all modules and blizzard texts that support it.'],
+            L['Each module can override the global font with its own font face.'],
+        },
+    })
+
     local blizzCard = page:Card(L['Blizzard UI Font'])
     local blizzRow1 = blizzCard:Row(rowH)
     blizzRow1:Checkbox(L['Style Blizzard Fonts'], {
-        width = 0.5,
+        width = 1,
         value = blizzDB.Enabled,
         msgPopup = true,
         msgText = L['Blizzard UI Font'],
@@ -80,7 +94,22 @@ local function BuildGlobalView(page)
             page:Refresh()
         end,
     })
-    blizzRow1:Dropdown(L['Outline'], {
+
+    blizzCard:Separator()
+
+    blizzCard:Row(rowH):Checkbox(L['Hide Shadows'], {
+        width = 1,
+        value = blizzDB.HideShadow,
+        tooltip = L['Remove the drop shadow from styled fonts for a flatter look. Native shadows return when unchecked.'],
+        conditions = { 'blizzFontsON' },
+        callback = function(checked)
+            blizzDB.HideShadow = checked
+            NRSKNUI:ApplyBlizzardFonts()
+        end,
+    })
+
+    local outlineRow = blizzCard:Row(rowH)
+    outlineRow:Dropdown(L['Outline'], {
         width = 0.5,
         options = OutlineOptions(),
         value = blizzDB.Outline,
@@ -91,8 +120,7 @@ local function BuildGlobalView(page)
         end,
     })
 
-    local blizzRow2 = blizzCard:Row(rowH)
-    blizzRow2:Checkbox(L['Use Slug Rendering'], {
+    outlineRow:Checkbox(L['Use Slug Rendering'], {
         width = 0.5,
         value = blizzDB.Slug,
         tooltip = L['Higher-quality glyph rendering on supported fonts, combined with the outline above where enabled.'],
@@ -102,18 +130,10 @@ local function BuildGlobalView(page)
             NRSKNUI:ApplyBlizzardFonts()
         end,
     })
-    blizzRow2:Checkbox(L['Hide Shadows'], {
-        width = 0.5,
-        value = blizzDB.HideShadow,
-        tooltip = L['Remove the drop shadow from styled fonts for a flatter look. Native shadows return when unchecked.'],
-        conditions = { 'blizzFontsON' },
-        callback = function(checked)
-            blizzDB.HideShadow = checked
-            NRSKNUI:ApplyBlizzardFonts()
-        end,
-    })
 
-    local function FamilySlider(row, famKey, label)
+    blizzCard:Separator()
+
+    local function FamilySlider(row, famKey, label, tooltip)
         row:Slider(label, {
             width = 0.5,
             min = -8,
@@ -121,6 +141,7 @@ local function BuildGlobalView(page)
             step = 1,
             value = blizzDB.Families[famKey] or 0,
             conditions = { 'blizzFontsON' },
+            tooltip = tooltip,
             callback = function(val)
                 blizzDB.Families[famKey] = val
                 NRSKNUI:ApplyBlizzardFonts(true)
@@ -129,12 +150,30 @@ local function BuildGlobalView(page)
     end
 
     local blizzRow3 = blizzCard:Row(rowH)
-    FamilySlider(blizzRow3, 'small', L['Small Size'])
-    FamilySlider(blizzRow3, 'medium', L['Medium Size'])
+    FamilySlider(blizzRow3, 'tiny', L['Tiny Size'], L['native sizes 9 and below'])
+    FamilySlider(blizzRow3, 'small', L['Small Size'], L['native sizes 10 to 11'])
 
-    local blizzRow4 = blizzCard:Row(rowHL, 0)
-    FamilySlider(blizzRow4, 'large', L['Large Size'])
-    FamilySlider(blizzRow4, 'huge', L['Huge Size'])
+    local blizzRow4 = blizzCard:Row(rowH)
+    FamilySlider(blizzRow4, 'medium', L['Medium Size'], L['native sizes 12 to 14'])
+    FamilySlider(blizzRow4, 'large', L['Large Size'], L['native sizes 15 to 18'])
+
+    local blizzRow5 = blizzCard:Row(rowHL, 0)
+    FamilySlider(blizzRow5, 'huge', L['Huge Size'], L['native sizes 19 to 24'])
+    FamilySlider(blizzRow5, 'display', L['Display Size'], L['native sizes above 24'])
+
+    blizzCard:Separator()
+
+    blizzCard:Row(22, 0):Text(NRSKNUI:ColorTextByTheme(L['Blizzard Font Info']), {
+        width = 1,
+        height = 22,
+        autoHeight = true,
+        bgMode = 'hide',
+        text = {
+            L['Font sizes have been split into 6 different size families, tiny, small, medium, large, huge and display.'],
+            L['by default all families are set to 0, this means they use native size.'],
+            L['Changing the value either adds or subtracts from native size, e.g a native size of 16 with slider value of 2, becomes 18.'],
+        },
+    })
 end
 
 local function BuildSpecialView(page, entry)
@@ -297,7 +336,8 @@ GUI:RegisterPage('globalFonts', {
     mode = 'clean',
     search = {
         L['Use Global Font'], L['Style Blizzard Fonts'], L['Outline'], L['Use Slug Rendering'],
-        L['Hide Shadows'], L['Small Size'], L['Medium Size'], L['Large Size'], L['Huge Size'], L['Font Size'],
+        L['Hide Shadows'], L['Tiny Size'], L['Small Size'], L['Medium Size'], L['Large Size'],
+        L['Huge Size'], L['Display Size'], L['Font Size'],
     },
     sidebar = { items = items },
     build = function(page, _, itemKey)
