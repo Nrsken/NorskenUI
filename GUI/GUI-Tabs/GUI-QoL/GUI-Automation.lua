@@ -68,6 +68,7 @@ local function BuildGeneralSettingsTab(page, db)
     infoRow:Text(NRSKNUI:ColorTextByTheme(L['Override Info']), {
         width = 1,
         height = textRowSize,
+        autoHeight = true,
         bgMode = 'hide',
         text = NRSKNUI:ColorTextByTheme('• ') ..
             L['Automation features that has override support are marked with '] .. overrideTag,

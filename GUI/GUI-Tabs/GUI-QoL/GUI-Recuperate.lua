@@ -35,6 +35,7 @@ local function BuildGeneralSettingsTab(page, db)
     infoRow:Text(NRSKNUI:ColorTextByTheme(L['Functionality Info']), {
         width = 1,
         height = infoRowSize,
+        autoHeight = true,
         bgMode = 'hide',
         text = NRSKNUI:ColorTextByTheme('• ') ..
             L['Because of restrictions i cannot fully hide the button when loaded and at '] ..

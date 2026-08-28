@@ -32,6 +32,7 @@ local function BuildTab(page, db)
     infoRow:Text(NRSKNUI:ColorTextByTheme(L['Functionality Info']), {
         width = 1,
         height = textRowSize,
+        autoHeight = true,
         bgMode = 'hide',
         text = NRSKNUI:ColorTextByTheme('• ') ..
             L['Copies SpellID, ItemID, AuraID, MacroID and Unitnames on mouseover'] .. '\n' ..
