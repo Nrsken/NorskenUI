@@ -276,16 +276,15 @@ local function BuildSpecialView(page, entry)
     end
 
     if entry.note then
-        local noteHeight = 40
+        local noteHeight = 20
         local noteRow = card:Row(noteHeight, 0)
         noteRow:Text(nil, {
             width = 1,
             text = L[entry.note],
             height = noteHeight,
+            autoHeight = true,
             bgMode = 'hide',
         })
-    else
-        card:Row(Theme.rowHeightSeparator, 0)
     end
 
     if entry.position then
