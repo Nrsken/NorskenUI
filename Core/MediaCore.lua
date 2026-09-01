@@ -82,6 +82,7 @@ end
 
 -- Font reg
 RegisterLSMMedia('font', 'Expressway.TTF', true, westAndRU)
+RegisterLSMMedia('font', 'ExpresswayMonoNum.TTF', true, westAndRU)
 RegisterLSMMedia('font', 'Quazii.TTF', true, westAndRU)
 
 -- Statusbar reg
