@@ -146,7 +146,7 @@ MiscVars.DEFS = {
     {
         key = 'WorldTextScale_v2',
         label = 'World Text Scale',
-        description = 'Adjust the scale of world text.',
+        description = 'Adjust the scale of world text. Set this to max value to hide stagger text.',
         type = 'number',
         min = 0.1,
         max = 100000,
