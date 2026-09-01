@@ -21,9 +21,9 @@ NRSKNUI.FourteenFortyPixel = 768 / 1440                                -- Scale 
 ---@param custom number|nil
 function NRSKNUI:SetScaleValue(custom)
     if not custom then
-        self.db.global.UIScale.Scale = self:GetBestPixelSize()
+        self.db.profile.UIScale.Scale = self:GetBestPixelSize()
     else
-        self.db.global.UIScale.Scale = custom
+        self.db.profile.UIScale.Scale = custom
     end
     self:SetUIScale()
 end
@@ -41,8 +41,8 @@ end
 
 ---Sets the UI scale based on the user's settings.
 function NRSKNUI:SetUIScale()
-    if self.db.global.UIScale.Enabled and not self:GetConflictingScaleAddon() then
-        UIParent:SetScale(self.db.global.UIScale.Scale)
+    if self.db.profile.UIScale.Enabled and not self:GetConflictingScaleAddon() then
+        UIParent:SetScale(self.db.profile.UIScale.Scale)
     end
 end
 

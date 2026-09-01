@@ -16,12 +16,37 @@ function NRSKNUI:Print(msg)
     print(self:ColorTextByTheme('Norsken') .. 'UI:|r ' .. msg)
 end
 
+-- Global to profile scope migration --
+
+-- Moved from global to profile scope.
+local SCOPE_MOVED_KEYS = { 'Theme', 'UIScale', 'AuraIndicators', 'AuraIndicatorGroups' }
+
+---@param db NRSKNUI.DBObject
+local function RunProfileScopeMigration(db)
+    if db.global.ProfileScopeMigrated then return end
+
+    for _, key in ipairs(SCOPE_MOVED_KEYS) do
+        local old = db.global[key]
+        -- Overwrite, never skip, AceDB already seeded the active profile with the new defaults.
+        if old ~= nil then
+            for _, profile in pairs(db.profiles) do
+                profile[key] = CopyTable(old)
+            end
+            db.global[key] = nil
+        end
+    end
+
+    db.global.ProfileScopeMigrated = true
+end
+
 -- OnInitialize: Called when the addon is initialized
 function NRSKNUI:OnInitialize()
     self.MyGUID = UnitGUID('player')
 
     self.db = AceDB:New('NorskenUIDB', self:GetDefaultDB(), true)
     ---@cast self.db NRSKNUI.DBObject
+
+    RunProfileScopeMigration(self.db)
 
     LDS:EnhanceDatabase(self.db, 'NorskenUI')
 

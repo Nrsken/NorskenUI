@@ -7,25 +7,6 @@ local Defaults = {
     global = {
         UseGlobalProfile = false,
         GlobalProfile = "Default",
-        XPTable = {},
-        Theme = {
-            mode           = "preset",
-            selectedPreset = "NUI v3",
-            customColors   = {},
-            fontFace       = "Interface\\AddOns\\NorskenUI\\Media\\Fonts\\Expressway.TTF",
-            fontSizeNormal = 12,
-            fontSizeSmall  = 12,
-            fontSizeLarge  = 16,
-            fontOutline    = "OUTLINE",
-            fontShadow     = false,
-        },
-        -- Global UIParent scale.
-        UIScale = {
-            Enabled = false,
-            Scale   = 0.71,
-        },
-        SpellAlertCVars = {},
-        CDMLayoutCache = {},
         GUIState = {
             frame = {
                 point = nil,
@@ -37,10 +18,28 @@ local Defaults = {
             },
             sidebarExpanded = nil,
         },
-        -- Aura Filters
-        AuraFilters = {},
-        AuraBlocklist = {},
-        AuraSpellLists = {},
+        XPTable = {},
+        SpellAlertCVars = {},
+        CDMLayoutCache = {},
+    },
+    profile = {
+        Theme = {
+            mode           = "preset",
+            selectedPreset = "NUI v3",
+            customColors   = {},
+            fontFace       = "Interface\\AddOns\\NorskenUI\\Media\\Fonts\\Expressway.TTF",
+            fontSizeNormal = 12,
+            fontSizeSmall  = 12,
+            fontSizeLarge  = 16,
+            fontOutline    = "OUTLINE",
+            fontShadow     = false,
+        },
+        -- UIParent scale.
+        UIScale = {
+            Enabled = false,
+            Scale   = 0.71,
+        },
+        -- Aura indicator definitions, referenced by key from each unit's placements.
         AuraIndicators = {
             ['builtin:defensives'] = { name = "Defensives", Trigger = { Type = 'Preset', Preset = 'preset:defensives' }, sortMethod = "ExpirationOnly", sortDirection = "Normal", Color = { 0.25, 0.78, 0.92, 1 }, },
             ['builtin:renewingmist'] = { name = "|cFF00ff96Renewing Mist|r", Trigger = { Base = 'HELPFUL', Type = 'SpellIDs', OnlyMine = true, SpellIDs = { [119611] = true } }, sortMethod = "ExpirationOnly", sortDirection = "Normal", Color = { 0, 0.9, 0.5, 1 }, },
@@ -58,8 +57,6 @@ local Defaults = {
             ['builtin:eternalflame'] = { name = "|cFFf48cbaEternal Flame|r", Trigger = { Base = 'HELPFUL', Type = 'SpellIDs', OnlyMine = true, SpellIDs = { [156322] = true } }, sortMethod = "ExpirationOnly", sortDirection = "Normal", Color = { 0.9, 0.7, 0, 1 }, },
         },
         AuraIndicatorGroups = {},
-    },
-    profile = {
         -- Shared color palette, pushed into oUF.colors + NRSKNUI.Colors by NRSKNUI:LoadCustomColors().
         -- Mainly consumed by UnitFrames, but any module can read NRSKNUI.db.profile.Colors.
         Colors = {

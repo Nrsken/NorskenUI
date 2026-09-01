@@ -631,6 +631,7 @@ function ProfileManager:RefreshAllModules()
     end
 
     -- Refresh GUI and previews if needed.
+    SafeCall(NRSKNUI.GUI, 'ApplyTheme') -- profile-scoped, so it re-resolves after the UpdateDB pass
     if NRSKNUI.GUIFrame then SafeCall(NRSKNUI.GUIFrame, 'ApplyThemeColors') end
     if NRSKNUI.PreviewManager then SafeCall(NRSKNUI.PreviewManager, 'Refresh') end
 end

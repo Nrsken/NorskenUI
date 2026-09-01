@@ -118,9 +118,8 @@ do
     local KAJI = NRSKNUI.Libs.KAJI
     NRSKNUI.GUI = KAJI:New({
         store = function()
-            if not (NRSKNUI.db and NRSKNUI.db.global) then return nil end
-            NRSKNUI.db.global.Theme = NRSKNUI.db.global.Theme or {}
-            return NRSKNUI.db.global.Theme
+            if not (NRSKNUI.db and NRSKNUI.db.profile) then return nil end
+            return NRSKNUI.db.profile.Theme
         end,
         classColorProvider = function()
             return NRSKNUI:GetPlayerClassColor()

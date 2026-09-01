@@ -37,7 +37,7 @@ local ATTACH_OPTIONS = {
 }
 UF.GUIAttachOptions = ATTACH_OPTIONS
 
-local function Store() return NRSKNUI.db.global.AuraIndicators end
+local function Store() return NRSKNUI.db.profile.AuraIndicators end
 local function Changed(key) AuraIndicators:Invalidate(key) end
 
 ---Layer choices.

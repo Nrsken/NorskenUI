@@ -598,7 +598,7 @@ GUI:RegisterPage('globalPage', {
         if tabId == 'colors' then
             BuildGlobalColorsTab(page, NRSKNUI.db.profile.Colors)
         elseif tabId == 'uiscale' then
-            BuildGlobalUIScaleTab(page, NRSKNUI.db.global.UIScale)
+            BuildGlobalUIScaleTab(page, NRSKNUI.db.profile.UIScale)
         elseif tabId == 'textures' then
             BuildGlobalTexturesTab(page, NRSKNUI.db.profile.globalMedia)
         elseif tabId == 'formatter' then

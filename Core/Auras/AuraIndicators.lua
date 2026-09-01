@@ -53,13 +53,13 @@ local GROUP_PREFIX = 'group:'
 local BUILTIN_PREFIX = 'builtin:'
 
 local function GetStore()
-    return NRSKNUI.db.global.AuraIndicators
+    return NRSKNUI.db.profile.AuraIndicators
 end
 
 ---Groups are only a way to organise the indicator list: a group holds a name, and an indicator points
 ---at one through its `group` field. Nothing about what an indicator does depends on being in one.
 local function GetGroupStore()
-    return NRSKNUI.db.global.AuraIndicatorGroups
+    return NRSKNUI.db.profile.AuraIndicatorGroups
 end
 
 ---Compiled branches for an indicator, in the same shape a container binding consumes.
@@ -326,7 +326,7 @@ function AuraIndicators:Invalidate(key)
 end
 
 ---Build a look table from the indicator's spec and the placement's own settings.
----@param spec table an entry from db.global.AuraIndicators
+---@param spec table an entry from db.profile.AuraIndicators
 ---@param placement table that indicator's entry in uDB.AuraIndicators
 ---@param fontDB table? the host's shared font block, for placements that opted into it
 ---@return table look

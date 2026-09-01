@@ -5,34 +5,12 @@
 -- BEGIN GENERATED DB TYPES --
 ---@class NRSKNUI.DBGlobal
 ---@field [string] any
----@field AuraBlocklist NRSKNUI.DBGlobal.AuraBlocklist
----@field AuraFilters NRSKNUI.DBGlobal.AuraFilters
----@field AuraIndicatorGroups NRSKNUI.DBGlobal.AuraIndicatorGroups
----@field AuraIndicators NRSKNUI.DBGlobal.AuraIndicators
----@field AuraSpellLists NRSKNUI.DBGlobal.AuraSpellLists
 ---@field CDMLayoutCache NRSKNUI.DBGlobal.CDMLayoutCache
 ---@field GUIState NRSKNUI.DBGlobal.GUIState
 ---@field GlobalProfile string
 ---@field SpellAlertCVars table<string, string?>
----@field Theme NRSKNUI.DBGlobal.Theme
----@field UIScale NRSKNUI.DBGlobal.UIScale
 ---@field UseGlobalProfile boolean
 ---@field XPTable NRSKNUI.DBGlobal.XPTable
-
----@class NRSKNUI.DBGlobal.AuraBlocklist
----@field [string] any
-
----@class NRSKNUI.DBGlobal.AuraFilters
----@field [string] any
-
----@class NRSKNUI.DBGlobal.AuraIndicatorGroups
----@field [string] any
-
----@class NRSKNUI.DBGlobal.AuraIndicators
----@field [string] any
-
----@class NRSKNUI.DBGlobal.AuraSpellLists
----@field [string] any
 
 ---@class NRSKNUI.DBGlobal.CDMLayoutCache
 ---@field [string] any
@@ -51,26 +29,6 @@
 ---@field xOffset nil
 ---@field yOffset nil
 
----@class NRSKNUI.DBGlobal.Theme
----@field [string] any
----@field customColors NRSKNUI.DBGlobal.Theme.customColors
----@field fontFace string
----@field fontOutline string
----@field fontShadow boolean
----@field fontSizeLarge number
----@field fontSizeNormal number
----@field fontSizeSmall number
----@field mode string
----@field selectedPreset string
-
----@class NRSKNUI.DBGlobal.Theme.customColors
----@field [string] any
-
----@class NRSKNUI.DBGlobal.UIScale
----@field [string] any
----@field Enabled boolean
----@field Scale number
-
 ---@class NRSKNUI.DBGlobal.XPTable
 ---@field [string] any
 
@@ -78,6 +36,8 @@
 ---@field [string] any
 ---@field AuraDisplayGroups NRSKNUI.DBProfile.AuraDisplayGroups
 ---@field AuraDisplays NRSKNUI.DBProfile.AuraDisplays
+---@field AuraIndicatorGroups NRSKNUI.DBProfile.AuraIndicatorGroups
+---@field AuraIndicators NRSKNUI.DBProfile.AuraIndicators
 ---@field Auras NRSKNUI.DBProfile.Auras
 ---@field BattleRes NRSKNUI.DBProfile.BattleRes
 ---@field BigWigsTimers NRSKNUI.DBProfile.BigWigsTimers
@@ -100,6 +60,8 @@
 ---@field ReckonTracker NRSKNUI.DBProfile.ReckonTracker
 ---@field RerollKeystone NRSKNUI.DBProfile.RerollKeystone
 ---@field Skinning NRSKNUI.DBProfile.Skinning
+---@field Theme NRSKNUI.DBProfile.Theme
+---@field UIScale NRSKNUI.DBProfile.UIScale
 ---@field UnitFrames NRSKNUI.DBProfile.UnitFrames
 ---@field UseElvUI NRSKNUI.DBProfile.UseElvUI
 ---@field UseOtherUF NRSKNUI.DBProfile.UseOtherUF
@@ -109,6 +71,12 @@
 ---@field [string] any
 
 ---@class NRSKNUI.DBProfile.AuraDisplays
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.AuraIndicatorGroups
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.AuraIndicators
 ---@field [string] any
 
 ---@class NRSKNUI.DBProfile.Auras
@@ -2542,6 +2510,26 @@
 ---@field Size number
 ---@field StyleText boolean
 ---@field Width number
+
+---@class NRSKNUI.DBProfile.Theme
+---@field [string] any
+---@field customColors NRSKNUI.DBProfile.Theme.customColors
+---@field fontFace string
+---@field fontOutline string
+---@field fontShadow boolean
+---@field fontSizeLarge number
+---@field fontSizeNormal number
+---@field fontSizeSmall number
+---@field mode string
+---@field selectedPreset string
+
+---@class NRSKNUI.DBProfile.Theme.customColors
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.UIScale
+---@field [string] any
+---@field Enabled boolean
+---@field Scale number
 
 ---@class NRSKNUI.DBProfile.UnitFrames
 ---@field [string] any
