@@ -100,6 +100,7 @@
 ---@field active boolean?
 ---@field isPreview boolean?
 ---@field matchDirty boolean?
+---@class AuraMatrixModule : NRSKNUI.ModuleBase, AceEvent-3.0
 
 -- The handles Core/Init.lua hangs off the addon table. Declared here so the field and the accessor
 -- that fills it agree on a type: without these the field takes whatever the assignment inferred.
@@ -144,6 +145,7 @@
 ---@field BlizzardMouseover BlizzardMouseoverModule
 ---@field BigWigsTimers BigWigsTimersModule
 ---@field CooldownStrings CooldownStringsModule
+---@field AuraMatrix AuraMatrixModule
 
 -- Typed accessors. Overloads dispatch on the literal module name.
 
@@ -190,6 +192,7 @@ local NRSKNUI
 ---@overload fun(self: NRSKNUI, name: "BlizzardMouseover", silent?: boolean): BlizzardMouseoverModule
 ---@overload fun(self: NRSKNUI, name: "BigWigsTimers", silent?: boolean): BigWigsTimersModule
 ---@overload fun(self: NRSKNUI, name: "CooldownStrings", silent?: boolean): CooldownStringsModule
+---@overload fun(self: NRSKNUI, name: "AuraMatrix", silent?: boolean): AuraMatrixModule
 ---@param name string
 ---@param silent? boolean
 ---@return AceModule
@@ -235,6 +238,7 @@ function NRSKNUI:GetModule(name, silent) end
 ---@overload fun(self: NRSKNUI, name: "BlizzardMouseover", ...: string): BlizzardMouseoverModule
 ---@overload fun(self: NRSKNUI, name: "BigWigsTimers", ...: string): BigWigsTimersModule
 ---@overload fun(self: NRSKNUI, name: "CooldownStrings", ...: string): CooldownStringsModule
+---@overload fun(self: NRSKNUI, name: "AuraMatrix", ...: string): AuraMatrixModule
 ---@param name string
 ---@param ... string
 ---@return AceModule

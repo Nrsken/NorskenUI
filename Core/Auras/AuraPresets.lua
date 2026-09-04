@@ -9,17 +9,7 @@ local ipairs = ipairs
 
 local Filters = AuraUtil.AuraFilters
 
-local BL_DEBUFFS = {
-    [160455] = true, -- Hunter Pet Fatigued
-    [26013] = true,  -- Deserter
-    [264689] = true, -- Hunter Pet Fatigued
-    [390435] = true, -- Exhaustion
-    [57723] = true,  -- Exhaustion
-    [57724] = true,  -- Sated
-    [71041] = true,  -- Dungeon Deserter
-    [80354] = true,  -- Temporal Displacement
-    [95809] = true,  -- Hunter Pet Insanity
-}
+local BL_DEBUFFS = NRSKNUI.AuraFilters.BloodlustDebuffs
 
 Premade.Presets = {
     {

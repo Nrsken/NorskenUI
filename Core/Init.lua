@@ -168,6 +168,9 @@ NRSKNUI.PetTexts = NRSKNUI:NewModule('PetTexts', 'AceEvent-3.0')
 NRSKNUI.PlayerAuras = NRSKNUI:NewModule('PlayerAuras', 'AceEvent-3.0')
 NRSKNUI.AuraDisplay = NRSKNUI:NewModule('AuraDisplay', 'AceEvent-3.0')
 
+-- Dev tools
+NRSKNUI.AuraMatrix = NRSKNUI:NewModule('AuraMatrix', 'AceEvent-3.0')
+
 -- Combat Modules
 NRSKNUI.CombatTimer = NRSKNUI:NewModule('CombatTimer', 'AceEvent-3.0')
 NRSKNUI.PotionReady = NRSKNUI:NewModule('PotionReady', 'AceEvent-3.0')

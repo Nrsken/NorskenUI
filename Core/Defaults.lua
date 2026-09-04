@@ -18,6 +18,9 @@ local Defaults = {
             },
             sidebarExpanded = nil,
         },
+        AuraMatrix = {
+            Enabled = false,
+        },
         XPTable = {},
         SpellAlertCVars = {},
         CDMLayoutCache = {},

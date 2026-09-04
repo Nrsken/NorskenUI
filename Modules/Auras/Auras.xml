@@ -3,4 +3,5 @@
 
     <Script file="PlayerAuras.lua" />
     <Script file="AuraDisplay.lua" />
+    <Script file="AuraMatrix.lua" />
 </Ui>

@@ -51,6 +51,20 @@ function NRSKNUI:ResetGUIState()
     self:Print('GUI position and size reset to defaults.')
 end
 
+---Toggles the AuraMatrix module on or off.
+function NRSKNUI:ToggleAuraMatrix()
+    local wanted = not self.AuraMatrix:IsEnabled()
+    self.db.global.AuraMatrix.Enabled = wanted
+
+    if wanted then
+        self:EnableModule('AuraMatrix')
+    else
+        self:DisableModule('AuraMatrix')
+    end
+
+    self:Print('AuraMatrix ' .. (wanted and 'enabled.' or 'hidden, reload to remove its containers.'))
+end
+
 -- Setup slash commands
 function NRSKNUI:SetupSlashCommands()
     SLASH_NRSKNUI1 = '/nui'
@@ -67,6 +81,8 @@ function NRSKNUI:SetupSlashCommands()
             if NRSKNUI.Anchors then
                 NRSKNUI.Anchors:Toggle()
             end
+        elseif msg == 'matrix' then
+            NRSKNUI:ToggleAuraMatrix()
         elseif msg == 'poolstats' then
             NRSKNUI:PrintPoolStats()
         elseif msg == 'guireset' then

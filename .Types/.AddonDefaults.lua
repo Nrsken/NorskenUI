@@ -5,12 +5,17 @@
 -- BEGIN GENERATED DB TYPES --
 ---@class NRSKNUI.DBGlobal
 ---@field [string] any
+---@field AuraMatrix NRSKNUI.DBGlobal.AuraMatrix
 ---@field CDMLayoutCache NRSKNUI.DBGlobal.CDMLayoutCache
 ---@field GUIState NRSKNUI.DBGlobal.GUIState
 ---@field GlobalProfile string
 ---@field SpellAlertCVars table<string, string?>
 ---@field UseGlobalProfile boolean
 ---@field XPTable NRSKNUI.DBGlobal.XPTable
+
+---@class NRSKNUI.DBGlobal.AuraMatrix
+---@field [string] any
+---@field Enabled boolean
 
 ---@class NRSKNUI.DBGlobal.CDMLayoutCache
 ---@field [string] any
