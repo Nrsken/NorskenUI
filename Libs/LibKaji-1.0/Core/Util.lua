@@ -147,8 +147,7 @@ function lib.SetTooltip(frame, gui, title, tooltip, opts)
     frame._tooltipTitle = title
     frame._tooltipText = text
     frame._tooltipContent = content
-    frame._tooltipDefault = default ~= nil and
-        (type(default) == "boolean" and (default and "On" or "Off") or tostring(default)) or nil
+    frame._tooltipDefault = default ~= nil and (type(default) == "boolean" and (default and "On" or "Off") or tostring(default)) or nil
     frame._tooltipOwner = opts.owner
     frame._tooltipAnchor = opts.anchor
     frame._tooltipX = opts.x
@@ -171,8 +170,8 @@ function lib.ShowTooltip(frame)
     if not (title or text or content) then return end
 
     local theme = frame._kajiGui.theme
-    GameTooltip:SetOwner(frame._tooltipOwner or frame, frame._tooltipAnchor or "ANCHOR_CURSOR_RIGHT",
-        frame._tooltipX or 30, frame._tooltipY or 0)
+    local accent = frame._accentColor or theme.accent -- a config.accentColor widget titles in its own accent
+    GameTooltip:SetOwner(frame._tooltipOwner or frame, frame._tooltipAnchor or "ANCHOR_CURSOR_RIGHT", frame._tooltipX or 30, frame._tooltipY or 0)
 
     -- A filler writes its own header, so the widget's title is its to set and ours only appends.
     if content then
@@ -181,8 +180,15 @@ function lib.ShowTooltip(frame)
             GameTooltip:AddLine(text, theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], true)
         end
     else
-        GameTooltip:SetText(title or text, theme.accent[1], theme.accent[2], theme.accent[3], 1, false)
-        if title and text then
+        local titleText
+        if title == "" then
+            titleText = text
+        else
+            titleText = title or text
+        end
+
+        GameTooltip:SetText(titleText, accent[1], accent[2], accent[3], 1, false)
+        if title ~= "" and text then
             GameTooltip:AddLine(text, theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], true)
         end
     end

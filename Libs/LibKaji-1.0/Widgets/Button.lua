@@ -11,6 +11,9 @@
     })
     GUI:CreateButton(parent, 'Select', { width = 110, image = iconID, callback = fn })
 
+Pass `selected` (or call `SetSelected`) for a latched toggle: the button rests on the
+theme's selection tint instead of its background until it is unlatched.
+
 --]]
 
 local lib = LibStub and LibStub("LibKaji-1.0", true)
@@ -34,6 +37,7 @@ local ICON_TEXT_GAP = 6
 ---@field _callback? fun()
 ---@field _tooltipTitle? string see lib.SetTooltip
 ---@field _bgColor number[]
+---@field _selected boolean
 ---@field _hasIcon boolean
 ---@field _imageColor? number[] icon tint; may be a live theme color table
 ---@field _iconSize number
@@ -68,6 +72,31 @@ end
 ---@param newCallback fun()
 function ButtonMixin:SetCallback(newCallback)
     self._callback = newCallback
+end
+
+---Resting fill: the selection tint while latched, the caller's background otherwise.
+function ButtonMixin:ApplyRestingColor()
+    local spec = self._kajiBackdrop
+    if not spec then return end
+
+    if self._selected then
+        spec.bg, spec.bgAlpha = self._accentColor, 0.25
+    else
+        spec.bg, spec.bgAlpha = self._bgColor, 0.9
+    end
+
+    lib.RefreshBackdrop(self)
+end
+
+---@param selected boolean
+function ButtonMixin:SetSelected(selected)
+    self._selected = selected and true or false
+    self:ApplyRestingColor()
+end
+
+---@return boolean
+function ButtonMixin:IsSelected()
+    return self._selected == true
 end
 
 ---@param newTooltip string
@@ -111,8 +140,15 @@ end
 
 function ButtonMixin:UpdateColors()
     local theme = self.gui.theme
-    lib.RefreshBackdrop(self)
-    self.text:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
+    self:ApplyRestingColor()
+
+    local accent = self._accentColor
+    if not self._accentOverride then
+        accent[1], accent[2], accent[3], accent[4] =
+            theme.accent[1], theme.accent[2], theme.accent[3], theme.accent[4] or 1
+    end
+
+    self.text:SetTextColor(accent[1], accent[2], accent[3], accent[4] or 1)
     -- The hover animator rests on the border color, so reseat it after a palette change.
     self._syncBorder(theme.border[1], theme.border[2], theme.border[3], theme.border[4] or 1)
 
@@ -144,6 +180,13 @@ function ButtonMixin:OnAcquire(parent, buttonText, config)
     self.explicitHeight = config.height and true or nil
 
     self._bgColor = config.bgColor or theme.bgMedium
+
+    local source = config.accentColor or theme.accent
+    local accent = self._accentColor
+    accent[1], accent[2], accent[3], accent[4] = source[1], source[2], source[3], source[4] or 1
+    self._accentOverride = config.accentColor ~= nil
+
+    self._selected = config.selected == true
     self._callback = config.callback
     self._hasIcon = image ~= nil
     self._imageColor = config.imageColor
@@ -151,7 +194,14 @@ function ButtonMixin:OnAcquire(parent, buttonText, config)
     self._iconYOffset = config.yOffset or 0
 
     -- A button's tooltip is a bare title above the button, not a labelled body.
-    lib.SetTooltip(self, self.gui, config.tooltip, nil, { anchor = "ANCHOR_TOP", x = 0, y = 4 })
+    --lib.SetTooltip(self, self.gui, config.tooltip, nil, { anchor = "ANCHOR_TOP", x = 0, y = 4 })
+
+    -- The "Default: x" line is only meaningful for a cvar-backed checkbox.
+    local spec = config.tooltip
+    if type(spec) == "table" then
+        spec = { text = spec.text }
+    end
+    lib.SetTooltip(self, self.gui, buttonText, spec)
 
     self._kajiBackdrop = { bg = self._bgColor, bgAlpha = 0.9, border = "border", borderAlpha = 1 }
 
@@ -180,6 +230,8 @@ end
 
 function ButtonMixin:OnRelease()
     self._callback = nil
+    self._accentOverride = nil
+    self._selected = false
     self._hasIcon = false
     self._imageColor = nil
     lib.ClearTooltip(self)
@@ -202,6 +254,8 @@ end
 ---@field width? number pixel width (default 120)
 ---@field height? number pixel height (default 24)
 ---@field bgColor? number[]
+---@field accentColor? number[] per-widget accent, overriding the theme's
+---@field selected? boolean latch the button on the theme's selection tint
 
 lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     local theme = gui.theme
@@ -219,9 +273,12 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
 
     Mixin(button, ButtonMixin)
 
+    -- Button-owned copy: the hover animator holds this table, so OnAcquire writes into it.
+    button._accentColor = { theme.accent[1], theme.accent[2], theme.accent[3], theme.accent[4] or 1 }
+
     button._animateBorder, button._syncBorder = Animations:CreateHoverColorAnimator(button,
         function(r, g, b, a) button:SetBackdropBorderColor(r, g, b, a) end,
-        theme.border, theme.accent, theme.animDuration)
+        theme.border, button._accentColor, theme.animDuration)
 
     -- Every script is set once here and reads state from fields, so a recycled button
     -- never carries a previous caller's callback or stacks a second handler.
@@ -232,7 +289,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     end)
     button:SetScript("OnLeave", function(self)
         self._animateBorder(false)
-        self:SetBackdropColor(self._bgColor[1], self._bgColor[2], self._bgColor[3], 0.9)
+        self:ApplyRestingColor()
         lib.HideTooltip()
     end)
     button:SetScript("OnMouseDown", function(self)
@@ -240,7 +297,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         self:SetBackdropColor(selected[1], selected[2], selected[3], selected[4])
     end)
     button:SetScript("OnMouseUp", function(self)
-        self:SetBackdropColor(self._bgColor[1], self._bgColor[2], self._bgColor[3], 0.9)
+        self:ApplyRestingColor()
     end)
     button:SetScript("OnClick", function(self)
         safecall(self._callback)

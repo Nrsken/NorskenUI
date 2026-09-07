@@ -319,6 +319,8 @@ DropdownMixin.SetOptions = DropdownMixin.UpdateOptions
 ---@field callback? fun(value: any)
 ---@field searchable? boolean
 ---@field multiSelect? boolean toggle several options at once; value becomes an array and the list stays open on click
+---@field accentColor? number[] per-widget accent, overriding the theme's
+---@field bgColor? number[] per-widget background for the closed row and its list, overriding the theme's
 ---@field tooltip? string
 
 ---@param parent Frame
@@ -358,6 +360,9 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     row._isFontPreview = false
     row._isStatusbarPreview = false
     row._searchable = false
+    -- Row-owned copy: the upvalues below capture this table, so OnAcquire writes into it.
+    row._accentColor = { theme.accent[1], theme.accent[2], theme.accent[3], theme.accent[4] or 1 }
+    row._bgColor = { theme.bgMedium[1], theme.bgMedium[2], theme.bgMedium[3] }
 
     local label = row:CreateFontString(nil, "OVERLAY")
     pixel.SetPixelPoint(label, "TOPLEFT", row, "TOPLEFT", 0, 1)
@@ -382,12 +387,15 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     pixel.SetPixelSnap(selectedBar)
     selectedBar:Hide()
 
+    local accent = row._accentColor
+    local bg = row._bgColor
+
     local selectedText = dropdownButton:CreateFontString(nil, "OVERLAY")
     pixel.SetPixelPoint(selectedText, "LEFT", dropdownButton, "LEFT", theme.paddingSmall, 0)
     pixel.SetPixelPoint(selectedText, "RIGHT", dropdownButton, "RIGHT", -24, 0)
     selectedText:SetJustifyH("LEFT")
     gui:ApplyFont(selectedText, "normal")
-    selectedText:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
+    selectedText:SetTextColor(accent[1], accent[2], accent[3], accent[4] or 1)
     dropdownButton.selectedText = selectedText
     row._selectedText = selectedText
 
@@ -395,7 +403,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     pixel.SetPixelSize(arrow, ARROW_SIZE, ARROW_SIZE)
     pixel.SetPixelPoint(arrow, "RIGHT", dropdownButton, "RIGHT", -theme.paddingSmall, 0)
     arrow:SetTexture(theme.stepperTexture)
-    arrow:SetVertexColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
+    arrow:SetVertexColor(accent[1], accent[2], accent[3], accent[4] or 1)
     pixel.SetPixelSnap(arrow)
     arrow:SetRotation(-pi / 2)
     dropdownButton.arrow = arrow
@@ -434,7 +442,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
 
             selectedText:SetText(text)
             gui:ApplyFont(selectedText, "normal")
-            selectedText:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
+            selectedText:SetTextColor(accent[1], accent[2], accent[3], accent[4] or 1)
             selectedBar:Hide()
             return
         end
@@ -449,7 +457,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         if optionColor then
             selectedText:SetTextColor(optionColor.r or optionColor[1], optionColor.g or optionColor[2], optionColor.b or optionColor[3], 1)
         else
-            selectedText:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
+            selectedText:SetTextColor(accent[1], accent[2], accent[3], accent[4] or 1)
         end
 
         -- Font and bar are independent: a statusbar dropdown recycled from a font one still
@@ -462,7 +470,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
 
         if row._isStatusbarPreview and value then
             ApplyPreviewTexture(selectedBar, gui:ResolveMedia(row._mediaType, value))
-            selectedBar:SetVertexColor(theme.accent[1], theme.accent[2], theme.accent[3], 0.4)
+            selectedBar:SetVertexColor(accent[1], accent[2], accent[3], accent[4] or 0.4)
             selectedBar:Show()
         else
             selectedBar:Hide()
@@ -523,7 +531,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
 
         thumb = scrollbar:GetThumbTexture()
         pixel.SetPixelSize(thumb, 12, 30)
-        thumb:SetColorTexture(theme.accent[1], theme.accent[2], theme.accent[3], 0.8)
+        thumb:SetColorTexture(accent[1], accent[2], accent[3], accent[4] or 0.8)
 
         thumbBorder = CreateFrame("Frame", nil, scrollbar, "BackdropTemplate")
         pixel.SetPixelPoint(thumbBorder, "TOPLEFT", thumb, 0, 0)
@@ -546,7 +554,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
 
     local SetBorderHover, SetBorderHoverSync = Animations:CreateHoverColorAnimator(dropdownButton,
         function(r, g, b, a) dropdownButton:SetBackdropBorderColor(r, g, b, a) end,
-        theme.border, theme.accent, theme.animDuration)
+        theme.border, accent, theme.animDuration)
 
     local function CloseDropdown(instant)
         if scrollHold then return end
@@ -718,7 +726,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
 
             if row._isStatusbarPreview then
                 ApplyPreviewTexture(btn._previewBar, gui:ResolveMedia(row._mediaType, key))
-                btn._previewBar:SetVertexColor(theme.accent[1], theme.accent[2], theme.accent[3], 0.4)
+                btn._previewBar:SetVertexColor(accent[1], accent[2], accent[3], accent[4] or 0.4)
                 btn._previewBar:Show()
             else
                 btn._previewBar:Hide()
@@ -729,14 +737,14 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
 
             local function UpdateItemState()
                 local isSelected = IsValueSelected(row, btn._itemValue)
-                local dot = indicatorColor or (isSelected and theme.accent or nil)
+                local dot = indicatorColor or (isSelected and accent or nil)
                 if dot then btn._indicator:SetTextColor(dot[1], dot[2], dot[3], 1) end
                 btn._indicator:SetShown(dot ~= nil)
 
                 if optionColor then
                     btn._text:SetTextColor(optionColor.r or optionColor[1], optionColor.g or optionColor[2], optionColor.b or optionColor[3], isSelected and 1 or 0.7)
                 elseif isSelected then
-                    btn._text:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
+                    btn._text:SetTextColor(accent[1], accent[2], accent[3], accent[4] or 1)
                 else
                     btn._text:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
                 end
@@ -752,7 +760,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
                 if tooltip then
                     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
                     GameTooltip:ClearLines()
-                    GameTooltip:AddLine(self._itemText or self._itemValue, theme.accent[1], theme.accent[2], theme.accent[3], false)
+                    GameTooltip:AddLine(self._itemText or self._itemValue, accent[1], accent[2], accent[3], false)
                     GameTooltip:AddLine(tooltip, theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], true)
                     GameTooltip:Show()
                 end
@@ -790,7 +798,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         pixel.SetPixelPoint(searchEditBox, "TOPLEFT", searchContainer, "TOPLEFT", 6, -4)
         pixel.SetPixelPoint(searchEditBox, "BOTTOMRIGHT", searchContainer, "BOTTOMRIGHT", -6, 4)
         searchEditBox:SetFontObject("GameFontNormal")
-        searchEditBox:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
+        searchEditBox:SetTextColor(accent[1], accent[2], accent[3], accent[4] or 1)
         searchEditBox:SetAutoFocus(false)
         searchEditBox:SetText("")
         searchEditBox:SetScript("OnTextChanged", function(self, userInput)
@@ -960,15 +968,23 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     -- re-tint is written once here and replayed by UpdateColors.
     row._restyle = function()
         local active = row.gui.theme
-        dropdownButton:SetBackdropColor(active.bgMedium[1], active.bgMedium[2], active.bgMedium[3], 0.9)
+        if not row._accentOverride then
+            accent[1], accent[2], accent[3], accent[4] =
+                active.accent[1], active.accent[2], active.accent[3], active.accent[4] or 1
+        end
+        if not row._bgOverride then
+            bg[1], bg[2], bg[3] = active.bgMedium[1], active.bgMedium[2], active.bgMedium[3]
+        end
+
+        dropdownButton:SetBackdropColor(bg[1], bg[2], bg[3], 0.9)
         dropdownButton:SetBackdropBorderColor(active.border[1], active.border[2], active.border[3], 1)
-        dropdownList:SetBackdropColor(active.bgMedium[1], active.bgMedium[2], active.bgMedium[3], 0.9)
+        dropdownList:SetBackdropColor(bg[1], bg[2], bg[3], 0.9)
         dropdownList:SetBackdropBorderColor(active.border[1], active.border[2], active.border[3], 1)
         row.label:SetTextColor(active.textSecondary[1], active.textSecondary[2], active.textSecondary[3], 1)
 
         searchContainer:SetBackdropColor(active.bgDark[1], active.bgDark[2], active.bgDark[3], 0.9)
         searchContainer:SetBackdropBorderColor(active.border[1], active.border[2], active.border[3], 1)
-        searchEditBox:SetTextColor(active.accent[1], active.accent[2], active.accent[3], 1)
+        searchEditBox:SetTextColor(accent[1], accent[2], accent[3], accent[4] or 1)
         if emptyLabel then
             emptyLabel:SetTextColor(active.textSecondary[1], active.textSecondary[2], active.textSecondary[3], 1)
         end
@@ -1003,6 +1019,7 @@ end
 ---@param config table
 function DropdownMixin:OnAcquire(parent, labelText, config)
     local mediaType = config.media
+    local theme = self.gui.theme
 
     self:SetParent(parent)
     self:ClearAllPoints()
@@ -1015,6 +1032,16 @@ function DropdownMixin:OnAcquire(parent, labelText, config)
     self._isStatusbarPreview = mediaType ~= nil and not self._isFontPreview and mediaType ~= "sound"
     self._searchable = config.searchable == true
     self._multiSelect = config.multiSelect == true
+
+    local source = config.accentColor or theme.accent
+    local accent = self._accentColor
+    accent[1], accent[2], accent[3], accent[4] = source[1], source[2], source[3], source[4] or 1
+    self._accentOverride = config.accentColor ~= nil
+
+    local bgSource = config.bgColor or theme.bgMedium
+    local bg = self._bgColor
+    bg[1], bg[2], bg[3] = bgSource[1], bgSource[2], bgSource[3]
+    self._bgOverride = config.bgColor ~= nil
 
     self.label:SetText(labelText or "")
     lib.SetTooltip(self, self.gui, labelText, config.tooltip)
@@ -1059,6 +1086,8 @@ function DropdownMixin:OnRelease()
     self._callback = nil
     self._currentValue = nil
     self._multiSelect = false
+    self._accentOverride = nil
+    self._bgOverride = nil
     self._selectedSet = nil
     self._mediaType = nil
     self._hasPending, self._pendingValue = false, nil
