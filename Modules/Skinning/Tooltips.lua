@@ -11,6 +11,8 @@ local hooksecurefunc = hooksecurefunc
 local IsShiftKeyDown, IsControlKeyDown, IsAltKeyDown = IsShiftKeyDown, IsControlKeyDown, IsAltKeyDown
 local UnitExists = UnitExists
 local UnitTokenFromGUID = UnitTokenFromGUID
+local UnitGUID = UnitGUID
+local GetMouseFoci = GetMouseFoci
 local issecretvalue = issecretvalue
 local GetPlayerInfoByGUID = GetPlayerInfoByGUID
 local UnitIsPlayer = UnitIsPlayer
@@ -207,21 +209,36 @@ local function UpdateBorderColor(tooltip)
     tooltip:SetBorderColor(BC[1], BC[2], BC[3], BC[4])
 end
 
+---UnitTokenFromGUID goes nil for group members whenever no token currently points at them.
+---@param unitGUID string
+---@return string? unit
+local function ResolveUnit(unitGUID)
+    local unit = UnitTokenFromGUID(unitGUID)
+    if unit then return unit end
+
+    for _, region in next, GetMouseFoci() do
+        local frameUnit = region.__unit or region.displayedUnit or region.unit
+        if type(frameUnit) == 'string' and UnitExists(frameUnit) then
+            local frameGUID = UnitGUID(frameUnit) -- secret means identity-restricted, never a group member
+            if not issecretvalue(frameGUID) and frameGUID == unitGUID then
+                return frameUnit
+            end
+        end
+    end
+end
+
 ---@param tooltip Tooltip
 ---@return table colorRGBA
 local function GetUnitColor(tooltip)
     local tooltipData = tooltip.processingInfo and tooltip.processingInfo.tooltipData
     local unitGUID = tooltipData and tooltipData.guid
     if unitGUID then
-        local unit = UnitTokenFromGUID(unitGUID)
+        local unit = ResolveUnit(unitGUID)
         if issecretvalue(unit) then
             local classToken = select(2, GetPlayerInfoByGUID(unitGUID))
             -- Unit is a player
             if classToken ~= nil then
                 return GetClassColor(classToken)
-            else
-                -- Unit is an NPC
-                return tooltipData.lines[1].leftColor
             end
         elseif unit ~= nil then
             -- Unit is a player
@@ -233,10 +250,13 @@ local function GetUnitColor(tooltip)
             elseif UnitIsMinion(unit) then
                 -- Unit is a pet/minion
                 return NRSKNUI:CreateColor(UnitSelectionColor(unit, true))
-            else
-                -- Unit is an NPC
-                return tooltipData.lines[1].leftColor
             end
+        end
+
+        -- Unit is an NPC
+        local leftColor = tooltipData.lines[1].leftColor
+        if not issecretvalue(leftColor) and leftColor then
+            return leftColor
         end
     end
 
@@ -383,7 +403,7 @@ local function GetPlayerUnit(data)
     local unitGUID = data and data.guid
     if not unitGUID or issecretvalue(unitGUID) then return end
 
-    local unit = UnitTokenFromGUID(unitGUID)
+    local unit = ResolveUnit(unitGUID)
     if not unit or issecretvalue(unit) then return end
 
     local isPlayer = UnitIsPlayer(unit)
