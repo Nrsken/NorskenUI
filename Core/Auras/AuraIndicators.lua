@@ -199,6 +199,7 @@ local PlacementDefaults = {
     Position = { AnchorFrom = 'CENTER', AnchorTo = 'CENTER', XOffset = 0, YOffset = 0 },
     Size = { Width = 24, Height = 24 },
     Texture = '',
+    Solid = false,
     Font = {
         UseGlobalFont = true,
         FontFace = 'Expressway',
@@ -338,6 +339,7 @@ local function ResolveLook(spec, placement, fontDB)
         Color = { color[1], color[2], color[3], alpha },
         Alpha = placement.Alpha or 1,
         Texture = placement.Texture,
+        Solid = placement.Solid,
         Icon = placement.Icon,
         Position = placement.Position,
         Font = placement.Font,
@@ -361,7 +363,9 @@ local function ApplyTextureLook(texture, look)
     else
         texture:SetColorTexture(color[1], color[2], color[3], color[4])
     end
-    texture:SetBlendMode('ADD')
+    -- Additive never occludes, so the bar reads through the tint at any alpha. Solid blends instead,
+    -- which is what makes a full-alpha tint actually opaque.
+    texture:SetBlendMode(look.Solid and 'BLEND' or 'ADD')
 end
 
 ---Overlay and Square are the same build, they differ only in whether the proxy covers its target.

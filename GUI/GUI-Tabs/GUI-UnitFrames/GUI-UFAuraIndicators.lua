@@ -473,14 +473,24 @@ local function BuildStyleOptions(page, card, placement)
         return
     end
 
-    card:Row(rowHL, 0):Dropdown(L['Texture'], {
-        width = 1,
+    local textureRow = card:Row(rowHL, 0)
+    textureRow:Dropdown(L['Texture'], {
+        width = 0.5,
         media = 'statusbar',
         searchable = true,
         value = placement.Texture,
         tooltip = L['Leave empty for a flat color. The color itself is set on the indicator.'],
         callback = function(value)
             placement.Texture = value
+            Changed(nil)
+        end,
+    })
+    textureRow:Checkbox(L['Solid'], {
+        width = 0.5,
+        value = placement.Solid,
+        tooltip = L['Draw the tint over the bar instead of adding to it, so alpha reads as real opacity.'],
+        callback = function(checked)
+            placement.Solid = checked
             Changed(nil)
         end,
     })
