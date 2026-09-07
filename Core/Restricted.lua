@@ -66,7 +66,8 @@ end
 ---@param value any
 ---@return boolean
 function NRSKNUI:IsSafeValue(value)
-    return value ~= nil and not self:IsSecretValue(value)
+    if self:IsSecretValue(value) then return false end
+    return type(value) ~= 'nil'
 end
 
 ---Is this table secret or flagged so that indexing it produces secrets?
