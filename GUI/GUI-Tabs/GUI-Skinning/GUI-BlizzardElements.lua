@@ -10,9 +10,13 @@ local Theme = NRSKNUI.Theme
 local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
 
+local min = math.min
+
 local FRAME_TOGGLES = {
     { key = 'CharacterFrame', label = L['Character Frame'] },
+    { key = 'GroupFinder',    label = L['Group Finder'] },
     { key = 'InspectFrame',   label = L['Inspect Frame'] },
+    { key = 'Menus',          label = L['Right-Click Menus'] },
     { key = 'PlayerSpells',   label = L['Spellbook & Talents'] },
 }
 
@@ -60,19 +64,44 @@ local function BuildGeneralSettingsTab(page, db)
 
     -- Card 2: Skin Colors
     local colorCard = page:Card(L['Skin Colors'], 'all')
-    local colorRow = colorCard:Row(rowH)
-    colorRow:ColorPicker(L['Border Color'], {
+    local panelRow = colorCard:Row(rowH)
+    panelRow:ColorPicker(L['Border Color'], {
         width = 0.5,
         value = db.General.BorderColor,
         callback = function(r, g, b, a)
             db.General.BorderColor = { r, g, b, a }; ApplySettings()
         end,
     })
-    colorRow:ColorPicker(L['Background Color'], {
+    panelRow:ColorPicker(L['Background Color'], {
         width = 0.5,
         value = db.General.BackgroundColor,
         callback = function(r, g, b, a)
             db.General.BackgroundColor = { r, g, b, a }; ApplySettings()
+        end,
+    })
+
+    local widgetRow = colorCard:Row(rowH)
+    widgetRow:ColorPicker(L['Widget Border Color'], {
+        width = 0.5,
+        value = db.General.WidgetBorderColor,
+        callback = function(r, g, b, a)
+            db.General.WidgetBorderColor = { r, g, b, a }; ApplySettings()
+        end,
+    })
+    widgetRow:ColorPicker(L['Widget Background Color'], {
+        width = 0.5,
+        value = db.General.WidgetBackgroundColor,
+        callback = function(r, g, b, a)
+            db.General.WidgetBackgroundColor = { r, g, b, a }; ApplySettings()
+        end,
+    })
+
+    local glowRow = colorCard:Row(rowH)
+    glowRow:ColorPicker(L['Widget Glow'], {
+        width = 1,
+        value = db.General.WidgetGlowColor,
+        callback = function(r, g, b, a)
+            db.General.WidgetGlowColor = { r, g, b, a }; ApplySettings()
         end,
     })
 
@@ -101,23 +130,31 @@ local function BuildGeneralSettingsTab(page, db)
 end
 
 -- Frames Tab.
-local function BuildFramesTab(page, db)
+local function BuildFramesTab(page, db, specs)
     local framesCard = page:Card(L['Skinned Frames'], 'all')
-    local toggleRow = framesCard:Row(rowHL, 0)
-    for _, toggle in ipairs(FRAME_TOGGLES) do
-        toggleRow:Checkbox(toggle.label, {
-            width = 0.33,
-            value = db.Frames[toggle.key] ~= false,
-            callback = function(checked)
-                db.Frames[toggle.key] = checked
-                if checked then
-                    ApplySettings()
-                else
-                    NRSKNUI:CreateReloadPrompt(
-                        'Restoring the default ' .. toggle.label .. ' requires a reload to take full effect.')
-                end
-            end,
-        })
+    local count = #specs
+
+    for i = 1, count, 4 do
+        local isLast = (i + 3) >= count
+        local rowHeight = (isLast and rowHL) or rowH
+        local row = framesCard:Row(rowHeight, (isLast and 0) or nil)
+
+        for j = i, min(i + 3, count) do
+            local spec = specs[j]
+
+            row:Checkbox(spec.label, {
+                width = (1 / 4),
+                value = db.Frames[spec.key] ~= false,
+                callback = function(checked)
+                    db.Frames[spec.key] = checked
+                    if checked then
+                        ApplySettings()
+                    else
+                        NRSKNUI:CreateReloadPrompt('Restoring the default ' .. spec.label .. ' requires a reload to take full effect.')
+                    end
+                end,
+            })
+        end
     end
 end
 
@@ -236,7 +273,7 @@ GUI:RegisterPage('blizzardElements', {
         if tabId == 'general' then
             BuildGeneralSettingsTab(page, db)
         elseif tabId == 'frames' then
-            BuildFramesTab(page, db)
+            BuildFramesTab(page, db, FRAME_TOGGLES)
         elseif tabId == 'objective' then
             BuildObjectiveTrackerTab(page, db)
         elseif tabId == 'font' then

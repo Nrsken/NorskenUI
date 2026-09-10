@@ -2,8 +2,25 @@
     xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd'>
 
     <Script file='SkinningCore.lua' />
+    <Script file='Widgets/Arrow.lua' />
+    <Script file='Widgets/Button.lua' />
+    <Script file='Widgets/MinMaxButton.lua' />
+    <Script file='Widgets/CheckBox.lua' />
+    <Script file='Widgets/CloseButton.lua' />
+    <Script file='Widgets/CollapseButton.lua' />
+    <Script file='Widgets/ControlButtons.lua' />
+    <Script file='Widgets/Dropdown.lua' />
+    <Script file='Widgets/EditBox.lua' />
+    <Script file='Widgets/Icon.lua' />
+    <Script file='Widgets/ItemButton.lua' />
+    <Script file='Widgets/PortraitFrame.lua' />
+    <Script file='Widgets/ScrollBar.lua' />
+    <Script file='Widgets/StatusBar.lua' />
+    <Script file='Widgets/Tab.lua' />
+    <Script file='Widgets/Menus.lua' />
 
     <Script file='Elements/CharacterFrame.lua' />
+    <Script file='Elements/GroupFinder.lua' />
     <Script file='Elements/InspectFrame.lua' />
     <Script file='Elements/PlayerSpells.lua' />
     <Script file='Elements/BlizzObjectiveTracker.lua' />

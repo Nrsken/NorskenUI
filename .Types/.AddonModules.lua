@@ -39,6 +39,10 @@
 ---@class RecuperateModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class MiscVarsModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class DurabilityModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class GroupFinderModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@field resortPending boolean?
+---@field ServerSearchThrottle number
+---@field lastServerSearch number?
 ---@class TooltipsModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class MinimapModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class SkinningModule : NRSKNUI.ModuleBase, AceEvent-3.0
@@ -116,6 +120,7 @@
 ---@field Recuperate RecuperateModule
 ---@field MiscVars MiscVarsModule
 ---@field Durability DurabilityModule
+---@field GroupFinder GroupFinderModule
 ---@field CharacterPanel CharacterPanelModule
 ---@field Tooltips TooltipsModule
 ---@field Minimap MinimapModule
@@ -168,6 +173,7 @@ local NRSKNUI
 ---@overload fun(self: NRSKNUI, name: "Recuperate", silent?: boolean): RecuperateModule
 ---@overload fun(self: NRSKNUI, name: "MiscVars", silent?: boolean): MiscVarsModule
 ---@overload fun(self: NRSKNUI, name: "Durability", silent?: boolean): DurabilityModule
+---@overload fun(self: NRSKNUI, name: "GroupFinder", silent?: boolean): GroupFinderModule
 ---@overload fun(self: NRSKNUI, name: "CombatCross", silent?: boolean): CombatCrossModule
 ---@overload fun(self: NRSKNUI, name: "CombatMessage", silent?: boolean): CombatMessageModule
 ---@overload fun(self: NRSKNUI, name: "CombatRes", silent?: boolean): CombatResModule
@@ -214,6 +220,7 @@ function NRSKNUI:GetModule(name, silent) end
 ---@overload fun(self: NRSKNUI, name: "Recuperate", ...: string): RecuperateModule
 ---@overload fun(self: NRSKNUI, name: "MiscVars", ...: string): MiscVarsModule
 ---@overload fun(self: NRSKNUI, name: "Durability", ...: string): DurabilityModule
+---@overload fun(self: NRSKNUI, name: "GroupFinder", ...: string): GroupFinderModule
 ---@overload fun(self: NRSKNUI, name: "CombatCross", ...: string): CombatCrossModule
 ---@overload fun(self: NRSKNUI, name: "CombatMessage", ...: string): CombatMessageModule
 ---@overload fun(self: NRSKNUI, name: "CombatRes", ...: string): CombatResModule

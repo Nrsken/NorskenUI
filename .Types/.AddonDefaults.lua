@@ -835,6 +835,7 @@
 ---@field Durability NRSKNUI.DBProfile.Miscellaneous.Durability
 ---@field FocusCastbar NRSKNUI.DBProfile.Miscellaneous.FocusCastbar
 ---@field Gateway NRSKNUI.DBProfile.Miscellaneous.Gateway
+---@field GroupFinder NRSKNUI.DBProfile.Miscellaneous.GroupFinder
 ---@field MiscVars NRSKNUI.DBProfile.Miscellaneous.MiscVars
 ---@field Recuperate NRSKNUI.DBProfile.Miscellaneous.Recuperate
 ---@field SkyRiding NRSKNUI.DBProfile.Miscellaneous.SkyRiding
@@ -1055,6 +1056,23 @@
 ---@field AnchorTo string
 ---@field XOffset number
 ---@field YOffset number
+
+---@class NRSKNUI.DBProfile.Miscellaneous.GroupFinder
+---@field [string] any
+---@field AccentMode string
+---@field CustomAccentColor table
+---@field Enabled boolean
+---@field FontFace string
+---@field FontOutline string
+---@field FontSize number
+---@field PanelWidth number
+---@field RoleIconStyle string
+---@field ScoreColorSource string
+---@field ShowLeaderScore boolean
+---@field ShowPanel boolean
+---@field SortBy string
+---@field SortDescending boolean
+---@field UseGlobalFont boolean
 
 ---@class NRSKNUI.DBProfile.Miscellaneous.MiscVars
 ---@field [string] any
@@ -2163,6 +2181,7 @@
 ---@class NRSKNUI.DBProfile.Skinning.BlizzardElements.Frames
 ---@field [string] any
 ---@field CharacterFrame boolean
+---@field GroupFinder boolean
 ---@field InspectFrame boolean
 ---@field PlayerSpells boolean
 
@@ -2175,7 +2194,9 @@
 ---@field DisabledColor table
 ---@field HighlightColor table
 ---@field PanelColor table
----@field WidgetColor table
+---@field WidgetBackgroundColor table
+---@field WidgetBorderColor table
+---@field WidgetGlowColor table
 
 ---@class NRSKNUI.DBProfile.Skinning.BlizzardElements.ObjectiveTracker
 ---@field [string] any

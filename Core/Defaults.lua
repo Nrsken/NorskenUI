@@ -866,6 +866,24 @@ local Defaults = {
                 },
             },
 
+            GroupFinder = {
+                Enabled = true,
+                ShowPanel = true,
+                PanelWidth = 176,
+                ShowLeaderScore = true,
+                ScoreColorSource = "blizzard", -- "blizzard" | "raiderio"
+                RoleIconStyle = "bar",         -- "bar" | "circle"
+                SortBy = "default",            -- "default" | "overallScore" | "dungeonScore"
+                SortDescending = true,
+                AccentMode = "theme",          -- "theme" | "class" | "custom"
+                CustomAccentColor = { 0, 1, 0.17, 1 },
+                -- Font settings
+                UseGlobalFont = true,
+                FontFace = "Expressway",
+                FontSize = 11,
+                FontOutline = "OUTLINE",
+            },
+
             MiscVars = {
                 Enabled = true,
 
@@ -1226,7 +1244,9 @@ local Defaults = {
                 General = {
                     BorderColor = { 0, 0, 0, 1 },
                     BackgroundColor = { 0, 0, 0, 0.8 },
-                    WidgetColor = { 0.078, 0.078, 0.078, 1 },
+                    WidgetBorderColor = { 0, 0, 0, 1 },
+                    WidgetBackgroundColor = { 0.11, 0.11, 0.11, 0.4 },
+                    WidgetGlowColor = { 1, 1, 1, 0.11 },
                     PanelColor = { 0.2, 0.2, 0.2, 1 },
                     DisabledColor = { 0, 0, 0, 0.4 },
                     AccentMode = "theme", -- "theme" | "class" | "custom"
@@ -1235,7 +1255,9 @@ local Defaults = {
                 },
                 Frames = {
                     CharacterFrame = true,
+                    GroupFinder = true,
                     InspectFrame = true,
+                    Menus = true,
                     PlayerSpells = true,
                 },
             },

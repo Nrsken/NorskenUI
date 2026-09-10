@@ -52,6 +52,7 @@ local DIVIDER_HEIGHT = 1
 local MIN_WIDTH = 180
 local MAX_WIDTH = 350
 local TEXT_INSET = 4
+local DISABLED_ALPHA = 0.4
 
 local BACKDROP = { bgFile = 'Interface\\Buttons\\WHITE8X8', edgeFile = 'Interface\\Buttons\\WHITE8X8', edgeSize = 1 }
 
@@ -92,7 +93,7 @@ local function EnsureMenu(gui)
             if item.divider then
                 item.tex:SetColorTexture(theme.border[1], theme.border[2], theme.border[3], theme.border[4])
             else
-                item.text:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], theme.accent[4])
+                item.text:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], (theme.accent[4] or 1) * (item.disabled and DISABLED_ALPHA or 1))
                 item.hover:SetColorTexture(theme.accentHover[1], theme.accentHover[2], theme.accentHover[3], theme.accentHover[4])
                 item.button:SetBackdropBorderColor(theme.accent[1], theme.accent[2], theme.accent[3], 0)
                 item.button:SetBackdropColor(theme.bgMedium[1], theme.bgMedium[2], theme.bgMedium[3], theme.bgMedium[4])
@@ -170,7 +171,10 @@ function InstanceMixin:ShowContextMenu(entries)
             gui:ApplyFont(item.text, 'normal')
             item.text:SetText(entry.text or '')
             item.button:SetEnabled(not entry.disabled)
-            item.text:SetAlpha(entry.disabled and 0.4 or 1)
+
+            -- Restyle repaints the label below, and SetTextColor's alpha overrides SetAlpha on a
+            -- FontString, so the dim has to ride the color rather than sit beside it.
+            item.disabled = entry.disabled == true
 
             local onClick = entry.onClick
             item.button:SetScript('OnClick', function()

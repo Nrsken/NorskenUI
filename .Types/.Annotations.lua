@@ -50,6 +50,52 @@
 ---@field HighlightRight Texture?
 ---@field ToggleCollapseButton Button?
 
+---@class NUIIconButton : Button
+---@field NUISkinned boolean?
+---@field Icon Texture?
+---@field NameFrame Frame?
+---@field shortageBorder Frame?
+---@field IconBorder Texture?
+
+---@class NUIScrollFrame : ScrollFrame
+---@field NUISkinned boolean?
+---@field ScrollBar Frame?
+
+---@class NUISearchEntry : Button
+---@field NUISkinned boolean?
+---@field ResultBG Texture?
+---@field Highlight Texture?
+---@field CancelButton NUIIconButton?
+---@field BackgroundTexture Texture?
+---@field isNowFilteredOut boolean?
+---@field isApplication boolean?
+---@field resultID number?
+---@field DataDisplay table?
+
+---@class NUISearchPanel : LFGListFrame_SearchPanel
+---@field results number[]?
+---@field totalResults number?
+---@field filters number?
+---@field searching boolean?
+---@field searchFailed boolean?
+
+---@class NUIApplicantRow : Button
+---@field DeclineButton NUIIconButton?
+---@field InviteButtonSmall NUIIconButton?
+---@field InviteButton Button?
+
+---@class NUIRequirementRow : Frame
+---@field CheckButton CheckButton?
+---@field EditBox EditBox?
+
+---@class NUIDungeonListRow : Frame
+---@field enableButton CheckButton?
+---@field expandOrCollapseButton Button?
+
+---@class NUIAffixHolder : Frame
+---@field AffixesContainer Frame?
+---@field Affixes table?
+
 -- Font styling API injected onto FontString / Font / EditBox metatables (see Core/FontCore.lua).
 ---@class Font ---@diagnostic disable-line: class-shadows-builtin
 local Font
@@ -136,6 +182,7 @@ function EditBox:SetFontJustify(source, parent, offsetX, offsetY, skip, bound, f
 ---@field SetAlphaFromBoolean fun(self: Frame, value: boolean|number|nil, alphaIfTrue?: number, alphaIfFalse?: number)
 ---@field CreateAuraContainer fun(self: Frame, config: table?): NUIAuraContainer?
 ---@field container NUIAuraContainer?
+---@field NUIGlow Texture? The widget glow texture attached by CreatePanelBackdrop
 ---@field _PixelGlow Frame? Attached by LibCustomGlow's PixelGlow_Start
 ---@field _AutoCastGlow Frame? Attached by LibCustomGlow's AutoCastGlow_Start
 local Frame
@@ -397,9 +444,14 @@ function FontString:GetWidestDigit() end
 ---@field SystemFont22_Shadow_ThickOutline Font
 ---@field UserScaledFontSystem15Shadow Font
 ---@field CharacterFrameTitleText FontString
+---@field RaiderIO_ProfileTooltipAnchor Frame
 
 ---@class InspectFrame
 ---@field unit string
+
+---@class LFGListFrame_SearchPanel
+---@field categoryID number
+---@field preferredFilters number
 
 ---@class SkinnedBackdropMixin : PublicBackdropMixin
 ---@field NUIBgAlpha number?
@@ -430,6 +482,23 @@ function FontString:GetWidestDigit() end
 ---@field Update fun(self: ScrollBox)
 ---@field NUIHooked? boolean
 
+---@class MenuInset
+---@field left number
+---@field top number
+---@field right number
+---@field bottom number
+
+-- Blizzard_Menu MenuTemplateBase, the menu style mixin supplies GetInset.
+---@class MenuFrame : Frame
+---@field ScrollBar Frame
+---@field GetInset fun(self: MenuFrame): MenuInset
+
+-- Menu row. Its regions are pooled attachments, released and reset when the menu closes.
+---@class MenuElement : Frame
+---@field highlight Texture?
+---@field arrow Texture?
+---@field attachments (Texture|FontString|Frame)[]
+
 -- TabSystemTemplate: TabSystemMixin on a HorizontalLayoutFrame, so it owns its tabs' anchors.
 ---@class NUITabSystem : Frame
 ---@field tabs Button[] Ordered by tabID, unlike the unordered tabPool
@@ -456,6 +525,11 @@ function FontString:GetWidestDigit() end
 ---@field NUIContainer Frame
 ---@field NUISettingTexture boolean?
 ---@field NUISkinned boolean?
+
+---@class SkinnedMinMaxButtonMixin: Button
+---@field NUIBtnMinMax Texture
+---@field NUIOnEnter fun(self: SkinnedMinMaxButtonMixin)
+---@field NUIOnLeave fun(self: SkinnedMinMaxButtonMixin)
 
 ---Blizzard ItemButton/paperdoll slot fields we touch (all optional per template)
 ---@class NUIItemButton : Button

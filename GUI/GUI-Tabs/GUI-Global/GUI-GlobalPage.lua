@@ -89,7 +89,7 @@ local function BuildGlobalColorsTab(page, db)
         for i = 1, count, 3 do
             local isLast = (i + 2) >= count
             local rowHeight = (isLast and rowHL) or rowH
-            local row = card:Row(rowHeight)
+            local row = card:Row(rowHeight, (isLast and 0) or nil)
 
             for j = i, min(i + 2, count) do
                 local spec = specs[j]

@@ -95,6 +95,7 @@ GUIFrame.SidebarConfig = {
                 { id = 'skyRiding',          text = L['Skyriding UI'] },
                 { id = 'spellAlert',         text = L['Spell Alerts'] },
                 { id = 'cdmStrings',         text = L['CDM Profile Backup'] },
+                { id = 'groupFinder',        text = L['Group Finder'] },
             }
         },
         {

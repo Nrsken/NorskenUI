@@ -13,4 +13,6 @@
     <Script file="SkyRiding.lua"/>
     <Script file="SpellAlerts.lua"/>
     <Script file="CDMStrings.lua"/>
+    <Script file="GroupFinder.lua"/>
+    <Script file="GroupFinderPanel.lua"/>
 </Ui>

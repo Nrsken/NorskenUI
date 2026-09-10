@@ -228,11 +228,13 @@ local function TitleSearch(S)
     scrollBox:NUISetPixelPoint('TOPLEFT', scrollParent, 'TOPLEFT', 4, -24)
     scrollBox:NUISetPixelPoint('BOTTOMRIGHT', scrollParent, 'BOTTOMRIGHT', 4, 1)
 
+    local color = Skinning.db.General.WidgetBackgroundColor
+
     local frame = CreateFrame('Frame', nil, scrollParent)
     frame:NUISetPixelSize(scrollBox:GetWidth(), 24)
     frame:NUISetPixelPoint('TOPLEFT', scrollParent, 'TOPLEFT', 4, 0)
     frame:NUICreateBackdrop()
-    frame:SetBackgroundColor(0, 0, 0, 0.5)
+    frame:SetBackgroundColor(color[1], color[2], color[3], color[4])
 
     local db = Skinning.db
     local r, g, b, a = Skinning:GetAccentColor()
@@ -398,7 +400,7 @@ local function SkinStatsPane(S)
         if category then
             category:NUIStripTextures('Keyed')
             -- Slim centered header plate, repositioning our own backdrop is fine
-            local backdrop = S:CreatePanelBackdrop(category, 'Transparent')
+            local backdrop = S:CreatePanelBackdrop(category, nil, nil, true)
             if backdrop then
                 backdrop:ClearAllPoints()
                 backdrop:NUISetPixelPoint('CENTER')
@@ -441,7 +443,7 @@ local function SkinSidebarTabs(S)
         if not tab.NUISkinned then
             tab.NUISkinned = true
 
-            local backdrop = S:CreatePanelBackdrop(tab)
+            local backdrop = S:CreatePanelBackdrop(tab, nil, nil, true)
             if backdrop then
                 -- Adjust backdrop size slightly so that the borders can be seen.
                 backdrop:ClearAllPoints()
@@ -513,8 +515,8 @@ local function SkinEquipmentManager(S)
     local PaperDollFrameEquipSet = _G.PaperDollFrameEquipSet
     local PaperDollFrameSaveSet = _G.PaperDollFrameSaveSet
 
-    S:HandleButton(PaperDollFrameEquipSet, 'Transparent')
-    S:HandleButton(PaperDollFrameSaveSet, 'Transparent')
+    S:HandleButton(PaperDollFrameEquipSet)
+    S:HandleButton(PaperDollFrameSaveSet)
     SkinGearManagerPopup(S)
 end
 

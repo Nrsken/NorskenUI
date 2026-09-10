@@ -159,6 +159,7 @@ local function StripRegion(region, stripType, a, b)
 end
 
 ---Strip textures/atlases from a frame (or texture) in a controlled way.
+---Regions flagged NUINoStrip are skipped.
 ---@param object Frame|Texture|string The frame (or its global name) to strip.
 ---@param stripType string? Selector: nil, 'Keyed', 'Kill', 'Layer', 'Atlas', 'ClearHide', 'Alpha'.
 ---@param a string|string[]|boolean? For 'Layer'/'Atlas': draw layer / atlas name(s), single or list. For 'Keyed': banish (kill) flag.
@@ -205,7 +206,7 @@ local function StripTextures(object, stripType, a, b)
 
     ---@cast object Frame
     for _, region in ipairs({ object:GetRegions() }) do
-        if region:IsObjectType('Texture') then
+        if region:IsObjectType('Texture') and not region.NUINoStrip then
             StripRegion(region, stripType, matcher, b)
         end
     end
