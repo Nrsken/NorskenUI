@@ -53,7 +53,7 @@ end
 ---Blizzard drives the stepper through OnButtonStateChanged, which fires for hover, press,
 ---and the SetEnabled calls ScrollBarMixin:Update makes at either end of the track.
 ---@param S SkinningModule
----@param button Button?
+---@param button NUIArrowButton|Button|nil
 ---@param direction string 'up'|'down'|'left'|'right'
 local function SkinStepper(S, button, direction)
     if not button or button.NUISkinned then return end
@@ -72,7 +72,7 @@ local function SkinStepper(S, button, direction)
 end
 
 ---Skin a modern WowTrimScrollBar/MinimalScrollBar
----@param scrollBar Frame
+---@param scrollBar NUIScrollBar|Frame
 function Skinning:HandleTrimScrollBar(scrollBar)
     if not scrollBar or scrollBar.NUISkinned then return end
     scrollBar.NUISkinned = true

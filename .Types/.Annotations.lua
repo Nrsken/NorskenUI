@@ -463,6 +463,12 @@ function FontString:GetWidestDigit() end
 ---@field NUIHighlight Texture?
 ---@field NUIMenuOpen boolean?
 
+-- The arrow API Skinning:CreateArrowTexture installs on a button.
+---@class NUIArrowButton : Button
+---@field NUIArrow Texture
+---@field NUIUpdateArrowState fun(self: NUIArrowButton)
+---@field NUISetArrowDirection fun(self: NUIArrowButton, dir: string, open: boolean?)
+
 ---@class SkinnedCloseButtonMixin : Button
 ---@field NUIBtnCross Texture
 
@@ -481,6 +487,11 @@ function FontString:GetWidestDigit() end
 ---@field ForEachFrame fun(self: ScrollBox, callback: fun(child: Frame))
 ---@field Update fun(self: ScrollBox)
 ---@field NUIHooked? boolean
+
+-- WowTrimScrollBar/MinimalScrollBar. The steppers are template-optional, MinimalScrollBar has neither.
+---@class NUIScrollBar : Frame
+---@field Back Button?
+---@field Forward Button?
 
 ---@class MenuInset
 ---@field left number

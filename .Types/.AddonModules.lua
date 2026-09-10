@@ -46,6 +46,7 @@
 ---@class TooltipsModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class MinimapModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class SkinningModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@field ButtonMixin SkinnedButtonMixin the shared button mixin, set in Widgets/Button.lua
 ---@class GatewayModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class PetTextsModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class PlayerAurasModule : NRSKNUI.ModuleBase, AceEvent-3.0
