@@ -1418,27 +1418,34 @@ L['Text Size'] = true
 L['Key Text Color'] = true
 L['Key Text Size'] = true
 
--- Skinning: Blizzard Frames --
-L['Blizzard Frames'] = true
-L['Blizzard Frame Skinning'] = true
-L['Enable Blizzard Frame Skinning'] = true
+-- Skinning: Frames --
+L['Frames'] = true
+L['Frame Skinning'] = true
+L['Enable Frame Skinning'] = true
 L['Skin Colors'] = true
 L['Accent Mode'] = true
 L['Custom Accent'] = true
 L['Color used for the highlights and accents on the skinned frames.'] = true
-L['Frames'] = true
-L['Skinned Frames'] = true
+L['Blizzard Frames'] = true
+L['Addons'] = true
+L['Ace3 Config Windows'] = true
 L['Character Frame'] = true
 L['Inspect Frame'] = true
 L['Right-Click Menus'] = true
+L['Raider.IO'] = true
+L['Simple Addon Manager'] = true
 L['Spellbook & Talents'] = true
 L['Tab Text'] = true
 L['Panel Text'] = true
 L['Search Box'] = true
+
+-- Skinning: Objective Tracker --
 L['Objective Tracker'] = true
+L['Objective Tracker Skinning'] = true
 L['Enable Objective Tracker Skinning'] = true
 L['Font Styling'] = true
 L['Enable Font Styling'] = true
+L['The font face and shadow are taken from Skinning > Frames > Font Settings.'] = true
 L['Quest Title Size'] = true
 L['Quest Text Size'] = true
 

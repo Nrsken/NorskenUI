@@ -105,12 +105,13 @@ GUIFrame.SidebarConfig = {
             defaultExpanded = false,
             items = {
                 { id = 'actionBars',        text = L['Action Bars'] },
-                { id = 'blizzardElements',  text = L['Blizzard Frames'],    elvUIDisabled = true },
                 { id = 'blizzardMouseover', text = L['Blizzard Mouseover'], elvUIDisabled = true },
                 { id = 'chat',              text = L['Chat'] },
                 { id = 'detailsBackdrop',   text = L['Details Backdrop'] },
+                { id = 'frameSkins',        text = L['Frames'],             elvUIDisabled = true },
                 { id = 'microMenu',         text = L['Micro Menu'] },
                 { id = 'minimap',           text = L['Minimap'] },
+                { id = 'objectiveTracker',  text = L['Objective Tracker'],  elvUIDisabled = true },
                 { id = 'tooltip',           text = L['Tooltips'] },
             }
         },

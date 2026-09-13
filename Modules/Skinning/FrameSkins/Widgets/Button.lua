@@ -13,7 +13,9 @@ Skinning.ButtonMixin = SkinnedButtonMixin
 ---Explicit SetTextColor overrides the font object in every state, so the mixin owns the disabled/hover look.
 ---@param hovered boolean?
 function SkinnedButtonMixin:NUIUpdateState(hovered)
-    local disabled = self.IsEnabled and not self:IsEnabled()
+    -- NUIIgnoreDisabled is for templates that disable themselves to stay inert, a static column
+    -- header being the usual one. Dimming those would read as a button the player can't press.
+    local disabled = not self.NUIIgnoreDisabled and self.IsEnabled and not self:IsEnabled()
     local dim = Skinning.db.General.DisabledColor[4]
     if self.NUIBackdrop then
         self.NUIBackdrop:SetAlpha(disabled and dim or 1)
@@ -65,9 +67,11 @@ end
 ---@param template string? 'Transparent' pins the background alpha at 0.5
 ---@param skipRegister boolean? Skip recolor registration (caller owns coloring)
 ---@param keepIcon boolean? Spare button.Icon from the strip, leaving Blizzard's art and anchors intact
-function Skinning:HandleButton(button, template, skipRegister, keepIcon)
+---@param ignoreDisabled boolean? Keep the resting look even while the button is disabled
+function Skinning:HandleButton(button, template, skipRegister, keepIcon, ignoreDisabled)
     if not button or button.NUISkinned then return end
     button.NUISkinned = true
+    button.NUIIgnoreDisabled = ignoreDisabled
 
     if keepIcon and button.Icon then
         button.Icon.NUINoStrip = true
@@ -87,6 +91,8 @@ function Skinning:HandleButton(button, template, skipRegister, keepIcon)
     if backdrop then
         for _, region in ipairs({ button:GetRegions() }) do
             if region:IsObjectType('FontString') then
+                -- Templates that anchor their label off an edge keep fighting a bare CENTER.
+                region:ClearAllPoints()
                 region:SetPoint('CENTER', backdrop, 'CENTER', 0, 0)
             end
         end

@@ -81,6 +81,8 @@
 ---@field hasRerolled boolean?
 ---@field isPreview boolean?
 ---@class BlizzObjectiveTrackerModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@field db NRSKNUI.DBProfile.Skinning.BlizzardElements.ObjectiveTracker
+---@field skinDB NRSKNUI.DBProfile.Skinning.BlizzardElements the FrameSkins table it sits under, for the shared font face and shadow
 ---@class BlizzardMouseoverModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class BigWigsTimersModule : NRSKNUI.ModuleBase, AceEvent-3.0, AceTimer-3.0, AceHook-3.0
 ---@field db NRSKNUI.DBProfile.BigWigsTimers

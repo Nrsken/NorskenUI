@@ -63,6 +63,7 @@
 
 ---@class NUISearchEntry : Button
 ---@field NUISkinned boolean?
+---@field Name FontString?
 ---@field ResultBG Texture?
 ---@field Highlight Texture?
 ---@field CancelButton NUIIconButton?
@@ -87,6 +88,28 @@
 ---@class NUIRequirementRow : Frame
 ---@field CheckButton CheckButton?
 ---@field EditBox EditBox?
+
+-- A Blizzard font object mirrored by Skinning:GetAccentFont, repainted on accent changes.
+---@class NUIAccentFont : Font
+---@field NUIUpdateSkinColors fun(self: NUIAccentFont)
+
+---@class NUIRewardsFrame : Frame
+---@field MoneyReward NUIIconButton?
+---@field title FontString?
+---@field rewardsLabel FontString?
+
+---@class NUIRoleIncentive : Frame
+---@field NUISkinned boolean?
+---@field border Texture?
+---@field texture Texture?
+---@field CircleMask MaskTexture?
+
+---@class NUIRoleButton : Button
+---@field background Texture?
+---@field shortageBorder Texture?
+---@field incentiveIcon NUIRoleIncentive?
+---@field CheckButton CheckButton?
+---@field checkButton CheckButton?
 
 ---@class NUIDungeonListRow : Frame
 ---@field enableButton CheckButton?
@@ -219,7 +242,8 @@ function Frame:NUIStripTextures(stripType, a, b) end
 ---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#createbackdrop)
 ---@param noBorders? boolean skip the four border edges, for frames that draw their own
 ---@param inset? number pixel inset of the bg and edges from the frame's rect, defaults to 1
-function Frame:NUICreateBackdrop(noBorders, inset) end
+---@param insetY number? Optional vertical inset, defaults to `inset`. Negatives sit outside the frame.
+function Frame:NUICreateBackdrop(noBorders, inset, insetY) end
 
 ---Return true if a NorskenUI backdrop was already added.
 ---
@@ -445,6 +469,8 @@ function FontString:GetWidestDigit() end
 ---@field UserScaledFontSystem15Shadow Font
 ---@field CharacterFrameTitleText FontString
 ---@field RaiderIO_ProfileTooltipAnchor Frame
+---@field RaiderIO_ExportButton Button
+---@field SimpleAddonManager SAMFrame
 
 ---@class InspectFrame
 ---@field unit string
@@ -591,6 +617,75 @@ function FontString:GetWidestDigit() end
 ---@field CloseButton Button?
 ---@field BorderBox NUIGearManagerBorderBox?
 ---@field IconSelector { ScrollBar: Frame? }|nil
+
+-- LibStub keeps its registries on the table itself, which the bundled stub leaves out.
+---@class LibStub
+---@field libs table<string, table>
+---@field minors table<string, number>
+
+-- AceGUI-3.0. The widgets themselves are plain Lua tables, so only the frames they own
+-- and the fields our skin reads are described here.
+
+---AceGUI back-references its widget object on every frame it builds.
+---@class AceWidgetFrame : Button
+---@field obj table
+
+---TabGroup tab. AceGUI drives it with a PanelTemplates clone of its own.
+---@class AceTabButton : Button
+---@field HighlightTexture Texture
+
+---TreeGroup row, rewritten from scratch by UpdateButton on every refresh.
+---@class AceTreeRow : Button
+---@field toggle NUICollapseButtonMixin
+---@field text FontString
+
+-- SimpleAddonManager. The addon builds its panels in Lua, so only the parts our skin
+-- touches are described here.
+
+---Enable toggle of a list row. Only the addon list's template carries the lock badge.
+---@class SAMEnabledButton : CheckButton, SkinnedCheckMixin
+---@field LockIcon Frame?
+---@field NUIBackdrop Frame?
+
+---Row of the addon/category lists. The expander only exists on rows that have children.
+---@class SAMListRow : Button
+---@field EnabledButton SAMEnabledButton
+---@field ExpandOrCollapseButton Button?
+---@field HighlightTexture Texture?
+---@field PushedTexture Texture?
+---@field NUISkinned boolean?
+
+---HybridScrollFrame: `buttons` is the row pool, absent until it first has data.
+---@class SAMScrollFrame : Frame
+---@field buttons SAMListRow[]?
+---@field ScrollBar Slider
+---@field update fun()
+
+---@class SAMCategoryFrame : Frame
+---@field NewButton Button
+---@field SelectAllButton Button
+---@field ClearSelectionButton Button
+---@field ScrollFrame SAMScrollFrame
+
+---@class SAMProfilerFrame : Frame
+---@field Divider Texture
+---@field Left { CurrentCPUButton: Button, AverageCPUButton: Button }
+---@field Right { EncounterCPUButton: Button, PeakCPUButton: Button }
+
+---@class SAMFrame : Frame
+---@field CharacterDropDown WowStyle1DropdownTemplate
+---@field SetsButton Button
+---@field SearchBox EditBox
+---@field ResultOptionsButton Button
+---@field ConfigButton Button
+---@field CategoryButton Button
+---@field EnableAllButton Button
+---@field DisableAllButton Button
+---@field OkButton Button
+---@field CancelButton Button
+---@field CategoryFrame SAMCategoryFrame
+---@field AddonListFrame { ScrollFrame: SAMScrollFrame }
+---@field ProfilerFrame SAMProfilerFrame
 
 -- Blizzard object pools: the generated stubs declare ObjectPoolBaseMixin (Acquire/Release)
 -- and ObjectPoolMixin separately but lose the CreateFromMixins inheritance, and pool

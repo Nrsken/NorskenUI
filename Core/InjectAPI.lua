@@ -280,16 +280,18 @@ local CreateTextureMixin = CreateFrame('Frame').CreateTexture
 
 ---@param frame Frame
 ---@param noBorders boolean? Sometime a manual border is needed, so skip creating the default borders if true.
----@param inset number? Optional inset for the background texture, defaults to 1.
-local function CreateBackdrop(frame, noBorders, inset)
+---@param inset number? Optional horizontal inset for the background texture, defaults to 1.
+---@param insetY number? Optional vertical inset, defaults to `inset`. Negatives sit outside the frame.
+local function CreateBackdrop(frame, noBorders, inset, insetY)
     ---@cast frame Frame & PublicBackdropMixin
     Mixin(frame, PublicBackdropMixin)
 
     local insetBG = inset or 1
+    local insetV = insetY or insetBG
 
     local BG = CreateTextureMixin(frame, nil, 'BACKGROUND')
-    BG:NUISetPixelPoint('TOPLEFT', frame, 'TOPLEFT', insetBG, -insetBG)
-    BG:NUISetPixelPoint('BOTTOMRIGHT', frame, 'BOTTOMRIGHT', -insetBG, insetBG)
+    BG:NUISetPixelPoint('TOPLEFT', frame, 'TOPLEFT', insetBG, -insetV)
+    BG:NUISetPixelPoint('BOTTOMRIGHT', frame, 'BOTTOMRIGHT', -insetBG, insetV)
     frame.backdropBackground = BG
     BG:NUISetPixelSnap()
 
@@ -300,26 +302,26 @@ local function CreateBackdrop(frame, noBorders, inset)
     frame.BackDropBorders = {}
 
     local LB = CreateTextureMixin(frame, nil, 'BORDER')
-    LB:NUISetPixelPoint('TOPLEFT', frame, insetBG, -insetBG)
-    LB:NUISetPixelPoint('BOTTOMLEFT', frame, insetBG, insetBG)
+    LB:NUISetPixelPoint('TOPLEFT', frame, insetBG, -insetV)
+    LB:NUISetPixelPoint('BOTTOMLEFT', frame, insetBG, insetV)
     insert(frame.BackDropBorders, LB)
     LB:NUISetPixelSnap()
 
     local TB = CreateTextureMixin(frame, nil, 'BORDER')
-    TB:NUISetPixelPoint('TOPLEFT', frame, insetBG, -insetBG)
-    TB:NUISetPixelPoint('TOPRIGHT', frame, -insetBG, -insetBG)
+    TB:NUISetPixelPoint('TOPLEFT', frame, insetBG, -insetV)
+    TB:NUISetPixelPoint('TOPRIGHT', frame, -insetBG, -insetV)
     insert(frame.BackDropBorders, TB)
     TB:NUISetPixelSnap()
 
     local RB = CreateTextureMixin(frame, nil, 'BORDER')
-    RB:NUISetPixelPoint('TOPRIGHT', frame, -insetBG, -insetBG)
-    RB:NUISetPixelPoint('BOTTOMRIGHT', frame, -insetBG, insetBG)
+    RB:NUISetPixelPoint('TOPRIGHT', frame, -insetBG, -insetV)
+    RB:NUISetPixelPoint('BOTTOMRIGHT', frame, -insetBG, insetV)
     insert(frame.BackDropBorders, RB)
     RB:NUISetPixelSnap()
 
     local BB = CreateTextureMixin(frame, nil, 'BORDER')
-    BB:NUISetPixelPoint('BOTTOMLEFT', frame, insetBG, insetBG)
-    BB:NUISetPixelPoint('BOTTOMRIGHT', frame, -insetBG, insetBG)
+    BB:NUISetPixelPoint('BOTTOMLEFT', frame, insetBG, insetV)
+    BB:NUISetPixelPoint('BOTTOMRIGHT', frame, -insetBG, insetV)
     insert(frame.BackDropBorders, BB)
     BB:NUISetPixelSnap()
 

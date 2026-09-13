@@ -15,13 +15,17 @@
     <Script file='Widgets/ItemButton.lua' />
     <Script file='Widgets/PortraitFrame.lua' />
     <Script file='Widgets/ScrollBar.lua' />
+    <Script file='Widgets/Slider.lua' />
     <Script file='Widgets/StatusBar.lua' />
     <Script file='Widgets/Tab.lua' />
     <Script file='Widgets/Menus.lua' />
 
-    <Script file='Elements/CharacterFrame.lua' />
-    <Script file='Elements/GroupFinder.lua' />
-    <Script file='Elements/InspectFrame.lua' />
-    <Script file='Elements/PlayerSpells.lua' />
-    <Script file='Elements/BlizzObjectiveTracker.lua' />
+    <Script file='Blizzard/CharacterFrame.lua' />
+    <Script file='Blizzard/GroupFinder.lua' />
+    <Script file='Blizzard/InspectFrame.lua' />
+    <Script file='Blizzard/PlayerSpells.lua' />
+
+    <Script file='Addons/Ace3.lua' />
+    <Script file='Addons/RaiderIO.lua' />
+    <Script file='Addons/SimpleAddonManager.lua' />
 </Ui>

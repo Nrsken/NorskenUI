@@ -105,6 +105,9 @@ function Skinning:HandleEditBox(editBox)
 
     local left, right, top, bottom = MeasureInputArt(editBox)
 
+    -- Placeholder text wraps by default, which spills out of a single-line box.
+    if editBox.Instructions then editBox.Instructions:SetWordWrap(false) end
+
     editBox:NUIStripTextures('Layer', EDITBOX_ART_LAYERS)
     if editBox.NineSlice then editBox.NineSlice:NUIStripTextures() end
 
@@ -115,6 +118,10 @@ function Skinning:HandleEditBox(editBox)
         backdrop:ClearAllPoints()
         backdrop:SetPoint('TOPLEFT', editBox, 'TOPLEFT', left, top)
         backdrop:SetPoint('BOTTOMRIGHT', editBox, 'BOTTOMRIGHT', right, bottom)
+
+        -- The art rarely matches the frame rect, so callers aligning or matching the box need it.
+        editBox.NUIArtLeft, editBox.NUIArtRight = left, right
+        editBox.NUIArtTop, editBox.NUIArtBottom = top, bottom
     end
 
     ---@cast editBox EditBox & SkinnedEditBoxMixin

@@ -5,13 +5,13 @@ local Skinning = NRSKNUI:GetModule('Skinning')
 
 local strlower = strlower
 local Mixin = Mixin
+local CreateFont = CreateFont
 local CreateFrame = CreateFrame
 local pairs = pairs
 local ipairs = ipairs
 local setmetatable = setmetatable
 local xpcall = xpcall
 local geterrorhandler = geterrorhandler
-local math_max = math.max
 
 local IsAddOnLoaded = C_AddOns and C_AddOns.IsAddOnLoaded
 
@@ -45,9 +45,111 @@ function Skinning:RegisterSkin(addonName, key, func)
 end
 
 ---Track a widget for live recoloring, it must implement NUIUpdateSkinColors()
----@param widget Frame|Button|StatusBar
+---@param widget Frame|Button|StatusBar|FontString|Font|Texture
 function Skinning:RegisterSkinned(widget)
     self.skinned[widget] = true
+end
+
+-- Accent text --
+
+---@class AccentTextMixin
+local AccentTextMixin = {}
+
+function AccentTextMixin:NUIUpdateSkinColors()
+    ---@cast self FontString
+    self:SetTextColor(Skinning:GetAccentColor())
+end
+
+local FONT_OUTLINE = 'OUTLINE'
+
+---Copy a Blizzard font object so it can be restyled without repainting the shared original every
+---other frame draws from.
+---@param base Font Blizzard font object to copy size and face from
+---@param name string
+---@return Font
+local function CreateOutlinedMirror(base, name)
+    local mirror = CreateFont(name)
+    mirror:SetFontObject(base)
+
+    -- Read the face and size back off the base so only the outline flag is ours. SetFont drops the
+    -- inheritance, so a refused combination falls back rather than leaving the object unset.
+    local face, size = mirror:GetFont()
+    if face and size and not mirror:SetFont(face, size, FONT_OUTLINE) then
+        mirror:SetFontObject(base)
+    end
+
+    return mirror
+end
+
+---@type table<Font, Font>
+local outlineFonts = {}
+local outlineFontCount = 0
+
+---Outlined mirror that stays white, for labels that want the outline without the accent.
+---@param base Font Blizzard font object to copy size and face from
+---@return Font
+function Skinning:GetOutlineFont(base)
+    local mirror = outlineFonts[base]
+    if mirror then return mirror end
+
+    outlineFontCount = outlineFontCount + 1
+    mirror = CreateOutlinedMirror(base, 'NorskenUIOutlineFont' .. outlineFontCount)
+    mirror:SetTextColor(1, 1, 1)
+
+    outlineFonts[base] = mirror
+    return mirror
+end
+
+---@type table<Font, NUIAccentFont>
+local accentFonts = {}
+local accentFontCount = 0
+
+---Mirror a Blizzard font object so the accent can recolor it without repainting the shared
+---original every other frame draws from. A FontString follows its font object's color live.
+---@param base Font Blizzard font object to copy size and face from
+---@return NUIAccentFont
+function Skinning:GetAccentFont(base)
+    local mirror = accentFonts[base]
+    if mirror then return mirror end
+
+    accentFontCount = accentFontCount + 1
+    mirror = CreateOutlinedMirror(base, 'NorskenUIAccentFont' .. accentFontCount)
+
+    ---@cast mirror NUIAccentFont
+    Mixin(mirror, AccentTextMixin)
+    -- Callers at file scope run before the profile exists, the skin pass repaints them.
+    if self.db then mirror:NUIUpdateSkinColors() end
+
+    accentFonts[base] = mirror
+    self:RegisterSkinned(mirror)
+    return mirror
+end
+
+---Swap a FontString onto an accent mirror of whatever font object it already carries, so its size
+---and face are kept. For labels that take their color from that object rather than their own.
+---@param text FontString?
+function Skinning:HandleAccentFont(text)
+    -- Re-running would mirror the mirror, so the swap is one way.
+    if not text or text.NUIAccented then return end
+
+    local base = text.GetFontObject and text:GetFontObject()
+    if not base then return end
+
+    text.NUIAccented = true
+    text:SetFontObject(self:GetAccentFont(base))
+end
+
+---Paint one FontString in the accent, for labels whose own color overrides their font object.
+---@param text FontString?
+function Skinning:HandleAccentText(text)
+    if not text or text.NUISkinned then return end
+    text.NUISkinned = true
+
+    ---@cast text FontString & AccentTextMixin
+    Mixin(text, AccentTextMixin)
+    text:NUIUpdateSkinColors()
+
+    self:RegisterSkinned(text)
 end
 
 ---Resolve the accent from the mode picked in the db: theme, class or custom.
@@ -81,6 +183,14 @@ function SkinnedBackdropMixin:NUIUpdateSkinColors()
     UpdateWidgetGlow(self)
 end
 
+---A child at its parent's level draws on top of it, so make room below rather than clamping into a collision.
+---@param frame Frame
+---@return number level
+local function LowerLevel(frame)
+    if frame:GetFrameLevel() == 0 then frame:SetFrameLevel(1) end
+    return frame:GetFrameLevel() - 1
+end
+
 ---Create a pixel-perfect backdrop child frame colored from the Blizzard Elements db
 ---@param frame Frame
 ---@param template string? 'Transparent' pins the background alpha at 0.5
@@ -93,7 +203,7 @@ function Skinning:CreatePanelBackdrop(frame, template, skipRegister, isWidget)
 
     local backdrop = CreateFrame('Frame', nil, frame)
     backdrop:SetAllPoints(frame)
-    backdrop:SetFrameLevel(math_max(0, frame:GetFrameLevel() - 1))
+    backdrop:SetFrameLevel(LowerLevel(frame))
     backdrop:NUICreateBackdrop()
 
     ---@cast backdrop Frame & PublicBackdropMixin & SkinnedBackdropMixin
@@ -133,7 +243,7 @@ function Skinning:CreateStatusBarBackdrop(bar, template)
     local backdrop = CreateFrame('Frame', nil, bar)
     backdrop:SetPoint('TOPLEFT', bar, -1, 1)
     backdrop:SetPoint('BOTTOMRIGHT', bar, 1, -1)
-    backdrop:SetFrameLevel(math_max(0, bar:GetFrameLevel() - 1))
+    backdrop:SetFrameLevel(LowerLevel(bar))
     backdrop:NUICreateBackdrop()
 
     ---@cast backdrop Frame & PublicBackdropMixin & SkinnedBackdropMixin

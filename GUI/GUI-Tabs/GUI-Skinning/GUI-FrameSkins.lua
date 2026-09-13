@@ -2,8 +2,6 @@
 local NRSKNUI = select(2, ...)
 ---@class Skinning
 local Skinning = NRSKNUI:GetModule('Skinning', true)
----@class BlizzObjectiveTracker
-local BOT = NRSKNUI:GetModule('BlizzObjectiveTracker', true)
 local L = NRSKNUI.Libs.AL
 local GUI = NRSKNUI.GUI
 local Theme = NRSKNUI.Theme
@@ -12,12 +10,18 @@ local rowHL = Theme.rowHeightLast
 
 local min = math.min
 
-local FRAME_TOGGLES = {
+local BLIZZARD_TOGGLES = {
     { key = 'CharacterFrame', label = L['Character Frame'] },
     { key = 'GroupFinder',    label = L['Group Finder'] },
     { key = 'InspectFrame',   label = L['Inspect Frame'] },
     { key = 'Menus',          label = L['Right-Click Menus'] },
     { key = 'PlayerSpells',   label = L['Spellbook & Talents'] },
+}
+
+local ADDON_TOGGLES = {
+    { key = 'Ace3',               label = L['Ace3 Config Windows'] },
+    { key = 'RaiderIO',           label = L['Raider.IO'] },
+    { key = 'SimpleAddonManager', label = L['Simple Addon Manager'] },
 }
 
 local fontSizes = {
@@ -30,33 +34,27 @@ local function ApplySettings()
     if Skinning then Skinning:ApplySettings() end
 end
 
-local function ApplyObjectiveTracker()
-    if BOT then BOT:ApplySettings() end
-end
-
 -- General Settings Tab.
 local function BuildGeneralSettingsTab(page, db)
     page:SetCondition('customAccent', function() return db.General.AccentMode == 'custom' end)
 
     -- Card 1: Enable
-    local enableCard = page:Card(L['Blizzard Frame Skinning'])
+    local enableCard = page:Card(L['Frame Skinning'])
     local enableRow = enableCard:Row(rowHL, 0)
-    enableRow:Checkbox(L['Enable Blizzard Frame Skinning'], {
+    enableRow:Checkbox(L['Enable Frame Skinning'], {
         width = 1,
         master = true,
         value = db.Enabled ~= false,
         msgPopup = true,
-        msgText = L['Blizzard Frame Skinning'],
+        msgText = L['Frame Skinning'],
         callback = function(checked)
             db.Enabled = checked
             NRSKNUI:ToggleModule('Skinning', checked)
-            NRSKNUI:ToggleModule('BlizzObjectiveTracker', checked)
             if checked then
                 ApplySettings()
-                ApplyObjectiveTracker()
             else
                 NRSKNUI:CreateReloadPrompt(
-                    'Restoring the default Blizzard frames requires a reload to take full effect.')
+                    'Restoring the default frames requires a reload to take full effect.')
             end
             page:Refresh()
         end,
@@ -130,14 +128,15 @@ local function BuildGeneralSettingsTab(page, db)
 end
 
 -- Frames Tab.
-local function BuildFramesTab(page, db, specs)
-    local framesCard = page:Card(L['Skinned Frames'], 'all')
+---@param card any Card the toggles are laid into, four per row
+---@param specs table[] { key, label } pairs keyed under db.Frames
+local function BuildToggleCard(card, db, specs)
     local count = #specs
 
     for i = 1, count, 4 do
         local isLast = (i + 3) >= count
         local rowHeight = (isLast and rowHL) or rowH
-        local row = framesCard:Row(rowHeight, (isLast and 0) or nil)
+        local row = card:Row(rowHeight, (isLast and 0) or nil)
 
         for j = i, min(i + 3, count) do
             local spec = specs[j]
@@ -158,89 +157,9 @@ local function BuildFramesTab(page, db, specs)
     end
 end
 
--- Objective Tracker Tab.
-local function BuildObjectiveTrackerTab(page, db)
-    local objDb = db.ObjectiveTracker
-    page:SetCondition('objEnabled', function() return objDb.Enabled end)
-    page:SetCondition('fontEnabled', function() return objDb.FontStyling end)
-    page:SetCondition('customColor', function() return objDb.ColorMode == 'custom' end)
-
-    -- Card 1: Enable
-    local enableCard = page:Card(L['Objective Tracker'], 'all')
-    local enableRow = enableCard:Row(rowHL, 0)
-    enableRow:Checkbox(L['Enable Objective Tracker Skinning'], {
-        width = 1,
-        value = objDb.Enabled,
-        callback = function(checked)
-            objDb.Enabled = checked
-            ApplyObjectiveTracker()
-            page:Refresh()
-            NRSKNUI:CreateReloadPrompt('Objective Tracker skinning changes require a reload to take full effect.')
-        end,
-    })
-
-    -- Card 2: Color
-    local colorCard = page:Card(L['Color'], 'all')
-    local colorRow = colorCard:Row(rowHL, 0)
-    colorRow:Dropdown(L['Color Mode'], {
-        width = 0.5,
-        options = NRSKNUI.ColorModeOptions,
-        conditions = { 'objEnabled' },
-        value = objDb.ColorMode,
-        callback = function(key)
-            objDb.ColorMode = key
-            ApplyObjectiveTracker()
-            page:Refresh()
-        end,
-    })
-    colorRow:ColorPicker(L['Custom Color'], {
-        width = 0.5,
-        conditions = { 'objEnabled', 'customColor' },
-        value = objDb.CustomColor,
-        callback = function(r, g, b, a)
-            objDb.CustomColor = { r, g, b, a }; ApplyObjectiveTracker()
-        end,
-    })
-
-    -- Card 3: Font Styling
-    local fontCard = page:Card(L['Font Styling'], 'all')
-    local fontToggleRow = fontCard:Row(rowH)
-    fontToggleRow:Checkbox(L['Enable Font Styling'], {
-        width = 1,
-        conditions = { 'objEnabled' },
-        value = objDb.FontStyling,
-        callback = function(checked)
-            objDb.FontStyling = checked
-            ApplyObjectiveTracker()
-            page:Refresh()
-        end,
-    })
-
-    fontCard:Separator()
-
-    local fontSizeRow = fontCard:Row(rowHL, 0)
-    fontSizeRow:Slider(L['Quest Title Size'], {
-        width = 0.5,
-        min = 8,
-        max = 20,
-        step = 1,
-        conditions = { 'objEnabled', 'fontEnabled' },
-        value = objDb.QuestTitleSize,
-        callback = function(val)
-            objDb.QuestTitleSize = val; ApplyObjectiveTracker()
-        end,
-    })
-    fontSizeRow:Slider(L['Quest Text Size'], {
-        width = 0.5,
-        min = 8,
-        max = 20,
-        step = 1,
-        conditions = { 'objEnabled', 'fontEnabled' },
-        value = objDb.QuestTextSize,
-        callback = function(val)
-            objDb.QuestTextSize = val; ApplyObjectiveTracker()
-        end,
-    })
+local function BuildFramesTab(page, db)
+    BuildToggleCard(page:Card(L['Blizzard Frames'], 'all'), db, BLIZZARD_TOGGLES)
+    BuildToggleCard(page:Card(L['Addons'], 'all'), db, ADDON_TOGGLES)
 end
 
 -- Font Settings Tab.
@@ -255,14 +174,13 @@ local function BuildFontSettingsTab(page, db)
     })
 end
 
-GUI:RegisterPage('blizzardElements', {
+GUI:RegisterPage('frameSkins', {
     mode = 'tabs',
     search = {},
     tabs = {
-        { id = 'general',   text = L['General Settings'] },
-        { id = 'frames',    text = L['Frames'] },
-        { id = 'objective', text = L['Objective Tracker'] },
-        { id = 'font',      text = L['Font Settings'] },
+        { id = 'general', text = L['General Settings'] },
+        { id = 'frames',  text = L['Frames'] },
+        { id = 'font',    text = L['Font Settings'] },
     },
     build = function(page, tabId)
         if NRSKNUI:ShouldNotLoadModule() then return end
@@ -273,9 +191,7 @@ GUI:RegisterPage('blizzardElements', {
         if tabId == 'general' then
             BuildGeneralSettingsTab(page, db)
         elseif tabId == 'frames' then
-            BuildFramesTab(page, db, FRAME_TOGGLES)
-        elseif tabId == 'objective' then
-            BuildObjectiveTrackerTab(page, db)
+            BuildFramesTab(page, db)
         elseif tabId == 'font' then
             BuildFontSettingsTab(page, db)
         end

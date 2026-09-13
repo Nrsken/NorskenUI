@@ -1212,6 +1212,7 @@ local Defaults = {
         },
         -- Skinning Settings
         Skinning = {
+            -- The module folder is Skinning/FrameSkins, the key stays so existing profiles keep their settings.
             BlizzardElements = {
                 Enabled = true,
                 UseGlobalFont = true,
@@ -1254,11 +1255,14 @@ local Defaults = {
                     HighlightColor = { 0.5, 0.5, 0.5, 0.1 },
                 },
                 Frames = {
+                    Ace3 = true,
                     CharacterFrame = true,
                     GroupFinder = true,
                     InspectFrame = true,
                     Menus = true,
                     PlayerSpells = true,
+                    RaiderIO = true,
+                    SimpleAddonManager = true,
                 },
             },
 

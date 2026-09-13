@@ -2,7 +2,10 @@
 local NRSKNUI = select(2, ...)
 ---@class BlizzObjectiveTrackerModule
 local ObjectiveTracker = NRSKNUI:GetModule('BlizzObjectiveTracker')
-function ObjectiveTracker:UpdateDB() self.db = NRSKNUI.db.profile.Skinning.BlizzardElements end
+function ObjectiveTracker:UpdateDB()
+    self.skinDB = NRSKNUI.db.profile.Skinning.BlizzardElements
+    self.db = self.skinDB.ObjectiveTracker
+end
 
 ---@class SkinningModule
 local Skinning = NRSKNUI:GetModule('Skinning')
@@ -20,7 +23,7 @@ ObjectiveTracker.coloredProgressBars = {}
 -- The tracker only ever colors by RGB, so the alpha is dropped here rather than at every call.
 ---@return number r, number g, number b
 local function GetAccentColor()
-    local objDb = ObjectiveTracker.db.ObjectiveTracker
+    local objDb = ObjectiveTracker.db
     local r, g, b = NRSKNUI:GetAccentColor(objDb.ColorMode, objDb.CustomColor)
     return r, g, b
 end
@@ -30,7 +33,7 @@ function ObjectiveTracker:OnEnable()
 
     self:SkinObjectiveTracker()
     self.themeSub = NRSKNUI.GUI:OnThemeChanged(function()
-        if self.db.ObjectiveTracker.ColorMode ~= "theme" then return end
+        if self.db.ColorMode ~= "theme" then return end
         self:ApplySettings()
     end)
 end
@@ -114,15 +117,15 @@ local function ReskinProgressBar(bar, r, g, b)
 end
 
 local function ApplyLabelFont(label)
-    local fontDB = ObjectiveTracker.db.ObjectiveTracker
+    local fontDB = ObjectiveTracker.db
     if not fontDB or not fontDB.FontStyling then return end
 
-    local fontPath = NRSKNUI:GetFont(ObjectiveTracker.db)
+    local fontPath = NRSKNUI:GetFont(ObjectiveTracker.skinDB)
     local outline = 'OUTLINE'
 
     label:SetFont(fontPath, fontDB.QuestTextSize or 12, outline)
 
-    local shadowDb = ObjectiveTracker.db.FontShadow
+    local shadowDb = ObjectiveTracker.skinDB.FontShadow
     if shadowDb and shadowDb.Enabled then
         local c = shadowDb.Color or { 0, 0, 0, 1 }
         label:SetShadowColor(c[1] or 0, c[2] or 0, c[3] or 0, c[4] or 1)
@@ -176,7 +179,7 @@ function ObjectiveTracker:SkinObjectiveTracker()
     if self.skinned then return end
     if not ObjectiveTrackerFrame then return end
 
-    local objDb = self.db.ObjectiveTracker
+    local objDb = self.db
     if not objDb or not objDb.Enabled then return end
 
     local r, g, b = GetAccentColor()
@@ -376,17 +379,17 @@ function ObjectiveTracker:SkinScenarioTracker()
 end
 
 function ObjectiveTracker:StyleFonts()
-    local fontDB = self.db.ObjectiveTracker
+    local fontDB = self.db
     if not fontDB or not fontDB.Enabled or not fontDB.FontStyling then return end
 
-    local fontPath = NRSKNUI:GetFont(self.db)
+    local fontPath = NRSKNUI:GetFont(self.skinDB)
     local outline = 'OUTLINE'
 
     local function ApplyFont(fontObject, size)
         if not fontObject then return end
         fontObject:SetFont(fontPath, size, outline)
 
-        local shadowDb = self.db.FontShadow
+        local shadowDb = self.skinDB.FontShadow
         if shadowDb and shadowDb.Enabled then
             local c = shadowDb.Color or { 0, 0, 0, 1 }
             fontObject:SetShadowColor(c[1] or 0, c[2] or 0, c[3] or 0, c[4] or 1)
@@ -408,7 +411,7 @@ function ObjectiveTracker:StyleFonts()
 end
 
 function ObjectiveTracker:UpdateColors()
-    local objDb = self.db.ObjectiveTracker
+    local objDb = self.db
     if not objDb then return end
 
     local r, g, b = GetAccentColor()

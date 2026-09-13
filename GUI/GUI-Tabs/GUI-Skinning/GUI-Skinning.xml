@@ -2,11 +2,12 @@
     xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd'>
 
     <Script file='GUI-ActionBars.lua'/>
-    <Script file='GUI-BlizzardElements.lua'/>
     <Script file='GUI-BlizzardMouseover.lua'/>
     <Script file='GUI-Chat.lua'/>
     <Script file='GUI-DetailsBackdrop.lua'/>
+    <Script file='GUI-FrameSkins.lua'/>
     <Script file='GUI-MicroMenu.lua'/>
     <Script file='GUI-Minimap.lua'/>
+    <Script file='GUI-ObjectiveTracker.lua'/>
     <Script file='GUI-Tooltips.lua'/>
 </Ui>

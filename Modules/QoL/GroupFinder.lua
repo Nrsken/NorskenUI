@@ -75,6 +75,7 @@ local ROLE_ATLAS = {
     HEALER = 'groupfinder-icon-role-micro-heal',
     DAMAGER = 'groupfinder-icon-role-micro-dps',
 }
+local APPLICANT_ROLE_ICONS = { 'RoleIcon1', 'RoleIcon2', 'RoleIcon3' }
 local ROLE_SORT = {
     TANK = 1,
     HEALER = 2,
@@ -415,6 +416,74 @@ local function UpdateRow(row)
 
     UpdateRowScore(row, info)
     UpdateRowRoles(row, info)
+end
+
+-- Applicant list --
+
+---@type table<string, string>?
+local flatRoleAtlas
+
+---Blizzard's plated atlas keyed back to our flat glyph. Built on first use, the table it reads from
+---belongs to the group finder addon and loads later than this file.
+---@param plated string?
+---@return string?
+local function FlatRoleAtlas(plated)
+    if not plated then return nil end
+
+    if not flatRoleAtlas then
+        local plates = _G.LFG_LIST_GROUP_DATA_ATLASES
+        if not plates then return nil end
+
+        flatRoleAtlas = {}
+        for role, atlas in pairs(plates) do
+            flatRoleAtlas[atlas] = ROLE_ATLAS[role]
+        end
+    end
+
+    return flatRoleAtlas[plated]
+end
+
+---The listing header drives the same icon widget the search rows use, but always down the plated
+---branch, so the filled slots are swapped to the flat glyphs the applicant rows already show.
+---@param viewer Frame
+local function UpdateEntryRoles(viewer)
+    if not GroupFinder.db.Enabled or GroupFinder.db.RoleIconStyle ~= 'bar' then return end
+
+    local display = viewer.DataDisplay
+    local enumerate = display and display.Enumerate
+    if not enumerate or not enumerate:IsShown() then return end
+
+    for _, icon in ipairs(enumerate.Icons or {}) do
+        local plated = icon.RoleIconWithBackground
+        -- Blizzard re-atlases the plated layer without re-showing it, so only the atlas marks a slot.
+        local atlas = icon:IsShown() and plated and FlatRoleAtlas(plated:GetAtlas())
+
+        if atlas then
+            plated:Hide()
+            icon.ClassCircle:Hide()
+            icon.RoleIcon:SetAtlas(atlas, false)
+            -- The glyph layer is the small one, so it takes the plated layer's slot to match the rows.
+            icon.RoleIcon:SetAllPoints(icon)
+            icon.RoleIcon:Show()
+        end
+    end
+end
+
+---Applicant rows carry Blizzard's plated role icons, so the bar style re-atlases them to the same
+---flat glyphs the search results use. Blizzard stamps the role on each icon just before this runs.
+---@param member Button
+local function UpdateApplicantRoles(member)
+    if not GroupFinder.db.Enabled or GroupFinder.db.RoleIconStyle ~= 'bar' then return end
+
+    for _, key in ipairs(APPLICANT_ROLE_ICONS) do
+        local icon = member[key]
+        local atlas = icon and icon:IsShown() and ROLE_ATLAS[icon.role]
+
+        if atlas then
+            icon:GetNormalTexture():SetAtlas(atlas, false)
+            icon:GetHighlightTexture():SetAtlas(atlas, false)
+        end
+    end
 end
 
 -- Filtering --
@@ -831,6 +900,8 @@ function GroupFinder:InstallHooks()
     self.hooksInstalled = true
 
     hooksecurefunc('LFGListSearchEntry_Update', UpdateRow)
+    hooksecurefunc('LFGListApplicationViewer_UpdateApplicantMember', UpdateApplicantRoles)
+    hooksecurefunc('LFGListApplicationViewer_UpdateGroupData', UpdateEntryRoles)
     hooksecurefunc('LFGListSearchPanel_UpdateResultList', OnUpdateResultList)
     hooksecurefunc('LFGListSearchPanel_SetCategory', function() self:UpdatePanelVisibility() end)
 

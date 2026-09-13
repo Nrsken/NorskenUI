@@ -12,6 +12,7 @@ local EXPAND_ATLAS = 'UI-QuestTrackerButton-Secondary-Expand'
 local COLLAPSE_ATLAS = 'UI-QuestTrackerButton-Secondary-Collapse'
 local HIGHTLIGHT_ATLAS = 'UI-QuestTrackerButton-Yellow-Highlight'
 
+---@class NUICollapseButtonMixin
 local NUICollapseButtonMixin = {}
 
 ---@param collapsed boolean

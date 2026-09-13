@@ -5,6 +5,7 @@ local Skinning = NRSKNUI:GetModule('Skinning')
 
 local hooksecurefunc = hooksecurefunc
 local Mixin = Mixin
+local _G = _G
 
 local STEPPER_ARROW_SIZE = 16
 
@@ -50,6 +51,32 @@ function SkinnedThumbMixin:NUIOnMouseUp()
     self:NUIUpdateThumbColor()
 end
 
+local function OnThumbEnter(host) host.NUIScrollThumb:NUIOnEnter() end
+local function OnThumbLeave(host) host.NUIScrollThumb:NUIOnLeave() end
+local function OnThumbMouseDown(host) host.NUIScrollThumb:NUIOnMouseDown() end
+local function OnThumbMouseUp(host) host.NUIScrollThumb:NUIOnMouseUp() end
+
+---Give a scroll thumb the bordered panel fill that takes the accent on hover and press.
+---@param thumb Frame Carries the backdrop; a legacy bar pins one over its thumb texture
+---@param host Frame? Frame that reports the mouse, defaults to the thumb
+function Skinning:HandleScrollThumb(thumb, host)
+    self:CreatePanelBackdrop(thumb, nil, true)
+
+    ---@cast thumb Frame & SkinnedThumbMixin
+    Mixin(thumb, SkinnedThumbMixin)
+    thumb:NUIUpdateThumbColor()
+
+    host = host or thumb
+    host.NUIScrollThumb = thumb
+
+    host:HookScript('OnEnter', OnThumbEnter)
+    host:HookScript('OnLeave', OnThumbLeave)
+    host:HookScript('OnMouseDown', OnThumbMouseDown)
+    host:HookScript('OnMouseUp', OnThumbMouseUp)
+
+    self:RegisterSkinned(thumb)
+end
+
 ---Blizzard drives the stepper through OnButtonStateChanged, which fires for hover, press,
 ---and the SetEnabled calls ScrollBarMixin:Update makes at either end of the track.
 ---@param S SkinningModule
@@ -83,7 +110,7 @@ function Skinning:HandleTrimScrollBar(scrollBar)
 
     local back, forward = 'right', 'left'
     if scrollBar.isHorizontal then
-        back, forward = 'down', 'up'
+        back, forward = 'up', 'down'
     end
 
     SkinStepper(self, scrollBar.Back, back)
@@ -97,19 +124,7 @@ function Skinning:HandleTrimScrollBar(scrollBar)
     if thumb then
         -- Alpha only: the thumb re-reads its own atlases on state changes, so they must stay valid.
         thumb:NUIStripTextures('Alpha')
-        self:CreatePanelBackdrop(thumb, nil, true)
-
-        ---@cast thumb Frame & SkinnedThumbMixin
-        Mixin(thumb, SkinnedThumbMixin)
-
-        thumb:NUIUpdateThumbColor()
-
-        thumb:HookScript('OnEnter', thumb.NUIOnEnter)
-        thumb:HookScript('OnLeave', thumb.NUIOnLeave)
-        thumb:HookScript('OnMouseDown', thumb.NUIOnMouseDown)
-        thumb:HookScript('OnMouseUp', thumb.NUIOnMouseUp)
-
-        self:RegisterSkinned(thumb)
+        self:HandleScrollThumb(thumb)
     end
 end
 
@@ -125,4 +140,41 @@ function Skinning:HookScrollBoxChildren(scrollBox, skinChild)
     end)
 
     scrollBox:ForEachFrame(skinChild)
+end
+
+---Blizzard's legacy stepper has no state callback, so Enable/Disable drive the arrow directly.
+---@param S SkinningModule
+---@param button Button?
+---@param direction string 'up'|'down'
+local function SkinLegacyStepper(S, button, direction)
+    if not button or button.NUISkinned then return end
+    button.NUISkinned = true
+
+    button:SetNormalTexture(NRSKNUI.ClearTexture)
+    button:SetPushedTexture(NRSKNUI.ClearTexture)
+    button:SetDisabledTexture(NRSKNUI.ClearTexture)
+    button:SetHighlightTexture(NRSKNUI.ClearTexture)
+    button:NUIStripTextures()
+
+    S:CreateArrowTexture(button, direction, STEPPER_ARROW_SIZE, STEPPER_ARROW_SIZE, nil, nil, nil, nil, nil, true)
+
+    hooksecurefunc(button, 'Enable', button.NUIUpdateArrowState)
+    hooksecurefunc(button, 'Disable', button.NUIUpdateArrowState)
+    hooksecurefunc(button, 'SetEnabled', button.NUIUpdateArrowState)
+    button:NUIUpdateArrowState()
+end
+
+---Skin a legacy UIPanelScrollBarTemplate: a Slider with two stepper buttons.
+---@param scrollBar Slider|Frame
+function Skinning:HandleScrollBar(scrollBar)
+    if not scrollBar or scrollBar.NUISkinned then return end
+
+    local name = scrollBar.GetName and scrollBar:GetName()
+    local up = scrollBar.ScrollUpButton or (name and _G[name .. 'ScrollUpButton'])
+    local down = scrollBar.ScrollDownButton or (name and _G[name .. 'ScrollDownButton'])
+
+    self:HandleSlider(scrollBar, true)
+
+    SkinLegacyStepper(self, up, 'right')
+    SkinLegacyStepper(self, down, 'left')
 end
