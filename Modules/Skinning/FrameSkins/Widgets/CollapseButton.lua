@@ -113,6 +113,17 @@ function Skinning:ReskinCollapse(button, isAtlas)
     end
 end
 
+---@param button Button & NUIPlusMinusButtonMixin
+local function ClearPlusMinusArt(button)
+    if button.NUIClearingArt then return end
+    button.NUIClearingArt = true
+
+    button:SetNormalTexture(NRSKNUI.ClearTexture)
+    button:SetPushedTexture(NRSKNUI.ClearTexture)
+
+    button.NUIClearingArt = nil
+end
+
 ---@class NUIPlusMinusButtonMixin
 ---@field NUIPlusMinusIcon Texture
 ---@field NUIHover boolean?
@@ -140,6 +151,10 @@ end
 ---@param collapsed boolean
 function NUIPlusMinusButtonMixin:NUISetCollapsed(collapsed)
     ---@cast self Button & NUIPlusMinusButtonMixin
+    -- Templates whose refresh re-atlases GetNormalTexture() directly never touch the setters, so the
+    -- art is cleared on every state change as well rather than only when a setter is called.
+    ClearPlusMinusArt(self)
+
     self.NUIPlusMinusIcon:SetTexture(collapsed and PLUS_TEXTURE or MINUS_TEXTURE)
 end
 
@@ -169,15 +184,36 @@ function NUIPlusMinusButtonMixin:NUIOnMouseUp()
     self:NUIUpdateSkinColors()
 end
 
----@param button Button & NUIPlusMinusButtonMixin
-local function ClearPlusMinusArt(button)
-    if button.NUIClearingArt then return end
-    button.NUIClearingArt = true
+---@class NUIPlusMinusGlyphMixin
+local NUIPlusMinusGlyphMixin = {}
 
-    button:SetNormalTexture(NRSKNUI.ClearTexture)
-    button:SetPushedTexture(NRSKNUI.ClearTexture)
+function NUIPlusMinusGlyphMixin:NUIUpdateSkinColors()
+    ---@cast self Texture
+    local r, g, b = Skinning:GetAccentColor()
+    self:SetVertexColor(r, g, b, PLUS_MINUS_REST_ALPHA)
+end
 
-    button.NUIClearingArt = nil
+---The same glyph for headers that mark their state with a plain texture instead of a button, so
+---there is no hover or pressed state to track. Call it again to flip the glyph.
+---@param texture Texture?
+---@param collapsed boolean
+---@param size number? Glyph size, defaults to 14
+function Skinning:SetPlusMinusGlyph(texture, collapsed, size)
+    if not texture then return end
+
+    texture:SetTexture(collapsed and PLUS_TEXTURE or MINUS_TEXTURE)
+    texture:NUISetPixelSize(size or PLUS_MINUS_SIZE, size or PLUS_MINUS_SIZE)
+
+    if not texture.NUISkinned then
+        texture.NUISkinned = true
+
+        ---@cast texture Texture & NUIPlusMinusGlyphMixin
+        Mixin(texture, NUIPlusMinusGlyphMixin)
+        self:RegisterSkinned(texture)
+    end
+
+    ---@cast texture Texture & NUIPlusMinusGlyphMixin
+    texture:NUIUpdateSkinColors()
 end
 
 ---Plus/minus toggle: accent glyph, brighter on hover, white while pressed. Drive the state

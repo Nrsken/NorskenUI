@@ -34,8 +34,18 @@
 ---@field func fun(S: table)
 ---@field ran boolean
 
+---@class NUICharacterFrame
+---@field activeSubframe string?
+
+---ListHeaderVisualMixin, the collapsible list header the Currency list builds its rows from.
+---@class NUIListHeader
+---@field SetTitleColor fun(self: NUIListHeader, useHighlight: boolean, color: ColorMixin)
+---@field CheckHighlightTitle fun(self: NUIListHeader, isMouseOver: boolean?)
+
 ---@class NUIListRow : Frame
 ---@field NUISkinned boolean?
+---@field Name FontString?
+---@field SetTitleColor fun(self: NUIListHeader, useHighlight: boolean, color: ColorMixin)?
 ---@field Background Texture?
 ---@field icon Texture?
 ---@field BgTop Texture?
@@ -654,6 +664,10 @@ function FontString:GetWidestDigit() end
 ---@field spellID number?
 
 ---Both Blizzard_SpellSearch row templates: suggested rows carry Text, result rows Name + Icon.
+---A three-slice header's right end cap, repurposed as the collapse glyph.
+---@class NUICollapseArrow : Texture
+---@field NUIAnchored boolean?
+
 ---@class SearchPreviewEntry : Button
 ---@field NUISkinned boolean?
 ---@field Text FontString?

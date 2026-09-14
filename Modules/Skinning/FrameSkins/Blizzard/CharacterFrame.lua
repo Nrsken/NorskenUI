@@ -6,16 +6,18 @@ local Skinning = NRSKNUI:GetModule('Skinning')
 local PaperDollFrame_UpdateSidebarTabs = PaperDollFrame_UpdateSidebarTabs
 local PaperDollItemSlotButton_Update = PaperDollItemSlotButton_Update
 local PaperDollFrame_UpdateStats = PaperDollFrame_UpdateStats
-local GetSpecialization = C_SpecializationInfo.GetSpecialization
-local GetSpecializationInfo = C_SpecializationInfo.GetSpecializationInfo
 local hooksecurefunc = hooksecurefunc
 local ipairs, pairs = ipairs, pairs
 local CreateColor = CreateColor
 local CreateFrame = CreateFrame
+local Mixin = Mixin
 local unpack = unpack
 local select = select
 local next = next
 local _G = _G
+
+local GetSpecialization = C_SpecializationInfo and C_SpecializationInfo.GetSpecialization
+local GetSpecializationInfo = C_SpecializationInfo and C_SpecializationInfo.GetSpecializationInfo
 
 local SLOT_NAMES = {
     'Head', 'Neck', 'Shoulder', 'Back', 'Chest', 'Shirt', 'Tabard',
@@ -32,11 +34,13 @@ local FLYOUT_POS = {
 -- FileID of the '+ New Set' (Character-Plus) icon, this row never gets an icon border.
 local NEW_SET_ICON = 514607
 
-local EXPAND_BUTTON_ATLAS = 'UI-QuestTrackerButton-Secondary-Expand'
-local COLLAPSE_BUTTON_ATLAS = 'UI-QuestTrackerButton-Secondary-Collapse'
-local EXPAND_ARROW_ATLAS = 'Soulbinds_Collection_CategoryHeader_Expand'
-local COLLAPSE_ARROW_ATLAS = 'Soulbinds_Collection_CategoryHeader_Collapse'
+local AMOUNT_BUTTON_GAP = 2
+local LONG_ARROW_TEXTURE = 'Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\right-arrow.png'
+local LONG_ARROW_SIZE = 32
+
 local OLD_ARROW_ATLASES = { ['Options_ListExpand_Right'] = true, ['Options_ListExpand_Right_Expanded'] = true, }
+local ARROW_INSET = 6
+local CHECK_INSET = 4
 
 ---@param texture Texture
 ---@param atlas string?
@@ -46,7 +50,15 @@ local function UpdateCollapseArrow(texture, atlas)
     local header = texture:GetParent()
     if not header.IsCollapsed then return end
 
-    texture:SetAtlas((header:IsCollapsed() and EXPAND_ARROW_ATLAS) or COLLAPSE_ARROW_ATLAS)
+    ---@cast texture NUICollapseArrow
+    if not texture.NUIAnchored then
+        texture.NUIAnchored = true
+
+        texture:ClearAllPoints()
+        texture:NUISetPixelPoint('RIGHT', header, 'RIGHT', -ARROW_INSET, 0)
+    end
+
+    Skinning:SetPlusMinusGlyph(texture, header:IsCollapsed())
 end
 
 ---@param button Button
@@ -54,9 +66,71 @@ local function UpdateToggleCollapseButton(button)
     local header = button.GetHeader and button:GetHeader()
     if not header or not header.IsCollapsed then return end
 
-    local atlas = (header:IsCollapsed() and EXPAND_BUTTON_ATLAS) or COLLAPSE_BUTTON_ATLAS
-    button:SetNormalAtlas(atlas)
-    button:SetPushedAtlas(atlas)
+    Skinning:ReskinPlusMinus(button)
+    ---@cast button Button & NUIPlusMinusButtonMixin
+    button:NUISetCollapsed(header:IsCollapsed())
+end
+
+-- The Character tab is left out, its name text belongs to the CharacterPanel module.
+local ACCENT_TITLE_SUBFRAMES = { ReputationFrame = true, TokenFrame = true }
+
+---@class NUITitleAccentMixin
+local TitleAccentMixin = {}
+
+function TitleAccentMixin:NUIUpdateSkinColors()
+    ---@cast self FontString
+    local frame = CharacterFrame --[[@as NUICharacterFrame]]
+    if not ACCENT_TITLE_SUBFRAMES[frame.activeSubframe] then return end
+
+    self:SetTextColor(Skinning:GetAccentColor())
+end
+
+---@param S SkinningModule
+local function SkinTitle(S)
+    local container = CharacterFrame.TitleContainer
+    local title = container and container.TitleText
+    if not title then return end
+
+    Mixin(title, TitleAccentMixin)
+    ---@cast title FontString & NUITitleAccentMixin
+    S:RegisterSkinned(title)
+
+    -- UpdateTitle repaints per tab, after the subframe's OnShow.
+    hooksecurefunc(CharacterFrame, 'UpdateTitle', function() title:NUIUpdateSkinColors() end)
+    title:NUIUpdateSkinColors()
+end
+
+---@class NUIArrowAccentMixin
+local ArrowAccentMixin = {}
+
+function ArrowAccentMixin:NUIUpdateSkinColors()
+    ---@cast self Texture
+    self:SetVertexColor(Skinning:GetAccentColor())
+end
+
+---@class NUICheckLabelAccentMixin
+local CheckLabelAccentMixin = {}
+
+function CheckLabelAccentMixin:NUIUpdateSkinColors()
+    ---@cast self FontString & NUICheckLabelAccentMixin
+    local check = self:GetParent() --[[@as CheckButton]]
+    if self.NUIPainting or not check:IsEnabled() then return end
+
+    -- Blizzard's own color carries the disabled state, so only the live one is ours to take over.
+    self.NUIPainting = true
+    self:SetTextColor(Skinning:GetAccentColor())
+    self.NUIPainting = false
+end
+
+---@class NUIHeaderAccentMixin
+local HeaderAccentMixin = {}
+
+function HeaderAccentMixin:NUIUpdateSkinColors()
+    ---@cast self NUIListHeader
+    local color = CreateColor(Skinning:GetAccentColor())
+    self:SetTitleColor(false, color)
+    self:SetTitleColor(true, color)
+    self:CheckHighlightTitle(nil)
 end
 
 ---Header-row treatment shared by the Reputation and Token lists. Safe on non-header rows.
@@ -65,7 +139,17 @@ end
 local function SkinHeaderRow(row)
     if row.Right and row.HighlightRight then
         row:NUIStripTextures('Keyed')
-        Skinning:CreatePanelBackdrop(row, 'Transparent')
+        Skinning:CreatePanelBackdrop(row, nil, nil, true)
+
+        -- ListHeaderVisualMixin re-asserts its own title color on hover, Reputation headers don't.
+        if row.SetTitleColor then
+            Mixin(row, HeaderAccentMixin)
+            ---@cast row NUIListRow & NUIHeaderAccentMixin
+            Skinning:RegisterSkinned(row)
+            row:NUIUpdateSkinColors()
+        else
+            Skinning:HandleAccentFont(row.Name)
+        end
 
         UpdateCollapseArrow(row.Right)
         UpdateCollapseArrow(row.HighlightRight)
@@ -281,6 +365,7 @@ end
 local function SkinShell(S)
     -- Handle the main portrait frame
     S:HandlePortraitFrame(CharacterFrame)
+    SkinTitle(S)
 
     -- Handle textures on the right side of the characterframe.
     -- For example, backdrop for the item level, Attributes and Enhancements rows.
@@ -502,8 +587,8 @@ local function SkinGearManagerPopup(S)
         if borderBox then
             borderBox:NUIStripTextures('Keyed')
             S:HandleEditBox(borderBox.IconSelectorEditBox)
-            S:HandleButton(borderBox.OkayButton, 'Transparent')
-            S:HandleButton(borderBox.CancelButton, 'Transparent')
+            S:HandleButton(borderBox.OkayButton)
+            S:HandleButton(borderBox.CancelButton)
         end
         if frame.IconSelector then
             S:HandleTrimScrollBar(frame.IconSelector.ScrollBar)
@@ -534,11 +619,23 @@ local function SkinReputation(S)
         detail:NUIStripTextures('Keyed')
         S:CreatePanelBackdrop(detail)
         S:HandleCloseButton(detail.CloseButton, detail)
-        S:HandleCheckBox(detail.AtWarCheckbox)
-        S:HandleCheckBox(detail.MakeInactiveCheckbox)
-        S:HandleCheckBox(detail.WatchFactionCheckbox)
-        S:HandleButton(detail.ViewRenownButton, 'Transparent')
+        S:HandleCheckBox(detail.AtWarCheckbox, CHECK_INSET)
+        S:HandleCheckBox(detail.MakeInactiveCheckbox, CHECK_INSET)
+        S:HandleCheckBox(detail.WatchFactionCheckbox, CHECK_INSET)
+        S:HandleButton(detail.ViewRenownButton)
         S:HandleTrimScrollBar(detail.ScrollingDescriptionScrollBar)
+        S:HandleAccentText(detail.Title)
+
+        -- Refresh runs from a function captured at load, so the repaint is caught on the label itself.
+        local labels = { detail.AtWarCheckbox.Label, detail.MakeInactiveCheckbox.Label, detail.WatchFactionCheckbox.Label }
+        for _, label in ipairs(labels) do
+            Mixin(label, CheckLabelAccentMixin)
+            ---@cast label FontString & NUICheckLabelAccentMixin
+            S:RegisterSkinned(label)
+
+            hooksecurefunc(label, 'SetTextColor', label.NUIUpdateSkinColors)
+            label:NUIUpdateSkinColors()
+        end
     end
 end
 
@@ -642,13 +739,10 @@ Skinning:RegisterSkin('Blizzard_TokenUI', 'CharacterFrame', function(S)
     local token = _G.TokenFrame
     if not token then return end
 
-    -- Deeper changes to this scrollbar taint currency transfers
-    -- HandleTrimScrollBar's alpha-only thumb treatment is the safe ceiling
     if token.ScrollBar then S:HandleTrimScrollBar(token.ScrollBar) end
     if token.ScrollBox then S:HookScrollBoxChildren(token.ScrollBox, SkinTokenRow) end
-    if token.filterDropdown then S:HandleDropdownButton(token.filterDropdown, 'Transparent') end
+    if token.filterDropdown then S:HandleDropdownButton(token.filterDropdown) end
 
-    -- HandleButton here taints currency transfers, just desaturate the button
     local logToggle = token.CurrencyTransferLogToggleButton
     if logToggle then
         if logToggle.NormalTexture then logToggle.NormalTexture:SetDesaturated(true) end
@@ -660,16 +754,18 @@ Skinning:RegisterSkin('Blizzard_TokenUI', 'CharacterFrame', function(S)
     if popup then
         popup:NUIStripTextures('Keyed')
         S:CreatePanelBackdrop(popup)
-        S:HandleCheckBox(popup.InactiveCheckbox)
-        S:HandleCheckBox(popup.BackpackCheckbox)
-        S:HandleButton(popup.CurrencyTransferToggleButton, 'Transparent')
+        S:HandleCheckBox(popup.InactiveCheckbox, CHECK_INSET)
+        S:HandleCheckBox(popup.BackpackCheckbox, CHECK_INSET)
+        S:HandleButton(popup.CurrencyTransferToggleButton)
         S:HandleCloseButton(popup['$parent.CloseButton'], popup)
+        S:HandleAccentText(popup.Title)
     end
 
     -- Skins the warbound transfer log window.
     local log = _G.CurrencyTransferLog
     if log then
         S:HandlePortraitFrame(log)
+        S:HandleAccentText(log.TitleContainer.TitleText)
         if log.ScrollBar then S:HandleTrimScrollBar(log.ScrollBar) end
         if log.ScrollBox then S:HookScrollBoxChildren(log.ScrollBox, SkinTransferLogRow) end
     end
@@ -680,20 +776,48 @@ Skinning:RegisterSkin('Blizzard_TokenUI', 'CharacterFrame', function(S)
         menu:NUIStripTextures('Keyed')
         S:CreatePanelBackdrop(menu)
         S:HandleCloseButton(menu.CloseButton, menu)
+        Skinning:HandleAccentFont(menu.TitleContainer.TitleText)
 
         local content = menu.Content
         if content then
-            if content.SourceSelector then S:HandleDropdownButton(content.SourceSelector.Dropdown) end
-            if content.AmountSelector then
-                S:HandleButton(content.AmountSelector.MaxQuantityButton, 'Transparent')
-                S:HandleEditBox(content.AmountSelector.InputBox)
+            if content.SourceSelector then
+                S:HandleDropdownButton(content.SourceSelector.Dropdown)
+                S:HandleAccentText(content.SourceSelector.SourceLabel)
+                S:HandleAccentText(content.SourceSelector.PlayerName)
+
+                local arrow = content.SourceSelector.Dropdown.LongArrow
+                arrow:SetTexture(LONG_ARROW_TEXTURE)
+                arrow:SetTexCoord(0, 1, 0, 1)
+                arrow:NUISetPixelSize(LONG_ARROW_SIZE, LONG_ARROW_SIZE)
+                arrow:NUISetPixelSnap()
+
+                Mixin(arrow, ArrowAccentMixin)
+                ---@cast arrow Texture & NUIArrowAccentMixin
+                S:RegisterSkinned(arrow)
+                arrow:NUIUpdateSkinColors()
             end
-            S:HandleButton(content.ConfirmButton, 'Transparent')
-            S:HandleButton(content.CancelButton, 'Transparent')
-            if content.SourceBalancePreview and content.SourceBalancePreview.BalanceInfo then
+            if content.AmountSelector then
+                local amount = content.AmountSelector
+                local box = amount.InputBox
+                local button = amount.MaxQuantityButton
+
+                S:HandleButton(button)
+                S:HandleEditBox(box)
+                S:HandleAccentText(amount.TransferAmountLabel)
+
+                local top, bottom = box.NUIArtTop or 0, box.NUIArtBottom or 0
+                button:NUISetPixelHeight(box:GetHeight() + top - bottom)
+                button:ClearAllPoints()
+                button:NUISetPixelPoint('RIGHT', box, 'LEFT', (box.NUIArtLeft or 0) - AMOUNT_BUTTON_GAP, (top + bottom) / 2)
+            end
+            S:HandleButton(content.ConfirmButton)
+            S:HandleButton(content.CancelButton)
+            if content.SourceBalancePreview then
+                S:HandleAccentText(content.SourceBalancePreview.Label)
                 S:HandleIcon(content.SourceBalancePreview.BalanceInfo.CurrencyIcon)
             end
-            if content.PlayerBalancePreview and content.PlayerBalancePreview.BalanceInfo then
+            if content.PlayerBalancePreview then
+                S:HandleAccentText(content.PlayerBalancePreview.Label)
                 S:HandleIcon(content.PlayerBalancePreview.BalanceInfo.CurrencyIcon)
             end
         end

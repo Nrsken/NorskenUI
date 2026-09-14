@@ -40,8 +40,9 @@ function Skinning:HandleDropdownButton(dropdown, template)
     ---@cast dropdown Button & SkinnedButtonMixin
     Mixin(dropdown, SkinnedButtonMixin)
 
+    -- IsOver is the flag ButtonStateBehaviorMixin just set, a cursor test disagrees with it.
     local function UpdateText()
-        dropdown:NUIUpdateState(dropdown.NUIMenuOpen or dropdown:IsMouseOver())
+        dropdown:NUIUpdateState(dropdown.NUIMenuOpen or dropdown:IsOver())
     end
 
     -- Recolors keep the open/hovered look instead of dropping back to the resting state.
