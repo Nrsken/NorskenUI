@@ -27,6 +27,7 @@
     <Script file='Blizzard/StaticPopup.lua' />
 
     <Script file='Addons/Ace3.lua' />
+    <Script file='Addons/BugSack.lua' />
     <Script file='Addons/RaiderIO.lua' />
     <Script file='Addons/SimpleAddonManager.lua' />
     <Script file='Addons/TalentLoadoutsEx.lua' />

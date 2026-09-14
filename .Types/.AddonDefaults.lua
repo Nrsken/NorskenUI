@@ -2180,10 +2180,17 @@
 
 ---@class NRSKNUI.DBProfile.Skinning.BlizzardElements.Frames
 ---@field [string] any
+---@field Ace3 boolean
+---@field BugSack boolean
 ---@field CharacterFrame boolean
 ---@field GroupFinder boolean
 ---@field InspectFrame boolean
+---@field Menus boolean
 ---@field PlayerSpells boolean
+---@field RaiderIO boolean
+---@field SimpleAddonManager boolean
+---@field StaticPopups boolean
+---@field TalentLoadoutsEx boolean
 
 ---@class NRSKNUI.DBProfile.Skinning.BlizzardElements.General
 ---@field [string] any

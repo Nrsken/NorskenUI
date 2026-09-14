@@ -101,3 +101,10 @@
 ---@field RaiderIO_GuildWeeklyFrame RaiderIOGuildWeeklyFrame
 ---@field RaiderIO_TalentBuildsFrame RaiderIOTalentBuildsFrame
 ---@field RaiderIO_TalentBuildsTalentFrameShortcut Button
+---@field BugSackFrame Frame The sack window, built on the first OpenSack rather than at load
+---@field BugSackScroll ScrollFrame
+---@field BugSackScrollScrollBar Slider
+---@field BugSackScrollText EditBox
+---@field BugSackPrevButton Button
+---@field BugSackNextButton Button
+---@field BugSackSendButton Button? Only built when AceSerializer is embedded

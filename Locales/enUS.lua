@@ -1429,6 +1429,7 @@ L['Color used for the highlights and accents on the skinned frames.'] = true
 L['Blizzard Frames'] = true
 L['Addons'] = true
 L['Ace3 Config Windows'] = true
+L['BugSack'] = true
 L['Character Frame'] = true
 L['Inspect Frame'] = true
 L['Right-Click Menus'] = true

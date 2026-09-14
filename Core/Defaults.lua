@@ -1256,6 +1256,7 @@ local Defaults = {
                 },
                 Frames = {
                     Ace3 = true,
+                    BugSack = true,
                     CharacterFrame = true,
                     GroupFinder = true,
                     InspectFrame = true,

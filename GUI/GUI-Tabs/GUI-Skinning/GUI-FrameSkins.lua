@@ -21,6 +21,7 @@ local BLIZZARD_TOGGLES = {
 
 local ADDON_TOGGLES = {
     { key = 'Ace3',               label = L['Ace3 Config Windows'] },
+    { key = 'BugSack',            label = L['BugSack'] },
     { key = 'RaiderIO',           label = L['Raider.IO'] },
     { key = 'SimpleAddonManager', label = L['Simple Addon Manager'] },
     { key = 'TalentLoadoutsEx',   label = L['Talent Loadout Ex'] },
