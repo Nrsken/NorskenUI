@@ -1,7 +1,7 @@
-## Interface: 120007, 120100
+## Interface: 120100
 ## Title: oUF
 ## Author: Haste, lightspark, p3lim, Rainrider
-## Version: 14.0.0
+## Version: @project-version@
 ## Notes: Unit frame framework. Does nothing by itself.
 ## OptionalDeps: Clique
 ## X-oUF: oUF
