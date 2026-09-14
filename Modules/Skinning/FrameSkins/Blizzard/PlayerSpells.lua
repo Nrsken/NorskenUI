@@ -7,6 +7,8 @@ local ipairs = ipairs
 local unpack = unpack
 local hooksecurefunc = hooksecurefunc
 
+local GetSpellTexture = C_Spell and C_Spell.GetSpellTexture
+
 local SPELL_BOOK_ART = {
     'BookBGLeft',
     'BookBGRight',
@@ -66,6 +68,13 @@ local function SkinSpellBook(S)
         S:HandleEditBox(SpellBookFrame.SearchBox)
     end
 
+    local assistedButton = SpellBookFrame.AssistedCombatRotationSpellFrame.Button
+    if assistedButton then
+        Skinning:HandleButton(assistedButton, nil, nil, true)
+    end
+
+    S:HandleSearchPreview(SpellBookFrame.SearchPreviewContainer, SpellBookFrame.SearchBox)
+
     -- The category row lives at the top of the book, so it keeps Blizzard's position.
     S:HandleTabRow(SpellBookFrame.CategoryTabSystem, nil, true)
 
@@ -119,19 +128,68 @@ local function SkinTalents(S, talents)
     local dropdown = talents.LoadSystem and talents.LoadSystem.Dropdown
     if dropdown then S:HandleDropdownButton(dropdown) end
 
-    -- Hero talents select frame.
-    local heroTalents = _G.HeroTalentsSelectionDialog
-    if heroTalents then
-        heroTalents:NUIStripTextures('Keyed')
-        S:CreatePanelBackdrop(heroTalents)
+    S:HandleSearchPreview(talents.SearchPreviewContainer, talents.SearchBox)
+end
+
+-- The spec options are pooled, so they only exist once the dialog has been built for a show.
+local function SkinHeroSpecOptions()
+    local container = _G.HeroTalentsSelectionDialog.SpecOptionsContainer
+    if not container then return end
+
+    for _, option in ipairs({ container:GetChildren() }) do
+        ---@cast option HeroSpecOption
+        Skinning:HandleOutlineFont(option.SpecName)
+        Skinning:HandleOutlineFont(option.Description)
+
+        Skinning:HandleButton(option.ActivateButton)
+        Skinning:HandleButton(option.ApplyChangesButton)
     end
 end
 
--- Specialization tab
+-- Hero talents select frame.
+local function SkinHeroTalents(S)
+    local heroTalents = _G.HeroTalentsSelectionDialog
+    if not heroTalents then return end
+
+    heroTalents:NUIStripTextures('Keyed')
+    S:CreatePanelBackdrop(heroTalents)
+
+    local dialogText = _G.HeroTalentsSelectionDialogText
+    S:HandleCloseButton(heroTalents.CloseButton, heroTalents)
+    S:HandleAccentText(dialogText)
+
+    SkinHeroSpecOptions()
+    heroTalents:HookScript('OnShow', SkinHeroSpecOptions)
+end
+
 local function SkinSpecContents(specFrame)
-    for _, child in ipairs({ specFrame:GetChildren() }) do
-        if child.ActivateButton then
-            Skinning:HandleButton(child.ActivateButton)
+    local pool = specFrame.SpecContentFramePool
+    if not pool then return end
+
+    for content in pool:EnumerateActive() do
+        ---@cast content SpecContentFrame
+        Skinning:HandleOutlineFont(content.SampleAbilityText)
+        Skinning:HandleButton(content.ActivateButton)
+
+        if content.SpellButtonPool then
+            for button in content.SpellButtonPool:EnumerateActive() do
+                ---@cast button SpecSpellButton
+                if button.Ring then button.Ring:Hide() end
+
+                local icon = button.Icon
+                if icon then
+                    for i = icon:GetNumMaskTextures(), 1, -1 do
+                        icon:RemoveMaskTexture(icon:GetMaskTexture(i))
+                    end
+
+                    if button.spellID then
+                        local texture = GetSpellTexture(button.spellID)
+                        if texture then icon:SetTexture(texture) end
+                    end
+
+                    Skinning:HandleIcon(icon, true)
+                end
+            end
         end
     end
 end
@@ -140,7 +198,7 @@ local function SkinSpec(S, spec)
     if not spec then return end
 
     SkinSpecContents(spec)
-    spec:HookScript('OnShow', SkinSpecContents)
+    hooksecurefunc(spec, 'UpdateSpecFrame', SkinSpecContents)
 end
 
 Skinning:RegisterSkin('Blizzard_PlayerSpells', 'PlayerSpells', function(S)
@@ -148,9 +206,11 @@ Skinning:RegisterSkin('Blizzard_PlayerSpells', 'PlayerSpells', function(S)
     if not PlayerSpellsFrame then return end
 
     S:HandlePortraitFrame(PlayerSpellsFrame)
+    S:HandleAccentFont(PlayerSpellsFrame.TitleContainer and PlayerSpellsFrame.TitleContainer.TitleText)
     S:HandleTabRow(PlayerSpellsFrame.TabSystem, PlayerSpellsFrame)
 
     SkinSpellBook(S)
     SkinTalents(S, PlayerSpellsFrame.TalentsFrame)
+    SkinHeroTalents(S)
     SkinSpec(S, PlayerSpellsFrame.SpecFrame)
 end)

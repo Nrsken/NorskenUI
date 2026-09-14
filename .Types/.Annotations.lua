@@ -637,6 +637,42 @@ function FontString:GetWidestDigit() end
 ---@field BorderBox NUIGearManagerBorderBox?
 ---@field IconSelector { ScrollBar: Frame? }|nil
 
+---@class HeroSpecOption : Frame
+---@field SpecName FontString?
+---@field Description FontString?
+---@field ActivateButton Button?
+---@field ApplyChangesButton Button?
+
+---@class SpecContentFrame : Frame
+---@field ActivateButton Button?
+---@field SampleAbilityText FontString?
+---@field SpellButtonPool table?
+
+---@class SpecSpellButton : Frame
+---@field Icon Texture?
+---@field Ring Texture?
+---@field spellID number?
+
+---Both Blizzard_SpellSearch row templates: suggested rows carry Text, result rows Name + Icon.
+---@class SearchPreviewEntry : Button
+---@field NUISkinned boolean?
+---@field Text FontString?
+---@field Name FontString?
+---@field Icon Texture?
+---@field IconFrame Texture?
+
+---@class SearchPreviewContainer : Frame
+---@field NUISkinned boolean?
+---@field OverflowCount { Text: FontString? }|nil
+---@field suggestedResultButtonsPool table?
+
+---An edit box that has been through HandleEditBox, which measures and records its input art.
+---@class NUISkinnedEditBox : EditBox
+---@field NUIArtLeft number?
+---@field NUIArtRight number?
+---@field NUIArtTop number?
+---@field NUIArtBottom number?
+
 -- Game Menu Skinning
 
 ---@class NUIGameMenuHeader : Frame

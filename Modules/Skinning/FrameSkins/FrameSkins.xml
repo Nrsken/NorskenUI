@@ -15,6 +15,7 @@
     <Script file='Widgets/ItemButton.lua' />
     <Script file='Widgets/PortraitFrame.lua' />
     <Script file='Widgets/ScrollBar.lua' />
+    <Script file='Widgets/SearchPreview.lua' />
     <Script file='Widgets/Slider.lua' />
     <Script file='Widgets/StatusBar.lua' />
     <Script file='Widgets/Tab.lua' />
