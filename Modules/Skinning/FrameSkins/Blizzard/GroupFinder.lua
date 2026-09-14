@@ -934,17 +934,23 @@ local function FindScoreText(icon)
 end
 
 ---@param text FontString
----@param isLevel boolean? keystone level, colored by the score that level is worth
+---@param isLevel boolean? keystone level, tiered by level rather than by score
 local function PaintScoreColor(text, isLevel)
-    local RaiderIO = _G.RaiderIO
-    if not RaiderIO or not RaiderIO.GetScoreColor or text.NUIPainting then return end
+    if text.NUIPainting then return end
 
     local value = tonumber(strmatch(text:GetText() or '', '%d+'))
-    local score = value and (isLevel and RaiderIO.GetScoreForKeystone(value) or value)
-    if not score then return end
+    if not value then return end
+
+    local color
+    if isLevel then
+        color = C_ChallengeMode.GetKeystoneLevelRarityColor(value)
+    else
+        color = C_ChallengeMode.GetSpecificDungeonOverallScoreRarityColor(value)
+    end
+    if not color then return end
 
     text.NUIPainting = true
-    text:SetTextColor(RaiderIO.GetScoreColor(score))
+    text:SetTextColor(color.r, color.g, color.b)
     text.NUIPainting = false
 end
 
@@ -960,7 +966,7 @@ local function TakeOverScoreText(text, isLevel)
     text:SetShadowOffset(0, 0) -- the string's own shadow, a font object swap never clears it
     text:SetShadowColor(0, 0, 0, 0)
 
-    -- BigWigs clears the text before it colors it, so the color only lands off the SetText pass.
+    -- BigWigs clears the text before it sets it, so the color only lands off the SetText pass.
     hooksecurefunc(text, 'SetText', function(self) PaintScoreColor(self, isLevel) end)
     hooksecurefunc(text, 'SetTextColor', function(self) PaintScoreColor(self, isLevel) end)
     PaintScoreColor(text, isLevel)
