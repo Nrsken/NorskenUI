@@ -33,6 +33,7 @@ local TAB_SHOULDER = 10
 local TAB_TEXT_INSET = 10
 local TAB_TEXT_Y = 0
 local TREE_ROW_HEIGHT = 18
+local TREE_TOGGLE_SIZE = 12
 local TREE_TOGGLE_COLLAPSED = {
     [130838] = true,
     [130836] = true,
@@ -764,12 +765,12 @@ function TreeButtonMixin:NUIUpdateSelected()
     if selected then self:UnlockHighlight() end
 end
 
----@param toggle NUICollapseButtonMixin
----@param texture number
+---@param toggle Button & NUIPlusMinusButtonMixin
+---@param texture number|string|nil
 local function TreeToggleTexture(toggle, texture)
     local collapsed = TREE_TOGGLE_COLLAPSED[texture]
     if collapsed ~= nil then
-        toggle:NUIDoCollapse(collapsed)
+        toggle:NUISetCollapsed(collapsed)
     end
 end
 
@@ -802,9 +803,15 @@ local function SkinTreeButton(button)
     bar:NUISetPixelWidth(2)
     button.NUISelectedBar = bar
 
-    -- AceGUI drives the toggle with file IDs, which ReskinCollapse's name matching cannot read.
-    Skinning:ReskinCollapse(button.toggle)
-    hooksecurefunc(button.toggle, 'SetNormalTexture', TreeToggleTexture)
+    -- UpdateButton has already drawn this pass, so read the state off the art before it is cleared.
+    local toggle = button.toggle
+    local normal = toggle:GetNormalTexture()
+    local state = normal and normal:GetTexture()
+
+    -- AceGUI drives the toggle with file IDs, which the glyph's own name matching cannot read.
+    Skinning:ReskinPlusMinus(toggle, TREE_TOGGLE_SIZE)
+    hooksecurefunc(toggle, 'SetNormalTexture', TreeToggleTexture)
+    TreeToggleTexture(toggle, state)
 
     ---@cast button Button & TreeButtonMixin
     Mixin(button, TreeButtonMixin)

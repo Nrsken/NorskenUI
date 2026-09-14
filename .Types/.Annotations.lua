@@ -716,7 +716,7 @@ function FontString:GetWidestDigit() end
 
 ---TreeGroup row, rewritten from scratch by UpdateButton on every refresh.
 ---@class AceTreeRow : Button
----@field toggle NUICollapseButtonMixin
+---@field toggle Button & NUIPlusMinusButtonMixin
 ---@field text FontString
 
 -- SimpleAddonManager. The addon builds its panels in Lua, so only the parts our skin
