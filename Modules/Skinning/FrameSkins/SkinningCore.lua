@@ -176,6 +176,7 @@ end
 local SkinnedBackdropMixin = {}
 
 local WIDGET_GLOW_ATLAS = 'glues-characterSelect-GS-TopHUD-middle-selectedGlow'
+Skinning.WidgetGlowAtlas = WIDGET_GLOW_ATLAS
 
 ---@param backdrop Frame
 local function UpdateWidgetGlow(backdrop)
@@ -285,10 +286,15 @@ end
 
 ---Inset ADD-blended highlight, recolored on every theme/color change.
 ---@param widget Button
-function Skinning:AddHighlight(widget)
+---@param region Region? Cover this instead, for a button whose art is smaller than its hit area
+function Skinning:AddHighlight(widget, region)
     local highlight = widget:CreateTexture(nil, 'HIGHLIGHT')
-    highlight:SetPoint('TOPLEFT', widget, 'TOPLEFT', 2, -2)
-    highlight:SetPoint('BOTTOMRIGHT', widget, 'BOTTOMRIGHT', -2, 2)
+    if region then
+        highlight:SetAllPoints(region)
+    else
+        highlight:SetPoint('TOPLEFT', widget, 'TOPLEFT', 2, -2)
+        highlight:SetPoint('BOTTOMRIGHT', widget, 'BOTTOMRIGHT', -2, 2)
+    end
     highlight:SetBlendMode('ADD')
     widget.NUIHighlight = highlight
 

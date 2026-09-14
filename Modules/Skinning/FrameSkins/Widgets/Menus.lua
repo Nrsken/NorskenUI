@@ -13,6 +13,8 @@ local ARROW_TEXTURE = 'Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\collaps
 -- Closing a menu releases every attachment with a SetToDefaults(), so styling is reapplied per open.
 local menuBackdrops = setmetatable({}, { __mode = 'k' })
 local skinnedMenuDescriptions = setmetatable({}, { __mode = 'k' })
+-- Addons that fork the menu lib run their own manager, each of which needs its own hooks.
+local hookedManagers = setmetatable({}, { __mode = 'k' })
 
 ---@param frame MenuElement
 local function UpdateMenuHighlight(frame)
@@ -86,19 +88,21 @@ local function SkinOpenMenu(manager, _ownerRegion, menuDescription)
     end
 end
 
----Skin Blizzard's context and dropdown menus, hooks installed once.
-function Skinning:HandleMenus()
-    if self.NUIMenusSkinned then return end
-
-    local manager = Menu and Menu.GetManager and Menu.GetManager() -- Blizzard_Menu may load after us
-    if not (manager and MenuVariants) then return end
-    self.NUIMenusSkinned = true
+---Skin context and dropdown menus, hooks installed once per manager.
+---@param manager table? Menu manager, defaults to Blizzard's
+---@param variants table? Matching MenuVariants table, defaults to Blizzard's
+function Skinning:HandleMenus(manager, variants)
+    -- Blizzard_Menu may load after us, and an addon's fork brings its own pair.
+    manager = manager or (Menu and Menu.GetManager and Menu.GetManager())
+    variants = variants or MenuVariants
+    if not (manager and variants) or hookedManagers[manager] then return end
+    hookedManagers[manager] = true
 
     hooksecurefunc(manager, 'OpenMenu', SkinOpenMenu)
     hooksecurefunc(manager, 'OpenContextMenu', SkinOpenMenu)
-    hooksecurefunc(MenuVariants, 'CreateHighlight', UpdateMenuHighlight)
-    hooksecurefunc(MenuVariants, 'CreateSubmenuArrow', UpdateMenuArrow)
-    hooksecurefunc(MenuVariants, 'CreateDivider', UpdateMenuDivider)
+    hooksecurefunc(variants, 'CreateHighlight', UpdateMenuHighlight)
+    hooksecurefunc(variants, 'CreateSubmenuArrow', UpdateMenuArrow)
+    hooksecurefunc(variants, 'CreateDivider', UpdateMenuDivider)
 end
 
 Skinning:RegisterSkin(nil, 'Menus', function(S) S:HandleMenus() end)

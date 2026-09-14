@@ -1256,11 +1256,13 @@ local Defaults = {
                 },
                 Frames = {
                     Ace3 = true,
+                    BigWigsKeystones = true,
                     BugSack = true,
                     CharacterFrame = true,
                     GameMenu = true,
                     GroupFinder = true,
                     InspectFrame = true,
+                    KeystoneLoot = true,
                     Menus = true,
                     PlayerSpells = true,
                     RaiderIO = true,

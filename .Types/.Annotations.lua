@@ -488,6 +488,13 @@ function FontString:GetWidestDigit() end
 ---@field RaiderIO_ExportButton Button
 ---@field SimpleAddonManager SAMFrame
 ---@field TalentLoadoutExMainFrame TLEMainFrame
+---@field KeystoneLootAPI KSLApi
+---@field KeystoneLootFrame KSLMainFrame
+---@field KeystoneLootReminderFrame KSLReminderFrame
+---@field KeystoneLootDropNotificationFrame KSLDropNotificationFrame
+---@field KeystoneLootMythicPlusNotificationFrame KSLMythicPlusNotificationFrame
+---@field KSLMenu { GetManager: fun(): table }
+---@field KSLMenuVariants table
 
 ---@class InspectFrame
 ---@field unit string
@@ -850,6 +857,145 @@ function FontString:GetWidestDigit() end
 
 ---@class TLETalentsFrame : Frame
 ---@field InspectCopyButton Button?
+
+-- BigWigs Keystones (/key). The panel is a file local in BigWigs/Tools/Keystones.lua with no name,
+-- so the skin finds it by these keys; only the parts it touches are described here.
+
+---@class BWKeystonePanel : Frame
+---@field PortraitContainer Frame
+---@field TitleText FontString?
+---@field TitleContainer { TitleText: FontString }?
+---@field tip Frame
+---@field teleportBar Texture
+
+---PanelTabButtonTemplate. LeftActive is the active-state art BigWigs toggles in place of a selection call.
+---@class BWKeystoneTab : Button
+---@field LeftActive Texture
+---@field Text FontString
+---@field NUISetTabSelected fun(self: BWKeystoneTab, selected: boolean, disabled: boolean?)
+
+---One column of a keystone row. Cells are pooled and reused across tabs.
+---@class BWKeystoneCell : Button
+---@field bg Texture
+---@field text FontString
+---@field NUISkinned boolean?
+
+---Its fill is the one region BigWigs does not keep a key for.
+---@class BWTeleportButton : Button
+---@field icon Texture
+---@field cdbar Texture
+---@field NUISkinned boolean?
+
+-- KeystoneLoot. Built from ui/**/*.xml; only the parts our skin touches are described here.
+
+---Public API table, exposed as _G.KeystoneLootAPI.
+---@class KSLApi
+---@field RegisterCallback fun(self: KSLApi, event: string, callback: fun(event: string, ...), owner: any?): boolean
+
+---Icon holder of one loot button. The badges sit above the icon, below its border.
+---@class KSLLootIconContent : Frame
+---@field Icon Texture
+---@field IconEmpty Texture
+---@field IconBorder Texture
+---@field FavoriteIcon Texture
+---@field OwnedIcon Texture
+---@field VoidcoreIcon Texture
+
+---Shared by the dungeon/raid rows and by both side panels.
+---@class KSLLootIconButton : Button
+---@field Content KSLLootIconContent
+---@field NUISkinned boolean?
+
+---@class KSLTeleportButton : Button
+---@field Icon Texture
+---@field IconBorder Texture
+
+---One dungeon or boss row: a teleport button, a label and a carousel of loot icons.
+---@class KSLEntryFrame : Frame
+---@field TeleportButton KSLTeleportButton
+---@field Divider Texture
+---@field BackButton Button
+---@field NextButton Button
+---@field IconScrollBox Frame
+---@field NUISkinned boolean?
+
+---The tiled inset and the border frame pinned over it draw one panel between them.
+---@class KSLInsetOwner : Frame
+---@field Inset Frame
+---@field BorderFrame Frame
+
+---@class KSLDungeonsFrame : KSLInsetOwner
+---@field entryPool ObjectPool
+
+---@class KSLRaidBlock : KSLInsetOwner
+---@field TitleText FontString
+---@field Divider Texture
+---@field entryPool ObjectPool
+---@field NUISkinned boolean?
+
+---Bare DropdownButton: the arrow is its NormalTexture rather than an Arrow key.
+---@class KSLRaidDropdown : WowStyle1DropdownTemplate
+---@field NormalTexture Texture
+---@field HighlightTexture Texture
+---@field Text FontString
+---@field Event table
+---@field NUISkinned boolean?
+
+---@class KSLRaidsFrame : Frame
+---@field DropdownButton KSLRaidDropdown
+---@field blockPool ObjectPool
+
+---DialogBorderTemplate column hanging off the side of the main window.
+---@class KSLSidePanel : Frame
+---@field iconPool ObjectPool
+
+---@class KSLMainFrame : Frame
+---@field TitleText FontString?
+---@field TitleContainer { TitleText: FontString }?
+---@field TabSystem NUITabSystem
+---@field ClassDropdown WowStyle1DropdownTemplate
+---@field SlotDropdown WowStyle1DropdownTemplate
+---@field ItemLevelDropdown WowStyle1DropdownTemplate
+---@field DungeonsFrame KSLDungeonsFrame
+---@field RaidsFrame KSLRaidsFrame
+---@field CatalystFrame KSLSidePanel
+---@field CustomItemFrame KSLSidePanel
+
+---SimplePanelTemplate shell shared by the three popups.
+---@class KSLPopupFrame : Frame
+---@field CloseButton Button
+---@field Title FontString
+
+---The looting_itemcard art, shared by the drop rows and the mythic plus card.
+---@class KSLItemCard : Button
+---@field Icon Texture
+---@field IconBorder Texture
+---@field HighlightTexture Texture
+
+---@class KSLDropRow : KSLItemCard
+---@field IconFrame { Icon: Texture, IconBorder: Texture, FavoriteIcon: Texture }
+---@field NUISkinned boolean?
+
+---@class KSLDropNotificationFrame : KSLPopupFrame
+---@field rowPool ObjectPool
+
+---@class KSLMythicPlusNotificationFrame : KSLPopupFrame
+---@field Card KSLItemCard
+
+---@class KSLReminderIcon : Button
+---@field Icon Texture
+---@field IconBorder Texture
+---@field NUISkinned boolean?
+
+---InsetFrameTemplate card. Init re-atlases Bg to the spec thumbnail on every acquire.
+---@class KSLSpecCard : Frame
+---@field Title FontString
+---@field LootSpecButton Button
+---@field iconPool ObjectPool
+---@field NUISkinned boolean?
+
+---@class KSLReminderFrame : KSLPopupFrame
+---@field specPool ObjectPool
 
 -- Blizzard object pools: the generated stubs declare ObjectPoolBaseMixin (Acquire/Release)
 -- and ObjectPoolMixin separately but lose the CreateFromMixins inheritance, and pool
