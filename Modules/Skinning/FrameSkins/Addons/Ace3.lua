@@ -27,6 +27,8 @@ local GOLD_CODES = { fed000 = true, ffd100 = true, ffd200 = true, ffff00 = true,
 local COLOR_ESCAPE = '|c(%x%x)(%x%x%x%x%x%x)'
 local AccentHex = 'FFD200' -- gsub's replacement function takes no arguments of its own
 
+local EDITBOX_LABEL_Y = -2
+
 local TAB_SHOULDER = 10
 local TAB_TEXT_INSET = 10
 local TAB_TEXT_Y = 0
@@ -173,6 +175,16 @@ Skins.CheckBox = function(widget)
     highlight:SetPoint('TOPLEFT', backdrop, 'TOPLEFT', 2, -2)
     highlight:SetPoint('BOTTOMRIGHT', backdrop, 'BOTTOMRIGHT', -2, 2)
 
+    -- Over the fill rather than replacing it, matching the Kaji toggles' knob.
+    local glyph = backdrop:CreateTexture(nil, 'OVERLAY', nil, 2)
+    glyph:SetTexture(NRSKNUI.Theme.checkTexture)
+    glyph:SetPoint('TOPLEFT', backdrop, 'TOPLEFT', 2, -2)
+    glyph:SetPoint('BOTTOMRIGHT', backdrop, 'BOTTOMRIGHT', -2, 2)
+    glyph:SetShown(check:IsShown())
+
+    hooksecurefunc(check, 'Show', function() glyph:Show() end)
+    hooksecurefunc(check, 'Hide', function() glyph:Hide() end)
+
     frame.NUICheck = check
     frame.NUIHighlight = highlight
 
@@ -193,13 +205,20 @@ Skins.EditBox = function(widget)
     local editbox, button = widget.editbox, widget.button
 
     Skinning:HandleEditBox(editbox)
-    editbox:SetTextInsets(3, 3, 3, 3)
 
     SkinButton(button)
     button:ClearAllPoints()
     button:SetPoint('RIGHT', editbox, 'RIGHT', -2, 0)
 
-    SkinAccentLabel(widget, widget.label)
+    -- The template left-aligns the label to the frame, which is short of where the text starts.
+    -- Reading the inset back keeps the two in step rather than repeating the floor here.
+    local label = widget.label
+    local textInset = editbox:GetTextInsets()
+    label:ClearAllPoints()
+    label:SetPoint('BOTTOMLEFT', editbox, 'TOPLEFT', textInset, EDITBOX_LABEL_Y)
+    label:SetPoint('BOTTOMRIGHT', editbox, 'TOPRIGHT', 0, EDITBOX_LABEL_Y)
+
+    SkinAccentLabel(widget, label)
 end
 
 Skins.MultiLineEditBox = function(widget)

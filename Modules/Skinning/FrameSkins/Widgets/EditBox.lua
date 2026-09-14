@@ -6,6 +6,7 @@ local Skinning = NRSKNUI:GetModule('Skinning')
 local hooksecurefunc = hooksecurefunc
 local ipairs = ipairs
 local Mixin = Mixin
+local math_abs = math.abs
 local math_max = math.max
 local math_min = math.min
 
@@ -16,6 +17,7 @@ local EDITBOX_ART_LAYERS = { 'BACKGROUND', 'BORDER' }
 local EDITBOX_ART_LAYER_SET = {}
 for _, layer in ipairs(EDITBOX_ART_LAYERS) do EDITBOX_ART_LAYER_SET[layer] = true end
 local MAX_ART_OVERHANG = 20
+local MIN_TEXT_INSET = 4
 
 ---Edge reads on a frame carrying protected data come back secret, so void the whole rect rather than measure it.
 ---@param object Frame|Texture
@@ -63,6 +65,36 @@ local function MeasureInputArt(editBox)
         math_min(MAX_ART_OVERHANG, right - boxRight),
         math_min(MAX_ART_OVERHANG, top - boxTop),
         math_max(-MAX_ART_OVERHANG, bottom - boxBottom)
+end
+
+---A single line of text centres on the frame rect, but the box is drawn on the art rect.
+---@param editBox EditBox
+---@param top number Art top as an offset from the frame's own top
+---@param bottom number Art bottom as an offset from the frame's own bottom
+local function CenterTextInArt(editBox, top, bottom)
+    local offset = top + bottom
+    if math_abs(offset) < 1 then return end
+
+    local l, r, t, b = editBox:GetTextInsets()
+    if offset > 0 then
+        editBox:SetTextInsets(l, r, t, b + offset)
+    else
+        editBox:SetTextInsets(l, r, t - offset, b)
+    end
+end
+
+---Raise the side insets to the floor. AceGUI re-asserts its own from seven call sites, so this
+---has to re-run on every write rather than land once.
+---@param editBox EditBox
+local function ApplyTextInsetFloor(editBox)
+    if editBox.NUISettingInsets then return end
+
+    local left, right, top, bottom = editBox:GetTextInsets()
+    if left >= MIN_TEXT_INSET and right >= MIN_TEXT_INSET then return end
+
+    editBox.NUISettingInsets = true
+    editBox:SetTextInsets(math_max(left, MIN_TEXT_INSET), math_max(right, MIN_TEXT_INSET), top, bottom)
+    editBox.NUISettingInsets = nil
 end
 
 ---Focus drives the border accent, so it repaints on every color update as well.
@@ -122,7 +154,12 @@ function Skinning:HandleEditBox(editBox)
         -- The art rarely matches the frame rect, so callers aligning or matching the box need it.
         editBox.NUIArtLeft, editBox.NUIArtRight = left, right
         editBox.NUIArtTop, editBox.NUIArtBottom = top, bottom
+
+        CenterTextInArt(editBox, top, bottom)
     end
+
+    hooksecurefunc(editBox, 'SetTextInsets', ApplyTextInsetFloor)
+    ApplyTextInsetFloor(editBox)
 
     ---@cast editBox EditBox & SkinnedEditBoxMixin
     Mixin(editBox, SkinnedEditBoxMixin)

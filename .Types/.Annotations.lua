@@ -477,6 +477,7 @@ function FontString:GetWidestDigit() end
 ---@field RaiderIO_ProfileTooltipAnchor Frame
 ---@field RaiderIO_ExportButton Button
 ---@field SimpleAddonManager SAMFrame
+---@field TalentLoadoutExMainFrame TLEMainFrame
 
 ---@class InspectFrame
 ---@field unit string
@@ -494,6 +495,9 @@ function FontString:GetWidestDigit() end
 ---@field NUIBackdrop Frame & PublicBackdropMixin
 ---@field NUIHighlight Texture?
 ---@field NUIMenuOpen boolean?
+---@field NUITextR number
+---@field NUITextG number
+---@field NUITextB number
 
 -- The arrow API Skinning:CreateArrowTexture installs on a button.
 ---@class NUIArrowButton : Button
@@ -613,10 +617,19 @@ function FontString:GetWidestDigit() end
 ---@class NUIEquipmentFlyout : EquipmentFlyoutFrame
 ---@field buttons NUIEquipmentFlyoutButton[]
 
+---@class NUISelectedIconButton : Button
+---@field Icon Texture
+
+---@class NUISelectedIconArea : Frame
+---@field SelectedIconButton NUISelectedIconButton?
+---@field SelectedIconText { SelectedIconDescription: FontString? }|Frame|nil
+
 ---@class NUIGearManagerBorderBox : Frame
 ---@field IconSelectorEditBox EditBox?
 ---@field OkayButton Button?
 ---@field CancelButton Button?
+---@field IconTypeDropdown WowStyle1DropdownTemplate?
+---@field SelectedIconArea NUISelectedIconArea?
 
 ---@class NUIGearManagerPopup : Frame
 ---@field NUISkinned boolean?
@@ -692,6 +705,80 @@ function FontString:GetWidestDigit() end
 ---@field CategoryFrame SAMCategoryFrame
 ---@field AddonListFrame { ScrollFrame: SAMScrollFrame }
 ---@field ProfilerFrame SAMProfilerFrame
+
+-- TalentLoadoutsEx. Built from frames/main.xml and frames/list.xml; only the parts our
+-- skin touches are described here.
+
+---@class TLEListButton : Button
+---@field NUISkinned boolean?
+---@field NUIUpdateSkinColors fun(button: TLEListButton)?
+---@field addDataType string? set on the two "Add ..." rows
+---@field data { text: string?, isExpanded: boolean? }? absent until the row is first initialized
+---@field Text FontString
+---@field BgTop Texture
+---@field BgBottom Texture
+---@field BgMiddle Texture
+---@field SelectedBar Texture
+---@field Check Texture
+---@field Icon Texture
+---@field ToggleButton Button & NUIPlusMinusButtonMixin & { isExpanded: boolean? }
+
+---@class TLEIconButton : Button
+---@field texture Texture
+
+---@class TLEDialogHeader : Frame
+---@field Text FontString?
+
+---@class TLEPresetAddonFrame : Frame
+---@field Title FontString
+---@field CategoryCheckButtons CheckButton[]
+
+---@class TLETalentTextMain : Frame
+---@field EditBox EditBox
+
+---@class TLETalentTextFrame : Frame
+---@field Main TLETalentTextMain
+
+---@class TLEEditPopupFrame : Frame
+---@field CloseButton Button?
+---@field BorderBox NUIGearManagerBorderBox?
+---@field IconSelector { ScrollBar: Frame? }|nil
+---@field SearchBox EditBox?
+---@field TalentTextFrame TLETalentTextFrame?
+---@field IconListFrame Frame?
+
+---@class TLETextPopupMain : Frame
+---@field ScrollFrame NUIScrollFrame
+---@field ImportButton Button
+---@field CancelButton Button
+---@field CloseButton Button
+
+---@class TLETextPopupFrame : Frame
+---@field Header TLEDialogHeader
+---@field Main TLETextPopupMain
+
+---@class TLEPresetPopupMain : Frame
+---@field CombineCheckButton CheckButton
+---@field PresetAddons TLEPresetAddonFrame[]
+
+---@class TLEPresetPopupFrame : Frame
+---@field Header TLEDialogHeader
+---@field Main TLEPresetPopupMain
+
+---@class TLEPvpFrame : Frame
+---@field CheckButton CheckButton
+
+---@class TLEMainFrame : Frame
+---@field Title FontString
+---@field PvpFrame TLEPvpFrame
+---@field ScrollBox Frame
+---@field ScrollBar Frame
+---@field EditPopupFrame TLEEditPopupFrame
+---@field TextPopupFrame TLETextPopupFrame
+---@field PresetPopupFrame TLEPresetPopupFrame
+
+---@class TLETalentsFrame : Frame
+---@field InspectCopyButton Button?
 
 -- Blizzard object pools: the generated stubs declare ObjectPoolBaseMixin (Acquire/Release)
 -- and ObjectPoolMixin separately but lose the CreateFromMixins inheritance, and pool

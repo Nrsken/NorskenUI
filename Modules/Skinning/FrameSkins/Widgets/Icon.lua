@@ -15,10 +15,11 @@ end
 
 ---@param icon Texture
 ---@param createBackdrop boolean? Create a border frame behind the icon
-function Skinning:HandleIcon(icon, createBackdrop)
+---@param skipZoom boolean? Leave the texcoords alone, for an icon already showing an atlas
+function Skinning:HandleIcon(icon, createBackdrop, skipZoom)
     if not icon then return end
 
-    icon:NUISetZoom()
+    if not skipZoom then icon:NUISetZoom() end
 
     if createBackdrop and not icon.NUIBackdrop then
         local parent = icon:GetParent()

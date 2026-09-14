@@ -9,6 +9,7 @@ local Mixin = Mixin
 
 local SkinnedButtonMixin = {}
 Skinning.ButtonMixin = SkinnedButtonMixin
+SkinnedButtonMixin.NUITextR, SkinnedButtonMixin.NUITextG, SkinnedButtonMixin.NUITextB = 1, 1, 1
 
 ---Explicit SetTextColor overrides the font object in every state, so the mixin owns the disabled/hover look.
 ---@param hovered boolean?
@@ -37,8 +38,17 @@ function SkinnedButtonMixin:NUIUpdateState(hovered)
         local r, g, b = Skinning:GetAccentColor()
         text:SetTextColor(r, g, b)
     else
-        text:SetTextColor(1, 1, 1)
+        text:SetTextColor(self.NUITextR, self.NUITextG, self.NUITextB)
     end
+end
+
+---Resting label color, for buttons whose text carries meaning. Hover and disabled are unchanged.
+---@param r number
+---@param g number
+---@param b number
+function SkinnedButtonMixin:NUISetTextColor(r, g, b)
+    self.NUITextR, self.NUITextG, self.NUITextB = r, g, b
+    self:NUIUpdateState()
 end
 
 ---Resting state only, a hovered button repaints on the next OnEnter.

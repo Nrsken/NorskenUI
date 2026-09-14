@@ -1263,6 +1263,8 @@ local Defaults = {
                     PlayerSpells = true,
                     RaiderIO = true,
                     SimpleAddonManager = true,
+                    StaticPopups = true,
+                    TalentLoadoutsEx = true,
                 },
             },
 

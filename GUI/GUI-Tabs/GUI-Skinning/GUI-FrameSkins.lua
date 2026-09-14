@@ -16,12 +16,14 @@ local BLIZZARD_TOGGLES = {
     { key = 'InspectFrame',   label = L['Inspect Frame'] },
     { key = 'Menus',          label = L['Right-Click Menus'] },
     { key = 'PlayerSpells',   label = L['Spellbook & Talents'] },
+    { key = 'StaticPopups',   label = L['Static Popups'] },
 }
 
 local ADDON_TOGGLES = {
     { key = 'Ace3',               label = L['Ace3 Config Windows'] },
     { key = 'RaiderIO',           label = L['Raider.IO'] },
     { key = 'SimpleAddonManager', label = L['Simple Addon Manager'] },
+    { key = 'TalentLoadoutsEx',   label = L['Talent Loadout Ex'] },
 }
 
 local fontSizes = {

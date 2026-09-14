@@ -12,6 +12,12 @@ local EXPAND_ATLAS = 'UI-QuestTrackerButton-Secondary-Expand'
 local COLLAPSE_ATLAS = 'UI-QuestTrackerButton-Secondary-Collapse'
 local HIGHTLIGHT_ATLAS = 'UI-QuestTrackerButton-Yellow-Highlight'
 
+local PLUS_TEXTURE = 'Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\plus-sign.png'
+local MINUS_TEXTURE = 'Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\minus-sign.png'
+local PLUS_MINUS_SIZE = 14
+local PLUS_MINUS_REST_ALPHA = 0.85
+local PLUS_MINUS_HOVER_MULT = 1.25
+
 ---@class NUICollapseButtonMixin
 local NUICollapseButtonMixin = {}
 
@@ -105,4 +111,106 @@ function Skinning:ReskinCollapse(button, isAtlas)
     else
         hooksecurefunc(button, 'SetNormalTexture', button.NUIResetTexture)
     end
+end
+
+---@class NUIPlusMinusButtonMixin
+---@field NUIPlusMinusIcon Texture
+---@field NUIHover boolean?
+---@field NUIPressed boolean?
+---@field NUIClearingArt boolean?
+local NUIPlusMinusButtonMixin = {}
+
+function NUIPlusMinusButtonMixin:NUIUpdateSkinColors()
+    ---@cast self Button & NUIPlusMinusButtonMixin
+    local glyph = self.NUIPlusMinusIcon
+
+    if self.NUIPressed then
+        glyph:SetVertexColor(1, 1, 1, 1)
+        return
+    end
+
+    local r, g, b = Skinning:GetAccentColor()
+    if self.NUIHover then
+        glyph:SetVertexColor(r * PLUS_MINUS_HOVER_MULT, g * PLUS_MINUS_HOVER_MULT, b * PLUS_MINUS_HOVER_MULT, 1)
+    else
+        glyph:SetVertexColor(r, g, b, PLUS_MINUS_REST_ALPHA)
+    end
+end
+
+---@param collapsed boolean
+function NUIPlusMinusButtonMixin:NUISetCollapsed(collapsed)
+    ---@cast self Button & NUIPlusMinusButtonMixin
+    self.NUIPlusMinusIcon:SetTexture(collapsed and PLUS_TEXTURE or MINUS_TEXTURE)
+end
+
+function NUIPlusMinusButtonMixin:NUIOnEnter()
+    ---@cast self Button & NUIPlusMinusButtonMixin
+    self.NUIHover = true
+    self:NUIUpdateSkinColors()
+end
+
+function NUIPlusMinusButtonMixin:NUIOnLeave()
+    ---@cast self Button & NUIPlusMinusButtonMixin
+    self.NUIHover = nil
+    -- Releasing off the button never sends OnMouseUp, so the press has to end with the hover.
+    self.NUIPressed = nil
+    self:NUIUpdateSkinColors()
+end
+
+function NUIPlusMinusButtonMixin:NUIOnMouseDown()
+    ---@cast self Button & NUIPlusMinusButtonMixin
+    self.NUIPressed = true
+    self:NUIUpdateSkinColors()
+end
+
+function NUIPlusMinusButtonMixin:NUIOnMouseUp()
+    ---@cast self Button & NUIPlusMinusButtonMixin
+    self.NUIPressed = nil
+    self:NUIUpdateSkinColors()
+end
+
+---@param button Button & NUIPlusMinusButtonMixin
+local function ClearPlusMinusArt(button)
+    if button.NUIClearingArt then return end
+    button.NUIClearingArt = true
+
+    button:SetNormalTexture(NRSKNUI.ClearTexture)
+    button:SetPushedTexture(NRSKNUI.ClearTexture)
+
+    button.NUIClearingArt = nil
+end
+
+---Plus/minus toggle: accent glyph, brighter on hover, white while pressed. Drive the state
+---with button:NUISetCollapsed(collapsed).
+---@param button Button
+---@param size number? Glyph size, defaults to 14
+function Skinning:ReskinPlusMinus(button, size)
+    if not button or button.NUISkinned then return end
+    button.NUISkinned = true
+
+    ---@cast button Button & NUIPlusMinusButtonMixin
+    Mixin(button, NUIPlusMinusButtonMixin)
+
+    button:SetHighlightTexture(NRSKNUI.ClearTexture)
+    ClearPlusMinusArt(button)
+
+    local glyph = button:CreateTexture(nil, 'ARTWORK')
+    glyph:NUISetPixelPoint('CENTER', button, 'CENTER', 0, 0)
+    glyph:NUISetPixelSize(size or PLUS_MINUS_SIZE, size or PLUS_MINUS_SIZE)
+    glyph:NUISetPixelSnap()
+    button.NUIPlusMinusIcon = glyph
+
+    -- Templates that re-apply their own art on every show would otherwise draw over this.
+    hooksecurefunc(button, 'SetNormalTexture', ClearPlusMinusArt)
+    hooksecurefunc(button, 'SetPushedTexture', ClearPlusMinusArt)
+
+    button:HookScript('OnEnter', button.NUIOnEnter)
+    button:HookScript('OnLeave', button.NUIOnLeave)
+    button:HookScript('OnMouseDown', button.NUIOnMouseDown)
+    button:HookScript('OnMouseUp', button.NUIOnMouseUp)
+
+    button:NUISetCollapsed(true)
+    button:NUIUpdateSkinColors()
+
+    self:RegisterSkinned(button)
 end
