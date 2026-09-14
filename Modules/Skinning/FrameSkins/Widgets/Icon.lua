@@ -26,6 +26,9 @@ function Skinning:HandleIcon(icon, createBackdrop)
         backdrop:SetPoint('TOPLEFT', icon, -1, 1)
         backdrop:SetPoint('BOTTOMRIGHT', icon, 1, -1)
         backdrop:NUIAddBorders()
+        backdrop:SetFrameLevel(parent:GetFrameLevel())
+        backdrop:SetBorderLayer('ARTWORK', 7)
+
         local border = self.db.General.BorderColor
         backdrop:SetBorderColor(border[1], border[2], border[3], border[4])
 

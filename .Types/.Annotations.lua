@@ -119,6 +119,12 @@
 ---@field AffixesContainer Frame?
 ---@field Affixes table?
 
+---@class ChallengesFrame_WeeklyInfo_Child : NUIAffixHolder
+
+---@class ChallengesDungeonIconFrameTemplate
+---@field NUIScoreText FontString? BigWigs' score string, which carries no parent key
+---@field NUISkinned boolean?
+
 -- Font styling API injected onto FontString / Font / EditBox metatables (see Core/FontCore.lua).
 ---@class Font ---@diagnostic disable-line: class-shadows-builtin
 local Font

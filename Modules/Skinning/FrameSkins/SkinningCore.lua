@@ -60,8 +60,6 @@ function AccentTextMixin:NUIUpdateSkinColors()
     self:SetTextColor(Skinning:GetAccentColor())
 end
 
-local FONT_OUTLINE = 'OUTLINE'
-
 ---Copy a Blizzard font object so it can be restyled without repainting the shared original every
 ---other frame draws from.
 ---@param base Font Blizzard font object to copy size and face from
@@ -74,7 +72,7 @@ local function CreateOutlinedMirror(base, name)
     -- Read the face and size back off the base so only the outline flag is ours. SetFont drops the
     -- inheritance, so a refused combination falls back rather than leaving the object unset.
     local face, size = mirror:GetFont()
-    if face and size and not mirror:SetFont(face, size, FONT_OUTLINE) then
+    if face and size and not mirror:SetFont(face, size, 'OUTLINE') then
         mirror:SetFontObject(base)
     end
 
@@ -137,6 +135,21 @@ function Skinning:HandleAccentFont(text)
 
     text.NUIAccented = true
     text:SetFontObject(self:GetAccentFont(base))
+end
+
+---Swap a FontString onto an outlined mirror of whatever font object it already carries, so its size
+---and face stay the ones BlizzardFonts resolved. Swapping resets the string's own color, so call this
+---before any SetTextColor on the same label.
+---@param text FontString?
+function Skinning:HandleOutlineFont(text)
+    -- Re-running would mirror the mirror, so the swap is one way.
+    if not text or text.NUIOutlined then return end
+
+    local base = text.GetFontObject and text:GetFontObject()
+    if not base then return end
+
+    text.NUIOutlined = true
+    text:SetFontObject(self:GetOutlineFont(base))
 end
 
 ---Paint one FontString in the accent, for labels whose own color overrides their font object.

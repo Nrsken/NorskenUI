@@ -6,6 +6,8 @@ local Skinning = NRSKNUI:GetModule('Skinning')
 local ipairs = ipairs
 local select = select
 local unpack = unpack
+local tonumber = tonumber
+local strmatch = strmatch
 local hooksecurefunc = hooksecurefunc
 local _G = _G
 
@@ -28,6 +30,9 @@ local CATEGORY_NAME_GAP = 4
 local GROUP_BUTTON_ICON_SIZE = 40
 local GROUP_BUTTON_ICON_GAP = 10
 local GROUP_BUTTON_TEXT_GAP = 10
+local DUNGEON_ICON_GAP = 4
+local DUNGEON_ICON_TEXT_SIZE = 20
+local WEEKLY_AFFIX_SIZE = 46
 
 local RESET_ATLAS = 'GM-raidMarker-reset'
 
@@ -853,7 +858,8 @@ end)
 -- Mythic+ tab --
 
 ---@param frame NUIAffixHolder Affix holder, either the keystone frame or the weekly info child
-local function SkinAffixes(S, frame)
+---@param iconSize number? Resize the affix frames.
+local function SkinAffixes(S, frame, iconSize)
     local container = frame.AffixesContainer or frame
     local affixes = container.Affixes
     if not affixes then return end
@@ -867,7 +873,97 @@ local function SkinAffixes(S, frame)
 
             S:HandleIcon(affix.Portrait, true)
         end
+
+        if iconSize then
+            affix:NUISetPixelSize(iconSize, iconSize)
+            -- The template insets the portrait by a pixel a side, which is where our border lands.
+            if affix.Portrait then affix.Portrait:NUISetPixelSize(iconSize - 2, iconSize - 2) end
+        end
+
+        if affix.Percent then
+            local size = (affix.info and affix.info.pct > 999) and S.db.FontMediumSize or S.db.FontLargeSize
+            affix.Percent:SetFontStyle(S.db, size)
+        end
     end
+
+    -- The layout frame placed them from their old sizes, so it has to run again after the resize.
+    if iconSize and container.Layout then container:Layout() end
+end
+
+---Take control over the positioning and sizing of dungeon icons within the challenges frame.
+---@param frame ChallengesFrame
+local function LineUpDungeonIcons(frame)
+    local icons = frame.DungeonIcons
+    local num = icons and #icons or 0
+    if num == 0 or not frame.WeeklyInfo then return end
+
+    local rowWidth = frame.WeeklyInfo:GetWidth()
+    local size = (rowWidth - DUNGEON_ICON_GAP * num) / num
+
+    for i = 1, num do
+        local icon = icons[i]
+
+        icon:NUISetPixelSize(size, size)
+        if icon.Icon then icon.Icon:NUISetPixelSize(size, size) end
+
+        icon:ClearAllPoints()
+        if i == 1 then
+            icon:NUISetPixelPoint('BOTTOMLEFT', frame, 'BOTTOM', -rowWidth / 2, 5)
+        else
+            icon:NUISetPixelPoint('LEFT', icons[i - 1], 'RIGHT', DUNGEON_ICON_GAP, 0)
+        end
+    end
+end
+
+---BigWigs' keyless score string, matched on its font so its dungeon name string is never taken.
+---@param icon ChallengesDungeonIconFrameTemplate
+---@return FontString?
+local function FindScoreText(icon)
+    local scoreFont = _G.SystemFont_Huge1_Outline
+    local regions = { icon:GetRegions() }
+
+    for i = 1, #regions do
+        local region = regions[i]
+        if region ~= icon.HighestLevel and region:GetObjectType() == 'FontString' then
+            local text = region --[[@as FontString]]
+            if text:GetFontObject() == scoreFont then
+                return text
+            end
+        end
+    end
+end
+
+---@param text FontString
+---@param isLevel boolean? keystone level, colored by the score that level is worth
+local function PaintScoreColor(text, isLevel)
+    local RaiderIO = _G.RaiderIO
+    if not RaiderIO or not RaiderIO.GetScoreColor or text.NUIPainting then return end
+
+    local value = tonumber(strmatch(text:GetText() or '', '%d+'))
+    local score = value and (isLevel and RaiderIO.GetScoreForKeystone(value) or value)
+    if not score then return end
+
+    text.NUIPainting = true
+    text:SetTextColor(RaiderIO.GetScoreColor(score))
+    text.NUIPainting = false
+end
+
+---Blizzard and BigWigs both repaint after any Update hook, so follow the strings' own setters.
+---@param text FontString?
+---@param isLevel boolean?
+local function TakeOverScoreText(text, isLevel)
+    if not text or text.NUIScoreHooked then return end
+    text.NUIScoreHooked = true
+
+    -- Off the shared font object, which BlizzardFonts gives slug, onto our own without it.
+    text:SetFontStyle(Skinning.db, DUNGEON_ICON_TEXT_SIZE)
+    text:SetShadowOffset(0, 0) -- the string's own shadow, a font object swap never clears it
+    text:SetShadowColor(0, 0, 0, 0)
+
+    -- BigWigs clears the text before it colors it, so the color only lands off the SetText pass.
+    hooksecurefunc(text, 'SetText', function(self) PaintScoreColor(self, isLevel) end)
+    hooksecurefunc(text, 'SetTextColor', function(self) PaintScoreColor(self, isLevel) end)
+    PaintScoreColor(text, isLevel)
 end
 
 local function UpdateDungeonIcons(frame)
@@ -879,59 +975,88 @@ local function UpdateDungeonIcons(frame)
 
             icon:NUIStripTextures('Atlas', 'ChallengeMode-DungeonIconFrame')
             S:HandleIcon(icon.Icon, true)
+            TakeOverScoreText(icon.HighestLevel, true)
+        end
+
+        -- BigWigs builds its score string in its own OnShow hook, after Blizzard's Update.
+        if not icon.NUIScoreText then
+            icon.NUIScoreText = FindScoreText(icon)
+            TakeOverScoreText(icon.NUIScoreText)
         end
     end
+
+    -- Update re-runs LineUpFrames every pass, so the row has to be redone every pass too.
+    LineUpDungeonIcons(frame)
 end
 
 Skinning:RegisterSkin('Blizzard_ChallengesUI', 'GroupFinder', function(S)
+    -- Hide background textures.
     local frame = _G.ChallengesFrame
-    if not frame then return end
+    if frame then
+        frame:DisableDrawLayer('BACKGROUND')
 
-    -- Update re-textures Background from the season's first map.
-    frame:NUIStripTextures('ClearHide')
+        hooksecurefunc(frame, 'Update', UpdateDungeonIcons)
 
+        -- One more pass once BigWigs' OnShow hook has built its score strings.
+        frame:HookScript('OnShow', function(self)
+            C_Timer.After(0, function() UpdateDungeonIcons(self) end)
+        end)
+
+        UpdateDungeonIcons(frame)
+    end
+
+    -- Hide background inset textures.
     local inset = _G.ChallengesFrameInset
     if inset then
         inset:NUIStripTextures('Keyed')
-        S:CreatePanelBackdrop(inset, 'Transparent')
     end
 
-    local keystone = _G.ChallengesKeystoneFrame
-    if keystone then
-        keystone:NUIStripTextures()
-        S:CreatePanelBackdrop(keystone, 'Transparent')
+    local weeklyFrame = frame and frame.WeeklyInfo
+    if weeklyFrame then
+        weeklyFrame:ClearAllPoints()
+        weeklyFrame:SetPoint('TOPLEFT', frame, 'TOPLEFT', 0, 0)
 
-        S:HandleButton(keystone.StartButton)
-        S:HandleCloseButton(keystone.CloseButton, keystone)
-        if keystone.KeystoneSlot then
-            S:HandleIcon(keystone.KeystoneSlot.Texture, true)
-        end
+        hooksecurefunc(weeklyFrame, 'SetUp', function(info)
+            SkinAffixes(S, info.Child, WEEKLY_AFFIX_SIZE)
+        end)
+        SkinAffixes(S, weeklyFrame.Child, WEEKLY_AFFIX_SIZE)
 
-        hooksecurefunc(keystone, 'OnKeystoneSlotted', function(self) SkinAffixes(S, self) end)
+        S:HandleAccentText(weeklyFrame.Child.WeeklyChest.RunStatus)
     end
 
     local notice = frame.SeasonChangeNoticeFrame
     if notice then
-        notice:NUIStripTextures()
-        S:CreatePanelBackdrop(notice)
+        notice:NUIStripTextures('Keyed')
+        S:CreatePanelBackdrop(notice, nil, nil, true)
         S:HandleButton(notice.Leave)
 
-        -- The notice affix adds its own popup ring over the keystone template's, so both go.
-        local affix = notice.Affix
-        if affix then
-            if affix.Border then affix.Border:NUIStripTextures() end
-            if affix.AffixBorder then affix.AffixBorder:NUIStripTextures() end
-            if affix.CircleMask then affix.CircleMask:Hide() end
-            S:HandleIcon(affix.Portrait, true)
-        end
+        S:HandleOutlineFont(notice.NewSeason)
+        S:HandleOutlineFont(notice.SeasonDescription)
+        S:HandleOutlineFont(notice.SeasonDescription2)
+        S:HandleOutlineFont(notice.SeasonDescription3)
+
+        S:HandleAccentText(notice.NewSeason)
+        S:HandleAccentText(notice.SeasonDescription3)
+        notice.SeasonDescription:SetTextColor(1, 1, 1)
+        notice.SeasonDescription2:SetTextColor(1, 1, 1)
     end
 
-    hooksecurefunc(frame, 'Update', UpdateDungeonIcons)
-    UpdateDungeonIcons(frame)
+    -- Keystone frame with the key input slot.
+    local keystone = _G.ChallengesKeystoneFrame
+    if keystone then
+        S:CreatePanelBackdrop(keystone)
+        S:HandleButton(keystone.StartButton)
+        S:HandleCloseButton(keystone.CloseButton, keystone)
+        S:HandleIcon(keystone.KeystoneSlot.Texture, false)
 
-    if _G.ChallengesFrameWeeklyInfoMixin then
-        hooksecurefunc(_G.ChallengesFrameWeeklyInfoMixin, 'SetUp', function(info)
-            SkinAffixes(S, info.Child)
+        hooksecurefunc(keystone, 'OnKeystoneSlotted', function(self) SkinAffixes(S, self) end)
+
+        -- Skin the keystone frame manually, looks better with most art kept intact imo.
+        hooksecurefunc(keystone, 'Reset', function(keyFrame)
+            keyFrame:GetRegions():SetAlpha(0)
+            keyFrame.InstructionBackground:SetAlpha(0)
+            keyFrame.SlotBG:Hide()
+            keyFrame.Divider:Hide()
         end)
     end
 end)
