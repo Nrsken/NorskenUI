@@ -11,6 +11,10 @@ local THUMB_LENGTH = 14
 local SCROLLBAR_THUMB_LENGTH = 24
 local GRIP_INSET = 2
 
+---@class SkinnedSliderMixin
+---@field NUIThumb Texture? The accent-colored grip drawn inside the invisible thumb texture
+---@field NUIActive boolean? The thumb is being dragged
+---@field NUIHover boolean? The cursor is over the slider
 local SkinnedSliderMixin = {}
 
 function SkinnedSliderMixin:NUIUpdateThumbColor()
@@ -27,6 +31,7 @@ function SkinnedSliderMixin:NUIUpdateThumbColor()
 end
 
 function SkinnedSliderMixin:NUIUpdateSkinColors()
+    ---@cast self Slider & PublicBackdropMixin & SkinnedSliderMixin
     local general = Skinning.db.General
     local bg, border = general.WidgetBackgroundColor, general.WidgetBorderColor
 

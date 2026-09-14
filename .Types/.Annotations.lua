@@ -496,6 +496,9 @@ function FontString:GetWidestDigit() end
 ---@field categoryID number
 ---@field preferredFilters number
 
+---@class LFGListApplicationViewer : Frame
+---@field DataDisplay table?
+
 ---@class SkinnedBackdropMixin : PublicBackdropMixin
 ---@field NUIBgAlpha number?
 
@@ -538,6 +541,13 @@ function FontString:GetWidestDigit() end
 ---@class NUIScrollBar : Frame
 ---@field Back Button?
 ---@field Forward Button?
+
+-- Blizzard's UIPanelScrollBarTemplate. The steppers are children on newer templates and
+-- globals named off the bar on older ones, so neither is guaranteed to be there.
+---@class NUILegacyScrollBar : Slider
+---@field ScrollUpButton Button?
+---@field ScrollDownButton Button?
+---@field NUISkinned boolean?
 
 ---@class MenuInset
 ---@field left number
@@ -738,7 +748,7 @@ function FontString:GetWidestDigit() end
 ---HybridScrollFrame: `buttons` is the row pool, absent until it first has data.
 ---@class SAMScrollFrame : Frame
 ---@field buttons SAMListRow[]?
----@field ScrollBar Slider
+---@field ScrollBar NUILegacyScrollBar
 ---@field update fun()
 
 ---@class SAMCategoryFrame : Frame

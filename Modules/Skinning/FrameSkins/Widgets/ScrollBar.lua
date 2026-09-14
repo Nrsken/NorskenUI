@@ -158,6 +158,7 @@ local function SkinLegacyStepper(S, button, direction)
 
     S:CreateArrowTexture(button, direction, STEPPER_ARROW_SIZE, STEPPER_ARROW_SIZE, nil, nil, nil, nil, nil, true)
 
+    ---@cast button NUIArrowButton
     hooksecurefunc(button, 'Enable', button.NUIUpdateArrowState)
     hooksecurefunc(button, 'Disable', button.NUIUpdateArrowState)
     hooksecurefunc(button, 'SetEnabled', button.NUIUpdateArrowState)
@@ -165,7 +166,7 @@ local function SkinLegacyStepper(S, button, direction)
 end
 
 ---Skin a legacy UIPanelScrollBarTemplate: a Slider with two stepper buttons.
----@param scrollBar Slider|Frame
+---@param scrollBar NUILegacyScrollBar
 function Skinning:HandleScrollBar(scrollBar)
     if not scrollBar or scrollBar.NUISkinned then return end
 

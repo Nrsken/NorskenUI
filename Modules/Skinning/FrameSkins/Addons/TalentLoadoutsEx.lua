@@ -245,7 +245,7 @@ local function SkinTextPopup(S, popup)
     local scrollBar = scrollFrame.ScrollBar
     if scrollBar then
         if scrollBar:GetObjectType() == 'Slider' then
-            S:HandleScrollBar(scrollBar --[[@as Slider]])
+            S:HandleScrollBar(scrollBar --[[@as NUILegacyScrollBar]])
         else
             S:HandleTrimScrollBar(scrollBar)
         end

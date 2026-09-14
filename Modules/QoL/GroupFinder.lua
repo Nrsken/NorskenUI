@@ -445,7 +445,7 @@ end
 
 ---The listing header drives the same icon widget the search rows use, but always down the plated
 ---branch, so the filled slots are swapped to the flat glyphs the applicant rows already show.
----@param viewer Frame
+---@param viewer LFGListApplicationViewer
 local function UpdateEntryRoles(viewer)
     if not GroupFinder.db.Enabled or GroupFinder.db.RoleIconStyle ~= 'bar' then return end
 
