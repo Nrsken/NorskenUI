@@ -26,6 +26,7 @@ local ADDON_TOGGLES = {
     { key = 'RaiderIO',           label = L['Raider.IO'] },
     { key = 'SimpleAddonManager', label = L['Simple Addon Manager'] },
     { key = 'TalentLoadoutsEx',   label = L['Talent Loadout Ex'] },
+    { key = 'TeleportMenu',       label = L['Teleport Menu'] },
 }
 
 local fontSizes = {

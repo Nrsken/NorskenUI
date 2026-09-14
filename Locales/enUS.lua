@@ -1440,6 +1440,7 @@ L['Simple Addon Manager'] = true
 L['Spellbook & Talents'] = true
 L['Static Popups'] = true
 L['Talent Loadout Ex'] = true
+L['Teleport Menu'] = true
 L['Tab Text'] = true
 L['Panel Text'] = true
 L['Search Box'] = true

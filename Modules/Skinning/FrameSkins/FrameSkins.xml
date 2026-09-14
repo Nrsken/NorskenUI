@@ -32,4 +32,5 @@
     <Script file='Addons/RaiderIO.lua' />
     <Script file='Addons/SimpleAddonManager.lua' />
     <Script file='Addons/TalentLoadoutsEx.lua' />
+    <Script file='Addons/TeleportMenu.lua' />
 </Ui>

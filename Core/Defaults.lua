@@ -1267,6 +1267,7 @@ local Defaults = {
                     SimpleAddonManager = true,
                     StaticPopups = true,
                     TalentLoadoutsEx = true,
+                    TeleportMenu = true,
                 },
             },
 
