@@ -637,6 +637,17 @@ function FontString:GetWidestDigit() end
 ---@field BorderBox NUIGearManagerBorderBox?
 ---@field IconSelector { ScrollBar: Frame? }|nil
 
+-- Game Menu Skinning
+
+---@class NUIGameMenuHeader : Frame
+---@field Text FontString?
+
+---The esc menu's button pool and header frame are absent from the generated stub.
+---@class NUIGameMenuFrame : Frame
+---@field Header NUIGameMenuHeader?
+---@field buttonPool { EnumerateActive: fun(self): (fun(): (Button & SkinnedButtonMixin)?) }?
+---@field InitButtons fun(self: NUIGameMenuFrame)
+
 -- LibStub keeps its registries on the table itself, which the bundled stub leaves out.
 ---@class LibStub
 ---@field libs table<string, table>

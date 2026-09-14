@@ -1258,6 +1258,7 @@ local Defaults = {
                     Ace3 = true,
                     BugSack = true,
                     CharacterFrame = true,
+                    GameMenu = true,
                     GroupFinder = true,
                     InspectFrame = true,
                     Menus = true,

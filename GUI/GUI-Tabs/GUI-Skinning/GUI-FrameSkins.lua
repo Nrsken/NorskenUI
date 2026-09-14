@@ -12,6 +12,7 @@ local min = math.min
 
 local BLIZZARD_TOGGLES = {
     { key = 'CharacterFrame', label = L['Character Frame'] },
+    { key = 'GameMenu',       label = L['Game Menu'] },
     { key = 'GroupFinder',    label = L['Group Finder'] },
     { key = 'InspectFrame',   label = L['Inspect Frame'] },
     { key = 'Menus',          label = L['Right-Click Menus'] },

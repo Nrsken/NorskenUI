@@ -21,6 +21,7 @@
     <Script file='Widgets/Menus.lua' />
 
     <Script file='Blizzard/CharacterFrame.lua' />
+    <Script file='Blizzard/GameMenu.lua' />
     <Script file='Blizzard/GroupFinder.lua' />
     <Script file='Blizzard/InspectFrame.lua' />
     <Script file='Blizzard/PlayerSpells.lua' />
