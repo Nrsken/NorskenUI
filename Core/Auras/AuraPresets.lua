@@ -21,6 +21,7 @@ Premade.Presets = {
                 tokens = { [Filters.Player] = false },
                 candidates = {
                     excludeSpellIDs = BL_DEBUFFS,
+                    isFromPlayerOrPlayerPet = false,
                     --maxDuration = 200000,
                 }
             },
