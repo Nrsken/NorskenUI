@@ -7,34 +7,10 @@ local canaccessvalue = canaccessvalue
 local GetMouseFocus = GetMouseFocus
 local GetMouseFoci = GetMouseFoci
 local pcall = pcall
-local ipairs, pairs = ipairs, pairs
+local ipairs = ipairs
 local type = type
-local format = string.format
 local floor = math.floor
 local loadAddOn = LoadAddOnWithErrorHandling or UIParentLoadAddOn -- UIParentLoadAddOn is renamed to: LoadAddOnWithErrorHandling in 12.1.X+
-
----Reports the GUI's widget pool: how many of each type are live versus parked.
-function NRSKNUI:PrintPoolStats()
-    local GUI = self.GUI
-    if not GUI or not GUI.GetPoolStats then
-        self:Print('Widget pool unavailable.')
-        return
-    end
-
-    local stats, live, pooled = GUI:GetPoolStats()
-
-    local names = {}
-    for widgetType in pairs(stats) do names[#names + 1] = widgetType end
-    table.sort(names)
-
-    self:Print(format('Widget pool: |cff00ff00%d live|r, |cffaaaaaa%d pooled|r, |cffffd100%d total|r',
-        live, pooled, live + pooled))
-    for _, widgetType in ipairs(names) do
-        local entry = stats[widgetType]
-        self:Print(format('  %-18s live %3d   pooled %3d   |cffffd100total %3d|r',
-            widgetType, entry.acquired, entry.pooled, entry.acquired + entry.pooled))
-    end
-end
 
 ---Wipes the saved GUI window position/size and snaps the live window back to its defaults.
 function NRSKNUI:ResetGUIState()
@@ -49,20 +25,6 @@ function NRSKNUI:ResetGUIState()
     end
 
     self:Print('GUI position and size reset to defaults.')
-end
-
----Toggles the AuraMatrix module on or off.
-function NRSKNUI:ToggleAuraMatrix()
-    local wanted = not self.AuraMatrix:IsEnabled()
-    self.db.global.AuraMatrix.Enabled = wanted
-
-    if wanted then
-        self:EnableModule('AuraMatrix')
-    else
-        self:DisableModule('AuraMatrix')
-    end
-
-    self:Print('AuraMatrix ' .. (wanted and 'enabled.' or 'hidden, reload to remove its containers.'))
 end
 
 -- Setup slash commands
@@ -81,10 +43,6 @@ function NRSKNUI:SetupSlashCommands()
             if NRSKNUI.Anchors then
                 NRSKNUI.Anchors:Toggle()
             end
-        elseif msg == 'matrix' then
-            NRSKNUI:ToggleAuraMatrix()
-        elseif msg == 'poolstats' then
-            NRSKNUI:PrintPoolStats()
         elseif msg == 'guireset' then
             NRSKNUI:ResetGUIState()
         end

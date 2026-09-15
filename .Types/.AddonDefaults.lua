@@ -15,7 +15,11 @@
 
 ---@class NRSKNUI.DBGlobal.AuraMatrix
 ---@field [string] any
+---@field Base string
 ---@field Enabled boolean
+---@field Raw boolean
+---@field SpellID nil
+---@field Unit string
 
 ---@class NRSKNUI.DBGlobal.CDMLayoutCache
 ---@field [string] any
@@ -2181,16 +2185,20 @@
 ---@class NRSKNUI.DBProfile.Skinning.BlizzardElements.Frames
 ---@field [string] any
 ---@field Ace3 boolean
+---@field BigWigsKeystones boolean
 ---@field BugSack boolean
 ---@field CharacterFrame boolean
+---@field GameMenu boolean
 ---@field GroupFinder boolean
 ---@field InspectFrame boolean
+---@field KeystoneLoot boolean
 ---@field Menus boolean
 ---@field PlayerSpells boolean
 ---@field RaiderIO boolean
 ---@field SimpleAddonManager boolean
 ---@field StaticPopups boolean
 ---@field TalentLoadoutsEx boolean
+---@field TeleportMenu boolean
 
 ---@class NRSKNUI.DBProfile.Skinning.BlizzardElements.General
 ---@field [string] any

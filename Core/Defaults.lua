@@ -1,4 +1,4 @@
----@class NRSKNUI
+﻿---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 
 -- Default settings table
@@ -17,9 +17,6 @@ local Defaults = {
                 height = nil,
             },
             sidebarExpanded = nil,
-        },
-        AuraMatrix = {
-            Enabled = false,
         },
         XPTable = {},
         SpellAlertCVars = {},
