@@ -1,7 +1,9 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 
-local UnitCanAssist, UnitIsVisible = UnitCanAssist, UnitIsVisible
+---@type fun(unit: UnitToken, target: UnitToken, canAssistImmunePC: boolean?, canAssistUninteractable: boolean?): boolean
+local UnitCanAssist = UnitCanAssist
+local UnitIsVisible = UnitIsVisible
 local UnitIsPlayerControlledOrGroupMember = UnitIsPlayerControlledOrGroupMember
 local C_Timer, GetTime = C_Timer, GetTime
 local min, huge, ceil = math.min, math.huge, math.ceil
