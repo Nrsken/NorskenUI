@@ -655,7 +655,12 @@ local UNIT_GATE_EVENTS = {
 
 local GATE_EVENTS = {
     'PLAYER_ENTERING_WORLD', 'ZONE_CHANGED_NEW_AREA', -- visibility
-    'GROUP_ROSTER_UPDATE'                             -- UnitIsPlayerControlledOrGroupMember
+    'GROUP_ROSTER_UPDATE',                            -- UnitIsPlayerControlledOrGroupMember
+    'ZONE_CHANGED', 'ZONE_CHANGED_INDOORS',
+    'GROUP_ROSTER_UPDATE', 'PARTY_MEMBER_ENABLE',
+    'PARTY_MEMBER_DISABLE', 'PLAYER_FLAGS_CHANGED',
+    'CINEMATIC_START', 'CINEMATIC_STOP', 'PLAY_MOVIE', 'STOP_MOVIE', -- no UNIT_* event marks either edge
+    'PLAYER_DEAD', 'PLAYER_ALIVE', 'PLAYER_UNGHOST'                  -- quieter than the UNIT_HEALTH other units need
 }
 
 -- Item enchants need a re-push after a loading screen, which outlasts a frame.
