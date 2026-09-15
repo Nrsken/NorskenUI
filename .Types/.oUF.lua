@@ -1,4 +1,4 @@
----@meta
+﻿---@meta
 
 -- Annotations for the embedded oUF unit frame framework (Libs/oUF).
 -- The addon sets `## X-oUF: NorskenUF`, so the framework is reachable both as the
@@ -704,6 +704,10 @@ function auras:AddSlot(filter, options) end
 ---@class oUF.ResurrectIndicator : Texture, oUF.Element
 ---@field PreUpdate? fun(self: oUF.ResurrectIndicator)
 ---@field PostUpdate? fun(self: oUF.ResurrectIndicator, incomingResurrect: boolean)
+--- NorskenUI additions
+---@field nuiResUnit? string Unit the tracked state belongs to; cleared when the frame is retargeted
+---@field nuiResShown? boolean Icon is showing, which is what carries a cast over into a pending offer
+---@field nuiResExpiry? number GetTime() past which a waiting offer is assumed gone
 
 ---@class oUF.SummonIndicator : Texture, oUF.Element
 ---@field useAtlasSize? boolean

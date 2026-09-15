@@ -1,13 +1,15 @@
----@class NRSKNUI
+﻿---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 ---@class UnitFramesModule
 local UF = NRSKNUI:GetModule('UnitFrames')
 local L = NRSKNUI.Libs.AL
 
-local ipairs, pairs = ipairs, pairs
+local ipairs, pairs, next = ipairs, pairs, next
 local CreateFrame = CreateFrame
 local format = string.format
 local unpack = unpack
+local C_Timer, GetTime = C_Timer, GetTime
+local UnitExists, UnitIsDeadOrGhost = UnitExists, UnitIsDeadOrGhost
 
 local GROUP_UNITS = {}
 for _, unit in ipairs(UF.GroupUnits) do GROUP_UNITS[unit] = true end
@@ -20,6 +22,66 @@ for unit in pairs(GROUP_UNITS) do
 end
 
 local unitDefs = {}
+
+local RES_TIMEOUT = 60 -- an offer lapses on its own, which also bounds an interrupted cast reading as pending
+local RES_INTERVAL = 0.25
+
+---@type table<oUF.ResurrectIndicator, true> elements currently showing the resurrect icon
+local resActive = {}
+local resTicker
+
+-- Nothing signals that an offer was accepted or lapsed, so showing elements are polled.
+local function ResTick()
+    for element in pairs(resActive) do
+        if element.Override then
+            resActive[element] = nil -- Preview swallows the update that would otherwise clear this
+        else
+            element:ForceUpdate()
+        end
+    end
+
+    if not next(resActive) and resTicker then
+        resTicker:Cancel()
+        resTicker = nil
+    end
+end
+
+---UnitHasIncomingResurrection covers the cast only, so true -> false on a still-dead unit is the
+---closest thing to a signal that the offer is now waiting to be accepted.
+---@param element oUF.ResurrectIndicator
+---@param incomingResurrect boolean?
+local function ResurrectPostUpdate(element, incomingResurrect)
+    local frame = element.__owner
+    local unit = frame and frame.__unit
+    if not unit then return end
+
+    if element.nuiResUnit ~= unit then
+        element.nuiResUnit = unit -- a retargeted frame carries no state from its previous unit
+        element.nuiResShown = nil
+    end
+
+    local dead = UnitExists(unit) and UnitIsDeadOrGhost(unit)
+    local shown
+
+    if incomingResurrect and dead then
+        shown = true
+        element.nuiResExpiry = GetTime() + RES_TIMEOUT
+    elseif element.nuiResShown and dead and GetTime() <= element.nuiResExpiry then
+        shown = true
+    end
+
+    element.nuiResShown = shown
+
+    if not shown then
+        resActive[element] = nil
+        element:Hide()
+        return
+    end
+
+    resActive[element] = true
+    resTicker = resTicker or C_Timer.NewTicker(RES_INTERVAL, ResTick)
+    element:Show()
+end
 
 ---@class UnitFramesIndicatorDef
 ---@field key string
@@ -100,6 +162,7 @@ UF.IndicatorDefs = {
         art = {
             { key = 'Blizzard', label = L['Blizzard'], atlas = 'RaidFrame-Icon-Rez' },
         },
+        postUpdate = ResurrectPostUpdate,
     },
     {
         key = 'PvP',
