@@ -268,7 +268,8 @@ function CHAT:CopyChatScrollFrame_OnSizeChanged(width, height)
     if CHAT.CopyChatFrameEditBox then CHAT.CopyChatFrameEditBox:SetSize(width, height) end
 end
 
-function CHAT:CopyChatScrollFrame_OnVerticalScroll(offset)
+---@param self ScrollFrame
+function CHAT.CopyChatScrollFrame_OnVerticalScroll(self, offset)
     if CHAT.CopyChatFrameEditBox then
         local editBoxHeight = CHAT.CopyChatFrameEditBox:GetHeight()
         local scrollFrameHeight = self:GetHeight()
@@ -615,6 +616,7 @@ function CHAT:AddWhisperModeWarning()
         end
 
         for _, child in pairs({ scrollBox.ScrollTarget:GetChildren() }) do
+            ---@cast child Frame & { Text: FontString? }
             local labelText = child.Text and child.Text:GetText()
             if labelText == "New Whispers" and child:IsShown() then
                 warningFrame:SetParent(child)
@@ -1208,7 +1210,8 @@ function CHAT:RGBToHex(r, g, b)
     return format("|cff%02x%02x%02x", r * 255, g * 255, b * 255)
 end
 
-function CHAT:ShortChannel()
+---@param self string the channel link captured by gsub
+function CHAT.ShortChannel(self)
     local key = gsub(strupper(self), " ", "_")
     return format("|Hchannel:%s|h[%s]|h", self, SHORT_CHANNELS[key] or gsub(self, "channel:", ""))
 end
@@ -1262,7 +1265,8 @@ function CHAT:AddMessageEdits(frame, msg, isHistory, historyTime)
     return msg
 end
 
-function CHAT:AddMessage(msg, infoR, infoG, infoB, infoID, accessID, typeID, event, eventArgs, msgFormatter, isHistory, historyTime)
+---@param self NUIChatFrame
+function CHAT.AddMessage(self, msg, infoR, infoG, infoB, infoID, accessID, typeID, event, eventArgs, msgFormatter, isHistory, historyTime)
     local body = CHAT:AddMessageEdits(self, msg, isHistory, historyTime)
     self.OldAddMessage(self, body, infoR, infoG, infoB, infoID, accessID, typeID, event, eventArgs, msgFormatter)
 end
@@ -1406,7 +1410,8 @@ function CHAT:UpdateChatTabColors()
     end
 end
 
-function CHAT:FCF_Tab_OnClick(button)
+---@param self Button the chat tab
+function CHAT.FCF_Tab_OnClick(self, button)
     local chat = self and CHAT:GetOwner(self)
     if not chat then return end
 
@@ -1448,14 +1453,18 @@ function CHAT:FCF_Tab_OnClick(button)
     end
 end
 
-function CHAT:Tab_OnClick(button)
+---@param self Button the chat tab
+function CHAT.Tab_OnClick(self, button)
     CHAT.FCF_Tab_OnClick(self, button)
     PlaySound(SOUND_U_CHAT_SCROLL_BUTTON)
 end
 
-function CHAT:FCF_Close(fallback)
+---@param self Frame? a chat window or its tab; normalized to the chat window below
+---@param fallback NUIChatFrame?
+function CHAT.FCF_Close(self, fallback)
     if fallback then self = fallback end
     if not self or self == CHAT then self = _G.FCF_GetCurrentChatFrame() end
+    ---@cast self NUIChatFrame
     if self == _G.DEFAULT_CHAT_FRAME then return end
 
     _G.FCF_UnDockFrame(self)
@@ -1487,9 +1496,12 @@ function CHAT:FCF_Close(fallback)
     CHAT:PostChatClose(self)
 end
 
-function CHAT:FCF_PopInWindow(fallback)
+---@param self Frame? a chat window or its tab; normalized to the chat window below
+---@param fallback NUIChatFrame?
+function CHAT.FCF_PopInWindow(self, fallback)
     if fallback then self = fallback end
     if not self or self == CHAT then self = _G.FCF_GetCurrentChatFrame() end
+    ---@cast self NUIChatFrame
     if self == _G.DEFAULT_CHAT_FRAME then return end
 
     _G.FCF_RestoreChatsToFrame(_G.DEFAULT_CHAT_FRAME, self)
@@ -2015,7 +2027,7 @@ function CHAT:SetupChatScripts(chat)
     if not chat.nrsknSetScriptHooked then
         chat.nrsknSetScriptHooked = true
         hooksecurefunc(chat, "SetScript", function(frame, scriptType, handler)
-            self:ChatFrame_SetScript(frame, scriptType, handler)
+            self:ChatFrame_SetScript(frame, scriptType)
         end)
     end
 
@@ -2255,6 +2267,7 @@ function CHAT:StyleCombatLog()
     local combatLog = _G.ChatFrame2
 
     if bar.SetBackdrop and not bar.styled then
+        ---@cast bar CombatLogQuickButtonFrame_Custom & BackdropTemplateMixin
         for _, region in pairs({ bar:GetRegions() }) do
             if region:IsObjectType("Texture") then
                 region:SetTexture()

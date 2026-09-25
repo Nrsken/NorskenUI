@@ -5,21 +5,12 @@
 -- BEGIN GENERATED DB TYPES --
 ---@class NRSKNUI.DBGlobal
 ---@field [string] any
----@field AuraMatrix NRSKNUI.DBGlobal.AuraMatrix
 ---@field CDMLayoutCache NRSKNUI.DBGlobal.CDMLayoutCache
 ---@field GUIState NRSKNUI.DBGlobal.GUIState
 ---@field GlobalProfile string
 ---@field SpellAlertCVars table<string, string?>
 ---@field UseGlobalProfile boolean
 ---@field XPTable NRSKNUI.DBGlobal.XPTable
-
----@class NRSKNUI.DBGlobal.AuraMatrix
----@field [string] any
----@field Base string
----@field Enabled boolean
----@field Raw boolean
----@field SpellID nil
----@field Unit string
 
 ---@class NRSKNUI.DBGlobal.CDMLayoutCache
 ---@field [string] any
@@ -836,6 +827,7 @@
 ---@field CooldownStrings NRSKNUI.DBProfile.Miscellaneous.CooldownStrings
 ---@field CopyAnything NRSKNUI.DBProfile.Miscellaneous.CopyAnything
 ---@field CursorCircle NRSKNUI.DBProfile.Miscellaneous.CursorCircle
+---@field DelveInfo NRSKNUI.DBProfile.Miscellaneous.DelveInfo
 ---@field Durability NRSKNUI.DBProfile.Miscellaneous.Durability
 ---@field FocusCastbar NRSKNUI.DBProfile.Miscellaneous.FocusCastbar
 ---@field Gateway NRSKNUI.DBProfile.Miscellaneous.Gateway
@@ -925,6 +917,10 @@
 ---@field SwipeColor table
 ---@field SwipeColorMode string
 ---@field Texture string
+
+---@class NRSKNUI.DBProfile.Miscellaneous.DelveInfo
+---@field [string] any
+---@field Enabled boolean
 
 ---@class NRSKNUI.DBProfile.Miscellaneous.Durability
 ---@field [string] any
@@ -2186,6 +2182,7 @@
 ---@field [string] any
 ---@field Ace3 boolean
 ---@field BigWigsKeystones boolean
+---@field BigWigsPopups boolean
 ---@field BugSack boolean
 ---@field CharacterFrame boolean
 ---@field GameMenu boolean
@@ -2194,7 +2191,10 @@
 ---@field KeystoneLoot boolean
 ---@field Menus boolean
 ---@field PlayerSpells boolean
+---@field Professions boolean
 ---@field RaiderIO boolean
+---@field ReadyCheck boolean
+---@field Runeforge boolean
 ---@field SimpleAddonManager boolean
 ---@field StaticPopups boolean
 ---@field TalentLoadoutsEx boolean

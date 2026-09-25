@@ -74,6 +74,7 @@ function RangeChecker:ShouldShow()
     if not self.db.Enabled then return false end
     if self.isPreview then return true end
     if not UnitExists('target') then return false end
+    ---@diagnostic disable-next-line: secret-condition
     if UnitIsUnit('target', 'player') then return false end
     if self.db.CombatOnly and not NRSKNUI:InCombat() then return false end
     return true

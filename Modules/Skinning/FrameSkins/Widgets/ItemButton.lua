@@ -118,9 +118,9 @@ function Skinning:HandleItemButton(button)
     end
 end
 
----Route a Blizzard IconBorder's quality color onto a skinned item button, kept alpha-0 rather than hidden.
+---Route a Blizzard IconBorder's quality color onto our border, kept alpha-0 rather than hidden.
 ---@param iconBorder Texture
----@param owner Button Skinned via HandleItemButton
+---@param owner Button|Frame A button skinned via HandleItemButton, or an icon's NUIBackdrop
 function Skinning:HandleIconBorder(iconBorder, owner)
     if not iconBorder or iconBorder.NUIHooked then return end
     iconBorder.NUIHooked = true

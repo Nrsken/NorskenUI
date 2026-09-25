@@ -1,4 +1,5 @@
 ---@class NRSKNUI
+---@field MyGUID string?
 local NRSKNUI = select(2, ...)
 local LDB = NRSKNUI.Libs.LDB
 local LDBIcon = NRSKNUI.Libs.LDBIcon

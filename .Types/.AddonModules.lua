@@ -58,6 +58,7 @@
 ---@class CombatCrossModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class CombatMessageModule : NRSKNUI.ModuleBase, AceEvent-3.0, AceTimer-3.0
 ---@class CombatResModule : NRSKNUI.ModuleBase, AceEvent-3.0, AceTimer-3.0
+---@field chargeInfo CombatResChargeInfo? the battle res spell's charges are never secret
 ---@class CombatCursorModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class FocusCastbarModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class SpeedModule : NRSKNUI.ModuleBase, AceEvent-3.0
@@ -65,7 +66,7 @@
 ---@class AuraDisplayModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class BlizzardMessagesModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class ActionBarsModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class Chatv2Module : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class Chatv2Module : NRSKNUI.ModuleBase, AceEvent-3.0, AceHook-3.0
 ---@class MicroMenuModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class DetailsBackdropModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class SkyRidingModule : NRSKNUI.ModuleBase, AceEvent-3.0
@@ -108,6 +109,7 @@
 ---@field isPreview boolean?
 ---@field matchDirty boolean?
 ---@class AuraMatrixModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class DelveInfoModule : NRSKNUI.ModuleBase, AceEvent-3.0
 
 -- The handles Core/Init.lua hangs off the addon table. Declared here so the field and the accessor
 -- that fills it agree on a type: without these the field takes whatever the assignment inferred.
@@ -154,6 +156,7 @@
 ---@field BigWigsTimers BigWigsTimersModule
 ---@field CooldownStrings CooldownStringsModule
 ---@field AuraMatrix AuraMatrixModule
+---@field DelveInfo DelveInfoModule
 
 -- Typed accessors. Overloads dispatch on the literal module name.
 
@@ -202,6 +205,7 @@ local NRSKNUI
 ---@overload fun(self: NRSKNUI, name: "BigWigsTimers", silent?: boolean): BigWigsTimersModule
 ---@overload fun(self: NRSKNUI, name: "CooldownStrings", silent?: boolean): CooldownStringsModule
 ---@overload fun(self: NRSKNUI, name: "AuraMatrix", silent?: boolean): AuraMatrixModule
+---@overload fun(self: NRSKNUI, name: "DelveInfo", silent?: boolean): DelveInfoModule
 ---@param name string
 ---@param silent? boolean
 ---@return AceModule
@@ -249,6 +253,7 @@ function NRSKNUI:GetModule(name, silent) end
 ---@overload fun(self: NRSKNUI, name: "BigWigsTimers", ...: string): BigWigsTimersModule
 ---@overload fun(self: NRSKNUI, name: "CooldownStrings", ...: string): CooldownStringsModule
 ---@overload fun(self: NRSKNUI, name: "AuraMatrix", ...: string): AuraMatrixModule
+---@overload fun(self: NRSKNUI, name: "DelveInfo", ...: string): DelveInfoModule
 ---@param name string
 ---@param ... string
 ---@return AceModule

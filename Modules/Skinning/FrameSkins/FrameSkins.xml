@@ -26,10 +26,14 @@
     <Script file='Blizzard/GroupFinder.lua' />
     <Script file='Blizzard/InspectFrame.lua' />
     <Script file='Blizzard/PlayerSpells.lua' />
+    <Script file='Blizzard/Professions.lua' />
+    <Script file='Blizzard/ReadyCheck.lua' />
+    <Script file='Blizzard/Runeforge.lua' />
     <Script file='Blizzard/StaticPopup.lua' />
 
     <Script file='Addons/Ace3.lua' />
     <Script file='Addons/BigWigsKeystones.lua' />
+    <Script file='Addons/BigWigsPopups.lua' />
     <Script file='Addons/BugSack.lua' />
     <Script file='Addons/KeystoneLoot.lua' />
     <Script file='Addons/RaiderIO.lua' />

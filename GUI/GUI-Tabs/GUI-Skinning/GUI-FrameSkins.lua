@@ -17,12 +17,16 @@ local BLIZZARD_TOGGLES = {
     { key = 'InspectFrame',   label = L['Inspect Frame'] },
     { key = 'Menus',          label = L['Right-Click Menus'] },
     { key = 'PlayerSpells',   label = L['Spellbook & Talents'] },
+    { key = 'Professions',    label = L['Professions'] },
+    { key = 'ReadyCheck',     label = L['Ready Check'] },
+    { key = 'Runeforge',      label = L['Runecarver'] },
     { key = 'StaticPopups',   label = L['Static Popups'] },
 }
 
 local ADDON_TOGGLES = {
     { key = 'Ace3',               label = L['Ace3 Config Windows'] },
     { key = 'BigWigsKeystones',   label = L['BigWigs Keystones'] },
+    { key = 'BigWigsPopups',      label = L['BigWigs Popups'] },
     { key = 'BugSack',            label = L['BugSack'] },
     { key = 'KeystoneLoot',       label = L['KeystoneLoot'] },
     { key = 'RaiderIO',           label = L['Raider.IO'] },

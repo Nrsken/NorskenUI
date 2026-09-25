@@ -167,6 +167,8 @@ end
 ---@param frame Frame
 function lib.ShowTooltip(frame)
     local title, text, content = frame._tooltipTitle, frame._tooltipText, frame._tooltipContent
+    -- An icon-only button carries "" as its label, which is a title we must not print.
+    if title == "" then title = nil end
     if not (title or text or content) then return end
 
     local theme = frame._kajiGui.theme
@@ -180,15 +182,8 @@ function lib.ShowTooltip(frame)
             GameTooltip:AddLine(text, theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], true)
         end
     else
-        local titleText
-        if title == "" then
-            titleText = text
-        else
-            titleText = title or text
-        end
-
-        GameTooltip:SetText(titleText, accent[1], accent[2], accent[3], 1, false)
-        if title ~= "" and text then
+        GameTooltip:SetText(title or text, accent[1], accent[2], accent[3], 1, false)
+        if title and text then
             GameTooltip:AddLine(text, theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], true)
         end
     end

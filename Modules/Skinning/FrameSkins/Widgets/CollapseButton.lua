@@ -202,6 +202,8 @@ function Skinning:SetPlusMinusGlyph(texture, collapsed, size)
     if not texture then return end
 
     texture:SetTexture(collapsed and PLUS_TEXTURE or MINUS_TEXTURE)
+    -- SetTexture keeps whatever crop a previous SetAtlas left, which shows as a sliver of the glyph.
+    texture:SetTexCoord(0, 1, 0, 1)
     texture:NUISetPixelSize(size or PLUS_MINUS_SIZE, size or PLUS_MINUS_SIZE)
 
     if not texture.NUISkinned then

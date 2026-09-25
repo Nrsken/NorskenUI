@@ -106,10 +106,8 @@ local function ReskinProgressBar(bar, r, g, b)
         return
     end
 
-    bar:NUIStripTextures()
-    Skinning:CreateStatusBarBackdrop(bar)
-
-    bar:SetStatusBarTexture(NRSKNUI.Media.Statusbars.NorskenUI)
+    -- The tracker drives the fill colour itself, so the shared handler is told to leave it be.
+    Skinning:HandleStatusBar(bar, true)
     bar:SetStatusBarColor(r, g, b)
 
     ObjectiveTracker.coloredProgressBars[bar] = true
@@ -161,7 +159,7 @@ local function ProgressBarHook(tracker, key)
         local label = bar.Label
         if label then
             label:ClearAllPoints()
-            label:SetPoint("CENTER", bar, "CENTER", 0, 1)
+            label:SetPoint("CENTER", bar, "CENTER", 0, 0)
             ApplyLabelFont(label)
         end
     end
@@ -234,6 +232,14 @@ function ObjectiveTracker:SkinObjectiveTracker()
     self:SkinScenarioTracker()
 
     self.skinned = true
+end
+
+--- Lets addon-owned tracker modules opt their header into the accent colouring.
+---@param header Frame
+function ObjectiveTracker:SkinModuleHeader(header)
+    if not self.skinned then return end
+
+    ReskinHeader(header, GetAccentColor())
 end
 
 function ObjectiveTracker:SkinScenarioTracker()

@@ -8,9 +8,6 @@ local gsub = string.gsub
 local strlower = strlower
 local hooksecurefunc = hooksecurefunc
 
-local YES_R, YES_G, YES_B = 0.30, 0.80, 0.40
-local NO_R, NO_G, NO_B = 0.90, 0.30, 0.30
-
 ---@param popup Frame
 ---@param key string
 ---@return any
@@ -24,16 +21,8 @@ end
 
 ---One set of buttons serves every dialog, so the label is re-read rather than read once.
 ---@param button Button & SkinnedButtonMixin
-local function TintConfirmButton(button)
-    local label = button:GetText()
-
-    if label == _G.YES then
-        button:NUISetTextColor(YES_R, YES_G, YES_B)
-    elseif label == _G.NO then
-        button:NUISetTextColor(NO_R, NO_G, NO_B)
-    else
-        button:NUISetTextColor(1, 1, 1)
-    end
+local function UpdateConfirmButton(button)
+    button:NUISetPrimary(button:GetText() == _G.YES)
 end
 
 ---@param S SkinningModule
@@ -48,8 +37,8 @@ local function SkinStaticPopup(S, popup)
     while button do
         S:HandleButton(button)
 
-        hooksecurefunc(button, 'SetText', TintConfirmButton)
-        TintConfirmButton(button)
+        hooksecurefunc(button, 'SetText', UpdateConfirmButton)
+        UpdateConfirmButton(button)
 
         index = index + 1
         button = GetElement(popup, 'Button' .. index)

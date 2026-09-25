@@ -6,6 +6,7 @@ local Skinning = NRSKNUI:GetModule('Skinning')
 local hooksecurefunc = hooksecurefunc
 local Mixin = Mixin
 local _G = _G
+local ScrollUtil = ScrollUtil
 
 local STEPPER_ARROW_SIZE = 16
 
@@ -128,12 +129,18 @@ function Skinning:HandleTrimScrollBar(scrollBar)
     end
 end
 
----Skin dynamically created ScrollBox children now and on every ScrollBox update.
+---Skin dynamically created ScrollBox children now, on every update, and as each frame initialises.
+---Update alone misses a freshly appended element, which is bound after it runs.
 ---@param scrollBox ScrollBox|Frame
 ---@param skinChild fun(child: Frame)
 function Skinning:HookScrollBoxChildren(scrollBox, skinChild)
     if not scrollBox or not scrollBox.ForEachFrame or scrollBox.NUIHooked then return end
     scrollBox.NUIHooked = true
+
+    local function OnInitialized(_, frame)
+        skinChild(frame)
+    end
+    ScrollUtil.AddInitializedFrameCallback(scrollBox, OnInitialized, OnInitialized)
 
     hooksecurefunc(scrollBox, 'Update', function(sb)
         sb:ForEachFrame(skinChild)

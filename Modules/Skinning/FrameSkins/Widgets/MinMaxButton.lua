@@ -43,7 +43,9 @@ function Skinning:HandleMinMaxButton(frame)
             local point, relativeTo, relativePoint, x, y = btn:GetPoint()
             btn:NUISetPixelPoint(point, relativeTo or btn:GetParent(), relativePoint or point, x or 0, y or 0)
 
-            local width = btn:GetWidth()
+            -- The buttons are setAllPoints with no size of their own, so they measure 0 until
+            -- the frame is first laid out. The template-sized parent is the stable source.
+            local width = frame:GetWidth()
             local size = NRSKNUI:NotSecretValue(width) and math_max(8, width * 0.6) or 8
 
             local minMax = btn:CreateTexture(nil, 'OVERLAY')

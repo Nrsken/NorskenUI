@@ -49,6 +49,7 @@ end
 -- Secret Wrappers --
 
 ---Is this value a secret?
+---@secret-guard value is-secret
 ---@param value any
 ---@return boolean
 function NRSKNUI:IsSecretValue(value)
@@ -56,6 +57,7 @@ function NRSKNUI:IsSecretValue(value)
 end
 
 ---Is this value NOT a secret?
+---@secret-guard value accessible
 ---@param value any
 ---@return boolean
 function NRSKNUI:NotSecretValue(value)
@@ -63,6 +65,7 @@ function NRSKNUI:NotSecretValue(value)
 end
 
 ---Value exists and is not a secret, i.e. safe to read/compare.
+---@secret-guard value accessible
 ---@param value any
 ---@return boolean
 function NRSKNUI:IsSafeValue(value)
@@ -78,6 +81,7 @@ function NRSKNUI:IsSecretTable(object)
 end
 
 ---Can the current (possibly tainted) call context operate on this value?
+---@secret-guard value accessible
 ---@param value any
 ---@return boolean
 function NRSKNUI:CanAccessValue(value)

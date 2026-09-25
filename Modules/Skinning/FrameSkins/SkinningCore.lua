@@ -176,6 +176,7 @@ end
 local SkinnedBackdropMixin = {}
 
 local WIDGET_GLOW_ATLAS = 'glues-characterSelect-GS-TopHUD-middle-selectedGlow'
+local PRIMARY_TINT_ALPHA = 0.3
 Skinning.WidgetGlowAtlas = WIDGET_GLOW_ATLAS
 
 ---@param backdrop Frame
@@ -192,7 +193,12 @@ function SkinnedBackdropMixin:NUIUpdateSkinColors()
     local bg = self.NUIIsWidget and general.WidgetBackgroundColor or general.BackgroundColor
     local border = self.NUIIsWidget and general.WidgetBorderColor or general.BorderColor
 
-    self:SetBackgroundColor(bg[1], bg[2], bg[3], self.NUIBgAlpha or bg[4])
+    if self.NUIPrimary then
+        local r, g, b = Skinning:GetAccentColor()
+        self:SetBackgroundColor(r, g, b, PRIMARY_TINT_ALPHA)
+    else
+        self:SetBackgroundColor(bg[1], bg[2], bg[3], self.NUIBgAlpha or bg[4])
+    end
     self:SetBorderColor(border[1], border[2], border[3], border[4])
     UpdateWidgetGlow(self)
 end
@@ -254,11 +260,12 @@ function Skinning:CreateStatusBarBackdrop(bar, template)
     if not bar then return end
     if bar.NUIBackdrop then return bar.NUIBackdrop end
 
+    -- Background only, on the bar's own rect. HandleStatusBar draws the single border ring at
+    -- OVERLAY; a second ring here would sit a fraction of a pixel off it and read as a doubled edge.
     local backdrop = CreateFrame('Frame', nil, bar)
-    backdrop:SetPoint('TOPLEFT', bar, -1, 1)
-    backdrop:SetPoint('BOTTOMRIGHT', bar, 1, -1)
+    backdrop:SetAllPoints(bar)
     backdrop:SetFrameLevel(LowerLevel(bar))
-    backdrop:NUICreateBackdrop()
+    backdrop:NUICreateBackdrop(true, 0)
 
     ---@cast backdrop Frame & PublicBackdropMixin & SkinnedBackdropMixin
     Mixin(backdrop, SkinnedBackdropMixin)

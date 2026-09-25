@@ -209,7 +209,7 @@ function EditBox:SetFontJustify(source, parent, offsetX, offsetY, skip, bound, f
 ---@field NUISetPixelOutside fun(self: Frame, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor outset from a frame's corners (defaults 1px)
 ---@field NUISetGridPoint fun(self: Frame, point: string, relativeTo?: Frame|string, relativePoint?: string, offsetX?: number, offsetY?: number) SetPoint but snaps the resulting edges onto the pixel grid (for anchoring to off-grid frames)
 ---@field NUISetPixelSnap fun(self: Frame) Disable Blizzard's grid snapping / texel bias on this object
----@field NUIAddBorders fun(self: Frame) Add a 1px border to all 4 edges (or custom size/color)
+---@field NUIAddBorders fun(self: Frame, noPixelSnap: boolean?) Add a 1px border to all 4 edges (or custom size/color)
 ---@field SetBorderLayer fun(self: Frame, layer: string, sublevel?: number) Set the draw layer of all 4 edges (e.g. 'ARTWORK', 'OVERLAY')
 ---@field SetBorderParent fun(self: Frame, parent: Frame, sublevel?: number) Reparent all 4 edges to a new parent (e.g. the frame's texture)
 ---@field SetBorderShown fun(self: Frame, shown: boolean) Show/hide all 4 edges
@@ -305,7 +305,7 @@ function Frame:NUIStyleChildFontStrings(source, getSize, outline, shadow, skip, 
 ---@field NUISetGridPoint fun(self: Button, point: string, relativeTo?: Frame|string, relativePoint?: string, offsetX?: number, offsetY?: number) SetPoint but snaps the resulting edges onto the pixel grid (for anchoring to off-grid frames)
 ---@field NUISetPixelSnap fun(self: Button) Disable Blizzard's grid snapping / texel bias on this object
 ---@field NUIStyleButton fun(self: Button, noHover?: boolean, noPushed?: boolean, noChecked?: boolean) Swap Blizzard highlight/pushed/checked art for flat additive overlays
----@field NUIAddBorders fun(self: Button) Add a 1px border to all 4 edges (or custom size/color)
+---@field NUIAddBorders fun(self: Button, noPixelSnap: boolean?) Add a 1px border to all 4 edges (or custom size/color)
 ---@field SetBorderLayer fun(self: Button, layer: string, sublevel?: number) Set the draw layer of all 4 edges (e.g. 'ARTWORK', 'OVERLAY')
 ---@field SetBorderParent fun(self: Button, parent: Frame) Reparent all 4 edges to a new parent (e.g. the frame's texture)
 ---@field SetBorderShown fun(self: Button, shown: boolean) Show/hide all 4 edges
@@ -363,7 +363,7 @@ function Button:NUIApplyPosition(Config, setParent) end
 ---@field NUISetPixelOutside fun(self: StatusBar, anchor?: table, xOffset?: number, yOffset?: number, anchor2?: table) Anchor outset from a frame's corners (defaults 1px)
 ---@field NUISetGridPoint fun(self: StatusBar, point: string, relativeTo?: Frame|string, relativePoint?: string, offsetX?: number, offsetY?: number) SetPoint but snaps the resulting edges onto the pixel grid (for anchoring to off-grid frames)
 ---@field NUISetPixelSnap fun(self: StatusBar) Disable Blizzard's grid snapping / texel bias on this object
----@field NUIAddBorders fun(self: StatusBar) Add a 1px border to all 4 edges (or custom size/color)
+---@field NUIAddBorders fun(self: StatusBar, noPixelSnap: boolean?) Add a 1px border to all 4 edges (or custom size/color)
 ---@field SetBorderLayer fun(self: StatusBar, layer: string, sublevel?: number) Set the draw layer of all 4 edges (e.g. 'ARTWORK', 'OVERLAY')
 ---@field SetBorderParent fun(self: StatusBar, parent: Frame) Reparent all 4 edges to a new parent (e.g. the frame's texture)
 ---@field SetBorderShown fun(self: StatusBar, shown: boolean) Show/hide all 4 edges
@@ -417,6 +417,7 @@ function StatusBar:NUIApplyPosition(Config, setParent) end
 ---@field NUISetPixelSnap fun(self: Texture) Disable Blizzard's grid snapping / texel bias on this texture
 ---@field NUISetZoom fun(self: Texture, zoom?: number) Apply a zoom crop via SetTexCoord (uses NRSKNUI.GlobalZoom when omitted)
 ---@field NUIStripTextures fun(self: Texture, stripType?: string, a?: string|string[]|boolean, b?: boolean) Strip this texture (clear, or per `stripType`). Same modes as the frame version.
+---@field NUIBackdrop (Frame & PublicBackdropMixin)? Set by Skinning:HandleIcon when it builds one
 local Texture
 
 ---Strip this texture (clear, or per `stripType`). Same modes as the frame version.
@@ -508,16 +509,14 @@ function FontString:GetWidestDigit() end
 
 ---@class SkinnedBackdropMixin : PublicBackdropMixin
 ---@field NUIBgAlpha number?
+---@field NUIPrimary boolean?
 
 ---@class SkinnedIconBackdropMixin : Frame, PublicBackdropMixin
 
 ---@class SkinnedButtonMixin : Button
----@field NUIBackdrop Frame & PublicBackdropMixin
+---@field NUIBackdrop Frame & PublicBackdropMixin & SkinnedBackdropMixin
 ---@field NUIHighlight Texture?
 ---@field NUIMenuOpen boolean?
----@field NUITextR number
----@field NUITextG number
----@field NUITextB number
 
 -- The arrow API Skinning:CreateArrowTexture installs on a button.
 ---@class NUIArrowButton : Button
@@ -703,6 +702,10 @@ function FontString:GetWidestDigit() end
 ---@field NUIArtRight number?
 ---@field NUIArtTop number?
 ---@field NUIArtBottom number?
+---@field NUIArtFitted boolean?
+---@field NUIBackdrop (Frame & PublicBackdropMixin)?
+---@field searchIcon Texture?
+---@field clearButton Button?
 
 -- Game Menu Skinning
 
@@ -714,6 +717,327 @@ function FontString:GetWidestDigit() end
 ---@field Header NUIGameMenuHeader?
 ---@field buttonPool { EnumerateActive: fun(self): (fun(): (Button & SkinnedButtonMixin)?) }?
 ---@field InitButtons fun(self: NUIGameMenuFrame)
+
+-- Professions Skinning. Built from Blizzard_Professions/ and Blizzard_ProfessionsTemplates/;
+-- only the parts our skin touches are described here.
+
+---@class NUINumericSpinner : EditBox
+---@field IncrementButton Button?
+---@field DecrementButton Button?
+
+---Slot buttons substitute an uppercase Icon for the ItemButton intrinsic's lowercase one.
+---@class NUIProfessionsSlotButton : Button
+---@field Icon Texture?
+---@field IconBorder Texture?
+---@field SlotBackground Texture?
+---@field CropFrame Texture?
+---@field ColorOverlay Texture?
+---@field CircleMask Texture?
+---@field InputOverlay Frame?
+---@field NUISkinned boolean?
+
+---@class NUIProfessionsReagentSlot : Frame
+---@field Button NUIProfessionsSlotButton?
+---@field Checkbox CheckButton?
+
+---@class NUIProfessionsRecraftSlot : Frame
+---@field InputSlot NUIProfessionsSlotButton?
+---@field OutputSlot NUIProfessionsSlotButton?
+
+---@class NUIProfessionsQualityContainer : Frame
+---@field Button NUIProfessionsSlotButton?
+---@field EditBox NUINumericSpinner?
+
+---@class NUIProfessionsQualityDialog : Frame
+---@field NUISkinned boolean?
+---@field TitleContainer { TitleText: FontString? }|nil
+---@field ClosePanelButton Button?
+---@field AcceptButton Button?
+---@field CancelButton Button?
+---@field Container1 NUIProfessionsQualityContainer?
+---@field Container2 NUIProfessionsQualityContainer?
+---@field Container3 NUIProfessionsQualityContainer?
+
+---@class NUIProfessionsStatLine : Frame
+---@field LeftLabel FontString?
+---@field RightLabel FontString?
+
+---@class NUIProfessionsCrafterDetails : Frame
+---@field BackgroundTop Texture?
+---@field BackgroundMiddle Texture?
+---@field BackgroundBottom Texture?
+---@field BackgroundMinimized Texture?
+---@field Label FontString?
+---@field StatLines table<string, NUIProfessionsStatLine>?
+---@field CraftingChoicesContainer { ConcentrateContainer: { ConcentrateToggleButton: NUIProfessionsSlotButton? }? }|nil
+
+---@class NUIProfessionsSchematicForm : Frame
+---@field Details NUIProfessionsCrafterDetails?
+---@field NUISkinned boolean?
+---@field Background Texture?
+---@field MinimalBackground Texture?
+---@field TrackRecipeCheckbox CheckButton?
+---@field AllocateBestQualityCheckbox CheckButton?
+---@field OutputText FontString?
+---@field RecraftingOutputText FontString?
+---@field RequiredTools FontString?
+---@field RecraftingRequiredTools FontString?
+---@field OutputSubText FontString?
+---@field OutputIcon NUIProfessionsSlotButton?
+---@field QualityDialog NUIProfessionsQualityDialog?
+---@field RecipeLevelDropdown WowStyle1DropdownTemplate?
+---@field RecipeLevelBar StatusBar?
+---@field reagentSlotPool { EnumerateActive: fun(self): (fun(): NUIProfessionsReagentSlot?) }?
+---@field salvageSlot NUIProfessionsReagentSlot?
+---@field enchantSlot NUIProfessionsReagentSlot?
+---@field recraftSlot NUIProfessionsRecraftSlot?
+---@field Init fun(self: NUIProfessionsSchematicForm)
+
+---@class NUIFilterDropdown : Button
+---@field ResetButton Button?
+
+---Category headers and recipe rows share the list's element pool, so every key is optional.
+---@class NUIProfessionsRecipeRow : Button
+---@field NUISkinned boolean?
+---@field LeftPiece Texture?
+---@field RightPiece Texture?
+---@field CenterPiece Texture?
+---@field SelectedOverlay Texture?
+---@field HighlightOverlay Texture?
+---@field CollapseIcon Texture?
+---@field CollapseIconAlphaAdd Texture?
+---@field NUIUpdateSkinColors fun(self: NUIProfessionsRecipeRow)
+
+---@class NUIProfessionsRecipeList : Frame
+---@field NUISkinned boolean?
+---@field BackgroundNineSlice Frame?
+---@field SearchBox NUISkinnedEditBox?
+---@field ScrollBar Frame?
+---@field ScrollBox Frame?
+---@field FilterDropdown NUIFilterDropdown?
+
+---@class NUIProfessionsExpansionDropdown : Button
+---@field Texture Texture?
+
+---@class NUIProfessionsRankBar : Frame
+---@field NUISkinned boolean?
+---@field Fill Texture?
+---@field Border Texture?
+---@field Background Texture?
+---@field Rank { Text: FontString? }|nil
+---@field ExpansionDropdownButton NUIProfessionsExpansionDropdown?
+
+---@class NUIProfessionsOutputItem : Frame
+---@field Item NUIItemButton?
+---@field Text FontString?
+---@field NameFrame Texture?
+---@field BorderFrame Texture?
+---@field HighlightNameFrame Texture?
+---@field PushedNameFrame Texture?
+
+---@class NUIProfessionsOutputRow : Frame
+---@field ItemContainer NUIProfessionsOutputItem?
+---@field itemButtonPool { EnumerateActive: fun(self): (fun(): NUIProfessionsSlotButton?) }?
+---@field Rows { Bracket: Texture?, Item: NUIItemButton? }[]?
+
+---@class NUIProfessionsOutputLog : Frame
+---@field NUISkinned boolean?
+---@field TitleContainer { TitleText: FontString? }|nil
+---@field ClosePanelButton Button?
+---@field ScrollBar Frame?
+---@field ScrollBox Frame?
+
+---@class NUIProfessionsScrollHost : Frame
+---@field ScrollBar Frame?
+
+---@class NUIProfessionsGuildFrame : Frame
+---@field Title FontString?
+---@field Container NUIProfessionsScrollHost?
+
+---@class NUIProfessionsCraftingPage : Frame
+---@field CreateButton Button?
+---@field CreateAllButton Button?
+---@field ViewGuildCraftersButton Button?
+---@field CreateMultipleInputBox NUINumericSpinner?
+---@field MinimizedSearchBox EditBox?
+---@field MinimizedSearchResults NUIProfessionsScrollHost?
+---@field ConcentrationDisplay { Icon: Texture? }|nil
+---@field TutorialButton { Ring: Texture? }|nil
+---@field LinkButton Button?
+---@field GuildFrame NUIProfessionsGuildFrame?
+---@field GearSlotDivider Frame?
+---@field RecipeList NUIProfessionsRecipeList?
+---@field SchematicForm NUIProfessionsSchematicForm?
+---@field RankBar NUIProfessionsRankBar?
+---@field CraftingOutputLog NUIProfessionsOutputLog?
+
+---@class NUIProfessionsTreeView : Frame
+---@field Background Texture?
+---@field TreeName FontString?
+---@field TreeDescription FontString?
+
+---@class NUIProfessionsDetailedView : Frame
+---@field Background Texture?
+---@field UnlockPathButton Button?
+---@field SpendPointsButton Button?
+---@field PathName FontString?
+---@field PointsText FontString?
+---@field UnspentPoints { Icon: Texture? }|nil
+
+---@class NUIProfessionsTreePreview : Frame
+---@field Background Texture?
+---@field Title FontString?
+---@field Description FontString?
+
+---@class NUIProfessionsSpecTab : Button
+---@field StateIcon Texture?
+
+---@class NUIProfessionsSpecPage : Frame
+---@field tabsPool { EnumerateActive: fun(self): (fun(): NUIProfessionsSpecTab?) }?
+---@field UndoButton Button?
+---@field PanelFooter Frame?
+---@field TreeView NUIProfessionsTreeView?
+---@field DetailedView NUIProfessionsDetailedView?
+---@field TreePreview NUIProfessionsTreePreview?
+---@field UpdateTabs fun(self: NUIProfessionsSpecPage)
+
+---The order note panels disagree on where the border art lives and how the title is keyed.
+---@class NUIProfessionsNoteBox : Frame
+---@field Background { Border: Texture? }|Frame|nil
+---@field Border Texture?
+---@field NoteTitle FontString?
+---@field TitleBox { Title: FontString? }|nil
+---@field ScrollingEditBox Frame?
+
+---@class NUIProfessionsRewards : Frame
+---@field Background Texture?
+---@field RewardText FontString?
+---@field RewardItems NUIProfessionsSlotButton[]?
+
+---@class NUIProfessionsOrderInfo : Frame
+---@field BackButton Button?
+---@field StartOrderButton Button?
+---@field DeclineOrderButton Button?
+---@field ReleaseOrderButton Button?
+---@field SocialDropdown (Button & { icon: Texture? })?
+---@field NoteBox NUIProfessionsNoteBox?
+---@field NPCRewardsFrame NUIProfessionsRewards?
+
+---@class NUIProfessionsFulfillmentForm : Frame
+---@field ItemIcon NUIProfessionsSlotButton?
+---@field NoteEditBox NUIProfessionsNoteBox?
+---@field ItemName FontString?
+---@field RecraftSlot NUIProfessionsRecraftSlot?
+
+---@class NUIProfessionsOrderDetails : Frame
+---@field Background Texture?
+---@field MinimumQualityIcon Texture?
+---@field SchematicForm NUIProfessionsSchematicForm?
+---@field FulfillmentForm NUIProfessionsFulfillmentForm?
+
+---@class NUIProfessionsDeclineDialog : Frame
+---@field TitleContainer { TitleText: FontString? }|nil
+---@field ConfirmationText FontString?
+---@field NoteEditBox NUIProfessionsNoteBox?
+---@field ConfirmButton Button?
+---@field CancelButton Button?
+
+---@class NUIProfessionsOrdersRemaining : Frame
+---@field Background Texture?
+---@field OrdersRemaining FontString?
+
+---@class NUIProfessionsOrderList : Frame
+---@field ScrollBar Frame?
+---@field HeaderContainer Frame?
+
+---@class NUIProfessionsBrowseFrame : Frame
+---@field SearchButton Button?
+---@field FavoritesSearchButton Button?
+---@field BackButton Button?
+---@field OrdersRemainingDisplay NUIProfessionsOrdersRemaining?
+---@field RecipeList NUIProfessionsRecipeList?
+---@field OrderList NUIProfessionsOrderList?
+
+---@class NUIProfessionsOrderView : Frame
+---@field ConcentrationDisplay { Icon: Texture? }|nil
+---@field RankBar NUIProfessionsRankBar?
+---@field CraftingOutputLog NUIProfessionsOutputLog?
+---@field OrderInfo NUIProfessionsOrderInfo?
+---@field OrderDetails NUIProfessionsOrderDetails?
+---@field DeclineOrderDialog NUIProfessionsDeclineDialog?
+
+---@class NUIProfessionsOrdersPage : Frame
+---@field BrowseFrame NUIProfessionsBrowseFrame?
+---@field OrderView NUIProfessionsOrderView?
+
+---The flyout is one frame private to Blizzard_ProfessionsTemplates, reachable only off the behavior.
+---@class NUIProfessionsFlyout : Frame
+---@field NUISkinned boolean?
+---@field NUIBackdrop (Frame & PublicBackdropMixin & SkinnedBackdropMixin)? Set by Skinning:CreatePanelBackdrop
+---@field ScrollBar Frame?
+---@field ScrollBox Frame?
+---@field HideUnownedCheckbox CheckButton?
+---@field UndoButton Button?
+---@field UndoItem NUIProfessionsSlotButton?
+
+---@class NUIProfessionsFlyoutBehavior
+---@field flyout NUIProfessionsFlyout?
+
+---@class NUIProfessionBookAnchor
+---@field point string
+---@field relativeTo Frame
+---@field relativePoint string
+---@field x number
+---@field y number
+
+---@class NUIProfessionBookButton : CheckButton
+---@field NUISkinned boolean?
+---@field NUIBaseAnchor NUIProfessionBookAnchor?
+---@field IconTexture Texture?
+---@field spellString (FontString & { NUIUpdateSkinColors: fun(self: FontString) })?
+---@field subSpellString FontString?
+---@field UpdateButton fun(self: NUIProfessionBookButton)
+
+---@class NUIProfessionBookPanel : Frame
+---@field professionName FontString?
+---@field missingHeader FontString?
+---@field missingText FontString?
+---@field specialization FontString?
+---@field rank FontString?
+---@field icon Texture?
+---@field CircleMask Texture?
+---@field SpellButton1 NUIProfessionBookButton?
+---@field SpellButton2 NUIProfessionBookButton?
+---@field statusBar (StatusBar & { rankText: FontString? })?
+---@field UnlearnButton Button?
+
+-- Runeforge Skinning. Built from Blizzard_RuneforgeUI/; only the parts our skin touches.
+
+---@class NUIRuneforgePowerButton : Button
+---@field Icon Texture?
+---@field Border Texture?
+---@field CircleMask Texture?
+---@field NUISkinned boolean?
+
+---@class NUIRuneforgePowerList : Frame
+---@field elements NUIRuneforgePowerButton[]?
+---@field GetNumElementFrames fun(self: NUIRuneforgePowerList): number
+---@field RefreshListDisplay fun(self: NUIRuneforgePowerList)
+
+---@class NUIRuneforgePageControl : Frame
+---@field BackwardButton Button?
+---@field ForwardButton Button?
+---@field PageText FontString?
+
+---@class NUIRuneforgePowerFrame : Frame
+---@field PowerList NUIRuneforgePowerList?
+---@field PageControl NUIRuneforgePageControl?
+
+---@class NUIRuneforgeFrame : Frame
+---@field Title FontString?
+---@field CloseButton Button?
+---@field CreateFrame { CraftItemButton: Button? }|nil
+---@field CraftingFrame { PowerFrame: NUIRuneforgePowerFrame? }|nil
 
 -- LibStub keeps its registries on the table itself, which the bundled stub leaves out.
 ---@class LibStub
@@ -1061,3 +1385,15 @@ function FontString:GetWidestDigit() end
 ---@field didDrag boolean
 ---@field animateBorder fun(r: number, g: number, b: number, a?: number)
 ---@field fadeTo fun(alpha: number)
+
+---Chat window fields Blizzard sets at runtime on temporary/popped-out windows, plus Chatv2's AddMessage stash.
+---@class NUIChatFrame : FloatingChatFrameTemplate
+---@field chatType string?
+---@field chatTarget string?
+---@field isTemporary boolean?
+---@field minFrame Frame?
+---@field OldAddMessage fun(self: NUIChatFrame, ...)?
+
+---Chatv2 persists which chat window the panel snapped to; not a default, so the generator never sees it.
+---@class NRSKNUI.DBProfile.Skinning.Chatv2
+---@field panelSnapID number?

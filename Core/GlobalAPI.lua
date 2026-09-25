@@ -92,6 +92,7 @@ function NRSKNUI:IsClassInGroup(classFilenameToCheck)
     for i = 1, maxCheck do
         local unit = prefix .. i
         local classFilename = select(2, UnitClass(unit))
+        ---@diagnostic disable-next-line: secret-comparison
         if classFilename == classFilenameToCheck then
             return true
         end
@@ -127,6 +128,7 @@ function NRSKNUI:SafeGetUnitFromGUID(GUID)
     local maxCheck = ((IsInRaid() and numMembers) or (numMembers - 1))
     for i = 1, maxCheck do
         local Unit = prefix .. i
+        ---@diagnostic disable-next-line: secret-comparison
         if UnitGUID(Unit) == GUID then
             return Unit
         end

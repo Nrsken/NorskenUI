@@ -20,7 +20,7 @@ local function GroupRange(frame)
 
     local inRange, wasChecked = UnitInRange(unit)
 
-    if NRSKNUI:IsSecretValue(wasChecked) then
+    if NRSKNUI:IsSecretValue(wasChecked) or NRSKNUI:IsSecretValue(inRange) then
         frame:SetAlphaFromBoolean(inRange, element.insideAlpha, element.outsideAlpha)
     elseif wasChecked then
         frame:SetAlpha(inRange and element.insideAlpha or element.outsideAlpha)

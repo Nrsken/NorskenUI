@@ -737,7 +737,7 @@ function FocusCastbar:UpdateTimeText()
     local duration = self.castBar:GetTimerDuration()
     if not duration then return end
 
-    self.castTimeText:SetText(duration:FormatRemainingDuration(self.durationFormatter))
+    self.castTimeText:SetText(duration:FormatRemainingDuration(self.durationFormatter, Enum.DurationTimeModifier.RealTime))
 end
 
 ---Only attached while a cast runs. The bar's own timer draws the cast progress, the kick ready indicator tracks

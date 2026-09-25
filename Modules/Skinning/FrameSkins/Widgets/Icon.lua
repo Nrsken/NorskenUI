@@ -8,10 +8,26 @@ local Mixin = Mixin
 
 local SkinnedIconBackdropMixin = {}
 
+---Forward a Blizzard IconBorder's quality color onto our border, r/g/b may be secret so never compare them.
+---@param r number
+---@param g number
+---@param b number
+function SkinnedIconBackdropMixin:NUISetQualityColor(r, g, b)
+    self.NUIQualityShown = true
+    self:SetBorderColor(r, g, b, 1)
+end
+
+function SkinnedIconBackdropMixin:NUIResetQualityColor()
+    self.NUIQualityShown = nil
+    self:NUIUpdateSkinColors()
+end
+
 function SkinnedIconBackdropMixin:NUIUpdateSkinColors()
     local general = Skinning.db.General
-    local border = self.NUIFill and general.WidgetBorderColor or general.BorderColor
-    self:SetBorderColor(border[1], border[2], border[3], border[4])
+    if not self.NUIQualityShown then
+        local border = self.NUIFill and general.WidgetBorderColor or general.BorderColor
+        self:SetBorderColor(border[1], border[2], border[3], border[4])
+    end
 
     if not self.NUIFill then return end
 
@@ -44,6 +60,7 @@ function Skinning:HandleIcon(icon, createBackdrop, skipZoom, isWidget)
         if isWidget then
             local fill = backdrop:CreateTexture(nil, 'BACKGROUND')
             fill:SetAllPoints(backdrop)
+            fill:NUISetPixelSnap() -- AddBorders owns the pixel math, an unsnapped fill rounds off it
             backdrop.NUIFill = fill
 
             local glow = backdrop:CreateTexture(nil, 'BACKGROUND', nil, 2)

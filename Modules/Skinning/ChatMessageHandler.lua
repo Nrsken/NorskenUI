@@ -28,7 +28,7 @@ local gmatch = gmatch
 local tonumber = tonumber
 local GetChannelShortcutForChannelID = GetChannelShortcutForChannelID
 local IsChannelRegionalForChannelID = IsChannelRegionalForChannelID
-local GetChatCategory = Chat_GetChatCategory or ChatFrame_GetChatCategory or GetChatCategory
+local GetChatCategory = Chat_GetChatCategory or GetChatCategory
 local RemoveExtraSpaces = RemoveExtraSpaces
 local RemoveNewlines = RemoveNewlines
 local GMChatFrame_IsGM = GMChatFrame_IsGM
@@ -380,8 +380,7 @@ function CMH:ChatFrame_MessageEventHandler(frame, event, arg1, arg2, arg3, arg4,
             end
         end
 
-        local coloredName = self:GetColoredName(event, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11,
-            arg12, arg13, arg14)
+        local coloredName = self:GetColoredName(event, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12)
         local channelLength = strlen(arg4 or '')
         local infoType = chatType
 
@@ -585,7 +584,8 @@ function CMH:ChatFrame_MessageEventHandler(frame, event, arg1, arg2, arg3, arg4,
         else
             -- Default case, regular chat messages including whispers
             -- Check if this message is censored and prepare formatter for "Show Message" click
-            local isChatLineCensored, eventArgs, msgFormatter = IsChatLineCensored and IsChatLineCensored(arg11)
+            local isChatLineCensored = IsChatLineCensored and IsChatLineCensored(arg11)
+            local eventArgs, msgFormatter
             if isChatLineCensored then
                 eventArgs = SafePack(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18)
 

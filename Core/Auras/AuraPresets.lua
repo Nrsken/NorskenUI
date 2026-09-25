@@ -22,7 +22,18 @@ Premade.Presets = {
                 candidates = {
                     excludeSpellIDs = BL_DEBUFFS,
                     isFromPlayerOrPlayerPet = false,
-                    --maxDuration = 200000,
+                }
+            },
+        },
+    },
+    {
+        key = 'preset:debuffsNoBloodlust',
+        name = L['Debuffs (No Bloodlust)'],
+        branches = {
+            {
+                type = Filters.Harmful,
+                candidates = {
+                    excludeSpellIDs = BL_DEBUFFS,
                 }
             },
         },
@@ -47,6 +58,7 @@ Premade.Presets = {
                         [207771] = true,  -- Fiery Brand
                         -- Druid
                         [22812] = true,   -- Barkskin
+                        [61336] = true,   -- Survival Instincts
                         [1261872] = true, -- Heart of the wild bearform
                         -- Evoker
                         [363916] = true,  -- Obsidian Scales

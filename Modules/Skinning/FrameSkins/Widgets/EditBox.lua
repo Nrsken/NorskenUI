@@ -18,6 +18,7 @@ local EDITBOX_ART_LAYER_SET = {}
 for _, layer in ipairs(EDITBOX_ART_LAYERS) do EDITBOX_ART_LAYER_SET[layer] = true end
 local MAX_ART_OVERHANG = 20
 local MIN_TEXT_INSET = 4
+local SEARCH_ART_INSET = 4
 
 ---Edge reads on a frame carrying protected data come back secret, so void the whole rect rather than measure it.
 ---@param object Frame|Texture
@@ -129,13 +130,48 @@ local function UpdateEditBoxState(editBox)
     editBox:NUIUpdateSkinColors()
 end
 
+---Fit the backdrop, and the search furniture anchored off the frame rect, to the input art.
+---@param editBox NUISkinnedEditBox
+---@return boolean fitted false when the frame has no rect yet
+local function FitBackdropToArt(editBox)
+    if editBox.NUIArtFitted then return true end
+
+    local backdrop = editBox.NUIBackdrop
+    if not backdrop then return false end
+
+    local left, right, top, bottom = MeasureInputArt(editBox)
+    if not left then return false end
+
+    editBox.NUIArtFitted = true
+
+    backdrop:ClearAllPoints()
+    backdrop:SetPoint('TOPLEFT', editBox, 'TOPLEFT', left, top)
+    backdrop:SetPoint('BOTTOMRIGHT', editBox, 'BOTTOMRIGHT', right, bottom)
+
+    -- The art rarely matches the frame rect, so callers aligning or matching the box need it.
+    editBox.NUIArtLeft, editBox.NUIArtRight = left, right
+    editBox.NUIArtTop, editBox.NUIArtBottom = top, bottom
+
+    CenterTextInArt(editBox, top, bottom)
+
+    -- SearchBoxTemplate hangs both off the frame rect, which is wider than the art.
+    if editBox.searchIcon then
+        editBox.searchIcon:ClearAllPoints()
+        editBox.searchIcon:NUISetPixelPoint('LEFT', backdrop, 'LEFT', SEARCH_ART_INSET, 0)
+    end
+    if editBox.clearButton then
+        editBox.clearButton:ClearAllPoints()
+        editBox.clearButton:NUISetPixelPoint('RIGHT', backdrop, 'RIGHT', -SEARCH_ART_INSET, 0)
+    end
+
+    return true
+end
+
 ---Skin an EditBox/SearchBox: backdrop fitted to the input art, accent border while focused.
 ---@param editBox EditBox
 function Skinning:HandleEditBox(editBox)
     if not editBox or editBox.NUISkinned then return end
     editBox.NUISkinned = true
-
-    local left, right, top, bottom = MeasureInputArt(editBox)
 
     -- Placeholder text wraps by default, which spills out of a single-line box.
     if editBox.Instructions then editBox.Instructions:SetWordWrap(false) end
@@ -146,16 +182,11 @@ function Skinning:HandleEditBox(editBox)
     local backdrop = self:CreatePanelBackdrop(editBox, nil, true, true)
     if not backdrop then return end
 
-    if left then
-        backdrop:ClearAllPoints()
-        backdrop:SetPoint('TOPLEFT', editBox, 'TOPLEFT', left, top)
-        backdrop:SetPoint('BOTTOMRIGHT', editBox, 'BOTTOMRIGHT', right, bottom)
-
-        -- The art rarely matches the frame rect, so callers aligning or matching the box need it.
-        editBox.NUIArtLeft, editBox.NUIArtRight = left, right
-        editBox.NUIArtTop, editBox.NUIArtBottom = top, bottom
-
-        CenterTextInArt(editBox, top, bottom)
+    -- A window the UI panel system positions carries no anchors of its own, so nothing under it has
+    -- a rect to measure until it is first shown. Retry the fit then rather than losing it.
+    ---@cast editBox NUISkinnedEditBox
+    if not FitBackdropToArt(editBox) then
+        editBox:HookScript('OnShow', FitBackdropToArt)
     end
 
     hooksecurefunc(editBox, 'SetTextInsets', ApplyTextInsetFloor)

@@ -150,7 +150,7 @@ local function FriendlyRangeCheck(unit, frame)
     end
 
     local inRange, wasChecked = UnitInRange(unit)
-    if NRSKNUI:IsSecretValue(wasChecked) then
+    if NRSKNUI:IsSecretValue(wasChecked) or NRSKNUI:IsSecretValue(inRange) then
         -- Group members hand the secret result to SetAlphaFromBoolean via the stash.
         if UnitInParty(unit) or (not secret and UnitInRaid(unit)) then
             frame.RangeIsInRange = inRange

@@ -406,7 +406,8 @@ function PublicBorderMixin:SetBorderParent(parent)
 end
 
 ---@param frame Frame
-local function AddBorders(frame)
+---@param noPixelSnap boolean? Leave Blizzard's grid snapping on.
+local function AddBorders(frame, noPixelSnap)
     if not frame then return end
     ---@cast frame Frame & PublicBackdropMixin
     Mixin(frame, PublicBorderMixin)
@@ -418,7 +419,6 @@ local function AddBorders(frame)
     TB:NUISetPixelHeight(1)
     TB:NUISetPixelPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
     TB:NUISetPixelPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
-    TB:NUISetPixelSnap()
     insert(frame.Borders, TB)
 
     -- Left border
@@ -426,7 +426,6 @@ local function AddBorders(frame)
     LB:NUISetPixelWidth(1)
     LB:NUISetPixelPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
     LB:NUISetPixelPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 0, 0)
-    LB:NUISetPixelSnap()
     insert(frame.Borders, LB)
 
     -- Bottom border
@@ -434,7 +433,6 @@ local function AddBorders(frame)
     BB:NUISetPixelHeight(1)
     BB:NUISetPixelPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 0, 0)
     BB:NUISetPixelPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
-    BB:NUISetPixelSnap()
     insert(frame.Borders, BB)
 
     -- Right border
@@ -442,8 +440,14 @@ local function AddBorders(frame)
     RB:NUISetPixelWidth(1)
     RB:NUISetPixelPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
     RB:NUISetPixelPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
-    RB:NUISetPixelSnap()
     insert(frame.Borders, RB)
+
+    if not noPixelSnap then
+        TB:NUISetPixelSnap()
+        LB:NUISetPixelSnap()
+        BB:NUISetPixelSnap()
+        RB:NUISetPixelSnap()
+    end
 
     frame:SetBorderColor(0, 0, 0, 1)
 end
@@ -455,7 +459,8 @@ end
 -- Button utility --
 
 -- Each interactive state swaps Blizzard's art for a flat additive overlay clamped inside
--- the button. Driven from a table so all three states share one code path.
+-- the button. Driven from a table so all three states share one code path, and re-appliable
+-- because Blizzard re-drives these textures per state on some templates.
 local BUTTON_STATES = {
     { field = 'hover',   set = 'SetHighlightTexture', get = 'GetHighlightTexture', r = 1,   g = 1,   b = 1,   a = 0.3 },
     { field = 'pushed',  set = 'SetPushedTexture',    get = 'GetPushedTexture',    r = 0.4, g = 0.4, b = 0.4, a = 0.3 },
@@ -472,7 +477,7 @@ local function StyleButton(button, noHover, noPushed, noChecked)
     local skip = { hover = noHover, pushed = noPushed, checked = noChecked }
 
     for _, state in ipairs(BUTTON_STATES) do
-        if button[state.set] and not button[state.field] and not skip[state.field] then
+        if button[state.set] and not skip[state.field] then
             button[state.set](button, NRSKNUI.ClearTexture)
 
             local texture = button[state.get](button)

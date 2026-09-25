@@ -142,7 +142,7 @@ function CombatRes:Render()
 end
 
 function CombatRes:UpdateCharges()
-    self.chargeInfo = GetSpellCharges(BATTLE_RES_SPELL)
+    self.chargeInfo = GetSpellCharges(BATTLE_RES_SPELL) --[[@as CombatResChargeInfo?]]
     self:Render()
 end
 

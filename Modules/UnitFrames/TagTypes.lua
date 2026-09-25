@@ -87,8 +87,11 @@ local function SmartColor(unit, frame)
 		if reactionColor then
 			return reactionColor:GenerateHexColorMarkup()
 		end
-	elseif UnitFactionGroup(unit) and UnitIsEnemy(unit, 'player') and UnitIsPVP(unit) then
-		return '|cffff0000'
+	elseif UnitFactionGroup(unit) and UnitIsEnemy(unit, 'player') then
+		local isPvP = UnitIsPVP(unit)
+		if NRSKNUI:NotSecretValue(isPvP) and isPvP then
+			return '|cffff0000'
+		end
 	end
 end
 
@@ -120,7 +123,9 @@ end
 ---@param unit string
 ---@return boolean
 local function CanReadMana(unit)
-	return UnitIsUnit(unit, 'player') or UnitPowerType(unit) == Enum.PowerType.Mana
+	local isPlayer = UnitIsUnit(unit, 'player')
+	if NRSKNUI:NotSecretValue(isPlayer) and isPlayer then return true end
+	return UnitPowerType(unit) == Enum.PowerType.Mana
 end
 
 -- Power Tags --

@@ -288,14 +288,10 @@ local function StyleStatusBar(tooltip)
     end
 end
 
--- The queue status texts are created on demand, so we need to run the fontstyling when Update() is called.
--- Also calling Update() ourselves when we change font size in the GUI for live update, so we need a recursion block.
-local stylingQueueStatus = false
 local function StyleQueueStatusFonts()
     local queueFrame = _G.QueueStatusFrame
 
-    if not queueFrame or stylingQueueStatus then return end
-    stylingQueueStatus = true
+    if not queueFrame then return end
 
     queueFrame:NUIStyleChildFontStrings(Tooltips.db, function(region, child)
         if region == child.Title then
@@ -303,9 +299,6 @@ local function StyleQueueStatusFonts()
         end
         return Tooltips.db.TextSize
     end)
-
-    queueFrame:Update()
-    stylingQueueStatus = false
 end
 
 local function SkinQueueStatus()
