@@ -17,6 +17,8 @@ local DIVIDER_HEIGHT = 1
 local ROW_INSET_X, ROW_INSET_Y = 0, 1
 local ROW_CHECK_INSET = 4
 local LOCK_ICON_SIZE, LOCK_ICON_OFFSET = 12, 3
+-- SAM puts its top row at 10, -30; 57 starts it past the Small portrait tab's cut, which ends 53 in.
+local HEADER_ROW_LEFT, HEADER_ROW_TOP = 57, -30
 
 local skinned = false
 
@@ -186,13 +188,16 @@ local function SkinSimpleAddonManager(frame)
     if skinned then return end
     skinned = true
 
-    Skinning:HandlePortraitFrame(frame)
+    -- ButtonFrameTemplate_HidePortrait leaves the portrait empty, so the TOC icon fills the tab.
+    Skinning:HandlePortraitFrame(frame, Skinning.PortraitTabSize.Small, Skinning:GetAddOnIcon('SimpleAddonManager'))
 
     -- The panel template moved its title into a container and the addon still supports both.
     Skinning:HandleAccentText(frame.TitleText or (frame.TitleContainer and frame.TitleContainer.TitleText))
 
     -- Header
     Skinning:HandleDropdownButton(frame.CharacterDropDown)
+    -- The whole top row chains off this one anchor, so moving it clears the tab's cut for all of it.
+    frame.CharacterDropDown:NUISetPixelPoint('TOPLEFT', frame, 'TOPLEFT', HEADER_ROW_LEFT, HEADER_ROW_TOP)
     Skinning:HandleButton(frame.SetsButton)
     Skinning:HandleEditBox(frame.SearchBox)
 

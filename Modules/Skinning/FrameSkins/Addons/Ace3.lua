@@ -13,6 +13,7 @@ local ipairs = ipairs
 local Mixin = Mixin
 local next = next
 local gsub = gsub
+local math_max = math.max
 
 local LibStub = LibStub
 local UIParent = UIParent
@@ -618,8 +619,57 @@ Skins.BlizOptionsGroup = function(widget)
     widget.label:SetFontObject(AccentLarge)
 end
 
+local CONTENT_LEFT = 17
+local CONTENT_TOP = 27
+local TAB_CONTENT_TOP = 42
+
+---@param widget table
+local function WrapContentHeight(widget)
+    local setHeight = widget.OnHeightSet
+    widget.OnHeightSet = function(self, height)
+        setHeight(self, height)
+        local shift = self.NUIContentShift
+        if not shift then return end
+
+        local content = self.content
+        content.height = math_max(0, content.height - shift)
+        content:SetHeight(content.height)
+    end
+end
+
+---@param widget table
+---@param top number
+local function SetContentTop(widget, top)
+    widget.NUIContentShift = top - CONTENT_TOP
+    widget.content:NUISetPixelPoint('TOPLEFT', widget.frame, 'TOPLEFT', CONTENT_LEFT, -top)
+    widget:OnHeightSet(widget.frame:GetHeight())
+end
+
+---@param widget table
+---@param title string?
+local function UpdateFrameIcon(widget, title)
+    local icon = Skinning:GetAddOnIcon(title)
+    widget.frame.NUIHeader:NUISetIconTexture(icon)
+    SetContentTop(widget, icon and TAB_CONTENT_TOP or CONTENT_TOP)
+end
+
 Skins.Frame = function(widget)
     SkinWindow(widget.frame)
+
+    local header = Skinning:CreatePortraitHeader(widget.frame, Skinning.PortraitTabSize.Small)
+    if header then
+        local dragHandle = widget.titletext:GetParent()
+        dragHandle:ClearAllPoints()
+        dragHandle:SetAllPoints(header)
+
+        widget.titletext:SetParent(header)
+        widget.titletext:ClearAllPoints()
+        widget.titletext:SetPoint('CENTER', header, 'CENTER')
+
+        WrapContentHeight(widget)
+        hooksecurefunc(widget, 'SetTitle', UpdateFrameIcon)
+        UpdateFrameIcon(widget, widget.titletext:GetText())
+    end
 
     widget.titletext:SetFontObject(AccentNormal)
     widget.statustext:SetFontObject(AccentNormal)
@@ -645,7 +695,11 @@ end
 -- SkironCooldownManager wraps Blizzard shells in container types of its own, a DefaultPanelTemplate
 -- window and an icon strip riding a WowTrimHorizontalScrollBar.
 Skins.SCMFrame = function(widget)
-    Skinning:HandlePortraitFrame(widget.frame)
+    -- No portrait on this template, so the addon's own TOC icon stands in.
+    Skinning:HandlePortraitFrame(widget.frame, Skinning.PortraitTabSize.Small, Skinning:GetAddOnIcon('SkironCooldownManager'))
+
+    WrapContentHeight(widget)
+    SetContentTop(widget, TAB_CONTENT_TOP)
 
     widget.titletext:SetFontObject(AccentNormal)
 end

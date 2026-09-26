@@ -16,9 +16,6 @@ local select = select
 local next = next
 local _G = _G
 
-local GetSpecialization = C_SpecializationInfo and C_SpecializationInfo.GetSpecialization
-local GetSpecializationInfo = C_SpecializationInfo and C_SpecializationInfo.GetSpecializationInfo
-
 local SLOT_NAMES = {
     'Head', 'Neck', 'Shoulder', 'Back', 'Chest', 'Shirt', 'Tabard',
     'Wrist', 'Hands', 'Waist', 'Legs', 'Feet', 'Finger0', 'Finger1', 'Trinket0',
@@ -255,36 +252,6 @@ local function SkinTransferLogRow(row)
     row.NUISkinned = true
 
     if row.CurrencyIcon then Skinning:HandleIcon(row.CurrencyIcon) end
-end
-
-local customPortrait
-local function UpdateCustomPortrait()
-    local index = GetSpecialization()
-    local icon
-    if index and index > 0 then
-        icon = select(4, GetSpecializationInfo(index))
-    end
-
-    customPortrait.icon:SetTexture(icon)
-end
-
-local function SetupCustomPortrait()
-    -- The sidebar tab hook that builds this fires on every paperdoll update
-    if customPortrait then return end
-
-    customPortrait = CreateFrame('Frame', nil, PaperDollFrame)
-    customPortrait:NUISetPixelSize(45, 45)
-    customPortrait:NUISetPixelPoint('TOPLEFT', PaperDollFrame, 'TOPLEFT', 7, -7)
-    customPortrait:NUIAddBorders()
-
-    customPortrait.icon = customPortrait:CreateTexture(nil, 'ARTWORK')
-    customPortrait.icon:SetAllPoints(customPortrait)
-    customPortrait.icon:NUISetZoom()
-
-    customPortrait:RegisterUnitEvent('PLAYER_SPECIALIZATION_CHANGED', 'player')
-    customPortrait:SetScript('OnEvent', UpdateCustomPortrait)
-
-    UpdateCustomPortrait()
 end
 
 -- Current search text, lowercased. Shared between the edit box handler and the data provider filter hook below.
@@ -701,7 +668,7 @@ Skinning:RegisterSkin('Blizzard_UIPanels_Game', 'CharacterFrame', function(S)
     if not _G.CharacterFrame then return end
 
     SkinShell(S)
-    S:HandleTabRow('CharacterFrameTab', CharacterFrame)
+    S:HandleTabRow('CharacterFrameTab', CharacterFrame, true)
     SkinSlots(S)
     HookFlyoutArrows()
     SkinModelScene(S)
@@ -713,7 +680,6 @@ Skinning:RegisterSkin('Blizzard_UIPanels_Game', 'CharacterFrame', function(S)
     if PaperDollFrame_UpdateSidebarTabs then
         hooksecurefunc('PaperDollFrame_UpdateSidebarTabs', function()
             SkinSidebarTabs(S)
-            SetupCustomPortrait()
         end)
     end
 

@@ -8,52 +8,31 @@ local ipairs = ipairs
 local hooksecurefunc = hooksecurefunc
 
 local ADDON_NAME = 'BugSack'
-
 local PANEL_PADDING = 6
-local TITLE_BAR_HEIGHT = 24
-local CONTENT_GAP = 4
-
 local BUTTON_HEIGHT = 22
 local BUTTON_GAP = 4
-
-local SCROLLBAR_INSET = 22
-
 local TAB_OVERLAP = -1
 local TAB_NAMES = { 'BugSackTabAll', 'BugSackTabSession', 'BugSackTabLast' }
-
 local skinned = false
 
----The sack's only unnamed children: the filter box, the close button and the title/drag label.
----Each is matched on what it actually carries, so anything unrecognised is left alone.
 ---@param S SkinningModule
----@param window Frame
-local function SkinAnonymousChildren(S, window)
-    for _, child in ipairs({ window:GetChildren() }) do
-        -- CreatePanelBackdrop has already parented our own unnamed frame here.
-        if not child:GetName() and child ~= window.NUIBackdrop then
-            if child:IsObjectType('EditBox') then
-                -- A real BackdropTemplate backdrop, which HandleEditBox's region strip cannot reach.
-                if child.SetBackdrop then child:SetBackdrop(nil) end
-                S:HandleEditBox(child)
-            elseif child.GetNormalTexture and child:GetNormalTexture() then
-                -- UIPanelCloseButton is the only one of the three carrying button art.
-                ---@cast child Button
-                S:HandleCloseButton(child, window)
-            elseif child.GetFontString and child:GetFontString() then
-                ---@cast child Button
-                local normal, highlight = child:GetNormalFontObject(), child:GetHighlightFontObject()
-                if normal then child:SetNormalFontObject(S:GetAccentFont(normal)) end
-                if highlight then child:SetHighlightFontObject(S:GetOutlineFont(highlight)) end
-            end
+---@param container Frame
+local function SkinTitleBar(S, container)
+    for _, child in ipairs({ container:GetChildren() }) do
+        if child:IsObjectType('EditBox') then
+            ---@cast child EditBox
+            S:HandleEditBox(child)
+        elseif child.GetFontString and child:GetFontString() then
+            ---@cast child Button
+            local normal, highlight = child:GetNormalFontObject(), child:GetHighlightFontObject()
+            if normal then child:SetNormalFontObject(S:GetAccentFont(normal)) end
+            if highlight then child:SetHighlightFontObject(S:GetOutlineFont(highlight)) end
         end
     end
-end
-    
----@param S SkinningModule
----@param window Frame
-local function SkinHeaderLabels(S, window)
-    for _, region in ipairs({ window:GetRegions() }) do
+
+    for _, region in ipairs({ container:GetRegions() }) do
         if region:IsObjectType('FontString') then
+            ---@cast region FontString
             S:HandleOutlineFont(region)
         end
     end
@@ -86,30 +65,13 @@ local function SkinNavButtons(S, window)
     sendButton:NUISetPixelPoint('RIGHT', nextButton, 'LEFT', -BUTTON_GAP, 0)
 end
 
----The sack pins its scroll child to a hardcoded 750, which no longer matches the re-anchored frame.
----@param scroll ScrollFrame
-local function SyncTextAreaWidth(scroll)
-    local textArea = _G.BugSackScrollText
-    if not textArea then return end
-
-    local width = scroll:GetWidth()
-    if width > 0 then textArea:SetWidth(width) end
-end
-
 ---@param S SkinningModule
----@param window Frame
-local function SkinScroll(S, window)
-    local scroll = _G.BugSackScroll
-    if not scroll then return end
+local function SkinScroll(S)
+    local textArea = _G.BugSackScrollText
+    local scroll = textArea and textArea:GetParent() --[[@as (Frame & { ScrollBar: Frame? })?]]
+    if not scroll or not scroll.ScrollBar then return end
 
-    S:HandleScrollBar(_G.BugSackScrollScrollBar)
-
-    scroll:ClearAllPoints()
-    scroll:NUISetPixelPoint('TOPLEFT', window, 'TOPLEFT', PANEL_PADDING, -(TITLE_BAR_HEIGHT + CONTENT_GAP))
-    scroll:NUISetPixelPoint('BOTTOMRIGHT', _G.BugSackNextButton, 'TOPRIGHT', -SCROLLBAR_INSET, CONTENT_GAP)
-
-    scroll:HookScript('OnSizeChanged', SyncTextAreaWidth)
-    SyncTextAreaWidth(scroll)
+    S:HandleTrimScrollBar(scroll.ScrollBar)
 end
 
 ---@param S SkinningModule
@@ -119,7 +81,7 @@ local function SkinTabs(S, window)
     for _, name in ipairs(TAB_NAMES) do
         local tab = _G[name]
         if tab then
-            S:HandleTab(tab)
+            S:HandleTab(tab, true)
 
             tab:ClearAllPoints()
             if previous then
@@ -140,14 +102,11 @@ local function SkinBugSack()
     skinned = true
 
     local S = Skinning
+    S:HandlePortraitFrame(window, S.PortraitTabSize.Small)
 
-    window:NUIStripTextures()
-    S:CreatePanelBackdrop(window)
-
-    SkinAnonymousChildren(S, window)
-    SkinHeaderLabels(S, window)
+    if window.TitleContainer then SkinTitleBar(S, window.TitleContainer) end
     SkinNavButtons(S, window)
-    SkinScroll(S, window)
+    SkinScroll(S)
     SkinTabs(S, window)
 end
 

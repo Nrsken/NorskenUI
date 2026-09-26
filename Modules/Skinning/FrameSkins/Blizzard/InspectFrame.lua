@@ -74,7 +74,7 @@ local function SkinTabs(S)
     local i = 1
     local tab, prev = _G.InspectFrameTab1, nil
     while tab do
-        S:HandleTab(tab)
+        S:HandleTab(tab, true)
 
         tab:ClearAllPoints()
         if prev then
@@ -112,7 +112,7 @@ Skinning:RegisterSkin('Blizzard_InspectUI', 'InspectFrame', function(S)
 
     for i = 1, (InspectFrame.numTabs or 5) do
         local tab = _G['InspectFrameTab' .. i]
-        if tab then S:HandleTab(tab) end
+        if tab then S:HandleTab(tab, true) end
     end
 
     for _, name in ipairs(SLOT_NAMES) do

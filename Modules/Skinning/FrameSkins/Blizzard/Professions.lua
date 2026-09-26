@@ -843,8 +843,7 @@ Skinning:RegisterSkin('Blizzard_Professions', 'Professions', function(S)
 
     S:HandlePortraitFrame(ProfessionsFrame)
     S:HandleAccentFont(ProfessionsFrame.TitleContainer and ProfessionsFrame.TitleContainer.TitleText)
-    S:HandleMinMaxButton(ProfessionsFrame.MaximizeMinimize)
-    S:HandleTabRow(ProfessionsFrame.TabSystem, ProfessionsFrame)
+    S:HandleTabRow(ProfessionsFrame.TabSystem, ProfessionsFrame, true)
 
     SkinCraftingPage(S, ProfessionsFrame.CraftingPage --[[@as NUIProfessionsCraftingPage]])
     SkinSpecPage(S, ProfessionsFrame.SpecPage --[[@as NUIProfessionsSpecPage]])

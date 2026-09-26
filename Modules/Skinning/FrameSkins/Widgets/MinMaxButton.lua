@@ -21,7 +21,7 @@ function SkinnedMinMaxButtonMixin:NUIOnLeave()
     self.NUIBtnMinMax:SetVertexColor(0.9, 0.9, 0.9)
 end
 
----@param frame Frame
+---@param frame Frame?
 function Skinning:HandleMinMaxButton(frame)
     if not frame or frame.NUISkinned then return end
     frame.NUISkinned = true

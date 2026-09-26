@@ -228,11 +228,8 @@ local function SkinMainFrame(S)
     local frame = _G.KeystoneLootFrame
 
     S:HandlePortraitFrame(frame)
-
-    -- The panel template moved its title into a container and both spellings are still in the wild.
     S:HandleAccentText(frame.TitleText or (frame.TitleContainer and frame.TitleContainer.TitleText))
-
-    S:HandleTabRow(frame.TabSystem, frame)
+    S:HandleTabRow(frame.TabSystem, frame, true)
 
     for _, dropdown in ipairs({
         frame.ClassDropdown,

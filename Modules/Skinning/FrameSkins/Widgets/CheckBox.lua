@@ -18,8 +18,9 @@ local DISABLED_R, DISABLED_G, DISABLED_B, DISABLED_A = 0.5, 0.5, 0.5, 0.75
 ---@field NUICheckGlyph Texture
 local SkinnedCheckMixin = {}
 
+-- Blizzard checks some boxes from secret data (group finder rows), so the state can't be tested here.
 function SkinnedCheckMixin:NUIUpdateCheckGlyph()
-    self.NUICheckGlyph:SetShown(self:GetChecked() and true or false)
+    self.NUICheckGlyph:SetAlphaFromBoolean(self:GetChecked(), 1, 0)
 end
 
 -- SetCheckButtonIsRadio rewrites every state texture, so the set has to stay re-appliable.

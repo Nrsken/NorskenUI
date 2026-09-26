@@ -109,7 +109,7 @@ Skinning:RegisterSkin(ADDON_NAME, 'BigWigsKeystones', function(S)
     local panel = FindPanel()
     if not panel then return end
 
-    S:HandlePortraitFrame(panel)
+    S:HandlePortraitFrame(panel, S.PortraitTabSize.Small)
     S:HandleAccentText(panel.TitleText or (panel.TitleContainer and panel.TitleContainer.TitleText))
     SkinTip(panel.tip)
 

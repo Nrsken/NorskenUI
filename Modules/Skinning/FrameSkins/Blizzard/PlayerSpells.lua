@@ -83,10 +83,6 @@ local function SkinSpellBook(S)
         SpellBookFrame.TopBar:Hide()
     end
 
-    -- Handle the min/max button for the spell book frame.
-    local MaximizeMinimizeButton = _G.PlayerSpellsFrame.MaximizeMinimizeButton
-    S:HandleMinMaxButton(MaximizeMinimizeButton)
-
     -- Hide help tip button
     SpellBookFrame.HelpPlateButton:NUIBanish()
 
@@ -207,7 +203,7 @@ Skinning:RegisterSkin('Blizzard_PlayerSpells', 'PlayerSpells', function(S)
 
     S:HandlePortraitFrame(PlayerSpellsFrame)
     S:HandleAccentFont(PlayerSpellsFrame.TitleContainer and PlayerSpellsFrame.TitleContainer.TitleText)
-    S:HandleTabRow(PlayerSpellsFrame.TabSystem, PlayerSpellsFrame)
+    S:HandleTabRow(PlayerSpellsFrame.TabSystem, PlayerSpellsFrame, true)
 
     SkinSpellBook(S)
     SkinTalents(S, PlayerSpellsFrame.TalentsFrame)

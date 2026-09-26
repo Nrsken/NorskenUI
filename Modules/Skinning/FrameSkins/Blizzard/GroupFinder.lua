@@ -779,7 +779,7 @@ local function SkinShell(S)
         frame.shadows:NUIStripTextures('Kill')
     end
 
-    S:HandleTabRow('PVEFrameTab', frame)
+    S:HandleTabRow('PVEFrameTab', frame, true)
 
     local groupFinder = _G.GroupFinderFrame
     if not groupFinder then return end
