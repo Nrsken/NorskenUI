@@ -408,10 +408,7 @@ function GroupFinder:BuildPanelWidgets()
         accentColor = accent,
         bgColor = widgetColor,
         tooltip = L['Clear Filters'],
-        callback = function()
-            self:ResetFilters()
-            self:OnFilterChanged()
-        end,
+        callback = function() self:ClearFilters() end,
     })
 
     local footer = GUI:CreateButton(panel, '', {
@@ -638,6 +635,8 @@ function GroupFinder:UpdatePanelVisibility()
         return
     end
 
+    -- The role behind needsRole can change between opens, so the mirror is re-read on every show.
+    self:SyncAdvancedFilter()
     panel:Show()
     self:RefreshPanel()
     self:EnsureRaiderIOAnchor()

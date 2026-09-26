@@ -86,6 +86,11 @@ local DECLINED_STATUS = {
     declined_full = true,
     declined_delisted = true
 }
+local NEEDS_ROLE_KEY = {
+    TANK = 'needsTank',
+    HEALER = 'needsHealer',
+    DAMAGER = 'needsDamage',
+}
 
 local ROW_WIDTH = 312
 local NAME_INSET = 10
@@ -715,7 +720,37 @@ end
 
 -- Server-side advanced filter --
 
----Push what the server can filter on so the result cap is spent on relevant listings.
+---@param enabled table? the filter just saved, read fresh when omitted
+function GroupFinder:SyncAdvancedFilter(enabled)
+    enabled = enabled or GetAdvancedFilter()
+    if not enabled then return end
+
+    local filters = self.filters
+    local needsKey = NEEDS_ROLE_KEY[NRSKNUI.MySpec.role]
+
+    filters.hasTank = enabled.hasTank == true
+    filters.hasHealer = enabled.hasHealer == true
+    filters.needsRole = needsKey ~= nil and enabled[needsKey] == true
+    filters.noMySpec = enabled.needsMyClass == true
+
+    local selected = {}
+    for _, groupID in ipairs(enabled.activities or {}) do
+        selected[groupID] = true
+    end
+
+    -- Blizzard seeds its dropdown with every dungeon checked, which filters the same as none checked.
+    local season = self:GetSeasonDungeons()
+    local allSeason = #season > 0
+    for _, dungeon in ipairs(season) do
+        if not selected[dungeon.id] then
+            allSeason = false
+            break
+        end
+    end
+
+    filters.dungeons = allSeason and {} or selected
+end
+
 function GroupFinder:PushAdvancedFilter()
     if not IsDungeonMode() then return end
 
@@ -723,14 +758,14 @@ function GroupFinder:PushAdvancedFilter()
     if not enabled then return end
 
     local filters = self.filters
-    local role = NRSKNUI.MySpec.role
+    local needsKey = NEEDS_ROLE_KEY[NRSKNUI.MySpec.role]
 
     enabled.hasTank = filters.hasTank
     enabled.hasHealer = filters.hasHealer
-    enabled.needsTank = filters.needsRole and role == 'TANK' or false
-    enabled.needsHealer = filters.needsRole and role == 'HEALER' or false
-    enabled.needsDamage = filters.needsRole and role == 'DAMAGER' or false
     enabled.needsMyClass = filters.noMySpec
+    if needsKey then
+        enabled[needsKey] = filters.needsRole
+    end
 
     local activities = {}
     for groupID in pairs(filters.dungeons) do
@@ -739,6 +774,36 @@ function GroupFinder:PushAdvancedFilter()
     enabled.activities = activities
 
     SaveAdvancedFilter(enabled)
+end
+
+---Mirrors Blizzard's own filter reset, so its filter button clears together with the panel.
+function GroupFinder:ClearFilters()
+    self:ResetFilters()
+
+    local enabled = GetAdvancedFilter()
+    if enabled then
+        enabled.needsTank = false
+        enabled.needsHealer = false
+        enabled.needsDamage = false
+        enabled.needsMyClass = false
+        enabled.hasTank = false
+        enabled.hasHealer = false
+        enabled.minimumRating = 0
+        enabled.activities = {}
+        enabled.difficultyNormal = true
+        enabled.difficultyHeroic = true
+        enabled.difficultyMythic = true
+        enabled.difficultyMythicPlus = true
+        enabled.generalPlaystyle1 = true
+        enabled.generalPlaystyle2 = true
+        enabled.generalPlaystyle3 = true
+        enabled.generalPlaystyle4 = true
+
+        SaveAdvancedFilter(enabled)
+    end
+
+    self:RefreshResults()
+    self:RefreshPanel()
 end
 
 function GroupFinder:DoServerSearch()
@@ -905,6 +970,12 @@ function GroupFinder:InstallHooks()
     hooksecurefunc('LFGListSearchPanel_UpdateResultList', OnUpdateResultList)
     hooksecurefunc('LFGListSearchPanel_SetCategory', function() self:UpdatePanelVisibility() end)
 
+    -- Catches Blizzard's filter dropdown and its reset button as well as our own pushes.
+    hooksecurefunc(C_LFGList, 'SaveAdvancedFilter', function(enabled)
+        self:SyncAdvancedFilter(enabled)
+        self:RefreshPanel()
+    end)
+
     local searchPanel = _G.LFGListFrame and _G.LFGListFrame.SearchPanel
     if searchPanel then
         searchPanel:HookScript('OnShow', function() self:UpdatePanelVisibility() end)
@@ -918,7 +989,6 @@ function GroupFinder:InstallHooks()
     end
 end
 
----Filters are session state, a stale dungeon selection must not silently hide every group at login.
 function GroupFinder:ResetFilters()
     self.filters = {
         dungeons = {},
@@ -943,6 +1013,7 @@ end
 function GroupFinder:OnEnable()
     self:UpdateDB()
     self:ResetFilters()
+    self:SyncAdvancedFilter()
     self:RefreshFriendResults()
     self:InstallHooks()
 
