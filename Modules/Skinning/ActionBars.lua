@@ -1776,6 +1776,29 @@ function ACB:HideBlizzardBars()
             frame:EnableMouse(false)
         end
     end
+
+    self:HideMainBarArt()
+end
+
+function ACB:HideMainBarArt()
+    local bar = MainActionBar
+    if self._mainBarArtHidden or not bar then return end
+    self._mainBarArtHidden = true
+
+    bar:NUIBanish('BorderArt')
+    bar:NUIBanish('EndCaps')
+    bar:NUIBanish('ActionBarPageNumber')
+
+    local function HideDividers(selfBar)
+        for _, pool in ipairs({ selfBar.HorizontalDividersPool, selfBar.VerticalDividersPool }) do
+            for divider in pool:EnumerateActive() do
+                divider:Hide()
+            end
+        end
+    end
+
+    hooksecurefunc(bar, 'UpdateDividers', HideDividers)
+    if bar.HorizontalDividersPool then HideDividers(bar) end
 end
 
 -- Apply all settings, standard module interface
