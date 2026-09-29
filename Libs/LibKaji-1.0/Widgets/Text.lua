@@ -34,7 +34,7 @@ local BLACK = { 0, 0, 0 }
 
 -- bgMode -> backdrop spec. Every mode builds the same frame; only visibility differs.
 local BG_MODES = {
-    show   = { bg = "bgDark", bgAlpha = 1, border = "border", borderAlpha = 1 },
+    show   = { bg = "bgDark", bgAlpha = 1, border = "widgetBorder", borderAlpha = 1 },
     border = { bg = BLACK, bgAlpha = 0, border = BLACK, borderAlpha = 1 },
     hide   = { bg = BLACK, bgAlpha = 0, border = BLACK, borderAlpha = 0 },
 }
@@ -140,8 +140,9 @@ function TextMixin:OnAcquire(parent, titleText, config)
     self.container._kajiBackdrop = BG_MODES[config.bgMode] or BG_MODES.hide
     lib.RefreshBackdrop(self.container)
 
-    self.title:SetText(titleText or "")
-    self._titleSpacer = self.title:GetStringHeight() + 6
+    local hasTitle = titleText ~= nil and titleText ~= ""
+    self.title:SetText(hasTitle and titleText or "")
+    self._titleSpacer = hasTitle and (self.title:GetStringHeight() + 6) or 0
 
     -- Auto sizing anchors one corner and sets the width itself, so GetStringHeight reports the
     -- wrapped height right away. Pinning both sides only resolves the width on the next layout
@@ -153,6 +154,7 @@ function TextMixin:OnAcquire(parent, titleText, config)
     else
         pixel.SetPixelPoint(self.label, "BOTTOMRIGHT", self.container, "BOTTOMRIGHT", 0, 0)
     end
+    self.label:SetJustifyH(config.justify or "LEFT")
     self.label:SetText(self:ResolveBody(config.text))
 
     self:SetAlpha(1)
@@ -163,6 +165,7 @@ end
 function TextMixin:OnRelease()
     self.title:SetText("")
     self.label:SetText("")
+    self.label:SetJustifyH("LEFT")
     self.explicitHeight = nil
     self._measured = nil
 end
@@ -175,6 +178,7 @@ end
 ---@field autoHeight? boolean force auto sizing even with a height set (which then acts as a floor)
 ---@field minHeight? number shortest the block may get while auto sizing
 ---@field bgMode? "show"|"border"|"hide"
+---@field justify? "LEFT"|"CENTER"|"RIGHT" body alignment, LEFT by default
 
 lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     local row = CreateFrame("Frame", nil, gui._poolHost)

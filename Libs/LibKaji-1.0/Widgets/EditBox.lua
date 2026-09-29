@@ -60,7 +60,7 @@ function EditBoxMixin:UpdateColors()
     lib.RefreshBackdrop(self.container)
     self.label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
     self.editBox:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
-    self._syncBorder(theme.border[1], theme.border[2], theme.border[3], theme.border[4] or 1)
+    self._syncBorder(theme.widgetBorder[1], theme.widgetBorder[2], theme.widgetBorder[3], theme.widgetBorder[4] or 1)
 end
 
 ---@param parent Frame
@@ -140,7 +140,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
 
     local container = CreateFrame("Frame", nil, row, "BackdropTemplate")
     pixel.SetPixelHeight(container, 24)
-    lib.SetBackdrop(container, gui, { bg = "bgDark", bgAlpha = 0.9, border = "border", borderAlpha = 1 })
+    lib.SetBackdrop(container, gui, { bg = "bgDark", bgAlpha = 0.9, border = "widgetBorder", borderAlpha = 1 })
     row.container = container
 
     -- EditBox frames autofocus by default, and OnAcquire reparents before it can turn
@@ -156,7 +156,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
 
     row._animateBorder, row._syncBorder = Animations:CreateHoverColorAnimator(container,
         function(r, g, b, a) container:SetBackdropBorderColor(r, g, b, a) end,
-        theme.border, theme.accent, theme.animDuration)
+        theme.widgetBorder, theme.accent, theme.animDuration)
 
     -- Set once, reading the callback off the row, so a recycled box never fires the
     -- previous consumer's handler.
@@ -166,7 +166,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         safecall(row._callback, eb:GetText())
     end)
     editBox:SetScript("OnEditFocusLost", function(eb)
-        local border = row.gui.theme.border
+        local border = row.gui.theme.widgetBorder
         container:SetBackdropBorderColor(border[1], border[2], border[3], 1)
         safecall(row._callback, eb:GetText())
     end)

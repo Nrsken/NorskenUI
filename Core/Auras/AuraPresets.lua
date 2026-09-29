@@ -52,7 +52,7 @@ Premade.Presets = {
                         [48707] = true,   -- Anti-Magic Shell
                         -- Demon Hunter
                         [187827] = true,  -- Metamorphosis
-                        [203819] = true,  -- Demon Spikes
+                        --[203819] = true,  -- Demon Spikes
                         [1266616] = true, -- Demon Muzzle
                         [212800] = true,  -- Blur
                         [207771] = true,  -- Fiery Brand
@@ -181,6 +181,69 @@ Premade.Presets = {
 
                         -- Racials
                         [256948] = true, -- Spatial Rift
+                    },
+                },
+            },
+        },
+    },
+    {
+        key = 'preset:healerhots',
+        name = L['Healer HoTs'],
+        branches = {
+            {
+                type = Filters.Helpful,
+                tokens = { [Filters.Player] = true },
+                candidates = {
+                    includeSpellIDs = {
+                        -- Restoration Druid
+                        [774] = true,    -- Rejuvenation
+                        [8936] = true,   -- Regrowth
+                        [33763] = true,  -- Lifebloom
+                        [155777] = true, -- Rejuvenation (Germination)
+                        [48438] = true,  -- Wild Growth
+                        [439530] = true, -- Symbiotic Blooms
+
+                        -- Discipline Priest
+                        [17] = true,      -- Power Word: Shield
+                        [194384] = true,  -- Atonement
+                        [1253593] = true, -- Void Shield
+
+                        -- Holy Priest
+                        [139] = true,   -- Renew
+                        [77489] = true, -- Echo of Light
+
+                        -- Both priest specs
+                        [41635] = true, -- Prayer of Mending
+
+                        -- Mistweaver Monk
+                        [119611] = true, -- Renewing Mist
+                        [124682] = true, -- Enveloping Mist
+                        [115175] = true, -- Soothing Mist
+                        [450769] = true, -- Aspect of Harmony
+                        [443113] = true, -- Strength of the Black Ox
+
+                        -- Restoration Shaman
+                        [61295] = true,  -- Riptide
+                        [974] = true,    -- Earth Shield
+                        [382024] = true, -- Earthliving Weapon
+                        [207400] = true, -- Ancestral Vigor
+                        [444490] = true, -- Hydrobubble
+
+                        -- Holy Paladin
+                        [432496] = true, -- Holy Bulwark
+                        [432607] = true, -- Holy Bulwark
+                        [432502] = true, -- Sacred Weapon
+                        [156322] = true, -- Eternal Flame
+                        [431381] = true, -- Dawnlight
+
+                        -- Preservation Evoker
+                        [364343] = true, -- Echo
+                        [366155] = true, -- Reversion
+                        [367364] = true, -- Echo Reversion
+                        [355941] = true, -- Dream Breath
+                        [376788] = true, -- Echo Dream Breath
+                        [363502] = true, -- Dream Flight
+                        [373267] = true, -- Lifebind
                     },
                 },
             },

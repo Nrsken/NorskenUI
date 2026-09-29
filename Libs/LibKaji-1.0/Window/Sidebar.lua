@@ -7,6 +7,7 @@
 *     { type='header', id, text, defaultExpanded?, items = { {id,text}, ... } }  -> expandable section
 *     { type='item',   id, text }                                               -> header-styled leaf (opens page `id`)
 * Self-restyles on theme change. Search results are rendered via ShowResults(results); ClearResults() returns to the tree.
+* A section's children live in a clipping container whose height animates on toggle, so the rows below slide with it.
 
 --]]
 
@@ -21,13 +22,14 @@ local CreateFrame = CreateFrame
 local ipairs = ipairs
 local pairs = pairs
 local wipe = wipe
-local mrad, mpi, mabs, mmin, mmax = math.rad, math.pi, math.abs, math.min, math.max
+local mrad, mpi, mabs, mmin, mmax, mfloor = math.rad, math.pi, math.abs, math.min, math.max, math.floor
 local format = string.format
 
 local HEADER_HEIGHT = 32
 local ITEM_HEIGHT = 28
 local HOVER_DURATION = 0.12
-local ARROW_DURATION = 0.2
+local EXPAND_DURATION = 0.2
+local COLLAPSE_DURATION = 0.15
 local ACCENT_BAR_WIDTH = 2
 local SECTION_SPACING = 4
 local ITEM_SPACING = 1
@@ -92,6 +94,7 @@ function InstanceMixin:CreateSidebar(parent, opts)
         scrollbar = scrollbar,
         config = opts.config,
         expanded = {},
+        anims = {}, -- [sectionId] = { p, from, to, t, duration }
         selected = nil,
         results = nil,
     }
@@ -137,23 +140,25 @@ function InstanceMixin:CreateSidebar(parent, opts)
         pixel.SetPixelSnap(arrow)
         header.arrow = arrow
 
+        -- Collapsed points right, expanded points down.
         local animGroup = arrow:CreateAnimationGroup()
         local rotation = animGroup:CreateAnimation("Rotation")
-        rotation:SetDuration(ARROW_DURATION)
         rotation:SetOrigin("CENTER", 0, 0)
-        rotation:SetSmoothing("OUT")
         animGroup:SetScript("OnFinished", function()
-            arrow:SetRotation(header.isExpanded and 0 or -mpi / 2)
+            arrow:SetRotation(header.isExpanded and 0 or mpi / 2)
         end)
         header.SetArrowState = function(self, expanded)
+            if self.isExpanded == expanded and animGroup:IsPlaying() then return end
             animGroup:Stop()
             self.isExpanded = expanded
-            arrow:SetRotation(expanded and 0 or -mpi / 2)
+            arrow:SetRotation(expanded and 0 or mpi / 2)
         end
         header.AnimateArrow = function(self, expanded)
             if self.isExpanded == expanded then return end
             animGroup:Stop()
-            rotation:SetRadians(expanded and mpi / 2 or -mpi / 2)
+            rotation:SetDuration(expanded and EXPAND_DURATION or COLLAPSE_DURATION)
+            rotation:SetSmoothing(expanded and "OUT" or "IN")
+            rotation:SetRadians(expanded and -mpi / 2 or mpi / 2)
             self.isExpanded = expanded
             animGroup:Play()
         end
@@ -273,17 +278,53 @@ function InstanceMixin:CreateSidebar(parent, opts)
         return it
     end
 
+    local containerPool = {}
+    local layout = {} -- ordered blocks: { frame, height } | { frame, section, full } | { gap }
+
+    local function AcquireContainer()
+        for _, c in ipairs(containerPool) do
+            if not c.inUse then
+                c.inUse = true; c:Show(); return c
+            end
+        end
+        local c = CreateFrame("Frame", nil, scrollChild)
+        c:SetClipsChildren(true)
+        c:SetFrameLevel(scrollChild:GetFrameLevel() + 1)
+        c.inUse = true
+        containerPool[#containerPool + 1] = c
+        return c
+    end
+
+    -- Rows are only marked free here and hidden by SweepUnused once the render has claimed what it needs.
+    -- A row that stays on screen is never hidden and re-shown, which would reset its hover and blink it.
     local function ReleaseAll()
+        for _, c in ipairs(containerPool) do c.inUse = false end
+        wipe(layout)
         for _, h in ipairs(headerPool) do
             h.inUse = false; h.disabled = nil; h.leafId = nil; h.sectionId = nil
-            h.hoverBg:SetAlpha(0); h.accentBar:Hide(); h.selectedBg:Hide(); h:Hide(); h:ClearAllPoints()
         end
         for _, it in ipairs(itemPool) do
-            it.inUse = false; it.disabled = nil; it.id = nil; it.searchResult = nil; it.hoverTarget = 0
-            it.hoverBg:SetAlpha(0); it.accentBar:Hide(); it.selectedBg:Hide()
-            it:Hide(); it:ClearAllPoints()
+            it.inUse = false; it.disabled = nil; it.id = nil; it.searchResult = nil
         end
         wipe(activeHeaders); wipe(activeItems)
+    end
+
+    local function SweepUnused()
+        for _, c in ipairs(containerPool) do
+            if not c.inUse and c:IsShown() then c:Hide(); c:ClearAllPoints() end
+        end
+        for _, h in ipairs(headerPool) do
+            if not h.inUse and h:IsShown() then
+                h.hoverBg:SetAlpha(0); h.accentBar:Hide(); h.selectedBg:Hide(); h:Hide(); h:ClearAllPoints()
+            end
+        end
+        for _, it in ipairs(itemPool) do
+            if not it.inUse and it:IsShown() then
+                it.hoverTarget = 0
+                it.hoverBg:SetAlpha(0); it.accentBar:Hide(); it.selectedBg:Hide()
+                it:Hide(); it:ClearAllPoints()
+            end
+        end
     end
 
     -- Visual state --
@@ -312,13 +353,16 @@ function InstanceMixin:CreateSidebar(parent, opts)
         end
     end
 
-    local function ConfigureItem(item, id, text, yOffset, searchResult)
-        item:SetParent(scrollChild)
-        item:SetFrameLevel(scrollChild:GetFrameLevel() + 2)
+    ---@param parent? Frame a section container, placed flush inside it; the scroll child otherwise
+    local function ConfigureItem(item, id, text, yOffset, searchResult, parent)
+        local host = parent or scrollChild
+        local inset = parent and 0 or pad
+        item:SetParent(host)
+        item:SetFrameLevel(host:GetFrameLevel() + 2)
         pixel.SetPixelHeight(item, ITEM_HEIGHT)
         item:ClearAllPoints()
-        pixel.SetPixelPoint(item, "TOPLEFT", scrollChild, "TOPLEFT", pad, -yOffset)
-        pixel.SetPixelPoint(item, "TOPRIGHT", scrollChild, "TOPRIGHT", -pad, -yOffset)
+        pixel.SetPixelPoint(item, "TOPLEFT", host, "TOPLEFT", inset, -yOffset)
+        pixel.SetPixelPoint(item, "TOPRIGHT", host, "TOPRIGHT", -inset, -yOffset)
         item.id = id
         item.searchResult = searchResult
         item.label:Show()
@@ -327,13 +371,10 @@ function InstanceMixin:CreateSidebar(parent, opts)
         activeItems[#activeItems + 1] = item
     end
 
-    local function ConfigureHeader(header, entry, yOffset, isLeaf)
+    local function ConfigureHeader(header, entry, isLeaf)
         header:SetParent(scrollChild)
         header:SetFrameLevel(scrollChild:GetFrameLevel() + 2)
         pixel.SetPixelHeight(header, HEADER_HEIGHT)
-        header:ClearAllPoints()
-        pixel.SetPixelPoint(header, "TOPLEFT", scrollChild, "TOPLEFT", pad, -yOffset)
-        pixel.SetPixelPoint(header, "TOPRIGHT", scrollChild, "TOPRIGHT", -pad, -yOffset)
         header.label:Show()
         gui:ApplyFont(header.label, "large")
         header.label:SetText(entry.text or "")
@@ -366,35 +407,102 @@ function InstanceMixin:CreateSidebar(parent, opts)
     end
 
     -- Rendering --
-    local function RenderTree()
+    ---@param sectionId string
+    ---@return number progress 0 collapsed .. 1 expanded
+    local function SectionProgress(sectionId)
+        local anim = sidebar.anims[sectionId]
+        if anim then return anim.p end
+        return sidebar.expanded[sectionId] and 1 or 0
+    end
+
+    ---@param block Frame
+    ---@param y number
+    local function Place(block, y)
+        block:ClearAllPoints()
+        pixel.SetPixelPoint(block, "TOPLEFT", scrollChild, "TOPLEFT", pad, -y)
+        pixel.SetPixelPoint(block, "TOPRIGHT", scrollChild, "TOPRIGHT", -pad, -y)
+    end
+
+    -- Positions the rendered blocks top to bottom. Cheap, so an animating section can call it every frame.
+    local function Relayout()
         local y = pad
+        for _, block in ipairs(layout) do
+            if block.gap then
+                y = y + block.gap
+            elseif block.section then
+                local height = mfloor(block.full * SectionProgress(block.section) + 0.5)
+                Place(block.frame, y)
+                pixel.SetPixelHeight(block.frame, mmax(height, 1))
+                block.frame:SetShown(height > 0)
+                y = y + height
+            else
+                Place(block.frame, y)
+                y = y + block.height
+            end
+        end
+        pixel.SetPixelHeight(scrollChild, y + pad)
+
+        -- A shorter list must not leave the view scrolled past its new end, which hides the top rows.
+        scrollFrame:UpdateScrollChildRect()
+        local maxScroll = mmax(0, scrollChild:GetHeight() - scrollFrame:GetHeight())
+        if scrollFrame:GetVerticalScroll() > maxScroll then
+            scrollbar:SetValue(maxScroll)
+            scrollFrame:SetVerticalScroll(maxScroll)
+        end
+    end
+
+    local function RenderTree()
         if not sidebar.config then
             pixel.SetPixelHeight(scrollChild, 1); return
         end
         for _, entry in ipairs(sidebar.config) do
-            if entry.type == "item" then
-                local header = AcquireHeader()
-                ConfigureHeader(header, entry, y, true)
-                y = y + HEADER_HEIGHT + SECTION_SPACING
-            else
-                local header = AcquireHeader()
-                ConfigureHeader(header, entry, y, false)
-                y = y + HEADER_HEIGHT
-                if sidebar.expanded[entry.id] and entry.items then
-                    local sectionDisabled = isDisabled(entry)
-                    for _, child in ipairs(entry.items) do
-                        local item = AcquireItem()
-                        ConfigureItem(item, child.id, child.text, y)
-                        item.disabled = sectionDisabled or isDisabled(child) or false
-                        item:EnableMouse(not item.disabled)
-                        ApplyItemState(item)
-                        y = y + ITEM_HEIGHT + ITEM_SPACING
-                    end
+            local header = AcquireHeader()
+            local isLeaf = entry.type == "item"
+            ConfigureHeader(header, entry, isLeaf)
+            layout[#layout + 1] = { frame = header, height = HEADER_HEIGHT }
+
+            -- A collapsing section keeps its children until the animation has closed over them.
+            if not isLeaf and entry.items and (sidebar.expanded[entry.id] or sidebar.anims[entry.id]) then
+                local container = AcquireContainer()
+                local sectionDisabled = isDisabled(entry)
+                local y = 0
+                for _, child in ipairs(entry.items) do
+                    local item = AcquireItem()
+                    ConfigureItem(item, child.id, child.text, y, nil, container)
+                    item.disabled = sectionDisabled or isDisabled(child) or false
+                    item:EnableMouse(not item.disabled)
+                    ApplyItemState(item)
+                    y = y + ITEM_HEIGHT + ITEM_SPACING
                 end
-                y = y + SECTION_SPACING
+                layout[#layout + 1] = { frame = container, section = entry.id, full = y }
+            end
+            layout[#layout + 1] = { gap = SECTION_SPACING }
+        end
+        Relayout()
+    end
+
+    -- Expand eases out (decelerate), collapse eases in (accelerate); a finished section re-renders once.
+    local driver = CreateFrame("Frame", nil, frame)
+    local function StepAnimations(_, elapsed)
+        if sidebar.results then wipe(sidebar.anims) end
+
+        local finished, running = false, false
+        for id, anim in pairs(sidebar.anims) do
+            anim.t = mmin(anim.t + elapsed, anim.duration)
+            local x = anim.t / anim.duration
+            local eased = anim.to > anim.from and (1 - (1 - x) ^ 3) or x * x
+            anim.p = anim.from + (anim.to - anim.from) * eased
+            if x >= 1 then
+                sidebar.anims[id] = nil
+                finished = true
+            else
+                running = true
             end
         end
-        pixel.SetPixelHeight(scrollChild, y + pad)
+
+        if not running then driver:SetScript("OnUpdate", nil) end
+        if sidebar.results then return end
+        if finished then sidebar:Refresh() else Relayout() end
     end
 
     local function RenderResults(results)
@@ -441,19 +549,28 @@ function InstanceMixin:CreateSidebar(parent, opts)
             if self.emptyText then self.emptyText:Hide() end
             RenderTree()
         end
+        SweepUnused()
     end
 
     function sidebar:ToggleSection(sectionId)
-        if self.expanded[sectionId] then
-            self.expanded[sectionId] = nil
-            local h = self:GetHeader(sectionId)
-            if h then h:AnimateArrow(false) end
-        else
-            self.expanded[sectionId] = true
-            local h = self:GetHeader(sectionId)
-            if h then h:AnimateArrow(true) end
-        end
+        local expanding = not self.expanded[sectionId]
+        self.expanded[sectionId] = expanding or nil
+
+        local header = self:GetHeader(sectionId)
+        if header then header:AnimateArrow(expanding) end
+
+        -- Toggling mid-animation turns around from wherever the section currently is.
+        local running = self.anims[sectionId]
+        local from = running and running.p or (expanding and 0 or 1)
+        self.anims[sectionId] = {
+            p = from,
+            from = from,
+            to = expanding and 1 or 0,
+            t = 0,
+            duration = expanding and EXPAND_DURATION or COLLAPSE_DURATION,
+        }
         self:Refresh()
+        driver:SetScript("OnUpdate", StepAnimations)
     end
 
     function sidebar:GetHeader(sectionId)

@@ -6,6 +6,7 @@
 ## Examples
 
 API: card:Separator()
+API: card:Separator('Advanced', { useLabel = true })
 API: GUI:CreateSeparator(parent, 'Advanced', { useLabel = true })
 
 --]]
@@ -47,7 +48,8 @@ end
 ---@param config table
 function SeparatorMixin:OnAcquire(parent, labelText, config)
     local useLabel = config.useLabel or false
-    local height = config.height or 6
+    -- A labelled one fills its taller row, so the label and the rule both sit inside it.
+    local height = config.height or (useLabel and self.gui.theme.rowHeightLabelSeparator or 6)
     local offset = useLabel and LABEL_OFFSET or 0
 
     self:SetParent(parent)

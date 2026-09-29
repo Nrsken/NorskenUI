@@ -369,11 +369,11 @@ end
 ---Anchor and offsets for the stack and duration strings inside the button.
 ---@param page KajiGUIPage
 ---@param db table
----@param ctx table { Apply: fun() }
+---@param ctx table { Apply: fun(), slots?: table[] } slots default to the aura stack and duration strings
 ---@return KajiGUIFluentCard
 function AuraCards:TextPosition(page, db, ctx)
     local Apply = ctx.Apply
-    local slots = self.TextSlots
+    local slots = ctx.slots or self.TextSlots
 
     local card = page:Card(L['Text Position'], 'all')
     for index, slot in ipairs(slots) do

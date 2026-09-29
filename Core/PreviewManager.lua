@@ -105,12 +105,19 @@ function PreviewManager:Refresh()
 
     local active = self.active
 
-    -- Anything whose scope changed is dropped as well as anything leaving, so a module owning several
-    -- pages gets told again below and previews the right part of itself.
+    -- Anything leaving is dropped. A module that stays but changes scope is either retargeted in place
+    -- through :UpdatePreviewScope, or dropped and told again below so it previews the right part of itself.
     for module, key in pairs(active) do
-        if ScopeKey(wanted[module], showAll) ~= key then
-            module:HidePreview()
-            active[module] = nil
+        local scope = wanted[module]
+        local newKey = ScopeKey(scope, showAll)
+        if newKey ~= key then
+            if scope ~= nil and module.UpdatePreviewScope then
+                module:UpdatePreviewScope(scope ~= true and scope or nil, showAll)
+                active[module] = newKey
+            else
+                module:HidePreview()
+                active[module] = nil
+            end
         end
     end
 

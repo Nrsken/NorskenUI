@@ -4,12 +4,16 @@
 * A left item-list column that a content host places beside its scroll region.
 * Owns only the list column: an optional button area on top, then a scrollable flat list of items.
 * Items are plain data: { key, text, icon? }. renderItem(itemFrame, item, selected) can override the default rendering.
+* Items may carry `accent` ({ r, g, b }), which colours the icon border (class colour, say), and `disabled`,
+* which dims the row and desaturates its icon.
 * An item may instead be a section: { type = 'header', key, text, defaultExpanded?, items = { ... } }, which
 * renders a collapsible header with its children indented beneath. Sections are one level deep.
 * An item may also be a caption: { type = 'label', key, text }, an inert row that titles the sections
 * below it, for a flat list whose sections come from more than one source.
 * :SetConfig returns only the *selectable leaves*, flattened in display order, so a host can pick an
 * initial selection by key without knowing the tree exists.
+* A button def { text, key } is a selectable entry: it latches while selected and leads the leaves.
+* Without a key a button is a plain action firing def.onClick.
 * Fires opts.onSelect(key, item) when an item is clicked. Self-restyles on theme change.
 * A descriptor may add onContextMenu(key, item, itemFrame), fired on right-click of an item or a
 * section header. The sidebar has no opinion on what that means; the host decides (typically
@@ -40,6 +44,9 @@ local ITEM_SPACING = 1
 local HOVER_DURATION = 0.12
 local ACCENT_BAR_WIDTH = 2
 local ICON_SIZE = 22
+local ICON_CROP = 0.08
+local DISABLED_ALPHA = 0.45
+local ICON_BORDER = { 0, 0, 0, 1 }
 local BUTTON_HEIGHT = 26
 local BUTTON_SPACING = 4
 
@@ -167,9 +174,15 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
         accentBar:Hide()
         item.accentBar = accentBar
 
+        local iconBorder = item:CreateTexture(nil, 'ARTWORK', nil, -1)
+        pixel.SetPixelSize(iconBorder, ICON_SIZE, ICON_SIZE)
+        iconBorder:Hide()
+        item.iconBorder = iconBorder
+
         local icon = item:CreateTexture(nil, 'ARTWORK')
-        pixel.SetPixelSize(icon, ICON_SIZE, ICON_SIZE)
-        pixel.SetPixelPoint(icon, 'LEFT', item, 'LEFT', 10, 0)
+        pixel.SetPixelSize(icon, ICON_SIZE - 2, ICON_SIZE - 2)
+        pixel.SetPixelPoint(icon, 'CENTER', iconBorder, 'CENTER', 0, 0)
+        icon:SetTexCoord(ICON_CROP, 1 - ICON_CROP, ICON_CROP, 1 - ICON_CROP)
         icon:Hide()
         item.icon = icon
 
@@ -306,7 +319,8 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
         wipe(activeHeaders)
         for _, it in ipairs(itemPool) do
             it.inUse = false; it.key = nil; it.item = nil; it.hoverTarget = 0
-            it.hoverBg:SetAlpha(0); it.accentBar:Hide(); it.selectedBg:Hide(); it.icon:Hide()
+            it.hoverBg:SetAlpha(0); it.accentBar:Hide(); it.selectedBg:Hide(); it.icon:Hide(); it.iconBorder:Hide()
+            it.icon:SetDesaturated(false); it.icon:SetAlpha(1); it.label:SetAlpha(1)
             it:Hide(); it:ClearAllPoints()
         end
         wipe(activeItems)
@@ -328,15 +342,24 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
         item.label:SetText(data.text or '')
         item.label:ClearAllPoints()
         if data.icon then
+            local border = data.accent or ICON_BORDER
+            item.iconBorder:SetColorTexture(border[1], border[2], border[3], 1)
+            item.iconBorder:ClearAllPoints()
+            pixel.SetPixelPoint(item.iconBorder, 'LEFT', item, 'LEFT', 6, 0)
+            item.iconBorder:Show()
             item.icon:SetTexture(data.icon)
             item.icon:Show()
-            pixel.SetPixelPoint(item.icon, 'LEFT', item, 'LEFT', 4, 0)
-            pixel.SetPixelPoint(item.label, 'LEFT', item.icon, 'RIGHT', 4, 0)
+            pixel.SetPixelPoint(item.label, 'LEFT', item.iconBorder, 'RIGHT', 6, 0)
         else
+            item.iconBorder:Hide()
             item.icon:Hide()
-            pixel.SetPixelPoint(item.label, 'LEFT', item, 'LEFT', 4, 0)
+            pixel.SetPixelPoint(item.label, 'LEFT', item, 'LEFT', 6, 0)
         end
         pixel.SetPixelPoint(item.label, 'RIGHT', item, 'RIGHT', -pad, 0)
+
+        item.icon:SetDesaturated(data.disabled == true)
+        item.icon:SetAlpha(data.disabled and DISABLED_ALPHA or 1)
+        item.label:SetAlpha(data.disabled and DISABLED_ALPHA or 1)
 
         ApplyItemState(item)
         if ms.renderItem then safecall(ms.renderItem, item, data, data.key == ms.selected) end
@@ -376,6 +399,11 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
         ReleaseAll()
         local leaves = {}
         local y = pad
+
+        -- Keyed buttons lead the leaves, so a host default or remembered key can land on them.
+        for _, def in ipairs(ms._buttonsRef or {}) do
+            if def.key ~= nil then leaves[#leaves + 1] = def end
+        end
 
         for _, data in ipairs(ms.items or {}) do
             if data.type == 'header' then
@@ -426,18 +454,28 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
 
         for i, def in ipairs(buttons) do
             local btn = buttonPool[i]
+            -- A keyed button is a selectable entry that latches, an unkeyed one stays an action.
+            local key = def.key
+            local callback = def.onClick
+            if key ~= nil then
+                callback = function()
+                    if key ~= ms.selected then ms:Select(key) end
+                end
+            end
             if not btn then
                 btn = gui:CreateButton(buttonArea, def.text, {
                     height = BUTTON_HEIGHT,
-                    callback = def.onClick,
+                    callback = callback,
                     tooltip = def.tooltip,
                 })
                 buttonPool[i] = btn
             else
                 btn:SetLabel(def.text)
-                btn:SetCallback(def.onClick)
+                btn:SetCallback(callback)
                 btn:SetTooltip(def.tooltip)
             end
+            btn.key = key
+            btn:SetSelected(key ~= nil and key == ms.selected)
             btn:Show()
             btn:ClearAllPoints()
             local y = (i - 1) * (BUTTON_HEIGHT + BUTTON_SPACING)
@@ -502,6 +540,7 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
     function ms:SetSelected(key)
         self.selected = key
         for _, it in ipairs(activeItems) do ApplyItemState(it) end
+        for _, btn in ipairs(buttonPool) do btn:SetSelected(btn.key ~= nil and btn.key == key) end
     end
 
     ---Selects an item and fires onSelect.
@@ -534,3 +573,4 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
 
     return ms
 end
+

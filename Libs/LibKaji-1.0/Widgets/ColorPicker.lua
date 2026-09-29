@@ -91,7 +91,7 @@ function ColorPickerMixin:UpdateColors()
     self.swatchBg:SetTexture(theme.colorSwatchTexture)
     self.label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
     self.hexText:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
-    self._syncBorder(theme.border[1], theme.border[2], theme.border[3], theme.border[4] or 1)
+    self._syncBorder(theme.widgetBorder[1], theme.widgetBorder[2], theme.widgetBorder[3], theme.widgetBorder[4] or 1)
 end
 
 ---@param parent Frame
@@ -153,7 +153,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     local swatch = CreateFrame("Button", nil, row, "BackdropTemplate") --[[@as KajiGUIColorSwatch]]
     pixel.SetPixelSize(swatch, 48, 24)
     pixel.SetPixelPoint(swatch, "TOPLEFT", row, "TOPLEFT", 0, -14)
-    lib.SetBackdrop(swatch, gui, { bg = { 1, 1, 1, 1 }, border = "border", borderAlpha = 1 })
+    lib.SetBackdrop(swatch, gui, { bg = { 1, 1, 1, 1 }, border = "widgetBorder", borderAlpha = 1 })
     swatch.r, swatch.g, swatch.b, swatch.a = 1, 1, 1, 1
     swatch.isKajiColorPicker = true
     swatch.colorPickerRow = row
@@ -169,7 +169,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
 
     row._animateBorder, row._syncBorder = Animations:CreateHoverColorAnimator(swatch,
         function(r, g, b, a) swatch:SetBackdropBorderColor(r, g, b, a) end,
-        theme.border, theme.accent, theme.animDuration)
+        theme.widgetBorder, theme.accent, theme.animDuration)
 
     swatch:SetScript("OnEnter", function() row._animateBorder(true) end)
     swatch:SetScript("OnLeave", function() row._animateBorder(false) end)

@@ -27,6 +27,8 @@ local GetAddOnRestrictionState = C_RestrictedActions and C_RestrictedActions.Get
 local ShouldUnitIdentityBeSecret = C_Secrets and C_Secrets.ShouldUnitIdentityBeSecret
 local CanCompareUnitTokens = C_Secrets and C_Secrets.CanCompareUnitTokens
 local GetSpellAuraSecrecy = C_Secrets and C_Secrets.GetSpellAuraSecrecy
+local ShouldAurasBeSecret = C_Secrets and C_Secrets.ShouldAurasBeSecret
+local ShouldCooldownsBeSecret = C_Secrets and C_Secrets.ShouldCooldownsBeSecret
 
 local NeverSecret = Enum and Enum.SecrecyLevel.NeverSecret
 local RestrictionType = Enum and Enum.AddOnRestrictionType
@@ -134,6 +136,20 @@ end
 ---@return boolean
 function NRSKNUI:IsSpellAuraSecret(spellID)
     return GetSpellAuraSecrecy(spellID) ~= NeverSecret
+end
+
+---Do aura queries hand back secrets in the current context? A secret answer counts as yes.
+---@return boolean
+function NRSKNUI:AreAurasSecret()
+    local secret = ShouldAurasBeSecret()
+    return issecretvalue(secret) or secret == true
+end
+
+---Do cooldown queries hand back secrets in the current context? A secret answer counts as yes.
+---@return boolean
+function NRSKNUI:AreCooldownsSecret()
+    local secret = ShouldCooldownsBeSecret()
+    return issecretvalue(secret) or secret == true
 end
 
 ---Safely get a value if it is not secret and can be accessed, otherwise return nil.

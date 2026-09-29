@@ -154,7 +154,8 @@ GUIFrame.SidebarConfig = {
             text = L['Missing Buffs'],
             defaultExpanded = false,
             items = {
-                { id = 'missingBuffs', text = L['Missing Buffs'] },
+                { id = 'missingBuffsRaid', text = L['Buffs'] },
+                { id = 'missingBuffsTargeted', text = L['Targeted Buffs'] },
             }
         },
     },

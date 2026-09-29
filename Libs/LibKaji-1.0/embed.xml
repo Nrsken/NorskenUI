@@ -31,6 +31,7 @@
     <Script file="Widgets\Separator.lua" />
     <Script file="Widgets\SectionHeader.lua" />
     <Script file="Widgets\Checkbox.lua" />
+    <Script file="Widgets\SlimCheckbox.lua" />
     <Script file="Widgets\Slider.lua" />
     <Script file="Widgets\ColorPicker.lua" />
     <Script file="Widgets\Dropdown.lua" />

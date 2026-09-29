@@ -75,6 +75,8 @@ function Skinning:HandleTab(tab, isWidget)
     if not tab or tab.NUISkinned then return end
     tab.NUISkinned = true
 
+    local wasActive = tab.LeftActive ~= nil and tab.LeftActive:IsShown()
+
     tab:NUIStripTextures()
     local backdrop = self:CreatePanelBackdrop(tab, nil, nil, isWidget)
     if backdrop then
@@ -94,7 +96,7 @@ function Skinning:HandleTab(tab, isWidget)
 
     self:AddHighlight(tab)
 
-    tab:NUISetTabSelected(tab.isSelected or false)
+    tab:NUISetTabSelected(tab.isSelected or wasActive)
     self:RegisterSkinned(tab)
 end
 

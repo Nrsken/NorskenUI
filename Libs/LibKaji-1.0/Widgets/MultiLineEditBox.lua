@@ -74,7 +74,7 @@ function MultiLineEditBoxMixin:UpdateColors()
     lib.RefreshBackdrop(self.container)
     self.label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
     self.editBox:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
-    self._syncBorder(theme.border[1], theme.border[2], theme.border[3], theme.border[4] or 1)
+    self._syncBorder(theme.widgetBorder[1], theme.widgetBorder[2], theme.widgetBorder[3], theme.widgetBorder[4] or 1)
 end
 
 ---@param parent Frame
@@ -137,7 +137,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     local container = CreateFrame("Frame", nil, row, "BackdropTemplate")
     pixel.SetPixelPoint(container, "TOPLEFT", row, "TOPLEFT", 0, -LABEL_HEIGHT)
     pixel.SetPixelPoint(container, "TOPRIGHT", row, "TOPRIGHT", 0, -LABEL_HEIGHT)
-    lib.SetBackdrop(container, gui, { bg = "bgDark", bgAlpha = 0.9, border = "border", borderAlpha = 1 })
+    lib.SetBackdrop(container, gui, { bg = "bgDark", bgAlpha = 0.9, border = "widgetBorder", borderAlpha = 1 })
     row.container = container
 
     local scrollFrame = CreateFrame("ScrollFrame", nil, container)
@@ -166,7 +166,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
 
     row._animateBorder, row._syncBorder = Animations:CreateHoverColorAnimator(container,
         function(r, g, b, a) container:SetBackdropBorderColor(r, g, b, a) end,
-        theme.border, theme.accent, theme.animDuration)
+        theme.widgetBorder, theme.accent, theme.animDuration)
 
     local scrollWidth = scrollFrame:GetWidth()
     pixel.SetPixelWidth(editBox, scrollWidth > 0 and scrollWidth - 14 or 186)
@@ -202,7 +202,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     editBox:SetScript("OnEscapePressed", function(eb) eb:ClearFocus() end)
     editBox:SetScript("OnEditFocusLost", function(eb)
         eb:HighlightText(0, 0)
-        local border = row.gui.theme.border
+        local border = row.gui.theme.widgetBorder
         container:SetBackdropBorderColor(border[1], border[2], border[3], 1)
         safecall(row._callback, eb:GetText())
     end)

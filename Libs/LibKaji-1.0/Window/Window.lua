@@ -504,7 +504,9 @@ function InstanceMixin:CreateGUIWindow(opts)
     frame:SetResizable(true)
     frame:SetResizeBounds(minW, minH)
     frame:EnableMouse(true)
-    frame:SetBackdrop({ bgFile = WHITE, edgeFile = WHITE, edgeSize = theme.borderSize })
+    -- Border only: header, sidebar, footer and content each paint their own single fill. A base fill
+    -- here would stack under all of them, and translucent theme colours would compound.
+    frame:SetBackdrop({ edgeFile = WHITE, edgeSize = theme.borderSize })
     pixel.SetPixelSnap(frame)
     frame:Hide()
 
@@ -522,7 +524,6 @@ function InstanceMixin:CreateGUIWindow(opts)
     window.inCombat = InCombatLockdown() and true or false
 
     local function RestyleFrame()
-        frame:SetBackdropColor(theme.bgDark[1], theme.bgDark[2], theme.bgDark[3], theme.bgDark[4])
         frame:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
     end
     RestyleFrame()

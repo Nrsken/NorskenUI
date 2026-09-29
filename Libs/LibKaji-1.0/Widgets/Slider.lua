@@ -188,7 +188,7 @@ function SliderMixin:UpdateColors()
     self._syncThumb(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 0.6)
     self._syncLeftStepper(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
     self._syncRightStepper(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
-    self._syncValueBorder(theme.border[1], theme.border[2], theme.border[3], theme.border[4] or 1)
+    self._syncValueBorder(theme.widgetBorder[1], theme.widgetBorder[2], theme.widgetBorder[3], theme.widgetBorder[4] or 1)
 end
 
 ---@param parent Frame
@@ -281,7 +281,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     pixel.SetPixelHeight(sliderBG, 8)
     pixel.SetPixelPoint(sliderBG, "TOPLEFT", row, "TOPLEFT", 68, -22)
     pixel.SetPixelPoint(sliderBG, "TOPRIGHT", row, "TOPRIGHT", -18, -22)
-    lib.SetBackdrop(sliderBG, gui, { bg = "bgDark", bgAlpha = 0.9, border = "border", borderAlpha = 1 })
+    lib.SetBackdrop(sliderBG, gui, { bg = "bgDark", bgAlpha = 0.9, border = "widgetBorder", borderAlpha = 1 })
     sliderBG:EnableMouse(false)
     row.sliderBG = sliderBG
 
@@ -340,7 +340,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     local valueContainer = CreateFrame("Frame", nil, slider, "BackdropTemplate")
     pixel.SetPixelSize(valueContainer, 48, 24)
     pixel.SetPixelPoint(valueContainer, "RIGHT", leftStepper, "LEFT", 0, 0)
-    lib.SetBackdrop(valueContainer, gui, { bg = "bgDark", bgAlpha = 1, border = "border", borderAlpha = 1 })
+    lib.SetBackdrop(valueContainer, gui, { bg = "bgDark", bgAlpha = 1, border = "widgetBorder", borderAlpha = 1 })
     row.valueContainer = valueContainer
 
     local valueEdit = CreateFrame("EditBox", nil, valueContainer)
@@ -367,7 +367,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
 
     row._animateValueBorder, row._syncValueBorder = Animations:CreateHoverColorAnimator(valueContainer,
         function(r, g, b, a) valueContainer:SetBackdropBorderColor(r, g, b, a) end,
-        theme.border, theme.accent, theme.animDuration)
+        theme.widgetBorder, theme.accent, theme.animDuration)
 
     leftStepper:SetScript("OnClick", function()
         local minVal = slider:GetMinMaxValues()
@@ -445,7 +445,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         editBox:HighlightText()
     end)
     valueEdit:SetScript("OnEditFocusLost", function(editBox)
-        local border = row.gui.theme.border
+        local border = row.gui.theme.widgetBorder
         valueContainer:SetBackdropBorderColor(border[1], border[2], border[3], 1)
         editBox:HighlightText(0, 0)
         row:CommitText()

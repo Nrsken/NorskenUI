@@ -53,6 +53,7 @@
 ---@field InstanceReset NRSKNUI.DBProfile.InstanceReset
 ---@field Minimap NRSKNUI.DBProfile.Minimap
 ---@field Miscellaneous NRSKNUI.DBProfile.Miscellaneous
+---@field MissingBuffs NRSKNUI.DBProfile.MissingBuffs
 ---@field MissingItems NRSKNUI.DBProfile.MissingItems
 ---@field PetTexts NRSKNUI.DBProfile.PetTexts
 ---@field PotionReady NRSKNUI.DBProfile.PotionReady
@@ -827,7 +828,6 @@
 ---@field CooldownStrings NRSKNUI.DBProfile.Miscellaneous.CooldownStrings
 ---@field CopyAnything NRSKNUI.DBProfile.Miscellaneous.CopyAnything
 ---@field CursorCircle NRSKNUI.DBProfile.Miscellaneous.CursorCircle
----@field DelveInfo NRSKNUI.DBProfile.Miscellaneous.DelveInfo
 ---@field Durability NRSKNUI.DBProfile.Miscellaneous.Durability
 ---@field FocusCastbar NRSKNUI.DBProfile.Miscellaneous.FocusCastbar
 ---@field Gateway NRSKNUI.DBProfile.Miscellaneous.Gateway
@@ -917,10 +917,6 @@
 ---@field SwipeColor table
 ---@field SwipeColorMode string
 ---@field Texture string
-
----@class NRSKNUI.DBProfile.Miscellaneous.DelveInfo
----@field [string] any
----@field Enabled boolean
 
 ---@class NRSKNUI.DBProfile.Miscellaneous.Durability
 ---@field [string] any
@@ -1239,6 +1235,298 @@
 ---@field AnchorTo string
 ---@field XOffset number
 ---@field YOffset number
+
+---@class NRSKNUI.DBProfile.MissingBuffs
+---@field [string] any
+---@field Buffs NRSKNUI.DBProfile.MissingBuffs.Buffs
+---@field ClickToCast boolean
+---@field Enabled boolean
+---@field FlyoutDirection string
+---@field FlyoutModifier string
+---@field Groups NRSKNUI.DBProfile.MissingBuffs.Groups
+---@field RaidBuffMode string
+---@field Remembered NRSKNUI.DBProfile.MissingBuffs.Remembered
+---@field Runeforge NRSKNUI.DBProfile.MissingBuffs.Runeforge
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Buffs
+---@field [string] any
+---@field ArcaneIntellect NRSKNUI.DBProfile.MissingBuffs.Buffs.ArcaneIntellect
+---@field AugmentRune NRSKNUI.DBProfile.MissingBuffs.Buffs.AugmentRune
+---@field BattleShout NRSKNUI.DBProfile.MissingBuffs.Buffs.BattleShout
+---@field BeaconOfFaith NRSKNUI.DBProfile.MissingBuffs.Buffs.BeaconOfFaith
+---@field BeaconOfLight NRSKNUI.DBProfile.MissingBuffs.Buffs.BeaconOfLight
+---@field BlessingOfTheBronze NRSKNUI.DBProfile.MissingBuffs.Buffs.BlessingOfTheBronze
+---@field BlisteringScales NRSKNUI.DBProfile.MissingBuffs.Buffs.BlisteringScales
+---@field DelveFood NRSKNUI.DBProfile.MissingBuffs.Buffs.DelveFood
+---@field EarthShield NRSKNUI.DBProfile.MissingBuffs.Buffs.EarthShield
+---@field Flask NRSKNUI.DBProfile.MissingBuffs.Buffs.Flask
+---@field Food NRSKNUI.DBProfile.MissingBuffs.Buffs.Food
+---@field GrimoireOfSacrifice NRSKNUI.DBProfile.MissingBuffs.Buffs.GrimoireOfSacrifice
+---@field Healthstone NRSKNUI.DBProfile.MissingBuffs.Buffs.Healthstone
+---@field InkyBlackPotion NRSKNUI.DBProfile.MissingBuffs.Buffs.InkyBlackPotion
+---@field LinkedSpirits NRSKNUI.DBProfile.MissingBuffs.Buffs.LinkedSpirits
+---@field MageFood NRSKNUI.DBProfile.MissingBuffs.Buffs.MageFood
+---@field MarkOfTheWild NRSKNUI.DBProfile.MissingBuffs.Buffs.MarkOfTheWild
+---@field PowerWordFortitude NRSKNUI.DBProfile.MissingBuffs.Buffs.PowerWordFortitude
+---@field RoguePoisons NRSKNUI.DBProfile.MissingBuffs.Buffs.RoguePoisons
+---@field Skyfury NRSKNUI.DBProfile.MissingBuffs.Buffs.Skyfury
+---@field SourceOfMagic NRSKNUI.DBProfile.MissingBuffs.Buffs.SourceOfMagic
+---@field SymbioticRelationship NRSKNUI.DBProfile.MissingBuffs.Buffs.SymbioticRelationship
+---@field Timelessness NRSKNUI.DBProfile.MissingBuffs.Buffs.Timelessness
+---@field WeaponOil NRSKNUI.DBProfile.MissingBuffs.Buffs.WeaponOil
+---@field WeaponOilOffHand NRSKNUI.DBProfile.MissingBuffs.Buffs.WeaponOilOffHand
+---@field Weyrnstone NRSKNUI.DBProfile.MissingBuffs.Buffs.Weyrnstone
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Buffs.ArcaneIntellect
+---@field [string] any
+---@field GlowColor table
+---@field GlowEnabled boolean
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Buffs.AugmentRune
+---@field [string] any
+---@field Expiring number
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Buffs.BattleShout
+---@field [string] any
+---@field GlowColor table
+---@field GlowEnabled boolean
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Buffs.BeaconOfFaith
+---@field [string] any
+---@field GlowColor table
+---@field GlowEnabled boolean
+---@field GlowLength number
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Buffs.BeaconOfLight
+---@field [string] any
+---@field GlowColor table
+---@field GlowEnabled boolean
+---@field GlowLength number
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Buffs.BlessingOfTheBronze
+---@field [string] any
+---@field GlowColor table
+---@field GlowEnabled boolean
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Buffs.BlisteringScales
+---@field [string] any
+---@field GlowColor table
+---@field GlowEnabled boolean
+---@field GlowLength number
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Buffs.DelveFood
+---@field [string] any
+---@field Expiring number
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Buffs.EarthShield
+---@field [string] any
+---@field GlowColor table
+---@field GlowEnabled boolean
+---@field GlowLength number
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Buffs.Flask
+---@field [string] any
+---@field Expiring number
+---@field GlowColor table
+---@field GlowEnabled boolean
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Buffs.Food
+---@field [string] any
+---@field Expiring number
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Buffs.GrimoireOfSacrifice
+---@field [string] any
+---@field GlowEnabled boolean
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Buffs.Healthstone
+---@field [string] any
+---@field Expiring number
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Buffs.InkyBlackPotion
+---@field [string] any
+---@field EmptyBagMode string
+---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Buffs.LinkedSpirits
+---@field [string] any
+---@field GlowColor table
+---@field GlowEnabled boolean
+---@field GlowLength number
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Buffs.MageFood
+---@field [string] any
+---@field Enabled boolean
+---@field Expiring number
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Buffs.MarkOfTheWild
+---@field [string] any
+---@field GlowColor table
+---@field GlowEnabled boolean
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Buffs.PowerWordFortitude
+---@field [string] any
+---@field GlowColor table
+---@field GlowEnabled boolean
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Buffs.RoguePoisons
+---@field [string] any
+---@field GlowColor table
+---@field GlowEnabled boolean
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Buffs.Skyfury
+---@field [string] any
+---@field GlowColor table
+---@field GlowEnabled boolean
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Buffs.SourceOfMagic
+---@field [string] any
+---@field GlowColor table
+---@field GlowEnabled boolean
+---@field GlowLength number
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Buffs.SymbioticRelationship
+---@field [string] any
+---@field GlowColor table
+---@field GlowEnabled boolean
+---@field GlowLength number
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Buffs.Timelessness
+---@field [string] any
+---@field GlowColor table
+---@field GlowEnabled boolean
+---@field GlowLength number
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Buffs.WeaponOil
+---@field [string] any
+---@field Expiring number
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Buffs.WeaponOilOffHand
+---@field [string] any
+---@field Expiring number
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Buffs.Weyrnstone
+---@field [string] any
+---@field GlowLength number
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Groups
+---@field [string] any
+---@field Raid NRSKNUI.DBProfile.MissingBuffs.Groups.Raid
+---@field Targeted NRSKNUI.DBProfile.MissingBuffs.Groups.Targeted
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Groups.Raid
+---@field [string] any
+---@field BorderColor table
+---@field Config NRSKNUI.DynamicGroupConfig
+---@field CountText NRSKNUI.DBProfile.MissingBuffs.Groups.Raid.CountText
+---@field FontFace string
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.MissingBuffs.Groups.Raid.FontShadow
+---@field FontSize number
+---@field IconSize number
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.MissingBuffs.Groups.Raid.Position
+---@field Strata string
+---@field TimerText NRSKNUI.DBProfile.MissingBuffs.Groups.Raid.TimerText
+---@field UseGlobalFont boolean
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Groups.Raid.Config
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Groups.Raid.CountText
+---@field [string] any
+---@field Position NRSKNUI.DBProfile.MissingBuffs.Groups.Raid.CountText.Position
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Groups.Raid.CountText.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Groups.Raid.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field OffsetY number
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Groups.Raid.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Groups.Raid.TimerText
+---@field [string] any
+---@field Position NRSKNUI.DBProfile.MissingBuffs.Groups.Raid.TimerText.Position
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Groups.Raid.TimerText.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Groups.Targeted
+---@field [string] any
+---@field BorderColor table
+---@field Config NRSKNUI.DynamicGroupConfig
+---@field CountText NRSKNUI.DBProfile.MissingBuffs.Groups.Targeted.CountText
+---@field FontFace string
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.MissingBuffs.Groups.Targeted.FontShadow
+---@field FontSize number
+---@field IconSize number
+---@field ParentFrame string
+---@field Position NRSKNUI.DBProfile.MissingBuffs.Groups.Targeted.Position
+---@field Strata string
+---@field TimerText NRSKNUI.DBProfile.MissingBuffs.Groups.Targeted.TimerText
+---@field UseGlobalFont boolean
+---@field anchorFrameType string
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Groups.Targeted.Config
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Groups.Targeted.CountText
+---@field [string] any
+---@field Position NRSKNUI.DBProfile.MissingBuffs.Groups.Targeted.CountText.Position
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Groups.Targeted.CountText.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Groups.Targeted.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field OffsetY number
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Groups.Targeted.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field AnchorTo string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Groups.Targeted.TimerText
+---@field [string] any
+---@field Position NRSKNUI.DBProfile.MissingBuffs.Groups.Targeted.TimerText.Position
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Groups.Targeted.TimerText.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Remembered
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.MissingBuffs.Runeforge
+---@field [string] any
+---@field [number] any
 
 ---@class NRSKNUI.DBProfile.MissingItems
 ---@field [string] any
@@ -2563,6 +2851,9 @@
 ---@field fontSizeSmall number
 ---@field mode string
 ---@field selectedPreset string
+---@field surfaceTint number
+---@field windowOpacity number
+---@field zoneContrast number
 
 ---@class NRSKNUI.DBProfile.Theme.customColors
 ---@field [string] any

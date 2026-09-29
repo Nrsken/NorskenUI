@@ -42,6 +42,7 @@ local MEDIA = lib.mediaBase
 ---@field bgLight number[]
 ---@field bgHover number[]
 ---@field border number[]
+---@field widgetBorder number[]
 ---@field accent number[]
 ---@field accentHover number[]
 ---@field accentDim number[]
@@ -59,8 +60,9 @@ local DEFAULT_THEME = {
     bgMedium                = { 0.0431, 0.0431, 0.0431, 1 },
     bgLight                 = { 0.1176, 0.1176, 0.1176, 1 },
     bgHover                 = { 0.22, 0.22, 0.24, 1 },
-    -- Border
+    -- Border: `border` edges the window chrome, `widgetBorder` the controls inside it
     border                  = { 0, 0, 0, 1 },
+    widgetBorder            = { 0.22, 0.22, 0.24, 1 },
     -- Accent
     accent                  = { 0.8980, 0.0627, 0.2235, 1 },
     accentHover             = { 0.8980, 0.0627, 0.2235, 0.25 },
@@ -112,7 +114,7 @@ local DEFAULT_THEME = {
 }
 lib.DEFAULT_THEME = DEFAULT_THEME
 
--- Expands a compact preset spec into the 16 color keys. Backgrounds share their RGB
+-- Expands a compact preset spec into the 17 color keys. Backgrounds share their RGB
 -- (dark and medium differ only in alpha unless `medium` is given); accent variants are
 -- derived from the accent color. Shared rows (text/status) are constant across presets.
 local function BuildPreset(spec)
@@ -135,6 +137,7 @@ local function BuildPreset(spec)
         bgLight = lBG,
         bgHover = hBG,
         border = { 0, 0, 0, 1 },
+        widgetBorder = spec.widgetBorder or hBG,
         -- Accent Colors
         accent = aC,
         accentHover = aH,
@@ -229,6 +232,7 @@ local THEME_COLOR_KEYS = {
     { key = "bgLight",       name = "Background Light",    category = "Backgrounds" },
     { key = "bgHover",       name = "Background Hover",    category = "Backgrounds" },
     { key = "border",        name = "Border",              category = "Borders" },
+    { key = "widgetBorder",  name = "Widget Border",       category = "Borders" },
     { key = "accent",        name = "Accent",              category = "Accent Colors",    supportsClassColor = true },
     { key = "accentHover",   name = "Accent Hover",        category = "Accent Colors",    supportsClassColor = true },
     { key = "accentDim",     name = "Accent Dim",          category = "Accent Colors",    supportsClassColor = true },
@@ -480,6 +484,9 @@ function InstanceMixin:_ResolveColor(key, store, mode)
         local dark = self.presets["Dark"]
         if dark and dark[key] then return copyColor(dark[key]) end
     end
+
+    -- Custom palettes saved before this key existed get the hover background they already chose.
+    if key == "widgetBorder" then return self:_ResolveColor("bgHover", store, mode) end
 
     return copyColor(DEFAULT_THEME[key])
 end

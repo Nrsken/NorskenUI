@@ -377,7 +377,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     pixel.SetPixelPoint(dropdownButton, "TOPRIGHT", row, "TOPRIGHT", 0, -14)
     dropdownButton:SetBackdrop(STANDARD_BACKDROP)
     dropdownButton:SetBackdropColor(theme.bgMedium[1], theme.bgMedium[2], theme.bgMedium[3], 0.9)
-    dropdownButton:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
+    dropdownButton:SetBackdropBorderColor(theme.widgetBorder[1], theme.widgetBorder[2], theme.widgetBorder[3], 1)
     pixel.SetPixelSnap(dropdownButton)
 
     -- Preview bar behind the selected text (statusbar media mode).
@@ -482,7 +482,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     pixel.SetPixelHeight(dropdownList, 1)
     dropdownList:SetBackdrop(STANDARD_BACKDROP)
     dropdownList:SetBackdropColor(theme.bgMedium[1], theme.bgMedium[2], theme.bgMedium[3], 0.9)
-    dropdownList:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
+    dropdownList:SetBackdropBorderColor(theme.widgetBorder[1], theme.widgetBorder[2], theme.widgetBorder[3], 1)
     dropdownList:SetFrameStrata("TOOLTIP")
     dropdownList:SetClipsChildren(true)
     dropdownList:Hide()
@@ -504,7 +504,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         pixel.SetPixelPoint(scrollbar, "BOTTOMRIGHT", dropdownList, "BOTTOMRIGHT", 0, 0)
         pixel.SetPixelWidth(scrollbar, 12)
         scrollbar:SetBackdrop(STANDARD_BACKDROP)
-        scrollbar:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
+        scrollbar:SetBackdropBorderColor(theme.widgetBorder[1], theme.widgetBorder[2], theme.widgetBorder[3], 1)
         scrollbar:SetBackdropColor(theme.bgDark[1], theme.bgDark[2], theme.bgDark[3], 0.9)
         scrollbar:SetOrientation("VERTICAL")
         scrollbar:SetValueStep(pixel.GetMult())
@@ -537,7 +537,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         pixel.SetPixelPoint(thumbBorder, "TOPLEFT", thumb, 0, 0)
         pixel.SetPixelPoint(thumbBorder, "BOTTOMRIGHT", thumb, 0, 0)
         thumbBorder:SetBackdrop(BORDER_ONLY_BACKDROP)
-        thumbBorder:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
+        thumbBorder:SetBackdropBorderColor(theme.widgetBorder[1], theme.widgetBorder[2], theme.widgetBorder[3], 1)
         thumb:HookScript("OnShow", function() thumbBorder:Show() end)
         thumb:HookScript("OnHide", function() thumbBorder:Hide() end)
     end
@@ -554,7 +554,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
 
     local SetBorderHover, SetBorderHoverSync = Animations:CreateHoverColorAnimator(dropdownButton,
         function(r, g, b, a) dropdownButton:SetBackdropBorderColor(r, g, b, a) end,
-        theme.border, accent, theme.animDuration)
+        theme.widgetBorder, accent, theme.animDuration)
 
     local function CloseDropdown(instant)
         if scrollHold then return end
@@ -791,7 +791,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         pixel.SetPixelPoint(searchContainer, "TOPRIGHT", dropdownList, "TOPRIGHT", -SEARCH_INPUT_RIGHT_PADDING, -SEARCH_PADDING)
         searchContainer:SetBackdrop(STANDARD_BACKDROP)
         searchContainer:SetBackdropColor(theme.bgDark[1], theme.bgDark[2], theme.bgDark[3], 0.9)
-        searchContainer:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
+        searchContainer:SetBackdropBorderColor(theme.widgetBorder[1], theme.widgetBorder[2], theme.widgetBorder[3], 1)
         searchContainer:Hide()
 
         searchEditBox = CreateFrame("EditBox", nil, searchContainer)
@@ -976,21 +976,22 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
             bg[1], bg[2], bg[3] = active.bgMedium[1], active.bgMedium[2], active.bgMedium[3]
         end
 
+        local edge = active.widgetBorder
         dropdownButton:SetBackdropColor(bg[1], bg[2], bg[3], 0.9)
-        dropdownButton:SetBackdropBorderColor(active.border[1], active.border[2], active.border[3], 1)
+        dropdownButton:SetBackdropBorderColor(edge[1], edge[2], edge[3], 1)
         dropdownList:SetBackdropColor(bg[1], bg[2], bg[3], 0.9)
-        dropdownList:SetBackdropBorderColor(active.border[1], active.border[2], active.border[3], 1)
+        dropdownList:SetBackdropBorderColor(edge[1], edge[2], edge[3], 1)
         row.label:SetTextColor(active.textSecondary[1], active.textSecondary[2], active.textSecondary[3], 1)
 
         searchContainer:SetBackdropColor(active.bgDark[1], active.bgDark[2], active.bgDark[3], 0.9)
-        searchContainer:SetBackdropBorderColor(active.border[1], active.border[2], active.border[3], 1)
+        searchContainer:SetBackdropBorderColor(edge[1], edge[2], edge[3], 1)
         searchEditBox:SetTextColor(accent[1], accent[2], accent[3], accent[4] or 1)
         if emptyLabel then
             emptyLabel:SetTextColor(active.textSecondary[1], active.textSecondary[2], active.textSecondary[3], 1)
         end
 
         arrow:SetVertexColor(active.textSecondary[1], active.textSecondary[2], active.textSecondary[3], 1)
-        SetBorderHoverSync(active.border[1], active.border[2], active.border[3], active.border[4] or 1)
+        SetBorderHoverSync(edge[1], edge[2], edge[3], edge[4] or 1)
 
         -- Repaint the selection so its own option color (or the accent default) follows.
         if row._currentValue ~= nil then row._applySelected(row._currentValue) end

@@ -246,7 +246,7 @@ function ButtonMixin:UpdateColors()
     end
 
     -- The hover animator rests on the border color, so reseat it after a palette change.
-    self._syncBorder(theme.border[1], theme.border[2], theme.border[3], theme.border[4] or 1)
+    self._syncBorder(theme.widgetBorder[1], theme.widgetBorder[2], theme.widgetBorder[3], theme.widgetBorder[4] or 1)
 
     -- Both read the accent above, and the fill has to land after the reseat so a button
     -- repainted mid-hover keeps its accent edge.
@@ -311,7 +311,7 @@ function ButtonMixin:OnAcquire(parent, buttonText, config)
     end
     lib.SetTooltip(self, self.gui, buttonText, spec)
 
-    self._kajiBackdrop = { bg = self._bgColor, bgAlpha = self._bgAlpha, border = "border", borderAlpha = 1 }
+    self._kajiBackdrop = { bg = self._bgColor, bgAlpha = self._bgAlpha, border = "widgetBorder", borderAlpha = 1 }
 
     -- The icon always exists; only its content and visibility change between uses.
     self.icon:SetShown(self._hasIcon)
@@ -366,12 +366,14 @@ function ButtonMixin:OnRelease()
     self.bgImage:SetTexCoord(0, 1, 0, 1)
     self.bgImage:SetVertexColor(1, 1, 1, 1)
     self.bgImage:SetAlpha(1)
+    self.bgImage:SetDesaturated(false)
     lib.ClearTooltip(self)
     self.text:SetText("")
     self.text:SetAlpha(1)
     self.icon:SetRotation(0)
     self.icon:SetVertexColor(1, 1, 1, 1)
     self.icon:SetDesaturated(false)
+    self.icon:SetAlpha(1)
     -- SetAtlas writes texcoords that SetTexture would not clear for the next occupant.
     self.icon:SetTexCoord(0, 1, 0, 1)
     self.icon:Hide()
@@ -407,7 +409,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     local theme = gui.theme
     local button = CreateFrame("Button", nil, gui._poolHost, "BackdropTemplate")
     button.gui = gui
-    lib.SetBackdrop(button, gui, { bg = "bgMedium", bgAlpha = 0.9, border = "border", borderAlpha = 1 })
+    lib.SetBackdrop(button, gui, { bg = "bgMedium", bgAlpha = 0.9, border = "widgetBorder", borderAlpha = 1 })
 
     -- Above the backdrop's fill (BACKGROUND, sublevel 0) but below its edge, which
     -- BackdropTemplate draws on BORDER - so the border survives an opaque fill.
@@ -431,7 +433,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
 
     button._animateBorder, button._syncBorder = Animations:CreateHoverColorAnimator(button,
         function(r, g, b, a) button:SetBackdropBorderColor(r, g, b, a) end,
-        theme.border, button._accentColor, theme.animDuration)
+        theme.widgetBorder, button._accentColor, theme.animDuration)
 
     -- Every script is set once here and reads state from fields, so a recycled button
     -- never carries a previous caller's callback or stacks a second handler.

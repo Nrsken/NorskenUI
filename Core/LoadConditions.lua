@@ -7,7 +7,13 @@ local IsInInstance = IsInInstance
 local GetInstanceInfo = GetInstanceInfo
 local UnitAffectingCombat = UnitAffectingCombat
 local pairs = pairs
+local ipairs = ipairs
+local select = select
+local tonumber = tonumber
 local CreateFrame = CreateFrame
+local GetBestMapForUnit = C_Map.GetBestMapForUnit
+local GetMapGroupID = C_Map.GetMapGroupID
+local GetMapChildrenInfo = C_Map.GetMapChildrenInfo
 
 ---@class LoadConditions
 local LoadConditions = {}
@@ -99,16 +105,89 @@ local function CheckPosition(config)
     return true
 end
 
+-- Zone condition: comma separated uiMapIDs, g = map group, c = map plus its children, i = instance, - leaves one out.
+local zoneSets = {} ---@type table<string, table> parsed per MapIDs string
+
+---@param text string
+---@return table
+local function ParseZones(text)
+    local zones = {
+        include = { maps = {}, groups = {}, instances = {} },
+        exclude = { maps = {}, groups = {}, instances = {} },
+    }
+    for negate, prefix, id in text:gmatch("(%-?)(%a?)(%d+)") do
+        id = tonumber(id)
+        prefix = prefix:lower()
+        local sets = negate == "-" and zones.exclude or zones.include
+        if prefix == "g" then
+            sets.groups[id] = true
+        elseif prefix == "i" then
+            sets.instances[id] = true
+        elseif prefix == "" or prefix == "c" then
+            sets.maps[id] = true
+            if prefix == "c" then
+                for _, child in ipairs(GetMapChildrenInfo(id, nil, true) or {}) do
+                    sets.maps[child.mapID] = true
+                end
+            end
+        end
+        if negate ~= "-" and (prefix == "" or prefix == "c" or prefix == "g" or prefix == "i") then zones.hasInclude = true end
+    end
+    return zones
+end
+
+---@param sets table
+---@param mapID number?
+---@param groupID number?
+---@param instanceID number?
+---@return boolean
+local function InZones(sets, mapID, groupID, instanceID)
+    return (mapID and sets.maps[mapID]) or (groupID and sets.groups[groupID]) or (instanceID and sets.instances[instanceID]) or false
+end
+
+local function CheckZone(config)
+    local text = config and config.MapIDs
+    if not text then return true end
+
+    local zones = zoneSets[text]
+    if not zones then
+        zones = ParseZones(text)
+        zoneSets[text] = zones
+    end
+
+    local mapID = GetBestMapForUnit("player")
+    local groupID = mapID and GetMapGroupID(mapID)
+    local instanceID = select(8, GetInstanceInfo())
+    if InZones(zones.exclude, mapID, groupID, instanceID) then return false end
+    return not zones.hasInclude or InZones(zones.include, mapID, groupID, instanceID)
+end
+
 local checkers = {
     Instance = CheckInstance,
     Group = CheckGroup,
     Combat = CheckCombat,
     Role = CheckRole,
     Position = CheckPosition,
+    Zone = CheckZone,
 }
 
 local function FireCallbacks()
-    for module, callback in pairs(callbacks) do if module:IsEnabled() then callback(module) end end
+    for aceModule, callback in pairs(callbacks) do
+        if aceModule:IsEnabled() then
+            callback(aceModule)
+        end
+    end
+end
+
+-- Subzone events fire constantly while moving, only a new map ID can change a Zone condition.
+local ZONE_EVENTS = { ZONE_CHANGED = true, ZONE_CHANGED_INDOORS = true, ZONE_CHANGED_NEW_AREA = true }
+local lastMapID
+
+local function OnEvent(_, event)
+    local mapID = GetBestMapForUnit("player")
+    if ZONE_EVENTS[event] and mapID == lastMapID then return end
+    lastMapID = mapID
+    FireCallbacks()
 end
 
 local function SetupEventFrame()
@@ -120,8 +199,9 @@ local function SetupEventFrame()
     eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
     eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
     eventFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+    for event in pairs(ZONE_EVENTS) do eventFrame:RegisterEvent(event) end
 
-    eventFrame:SetScript("OnEvent", FireCallbacks)
+    eventFrame:SetScript("OnEvent", OnEvent)
 end
 
 ---@param conditions table LoadConditions config with category tables
@@ -148,6 +228,7 @@ function LoadConditions:GetDefaults()
         Combat = {},
         Role = { Types = {} },
         Position = { Types = {} },
+        Zone = {},
     }
 end
 

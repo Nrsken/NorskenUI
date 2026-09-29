@@ -28,6 +28,7 @@ Modules/Skinning/Skinning.xml
 Modules/ClassUtility/ClassUtility.xml
 Modules/Dungeons/Dungeons.xml
 Modules/BigWigsTimers/BigWigsTimers.xml
+Modules/MissingBuffs/MissingBuffs.xml
 
 # Load GUI Core File
 GUI/GUI-Core.lua

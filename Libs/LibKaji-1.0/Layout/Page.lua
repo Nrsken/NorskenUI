@@ -77,6 +77,11 @@ function FluentRow:Checkbox(label, config) return self:_Add("CreateCheckbox", la
 ---@param label? string
 ---@param config? KajiGUIWidgetConfig
 ---@return Frame widget
+function FluentRow:SlimCheckbox(label, config) return self:_Add("CreateSlimCheckbox", label, config) end
+
+---@param label? string
+---@param config? KajiGUIWidgetConfig
+---@return Frame widget
 function FluentRow:Slider(label, config) return self:_Add("CreateSlider", label, config) end
 
 ---@param label? string
@@ -212,11 +217,14 @@ function FluentCard:Section(title, config)
     return not config.collapsed
 end
 
----Adds a full-width separator row.
+---Adds a full-width separator row, with an accent label above the rule when config.useLabel is set.
+---@param label? string
+---@param config? { useLabel?: boolean, height?: number }
 ---@return self
-function FluentCard:Separator()
-    local sep = self.page.gui:CreateSeparator(self.real.content)
-    self.real:AddRow(sep, self.page.gui.theme.rowHeightSeparator)
+function FluentCard:Separator(label, config)
+    local theme = self.page.gui.theme
+    local sep = self.page.gui:CreateSeparator(self.real.content, label, config)
+    self.real:AddRow(sep, config and config.useLabel and theme.rowHeightLabelSeparator or theme.rowHeightSeparator)
     return self
 end
 

@@ -106,8 +106,6 @@ local function SidebarItems(kind)
             local headers, byBoss, loose = {}, {}, {}
 
             if kind == 'raid' then
-                insert(items, { type = 'label', key = 'raid:' .. info.instanceId, text = info.name })
-
                 for _, boss in ipairs(BigWigsTimers:GetBossesForInstance(info.instanceId)) do
                     local header = {
                         type = 'header',
@@ -146,7 +144,8 @@ local function SidebarItems(kind)
                 insert(headers, {
                     type = 'header',
                     key = BossKey(info.instanceId, 0),
-                    text = L['Unassigned'],
+                    -- No raid heading above it any more, so it names its raid itself.
+                    text = format('%s (%s)', L['Unassigned'], info.name),
                     defaultExpanded = false,
                     items = loose,
                 })

@@ -110,6 +110,10 @@
 ---@field matchDirty boolean?
 ---@class AuraMatrixModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class DelveInfoModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class MissingBuffsModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@field groups table<string, NRSKNUI.DynamicGroup>?
+---@field flyoutKey string? the buff whose item picker is open
+---@field tooltipIcon (Frame & { texture: Texture })? icon hung off GameTooltip, built on first hover
 
 -- The handles Core/Init.lua hangs off the addon table. Declared here so the field and the accessor
 -- that fills it agree on a type: without these the field takes whatever the assignment inferred.
@@ -157,6 +161,7 @@
 ---@field CooldownStrings CooldownStringsModule
 ---@field AuraMatrix AuraMatrixModule
 ---@field DelveInfo DelveInfoModule
+---@field MissingBuffs MissingBuffsModule
 
 -- Typed accessors. Overloads dispatch on the literal module name.
 
@@ -206,6 +211,7 @@ local NRSKNUI
 ---@overload fun(self: NRSKNUI, name: "CooldownStrings", silent?: boolean): CooldownStringsModule
 ---@overload fun(self: NRSKNUI, name: "AuraMatrix", silent?: boolean): AuraMatrixModule
 ---@overload fun(self: NRSKNUI, name: "DelveInfo", silent?: boolean): DelveInfoModule
+---@overload fun(self: NRSKNUI, name: "MissingBuffs", silent?: boolean): MissingBuffsModule
 ---@param name string
 ---@param silent? boolean
 ---@return AceModule
@@ -254,6 +260,7 @@ function NRSKNUI:GetModule(name, silent) end
 ---@overload fun(self: NRSKNUI, name: "CooldownStrings", ...: string): CooldownStringsModule
 ---@overload fun(self: NRSKNUI, name: "AuraMatrix", ...: string): AuraMatrixModule
 ---@overload fun(self: NRSKNUI, name: "DelveInfo", ...: string): DelveInfoModule
+---@overload fun(self: NRSKNUI, name: "MissingBuffs", ...: string): MissingBuffsModule
 ---@param name string
 ---@param ... string
 ---@return AceModule

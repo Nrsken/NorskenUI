@@ -241,7 +241,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     local toggle = CreateFrame("Frame", nil, row, "BackdropTemplate")
     pixel.SetPixelSize(toggle, TOGGLE_WIDTH, TOGGLE_HEIGHT)
     pixel.SetPixelPoint(toggle, "TOPLEFT", row, "TOPLEFT", 0, -14)
-    lib.SetBackdrop(toggle, gui, { bg = "bgMedium", bgAlpha = 0.9, border = "border", borderAlpha = 1 })
+    lib.SetBackdrop(toggle, gui, { bg = "bgMedium", bgAlpha = 0.9, border = "widgetBorder", borderAlpha = 1 })
     row.toggle = toggle
 
     local knob = CreateFrame("Frame", nil, toggle, "BackdropTemplate")
@@ -250,9 +250,8 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     lib.SetBackdrop(knob, gui, {
         bg = { 0, 0, 0 },
         bgAlpha = 0.9,
-        border = "border",
+        border = "border", -- the knob's own edge inside the track, not the widget outline
         borderAlpha = 1,
-        insets = { left = -1, right = -1, top = 0, bottom = 0 },
     })
     row.knob = knob
 

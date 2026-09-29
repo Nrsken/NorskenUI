@@ -1,0 +1,75 @@
+---@meta
+
+-- MissingBuffs module types.
+
+---@alias MissingBuffs.Category 'Raid'|'Presence'|'Targeted'|'Self'|'Consumable'|'Utility'
+
+---@class MissingBuffs.Entry
+---@field key string
+---@field settingsKey? string shares another entry's settings and GUI page instead of having its own
+---@field nameSpellID? number the list shows this spell's (localized) name, otherwise the key's
+---@field spellID? number|number[] aura IDs, any one satisfies
+---@field outdoorSpellID? number[] aura IDs that satisfy outside instances instead
+---@field castSpellID? number known-spell gate, icon and click-cast, else the first spellID
+---@field casterBuffID? number self aura that proves a targeted buff is out
+---@field class? string
+---@field specID? number
+---@field requiresSpellID? number
+---@field excludeSpellID? number
+---@field levelRequired? number
+---@field benefit? 'intellect'|'attackPower'
+---@field perClass? table<string, number>
+---@field playersOnly? boolean
+---@field role? string beneficiary role for targeted buffs
+---@field enchantID? number
+---@field enchantSlot? 'offhand'
+---@field requiresShield? boolean
+---@field itemID? number[]
+---@field casterClass? string
+---@field maxCharges? number charges a full stack of the item holds, shown as N/max once only one is left
+---@field icon? number
+---@field roleSpell? table<string, number> per-role cast spell and icon
+---@field check? string named evaluator in MissingBuffsState
+---@field noClick? boolean
+---@field targeted? boolean click casts on mouseover, then target
+---@field selfCast? boolean click casts on yourself, for a spell that would otherwise land on the target
+---@field useWeapon? boolean click also applies the weapon slot, off hand with enchantSlot
+---@field itemList? string key into ConsumableItems for the click
+---@field glowDetectable? boolean
+---@field unsafeRestricted? boolean reads nothing while auras are secret despite NeverSecret
+---@field readyCheckOnly? boolean
+---@field groupOnly? boolean
+---@field suppressedBy? string
+---@field hideOnCooldown? boolean
+---@field noExpiry? boolean
+
+---@class MissingBuffs.Result
+---@field entry MissingBuffs.Entry
+---@field category MissingBuffs.Category
+---@field icon number?
+---@field castSpell number? known spell the click casts
+---@field useItem number? bag item the click uses
+---@field noItem boolean? a bag-based reminder with nothing in the bags to use
+---@field expiring boolean
+---@field remaining number?
+---@field missing number?
+---@field total number?
+---@field eating boolean?
+
+---@class MissingBuffs.Unit
+---@field unit string
+---@field name string?
+---@field class string?
+---@field isPlayer boolean
+---@field isMe boolean
+---@field phased boolean
+
+---@class MissingBuffs.Button : Button
+---@field key string
+---@field active boolean?
+
+---@class MissingBuffs.FlyoutButton : Button
+---@field texture Texture
+---@field count FontString
+---@field itemID number
+---@field itemList string

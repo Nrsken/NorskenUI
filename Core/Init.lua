@@ -170,7 +170,7 @@ NRSKNUI.PlayerAuras = NRSKNUI:NewModule('PlayerAuras', 'AceEvent-3.0')
 NRSKNUI.AuraDisplay = NRSKNUI:NewModule('AuraDisplay', 'AceEvent-3.0')
 
 -- Dev tools
-NRSKNUI.AuraMatrix = NRSKNUI:NewModule('AuraMatrix', 'AceEvent-3.0')
+--NRSKNUI.AuraMatrix = NRSKNUI:NewModule('AuraMatrix', 'AceEvent-3.0')
 
 -- Combat Modules
 NRSKNUI.CombatTimer = NRSKNUI:NewModule('CombatTimer', 'AceEvent-3.0')
@@ -188,3 +188,6 @@ NRSKNUI.RerollKeystone = NRSKNUI:NewModule('RerollKeystone', 'AceEvent-3.0', 'Ac
 
 -- BigWigs Timers Module
 NRSKNUI.BigWigsTimers = NRSKNUI:NewModule('BigWigsTimers', 'AceEvent-3.0', 'AceTimer-3.0', 'AceHook-3.0')
+
+-- Missing Buffs Module
+NRSKNUI.MissingBuffs = NRSKNUI:NewModule('MissingBuffs', 'AceEvent-3.0')
