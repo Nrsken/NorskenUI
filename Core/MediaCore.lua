@@ -213,7 +213,7 @@ function NRSKNUI:GetStatusbar(moduleDB, override)
 
     local global = self.db and self.db.profile and self.db.profile.globalMedia
     local name
-    if global and global.Enabled and global.profileBar.Enabled then
+    if global and global.Enabled then
         if moduleDB and moduleDB.UseGlobalBar == false then
             name = moduleDB.StatusBarTexture or moduleDB.statusBar or 'NorskenUI'
         else
@@ -223,6 +223,35 @@ function NRSKNUI:GetStatusbar(moduleDB, override)
         name = (moduleDB and (moduleDB.StatusBarTexture or moduleDB.statusBar)) or 'NorskenUI'
     end
     return self:ResolveMediaPath('statusbar', name) or fallbackPaths.statusbar
+end
+
+---nil means a flat backdrop, which a module off UseGlobalBar always keeps.
+---@param moduleDB table?
+---@return string? path
+function NRSKNUI:GetBarBackground(moduleDB)
+    if moduleDB and moduleDB.UseGlobalBar == false then return end
+    local name = self.db.profile.globalMedia.profileBar.backgroundTexture
+    return name and self:ResolveMediaPath('statusbar', name)
+end
+
+---@param moduleDB table?
+---@param key? string the module's own color key, BorderColor by default
+---@return number[] rgba
+function NRSKNUI:GetBorderColor(moduleDB, key)
+    if moduleDB and moduleDB.UseGlobalBorder == false then
+        return moduleDB[key or 'BorderColor']
+    end
+    return self.db.profile.globalMedia.profileBorder.BorderColor
+end
+
+---@param moduleDB table?
+---@param key? string the module's own color key, BackdropColor by default
+---@return number[] rgba
+function NRSKNUI:GetBackdropColor(moduleDB, key)
+    if moduleDB and moduleDB.UseGlobalBackdrop == false then
+        return moduleDB[key or 'BackdropColor']
+    end
+    return self.db.profile.globalMedia.profileBorder.BackdropColor
 end
 
 ---Resolve spark texture to a usable file path or atlas name, with a fallback to the solid spark.
@@ -251,7 +280,7 @@ function NRSKNUI:SetSpark(texture, moduleDB, barHeight, override)
 
     -- Use global or per module spark settings, but allow a per-element override to win outright.
     local name, scale, color, width
-    if globalSpark and globalSpark.Enabled and not (moduleDB and moduleDB.UseGlobalSpark == false) then
+    if globalSpark and not (moduleDB and moduleDB.UseGlobalSpark == false) then
         name, scale, color, width = globalSpark.sparkTexture, globalSpark.Scale, globalSpark.color, globalSpark.Width
     elseif moduleDB then
         name, scale, color, width = moduleDB.SparkTexture, moduleDB.SparkScale, moduleDB.SparkColor, moduleDB.SparkWidth

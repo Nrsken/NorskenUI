@@ -158,6 +158,23 @@ local POINT_KEYS = { 'pointOne', 'pointTwo', 'pointThree', 'pointFour', 'pointFi
 local COLOR_KEYS = { 'colorOne', 'colorTwo', 'colorThree', 'colorFour', 'colorFive' }
 local formatterCache = {}
 
+---Minutes and hours round to nearest, seconds round up so a running timer never reads 0.
+---@param fmt string
+---@return number div seconds per displayed unit
+---@return number step
+---@return boolean nearest
+function NRSKNUI:GetDurationFormatUnit(fmt)
+    if fmt:find('h$') then return 3600, 1, true end
+    if fmt:find('m$') then return 60, 1, true end
+    return 1, fmt:find('%.1f') and 0.1 or 1, false
+end
+
+local function DurationComponent(fmt)
+    local div, step, nearest = NRSKNUI:GetDurationFormatUnit(fmt)
+    -- Seconds leave div out, as the formatter was always fed them.
+    return { div = div ~= 1 and div or nil, step = step, rounding = nearest and enumNearest or enumUp }
+end
+
 ---Ordered rgba per breakpoint, nil when the format strings should stay uncolored.
 local function ResolveBreakpointColors(useBreakpointColors, singleColor)
     if singleColor then
@@ -186,10 +203,7 @@ local function BuildDurationBreakpoints(colors)
         breakpoints[i] = {
             threshold = threshold,
             format = format,
-            -- Points four and five use their own threshold as the unit divisor, 60 -> minutes, 3600 -> hours.
-            components = { (i >= 4)
-            and { div = threshold, step = 1, rounding = enumNearest }
-            or { step = (i == 1) and 0.1 or 1, rounding = enumUp } },
+            components = { DurationComponent(point.format) },
         }
         previous = threshold
     end

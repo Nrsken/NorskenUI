@@ -724,9 +724,9 @@ function CHAT:UpdateTabBackdrop()
     tabBackdrop:SetPoint("TOPLEFT", self.panel, "TOPLEFT", 0, 0)
     tabBackdrop:SetPoint("BOTTOMRIGHT", self.panel, "TOPRIGHT", 0, -TAB_HEIGHT)
 
-    local tabBgColor = db.TabBackdrop and db.TabBackdrop.Color or { 0, 0, 0, 0.5 }
-    local tabBorderColor = db.TabBackdrop and db.TabBackdrop.BorderColor or { 0, 0, 0, 1 }
-    local tabBackdropEnabled = db.TabBackdrop and db.TabBackdrop.Enabled
+    local tabBgColor = NRSKNUI:GetBackdropColor(db.TabBackdrop, 'Color')
+    local tabBorderColor = NRSKNUI:GetBorderColor(db.TabBackdrop)
+    local tabBackdropEnabled = db.TabBackdrop.Enabled
 
     tabBackdrop:SetBackdrop(BACKDROP_TEMPLATE)
 
@@ -746,10 +746,10 @@ function CHAT:ApplyBackdrop(backdrop)
     backdrop:SetBackdrop(BACKDROP_TEMPLATE)
 
     if db.Backdrop.Enabled ~= false then
-        backdrop:SetBackdropColor(db.Backdrop.Color[1], db.Backdrop.Color[2], db.Backdrop.Color[3],
-            db.Backdrop.Color[4] or 0.6)
-        backdrop:SetBackdropBorderColor(db.Backdrop.BorderColor[1], db.Backdrop.BorderColor[2],
-            db.Backdrop.BorderColor[3], db.Backdrop.BorderColor[4] or 1)
+        local bg = NRSKNUI:GetBackdropColor(db.Backdrop, 'Color')
+        local border = NRSKNUI:GetBorderColor(db.Backdrop)
+        backdrop:SetBackdropColor(bg[1], bg[2], bg[3], bg[4] or 0.6)
+        backdrop:SetBackdropBorderColor(border[1], border[2], border[3], border[4] or 1)
         backdrop:Show()
     else
         backdrop:SetBackdropColor(0, 0, 0, 0)
@@ -1640,8 +1640,8 @@ function CHAT:ApplyFrameStyle(frame, template, glossTex, ignoreUpdates, forcePix
     local backdropR, backdropG, backdropB, backdropA, borderR, borderG, borderB, borderA = GetTemplateColors(template)
 
     if db.EditBox then
-        local bgColor = db.EditBox.BackdropColor
-        local borderColor = db.EditBox.BorderColor
+        local bgColor = NRSKNUI:GetBackdropColor(db.EditBox)
+        local borderColor = NRSKNUI:GetBorderColor(db.EditBox)
         if bgColor then
             backdropR, backdropG, backdropB, backdropA = bgColor[1], bgColor[2], bgColor[3], bgColor[4] or backdropA
         end

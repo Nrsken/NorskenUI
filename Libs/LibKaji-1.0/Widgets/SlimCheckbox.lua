@@ -1,8 +1,8 @@
 --[[
 # SlimCheckbox
 
-* A compact square tick for dense grids and lists: a small box that fills with the accent when checked,
-  with an optional label to its right. No slide animation, the callback fires on the click.
+* A compact square tick for dense grids and lists, drawn like the Checkbox knob: accent fill, checkmark
+  and glow fade in when checked. An optional label sits to its right. The callback fires on the click.
 * `align = 'CENTER'` centres the box in its share of the row, for matrix cells without a label.
 
 ## Examples
@@ -37,13 +37,11 @@ local floor = math.floor
 
 local WIDGET_TYPE = "SlimCheckbox"
 local BOX_SIZE = 16
-local FILL_INSET = 3
 local LABEL_GAP = 6
 
 ---@class KajiGUISlimCheckboxMixin : Frame
 ---@field gui KajiGUIInstance
----@field box Frame|BackdropTemplate
----@field fill Texture
+---@field box KajiTickBox
 ---@field label FontString
 ---@field button Button
 ---@field _state boolean
@@ -52,14 +50,11 @@ local LABEL_GAP = 6
 ---@field _callback? fun(checked: boolean)
 local SlimCheckboxMixin = {}
 
-function SlimCheckboxMixin:ApplyState()
+---@param instant? boolean
+function SlimCheckboxMixin:ApplyState(instant)
     local theme = self.gui.theme
-    local accent = theme.accent
-    self.fill:SetShown(self._state)
-    self.fill:SetColorTexture(accent[1], accent[2], accent[3], 1)
-
-    local edge = (self._hovered or self._state) and accent or theme.widgetBorder
-    self.box:SetBackdropBorderColor(edge[1], edge[2], edge[3], 1)
+    self.box:SetChecked(self._state, instant)
+    self.box:SetHovered(self._hovered, instant)
 
     local text = self._state and theme.textPrimary or theme.textSecondary
     self.label:SetTextColor(text[1], text[2], text[3], 1)
@@ -72,7 +67,7 @@ end
 function SlimCheckboxMixin:LayoutContent(width)
     width = width or self:GetWidth()
     local mult = pixel.GetMult()
-    local size = self.box:GetWidth()
+    local size = BOX_SIZE
     local x = 0
     if self._align == "CENTER" and width and width > size then
         x = floor((width - size) / 2 / mult) * mult
@@ -90,6 +85,7 @@ end
 
 ---@param enabled boolean
 function SlimCheckboxMixin:SetEnabled(enabled)
+    self.box:SetEnabled(enabled)
     self:SetAlpha(enabled and 1 or 0.5)
     self.button:EnableMouse(enabled)
 end
@@ -102,12 +98,12 @@ end
 ---@param value boolean
 function SlimCheckboxMixin:SetValue(value)
     self._state = value == true
-    self:ApplyState()
+    self:ApplyState(true)
 end
 
 function SlimCheckboxMixin:UpdateColors()
-    lib.RefreshBackdrop(self.box)
-    self:ApplyState()
+    self.box:Repaint()
+    self:ApplyState(true)
 end
 
 ---@param parent Frame
@@ -129,6 +125,7 @@ function SlimCheckboxMixin:OnAcquire(parent, labelText, config)
     lib.SetTooltip(self, self.gui, labelText, config.tooltip)
 
     self.button:EnableMouse(true)
+    self.box:SetEnabled(true)
     self:SetAlpha(1)
     self:LayoutContent()
     self:UpdateColors()
@@ -158,17 +155,8 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     local row = CreateFrame("Frame", nil, gui._poolHost)
     row.gui = gui
 
-    local box = CreateFrame("Frame", nil, row, "BackdropTemplate")
-    pixel.SetPixelSize(box, BOX_SIZE, BOX_SIZE)
-    lib.SetBackdrop(box, gui, { bg = "bgDark", bgAlpha = 1, border = "widgetBorder", borderAlpha = 1 })
+    local box = lib.CreateTickBox(gui, row, BOX_SIZE)
     row.box = box
-
-    local fill = box:CreateTexture(nil, "ARTWORK")
-    pixel.SetPixelPoint(fill, "TOPLEFT", box, "TOPLEFT", FILL_INSET, -FILL_INSET)
-    pixel.SetPixelPoint(fill, "BOTTOMRIGHT", box, "BOTTOMRIGHT", -FILL_INSET, FILL_INSET)
-    pixel.SetPixelSnap(fill)
-    fill:Hide()
-    row.fill = fill
 
     local label = row:CreateFontString(nil, "OVERLAY")
     pixel.SetPixelPoint(label, "LEFT", box, "RIGHT", LABEL_GAP, 0)

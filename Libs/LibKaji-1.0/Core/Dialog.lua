@@ -178,7 +178,7 @@ local function CreateDialogBase(theme, opts, textHeight)
     local dialog = CreateFrame('Frame', nil, UIParent, 'BackdropTemplate')
     dialog:SetSize(width, height)
     dialog:SetPoint('CENTER', UIParent, 'CENTER', 0, 350)
-    dialog:SetFrameStrata('TOOLTIP')
+    dialog:SetFrameStrata('FULLSCREEN_DIALOG') -- below TOOLTIP so its own button tooltips draw on top
     dialog:SetFrameLevel(100)
     dialog:EnableMouse(true)
     dialog:SetMovable(true)
@@ -240,7 +240,7 @@ local function CreateCloseButton(gui, header, onClose)
     return closeBtn
 end
 
-local function CreateHeaderTexture(header, opts)
+local function CreateHeaderTexture(gui, header, opts)
     if not opts.texture then return end
     local tex = opts.texture
 
@@ -256,6 +256,8 @@ local function CreateHeaderTexture(header, opts)
     end
     texture:SetTexelSnappingBias(0)
     texture:SetSnapToPixelGrid(false)
+
+    lib.AddIconGlow(frame, texture, tex.width or 20, tex.height or 20, tex.glow, gui)(1)
 end
 
 local function MeasureTextHeight(gui, text, width, fontStyle)
@@ -310,6 +312,8 @@ function InstanceMixin:Prompt(opts)
     end
 
     local dialog = CreateDialogBase(theme, opts, textHeight)
+    -- Built fresh per prompt, so the popup edge and shadow are painted once rather than subscribed.
+    lib.StylePopup(dialog, self)()
     local header = CreateDialogHeader(self, dialog, opts.title)
 
     local function CloseDialog()
@@ -322,7 +326,7 @@ function InstanceMixin:Prompt(opts)
         CloseDialog()
     end)
 
-    CreateHeaderTexture(header, opts)
+    CreateHeaderTexture(self, header, opts)
 
     local isCopyMode = opts.editBox and not opts.onAccept
 

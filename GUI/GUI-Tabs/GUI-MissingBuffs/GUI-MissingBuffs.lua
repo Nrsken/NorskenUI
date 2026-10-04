@@ -20,6 +20,7 @@ local GetSpellName = C_Spell and C_Spell.GetSpellName
 local GetSpellTexture = C_Spell and C_Spell.GetSpellTexture
 
 local GENERAL = 'general'
+local GENERAL_ICON = 'Interface\\Icons\\Trade_Engineering'
 local QUESTION_MARK = 134400
 
 local MODIFIER_OPTIONS = {
@@ -129,7 +130,10 @@ end
 local function SidebarItems(groupPage)
     return function()
         local buffs = NRSKNUI.db.profile.MissingBuffs.Buffs
-        local items = {}
+        local items = {
+            { type = 'label', key = 'category:general', text = L['General Settings'] },
+            { key = GENERAL, text = L['Dynamic Group'], icon = GENERAL_ICON },
+        }
 
         for _, category in ipairs(groupPage.categories) do
             items[#items + 1] = { type = 'label', key = 'category:' .. category, text = CATEGORIES[category].text }
@@ -140,7 +144,6 @@ local function SidebarItems(groupPage)
                         key = entry.key,
                         text = GetEntryName(entry),
                         icon = GetEntryIcon(entry),
-                        accent = entry.class and NRSKNUI:GetClassColor(entry.class) or nil,
                         disabled = not buffs[entry.key].Enabled,
                     }
                 end
@@ -205,6 +208,8 @@ local function BuildModuleCards(page, db)
         end,
     })
 
+    behaviourCard:Separator()
+
     local itemPickerCard = behaviourCard:Row(rowHL, 0)
     itemPickerCard:Dropdown(L['Item Picker Modifier'], {
         width = 0.5,
@@ -233,7 +238,7 @@ local function BuildAppearanceCard(page, db)
     local card = page:Card(L['Appearance'], 'all')
     local row = card:Row(rowHL, 0)
     row:Slider(L['Icon Size'], {
-        width = 0.5,
+        width = 1,
         min = 16,
         max = 80,
         step = 1,
@@ -243,14 +248,8 @@ local function BuildAppearanceCard(page, db)
             ApplySettings()
         end,
     })
-    row:ColorPicker(L['Border Color'], {
-        width = 0.5,
-        value = db.BorderColor,
-        callback = function(r, g, b, a)
-            db.BorderColor = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
+
+    page:BackdropColorsCard({ db = db, title = L['Border'], showBackdrop = false, onChangeCallback = ApplySettings })
 end
 
 -- Buff Tabs --
@@ -374,12 +373,15 @@ local function BuildBuffSettingsTab(page, groupPage, entry, category, settings)
 
     infoCard:Separator()
 
+    local tracked = DescribeTracked(entry, info)
+    if entry.readyCheckOnly then tracked = tracked .. ' ' .. L['Only during a ready check.'] end
+
     infoCard:Row(rowHL, 0):Text('', {
         width = 1,
         autoHeight = true,
         bgMode = 'hide',
         text = concat({
-            NRSKNUI:ColorTextByTheme(L['Checks: ']) .. DescribeTracked(entry, info),
+            NRSKNUI:ColorTextByTheme(L['Checks: ']) .. tracked,
             NRSKNUI:ColorTextByTheme(L['Combat: ']) .. DescribeCombat(entry),
             NRSKNUI:ColorTextByTheme(L['Click: ']) .. DescribeClick(entry),
         }, '\n'),
@@ -449,7 +451,6 @@ for _, groupPage in ipairs(GROUP_PAGES) do
         mode = 'tabs',
         search = { L['Missing Buffs'], groupPage.text },
         sidebar = {
-            buttons = { { text = L['General Settings'], key = GENERAL } },
             items = groupPage.items,
             width = 210,
             default = GENERAL,

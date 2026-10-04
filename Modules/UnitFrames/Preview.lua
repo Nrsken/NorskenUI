@@ -12,7 +12,7 @@ local CreateFrame = CreateFrame
 local format = string.format
 
 local LABEL_SIZE = 13
-local LABEL_LEVEL = 1100 -- Above the indicator container, which sits at 1000.
+local LABEL_LEVEL = 1100 -- Absolute, so it clears the top layer of any frame.
 
 ---@class UnitFramesPreview
 local Preview = {}
@@ -319,6 +319,9 @@ local function ApplyGroup(key, state)
         header.nuiForced = true
         ForceHeader(header)
     end
+
+    -- A centered party sits in by its empty slots; the preview fills all of them.
+    if group.centeredFor then UF:LayoutGroup(key) end
 end
 
 ---@param key string
@@ -347,7 +350,12 @@ local function RestoreGroup(key, state)
         end
 
         group.container.nuiPreviewing = nil
-        UF:ApplyGroupVisibility(key)
+        -- Back to the real member count, re-centered; LayoutGroup hands visibility back as well.
+        if group.centeredFor then
+            UF:LayoutGroup(key)
+        else
+            UF:ApplyGroupVisibility(key)
+        end
     end)
 end
 

@@ -97,36 +97,14 @@ local function BuildGeneralSettingsTab(page, db)
 
     local mountRow = generalCard:Row(rowHL, 0)
     mountRow:Checkbox(L['Show Mount'], {
-        width = 1,
+        width = 0.5,
         value = db.ShowMountInfo,
         tooltip = L['Shows the mount a player is currently riding on their tooltip when holding shift.'],
         callback = function(checked)
             db.ShowMountInfo = checked
         end,
     })
-
-    -- Card 3: Backdrop
-    local backdropCard = page:Card(L['Backdrop'], 'all')
-    local bgRow = backdropCard:Row(rowH)
-    bgRow:ColorPicker(L['Background'], {
-        width = 1,
-        value = db.BackgroundColor,
-        callback = function(r, g, b, a)
-            db.BackgroundColor = { r, g, b, a }; ApplySettings()
-        end,
-    })
-
-    backdropCard:Separator()
-
-    local borderRow = backdropCard:Row(rowHL, 0)
-    borderRow:ColorPicker(L['Border'], {
-        width = 0.5,
-        value = db.BorderColor,
-        callback = function(r, g, b, a)
-            db.BorderColor = { r, g, b, a }; ApplySettings()
-        end,
-    })
-    borderRow:Checkbox(L['Item Quality Borders'], {
+    mountRow:Checkbox(L['Item Quality Borders'], {
         width = 0.5,
         value = db.ShowItemQualityBorder,
         tooltip = L['Color tooltip borders by item quality, falls back to the border color for everything else.'],
@@ -135,6 +113,9 @@ local function BuildGeneralSettingsTab(page, db)
             ApplySettings()
         end,
     })
+
+    -- Card 3: Backdrop
+    page:BackdropColorsCard({ db = db, title = L['Backdrop'], backdropKey = 'BackgroundColor', onChangeCallback = ApplySettings })
 end
 
 -- StatusBar Settings Tab.

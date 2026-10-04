@@ -65,7 +65,7 @@ function MM:CreateMicroBar()
     backdrop:SetFrameLevel(microBar:GetFrameLevel() - 1)
     backdrop:SetAllPoints(microBar)
     backdrop:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8" })
-    backdrop:SetBackdropColor(unpack(self.db.BackdropColor))
+    backdrop:SetBackdropColor(unpack(NRSKNUI:GetBackdropColor(self.db)))
     microBar.backdrop = backdrop
 
     local borderFrame = CreateFrame("Frame", nil, backdrop)
@@ -73,7 +73,7 @@ function MM:CreateMicroBar()
     borderFrame:SetFrameStrata("DIALOG")
     borderFrame:SetFrameLevel(microBar:GetFrameLevel() + 1)
     backdrop:NUIAddBorders()
-    backdrop:SetBorderColor(unpack(self.db.BackdropBorderColor))
+    backdrop:SetBorderColor(unpack(NRSKNUI:GetBorderColor(self.db, 'BackdropBorderColor')))
     backdrop:SetBorderParent(borderFrame)
     microBar.borderFrame = borderFrame
 
@@ -197,8 +197,8 @@ function MM:ApplySettings()
 
     if microBar.backdrop then
         microBar.backdrop:SetShown(self.db.ShowBackdrop)
-        microBar.backdrop:SetBackdropColor(unpack(self.db.BackdropColor))
-        local borderColor = self.db.BackdropBorderColor
+        microBar.backdrop:SetBackdropColor(unpack(NRSKNUI:GetBackdropColor(self.db)))
+        local borderColor = NRSKNUI:GetBorderColor(self.db, 'BackdropBorderColor')
         microBar.backdrop:SetBorderColor(borderColor[1], borderColor[2], borderColor[3], borderColor[4])
     end
 

@@ -144,8 +144,8 @@ function XPBar:ApplySettings()
     local pR, pG, pB, pA = NRSKNUI:GetAccentColor(self.db.ColorMode, self.db.StatusColor)
     local qR, qG, qB, qA = NRSKNUI:GetAccentColor(self.db.ColorModeQuest, self.db.QuestColor)
     local rR, rG, rB, rA = NRSKNUI:GetAccentColor(self.db.ColorModeRested, self.db.RestedColor)
-    local bgR, bgG, bgB, bgA = unpack(self.db.BackgroundColor)
-    local bR, bG, bB, bA = unpack(self.db.BorderColor)
+    local bgR, bgG, bgB, bgA = unpack(NRSKNUI:GetBackdropColor(self.db, 'BackgroundColor'))
+    local bR, bG, bB, bA = unpack(NRSKNUI:GetBorderColor(self.db))
     local tR, tG, tB, tA = unpack(self.db.TextColor)
 
     if self.db.ColorModeRested == 'theme' or self.db.ColorModeRested == 'class' then rA = 0.25 end -- Force 0.25 alpha for theme/class rested bar colors.
@@ -158,6 +158,7 @@ function XPBar:ApplySettings()
     -- Core frame settings
     self.coreFrame:NUISetPixelSize(width, height)
     self.coreFrame:NUIApplyPosition(self.db)
+    self.coreFrame:SetBackgroundTexture(NRSKNUI:GetBarBackground(self.db))
     self.coreFrame:SetBackgroundColor(bgR, bgG, bgB, bgA)
     self.coreFrame.borderFrame:SetBorderColor(bR, bG, bB, bA)
 

@@ -10,6 +10,10 @@ local format = string.format
 local unpack = unpack
 local C_Timer, GetTime = C_Timer, GetTime
 local UnitExists, UnitIsDeadOrGhost = UnitExists, UnitIsDeadOrGhost
+local UnitInRaid, UnitIsGroupAssistant = UnitInRaid, UnitIsGroupAssistant
+
+-- Blizzard's mainline frames have no assist atlas; this is the texture oUF's own assist element uses.
+local ASSIST_TEXTURE = [[Interface\GroupFrame\UI-Group-AssistantIcon]]
 
 local GROUP_UNITS = {}
 for _, unit in ipairs(UF.GroupUnits) do GROUP_UNITS[unit] = true end
@@ -43,6 +47,22 @@ local function ResTick()
     if not next(resActive) and resTicker then
         resTicker:Cancel()
         resTicker = nil
+    end
+end
+
+---oUF's leader element skips raid assists; a raid has one leader, so the two never compete.
+---@param element oUF.LeaderIndicator
+---@param isLeader boolean
+local function LeaderPostUpdate(element, isLeader)
+    if isLeader then return end
+
+    local unit = element.__owner.__unit
+    if not (unit and UnitInRaid(unit)) then return end
+
+    local isAssist = UnitIsGroupAssistant(unit)
+    if NRSKNUI:NotSecretValue(isAssist) and isAssist then
+        element:SetTexture(ASSIST_TEXTURE)
+        element:Show()
     end
 end
 
@@ -88,7 +108,7 @@ end
 ---@field label string display name, used by the GUI tabs and the page search index
 ---@field element string
 ---@field units? table<string, boolean> config keys it applies to, nil for every unit
----@field topLevel? string a UF.TopLevels key, when the icon needs a frame level of its own
+---@field layer? string UF.LayerElements key, nil draws on Status
 ---@field art UnitFramesIndicatorArt[] the first entry is what an unrecognized Texture falls back to
 ---@field configure? fun(tex: Texture, db: table) settings beyond size and position
 ---@field postUpdate? fun(element: Texture, ...) oUF PostUpdate, for filtering what the element shows
@@ -184,18 +204,19 @@ UF.IndicatorDefs = {
     },
     {
         key = 'Leader',
-        label = L['Leader Indicator'],
+        label = L['Leader / Assist'],
         element = 'LeaderIndicator',
         units = PLAYER_UNITS,
         art = {
             { key = 'Blizzard', label = L['Blizzard'], atlas = 'UI-HUD-UnitFrame-Player-Group-LeaderIcon' },
         },
+        postUpdate = LeaderPostUpdate,
     },
     {
         key = 'RaidIcon',
         label = L['Raid Icon'],
         element = 'RaidTargetIndicator',
-        topLevel = 'RaidMark',
+        layer = 'RaidMark',
         art = {
             { key = 'Blizzard', label = L['Blizzard'], texture = [[Interface\TargetingFrame\UI-RaidTargetingIcons]], coords = { 0, 0.25, 0, 0.25 } },
         },
@@ -278,17 +299,17 @@ UF.Elements.Indicators = {
         local container = CreateFrame('Frame', nil, self)
         container:NUISetPixelPoint('TOPLEFT', self, 'TOPLEFT', 0, 0)
         container:NUISetPixelPoint('BOTTOMRIGHT', self, 'BOTTOMRIGHT', 0, 0)
-        container:SetFrameLevel(UF.TopLevels.Status)
         container:SetFrameStrata('MEDIUM')
         self.IndicatorContainer = container
+        self.nuiIndicatorHosts = {}
 
         for _, def in ipairs(UF.UnitIndicators(unit)) do
             local parent = container
 
-            if def.topLevel then
+            if def.layer then
                 parent = CreateFrame('Frame', nil, self)
                 parent:SetAllPoints()
-                parent:SetFrameLevel(UF.TopLevels[def.topLevel])
+                self.nuiIndicatorHosts[def.layer] = parent
             end
 
             local tex = parent:CreateTexture(nil, 'OVERLAY')

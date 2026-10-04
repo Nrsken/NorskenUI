@@ -42,7 +42,7 @@ local function UpdateMenuDivider(frame)
     local divider = attachments and attachments[#attachments] -- frame.divider is set after this hook
     if not divider then return end
 
-    local border = Skinning.db.General.BorderColor
+    local border = NRSKNUI:GetBorderColor(Skinning.db.General)
     divider:SetVertexColor(border[1], border[2], border[3], border[4]) -- tinted, its soft edges carry the row spacing
 end
 

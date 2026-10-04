@@ -75,7 +75,7 @@ local function BuildGeneralSettingsTab(page, db)
         end,
     })
 
-    local textureRow = barCard:Row(rowH)
+    local textureRow = barCard:Row(rowHL, 0)
     textureRow:Checkbox(L['Use Global Bar'], {
         width = 0.5,
         value = db.UseGlobalBar ~= false,
@@ -96,21 +96,7 @@ local function BuildGeneralSettingsTab(page, db)
         end,
     })
 
-    local barColorRow = barCard:Row(rowHL, 0)
-    barColorRow:ColorPicker(L['Background'], {
-        width = 0.5,
-        value = db.BackdropColor,
-        callback = function(r, g, b, a)
-            db.BackdropColor = { r, g, b, a }; ApplySettings()
-        end,
-    })
-    barColorRow:ColorPicker(L['Border'], {
-        width = 0.5,
-        value = db.BorderColor,
-        callback = function(r, g, b, a)
-            db.BorderColor = { r, g, b, a }; ApplySettings()
-        end,
-    })
+    page:BackdropColorsCard({ db = db, onChangeCallback = ApplySettings })
 
     page:SparkSettingsCard({
         title = L['Spark'],

@@ -167,22 +167,7 @@ end
 local function BuildStyleTab(page, index, bgDB)
     page:SetCondition('backdrop', function() return bgDB.Enabled end)
 
-    local colorCard = page:Card(L['Colors'], 'backdrop')
-    local colorRow = colorCard:Row(rowHL, 0)
-    colorRow:ColorPicker(L['Backdrop Color'], {
-        width = 0.5,
-        value = bgDB.BackgroundColor,
-        callback = function(r, g, b, a)
-            bgDB.BackgroundColor = { r, g, b, a }; Apply(index)
-        end,
-    })
-    colorRow:ColorPicker(L['Border Color'], {
-        width = 0.5,
-        value = bgDB.BorderColor,
-        callback = function(r, g, b, a)
-            bgDB.BorderColor = { r, g, b, a }; Apply(index)
-        end,
-    })
+    page:BackdropColorsCard({ db = bgDB, backdropKey = 'BackgroundColor', onChangeCallback = function() Apply(index) end }, 'backdrop')
 end
 
 -- Position Settings Tab.

@@ -8,6 +8,7 @@
 ---@field CDMLayoutCache NRSKNUI.DBGlobal.CDMLayoutCache
 ---@field GUIState NRSKNUI.DBGlobal.GUIState
 ---@field GlobalProfile string
+---@field SidebarCollapsed NRSKNUI.DBGlobal.SidebarCollapsed
 ---@field SpellAlertCVars table<string, string?>
 ---@field UseGlobalProfile boolean
 ---@field XPTable NRSKNUI.DBGlobal.XPTable
@@ -28,6 +29,9 @@
 ---@field width nil
 ---@field xOffset nil
 ---@field yOffset nil
+
+---@class NRSKNUI.DBGlobal.SidebarCollapsed
+---@field [string] any
 
 ---@class NRSKNUI.DBGlobal.XPTable
 ---@field [string] any
@@ -247,6 +251,8 @@
 ---@field TextSeparator string
 ---@field TextTimer string
 ---@field TimeFormat string
+---@field UseGlobalBackdrop boolean
+---@field UseGlobalBorder boolean
 ---@field UseGlobalFont boolean
 ---@field anchorFrameType string
 
@@ -287,7 +293,9 @@
 ---@field Position NRSKNUI.DBProfile.BigWigsTimers.Bars.Position
 ---@field StatusBarTexture string
 ---@field Strata string
+---@field UseGlobalBackdrop boolean
 ---@field UseGlobalBar boolean
+---@field UseGlobalBorder boolean
 ---@field UseGlobalFont boolean
 ---@field Width number
 ---@field anchorFrameType string
@@ -638,6 +646,8 @@
 ---@field Position NRSKNUI.DBProfile.CombatTimer.Position
 ---@field PrintEnd boolean
 ---@field Strata string
+---@field UseGlobalBackdrop boolean
+---@field UseGlobalBorder boolean
 ---@field UseGlobalFont boolean
 ---@field anchorFrameType string
 
@@ -683,7 +693,9 @@
 ---@field Strata string
 ---@field Target NRSKNUI.DBProfile.DungeonCasts.Target
 ---@field TextColor table
+---@field UseGlobalBackdrop boolean
 ---@field UseGlobalBar boolean
+---@field UseGlobalBorder boolean
 ---@field UseGlobalFont boolean
 ---@field UseGlobalSpark boolean
 ---@field Width number
@@ -970,7 +982,9 @@
 ---@field TargetMarker NRSKNUI.DBProfile.Miscellaneous.FocusCastbar.TargetMarker
 ---@field TargetNames NRSKNUI.DBProfile.Miscellaneous.FocusCastbar.TargetNames
 ---@field TextColor table
+---@field UseGlobalBackdrop boolean
 ---@field UseGlobalBar boolean
+---@field UseGlobalBorder boolean
 ---@field UseGlobalFont boolean
 ---@field UseGlobalSpark boolean
 ---@field Width number
@@ -1109,7 +1123,9 @@
 ---@field SpeedText NRSKNUI.DBProfile.Miscellaneous.SkyRiding.SpeedText
 ---@field StatusBarTexture string
 ---@field Strata string
+---@field UseGlobalBackdrop boolean
 ---@field UseGlobalBar boolean
+---@field UseGlobalBorder boolean
 ---@field Vigor NRSKNUI.DBProfile.Miscellaneous.SkyRiding.Vigor
 ---@field WhirlingSurge NRSKNUI.DBProfile.Miscellaneous.SkyRiding.WhirlingSurge
 ---@field Width number
@@ -1215,7 +1231,9 @@
 ---@field StatusColor table
 ---@field Strata string
 ---@field TextColor table
+---@field UseGlobalBackdrop boolean
 ---@field UseGlobalBar boolean
+---@field UseGlobalBorder boolean
 ---@field UseGlobalFont boolean
 ---@field anchorFrameType string
 ---@field height number
@@ -1427,6 +1445,7 @@
 ---@field Position NRSKNUI.DBProfile.MissingBuffs.Groups.Raid.Position
 ---@field Strata string
 ---@field TimerText NRSKNUI.DBProfile.MissingBuffs.Groups.Raid.TimerText
+---@field UseGlobalBorder boolean
 ---@field UseGlobalFont boolean
 ---@field anchorFrameType string
 
@@ -1481,6 +1500,7 @@
 ---@field Position NRSKNUI.DBProfile.MissingBuffs.Groups.Targeted.Position
 ---@field Strata string
 ---@field TimerText NRSKNUI.DBProfile.MissingBuffs.Groups.Targeted.TimerText
+---@field UseGlobalBorder boolean
 ---@field UseGlobalFont boolean
 ---@field anchorFrameType string
 
@@ -1825,6 +1845,8 @@
 ---@field TextPositions NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar1.TextPositions
 ---@field TextVisibility NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar1.TextVisibility
 ---@field TotalButtons number
+---@field UseGlobalBackdrop boolean
+---@field UseGlobalBorder boolean
 
 ---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar1.FontSizes
 ---@field [string] any
@@ -1886,6 +1908,8 @@
 ---@field TextPositions NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar2.TextPositions
 ---@field TextVisibility NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar2.TextVisibility
 ---@field TotalButtons number
+---@field UseGlobalBackdrop boolean
+---@field UseGlobalBorder boolean
 
 ---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar2.FontSizes
 ---@field [string] any
@@ -1947,6 +1971,8 @@
 ---@field TextPositions NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar3.TextPositions
 ---@field TextVisibility NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar3.TextVisibility
 ---@field TotalButtons number
+---@field UseGlobalBackdrop boolean
+---@field UseGlobalBorder boolean
 
 ---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar3.FontSizes
 ---@field [string] any
@@ -2008,6 +2034,8 @@
 ---@field TextPositions NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar4.TextPositions
 ---@field TextVisibility NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar4.TextVisibility
 ---@field TotalButtons number
+---@field UseGlobalBackdrop boolean
+---@field UseGlobalBorder boolean
 
 ---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar4.FontSizes
 ---@field [string] any
@@ -2069,6 +2097,8 @@
 ---@field TextPositions NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar5.TextPositions
 ---@field TextVisibility NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar5.TextVisibility
 ---@field TotalButtons number
+---@field UseGlobalBackdrop boolean
+---@field UseGlobalBorder boolean
 
 ---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar5.FontSizes
 ---@field [string] any
@@ -2130,6 +2160,8 @@
 ---@field TextPositions NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar6.TextPositions
 ---@field TextVisibility NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar6.TextVisibility
 ---@field TotalButtons number
+---@field UseGlobalBackdrop boolean
+---@field UseGlobalBorder boolean
 
 ---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar6.FontSizes
 ---@field [string] any
@@ -2191,6 +2223,8 @@
 ---@field TextPositions NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar7.TextPositions
 ---@field TextVisibility NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar7.TextVisibility
 ---@field TotalButtons number
+---@field UseGlobalBackdrop boolean
+---@field UseGlobalBorder boolean
 
 ---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar7.FontSizes
 ---@field [string] any
@@ -2252,6 +2286,8 @@
 ---@field TextPositions NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar8.TextPositions
 ---@field TextVisibility NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar8.TextVisibility
 ---@field TotalButtons number
+---@field UseGlobalBackdrop boolean
+---@field UseGlobalBorder boolean
 
 ---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.Bar8.FontSizes
 ---@field [string] any
@@ -2312,6 +2348,8 @@
 ---@field TextPositions NRSKNUI.DBProfile.Skinning.ActionBars.Bars.PetBar.TextPositions
 ---@field TextVisibility NRSKNUI.DBProfile.Skinning.ActionBars.Bars.PetBar.TextVisibility
 ---@field TotalButtons number
+---@field UseGlobalBackdrop boolean
+---@field UseGlobalBorder boolean
 
 ---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.PetBar.FontSizes
 ---@field [string] any
@@ -2372,6 +2410,8 @@
 ---@field TextPositions NRSKNUI.DBProfile.Skinning.ActionBars.Bars.StanceBar.TextPositions
 ---@field TextVisibility NRSKNUI.DBProfile.Skinning.ActionBars.Bars.StanceBar.TextVisibility
 ---@field TotalButtons number
+---@field UseGlobalBackdrop boolean
+---@field UseGlobalBorder boolean
 
 ---@class NRSKNUI.DBProfile.Skinning.ActionBars.Bars.StanceBar.FontSizes
 ---@field [string] any
@@ -2497,6 +2537,8 @@
 ---@field DisabledColor table
 ---@field HighlightColor table
 ---@field PanelColor table
+---@field UseGlobalBackdrop boolean
+---@field UseGlobalBorder boolean
 ---@field WidgetBackgroundColor table
 ---@field WidgetBorderColor table
 ---@field WidgetGlowColor table
@@ -2585,11 +2627,15 @@
 ---@field BorderColor table
 ---@field Color table
 ---@field Enabled boolean
+---@field UseGlobalBackdrop boolean
+---@field UseGlobalBorder boolean
 
 ---@class NRSKNUI.DBProfile.Skinning.Chatv2.EditBox
 ---@field [string] any
 ---@field BackdropColor table
 ---@field BorderColor table
+---@field UseGlobalBackdrop boolean
+---@field UseGlobalBorder boolean
 
 ---@class NRSKNUI.DBProfile.Skinning.Chatv2.FontShadow
 ---@field [string] any
@@ -2610,6 +2656,8 @@
 ---@field BorderColor table
 ---@field Color table
 ---@field Enabled boolean
+---@field UseGlobalBackdrop boolean
+---@field UseGlobalBorder boolean
 
 ---@class NRSKNUI.DBProfile.Skinning.Chatv2.TabSelectedTextColor
 ---@field [string] any
@@ -2658,6 +2706,8 @@
 ---@field Position NRSKNUI.DBProfile.Skinning.MicroMenu.Position
 ---@field ShowBackdrop boolean
 ---@field Strata string
+---@field UseGlobalBackdrop boolean
+---@field UseGlobalBorder boolean
 ---@field anchorFrameType string
 
 ---@class NRSKNUI.DBProfile.Skinning.MicroMenu.Mouseover
@@ -2785,7 +2835,9 @@
 ---@field StatusBarTexture string
 ---@field TextSize number
 ---@field TextSmallSize number
+---@field UseGlobalBackdrop boolean
 ---@field UseGlobalBar boolean
+---@field UseGlobalBorder boolean
 ---@field UseGlobalFont boolean
 
 ---@class NRSKNUI.DBProfile.Skinning.Tooltips.FontShadow
@@ -2885,6 +2937,7 @@
 ---@field ForegroundAlphaWhenColorByClass number
 ---@field HealAbsorb NRSKNUI.DBProfile.UnitFrames.General.HealAbsorb
 ---@field Highlight NRSKNUI.DBProfile.UnitFrames.General.Highlight
+---@field Layers NRSKNUI.DBProfile.UnitFrames.General.Layers
 ---@field Range NRSKNUI.DBProfile.UnitFrames.General.Range
 ---@field SafeZone NRSKNUI.DBProfile.UnitFrames.General.SafeZone
 ---@field Smooth boolean
@@ -2912,7 +2965,6 @@
 ---@field [string] any
 ---@field Color table
 ---@field Enabled boolean
----@field Layer number
 ---@field StatusBarTexture string
 ---@field UseGlobalBar boolean
 
@@ -2924,7 +2976,7 @@
 ---@field Enabled boolean
 ---@field IconPosition NRSKNUI.DBProfile.UnitFrames.General.Dispel.IconPosition
 ---@field IconSize number
----@field Layer number
+---@field IgnoreTypes NRSKNUI.DBProfile.UnitFrames.General.Dispel.IgnoreTypes
 ---@field ShowIcon boolean
 ---@field ShowWithoutDispelType boolean
 ---@field Source string
@@ -2937,11 +2989,13 @@
 ---@field XOffset number
 ---@field YOffset number
 
+---@class NRSKNUI.DBProfile.UnitFrames.General.Dispel.IgnoreTypes
+---@field [string] any
+
 ---@class NRSKNUI.DBProfile.UnitFrames.General.HealAbsorb
 ---@field [string] any
 ---@field Color table
 ---@field Enabled boolean
----@field Layer number
 ---@field StatusBarTexture string
 ---@field UseGlobalBar boolean
 
@@ -2951,6 +3005,24 @@
 ---@field Enabled boolean
 ---@field StatusBarTexture string
 ---@field UseGlobalBar boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.General.Layers
+---@field [string] any
+---@field Border number
+---@field Buffs number
+---@field Castbar number
+---@field DamageAbsorb number
+---@field Debuffs number
+---@field Defensives number
+---@field Dispel number
+---@field HealAbsorb number
+---@field Highlight number
+---@field IndicatorIcons number
+---@field IndicatorTints number
+---@field Power number
+---@field RaidMark number
+---@field Status number
+---@field Tags number
 
 ---@class NRSKNUI.DBProfile.UnitFrames.General.Range
 ---@field [string] any
@@ -3185,6 +3257,7 @@
 ---@field [string] any
 ---@field Buffs NRSKNUI.DBProfile.UnitFrames.Units.party.Auras.Buffs
 ---@field Debuffs NRSKNUI.DBProfile.UnitFrames.Units.party.Auras.Debuffs
+---@field Defensives NRSKNUI.DBProfile.UnitFrames.Units.party.Auras.Defensives
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Auras.Buffs
 ---@field [string] any
@@ -3225,6 +3298,10 @@
 ---@field [string] any
 ---@field Preset string
 ---@field Type string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Auras.Defensives
+---@field [string] any
+---@field Enabled boolean
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Castbar
 ---@field [string] any
@@ -3302,7 +3379,18 @@
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Power
 ---@field [string] any
+---@field Classes NRSKNUI.DBProfile.UnitFrames.Units.party.Power.Classes
 ---@field Enabled boolean
+---@field Roles NRSKNUI.DBProfile.UnitFrames.Units.party.Power.Roles
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Power.Classes
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Power.Roles
+---@field [string] any
+---@field DAMAGER boolean
+---@field HEALER boolean
+---@field TANK boolean
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.party.Tags
 ---@field [string] any
@@ -3568,6 +3656,7 @@
 ---@field [string] any
 ---@field Buffs NRSKNUI.DBProfile.UnitFrames.Units.raid1.Auras.Buffs
 ---@field Debuffs NRSKNUI.DBProfile.UnitFrames.Units.raid1.Auras.Debuffs
+---@field Defensives NRSKNUI.DBProfile.UnitFrames.Units.raid1.Auras.Defensives
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Auras.Buffs
 ---@field [string] any
@@ -3608,6 +3697,10 @@
 ---@field [string] any
 ---@field Preset string
 ---@field Type string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Auras.Defensives
+---@field [string] any
+---@field Enabled boolean
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Castbar
 ---@field [string] any
@@ -3690,7 +3783,18 @@
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Power
 ---@field [string] any
+---@field Classes NRSKNUI.DBProfile.UnitFrames.Units.raid1.Power.Classes
 ---@field Enabled boolean
+---@field Roles NRSKNUI.DBProfile.UnitFrames.Units.raid1.Power.Roles
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Power.Classes
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Power.Roles
+---@field [string] any
+---@field DAMAGER boolean
+---@field HEALER boolean
+---@field TANK boolean
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.raid1.Tags
 ---@field [string] any
@@ -3753,6 +3857,7 @@
 ---@field [string] any
 ---@field Buffs NRSKNUI.DBProfile.UnitFrames.Units.raid2.Auras.Buffs
 ---@field Debuffs NRSKNUI.DBProfile.UnitFrames.Units.raid2.Auras.Debuffs
+---@field Defensives NRSKNUI.DBProfile.UnitFrames.Units.raid2.Auras.Defensives
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Auras.Buffs
 ---@field [string] any
@@ -3793,6 +3898,10 @@
 ---@field [string] any
 ---@field Preset string
 ---@field Type string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Auras.Defensives
+---@field [string] any
+---@field Enabled boolean
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Castbar
 ---@field [string] any
@@ -3875,7 +3984,18 @@
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Power
 ---@field [string] any
+---@field Classes NRSKNUI.DBProfile.UnitFrames.Units.raid2.Power.Classes
 ---@field Enabled boolean
+---@field Roles NRSKNUI.DBProfile.UnitFrames.Units.raid2.Power.Roles
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Power.Classes
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Power.Roles
+---@field [string] any
+---@field DAMAGER boolean
+---@field HEALER boolean
+---@field TANK boolean
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.raid2.Tags
 ---@field [string] any
@@ -3938,6 +4058,7 @@
 ---@field [string] any
 ---@field Buffs NRSKNUI.DBProfile.UnitFrames.Units.raid3.Auras.Buffs
 ---@field Debuffs NRSKNUI.DBProfile.UnitFrames.Units.raid3.Auras.Debuffs
+---@field Defensives NRSKNUI.DBProfile.UnitFrames.Units.raid3.Auras.Defensives
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Auras.Buffs
 ---@field [string] any
@@ -3978,6 +4099,10 @@
 ---@field [string] any
 ---@field Preset string
 ---@field Type string
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Auras.Defensives
+---@field [string] any
+---@field Enabled boolean
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Castbar
 ---@field [string] any
@@ -4060,7 +4185,18 @@
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Power
 ---@field [string] any
+---@field Classes NRSKNUI.DBProfile.UnitFrames.Units.raid3.Power.Classes
 ---@field Enabled boolean
+---@field Roles NRSKNUI.DBProfile.UnitFrames.Units.raid3.Power.Roles
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Power.Classes
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Power.Roles
+---@field [string] any
+---@field DAMAGER boolean
+---@field HEALER boolean
+---@field TANK boolean
 
 ---@class NRSKNUI.DBProfile.UnitFrames.Units.raid3.Tags
 ---@field [string] any
@@ -4260,6 +4396,7 @@
 ---@field durationSingleColor boolean
 ---@field durationSingleColorValue table
 ---@field profileBar NRSKNUI.DBProfile.globalMedia.profileBar
+---@field profileBorder NRSKNUI.DBProfile.globalMedia.profileBorder
 ---@field profileBreakPoints NRSKNUI.DBProfile.globalMedia.profileBreakPoints
 ---@field profileColorBreakPoint NRSKNUI.DBProfile.globalMedia.profileColorBreakPoint
 ---@field profileColorCurve NRSKNUI.DBProfile.globalMedia.profileColorCurve
@@ -4367,8 +4504,12 @@
 
 ---@class NRSKNUI.DBProfile.globalMedia.profileBar
 ---@field [string] any
----@field Enabled boolean
 ---@field statusBar string
+
+---@class NRSKNUI.DBProfile.globalMedia.profileBorder
+---@field [string] any
+---@field BackdropColor table
+---@field BorderColor table
 
 ---@class NRSKNUI.DBProfile.globalMedia.profileBreakPoints
 ---@field [string] any
@@ -4429,7 +4570,6 @@
 
 ---@class NRSKNUI.DBProfile.globalMedia.profileSpark
 ---@field [string] any
----@field Enabled boolean
 ---@field Scale number
 ---@field Width number
 ---@field color table

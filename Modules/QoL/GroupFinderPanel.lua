@@ -9,6 +9,7 @@ local Skinning = NRSKNUI:GetModule('Skinning')
 
 local _G = _G
 local GetTime = GetTime
+local GetNumSubgroupMembers = GetNumSubgroupMembers
 local format = string.format
 local CreateFrame = CreateFrame
 local ipairs, next, type = ipairs, next, type
@@ -83,6 +84,8 @@ local FILTER_LABELS = {
     noMySpec = { L['No Duplicate Class'], L['Hides groups that already contain your class.'] },
     notDeclined = { L['Not Declined'], L['Hides groups that declined your application this session.'] },
 }
+-- needsRole reads as this while grouped, the filter then checks the whole party's roles.
+local GROUP_FIT_LABELS = { L['Group Fit'], L['Only groups with open slots for every role in your group.'] }
 local FILTER_HEIGHT = 22
 local FILTER_PITCH = 26
 
@@ -261,7 +264,7 @@ end
 
 function GroupFinder:GetPanelColors()
     if Skinning then
-        return Skinning.db.General.BackgroundColor, Skinning.db.General.BorderColor
+        return NRSKNUI:GetBackdropColor(Skinning.db.General, 'BackgroundColor'), NRSKNUI:GetBorderColor(Skinning.db.General)
     end
     return Theme.bgDark, Theme.border
 end
@@ -609,6 +612,13 @@ function GroupFinder:RefreshPanel()
     for key, button in next, panel.filterButtons do
         button:SetSelected(self.filters[key] == true)
     end
+
+    local needsRole = panel.filterButtons.needsRole
+    local labels = GetNumSubgroupMembers() > 0 and GROUP_FIT_LABELS or FILTER_LABELS.needsRole
+    needsRole:SetLabel(labels[1])
+    -- The required role can differ from the current spec's, so the tooltip names it.
+    local required = self:GetNeededRoleNames()
+    needsRole:SetTooltip(labels[1], required and format('%s\n\n%s', labels[2], format(L['Requires: %s'], required)) or labels[2])
 
     panel.SortDropdown:SetValue(self.db.SortBy, true)
     panel.SortDirection.icon:SetRotation(rad(self.db.SortDescending and 0 or 180))

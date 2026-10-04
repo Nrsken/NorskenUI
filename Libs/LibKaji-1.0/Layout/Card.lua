@@ -8,6 +8,8 @@
   CreateCard/CreateRow directly, so widgets are tracked, gated and reflowed for you.
 * Both are pooled widgets. Releasing a card releases its rows, and releasing a row
   releases its widgets, so tearing down a page reclaims the whole tree (see Pool.lua).
+* A collapsible section's rows go into a clipping body whose height animates on toggle, so the
+  rows below it slide instead of jumping.
 
 ## Example
 
@@ -28,10 +30,17 @@ local ipairs = ipairs
 local wipe = wipe
 local tinsert = table.insert
 local abs = math.abs
+local floor, max, min = math.floor, math.max, math.min
+local pi = math.pi
+local pairs = pairs
+local safecall = lib.safecall
 
 local CARD_TYPE = "Card"
 local ROW_TYPE = "Row"
 local HEADER_HEIGHT = 32
+local STRIPE_ALPHA = 0.05
+local EXPAND_DURATION = 0.2
+local COLLAPSE_DURATION = 0.15
 
 -- Card --
 
@@ -40,6 +49,8 @@ local HEADER_HEIGHT = 32
 ---@field content Frame
 ---@field header Frame|BackdropTemplate
 ---@field titleText FontString
+---@field corners Frame holds the accent corner ticks, kept above the header band
+---@field cornerTicks Texture[]
 ---@field headerHeight number
 ---@field contentHeight number
 ---@field rows table
@@ -48,7 +59,143 @@ local HEADER_HEIGHT = 32
 ---@field _onHeightChanged? fun(card: KajiGUICard) set by the card stack, for rows that resize themselves
 ---@field _enabledHandler? fun(enabled: boolean) see FluentCard:SetEnabledHandler
 ---@field _yOffset number
+---@field _body? Frame the section body new rows go into, between BeginBody and EndBody
+---@field _bodies Frame[] pooled section bodies
+---@field _anims table<any, table> [section key] = { p, from, to, t, duration, onDone?, header? }
+---@field _driver? Frame steps the section animations
 local CardMixin = {}
+
+-- Section bodies --
+
+---How far open a section is, 0 closed .. 1 open.
+---@param key any
+---@return number
+function CardMixin:GetSectionProgress(key)
+    local anim = self._anims[key]
+    return anim and anim.p or 1
+end
+
+---@param key any
+---@return table? anim
+function CardMixin:GetSectionAnim(key)
+    return self._anims[key]
+end
+
+---Lays a body's rows out and sizes the body to the open part of them, then reflows the card.
+---@param body Frame
+local function RelayoutBody(body)
+    local card = body._owner
+    local pad = card.gui.theme.paddingSmall
+    local y = 0
+    for _, row in ipairs(body.rows) do
+        local offset = y + (row._layoutOffsetY or 0)
+        row:ClearAllPoints()
+        pixel.SetPixelPoint(row, "TOPLEFT", body, "TOPLEFT", 0, -offset)
+        pixel.SetPixelPoint(row, "TOPRIGHT", body, "TOPRIGHT", 0, -offset)
+        y = y + (row._layoutHeight or 24) + (row._layoutSpacing or pad)
+    end
+
+    local height = floor(y * card:GetSectionProgress(body._key) + 0.5)
+    body._layoutHeight = height
+    pixel.SetPixelHeight(body, max(height, 1))
+    body:SetShown(height > 0)
+    card:Relayout()
+end
+
+-- A body stands in for the card to the rows inside it: they reflow it, and it passes that on.
+local BodyMixin = {}
+
+function BodyMixin:Relayout()
+    RelayoutBody(self)
+end
+
+function BodyMixin:_onHeightChanged()
+    local card = self._owner
+    if card._onHeightChanged then card._onHeightChanged(card) end
+end
+
+---Starts a section body: rows added until EndBody are clipped to how far the section is open.
+---@param key any the section's key, stable across rebuilds
+function CardMixin:BeginBody(key)
+    self:EndBody()
+
+    local body
+    for _, b in ipairs(self._bodies) do
+        if not b._inUse then body = b break end
+    end
+    if not body then
+        body = Mixin(CreateFrame("Frame", nil, self.content), BodyMixin)
+        body:SetClipsChildren(true)
+        body._owner = self
+        body.rows = {}
+        self._bodies[#self._bodies + 1] = body
+    end
+
+    body._inUse = true
+    body._key = key
+    body._isBody = true
+    body:SetParent(self.content)
+    body:Show()
+    self:AddRow(body, 1, 0)
+    self._body = body
+    RelayoutBody(body)
+end
+
+function CardMixin:EndBody()
+    self._body = nil
+end
+
+---Eases a section's body open or shut, then calls onDone; reversing mid-way starts from where it is.
+---@param key any
+---@param to 0|1
+---@param onDone? fun()
+---@return table anim
+function CardMixin:AnimateSection(key, to, onDone)
+    local running = self._anims[key]
+    local from = running and running.p or (to == 1 and 0 or 1)
+    local anim = {
+        p = from,
+        from = from,
+        to = to,
+        t = 0,
+        duration = to == 1 and EXPAND_DURATION or COLLAPSE_DURATION,
+        onDone = onDone,
+        header = running and running.header,
+    }
+    self._anims[key] = anim
+
+    if not self._driver then
+        self._driver = CreateFrame("Frame", nil, self)
+    end
+    self._driver:SetScript("OnUpdate", function(_, elapsed) self:StepSections(elapsed) end)
+    return anim
+end
+
+---@param elapsed number
+function CardMixin:StepSections(elapsed)
+    local finished, running = {}, false
+    for key, anim in pairs(self._anims) do
+        anim.t = min(anim.t + elapsed, anim.duration)
+        local x = anim.t / anim.duration
+        -- Opening eases out (decelerates), closing eases in (accelerates).
+        local eased = anim.to > anim.from and (1 - (1 - x) ^ 3) or x * x
+        anim.p = anim.from + (anim.to - anim.from) * eased
+        if anim.header then anim.header.arrow:SetRotation((1 - anim.p) * pi / 2) end
+        if x >= 1 then finished[#finished + 1] = key else running = true end
+    end
+
+    for _, body in ipairs(self._bodies) do
+        if body._inUse and self._anims[body._key] then RelayoutBody(body) end
+    end
+    if self._onHeightChanged then self._onHeightChanged(self) end
+
+    if not running then self._driver:SetScript("OnUpdate", nil) end
+    for _, key in ipairs(finished) do
+        local anim = self._anims[key]
+        self._anims[key] = nil
+        if anim.onDone then safecall(anim.onDone) end
+    end
+end
 
 ---Re-anchors every entry in the vertical flow from the top, using the height each one was added
 ---with. Cheap enough to be the single layout path: a card holds a handful of rows.
@@ -75,13 +222,15 @@ end
 ---@param spacing? number trailing spacing; pass 0 for the last row
 ---@return Frame
 function CardMixin:AddRow(widget, height, spacing)
-    widget:SetParent(self.content)
-    widget._card = self
+    local body = self._body
+    local host = body or self
+    widget:SetParent(body or self.content)
+    widget._card = host
     widget._layoutHeight = height or widget:GetHeight() or 24
     widget._layoutSpacing = spacing or self.gui.theme.paddingSmall
 
-    tinsert(self.rows, widget)
-    self:Relayout()
+    tinsert(host.rows, widget)
+    host:Relayout()
 
     return widget
 end
@@ -103,9 +252,19 @@ function CardMixin:Reset()
     for _, row in ipairs(self.rows) do
         -- Cut the link back to us first: a discarded row must not reflow the card we are rebuilding.
         row._card = nil
-        self.gui:ReleaseWidget(row)
+        if not row._isBody then self.gui:ReleaseWidget(row) end
     end
     wipe(self.rows)
+    for _, body in ipairs(self._bodies) do
+        for _, row in ipairs(body.rows) do
+            row._card = nil
+            self.gui:ReleaseWidget(row)
+        end
+        wipe(body.rows)
+        body._inUse = false
+        body:Hide()
+    end
+    self._body = nil
 
     self.currentY = 0
     self.contentHeight = 0
@@ -127,6 +286,11 @@ function CardMixin:SetEnabled(enabled)
     if self._enabledHandler then self._enabledHandler(enabled) end
 end
 
+---@param title string
+function CardMixin:SetTitle(title)
+    self.titleText:SetText(title)
+end
+
 ---Y position the next card in a stack should start at.
 ---@return number
 function CardMixin:GetNextOffset()
@@ -140,6 +304,9 @@ function CardMixin:UpdateColors()
     lib.RefreshBackdrop(self)
     lib.RefreshBackdrop(self.header)
     self.titleText:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
+    for _, tick in ipairs(self.cornerTicks) do
+        tick:SetColorTexture(theme.accent[1], theme.accent[2], theme.accent[3], theme.cardCornerAlpha)
+    end
 end
 
 ---@param parent Frame
@@ -183,6 +350,8 @@ function CardMixin:OnAcquire(parent, title, config)
     self:SetAlpha(1)
     self.header:SetAlpha(1)
     self.titleText:SetAlpha(1)
+    -- Reparenting resets levels, so the ticks are lifted above the header band on every acquire.
+    self.corners:SetFrameLevel(self.header:GetFrameLevel() + 1)
     self:UpdateColors()
     self:UpdateHeight()
     self:Show()
@@ -190,6 +359,8 @@ end
 
 function CardMixin:OnRelease()
     self:Reset()
+    wipe(self._anims)
+    if self._driver then self._driver:SetScript("OnUpdate", nil) end
     self._onHeightChanged = nil
     self._enabledHandler = nil
     self._hasInternalWidgetState = nil
@@ -209,6 +380,8 @@ lib:RegisterWidgetType(CARD_TYPE, function(gui)
     card.gui = gui
     card.contentHeight = 0
     card.rows = {}
+    card._bodies = {}
+    card._anims = {}
     card.currentY = 0
     card.headerHeight = 0
     card._yOffset = 0
@@ -230,6 +403,32 @@ lib:RegisterWidgetType(CARD_TYPE, function(gui)
     content:EnableMouse(false)
     card.content = content
 
+    -- Body only: a second grain layer on the header band read as noise.
+    lib.AddSurfaceTexture(card, gui)
+
+    -- Own frame above the header band, which would otherwise cover the top-left ticks.
+    local corners = CreateFrame("Frame", nil, card)
+    corners:SetAllPoints()
+    corners:EnableMouse(false)
+    card.corners = corners
+
+    local length, edge = theme.cardCornerLength, theme.borderSize
+    local function Tick(point, w, h)
+        local t = corners:CreateTexture(nil, "OVERLAY")
+        pixel.SetPixelSize(t, w, h)
+        pixel.SetPixelPoint(t, point, card, point, 0, 0)
+        pixel.SetPixelSnap(t)
+        return t
+    end
+    card.cornerTicks = {
+        Tick("TOPLEFT", length, edge), Tick("TOPLEFT", edge, length),
+        Tick("BOTTOMRIGHT", length, edge), Tick("BOTTOMRIGHT", edge, length),
+    }
+
+    -- Highlight on the corners frame so the header band never covers it.
+    lib.AddTopSheen(header, gui)
+    lib.AddTopHighlight(corners, gui, "ARTWORK")
+
     return Mixin(card, CardMixin)
 end)
 
@@ -249,6 +448,8 @@ end
 ---@field gui KajiGUIInstance
 ---@field widgets table
 ---@field _rowHeight number
+---@field _indent number left inset before the first widget
+---@field _divider? Texture the bottom rule SetDivider shows
 ---@field _card? KajiGUICard set when the row is added to a card
 local RowMixin = {}
 
@@ -269,6 +470,20 @@ function RowMixin:SetContentHeight(height)
 
     card:Relayout()
     if card._onHeightChanged then card._onHeightChanged(card) end
+end
+
+---SetContentHeight for several self-sizing widgets side by side; the row takes the tallest.
+---@param widget Frame
+---@param height number
+function RowMixin:SetWidgetHeight(widget, height)
+    self._widgetHeights = self._widgetHeights or {}
+    self._widgetHeights[widget] = height
+
+    local tallest = 0
+    for _, h in pairs(self._widgetHeights) do
+        if h > tallest then tallest = h end
+    end
+    self:SetContentHeight(tallest)
 end
 
 ---Adds a widget at a relative width. Widths in a row should sum to 1.0.
@@ -306,7 +521,8 @@ function RowMixin:LayoutWidgets(width)
     if not width or width <= 0 then return end
 
     local pad = self.gui.theme.paddingSmall
-    local x = 0
+    local x = self._indent
+    width = width - x
     local count = #self.widgets
 
     for i, widget in ipairs(self.widgets) do
@@ -324,9 +540,10 @@ end
 
 ---@param parent Frame
 ---@param _ any unused; Row takes (parent, config)
----@param config table `{ height?: number }`
+---@param config table `{ height?: number, indent?: number }`
 function RowMixin:OnAcquire(parent, _, config)
     local height = config.height or 24
+    self._indent = config.indent or 0
 
     self:SetParent(parent)
     self:ClearAllPoints()
@@ -336,15 +553,54 @@ function RowMixin:OnAcquire(parent, _, config)
     self:Show()
 end
 
+---A thin rule along the row's bottom edge, for table-like lists.
+---@param shown boolean
+function RowMixin:SetDivider(shown)
+    if shown and not self._divider then
+        local line = self:CreateTexture(nil, "BACKGROUND")
+        pixel.SetPixelHeight(line, self.gui.theme.borderSize)
+        pixel.SetPixelPoint(line, "BOTTOMLEFT", self, "BOTTOMLEFT", 0, 0)
+        pixel.SetPixelPoint(line, "BOTTOMRIGHT", self, "BOTTOMRIGHT", 0, 0)
+        pixel.SetPixelSnap(line)
+        self._divider = line
+    end
+    if not self._divider then return end
+
+    local color = self.gui.theme.border
+    self._divider:SetColorTexture(color[1], color[2], color[3], 1)
+    self._divider:SetShown(shown)
+end
+
+---A light band behind the row for striping long lists; it reaches into the card's side padding.
+---@param shown boolean
+function RowMixin:SetStripe(shown)
+    if shown and not self._stripe then
+        local band = self:CreateTexture(nil, "BACKGROUND", nil, -1)
+        local inset = self.gui.theme.paddingSmall
+        pixel.SetPixelPoint(band, "TOPLEFT", self, "TOPLEFT", -inset, 0)
+        pixel.SetPixelPoint(band, "BOTTOMRIGHT", self, "BOTTOMRIGHT", inset, 0)
+        self._stripe = band
+    end
+    if not self._stripe then return end
+
+    -- A white wash rather than a theme shade: the background shades sit too close together to read.
+    self._stripe:SetColorTexture(1, 1, 1, STRIPE_ALPHA)
+    self._stripe:SetShown(shown)
+end
+
 function RowMixin:OnRelease()
     -- A row owns its widgets, so releasing it hands them back too. This is what makes a
     -- card teardown reclaim the whole subtree rather than orphaning it.
     self.gui:ReleaseAll(self.widgets)
+    if self._divider then self._divider:Hide() end
+    if self._stripe then self._stripe:Hide() end
     self._card = nil
     self._rowHeight = 24
+    self._indent = 0
     self._layoutHeight = nil
     self._layoutSpacing = nil
     self._layoutOffsetY = nil
+    self._widgetHeights = nil
 end
 
 ---@class KajiGUIRow : KajiGUIRowMixin
@@ -355,6 +611,7 @@ lib:RegisterWidgetType(ROW_TYPE, function(gui)
     row:EnableMouse(false)
     row.widgets = {}
     row._rowHeight = 24
+    row._indent = 0
 
     Mixin(row, RowMixin)
     row:SetScript("OnSizeChanged", function(self, width) self:LayoutWidgets(width) end)
@@ -365,7 +622,8 @@ end)
 ---Horizontal layout container. Widget widths resolve on resize.
 ---@param parent Frame
 ---@param height? number
+---@param indent? number left inset before the first widget
 ---@return KajiGUIRow
-function InstanceMixin:CreateRow(parent, height)
-    return self:BuildWidget(ROW_TYPE, parent, nil, { height = height })
+function InstanceMixin:CreateRow(parent, height, indent)
+    return self:BuildWidget(ROW_TYPE, parent, nil, { height = height, indent = indent })
 end

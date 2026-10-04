@@ -17,9 +17,10 @@ local SECTIONS = {
     { key = 'castbar',        text = L['Castbar'] },
     { key = 'tags',           text = L['Tags'] },
     { key = 'dispel',         text = L['Dispel'] },
-    { key = 'indicators',     text = L['Indicators'] },
+    { key = 'indicators',     text = L['Status Icons'] },
     { key = 'aurabuffs',      text = L['Aura Buffs'] },
     { key = 'auradebuffs',    text = L['Aura Debuffs'] },
+    { key = 'auradefensives', text = L['Aura Defensives'] },
     { key = 'auraindicators', text = L['Aura Indicators'] },
 }
 
@@ -34,6 +35,7 @@ local SECTION_TABS = {
     indicators = UF.GUIIndicatorTabs,
     aurabuffs = UF.GUIAuras.tabs,
     auradebuffs = UF.GUIAuras.tabs,
+    auradefensives = UF.GUIAuras.tabs,
     auraindicators = UF.GUIAuraIndicatorTabs,
 }
 
@@ -41,11 +43,14 @@ local SECTION_TABS = {
 ---@return table items
 local function SectionItems(unit)
     local isGroup = UF.GroupConfigs[unit]
-    local items = {}
+    -- Captioned with the unit, like the Missing Buffs sections, so the list says whose frame it edits.
+    local items = { { type = 'label', key = 'unit', text = UF.UnitLabels[unit] or unit } }
     for _, section in ipairs(SECTIONS) do
         local skip = UF.NoPower[unit] and (section.key == 'power' or section.key == 'castbar')
         -- Group units are deliberately castbar-free, and only they have a header to configure.
         skip = skip or (isGroup and section.key == 'castbar') or (not isGroup and section.key == 'group')
+        -- Defensives only exist on party and raid frames.
+        skip = skip or (not isGroup and section.key == 'auradefensives')
 
         if not skip then
             items[#items + 1] = { key = section.key, text = section.text }
@@ -75,12 +80,9 @@ local function SearchTerms()
         { text = L['Safe Zone'],         itemKey = 'castbar' },
         { text = L['Tags'],              itemKey = 'tags' },
         { text = L['Tag Text'],          itemKey = 'tags' },
-        { text = L['Insert Health Tag'], itemKey = 'tags' },
-        { text = L['Insert Power Tag'],  itemKey = 'tags' },
-        { text = L['Insert Name Tag'],   itemKey = 'tags' },
-        { text = L['Insert Misc Tag'],   itemKey = 'tags' },
+        { text = L['Insert Tag'],        itemKey = 'tags' },
         { text = L['Bound To'],          itemKey = 'tags' },
-        { text = L['Indicators'],        itemKey = 'indicators' },
+        { text = L['Status Icons'],      itemKey = 'indicators' },
     }
 
     -- Each indicator is its own tab, so name them all and land on the right one.
@@ -91,6 +93,7 @@ local function SearchTerms()
     -- The aura terms apply to both displays
     terms[#terms + 1] = { text = L['Aura Buffs'], itemKey = 'aurabuffs' }
     terms[#terms + 1] = { text = L['Aura Debuffs'], itemKey = 'auradebuffs' }
+    terms[#terms + 1] = { text = L['Aura Defensives'], itemKey = 'auradefensives' }
     terms[#terms + 1] = { text = L['Aura Indicators'], itemKey = 'auraindicators' }
     terms[#terms + 1] = { text = L['Dispel'], itemKey = 'dispel' }
     terms[#terms + 1] = { text = L['Dispel Highlight'], itemKey = 'dispel' }

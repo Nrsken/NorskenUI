@@ -78,6 +78,31 @@ local function ResolveGrowthDirection(direction, default)
     return default
 end
 
+---@param horizontal string? 'LEFT' | 'RIGHT' | 'CENTER'
+---@param vertical string? 'UP' | 'DOWN' | 'CENTER'
+---@param anchorTo string? the owner's point the container attaches to
+---@return string flowCorner the corner buttons start from, inside the container
+---@return string containerPoint the container's own point, where it attaches to its owner
+---@return string horizontalFlow 'LEFT' | 'RIGHT'
+---@return string verticalFlow 'UP' | 'DOWN'
+function NRSKNUI:ResolveAuraGrowth(horizontal, vertical, anchorTo)
+    local horizontalFlow = (horizontal == 'LEFT') and 'LEFT' or 'RIGHT'
+    local verticalFlow = (vertical == 'UP') and 'UP' or 'DOWN'
+
+    local cornerV = (verticalFlow == 'DOWN') and 'TOP' or 'BOTTOM'
+    local cornerH = (horizontalFlow == 'LEFT') and 'RIGHT' or 'LEFT'
+
+    -- LEFT / RIGHT / CENTER sit on the owner's vertical middle, TOP / BOTTOM / CENTER on its horizontal one.
+    local middleV = anchorTo == 'LEFT' or anchorTo == 'RIGHT' or anchorTo == 'CENTER'
+    local middleH = anchorTo == 'TOP' or anchorTo == 'BOTTOM' or anchorTo == 'CENTER'
+
+    local pointV = (vertical == 'CENTER' or middleV) and '' or cornerV
+    local pointH = (horizontal == 'CENTER' or middleH) and '' or cornerH
+    local containerPoint = pointV .. pointH
+
+    return cornerV .. cornerH, containerPoint ~= '' and containerPoint or 'CENTER', horizontalFlow, verticalFlow
+end
+
 ---Extent of the largest grid a config can lay out.
 ---@param config table .size, .perRow, .elementSpacing and .lineSpacing
 ---@param count number most buttons that can be placed
@@ -634,6 +659,17 @@ function ContainerMixin:AddSlot(filter, options)
     PushSlotCandidates(self, index, key)
 
     return slot, key, index
+end
+
+---The gate and SetSlotShown can still override these.
+---@param index number the third return of :AddSlot
+---@param candidateFilters table?
+function ContainerMixin:SetSlotCandidates(index, candidateFilters)
+    local key = self.slotKeys[index]
+    if not key then return end
+
+    self.slotCandidates[index] = candidateFilters
+    PushSlotCandidates(self, index, key)
 end
 
 ---Show or hide a slot, which the gate can still override.

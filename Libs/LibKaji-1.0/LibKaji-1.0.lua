@@ -85,7 +85,7 @@ local InstanceMixin = lib.InstanceMixin
 ---@field presets? table override the bundled preset set (defaults to lib.THEME_PRESETS)
 ---@field presetNames? string[] override the ordered preset name list (defaults to lib.THEME_PRESET_NAMES)
 ---@field colorKeys? table[] override the color-key editor metadata (defaults to lib.THEME_COLOR_KEYS)
----@field defaultPreset? string preset used before the store exists / on reset (defaults to "NUI v2")
+---@field defaultPreset? string preset used before the store exists / on reset (defaults to "NUI Neon")
 
 ---Creates an isolated GUI instance for a consuming addon.
 ---@param opts? KajiGUIOptions
@@ -108,7 +108,7 @@ function lib:New(opts)
     instance.presets            = opts.presets or lib.THEME_PRESETS
     instance.presetNames        = opts.presetNames or lib.THEME_PRESET_NAMES
     instance.colorKeys          = opts.colorKeys or lib.THEME_COLOR_KEYS
-    instance.defaultPreset      = opts.defaultPreset or "NUI v2"
+    instance.defaultPreset      = opts.defaultPreset or "NUI Neon"
     instance._storeAccessor     = opts.store
     instance.classColorProvider = opts.classColorProvider
 

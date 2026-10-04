@@ -221,14 +221,14 @@ function BuildRowMixin:NUIUpdateSkinColors()
 
     local backdrop = self.NUIBackdrop
     local general = Skinning.db.General
-    local bg = general.BackgroundColor
+    local bg = NRSKNUI:GetBackdropColor(general, 'BackgroundColor')
     backdrop:SetBackgroundColor(bg[1], bg[2], bg[3], ROW_BG_ALPHA)
 
     if self.NUIFocused then
         local r, g, b = Skinning:GetAccentColor()
         backdrop:SetBorderColor(r, g, b, 1)
     else
-        local border = general.BorderColor
+        local border = NRSKNUI:GetBorderColor(general)
         backdrop:SetBorderColor(border[1], border[2], border[3], border[4])
     end
 end

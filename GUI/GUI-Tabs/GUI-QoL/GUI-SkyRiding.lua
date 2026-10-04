@@ -313,7 +313,7 @@ local function BuildColorSettingsTab(page, db)
 
     -- Card 2
     local backdropCard = page:Card(L['Backdrop'], 'all')
-    local borderRow = backdropCard:Row(rowH)
+    local borderRow = backdropCard:Row(rowHL, 0)
     borderRow:Checkbox(L['Show Border'], {
         width = 1,
         value = db.BorderEnabled,
@@ -324,27 +324,7 @@ local function BuildColorSettingsTab(page, db)
         end,
     })
 
-    backdropCard:Separator()
-
-    local backdropColorRow = backdropCard:Row(rowHL, 0)
-    backdropColorRow:ColorPicker(L['Backdrop Color'], {
-        width = 0.5,
-        value = db.BackgroundColor,
-        callback = function(r, g, b, a)
-            db.BackgroundColor = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
-
-    backdropColorRow:ColorPicker(L['Border Color'], {
-        width = 0.5,
-        value = db.BorderColor,
-        conditions = { 'BorderOn' },
-        callback = function(r, g, b, a)
-            db.BorderColor = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
+    page:BackdropColorsCard({ db = db, backdropKey = 'BackgroundColor', onChangeCallback = ApplySettings })
 
     -- Card 3
     local textColorCard = page:Card(L['Speed Text'], 'all')

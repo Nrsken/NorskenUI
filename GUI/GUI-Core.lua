@@ -5,6 +5,21 @@ NRSKNUI.GUIFrame = NRSKNUI.GUIFrame or {}
 local Theme = NRSKNUI.Theme
 local L = NRSKNUI.Libs.AL
 
+-- Load-time settings prompt one reload when the user leaves the page, never per edit; latest reason wins.
+local pendingReload
+
+---@param reason string shown in the reload prompt
+function NRSKNUI:RequestReload(reason)
+    pendingReload = reason
+end
+
+local function PromptPendingReload()
+    if not pendingReload then return end
+    local reason = pendingReload
+    pendingReload = nil
+    NRSKNUI:CreateReloadPrompt(reason)
+end
+
 -- Dropdown option lists every tab shares. Dropdown.lua reads value or key, so value serves both.
 NRSKNUI.AnchorOptions = {
     { value = 'TOPLEFT',     text = L['Top Left'] },
@@ -61,6 +76,7 @@ local window = GUI:CreateGUIWindow({
         layers = {
             {
                 texture = LOGO .. 'logocookingsPT1128x128OT.png',
+                glow = LOGO .. 'logocookingsPT1128x128OT_glow.png',
                 size = 64,
                 anchor = { 'LEFT', 'LEFT', -10, 1 },
                 color = 'accent',
@@ -102,6 +118,7 @@ local window = GUI:CreateGUIWindow({
     end,
     onClose = function()
         NRSKNUI.GUIOpen = false
+        PromptPendingReload()
         if NRSKNUI.PreviewManager then
             NRSKNUI.PreviewManager:SetGUIOpen(false)
         end
@@ -115,6 +132,7 @@ NRSKNUI.GUIOpen = false
 
 window:AddHeaderButton({
     icon = TEX .. 'NorskenCustomCrossv3.png',
+    glow = TEX .. 'NorskenCustomCrossv3_glow.png',
     size = 22,
     rotation = 45,
     onClick = function()
@@ -124,6 +142,7 @@ window:AddHeaderButton({
 })
 window:AddHeaderButton({
     icon = TEX .. 'HomeButtonv2.png',
+    glow = TEX .. 'HomeButtonv2_glow.png',
     size = 18,
     onClick = function()
         window:ShowPage('homePage')
@@ -132,6 +151,7 @@ window:AddHeaderButton({
 })
 window:AddHeaderButton({
     icon = TEX .. 'anchor.png',
+    glow = TEX .. 'anchor_glow.png',
     size = 22,
     onClick = function()
         if NRSKNUI.Anchors then
@@ -142,6 +162,7 @@ window:AddHeaderButton({
 })
 window:AddHeaderButton({
     icon = TEX .. 'fill.png',
+    glow = TEX .. 'fill_glow.png',
     size = 18,
     onClick = function()
         window:ShowPage('themePage')
@@ -150,6 +171,7 @@ window:AddHeaderButton({
 })
 window:AddHeaderButton({
     icon = TEX .. 'eye.png',
+    glow = TEX .. 'eye_glow.png',
     size = 24,
     onClick = function(btn)
         local manager = NRSKNUI.PreviewManager
@@ -164,15 +186,16 @@ window:AddHeaderButton({
 -- Previews follow the open page, so the manager needs to hear about every page change. The host is
 -- hooked rather than window:ShowPage, since the sidebar shows pages through the host directly.
 if window.content then
-    window.content.onPageChanged = function(pageId)
+    window.content.onPageChanged = function(pageId, previousId)
         if NRSKNUI.PreviewManager then
             NRSKNUI.PreviewManager:SetPage(pageId)
         end
+        if pageId ~= previousId then PromptPendingReload() end
     end
 end
 
 -- Footer socials: auto-packed left -> right. The copy prompt stays addon-side.
-local function CopyPrompt(title, link, icon)
+local function CopyPrompt(title, link, icon, glow)
     NRSKNUI:CreatePrompt({
         title = title,
         text = link,
@@ -180,6 +203,7 @@ local function CopyPrompt(title, link, icon)
         editBoxLabel = 'CTRL-C to copy',
         texture = {
             path = icon,
+            glow = glow,
             width = 21,
             height = 21,
             color = {
@@ -192,26 +216,29 @@ local function CopyPrompt(title, link, icon)
 end
 window:AddFooterSocial({
     icon = SOCIAL .. 'twitchv2W.png',
+    glow = SOCIAL .. 'twitchv2W_glow.png',
     text = 'Twitch',
     width = 62,
     onClick = function()
-        CopyPrompt('Support My |cff9146FFTwitch|r', 'www.twitch.tv/norskenwow', SOCIAL .. 'twitchv2W.png')
+        CopyPrompt('Support My |cff9146FFTwitch|r', 'www.twitch.tv/norskenwow', SOCIAL .. 'twitchv2W.png', SOCIAL .. 'twitchv2W_glow.png')
     end,
 })
 window:AddFooterSocial({
     icon = SOCIAL .. 'discordv2W.png',
+    glow = SOCIAL .. 'discordv2W_glow.png',
     text = 'Discord',
     width = 68,
     onClick = function()
-        CopyPrompt('Join My |cff5865F2Discord|r', 'https://discord.com/invite/23bS8pHfuX', SOCIAL .. 'discordv2W.png')
+        CopyPrompt('Join My |cff5865F2Discord|r', 'https://discord.com/invite/23bS8pHfuX', SOCIAL .. 'discordv2W.png', SOCIAL .. 'discordv2W_glow.png')
     end,
 })
 window:AddFooterSocial({
     icon = SOCIAL .. 'github2W.png',
+    glow = SOCIAL .. 'github2W_glow.png',
     text = 'GitHub',
     width = 68,
     onClick = function()
-        CopyPrompt('Support My |cffffffffGitHub|r', 'https://github.com/Nrsken/NorskenUI', SOCIAL .. 'github2W.png')
+        CopyPrompt('Support My |cffffffffGitHub|r', 'https://github.com/Nrsken/NorskenUI', SOCIAL .. 'github2W.png', SOCIAL .. 'github2W_glow.png')
     end,
 })
 

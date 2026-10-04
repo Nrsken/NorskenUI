@@ -205,7 +205,7 @@ local function UpdateBorderColor(tooltip)
         end
     end
 
-    local BC = Tooltips.db.BorderColor
+    local BC = NRSKNUI:GetBorderColor(Tooltips.db)
     tooltip:SetBorderColor(BC[1], BC[2], BC[3], BC[4])
 end
 

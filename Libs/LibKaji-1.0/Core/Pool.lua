@@ -41,6 +41,7 @@ recycled it. Capture a generation guard instead:
 
 --]]
 
+---@class LibKaji-1.0
 local lib = LibStub and LibStub("LibKaji-1.0", true)
 if not lib then return end
 ---@class KajiGUIInstanceMixin

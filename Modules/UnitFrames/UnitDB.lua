@@ -52,17 +52,116 @@ UF.GROUP_SIZE = 5
 UF.frames = UF.frames or {}
 UF.groups = UF.groups or {}
 UF.BaseLevels = { Background = 1, Bar = 2, }
-UF.Layers = { Min = 1, Max = 12, Highlight = 9, Border = 10, }
-UF.ReservedLayers = { [UF.Layers.Highlight] = true, [UF.Layers.Border] = true, }
-UF.TopLevels = { Tags = 999, Auras = 1000, RaidMark = 1001, Status = 1002, }
+-- Each layer is a band of Step levels so multi-frame elements stay inside their own band.
+UF.Layers = { Min = 1, Max = 40, Step = 20, }
 
----Resolve a layer on UF.Layers to a concrete frame level for a unit frame.
+-- Aura indicator spots split into a tint and an icon group by style, ordered per unit inside it.
+UF.LayerElements = {
+    { key = 'IndicatorTints', label = L['Indicator Tints'] },
+    { key = 'Power',        label = L['Power'] },
+    { key = 'Castbar',      label = L['Castbar'] },
+    { key = 'Dispel',       label = L['Dispel Highlight'] },
+    { key = 'DamageAbsorb', label = L['Damage Absorb'] },
+    { key = 'HealAbsorb',   label = L['Heal Absorb'] },
+    { key = 'Highlight',    label = L['Mouseover Highlight'] },
+    { key = 'Border',       label = L['Border'] },
+    { key = 'Tags',         label = L['Tags'] },
+    { key = 'Buffs',        label = L['Aura Buffs'] },
+    { key = 'Debuffs',      label = L['Aura Debuffs'] },
+    { key = 'Defensives',   label = L['Aura Defensives'] },
+    { key = 'IndicatorIcons', label = L['Indicator Icons'] },
+    { key = 'RaidMark',     label = L['Raid Icon'] },
+    { key = 'Status',       label = L['Status Icons'] },
+}
+
+---@return table layers
+function UF.GetLayerMap()
+    return UF.db.General.Layers
+end
+
+---Resolve a layer to the bottom frame level of its band on a unit frame.
 ---@param frame oUF.UnitFrame
 ---@param layer number
 ---@return number level
 function UF.GetLayerLevel(frame, layer)
     local layers = UF.Layers
-    return frame:GetFrameLevel() + UF.BaseLevels.Bar + min(max(layer, layers.Min), layers.Max)
+    return frame:GetFrameLevel() + UF.BaseLevels.Bar + min(max(layer, layers.Min), layers.Max) * layers.Step
+end
+
+---@param frame oUF.UnitFrame
+---@param key string a UF.LayerElements key
+---@return number level
+function UF.GetElementLevel(frame, key)
+    return UF.GetLayerLevel(frame, UF.GetLayerMap()[key])
+end
+
+---Tints draw low; icons, textures and text draw high.
+---@param placement table
+---@return string key a UF.LayerElements key
+function UF.IndicatorGroup(placement)
+    return placement.Style == NRSKNUI.AuraIndicators.Styles.Overlay and 'IndicatorTints' or 'IndicatorIcons'
+end
+
+---Two levels per same-group spot ordered below this one, capped at the band.
+---@param frame oUF.UnitFrame
+---@param placements table[] the unit's spots
+---@param placement table
+---@return number level
+function UF.GetIndicatorLevel(frame, placements, placement)
+    local group = UF.IndicatorGroup(placement)
+    local order = placement.Order or 0
+    local below = 0
+    for _, other in ipairs(placements) do
+        if other ~= placement and UF.IndicatorGroup(other) == group and (other.Order or 0) < order then
+            below = below + 1
+        end
+    end
+    return UF.GetElementLevel(frame, group) + min(below * 2, UF.Layers.Step - 2)
+end
+
+---Dispel and aura indicator slots are built once and take their level at build time instead.
+---@param frame oUF.UnitFrame
+---@param map table a layer map
+function UF.ApplyFrameLayers(frame, map)
+    local function Level(key) return UF.GetLayerLevel(frame, map[key]) end
+
+    local health = frame.Health
+    if health then
+        local damage = Level('DamageAbsorb')
+        health.nuiHealAbsorb:SetFrameLevel(Level('HealAbsorb'))
+        health.nuiDamageAbsorb:SetFrameLevel(damage)
+        -- The over-absorb pair belongs to the damage absorb and rides its layer.
+        health.OverDamageAbsorbClip:SetFrameLevel(damage)
+        health.OverDamageAbsorb:SetFrameLevel(damage)
+        frame.nuiHighlightFrame:SetFrameLevel(Level('Highlight'))
+        frame.healthBorderFrame:SetFrameLevel(Level('Border'))
+    end
+
+    if frame.Power then
+        local level = Level('Power')
+        frame.powerBackground:SetFrameLevel(level)
+        frame.Power:SetFrameLevel(level + 1)
+        frame.powerBorderFrame:SetFrameLevel(level + 2)
+    end
+
+    if frame.CastbarContainer then
+        local level = Level('Castbar')
+        frame.CastbarContainer:SetFrameLevel(level)
+        frame.Castbar:SetFrameLevel(level + 1)
+    end
+
+    if frame.TagContainer then frame.TagContainer:SetFrameLevel(Level('Tags')) end
+
+    if frame.IndicatorContainer then
+        frame.IndicatorContainer:SetFrameLevel(Level('Status'))
+        for key, host in pairs(frame.nuiIndicatorHosts) do
+            host:SetFrameLevel(Level(key))
+        end
+    end
+
+    for kind, container in pairs(frame.Auras or {}) do
+        container:SetFrameLevel(Level(kind))
+    end
 end
 
 ---Resolve an aura attach target to a region on a frame.
@@ -72,13 +171,12 @@ end
 function UF.ResolveAttachTarget(frame, attach)
     local targets = NRSKNUI.AuraIndicators.Attach
 
-    if attach == targets.Health then
-        return frame.Health
-    elseif attach == targets.HealthFill then
+    if attach == targets.HealthFill then
         return frame.Health and frame.Health:GetStatusBarTexture()
     end
 
-    return frame
+    -- Nothing may cover a docked power bar, so the old Whole Frame resolves to the health area too.
+    return frame.Health or frame
 end
 
 ---Normalize a unit string to its base archetype, stripping any numeric suffixes.

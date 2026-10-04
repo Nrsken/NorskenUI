@@ -10,6 +10,8 @@ local ipairs, pairs = ipairs, pairs
 local setmetatable = setmetatable
 local tsort = table.sort
 local GetTime = GetTime
+local GetNumSubgroupMembers = GetNumSubgroupMembers
+local UnitGroupRolesAssigned = UnitGroupRolesAssigned
 local next = next
 local type = type
 local wipe = wipe
@@ -91,6 +93,7 @@ local NEEDS_ROLE_KEY = {
     HEALER = 'needsHealer',
     DAMAGER = 'needsDamage',
 }
+local NEEDS_ROLE_ORDER = { 'TANK', 'HEALER', 'DAMAGER' }
 
 local ROW_WIDTH = 312
 local NAME_INSET = 10
@@ -515,11 +518,36 @@ local function ReadDeclined(resultID, info)
     return (declines and partyGUID and declines[partyGUID]) ~= nil
 end
 
+local partyRoles = {}
+
+---Nil when solo or a role is unreadable, leaving it to the server's needsRole filter.
+---@return table<string, number>?
+local function ReadPartyRoles()
+    local numMembers = GetNumSubgroupMembers()
+    if numMembers == 0 then return nil end
+
+    partyRoles.TANK, partyRoles.HEALER, partyRoles.DAMAGER = 0, 0, 0
+
+    for index = 0, numMembers do
+        local role = NRSKNUI:SafeValue(UnitGroupRolesAssigned(index == 0 and 'player' or ('party' .. index)))
+        if not role then return nil end
+
+        if index == 0 and role == 'NONE' then role = NRSKNUI.MySpec.role end
+        -- An unassigned member still takes a slot, and damage is the one a group lists most of.
+        if not partyRoles[role] then role = 'DAMAGER' end
+
+        partyRoles[role] = partyRoles[role] + 1
+    end
+
+    return partyRoles
+end
+
 ---Every unreadable value keeps the group, a filter must never hide a listing it could not judge.
 ---@param resultID number
 ---@param info table
+---@param roles table<string, number>? the party's role counts, nil when solo
 ---@return boolean
-local function PassesFilters(resultID, info)
+local function PassesFilters(resultID, info, roles)
     local filters = GroupFinder.filters
 
     if next(filters.dungeons) then
@@ -540,6 +568,17 @@ local function PassesFilters(resultID, info)
             local healer = SafeIndex(counts, 'HEALER')
 
             if tank == 0 and healer == 0 then return false end
+        end
+    end
+
+    -- The server only checks our own role; whole-party fit is judged locally from remaining counts.
+    if filters.needsRole and roles then
+        local counts = GetSearchResultMemberCounts(resultID)
+        if counts then
+            for role, needed in next, roles do
+                local remaining = SafeIndex(counts, role .. '_REMAINING')
+                if remaining and remaining < needed then return false end
+            end
         end
     end
 
@@ -626,6 +665,7 @@ local function HasActiveFilters()
     return next(filters.dungeons) ~= nil
         or filters.hasEither
         or filters.notDeclined
+        or (filters.needsRole and GetNumSubgroupMembers() > 0)
 end
 
 ---@param a table
@@ -656,6 +696,7 @@ local function DoResultPass(panel)
     if not sortByScore and not HasActiveFilters() then return end
 
     local filtered = {}
+    local roles = ReadPartyRoles()
 
     wipe(scoreCache)
     wipe(declinedCache)
@@ -667,7 +708,7 @@ local function DoResultPass(panel)
         local resultID = rawResults[index]
         local info = GetSearchResultInfo(resultID)
 
-        if info and PassesFilters(resultID, info) then
+        if info and PassesFilters(resultID, info, roles) then
             filtered[#filtered + 1] = resultID
             if sortByScore then
                 orderCache[resultID] = index
@@ -726,11 +767,11 @@ function GroupFinder:SyncAdvancedFilter(enabled)
     if not enabled then return end
 
     local filters = self.filters
-    local needsKey = NEEDS_ROLE_KEY[NRSKNUI.MySpec.role]
 
     filters.hasTank = enabled.hasTank == true
     filters.hasHealer = enabled.hasHealer == true
-    filters.needsRole = needsKey ~= nil and enabled[needsKey] == true
+    -- A spec swap leaves the old role set in Blizzard's menu, so any required role lights the button.
+    filters.needsRole = (enabled.needsTank or enabled.needsHealer or enabled.needsDamage) == true
     filters.noMySpec = enabled.needsMyClass == true
 
     local selected = {}
@@ -751,6 +792,21 @@ function GroupFinder:SyncAdvancedFilter(enabled)
     filters.dungeons = allSeason and {} or selected
 end
 
+---@return string? names localized required roles, nil for none
+function GroupFinder:GetNeededRoleNames()
+    local enabled = GetAdvancedFilter()
+    if not enabled then return nil end
+
+    local names
+    for _, role in ipairs(NEEDS_ROLE_ORDER) do
+        if enabled[NEEDS_ROLE_KEY[role]] then
+            names = names and (names .. ', ' .. _G[role]) or _G[role]
+        end
+    end
+
+    return names
+end
+
 function GroupFinder:PushAdvancedFilter()
     if not IsDungeonMode() then return end
 
@@ -763,8 +819,12 @@ function GroupFinder:PushAdvancedFilter()
     enabled.hasTank = filters.hasTank
     enabled.hasHealer = filters.hasHealer
     enabled.needsMyClass = filters.noMySpec
-    if needsKey then
-        enabled[needsKey] = filters.needsRole
+
+    -- Only seed our own role when none is required, so a role picked in Blizzard's menu survives.
+    if not filters.needsRole then
+        enabled.needsTank, enabled.needsHealer, enabled.needsDamage = false, false, false
+    elseif needsKey and not (enabled.needsTank or enabled.needsHealer or enabled.needsDamage) then
+        enabled[needsKey] = true
     end
 
     local activities = {}
@@ -947,6 +1007,12 @@ function GroupFinder:CHALLENGE_MODE_MAPS_UPDATE()
     self:RefreshPanel()
 end
 
+---Joining, leaving or a role swap changes what needsRole means, and the button's label with it.
+function GroupFinder:OnPartyChanged()
+    self:RefreshResults()
+    self:RefreshPanel()
+end
+
 function GroupFinder:LFG_LIST_SEARCH_RESULT_UPDATED()
     if self.resortPending then return end
     if self.db.SortBy == 'default' and not HasActiveFilters() then return end
@@ -1021,6 +1087,8 @@ function GroupFinder:OnEnable()
     self:RegisterEvent('SOCIAL_QUEUE_UPDATE', 'RefreshFriendResults')
     self:RegisterEvent('CHALLENGE_MODE_COMPLETED', 'RefreshPanel')
     self:RegisterEvent('CHALLENGE_MODE_MAPS_UPDATE')
+    self:RegisterEvent('GROUP_ROSTER_UPDATE', 'OnPartyChanged')
+    self:RegisterEvent('PLAYER_ROLES_ASSIGNED', 'OnPartyChanged')
 
     -- The dungeon art and the weekly run history both arrive with this request.
     RequestMapInfo()

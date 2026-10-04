@@ -9,6 +9,7 @@ local pairs = pairs
 local ipairs = ipairs
 local select = select
 local tonumber = tonumber
+local mmax = math.max
 local GetTime = GetTime
 local UnitRace = UnitRace
 local UnitClass = UnitClass
@@ -162,7 +163,8 @@ end
 local function GetRemaining(aura)
     local expirationTime = aura.expirationTime
     if NRSKNUI:IsSecretValue(expirationTime) or not expirationTime or expirationTime <= 0 then return nil end
-    return expirationTime - now
+    -- An aura lingers briefly past its expiration until the client removes it.
+    return mmax(expirationTime - now, 0)
 end
 
 -- While auras are secret only the IDs the client still answers for are asked.

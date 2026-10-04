@@ -7,7 +7,10 @@
   and stretches the icon over the whole share instead, for swatches and bars.
 * `text` attaches a label to one side of the icon, so an icon-plus-caption row needs one widget
   rather than an icon and a Text sharing a row. The label takes the leftover space on its side, and
-  a TOP/BOTTOM label makes the widget taller instead of wider.
+  a TOP/BOTTOM label makes the widget taller instead of wider. A RIGHT label can carry a muted
+  `description` line under it.
+* For lists: `linkTo` draws a guide line from the previous icon down to this one, `dimmed` greys the
+  icon and fades its text (an entry that is switched off), and `onClick(button)` fires on a click.
 
 ## Examples
 
@@ -44,6 +47,7 @@ local WIDGET_TYPE = "Icon"
 local QUALITY_ATLAS_PATTERN = "|A:(Professions%-ChatIcon%-Quality%-Tier%d):%d+:%d+"
 local QUESTION_MARK = 134400
 local TEXT_SPACING = 6
+local DIMMED_ALPHA = 0.4
 
 -- Which side of the icon the label sits on, and how it reads there by default.
 local TEXT_POSITIONS = {
@@ -52,6 +56,9 @@ local TEXT_POSITIONS = {
     TOP = { justify = "CENTER", stacked = true },
     BOTTOM = { justify = "CENTER", stacked = true },
 }
+
+local floor = math.floor
+local safecall = lib.safecall
 
 local GetItemInfo = C_Item.GetItemInfo
 local GetItemIconByID = C_Item.GetItemIconByID
@@ -64,7 +71,11 @@ local GetItemIconByID = C_Item.GetItemIconByID
 ---@field qualityFrame Frame
 ---@field qualityTexture Texture
 ---@field label FontString
+---@field description FontString muted line under a RIGHT label
+---@field guide Texture line up to the linked icon
 ---@field _size number
+---@field _dimmed boolean
+---@field _onClick? fun(button: string)
 ---@field _align string
 ---@field _textPosition? string
 ---@field _textSpacing number
@@ -91,6 +102,12 @@ function IconMixin:SetTexture(tex)
     self.icon:SetTexture(tex)
 end
 
+---Replaces the caption's text, for a caption configured through `text`.
+---@param text string
+function IconMixin:SetLabel(text)
+    self.label:SetText(text)
+end
+
 ---@param id number
 function IconMixin:SetItemID(id)
     self._itemID = id
@@ -109,6 +126,7 @@ function IconMixin:LayoutIcon()
 
     frame:ClearAllPoints()
     label:ClearAllPoints()
+    self.description:ClearAllPoints()
 
     if self._align == "FILL" then
         frame:SetAllPoints()
@@ -142,7 +160,13 @@ function IconMixin:LayoutIcon()
         pixel.SetPixelPoint(frame, "LEFT", self, "LEFT", 0, 0)
     end
 
-    if position == "RIGHT" then
+    if position == "RIGHT" and self.description:IsShown() then
+        -- Split around the icon's middle, so the two lines sit centred on it together.
+        pixel.SetPixelPoint(label, "BOTTOMLEFT", frame, "RIGHT", self._textSpacing, 1)
+        pixel.SetPixelPoint(label, "RIGHT", self, "RIGHT", 0, 0)
+        pixel.SetPixelPoint(self.description, "TOPLEFT", frame, "RIGHT", self._textSpacing, -1)
+        pixel.SetPixelPoint(self.description, "RIGHT", self, "RIGHT", 0, 0)
+    elseif position == "RIGHT" then
         pixel.SetPixelPoint(label, "LEFT", frame, "RIGHT", self._textSpacing, 0)
         pixel.SetPixelPoint(label, "RIGHT", self, "RIGHT", 0, 0)
     elseif position == "LEFT" then
@@ -154,9 +178,15 @@ end
 function IconMixin:UpdateColors()
     lib.RefreshBackdrop(self.border)
 
-    local color = self._textColor or self.gui.theme.textSecondary
+    local theme = self.gui.theme
+    local color = self._textColor or theme.textSecondary
+    local alpha = self._dimmed and DIMMED_ALPHA or 1
 
-    self.label:SetTextColor(color[1], color[2], color[3], color[4] or 1)
+    self.label:SetTextColor(color[1], color[2], color[3], (color[4] or 1) * alpha)
+    self.description:SetTextColor(theme.textMuted[1], theme.textMuted[2], theme.textMuted[3], alpha)
+    self.guide:SetColorTexture(theme.widgetBorder[1], theme.widgetBorder[2], theme.widgetBorder[3], 1)
+    self.icon:SetDesaturated(self._dimmed)
+    self.icon:SetAlpha(alpha)
 end
 
 ---@param parent Frame
@@ -179,6 +209,11 @@ function IconMixin:OnAcquire(parent, _, config)
 
     local height = size
 
+    local description = spec and not spec.stacked and text.description or nil
+    self.gui:ApplyFont(self.description, "small")
+    self.description:SetText(description or "")
+    self.description:SetShown(description ~= nil and description ~= "")
+
     if spec then
         self.gui:ApplyFont(self.label, text.size or "normal")
         self.label:SetText(text.text or "")
@@ -199,10 +234,22 @@ function IconMixin:OnAcquire(parent, _, config)
     self:LayoutIcon()
 
     lib.SetTooltip(self, self.gui, config.tooltipTitle, config.tooltip)
-    self.iconFrame:EnableMouse(config.tooltip ~= nil)
+    self._onClick = config.onClick
+    local interactive = config.tooltip ~= nil or config.onClick ~= nil
+    self.iconFrame:EnableMouse(interactive)
 
     -- With a label the icon is only part of what the reader sees, so the whole widget is the target.
-    self:EnableMouse(spec ~= nil and config.tooltip ~= nil)
+    self:EnableMouse(spec ~= nil and interactive)
+
+    -- Floored to the pixel left of centre: a 1px line on an even icon's exact middle straddles two.
+    local linked = config.linkTo
+    self.guide:ClearAllPoints()
+    if linked then
+        pixel.SetPixelPoint(self.guide, "TOPLEFT", linked.iconFrame, "BOTTOMLEFT", floor(linked._size / 2), 0)
+        pixel.SetPixelPoint(self.guide, "BOTTOMLEFT", self.iconFrame, "TOPLEFT", floor(size / 2), 0)
+    end
+    self.guide:SetShown(linked ~= nil)
+    self._dimmed = config.dimmed == true
 
     self.border:SetShown(config.showBorder ~= false)
     self.qualityFrame:SetShown(config.showQuality ~= false and itemID ~= nil)
@@ -221,6 +268,14 @@ function IconMixin:OnAcquire(parent, _, config)
 end
 
 function IconMixin:OnRelease()
+    self._onClick = nil
+    self._dimmed = false
+    self.guide:Hide()
+    self.guide:ClearAllPoints() -- never left anchored to an icon that is reused elsewhere
+    self.description:SetText("")
+    self.description:Hide()
+    self.icon:SetDesaturated(false)
+    self.icon:SetAlpha(1)
     self._itemID = nil
     self._textPosition = nil
     self._textColor = nil
@@ -246,6 +301,9 @@ end
 ---@field tooltip? string|{ text?: string, default?: any }|fun(tooltip: GameTooltip, frame: Frame) Hovering the icon shows this. A function fills the tooltip itself, e.g. `function(t) t:SetSpellByID(id) end`.
 ---@field tooltipTitle? string Accent-colored title above a text tooltip. Ignored when `tooltip` is a filler function.
 ---@field text? KajiGUIIconTextConfig A label attached to one side of the icon.
+---@field linkTo? KajiGUIIcon The previous icon in a list, joined to this one by a guide line.
+---@field dimmed? boolean Greys the icon and fades its text, for a list entry that is switched off.
+---@field onClick? fun(button: string) Fires on a click anywhere on the widget, with the mouse button.
 
 ---@class KajiGUIIconTextConfig
 ---@field text? string The label itself; colour escapes work as anywhere else.
@@ -255,6 +313,7 @@ end
 ---@field justify? 'LEFT'|'CENTER'|'RIGHT' Defaults to reading away from the icon.
 ---@field color? number[] Defaults to the theme's secondary text colour.
 ---@field spacing? number Gap between icon and label. Defaults to 6.
+---@field description? string A muted second line under a RIGHT label.
 
 lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     local container = CreateFrame("Frame", nil, gui._poolHost)
@@ -292,12 +351,32 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     label:Hide()
     container.label = label
 
+    local description = container:CreateFontString(nil, "OVERLAY")
+    description:SetJustifyH("LEFT")
+    description:SetWordWrap(false)
+    gui:ApplyFont(description, "small")
+    description:Hide()
+    container.description = description
+
+    -- Behind the icons, so it runs from one icon's bottom edge to the next one's top.
+    local guide = container:CreateTexture(nil, "BACKGROUND")
+    pixel.SetPixelWidth(guide, gui.theme.borderSize)
+    pixel.SetPixelSnap(guide)
+    guide:Hide()
+    container.guide = guide
+
     -- Set once, reading the tooltip off the container, so a recycled icon can never show the
     -- previous occupant's content (see lib.SetTooltip).
     iconFrame:SetScript("OnEnter", function() lib.ShowTooltip(container) end)
     iconFrame:SetScript("OnLeave", function() lib.HideTooltip() end)
     container:SetScript("OnEnter", function() lib.ShowTooltip(container) end)
     container:SetScript("OnLeave", function() lib.HideTooltip() end)
+
+    local function Click(self, button)
+        if container._onClick and self:IsMouseOver() then safecall(container._onClick, button) end
+    end
+    iconFrame:SetScript("OnMouseUp", Click)
+    container:SetScript("OnMouseUp", Click)
 
     return Mixin(container, IconMixin)
 end)

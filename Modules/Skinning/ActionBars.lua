@@ -443,6 +443,22 @@ function ACB:StyleButtonText(button, barKey)
     end
 end
 
+local function StylePushedTexture(button)
+    local pushed = button:GetPushedTexture()
+    if not pushed then return end
+
+    pushed:NUISetPixelSnap()
+    pushed:SetTexture("Interface\\Buttons\\WHITE8x8")
+    pushed:SetTexCoord(0, 1, 0, 1)
+    pushed:ClearAllPoints()
+    pushed:SetPoint("TOPLEFT", button, "TOPLEFT", 1, -1)
+    pushed:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -1, 1)
+    pushed:SetBlendMode("ADD")
+    pushed:SetVertexColor(1, 1, 1, 0.4)
+end
+
+local artHooked = setmetatable({}, { __mode = "k" })
+
 -- Button texture styling/hiding
 function ACB:StyleButtonTextures(button)
     if not button then return end
@@ -453,6 +469,14 @@ function ACB:StyleButtonTextures(button)
     button:NUIBanish('NewActionTexture') -- glow texture for new actions
     button:NUIBanish('SpellHighlightTexture')
     button:NUIBanish('SlotBackground')   -- Hides the default slot background on action buttons
+    -- Banished rather than hidden: UpdateButtonArt re-shows Bar 1's slot art on every Edit Mode layout apply.
+    button:NUIBanish('SlotArt')
+
+    -- The same UpdateButtonArt swaps Blizzard's pushed atlas back in.
+    if button.UpdateButtonArt and not artHooked[button] then
+        artHooked[button] = true
+        hooksecurefunc(button, "UpdateButtonArt", StylePushedTexture)
+    end
 
     -- Hide the normal texture
     local normalTex = button:GetNormalTexture()
@@ -476,18 +500,7 @@ function ACB:StyleButtonTextures(button)
         button.HighlightTexture:SetVertexColor(1, 1, 1, 0.3)
     end
 
-    -- Style pushed texture
-    local pushed = button:GetPushedTexture()
-    if pushed then
-        pushed:NUISetPixelSnap()
-        pushed:SetTexture("Interface\\Buttons\\WHITE8x8")
-        pushed:SetTexCoord(0, 1, 0, 1)
-        pushed:ClearAllPoints()
-        pushed:SetPoint("TOPLEFT", button, "TOPLEFT", 1, -1)
-        pushed:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -1, 1)
-        pushed:SetBlendMode("ADD")
-        pushed:SetVertexColor(1, 1, 1, 0.4)
-    end
+    StylePushedTexture(button)
 end
 
 -- Check if a button has content for empty backdrop handling
@@ -512,8 +525,8 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
 
     -- Get bar-specific colors
     local barConfig = self:GetBarConfig(barName)
-    local backdropColor = barConfig and barConfig.BackdropColor or { 0, 0, 0, 0.8 }
-    local borderColor = barConfig and barConfig.BorderColor or { 0, 0, 0, 1 }
+    local backdropColor = NRSKNUI:GetBackdropColor(barConfig)
+    local borderColor = NRSKNUI:GetBorderColor(barConfig)
 
     -- Create backdrop frame with raw integer size (pixel-perfect approach)
     local backdrop = CreateFrame("Frame", "NRSKNUI_" .. barName .. "Backdrop" .. index, UIParent, "BackdropTemplate")
@@ -620,7 +633,6 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
     end
 
     -- Blizzard elements hide/skin
-    if button.SlotArt then button.SlotArt:Hide() end                            -- Hides the default slot background
     if button.IconMask then button.IconMask:Hide() end                          -- Hides the default circular mask on icons
     if button.InterruptDisplay then button.InterruptDisplay:SetAlpha(0) end     -- Hides the "slash" texture for interruptible spells
     if button.SpellCastAnimFrame then button.SpellCastAnimFrame:SetAlpha(0) end -- Hides the "shine" animation
@@ -1827,8 +1839,8 @@ function ACB:UpdateBarBackdropColors(barKey)
     local barConfig = self:GetBarConfig(barKey)
     if not barConfig then return end
 
-    local backdropColor = barConfig.BackdropColor or { 0, 0, 0, 0.8 }
-    local borderColor = barConfig.BorderColor or { 0, 0, 0, 1 }
+    local backdropColor = NRSKNUI:GetBackdropColor(barConfig)
+    local borderColor = NRSKNUI:GetBorderColor(barConfig)
     local hideEmpty = barConfig.HideEmptyBackdrops == true
 
     -- Find all backdrops for this bar

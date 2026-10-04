@@ -167,6 +167,28 @@ UF:RegisterTag('NUF:curpower:smartcolor', L['Power (Colored)'], 'power', POWER_E
 	return Colored(UnitPower(unit), PowerColor(_FRAME, UnitPowerType(unit)))
 end)
 
+---Death Knights only: runic power is their main resource, so the tag stays blank for everyone else.
+---@param unit string
+---@return boolean
+local function IsDeathKnight(unit)
+	local _, class = UnitClass(unit)
+	return NRSKNUI:NotSecretValue(class) and class == 'DEATHKNIGHT'
+end
+
+--* Death Knight runic power as a raw value.
+UF:RegisterTag('NUF:runicpower', L['Runic Power (Death Knight)'], 'power', POWER_EVENTS, function(unit)
+	if not unit or not UnitExists(unit) or not IsDeathKnight(unit) then return '' end
+
+	return UnitPower(unit, Enum.PowerType.RunicPower)
+end)
+
+--* Death Knight runic power as a raw value, colored.
+UF:RegisterTag('NUF:runicpower:smartcolor', L['Runic Power (Death Knight, Colored)'], 'power', POWER_EVENTS, function(unit)
+	if not unit or not UnitExists(unit) or not IsDeathKnight(unit) then return '' end
+
+	return Colored(UnitPower(unit, Enum.PowerType.RunicPower), PowerColor(_FRAME, Enum.PowerType.RunicPower))
+end)
+
 --* Mana percentage for healers. Blank while the unit's mana is unreadable, see CanReadMana.
 UF:RegisterTag('NUF:healmana', L['Mana % (Healer)'], 'power', POWER_EVENTS_SLOW, function(unit)
 	if NRSKNUI:GetSafeRole(unit) ~= 'HEALER' or not CanReadMana(unit) then return '' end

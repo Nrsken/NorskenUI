@@ -198,6 +198,7 @@ function EditBox:SetFontJustify(source, parent, offsetX, offsetY, skip, bound, f
 
 ---@class Frame ---@diagnostic disable-line: class-shadows-builtin
 ---@field SetBackgroundColor fun(self: Frame, r: number, g: number, b: number, a: number?)
+---@field SetBackgroundTexture fun(self: Frame, path: string?)
 ---@field UpdateBackdropFromDB fun(self: Frame, db: table)
 ---@field SetBorderColor fun(self: Frame, r: number, g: number, b: number, a: number?)
 ---@field ToggleBackdrop fun(self: Frame, show: boolean)
@@ -230,6 +231,7 @@ local Frame
 ---@field AddGroup fun(self: NUIAuraContainer, filter: string, options: table?): string, number
 ---@field AddSlot fun(self: NUIAuraContainer, filter: string, options: table?): table?, string, number
 ---@field SetSlotShown fun(self: NUIAuraContainer, index: number, shown: boolean)
+---@field SetSlotCandidates fun(self: NUIAuraContainer, index: number, candidateFilters: table?)
 ---@field AddFilteredGroup fun(self: NUIAuraContainer, trigger: table?, options: table?): string[]
 ---@field ReapplyFilters fun(self: NUIAuraContainer)
 ---@field RebindFilteredGroups fun(self: NUIAuraContainer, trigger: table?)
@@ -293,6 +295,7 @@ function Frame:NUIStyleChildFontStrings(source, getSize, outline, shadow, skip, 
 
 ---@class Button ---@diagnostic disable-line: class-shadows-builtin
 ---@field SetBackgroundColor fun(self: Button, r: number, g: number, b: number, a: number?)
+---@field SetBackgroundTexture fun(self: Button, path: string?)
 ---@field UpdateBackdropFromDB fun(self: Button, db: table)
 ---@field SetBorderColor fun(self: Button, r: number, g: number, b: number, a: number?)
 ---@field ToggleBackdrop fun(self: Button, show: boolean)
@@ -352,6 +355,7 @@ function Button:NUIApplyPosition(Config, setParent) end
 
 ---@class StatusBar ---@diagnostic disable-line: class-shadows-builtin
 ---@field SetBackgroundColor fun(self: StatusBar, r: number, g: number, b: number, a: number?)
+---@field SetBackgroundTexture fun(self: StatusBar, path: string?)
 ---@field UpdateBackdropFromDB fun(self: StatusBar, db: table)
 ---@field SetBorderColor fun(self: StatusBar, r: number, g: number, b: number, a: number?)
 ---@field ToggleBackdrop fun(self: StatusBar, show: boolean)
@@ -510,6 +514,7 @@ function FontString:GetWidestDigit() end
 ---@class SkinnedBackdropMixin : PublicBackdropMixin
 ---@field NUIBgAlpha number?
 ---@field NUIPrimary boolean?
+---@field NUIPrimaryTint Texture?
 
 ---@class SkinnedIconBackdropMixin : Frame, PublicBackdropMixin
 
@@ -1397,3 +1402,7 @@ function FontString:GetWidestDigit() end
 ---Chatv2 persists which chat window the panel snapped to; not a default, so the generator never sees it.
 ---@class NRSKNUI.DBProfile.Skinning.Chatv2
 ---@field panelSnapID number?
+
+---nil means a flat backdrop, so there is no default for the generator to see.
+---@class NRSKNUI.DBProfile.globalMedia.profileBar
+---@field backgroundTexture string?

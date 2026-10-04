@@ -7,8 +7,9 @@ local L = NRSKNUI.Libs.AL
 
 local tsort, tremove = table.sort, table.remove
 local ipairs, pairs = ipairs, pairs
-local format = string.format
+local format, gsub = string.format, string.gsub
 local CopyTable = CopyTable
+local wipe = wipe
 local tonumber = tonumber
 local type = type
 
@@ -134,31 +135,152 @@ function AuraIndicators:CreateGroup(name)
     return id
 end
 
----Move an indicator into a group, or out of one when groupId is nil. Emptied groups are dropped, since
----a header with nothing under it is only clutter.
+---Indicators never placed by hand sort after the placed ones, by name.
+---@param groupId string
+---@return table[] members { key, text, order? }
+function AuraIndicators:GetMembers(groupId)
+    local members = {}
+    for key, spec in pairs(GetStore() or {}) do
+        if type(spec) == 'table' and spec.group == groupId then
+            members[#members + 1] = { key = key, text = spec.name or key, order = spec.order }
+        end
+    end
+    tsort(members, function(a, b)
+        if a.order and b.order and a.order ~= b.order then return a.order < b.order end
+        if (a.order ~= nil) ~= (b.order ~= nil) then return a.order ~= nil end
+        return a.text < b.text
+    end)
+    return members
+end
+
+---A group outlives its last member; only DeleteGroup removes it.
 ---@param key string
 ---@param groupId string?
 function AuraIndicators:SetGroup(key, groupId)
     local spec = self:GetSpec(key)
-    if not spec then return end
+    if not spec or spec.group == groupId then return end
 
+    spec.order = nil
+    if not groupId then
+        spec.group = nil
+        return
+    end
+
+    -- Numbered with the members already there, so the newcomer lands last whatever order they had.
+    local members = self:GetMembers(groupId)
+    for index, member in ipairs(members) do GetStore()[member.key].order = index end
     spec.group = groupId
-    self:PruneGroups()
+    spec.order = #members + 1
 end
 
----Forget any group nothing points at.
-function AuraIndicators:PruneGroups()
-    local store, groups = GetStore(), GetGroupStore()
-    if not (store and groups) then return end
+---Joins the target's group; an ungrouped target ungroups it, since the top level sorts by name.
+---@param key string
+---@param targetKey string
+---@param position 'before'|'after'
+function AuraIndicators:MoveNextTo(key, targetKey, position)
+    local spec, target = self:GetSpec(key), self:GetSpec(targetKey)
+    if not (spec and target) or key == targetKey then return end
 
-    local used = {}
-    for _, spec in pairs(store) do
-        if type(spec) == 'table' and spec.group then used[spec.group] = true end
+    local groupId = target.group
+    spec.group = groupId
+    spec.order = nil
+    if not groupId then return end
+
+    local ordered = {}
+    for _, member in ipairs(self:GetMembers(groupId)) do
+        if member.key ~= key then
+            if member.key == targetKey and position == 'before' then ordered[#ordered + 1] = key end
+            ordered[#ordered + 1] = member.key
+            if member.key == targetKey and position == 'after' then ordered[#ordered + 1] = key end
+        end
+    end
+    for index, memberKey in ipairs(ordered) do GetStore()[memberKey].order = index end
+end
+
+---@param groupId string
+---@param name string
+function AuraIndicators:RenameGroup(groupId, name)
+    local group = GetGroupStore()[groupId]
+    if not group or not name or name == '' then return end
+
+    group.name = name
+end
+
+---Removes a group; its indicators stay, outside any group.
+---@param groupId string
+function AuraIndicators:DeleteGroup(groupId)
+    for _, spec in pairs(GetStore() or {}) do
+        if type(spec) == 'table' and spec.group == groupId then
+            spec.group = nil
+            spec.order = nil
+        end
+    end
+    GetGroupStore()[groupId] = nil
+end
+
+---@param fn fun(placement: table)
+local function EachPlacement(fn)
+    for _, uDB in pairs(NRSKNUI.db.profile.UnitFrames.Units) do
+        for _, placement in ipairs(uDB.AuraIndicators or {}) do fn(placement) end
+    end
+end
+
+---A user indicator is keyed by its name, so renaming moves it, and every placement listing it follows.
+---@param key string
+---@param name string
+---@return string? newKey nil when the name is taken or the indicator is a shipped one
+function AuraIndicators:Rename(key, name)
+    local store, spec = GetStore(), self:GetSpec(key)
+    if not spec or self:IsBuiltin(key) or not name or name == '' then return nil end
+    if name == key then return key end
+    if store[name] or self:IsBuiltin(name) then return nil end
+
+    spec.name = name
+    store[name] = spec
+    store[key] = nil
+    EachPlacement(function(placement)
+        for i, assigned in ipairs(placement.Keys) do
+            if assigned == key then placement.Keys[i] = name end
+        end
+    end)
+
+    self:Invalidate(key)
+    return name
+end
+
+---A user copy of any indicator, shipped ones included, under the first free "(Copy)" name.
+---@param key string
+---@return string? newKey
+function AuraIndicators:Duplicate(key)
+    local source = self:GetSpec(key)
+    if not source then return nil end
+
+    -- Shipped names carry a class colour escape, which a user's key should not.
+    local plain = gsub(gsub(source.name or key, '|c%x%x%x%x%x%x%x%x', ''), '|r', '')
+    local store = GetStore()
+    local name, n = format(L['%s (Copy)'], plain), 1
+    while store[name] do
+        n = n + 1
+        name = format(L['%s (Copy %d)'], plain, n)
     end
 
-    for id in pairs(groups) do
-        if not used[id] then groups[id] = nil end
-    end
+    local copy = CopyTable(source)
+    copy.name = name
+    copy.group, copy.order = nil, nil
+    store[name] = copy
+    self:Invalidate(name)
+    return name
+end
+
+---@param key string
+function AuraIndicators:ResetBuiltin(key)
+    local spec = self:GetSpec(key)
+    local shipped = NRSKNUI:GetDefaultDB().profile.AuraIndicators[key]
+    if not (spec and shipped and self:IsBuiltin(key)) then return end
+
+    wipe(spec)
+    for field, value in pairs(CopyTable(shipped)) do spec[field] = value end
+    self:Invalidate(key)
 end
 
 ---Readable summary of what an indicator matches, for the GUI card.
@@ -194,7 +316,6 @@ local PlacementDefaults = {
     Keys = {},
     Alpha = 1,
     Style = AuraIndicators.Styles.Overlay,
-    Layer = 1,
     Attach = AuraIndicators.Attach.Health,
     Position = { AnchorFrom = 'CENTER', AnchorTo = 'CENTER', XOffset = 0, YOffset = 0 },
     Size = { Width = 24, Height = 24 },
@@ -222,8 +343,9 @@ local PlacementDefaults = {
 ---Add a fully populated indicator to the store.
 ---@param key string
 ---@param name string
+---@param presetKey? string start from this preset's triggers instead of an empty spell list
 ---@return table? spec
-function AuraIndicators:Create(key, name)
+function AuraIndicators:Create(key, name, presetKey)
     local store = GetStore()
     -- A user's key is whatever they named it, so the shipped prefix is off limits: an indicator
     -- wearing it could never be deleted again.
@@ -232,9 +354,10 @@ function AuraIndicators:Create(key, name)
     local spec = CopyTable(SpecDefaults)
     spec.name = name
     -- Its own table, not a shared default: an indicator's trigger is edited in place.
-    spec.Trigger = NRSKNUI.AuraTriggers:New({ Type = NRSKNUI.AuraTriggers.Types.SpellIDs })
+    spec.Trigger = NRSKNUI.AuraTriggers:New({ branches = { { candidates = { includeSpellIDs = {} } } } })
     -- The unit frame drawing the indicator decides the unit, so the trigger never carries one.
     spec.Trigger.Unit = nil
+    if presetKey then NRSKNUI.AuraTriggers:LoadPreset(spec.Trigger, presetKey) end
 
     store[key] = spec
     self:Invalidate(key)
@@ -247,9 +370,21 @@ end
 ---@return table placement
 function AuraIndicators:AddPlacement(uDB)
     local placement = CopyTable(PlacementDefaults)
+    placement.Order = self:TopOrder(uDB.AuraIndicators)
 
     tinsert(uDB.AuraIndicators, placement)
     return placement
+end
+
+---Order above every spot on its unit, so a new or restyled one draws on top.
+---@param placements table[]
+---@return number
+function AuraIndicators:TopOrder(placements)
+    local top = 0
+    for _, placement in ipairs(placements) do
+        if (placement.Order or 0) > top then top = placement.Order end
+    end
+    return top + 1
 end
 
 ---@param placement table
@@ -300,7 +435,6 @@ function AuraIndicators:Delete(key)
     if not store or not store[key] or self:IsBuiltin(key) then return end
 
     store[key] = nil
-    self:PruneGroups()
     self:Invalidate(key)
 end
 

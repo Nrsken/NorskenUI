@@ -335,7 +335,7 @@ end
 local HeadingMixin = {}
 
 function HeadingMixin:NUIUpdateSkinColors()
-    local border = Skinning.db.General.BorderColor
+    local border = NRSKNUI:GetBorderColor(Skinning.db.General)
 
     self.NUILeft:SetColorTexture(border[1], border[2], border[3], border[4])
     self.NUIRight:SetColorTexture(border[1], border[2], border[3], border[4])
@@ -403,8 +403,8 @@ local SurfaceMixin = {}
 
 function SurfaceMixin:NUIUpdateSkinColors()
     ---@cast self Frame & PublicBackdropMixin
-    local bg = Skinning.db.General.BackgroundColor
-    local border = Skinning.db.General.BorderColor
+    local bg = NRSKNUI:GetBackdropColor(Skinning.db.General, 'BackgroundColor')
+    local border = NRSKNUI:GetBorderColor(Skinning.db.General)
 
     self:SetBackgroundColor(bg[1], bg[2], bg[3], bg[4])
     self:SetBorderColor(border[1], border[2], border[3], border[4])
@@ -564,7 +564,7 @@ local PaneMixin = {}
 
 function PaneMixin:NUIUpdateSkinColors()
     ---@cast self Frame & PublicBackdropMixin
-    local color = Skinning.db.General.BorderColor
+    local color = NRSKNUI:GetBorderColor(Skinning.db.General)
     self:SetBorderColor(color[1], color[2], color[3], color[4])
 end
 

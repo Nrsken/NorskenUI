@@ -48,6 +48,7 @@ function InstanceMixin:CreateSidebar(parent, opts)
 
     local frame = CreateFrame("Frame", nil, parent, "BackdropTemplate")
     frame:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8" })
+    lib.AddSurfaceTexture(frame, gui)
 
     local rightBorder = frame:CreateTexture(nil, "BORDER")
     pixel.SetPixelWidth(rightBorder, theme.borderSize)
@@ -66,7 +67,7 @@ function InstanceMixin:CreateSidebar(parent, opts)
     scrollFrame:SetScrollChild(scrollChild)
 
     local scrollbar = gui:CreateScrollbar(scrollFrame, {
-        width = 16,
+        width = theme.scrollbarWidth,
         thumbHeight = 40,
         padding = { top = -1, bottom = -1, right = 0 },
         scrollStep = 40,
@@ -126,6 +127,7 @@ function InstanceMixin:CreateSidebar(parent, opts)
         pixel.SetPixelPoint(accentBar, "BOTTOMLEFT", header, "BOTTOMLEFT", 0, 0)
         accentBar:Hide()
         header.accentBar = accentBar
+        header.barGlow = lib.CreateBarGlow(header, accentBar)
 
         local label = header:CreateFontString(nil, "OVERLAY")
         label:SetPoint("LEFT", header, "LEFT", pad, 0)
@@ -230,6 +232,7 @@ function InstanceMixin:CreateSidebar(parent, opts)
         pixel.SetPixelPoint(accentBar, "BOTTOMLEFT", item, "BOTTOMLEFT", 0, 0)
         accentBar:Hide()
         item.accentBar = accentBar
+        item.barGlow = lib.CreateBarGlow(item, accentBar)
 
         local label = item:CreateFontString(nil, "OVERLAY")
         pixel.SetPixelPoint(label, "LEFT", item, "LEFT", 10, 0)
@@ -251,12 +254,16 @@ function InstanceMixin:CreateSidebar(parent, opts)
             self.hoverTarget = 1
             if self.id ~= sidebar.selected then
                 self.label:SetTextColor(theme.textPrimary[1], theme.textPrimary[2], theme.textPrimary[3], 1)
+                -- Neon: the accent bar fades in partway, previewing the selection.
+                self.accentBar:SetColorTexture(theme.accent[1], theme.accent[2], theme.accent[3], lib.HOVER_BAR_ALPHA)
+                self.accentBar:Show()
             end
         end)
         item:SetScript("OnLeave", function(self)
             self.hoverTarget = 0
             if self.id ~= sidebar.selected and not self.disabled then
                 self.label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
+                self.accentBar:Hide()
             end
         end)
         item:SetScript("OnClick", function(self)
@@ -281,18 +288,33 @@ function InstanceMixin:CreateSidebar(parent, opts)
     local containerPool = {}
     local layout = {} -- ordered blocks: { frame, height } | { frame, section, full } | { gap }
 
+    -- Re-tinted on every acquire: a theme change re-renders the tree, so this keeps pooled guides current.
+    local function PaintGuide(c)
+        c.guide:SetColorTexture(theme.widgetBorder[1], theme.widgetBorder[2], theme.widgetBorder[3], 1)
+        return c
+    end
+
     local function AcquireContainer()
         for _, c in ipairs(containerPool) do
             if not c.inUse then
-                c.inUse = true; c:Show(); return c
+                c.inUse = true; c:Show(); return PaintGuide(c)
             end
         end
         local c = CreateFrame("Frame", nil, scrollChild)
         c:SetClipsChildren(true)
         c:SetFrameLevel(scrollChild:GetFrameLevel() + 1)
+
+        -- On the accent bar's column, so the selected child's bar covers its stretch.
+        local guide = c:CreateTexture(nil, "BACKGROUND")
+        pixel.SetPixelWidth(guide, theme.borderSize)
+        pixel.SetPixelPoint(guide, "TOPLEFT", c, "TOPLEFT", 0, 0)
+        pixel.SetPixelPoint(guide, "BOTTOMLEFT", c, "BOTTOMLEFT", 0, 0)
+        pixel.SetPixelSnap(guide)
+        c.guide = guide
+
         c.inUse = true
         containerPool[#containerPool + 1] = c
-        return c
+        return PaintGuide(c)
     end
 
     -- Rows are only marked free here and hidden by SweepUnused once the render has claimed what it needs.
@@ -315,13 +337,13 @@ function InstanceMixin:CreateSidebar(parent, opts)
         end
         for _, h in ipairs(headerPool) do
             if not h.inUse and h:IsShown() then
-                h.hoverBg:SetAlpha(0); h.accentBar:Hide(); h.selectedBg:Hide(); h:Hide(); h:ClearAllPoints()
+                h.hoverBg:SetAlpha(0); h.accentBar:Hide(); h.selectedBg:Hide(); h.barGlow:Hide(); h:Hide(); h:ClearAllPoints()
             end
         end
         for _, it in ipairs(itemPool) do
             if not it.inUse and it:IsShown() then
                 it.hoverTarget = 0
-                it.hoverBg:SetAlpha(0); it.accentBar:Hide(); it.selectedBg:Hide()
+                it.hoverBg:SetAlpha(0); it.accentBar:Hide(); it.selectedBg:Hide(); it.barGlow:Hide()
                 it:Hide(); it:ClearAllPoints()
             end
         end
@@ -331,14 +353,14 @@ function InstanceMixin:CreateSidebar(parent, opts)
     local function ApplyItemState(item)
         if item.disabled then
             item.label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 0.35)
-            item.accentBar:Hide(); item.selectedBg:Hide()
+            item.accentBar:Hide(); item.selectedBg:Hide(); item.barGlow:Hide()
         elseif item.id == sidebar.selected then
             item.accentBar:SetColorTexture(theme.accent[1], theme.accent[2], theme.accent[3], 1)
-            item.selectedBg:SetColorTexture(theme.accent[1], theme.accent[2], theme.accent[3], 0.08)
-            item.accentBar:Show(); item.selectedBg:Show()
+            item.accentBar:Show()
+            lib.PaintSelected(item, theme)
             item.label:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
         else
-            item.accentBar:Hide(); item.selectedBg:Hide()
+            item.accentBar:Hide(); item.selectedBg:Hide(); item.barGlow:Hide()
             item.label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
         end
     end
@@ -346,10 +368,10 @@ function InstanceMixin:CreateSidebar(parent, opts)
     local function ApplyHeaderSelection(header)
         if header.leafId and not header.disabled and header.leafId == sidebar.selected then
             header.accentBar:SetColorTexture(theme.accent[1], theme.accent[2], theme.accent[3], 1)
-            header.selectedBg:SetColorTexture(theme.accent[1], theme.accent[2], theme.accent[3], 0.08)
-            header.accentBar:Show(); header.selectedBg:Show()
+            header.accentBar:Show()
+            lib.PaintSelected(header, theme)
         else
-            header.accentBar:Hide(); header.selectedBg:Hide()
+            header.accentBar:Hide(); header.selectedBg:Hide(); header.barGlow:Hide()
         end
     end
 
@@ -376,7 +398,7 @@ function InstanceMixin:CreateSidebar(parent, opts)
         header:SetFrameLevel(scrollChild:GetFrameLevel() + 2)
         pixel.SetPixelHeight(header, HEADER_HEIGHT)
         header.label:Show()
-        gui:ApplyFont(header.label, "large")
+        gui:ApplyFont(header.label, "medium")
         header.label:SetText(entry.text or "")
 
         local disabled = isDisabled(entry) or false
@@ -393,6 +415,7 @@ function InstanceMixin:CreateSidebar(parent, opts)
             header.arrow:Show()
             header.accentBar:Hide()
             header.selectedBg:Hide()
+            header.barGlow:Hide()
             header:SetArrowState(sidebar.expanded[entry.id] == true)
         end
 

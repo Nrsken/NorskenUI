@@ -59,11 +59,14 @@ local function BuildHeader(window, logoCfg)
     pixel.SetPixelPoint(header, "TOPLEFT", parent, "TOPLEFT", 0, 0)
     pixel.SetPixelPoint(header, "TOPRIGHT", parent, "TOPRIGHT", 0, 0)
     header:SetBackdrop({ bgFile = WHITE })
+    lib.AddSurfaceTexture(header, gui)
 
     local bottomBorder = header:CreateTexture(nil, "BORDER")
     pixel.SetPixelHeight(bottomBorder, theme.borderSize)
     pixel.SetPixelPoint(bottomBorder, "BOTTOMLEFT", header, "BOTTOMLEFT", 0, 0)
     pixel.SetPixelPoint(bottomBorder, "BOTTOMRIGHT", header, "BOTTOMRIGHT", 0, 0)
+
+    lib.AddTopSheen(header, gui)
 
     local layerTex = {}
     if logoCfg then
@@ -79,6 +82,7 @@ local function BuildHeader(window, logoCfg)
             pixel.SetPixelSnap(t)
             layerTex[i] = t
             layer._tex = t
+            layer._paintGlow = lib.AddIconGlow(container, t, layer.size, layer.size, layer.glow, gui)
         end
 
         if logoCfg.version then
@@ -100,6 +104,7 @@ local function BuildHeader(window, logoCfg)
                 if layer._tex then
                     local c = theme[layer.color] or theme.textSecondary
                     layer._tex:SetVertexColor(c[1], c[2], c[3], layer.alpha or c[4] or 1)
+                    layer._paintGlow(layer.alpha or 1)
                 end
             end
             if window._logoVersion then
@@ -131,6 +136,7 @@ local function BuildFooter(window)
     pixel.SetPixelPoint(footer, "BOTTOMLEFT", parent, "BOTTOMLEFT", 0, 0)
     pixel.SetPixelPoint(footer, "BOTTOMRIGHT", parent, "BOTTOMRIGHT", 0, 0)
     footer:SetBackdrop({ bgFile = WHITE })
+    lib.AddSurfaceTexture(footer, gui)
 
     local topBorder = footer:CreateTexture(nil, "BORDER")
     pixel.SetPixelHeight(topBorder, theme.borderSize)
@@ -194,7 +200,7 @@ end
 -- Public window methods --
 
 ---Adds a header button, auto-packed from the right edge in add order.
----@param config table { icon, size?, width?, height?, onClick?, tooltip?, rotation?, strata?, yOffset? }
+---@param config table { icon, glow?, size?, width?, height?, onClick?, tooltip?, rotation?, strata?, yOffset? }
 ---@return Button
 function WindowMixin:AddHeaderButton(config)
     local gui, theme, header = self.gui, self.gui.theme, self.header
@@ -213,9 +219,11 @@ function WindowMixin:AddHeaderButton(config)
     pixel.SetPixelSnap(tex)
     if config.rotation then tex:SetRotation(rad(config.rotation)) end
     btn:SetNormalTexture(tex)
+    local paintGlow = lib.AddIconGlow(btn, tex, width, config.height or size, config.glow, gui, config.rotation and rad(config.rotation))
 
     local function ApplyAlpha(a)
         tex:SetVertexColor(theme.accent[1], theme.accent[2], theme.accent[3], a)
+        paintGlow(a)
     end
     ApplyAlpha(0.7)
     -- Tween only alpha; the setter reads accent live so theme changes keep the tint correct.
@@ -255,7 +263,7 @@ function WindowMixin:AddHeaderButton(config)
 end
 
 ---Adds a footer social button, auto-packed from the left edge in add order.
----@param config table { icon, text?, width?, onClick?, tooltip? }
+---@param config table { icon, glow?, text?, width?, onClick?, tooltip? }
 ---@return Button
 function WindowMixin:AddFooterSocial(config)
     local gui, theme, footer = self.gui, self.gui.theme, self.footer
@@ -271,6 +279,7 @@ function WindowMixin:AddFooterSocial(config)
     pixel.SetPixelPoint(tex, "LEFT", btn, "LEFT", 0, 0)
     tex:SetTexture(config.icon)
     pixel.SetPixelSnap(tex)
+    local paintGlow = lib.AddIconGlow(btn, tex, 21, 21, config.glow, gui)
 
     local label = btn:CreateFontString(nil, "OVERLAY")
     pixel.SetPixelPoint(label, "LEFT", tex, "RIGHT", theme.paddingSmall, 1)
@@ -281,6 +290,7 @@ function WindowMixin:AddFooterSocial(config)
     local function Restyle(hover)
         local a = hover and 1 or 0.7
         tex:SetVertexColor(theme.accent[1], theme.accent[2], theme.accent[3], a)
+        paintGlow(a)
         label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], a)
     end
     Restyle(false)
@@ -308,8 +318,6 @@ function WindowMixin:ShowPage(id, target)
     end
 end
 
-local SEARCH_BOX_HEIGHT = 30
-
 ---Builds the navigation sidebar + search box from a config list and wires selection to ShowPage.
 ---@param config table[] sidebar entry list (headers / items)
 ---@param opts? table { isDisabled?: fun(entry): boolean }
@@ -318,6 +326,8 @@ function WindowMixin:SetSidebar(config, opts)
     opts = opts or {}
     local gui, theme, frame = self.gui, self.gui.theme, self.frame
     self._sidebarConfig = config
+    -- One pixel taller and higher so the box's top edge shares the header's bottom line.
+    local searchBoxHeight = theme.barHeight + 1
 
     -- Inset the content to the right of the sidebar column.
     self.contentContainer:ClearAllPoints()
@@ -341,13 +351,14 @@ function WindowMixin:SetSidebar(config, opts)
             self:SavePosition()
         end,
     })
-    pixel.SetPixelPoint(sidebar.frame, "TOPLEFT", frame, "TOPLEFT", 0, -(theme.headerHeight + SEARCH_BOX_HEIGHT - 1))
+    pixel.SetPixelPoint(sidebar.frame, "TOPLEFT", frame, "TOPLEFT", 0, -(theme.headerHeight + searchBoxHeight - 1))
     pixel.SetPixelPoint(sidebar.frame, "BOTTOMLEFT", frame, "BOTTOMLEFT", 0, theme.footerHeight)
     pixel.SetPixelWidth(sidebar.frame, theme.sidebarWidth)
     self.sidebar = sidebar
 
     local search = gui:CreateSearchBox(frame, {
-        height = SEARCH_BOX_HEIGHT,
+        height = searchBoxHeight,
+        fieldTop = theme.barInset + 1,
         onChanged = function(text)
             if text == "" then
                 sidebar:ClearResults()
@@ -483,8 +494,8 @@ function InstanceMixin:CreateGUIWindow(opts)
     if not self.overlay then
         local overlay = CreateFrame("Frame", nil, UIParent)
         overlay:SetAllPoints(UIParent)
-        overlay:SetFrameStrata("TOOLTIP")
-        overlay:SetFrameLevel(1)
+        overlay:SetFrameStrata("FULLSCREEN_DIALOG") -- below TOOLTIP so item tooltips draw over the list
+        overlay:SetFrameLevel(200) -- above prompts at level 100
         overlay:EnableMouse(false)
         self.overlay = overlay
     end
@@ -508,6 +519,15 @@ function InstanceMixin:CreateGUIWindow(opts)
     -- here would stack under all of them, and translucent theme colours would compound.
     frame:SetBackdrop({ edgeFile = WHITE, edgeSize = theme.borderSize })
     pixel.SetPixelSnap(frame)
+
+    -- Frames don't clip their own regions; the glow's clear centre leaves the translucent window undarkened.
+    local shadow = frame:CreateTexture(nil, "BACKGROUND", nil, -8)
+    shadow:SetTexture(theme.glowTexture)
+    shadow:SetTextureSliceMargins(16, 16, 16, 16)
+    shadow:SetTextureSliceMode(Enum.UITextureSliceMode.Stretched)
+    shadow:SetPoint("TOPLEFT", frame, "TOPLEFT", -theme.shadowSize, theme.shadowSize)
+    shadow:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", theme.shadowSize, -theme.shadowSize)
+    shadow:SetVertexColor(0, 0, 0, theme.shadowAlpha)
     frame:Hide()
 
     ---@class KajiGUIWindow : KajiGUIWindowMixin
@@ -524,7 +544,8 @@ function InstanceMixin:CreateGUIWindow(opts)
     window.inCombat = InCombatLockdown() and true or false
 
     local function RestyleFrame()
-        frame:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
+        local a = theme.accent
+        frame:SetBackdropBorderColor(a[1], a[2], a[3], theme.windowEdgeAlpha)
     end
     RestyleFrame()
     gui:OnThemeChanged(RestyleFrame)

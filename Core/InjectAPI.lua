@@ -216,6 +216,7 @@ end
 
 ---@class PublicBackdropMixin : Frame
 ---@field BackDropBorders table
+---@field backdropBackground Texture?
 local PublicBackdropMixin = {}
 
 ---Set the color of the background
@@ -224,9 +225,21 @@ local PublicBackdropMixin = {}
 ---@param b number
 ---@param a? number
 function PublicBackdropMixin:SetBackgroundColor(r, g, b, a)
-    if self.backdropBackground then
-        self.backdropBackground:SetColorTexture(r, g, b, a)
+    local background = self.backdropBackground
+    if not background then return end
+    if self._backgroundTexture then
+        background:SetTexture(self._backgroundTexture)
+        background:SetVertexColor(r, g, b, a)
+    else
+        background:SetColorTexture(r, g, b, a)
+        background:SetVertexColor(1, 1, 1, 1)
     end
+end
+
+---nil goes back to a flat fill. Applies on the next SetBackgroundColor, so call this first.
+---@param path string?
+function PublicBackdropMixin:SetBackgroundTexture(path)
+    self._backgroundTexture = path
 end
 
 ---Set the color of the backdrops borders
@@ -246,11 +259,13 @@ end
 ---@param db table
 function PublicBackdropMixin:UpdateBackdropFromDB(db)
     if self.backdropBackground then
-        self.backdropBackground:SetColorTexture(db.BackgroundColor[1], db.BackgroundColor[2], db.BackgroundColor[3], db.BackgroundColor[4])
+        local bg = NRSKNUI:GetBackdropColor(db, 'BackgroundColor')
+        self:SetBackgroundColor(bg[1], bg[2], bg[3], bg[4])
     end
     if self.BackDropBorders then
+        local border = NRSKNUI:GetBorderColor(db)
         for _, edge in pairs(self.BackDropBorders) do
-            edge:SetColorTexture(db.BorderColor[1], db.BorderColor[2], db.BorderColor[3], db.BorderColor[4])
+            edge:SetColorTexture(border[1], border[2], border[3], border[4])
         end
     end
 end
@@ -362,8 +377,9 @@ end
 ---@param db table
 function PublicBorderMixin:UpdateBorderFromDB(db)
     if self.Borders then
+        local border = NRSKNUI:GetBorderColor(db)
         for _, edge in pairs(self.Borders) do
-            edge:SetColorTexture(db.BorderColor[1], db.BorderColor[2], db.BorderColor[3], db.BorderColor[4])
+            edge:SetColorTexture(border[1], border[2], border[3], border[4])
         end
     end
 end

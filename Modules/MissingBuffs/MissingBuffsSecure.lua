@@ -20,7 +20,7 @@ local GameTooltip = GameTooltip
 
 local MACRO_CAST = '/cast %s'
 local MACRO_SELF = '/cast [@player] %s'
-local MACRO_TARGETED = '/cast [@mouseover,help,nodead][@target,help,nodead][] %s'
+local MACRO_TARGETED = '/cast [@target,help,nodead][] %s'
 local MACRO_ITEM = '/use item:%d'
 local USE_MAINHAND = '\n/use 16'
 local USE_OFFHAND = '\n/use 17'
@@ -61,7 +61,7 @@ local function OnMainEnter(button)
             or L['Left-Click to use on your main hand']
     else
         title = GetSpellName(result.castSpell --[[@as number]]) or ''
-        action = (result.category == 'Targeted' or entry.targeted) and L['Left-Click to cast on your mouseover or target']
+        action = (result.category == 'Targeted' or entry.targeted) and L['Left-Click to cast on your target']
             or L['Left-Click to cast']
     end
 

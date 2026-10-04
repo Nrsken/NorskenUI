@@ -25,7 +25,7 @@ end
 function SkinnedIconBackdropMixin:NUIUpdateSkinColors()
     local general = Skinning.db.General
     if not self.NUIQualityShown then
-        local border = self.NUIFill and general.WidgetBorderColor or general.BorderColor
+        local border = self.NUIFill and general.WidgetBorderColor or NRSKNUI:GetBorderColor(general)
         self:SetBorderColor(border[1], border[2], border[3], border[4])
     end
 

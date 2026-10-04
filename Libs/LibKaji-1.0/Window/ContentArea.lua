@@ -49,7 +49,7 @@ local wipe = wipe
 local PlaySound = PlaySound
 local tremove = table.remove
 local strfind, strlower = string.find, string.lower
-local mmax, mmin = math.max, math.min
+local mmax, mmin, mabs = math.max, math.min, math.abs
 
 local C_Timer = C_Timer
 local SOUNDKIT = SOUNDKIT
@@ -94,13 +94,13 @@ local function ClearScrollChild(gui, scrollChild)
     pixel.SetPixelHeight(scrollChild, 1)
 end
 
-local TAB_ROW_HEIGHT = 29 -- height of one row of tabs
 local TAB_STRIP_TOP = 0   -- gap above the first row
 local TAB_HPAD = 14       -- horizontal padding on each side of a tab label
 local TAB_GAP = 2         -- gap between the bordered tab buttons (and below them, before the next row)
-local TAB_INSET = 4       -- padding between the strip's edges and the tab buttons
 local TAB_UNDERLINE = 2   -- selected-tab underline thickness
 local UNDERLINE_INSET = 1 -- underline is shorter than the tab by this on each side
+local UNDERLINE_GLOW_HEIGHT = 8 -- the selected tab's glow rising from its underline
+local HOVER_DURATION = 0.12 -- matches the sidebar items' hover fade
 local TAB_BACKDROP = { bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1 }
 
 -- Scratch tables reused across a single BuildTabs pass.
@@ -117,6 +117,9 @@ local function CreateTabStrip(gui, parent, opts)
     -- Space kept clear on the right (the scroll region's scrollbar). Reserved unconditionally so
     -- the tabs don't jump when switching between tabs that scroll and tabs that don't.
     local rightReserve = opts.rightReserve or 0
+    -- From the header band, so one row of tabs is exactly theme.barHeight tall like the search box.
+    local TAB_INSET = theme.barInset
+    local TAB_ROW_HEIGHT = theme.barControlHeight + TAB_GAP
 
     local frame = CreateFrame("Frame", nil, parent)
     pixel.SetPixelPoint(frame, "TOPLEFT", parent, "TOPLEFT", 0, 0)
@@ -172,6 +175,7 @@ local function CreateTabStrip(gui, parent, opts)
             tab.label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 0.35)
             tab.selectedBg:Hide()
             tab.underline:Hide()
+            tab.underGlow:Hide()
             tab:SetBackdropColor(theme.bgMedium[1], theme.bgMedium[2], theme.bgMedium[3], 1)
             tab:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
         elseif tab.value == strip.selected then
@@ -180,14 +184,23 @@ local function CreateTabStrip(gui, parent, opts)
             tab.selectedBg:Show()
             tab.underline:SetColorTexture(theme.accent[1], theme.accent[2], theme.accent[3], 1)
             tab.underline:Show()
+            -- VERTICAL runs bottom (first color) to top (second color).
+            local ac = theme.accent
+            tab.underGlow:SetGradient("VERTICAL", CreateColor(ac[1], ac[2], ac[3], theme.underlineGlowAlpha), CreateColor(ac[1], ac[2], ac[3], 0))
+            tab.underGlow:Show()
             tab:SetBackdropColor(theme.bgMedium[1], theme.bgMedium[2], theme.bgMedium[3], 1)
             tab:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
         else
-            tab.label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
+            tab.underGlow:Hide()
+            -- The hover fill's alpha is the hover progress, so the text, border and underline ride the same fade.
+            local p = tab.hoverBg:GetAlpha()
+            local sec, pri, bd, ac = theme.textSecondary, theme.textPrimary, theme.border, theme.accent
+            tab.label:SetTextColor(sec[1] + (pri[1] - sec[1]) * p, sec[2] + (pri[2] - sec[2]) * p, sec[3] + (pri[3] - sec[3]) * p, 1)
             tab.selectedBg:Hide()
-            tab.underline:Hide()
+            tab.underline:SetColorTexture(ac[1], ac[2], ac[3], 0.3 * p)
+            tab.underline:SetShown(p > 0)
             tab:SetBackdropColor(theme.bgMedium[1], theme.bgMedium[2], theme.bgMedium[3], 1)
-            tab:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
+            tab:SetBackdropBorderColor(bd[1] + (ac[1] - bd[1]) * p, bd[2] + (ac[2] - bd[2]) * p, bd[3] + (ac[3] - bd[3]) * p, 1 - 0.4 * p)
         end
     end
 
@@ -196,6 +209,14 @@ local function CreateTabStrip(gui, parent, opts)
         pixel.SetPixelHeight(tab, TAB_ROW_HEIGHT - TAB_GAP)
         tab:SetBackdrop(TAB_BACKDROP)
         tab:RegisterForClicks("LeftButtonUp")
+        lib.AddTopSheen(tab, gui)
+        lib.AddTopHighlight(tab, gui)
+
+        local hoverBg = tab:CreateTexture(nil, "BACKGROUND")
+        hoverBg:SetAllPoints()
+        hoverBg:SetColorTexture(1, 1, 1, 0.05)
+        hoverBg:SetAlpha(0)
+        tab.hoverBg = hoverBg
 
         local selectedBg = tab:CreateTexture(nil, "BACKGROUND", nil, 1)
         selectedBg:SetAllPoints()
@@ -215,16 +236,28 @@ local function CreateTabStrip(gui, parent, opts)
         underline:Hide()
         tab.underline = underline
 
+        local underGlow = tab:CreateTexture(nil, "ARTWORK")
+        underGlow:SetTexture("Interface\\Buttons\\WHITE8X8")
+        pixel.SetPixelHeight(underGlow, UNDERLINE_GLOW_HEIGHT)
+        pixel.SetPixelPoint(underGlow, "BOTTOMLEFT", underline, "TOPLEFT", 0, 0)
+        pixel.SetPixelPoint(underGlow, "BOTTOMRIGHT", underline, "TOPRIGHT", 0, 0)
+        underGlow:Hide()
+        tab.underGlow = underGlow
+
+        tab.hoverTarget = 0
+        tab:SetScript("OnUpdate", function(self, elapsed)
+            local cur = hoverBg:GetAlpha()
+            if mabs(cur - self.hoverTarget) > 0.01 then
+                local speed = elapsed / HOVER_DURATION
+                hoverBg:SetAlpha(self.hoverTarget > cur and mmin(cur + speed, self.hoverTarget) or mmax(cur - speed, self.hoverTarget))
+                ApplyTabState(self)
+            end
+        end)
         tab:SetScript("OnEnter", function(self)
-            if self.disabled or self.value == strip.selected then return end
-            self.label:SetTextColor(theme.textPrimary[1], theme.textPrimary[2], theme.textPrimary[3], 1)
-            self:SetBackdropBorderColor(theme.accent[1], theme.accent[2], theme.accent[3], 0.6)
-            self.underline:SetColorTexture(theme.accent[1], theme.accent[2], theme.accent[3], 0.3)
-            self.underline:Show()
+            if not self.disabled then self.hoverTarget = 1 end
         end)
         tab:SetScript("OnLeave", function(self)
-            if self.disabled or self.value == strip.selected then return end
-            ApplyTabState(self)
+            self.hoverTarget = 0
         end)
         tab:SetScript("OnClick", function(self)
             if self.disabled or self.value == strip.selected then return end
@@ -249,8 +282,8 @@ local function CreateTabStrip(gui, parent, opts)
 
     local function ReleaseAll()
         for _, t in ipairs(pool) do
-            t.inUse = false; t.disabled = nil; t.value = nil
-            t.underline:Hide(); t:Hide(); t:ClearAllPoints()
+            t.inUse = false; t.disabled = nil; t.value = nil; t.hoverTarget = 0
+            t.hoverBg:SetAlpha(0); t.underline:Hide(); t.underGlow:Hide(); t:Hide(); t:ClearAllPoints()
         end
         wipe(active)
     end
@@ -401,6 +434,8 @@ function InstanceMixin:CreateContentHost(parent, opts)
     frame:SetAllPoints(parent)
     if opts.showBackground ~= false then
         frame:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8" })
+        -- Also covers the item list column, which sits inside this frame on a translucent fill.
+        lib.AddSurfaceTexture(frame, gui)
         local function Restyle()
             frame:SetBackdropColor(theme.bgDark[1], theme.bgDark[2], theme.bgDark[3], theme.bgDark[4])
         end
@@ -437,7 +472,7 @@ function InstanceMixin:CreateContentHost(parent, opts)
 
     -- Anchored to the scroll region, not the host, so it starts below the tab strip in tabs mode.
     local scrollbarOptions = opts.scrollbarOptions or {
-        width = 16,
+        width = scrollbarWidth,
         thumbHeight = 40,
         padding = { top = -1, bottom = -1, right = 0 },
         scrollStep = 40,

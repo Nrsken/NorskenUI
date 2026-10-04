@@ -131,6 +131,8 @@ end
 
 -- Backdrop Settings Tab.
 local function BuildBackdropSettingsTab(page, db)
+    page:SetCondition('backdrop', function() return db.BackdropEnabled end)
+
     local backdropCard = page:Card(L['Backdrop'], 'all')
     local enableBackdropRow = backdropCard:Row(rowH)
     enableBackdropRow:Checkbox(L['Enable Backdrop'], {
@@ -144,27 +146,6 @@ local function BuildBackdropSettingsTab(page, db)
     })
 
     backdropCard:Separator()
-
-    local backdropColorRow = backdropCard:Row(rowH)
-    backdropColorRow:ColorPicker(L['Background Color'], {
-        width = 0.5,
-        value = db.BackgroundColor,
-        conditions = { 'backdrop' },
-        callback = function(r, g, b, a)
-            db.BackgroundColor = { r, g, b, a }
-            ApplySettings()
-        end
-    })
-
-    backdropColorRow:ColorPicker(L['Border Color'], {
-        width = 0.5,
-        value = db.BorderColor,
-        conditions = { 'backdrop' },
-        callback = function(r, g, b, a)
-            db.BorderColor = { r, g, b, a }
-            ApplySettings()
-        end
-    })
 
     local offsetRow = backdropCard:Row(rowHL, 0)
     offsetRow:Slider(L['Padding X'], {
@@ -192,6 +173,8 @@ local function BuildBackdropSettingsTab(page, db)
             ApplySettings()
         end
     })
+
+    page:BackdropColorsCard({ db = db, backdropKey = 'BackgroundColor', onChangeCallback = ApplySettings }, 'backdrop')
 end
 
 -- Font Settings Tab.

@@ -101,7 +101,7 @@ function MissingBuffs:ToggleFlyout(key)
     local direction = DIRECTIONS[self.db.FlyoutDirection]
     local dx, dy = direction[1], direction[2]
     local step = size + SPACING
-    local border = db.BorderColor
+    local border = NRSKNUI:GetBorderColor(db)
 
     for index, itemID in ipairs(items) do
         local button = self:GetFlyoutButton(index)

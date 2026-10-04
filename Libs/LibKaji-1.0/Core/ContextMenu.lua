@@ -53,6 +53,7 @@ local MIN_WIDTH = 180
 local MAX_WIDTH = 350
 local TEXT_INSET = 4
 local DISABLED_ALPHA = 0.4
+local HOVER_BAR_WIDTH = 2
 
 local BACKDROP = { bgFile = 'Interface\\Buttons\\WHITE8X8', edgeFile = 'Interface\\Buttons\\WHITE8X8', edgeSize = 1 }
 
@@ -73,6 +74,13 @@ local function EnsureMenu(gui)
 
     local menu = { frame = frame, items = {} }
     gui._contextMenu = menu
+    local restylePopup = lib.StylePopup(frame, gui)
+
+    -- Rows read white; only the hovered one takes the accent.
+    local function PaintLabel(item, hovered)
+        local c = hovered and theme.accent or theme.textPrimary
+        item.text:SetTextColor(c[1], c[2], c[3], item.disabled and DISABLED_ALPHA or 1)
+    end
 
     -- Match Blizzards behavior of closing the menu when clicking outside of it.
     frame:SetScript('OnShow', function(self) self:RegisterEvent('GLOBAL_MOUSE_DOWN') end)
@@ -88,13 +96,15 @@ local function EnsureMenu(gui)
     ---Restyles chrome so an open menu follows a live theme change like every other widget.
     function menu:Restyle()
         frame:SetBackdropColor(theme.bgLight[1], theme.bgLight[2], theme.bgLight[3], theme.bgLight[4])
-        frame:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], theme.border[4])
+        restylePopup()
         for _, item in ipairs(self.items) do
             if item.divider then
                 item.tex:SetColorTexture(theme.border[1], theme.border[2], theme.border[3], theme.border[4])
             else
-                item.text:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], (theme.accent[4] or 1) * (item.disabled and DISABLED_ALPHA or 1))
-                item.hover:SetColorTexture(theme.accentHover[1], theme.accentHover[2], theme.accentHover[3], theme.accentHover[4])
+                PaintLabel(item, false)
+                local a = theme.accent
+                item.hover:SetGradient('HORIZONTAL', CreateColor(a[1], a[2], a[3], theme.selectionGlowAlpha), CreateColor(a[1], a[2], a[3], 0))
+                item.bar:SetColorTexture(a[1], a[2], a[3], 1)
                 item.button:SetBackdropBorderColor(theme.accent[1], theme.accent[2], theme.accent[3], 0)
                 item.button:SetBackdropColor(theme.bgMedium[1], theme.bgMedium[2], theme.bgMedium[3], theme.bgMedium[4])
             end
@@ -118,9 +128,15 @@ local function EnsureMenu(gui)
             pixel.SetPixelHeight(item.button, ITEM_HEIGHT)
             item.button:SetFrameLevel(frame:GetFrameLevel() + 1)
 
-            item.hover = item.button:CreateTexture(nil, 'OVERLAY')
+            item.hover = item.button:CreateTexture(nil, 'BACKGROUND', nil, 1)
             item.hover:SetAllPoints()
+            item.hover:SetTexture('Interface\\Buttons\\WHITE8X8')
             item.hover:Hide()
+            item.bar = item.button:CreateTexture(nil, 'ARTWORK')
+            pixel.SetPixelWidth(item.bar, HOVER_BAR_WIDTH)
+            pixel.SetPixelPoint(item.bar, 'TOPLEFT', item.button, 'TOPLEFT', 0, 0)
+            pixel.SetPixelPoint(item.bar, 'BOTTOMLEFT', item.button, 'BOTTOMLEFT', 0, 0)
+            item.bar:Hide()
 
             item.text = item.button:CreateFontString(nil, 'OVERLAY')
             item.text:SetJustifyH('LEFT')
@@ -128,8 +144,15 @@ local function EnsureMenu(gui)
             pixel.SetPixelPoint(item.text, 'LEFT', item.button, 'LEFT', TEXT_INSET, 0)
             pixel.SetPixelPoint(item.text, 'RIGHT', item.button, 'RIGHT', -TEXT_INSET, 0)
 
-            item.button:SetScript('OnEnter', function(self) if self:IsEnabled() then item.hover:Show() end end)
-            item.button:SetScript('OnLeave', function() item.hover:Hide() end)
+            item.button:SetScript('OnEnter', function(self)
+                if not self:IsEnabled() then return end
+                item.hover:Show(); item.bar:Show()
+                PaintLabel(item, true)
+            end)
+            item.button:SetScript('OnLeave', function()
+                item.hover:Hide(); item.bar:Hide()
+                PaintLabel(item, false)
+            end)
 
             self.items[index] = item
         end
@@ -138,6 +161,7 @@ local function EnsureMenu(gui)
         item.tex:SetShown(divider)
         item.button:SetShown(not divider)
         item.hover:Hide()
+        item.bar:Hide()
         return item
     end
 

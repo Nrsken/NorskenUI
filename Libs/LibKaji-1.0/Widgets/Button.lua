@@ -42,6 +42,7 @@ local Mixin = Mixin
 
 local WIDGET_TYPE = "Button"
 local ICON_TEXT_GAP = 6
+local BUTTON_GLOW_REACH = 8 -- the small glow
 
 ---@class KajiGUIButtonMixin : Button, BackdropTemplate
 ---@field gui KajiGUIInstance
@@ -49,12 +50,16 @@ local ICON_TEXT_GAP = 6
 ---@field text FontString
 ---@field _callback? fun()
 ---@field _tooltipTitle? string see lib.SetTooltip
+---@field _tooltipText? string see lib.SetTooltip
 ---@field _tooltipContent? fun(tooltip: GameTooltip, frame: Frame) see lib.SetTooltip
 ---@field _bgColor number[]
 ---@field _bgAlpha number resting fill opacity
 ---@field _selectionStyle "fill"|"text"|"both"
 ---@field _hoverLabel boolean
+---@field _bare boolean no fill or edge, the image alone (accent on hover)
 ---@field _hovered boolean
+---@field _glow Texture hover glow (lib.CreateFrameGlow)
+---@field _glowHost Frame one level under the button, holding the glow
 ---@field _selected boolean
 ---@field _hasIcon boolean
 ---@field bgImage Texture
@@ -119,6 +124,10 @@ end
 
 ---@param enabled boolean
 function ButtonMixin:SetEnabled(enabled)
+    if not enabled then
+        self._hovered = false
+        self._glow:Hide()
+    end
     if enabled then
         self:Enable()
     else
@@ -190,8 +199,10 @@ function ButtonMixin:IsSelected()
 end
 
 ---@param newTooltip string
-function ButtonMixin:SetTooltip(newTooltip)
+---@param text? string the body line under the title, left as is when omitted
+function ButtonMixin:SetTooltip(newTooltip, text)
     self._tooltipTitle = newTooltip
+    if text then self._tooltipText = text end
 end
 
 ---A filler writes the whole tooltip itself - header included - for content a plain
@@ -277,12 +288,15 @@ function ButtonMixin:OnAcquire(parent, buttonText, config)
 
     self:SetParent(parent)
     self:ClearAllPoints()
+    -- Reparenting resets the button's level; keep the glow host one under it.
+    self._glowHost:SetFrameLevel(math.max(self:GetFrameLevel() - 1, 0))
     pixel.SetPixelHeight(self, config.height or 24)
     pixel.SetPixelWidth(self, config.width or 120)
     self.explicitHeight = config.height and true or nil
 
     self._bgColor = config.bgColor or theme.bgMedium
-    self._bgAlpha = config.bgAlpha or 0.9
+    self._bare = config.bare == true
+    self._bgAlpha = self._bare and 0 or (config.bgAlpha or 0.9)
     self._selectionStyle = config.selectionStyle or "fill"
     self._hoverLabel = config.hoverLabel == true
 
@@ -311,7 +325,7 @@ function ButtonMixin:OnAcquire(parent, buttonText, config)
     end
     lib.SetTooltip(self, self.gui, buttonText, spec)
 
-    self._kajiBackdrop = { bg = self._bgColor, bgAlpha = self._bgAlpha, border = "widgetBorder", borderAlpha = 1 }
+    self._kajiBackdrop = { bg = self._bgColor, bgAlpha = self._bgAlpha, border = "widgetBorder", borderAlpha = self._bare and 0 or 1 }
 
     -- The icon always exists; only its content and visibility change between uses.
     self.icon:SetShown(self._hasIcon)
@@ -357,7 +371,9 @@ function ButtonMixin:OnRelease()
     self._selected = false
     self._selectionStyle = "fill"
     self._hoverLabel = false
+    self._bare = false
     self._hovered = false
+    self._glow:Hide()
     self._bgAlpha = 0.9
     self._hasIcon = false
     self._imageColor = nil
@@ -402,8 +418,9 @@ end
 ---@field selected? boolean latch the button; selectionStyle decides how that reads
 ---@field selectionStyle? "fill"|"text"|"both" latched look: a tinted fill, an accent label, or the two together (default "fill")
 ---@field hoverLabel? boolean accent the label on hover; for a "text" button with no latch to mark
+---@field bare? boolean no fill and no edge, the image alone, tinted with the accent on hover
 ---@field labelAlpha? number label opacity, multiplied into the label color (default 1)
----@field fontSize? "small"|"normal"|"large"|number label font size (default "normal")
+---@field fontSize? "small"|"normal"|"medium"|"large"|number label font size, "normal" by default
 
 lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     local theme = gui.theme
@@ -431,6 +448,13 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     -- Button-owned copy: the hover animator holds this table, so OnAcquire writes into it.
     button._accentColor = { theme.accent[1], theme.accent[2], theme.accent[3], theme.accent[4] or 1 }
 
+    -- One level under the button so its fill covers the glow and packed neighbours stay clean.
+    local glowHost = CreateFrame("Frame", nil, button)
+    glowHost:SetAllPoints()
+    glowHost:EnableMouse(false)
+    button._glowHost = glowHost
+    button._glow = lib.CreateFrameGlow(button, gui, BUTTON_GLOW_REACH, glowHost)
+
     button._animateBorder, button._syncBorder = Animations:CreateHoverColorAnimator(button,
         function(r, g, b, a) button:SetBackdropBorderColor(r, g, b, a) end,
         theme.widgetBorder, button._accentColor, theme.animDuration)
@@ -442,19 +466,34 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         self:UpdateBackgroundCrop()
     end)
     button:SetScript("OnEnter", function(self)
+        if self._bare then
+            local accent = self._accentColor
+            self.icon:SetVertexColor(accent[1], accent[2], accent[3], 1)
+            lib.ShowTooltip(self)
+            return
+        end
         self._hovered = true
+        lib.SetFrameGlow(self._glow, self.gui, lib.GLOW_HOVER, self._accentColor)
         self._animateBorder(true)
         self:ApplyLabelColor()
         lib.ShowTooltip(self)
     end)
     button:SetScript("OnLeave", function(self)
+        if self._bare then
+            local color = self._imageColor or { 1, 1, 1, 1 }
+            self.icon:SetVertexColor(color[1], color[2], color[3], color[4] or 1)
+            lib.HideTooltip()
+            return
+        end
         self._hovered = false
+        lib.SetFrameGlow(self._glow, self.gui, 0)
         self._animateBorder(false)
         self:ApplyRestingColor()
         self:ApplyLabelColor()
         lib.HideTooltip()
     end)
     button:SetScript("OnMouseDown", function(self)
+        if self._bare then return end
         local selected = self.gui.theme.selectedBg
         self:SetBackdropColor(selected[1], selected[2], selected[3], selected[4])
     end)

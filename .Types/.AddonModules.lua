@@ -17,9 +17,8 @@
 ---@field UnitLabels table<string, string>
 ---@field NoPower table<string, boolean>
 ---@field BaseLevels { Background: number, Bar: number }
----@field Layers { Min: number, Max: number, Highlight: number, Border: number }
----@field ReservedLayers table<number, boolean>
----@field TopLevels { Tags: number, Auras: number, RaidMark: number, Status: number }
+---@field Layers { Min: number, Max: number, Step: number }
+---@field LayerElements { key: string, label: string }[] every layerable element, in default draw order
 ---@field frames table<string, oUF.UnitFrame>
 ---@field groups table<string, UnitFramesGroup>
 ---@field styleName string
@@ -113,7 +112,9 @@
 ---@class MissingBuffsModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@field groups table<string, NRSKNUI.DynamicGroup>?
 ---@field flyoutKey string? the buff whose item picker is open
----@field tooltipIcon (Frame & { texture: Texture })? icon hung off GameTooltip, built on first hover
+---@field tooltipIcon MissingBuffsTooltipIcon? icon hung off GameTooltip, built on first hover
+---@class MissingBuffsTooltipIcon : Frame
+---@field texture Texture
 
 -- The handles Core/Init.lua hangs off the addon table. Declared here so the field and the accessor
 -- that fills it agree on a type: without these the field takes whatever the assignment inferred.

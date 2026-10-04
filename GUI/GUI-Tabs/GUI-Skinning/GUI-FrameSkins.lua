@@ -71,24 +71,16 @@ local function BuildGeneralSettingsTab(page, db)
         end,
     })
 
-    -- Card 2: Skin Colors
-    local colorCard = page:Card(L['Skin Colors'], 'all')
-    local panelRow = colorCard:Row(rowH)
-    panelRow:ColorPicker(L['Border Color'], {
-        width = 0.5,
-        value = db.General.BorderColor,
-        callback = function(r, g, b, a)
-            db.General.BorderColor = { r, g, b, a }; ApplySettings()
-        end,
-    })
-    panelRow:ColorPicker(L['Background Color'], {
-        width = 0.5,
-        value = db.General.BackgroundColor,
-        callback = function(r, g, b, a)
-            db.General.BackgroundColor = { r, g, b, a }; ApplySettings()
-        end,
+    -- Card 2: Frame Colors
+    page:BackdropColorsCard({
+        db = db.General,
+        title = L['Frame Colors'],
+        backdropKey = 'BackgroundColor',
+        onChangeCallback = ApplySettings,
     })
 
+    -- Card 3: Skin Colors
+    local colorCard = page:Card(L['Skin Colors'], 'all')
     local widgetRow = colorCard:Row(rowH)
     widgetRow:ColorPicker(L['Widget Border Color'], {
         width = 0.5,

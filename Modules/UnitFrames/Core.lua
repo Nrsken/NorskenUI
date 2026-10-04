@@ -210,6 +210,8 @@ function UF:ConfigureFrame(frame, unit)
             def.Configure(frame, unit, uDB, general)
         end
     end
+    -- After the elements, since some build their frames lazily in Configure.
+    UF.ApplyFrameLayers(frame, UF.GetLayerMap())
 
     if frame.nuiBuilt then
         self:ApplyElementStates(frame, unit, uDB)

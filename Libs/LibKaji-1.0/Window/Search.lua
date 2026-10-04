@@ -28,7 +28,7 @@ local strfind, strlower = string.find, string.lower
 
 -- Collector: mirrors the fluent surface, records labels, builds nothing --
 
-local WIDGET_METHODS = { "Checkbox", "Slider", "Dropdown", "Button", "ColorPicker", "EditBox", "MultiLineEditBox", "Text", "AnchorPicker" }
+local WIDGET_METHODS = { "Checkbox", "Radio", "Slider", "Dropdown", "Button", "ColorPicker", "EditBox", "MultiLineEditBox", "Text", "AnchorPicker" }
 
 -- `ctx` tags each harvested label with the { tabId, itemKey } it was built under, so a widget
 -- result can navigate straight to the tab / sidebar item that owns it.
@@ -260,7 +260,7 @@ local PLACEHOLDER = "Search..."
 
 ---Creates a themed search box. Fires opts.onChanged(text) as the user types.
 ---@param parent Frame
----@param opts table { onChanged: fun(text: string), height?: number }
+---@param opts table { onChanged: fun(text: string), height?: number, fieldTop?: number }
 ---@return Frame box
 function InstanceMixin:CreateSearchBox(parent, opts)
     opts = opts or {}
@@ -271,10 +271,22 @@ function InstanceMixin:CreateSearchBox(parent, opts)
     local box = CreateFrame("Frame", nil, parent, "BackdropTemplate")
     pixel.SetPixelHeight(box, opts.height or 30)
     box:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1 })
+    lib.AddSurfaceTexture(box, gui)
 
-    local inner = CreateFrame("Frame", nil, box)
-    pixel.SetPixelPoint(inner, "TOPLEFT", box, "TOPLEFT", 2, -4)
-    pixel.SetPixelPoint(inner, "BOTTOMRIGHT", box, "BOTTOMRIGHT", -2, 3)
+    -- Sized from the header band to match the sub-tabs and item-list buttons.
+    local fieldTop = opts.fieldTop or theme.barInset
+    local inner = CreateFrame("Frame", nil, box, "BackdropTemplate")
+    pixel.SetPixelPoint(inner, "TOPLEFT", box, "TOPLEFT", theme.barInset, -fieldTop)
+    pixel.SetPixelPoint(inner, "TOPRIGHT", box, "TOPRIGHT", -theme.barInset, -fieldTop)
+    pixel.SetPixelHeight(inner, theme.barControlHeight)
+    lib.SetBackdrop(inner, gui, { bg = "bgDark", border = "widgetBorder" })
+
+    local fieldGlow = lib.CreateFrameGlow(inner, gui, lib.FIELD_GLOW_REACH, box)
+    local hovered = false
+    local edit -- assigned below; the painter only runs from its scripts
+    local function PaintGlow()
+        lib.SetFrameGlow(fieldGlow, gui, edit:HasFocus() and lib.GLOW_ACTIVE or (hovered and lib.GLOW_HOVER or 0))
+    end
 
     local clear = CreateFrame("Button", nil, inner)
     pixel.SetPixelSize(clear, 14, 14)
@@ -284,9 +296,10 @@ function InstanceMixin:CreateSearchBox(parent, opts)
     clearIcon:SetAllPoints()
     clearIcon:SetTexture(theme.crossCustomTexture)
 
-    local edit = CreateFrame("EditBox", nil, inner)
+    edit = CreateFrame("EditBox", nil, inner)
+    -- Full field height so the text centres in the field, stopping short of the clear button.
     pixel.SetPixelPoint(edit, "TOPLEFT", inner, "TOPLEFT", 6, 0)
-    pixel.SetPixelPoint(edit, "BOTTOMRIGHT", clear, "BOTTOMLEFT", -4, 0)
+    pixel.SetPixelPoint(edit, "BOTTOMRIGHT", inner, "BOTTOMRIGHT", -(2 + 14 + 4), 0)
     edit:SetAutoFocus(false)
     gui:ApplyFont(edit, "normal")
     edit:SetText(PLACEHOLDER)
@@ -304,8 +317,10 @@ function InstanceMixin:CreateSearchBox(parent, opts)
     local function Restyle()
         box:SetBackdropColor(theme.bgMedium[1], theme.bgMedium[2], theme.bgMedium[3], theme.bgMedium[4])
         box:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
+        lib.RefreshBackdrop(inner)
         if edit:HasFocus() then
-            edit:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
+            inner:SetBackdropBorderColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
+            edit:SetTextColor(theme.textPrimary[1], theme.textPrimary[2], theme.textPrimary[3], 1)
         else
             edit:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 0.6)
         end
@@ -336,11 +351,23 @@ function InstanceMixin:CreateSearchBox(parent, opts)
         if box.text ~= "" then Clear() end
     end)
     edit:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
+    edit:SetScript("OnEnter", function()
+        hovered = true
+        PaintGlow()
+    end)
+    edit:SetScript("OnLeave", function()
+        hovered = false
+        PaintGlow()
+    end)
     edit:SetScript("OnEditFocusGained", function(self)
-        self:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
+        PaintGlow()
+        inner:SetBackdropBorderColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
+        self:SetTextColor(theme.textPrimary[1], theme.textPrimary[2], theme.textPrimary[3], 1)
         if self:GetText() == PLACEHOLDER then self:SetText("") end
     end)
     edit:SetScript("OnEditFocusLost", function(self)
+        PaintGlow()
+        lib.RefreshBackdrop(inner)
         self:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 0.6)
         if self:GetText() == "" then self:SetText(PLACEHOLDER) end
     end)

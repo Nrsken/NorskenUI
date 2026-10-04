@@ -693,7 +693,7 @@ local function BuildBarStyleTab(page, db, barKey, barDB)
     page:SetCondition('bar', function() return barDB.Enabled end)
 
     local backdropCard = page:Card(L['Backdrop'], 'bar')
-    local hideRow = backdropCard:Row(rowH)
+    local hideRow = backdropCard:Row(rowHL, 0)
     hideRow:Checkbox(L['Hide Empty Backdrops'], {
         width = 1,
         value = barDB.HideEmptyBackdrops,
@@ -703,23 +703,7 @@ local function BuildBarStyleTab(page, db, barKey, barDB)
         end,
     })
 
-    backdropCard:Separator()
-
-    local colorRow = backdropCard:Row(rowHL, 0)
-    colorRow:ColorPicker(L['Backdrop Color'], {
-        width = 0.5,
-        value = barDB.BackdropColor,
-        callback = function(r, g, b, a)
-            barDB.BackdropColor = { r, g, b, a }; ApplyBar(barKey)
-        end,
-    })
-    colorRow:ColorPicker(L['Border Color'], {
-        width = 0.5,
-        value = barDB.BorderColor,
-        callback = function(r, g, b, a)
-            barDB.BorderColor = { r, g, b, a }; ApplyBar(barKey)
-        end,
-    })
+    page:BackdropColorsCard({ db = barDB, title = L['Colors'], onChangeCallback = function() ApplyBar(barKey) end }, 'bar')
 end
 
 GUI:RegisterPage(PAGE, {

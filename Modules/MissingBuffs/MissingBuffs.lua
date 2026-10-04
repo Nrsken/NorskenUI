@@ -90,6 +90,7 @@ function MissingBuffs:SetTooltipIcon(texture)
     local frame = self.tooltipIcon
     if not frame then
         frame = CreateFrame('Frame', nil, GameTooltip)
+        ---@cast frame MissingBuffsTooltipIcon
         frame:NUIAddBorders()
         frame:SetBorderColor(0, 0, 0, 1)
         frame.texture = frame:CreateTexture(nil, 'ARTWORK')
@@ -134,7 +135,7 @@ end
 ---@return boolean resized
 local function ConfigureIcon(icon, db)
     local size = db.IconSize
-    local border = db.BorderColor
+    local border = NRSKNUI:GetBorderColor(db)
     local resized = icon.size ~= size
     icon.size = size
 

@@ -28,7 +28,7 @@ end
 function SkinnedThumbMixin:NUIUpdateSkinColors()
     self:NUIUpdateThumbColor()
 
-    local border = Skinning.db.General.BorderColor
+    local border = NRSKNUI:GetBorderColor(Skinning.db.General)
     self.NUIBackdrop:SetBorderColor(border[1], border[2], border[3], border[4])
 end
 

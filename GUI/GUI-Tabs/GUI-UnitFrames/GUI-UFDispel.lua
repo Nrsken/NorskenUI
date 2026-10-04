@@ -7,7 +7,6 @@ local Theme = NRSKNUI.Theme
 local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
 
-local ReloadUI = ReloadUI
 local ipairs = ipairs
 
 local STYLE_OPTIONS = {
@@ -17,41 +16,34 @@ local STYLE_OPTIONS = {
 
 local ANCHOR_OPTIONS = NRSKNUI.AnchorOptions
 
+-- Dispel type names as the game reports them; the labels are the same words, translated.
+local IGNORE_OPTIONS = {
+    { value = 'Magic',   text = L['Magic'] },
+    { value = 'Curse',   text = L['Curse'] },
+    { value = 'Disease', text = L['Disease'] },
+    { value = 'Poison',  text = L['Poison'] },
+    { value = 'Bleed',   text = L['Bleed'] },
+}
+
 local SOURCE_OPTIONS = {
     { value = 'raid', text = L['Dispellable by You'] },
     { value = 'any',  text = L['Dispellable by Anyone'] },
 }
 
----Which settings only take effect on the next reload, since the game builds an aura button once.
----@param page KajiGUIPage
----@param group string
-local function BuildReloadCard(page, group)
-    local card = page:Card(L['Apply Changes'], group)
-    card:Row(56):Text(L['Dispel Highlight'], {
-        width = 1,
-        text = L['Style, border, icon, alpha and layer are read when the highlight is built, so they take a reload. Turning it on or off, the dispel source and what it attaches to apply straight away.'],
-        height = 56,
-        bgMode = 'none',
-    })
-    card:Row(32):Button(L['Reload UI'], {
-        width = 1,
-        height = 32,
-        callback = function()
-            ReloadUI()
-        end,
-    })
+-- Style, border, icon, alpha and layer are only read when the highlight is built.
+local function NeedsReload()
+    NRSKNUI:RequestReload(L['Dispel highlight style changes show after a reload.'])
 end
 
 ---@param page KajiGUIPage
 ---@param dDB table the Dispel block being edited
----@param ctx table { group: string, conditions: string[]?, useGlobal: table? the unit block, when this is a unit's section }
+---@param ctx table { group: string, conditions: string[]?, useGlobal: table? the unit's Dispel block, when this is a unit's section }
 local function BuildDispelCards(page, dDB, ctx)
     local group, conditions = ctx.group, ctx.conditions
     if dDB.Style ~= 'Overlay' and dDB.Style ~= 'Gradient' then dDB.Style = 'Overlay' end
     page:SetCondition('dispelIcon', function() return dDB.ShowIcon end)
     page:SetCondition('ownEnabled', function() return dDB.Enabled end)
 
-    -- The icon is the game's own artwork, one per dispel type, so there is nothing to pick or color.
     local ownConditions = { 'ownEnabled' }
     for _, condition in ipairs(conditions or {}) do
         ownConditions[#ownConditions + 1] = condition
@@ -60,22 +52,36 @@ local function BuildDispelCards(page, dDB, ctx)
     local card = page:Card(L['Dispel Highlight'], group)
     if ctx.useGlobal then
         local unitDB = ctx.useGlobal
-        card:Row(rowH):Checkbox(L['Use Global Dispel Settings'], {
-            width = 1,
+        local globalRow = card:Row(unitDB.UseGlobal and rowHL or rowH, unitDB.UseGlobal and 0 or nil)
+        globalRow:Checkbox(L['Use Global Dispel Settings'], {
+            width = 0.5,
             tooltip = L['Follow the dispel highlight from the general settings.'],
             value = unitDB.UseGlobal,
             callback = function(checked)
                 unitDB.UseGlobal = checked
                 ctx.Apply()
-                page:Refresh()
+                ctx.reload() -- the unit's own settings come and go with this
             end,
         })
+
+        -- Following the global block, there is nothing of the unit's own to edit, so none of it is drawn.
+        if unitDB.UseGlobal then
+            globalRow:Button(L['Edit Global Dispel Settings'], {
+                width = 0.5,
+                height = 24,
+                yOffset = -14,
+                callback = function()
+                    NRSKNUI.GUIFrame:ShowPage('unitFramesGeneral', { itemKey = 'dispel' })
+                end,
+            })
+            return
+        end
 
         card:Separator()
     end
 
-    local enableRow = card:Row(rowHL, 0)
-    enableRow:Checkbox(L['Enable Dispel Highlight'], {
+    local toggleRow = card:Row(rowH)
+    toggleRow:Checkbox(L['Enable Dispel Highlight'], {
         width = 0.5,
         conditions = conditions,
         tooltip = L['Colors the unit frame by the dispel type of a debuff on it. Only ever drawn on units you can help.'],
@@ -86,7 +92,20 @@ local function BuildDispelCards(page, dDB, ctx)
             page:Refresh()
         end,
     })
-    enableRow:Dropdown(L['Dispellable By'], {
+    toggleRow:Checkbox(L['Show Without Dispel Type'], {
+        width = 0.5,
+        conditions = ownConditions,
+        tooltip = L['Keep the highlight up for matching auras that have no dispel type at all. The game colors these by dispel type, so they draw in its no-type color.'],
+        value = dDB.ShowWithoutDispelType,
+        callback = function(checked)
+            dDB.ShowWithoutDispelType = checked
+            ctx.Apply()
+        end,
+    })
+    card:Separator()
+
+    local sourceRow = card:Row(rowHL, 0)
+    sourceRow:Dropdown(L['Dispellable By'], {
         width = 0.5,
         conditions = ownConditions,
         options = SOURCE_OPTIONS,
@@ -96,6 +115,15 @@ local function BuildDispelCards(page, dDB, ctx)
             dDB.Source = value
             ctx.Apply()
         end,
+    })
+    sourceRow:Dropdown(L['Ignore Dispel Types'], {
+        width = 0.5,
+        multiSelect = true,
+        conditions = ownConditions,
+        options = IGNORE_OPTIONS,
+        tooltip = L['Debuffs of these types never light the frame, but another debuff on the same unit still does. For example Bleed, when a fight puts one on everyone.'],
+        value = dDB.IgnoreTypes,
+        callback = function() ctx.Apply() end,
     })
 
     local styleCard = page:Card(L['Style Settings'], group)
@@ -109,6 +137,7 @@ local function BuildDispelCards(page, dDB, ctx)
         callback = function(value)
             dDB.Style = value
             ctx.Apply()
+            NeedsReload()
         end,
     })
     styleRow:Slider(L['Border Size'], {
@@ -122,10 +151,11 @@ local function BuildDispelCards(page, dDB, ctx)
         callback = function(value)
             dDB.BorderSize = value
             ctx.Apply()
+            NeedsReload()
         end,
     })
 
-    local placeRow = styleCard:Row(rowH)
+    local placeRow = styleCard:Row(rowHL, 0)
     placeRow:Dropdown(L['Attach To'], {
         width = 0.5,
         conditions = ownConditions,
@@ -136,20 +166,7 @@ local function BuildDispelCards(page, dDB, ctx)
             ctx.Apply()
         end,
     })
-    placeRow:Dropdown(L['Layer'], {
-        width = 0.5,
-        conditions = ownConditions,
-        options = UF.GUILayerOptions(),
-        tooltip = L['Higher layers draw over lower ones. Damage absorb sits on 4 and heal absorb on 5 by default.'],
-        value = dDB.Layer,
-        callback = function(value)
-            dDB.Layer = value
-            ctx.Apply()
-        end,
-    })
-
-    local lastRow = styleCard:Row(rowHL, 0)
-    lastRow:Slider(L['Alpha'], {
+    placeRow:Slider(L['Alpha'], {
         width = 0.5,
         min = 0,
         max = 1,
@@ -160,16 +177,7 @@ local function BuildDispelCards(page, dDB, ctx)
         callback = function(value)
             dDB.Alpha = value
             ctx.Apply()
-        end,
-    })
-    lastRow:Checkbox(L['Show Without Dispel Type'], {
-        width = 0.5,
-        conditions = ownConditions,
-        tooltip = L['Keep the highlight up for matching auras that have no dispel type at all. The game colors these by dispel type, so they draw in its no-type color.'],
-        value = dDB.ShowWithoutDispelType,
-        callback = function(checked)
-            dDB.ShowWithoutDispelType = checked
-            ctx.Apply()
+            NeedsReload()
         end,
     })
 
@@ -180,19 +188,22 @@ local function BuildDispelCards(page, dDB, ctx)
     end
 
     local iconCard = page:Card(L['Dispel Icon'], group)
-    local iconRow = iconCard:Row(rowH)
-    iconRow:Checkbox(L['Show Dispel Icon'], {
-        width = 0.5,
+    iconCard:Row(rowH):Checkbox(L['Show Dispel Icon'], {
+        width = 1,
         conditions = conditions,
         tooltip = L["The game's own icon for the dispel type, drawn over the highlight."],
         value = dDB.ShowIcon,
         callback = function(checked)
             dDB.ShowIcon = checked
             ctx.Apply()
+            NeedsReload()
             page:Refresh()
         end,
     })
-    iconRow:Slider(L['Icon Size'], {
+    iconCard:Separator()
+
+    local sizeRow = iconCard:Row(rowH)
+    sizeRow:Slider(L['Icon Size'], {
         width = 0.5,
         min = 8,
         max = 32,
@@ -202,11 +213,11 @@ local function BuildDispelCards(page, dDB, ctx)
         callback = function(value)
             dDB.IconSize = value
             ctx.Apply()
+            NeedsReload()
         end,
     })
-
-    iconCard:Row(rowH):Dropdown(L['Anchor Point'], {
-        width = 1,
+    sizeRow:Dropdown(L['Anchor Point'], {
+        width = 0.5,
         conditions = iconConditions,
         options = ANCHOR_OPTIONS,
         tooltip = L['Which corner of the highlight the icon sits in.'],
@@ -215,6 +226,7 @@ local function BuildDispelCards(page, dDB, ctx)
             dDB.IconPosition.AnchorFrom = value
             dDB.IconPosition.AnchorTo = value
             ctx.Apply()
+            NeedsReload()
         end,
     })
 
@@ -230,6 +242,7 @@ local function BuildDispelCards(page, dDB, ctx)
         callback = function(value)
             dDB.IconPosition.XOffset = value
             ctx.Apply()
+            NeedsReload()
         end,
     })
     offsetRow:Slider(L['Y Offset'], {
@@ -243,10 +256,9 @@ local function BuildDispelCards(page, dDB, ctx)
         callback = function(value)
             dDB.IconPosition.YOffset = value
             ctx.Apply()
+            NeedsReload()
         end,
     })
-
-    BuildReloadCard(page, group)
 end
 
 ---The shared block, on Unit Frames -> General.
@@ -271,6 +283,7 @@ local function BuildUnitSection(page, uDB, unit)
         useGlobal = dDB,
         -- Scoped to this unit: an unscoped pass reconfigures every other unit's frames as well.
         Apply = function() UF:ApplySettings(unit) end,
+        reload = function() NRSKNUI.GUIFrame.content:ShowPage(UF.GUIPageID(unit), { itemKey = 'dispel' }) end,
     })
 end
 

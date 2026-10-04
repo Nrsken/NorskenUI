@@ -254,12 +254,14 @@ function nameplates:SetNumAuraContainers(numContainers) end
 ---@field nuiBuilt? boolean Set once BuildStyle has finished; later Configure passes re-apply element states
 ---@field healthBorderFrame Frame Border overlay above the health bar
 ---@field nuiHighlight NUI.HighlightTexture Mouseover highlight
+---@field nuiHighlightFrame Frame Holds the mouseover highlight on its own layer
 ---@field powerBackground Frame Backdrop behind the power bar
 ---@field powerBorderFrame Frame Border overlay above the power bar
 ---@field CastbarContainer Frame Holds the castbar and its icon
 ---@field TagContainer Frame Parent for the tag font strings
 ---@field TagSlots table<string, NUI.TagFontString> Tag font strings keyed by slot name
 ---@field IndicatorContainer Frame Parent for the indicator textures
+---@field nuiIndicatorHosts table<string, Frame> keyed by UF.LayerElements key
 ---@field nuiRangeIn? number In-range alpha
 ---@field nuiRangeOut? number Out-of-range alpha
 ---@field nuiRangeUnit? string Unit the frame is registered under in `UF.RangeFrames`

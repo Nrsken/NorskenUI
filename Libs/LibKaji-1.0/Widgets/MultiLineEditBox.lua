@@ -62,7 +62,11 @@ function MultiLineEditBoxMixin:SetEnabled(enabled)
     self.editBox:EnableMouse(enabled)
     self.editBox:EnableKeyboard(enabled)
     self.container:EnableMouse(enabled)
-    if not enabled then self.editBox:ClearFocus() end
+    if not enabled then
+        self.editBox:ClearFocus()
+        self._hovered = false
+        self._paintGlow()
+    end
 end
 
 function MultiLineEditBoxMixin:UpdateScrollbar()
@@ -73,7 +77,7 @@ function MultiLineEditBoxMixin:UpdateColors()
     local theme = self.gui.theme
     lib.RefreshBackdrop(self.container)
     self.label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
-    self.editBox:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
+    self.editBox:SetTextColor(theme.textPrimary[1], theme.textPrimary[2], theme.textPrimary[3], 1)
     self._syncBorder(theme.widgetBorder[1], theme.widgetBorder[2], theme.widgetBorder[3], theme.widgetBorder[4] or 1)
 end
 
@@ -107,6 +111,8 @@ function MultiLineEditBoxMixin:OnAcquire(parent, labelText, config)
 end
 
 function MultiLineEditBoxMixin:OnRelease()
+    self._hovered = false
+    self._paintGlow()
     self._callback = nil
     self.editBox:ClearFocus()
     self.editBox:SetText("")
@@ -168,6 +174,12 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         function(r, g, b, a) container:SetBackdropBorderColor(r, g, b, a) end,
         theme.widgetBorder, theme.accent, theme.animDuration)
 
+    -- Neon: the field glows faintly while hovered, fully while focused.
+    local fieldGlow = lib.CreateFrameGlow(container, gui, lib.FIELD_GLOW_REACH, row)
+    row._paintGlow = function()
+        lib.SetFrameGlow(fieldGlow, gui, editBox:HasFocus() and lib.GLOW_ACTIVE or (row._hovered and lib.GLOW_HOVER or 0))
+    end
+
     local scrollWidth = scrollFrame:GetWidth()
     pixel.SetPixelWidth(editBox, scrollWidth > 0 and scrollWidth - 14 or 186)
 
@@ -204,20 +216,26 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         eb:HighlightText(0, 0)
         local border = row.gui.theme.widgetBorder
         container:SetBackdropBorderColor(border[1], border[2], border[3], 1)
+        row._paintGlow()
         safecall(row._callback, eb:GetText())
     end)
     editBox:SetScript("OnEditFocusGained", function()
         local accent = row.gui.theme.accent
         container:SetBackdropBorderColor(accent[1], accent[2], accent[3], 1)
+        row._paintGlow()
     end)
 
     -- One hover pair shared by every hit area in the widget.
     local function OnEnter()
+        row._hovered = true
+        row._paintGlow()
         if not editBox:HasFocus() then row._animateBorder(true) end
         lib.ShowTooltip(row)
     end
     local function OnLeave()
-        if not editBox:HasFocus() and not container:IsMouseOver() then row._animateBorder(false) end
+        row._hovered = container:IsMouseOver()
+        row._paintGlow()
+        if not editBox:HasFocus() and not row._hovered then row._animateBorder(false) end
         lib.HideTooltip()
     end
     local function FocusEditBox() editBox:SetFocus() end

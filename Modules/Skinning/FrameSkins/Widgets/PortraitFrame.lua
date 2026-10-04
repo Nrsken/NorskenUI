@@ -43,7 +43,7 @@ local HeaderMixin = {}
 
 function HeaderMixin:NUIUpdateSkinColors()
     local general = Skinning.db.General
-    local bg, border = general.WidgetBackgroundColor, general.BorderColor
+    local bg, border = general.WidgetBackgroundColor, NRSKNUI:GetBorderColor(general)
 
     for _, fill in ipairs(self.NUIFills) do
         fill:SetVertexColor(bg[1], bg[2], bg[3], bg[4])
@@ -110,6 +110,12 @@ end
 hooksecurefunc('SetPortraitTexture', function(texture, unit)
     local header = texture and (texture --[[@as Texture & { NUIHeader: NUIPortraitHeader? }]]).NUIHeader
     if not header then return end
+
+    -- Secret tokens only work from untainted code; hide rather than keep the last unit's face.
+    if NRSKNUI:IsSecretValue(unit) then
+        header:NUISetIconShown(false)
+        return
+    end
 
     SetPortraitTexture(header.NUIIconTexture, unit, true)
     header.NUIIconTexture:NUISetZoom()

@@ -20,6 +20,9 @@
 ---@field LDS LibDualSpec-1.0
 ---@field KAJI LibKaji-1.0
 
+---@class LibDualSpec-1.0
+---@field currentSpec number 0 until the character has a specialization
+
 ---@class NRSKNUI.ModuleBase
 ---@field SetEnabledState fun(self: NRSKNUI.ModuleBase, state: boolean)
 ---@field db table

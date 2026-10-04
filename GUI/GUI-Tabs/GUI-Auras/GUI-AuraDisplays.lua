@@ -10,7 +10,9 @@ local Theme = NRSKNUI.Theme
 local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
 local AuraCards = NRSKNUI.GUIAuraCards
-local TriggerCard = NRSKNUI.GUITriggerCard
+local TriggerEditor = NRSKNUI.GUITriggerEditor
+local Premade = NRSKNUI.AuraFiltersPremade
+local AuraTriggers = NRSKNUI.AuraTriggers
 
 local ipairs = ipairs
 local format = string.format
@@ -53,6 +55,13 @@ local function Resolve(key)
     local instance = AuraDisplay:Get(key)
     if not instance then return nil end
 
+    -- Any debuff branch earns the tracker its dispel settings.
+    local trigger = instance.Trigger
+    local harmful = trigger == nil or trigger.Base ~= AuraUtil.AuraFilters.Helpful
+    for _, branch in ipairs(trigger and trigger.branches or {}) do
+        if (branch.type or trigger.Base) ~= AuraUtil.AuraFilters.Helpful then harmful = true end
+    end
+
     -- Custom user trackers.
     return {
         key = key,
@@ -60,7 +69,7 @@ local function Resolve(key)
         isBuiltin = AuraDisplay:IsBuiltin(key),
         title = instance.name or key,
         enableText = L['Enable'],
-        harmful = instance.Trigger == nil or instance.Trigger.Base ~= AuraUtil.AuraFilters.Helpful,
+        harmful = harmful,
         db = instance,
         Apply = function() AuraDisplay:ApplySettings(key) end,
         Toggle = function()
@@ -69,6 +78,8 @@ local function Resolve(key)
         end,
     }
 end
+
+local RefreshSidebar -- defined with the sidebar below
 
 -- Layout Tab
 local function BuildLayoutTab(page, display, db, ctx)
@@ -83,6 +94,7 @@ local function BuildLayoutTab(page, display, db, ctx)
             db.Enabled = checked
             display.Toggle(checked)
             page:Refresh()
+            RefreshSidebar() -- the row dims with its tracker
         end,
     })
 
@@ -135,13 +147,11 @@ end
 local function BuildTriggerTab(page, display, db)
     db.Trigger = db.Trigger or NRSKNUI.AuraTriggers:New()
 
-    TriggerCard:Build(page, db.Trigger, { onChange = display.Apply })
+    TriggerEditor:Build(page, db.Trigger, { title = L['Tracker'], showUnit = true, onChange = display.Apply })
 end
 
 -- Appearance Tab
 local function BuildAppearanceTab(page, display, db, ctx)
-    AuraCards:Icons(page, db, ctx)
-    AuraCards:Text(page, db, ctx)
     AuraCards:Cooldown(page, db, ctx)
     if display.harmful then AuraCards:Dispel(page, db, ctx) end
     AuraCards:Tooltip(page, db, ctx)
@@ -154,14 +164,11 @@ local function BuildFontTab(page, display, db, ctx)
         db = db,
         includeSoftOutline = true,
         globalOverride = {},
-        fontSizes = {
-            { label = L['Stack Size'],    dbKey = 'StackFont.FontSize' },
-            { label = L['Duration Size'], dbKey = 'DurationFont.FontSize' },
-        },
+        hideFontSize = true, -- each string's size sits with the rest of its settings in the Text card
         onChangeCallback = display.Apply,
     })
 
-    AuraCards:TextPosition(page, db, ctx)
+    AuraCards:Text(page, db, ctx)
     AuraCards:Reload(page)
 end
 
@@ -174,10 +181,12 @@ local function Reopen(selectKey)
     window.content:ShowPage(PAGE, selectKey and { itemKey = selectKey } or nil)
 end
 
-local function CreateDisplayPrompt()
+---@param presetKey string? start from this preset
+---@param presetName string? its name, the suggested tracker name
+local function CreateDisplayPrompt(presetKey, presetName)
     NRSKNUI:CreatePrompt({
         title = L['New Tracker'],
-        text = '',
+        text = presetName or '',
         editBox = true,
         editBoxLabel = L['Tracker Name'],
         onAccept = function(name)
@@ -186,7 +195,7 @@ local function CreateDisplayPrompt()
                 return
             end
 
-            local id = AuraDisplay:Create(name)
+            local id = AuraDisplay:Create(name, presetKey)
             if not id then return end
 
             NRSKNUI:ToggleModule('AuraDisplay', true)
@@ -198,21 +207,88 @@ local function CreateDisplayPrompt()
     })
 end
 
-local function RenameDisplayPrompt(key)
-    NRSKNUI:CreatePrompt({
-        title = L['Rename Tracker'],
-        text = AuraDisplay:GetName(key),
-        editBox = true,
-        editBoxLabel = L['Tracker Name'],
-        onAccept = function(name)
-            if not name or name == '' then return end
+local function NewTrackerMenu()
+    local entries = {
+        { text = L['Empty Tracker'], onClick = function() CreateDisplayPrompt() end },
+        { divider = true },
+    }
+    for _, preset in ipairs(Premade:GetList()) do
+        entries[#entries + 1] = {
+            text = format(L['From %s'], preset.text),
+            onClick = function() CreateDisplayPrompt(preset.key, preset.text) end,
+        }
+    end
+    GUI:ShowContextMenu(entries)
+end
 
-            AuraDisplay:Rename(key, name)
-            Reopen(key)
+---@param key string
+local function ToggleDisplay(key)
+    local instance = AuraDisplay:Get(key)
+    instance.Enabled = not instance.Enabled
+    NRSKNUI:ToggleModule('AuraDisplay', AuraDisplay:AnyEnabled())
+    AuraDisplay:ApplySettings(key)
+    Reopen(key)
+end
+
+---@param key string
+local function DuplicateDisplay(key)
+    local newId = AuraDisplay:Duplicate(key)
+    if not newId then return end
+
+    NRSKNUI:ToggleModule('AuraDisplay', AuraDisplay:AnyEnabled())
+    AuraDisplay:ApplySettings(newId)
+    Reopen(newId)
+end
+
+---@param key string
+local function BuiltinMenu(key)
+    local instance = AuraDisplay:Get(key)
+    local shipped = AuraTriggers:GetShipped(instance.Trigger)
+    local entries = {
+        { text = instance.Enabled and L['Disable'] or L['Enable'], onClick = function() ToggleDisplay(key) end },
+        { text = L['Duplicate as Custom'], onClick = function() DuplicateDisplay(key) end },
+        { divider = true },
+    }
+
+    if shipped and (shipped.Added or shipped.Removed) then
+        entries[#entries + 1] = {
+            text = L['Reset Spells to Default'],
+            onClick = function()
+                NRSKNUI:CreatePrompt({
+                    title = L['Reset Spells to Default'],
+                    text = L['Remove the spells you added and switch every default spell back on?'],
+                    onAccept = function()
+                        shipped.Added, shipped.Removed = nil, nil
+                        AuraTriggers:Invalidate()
+                        Reopen(key)
+                    end,
+                    acceptText = L['Reset'],
+                    cancelText = L['Cancel'],
+                })
+            end,
+        }
+    end
+
+    entries[#entries + 1] = {
+        text = L['Reset Everything to Default'],
+        onClick = function()
+            NRSKNUI:CreatePrompt({
+                title = L['Reset Everything to Default'],
+                text = format(L["Put '%s' back to how it shipped, spells, layout and position included?"], AuraDisplay:GetName(key)),
+                onAccept = function()
+                    AuraDisplay:ResetBuiltin(key)
+                    NRSKNUI:ToggleModule('AuraDisplay', AuraDisplay:AnyEnabled())
+                    AuraDisplay:ApplySettings(key)
+                    AuraTriggers:Invalidate()
+                    Reopen(key)
+                end,
+                acceptText = L['Reset'],
+                cancelText = L['Cancel'],
+            })
         end,
-        acceptText = L['Rename'],
-        cancelText = L['Cancel'],
-    })
+    }
+
+    GUI:ShowContextMenu(entries)
 end
 
 local function CreateGroupPrompt(key)
@@ -253,60 +329,100 @@ local function DeleteDisplayPrompt(key)
     })
 end
 
----Sidebar items for the mini sidebar.
+---@return table? miniSidebar
+local function MiniSidebar()
+    local content = NRSKNUI.GUIFrame and NRSKNUI.GUIFrame.content
+    return content and content.miniSidebar
+end
+
+---@param key string
+---@param instance table
+---@return table
+local function TrackerItem(key, text, instance)
+    return {
+        key = key,
+        text = text,
+        disabled = not instance.Enabled,
+        draggable = true,
+        renamable = true,
+        grouped = instance.group ~= nil,
+    }
+end
+
+---@param key string
+---@return boolean
+local function IsOpen(key)
+    return not NRSKNUI.db.global.SidebarCollapsed[PAGE][key]
+end
+
+---Defaults first, then groups and loose trackers by name; only a group's own trackers keep a manual order.
 ---@return table[]
 local function SidebarItems()
     local items = {}
 
-    -- Default built in trackers.
     local shipped = {}
     for _, entry in ipairs(AuraDisplay:GetList()) do
         if AuraDisplay:IsBuiltin(entry.key) then
-            shipped[#shipped + 1] = { key = entry.key, text = entry.text }
+            local instance = AuraDisplay:Get(entry.key)
+            shipped[#shipped + 1] = { key = entry.key, text = entry.text, disabled = not instance.Enabled }
         end
     end
     for _, entry in ipairs(STANDARD) do
-        shipped[#shipped + 1] = { key = entry.key, text = entry.title }
+        shipped[#shipped + 1] = { key = entry.key, text = entry.title, disabled = not entry.GetDB().Enabled }
     end
 
     items[#items + 1] = {
         type = 'header',
         key = DISPLAYS_SECTION,
         text = L['Default Trackers'],
-        defaultExpanded = true,
+        defaultExpanded = IsOpen(DISPLAYS_SECTION),
         items = shipped,
     }
 
-    -- Grouped user trackers.
+    -- An empty group stays listed, so a tracker can be dragged back into it.
     for _, group in ipairs(AuraDisplay:GetGroups()) do
         local members = {}
-        for _, entry in ipairs(AuraDisplay:GetList()) do
-            local instance = AuraDisplay:Get(entry.key)
-            if instance and instance.group == group.key then
-                members[#members + 1] = { key = entry.key, text = entry.text }
-            end
+        for _, member in ipairs(AuraDisplay:GetMembers(group.key)) do
+            members[#members + 1] = TrackerItem(member.key, member.text, AuraDisplay:Get(member.key))
         end
 
-        if members[1] then
-            items[#items + 1] = {
-                type = 'header',
-                key = group.key,
-                text = group.name,
-                defaultExpanded = true,
-                items = members,
-            }
-        end
+        items[#items + 1] = {
+            type = 'header',
+            key = group.key,
+            text = group.name,
+            isGroup = true,
+            defaultExpanded = IsOpen(group.key),
+            items = members,
+        }
     end
 
-    -- Ungrouped user trackers.
     for _, entry in ipairs(AuraDisplay:GetList()) do
         local instance = AuraDisplay:Get(entry.key)
         if instance and not AuraDisplay:IsBuiltin(entry.key) and not instance.group then
-            items[#items + 1] = { key = entry.key, text = entry.text }
+            items[#items + 1] = TrackerItem(entry.key, entry.text, instance)
         end
     end
 
     return items
+end
+
+function RefreshSidebar()
+    local sidebar = MiniSidebar()
+    if sidebar then sidebar:SetItems(SidebarItems()) end
+end
+
+---@param groupKey string
+local function GroupMenu(groupKey)
+    GUI:ShowContextMenu({
+        { text = L['Rename'], onClick = function() MiniSidebar():BeginRename(groupKey) end },
+        {
+            text = L['Delete Group'],
+            onClick = function()
+                AuraDisplay:DeleteGroup(groupKey)
+                RefreshSidebar()
+            end,
+        },
+    })
 end
 
 GUI:RegisterPage(PAGE, {
@@ -316,16 +432,45 @@ GUI:RegisterPage(PAGE, {
         L['Standard Buffs'], L['Standard Debuffs'], L['Trigger'],
     },
     sidebar = {
-        buttons = { { text = L['New Tracker'], onClick = CreateDisplayPrompt }, },
+        buttons = { { text = L['New Tracker'], onClick = NewTrackerMenu }, },
         items = SidebarItems,
-        onContextMenu = function(key)
-            if STANDARD[key] or AuraDisplay:IsBuiltin(key) then return end -- no context menu for the built in trackers
+        onToggle = function(key, expanded)
+            NRSKNUI.db.global.SidebarCollapsed[PAGE][key] = (not expanded) or nil
+        end,
+        onRename = function(key, text, item)
+            if item.isGroup then
+                AuraDisplay:RenameGroup(key, text)
+            else
+                AuraDisplay:Rename(key, text)
+            end
+            RefreshSidebar()
+        end,
+        -- Into a group, or next to a grouped tracker; next to a loose one only takes a tracker out of its group.
+        canDrop = function(item, target, position)
+            if position == 'into' then return target.isGroup == true end
+            return target.draggable == true and (target.grouped or item.grouped)
+        end,
+        onMove = function(key, targetKey, position)
+            if position == 'into' then
+                AuraDisplay:SetGroup(key, targetKey)
+            else
+                AuraDisplay:MoveNextTo(key, targetKey, position)
+            end
+            RefreshSidebar()
+            if position == 'into' then MiniSidebar():SetExpanded(targetKey, true) end
+        end,
+        onContextMenu = function(key, item)
+            if item and item.isGroup then return GroupMenu(key) end
+            if STANDARD[key] then return end
+            if AuraDisplay:IsBuiltin(key) then return BuiltinMenu(key) end
 
             local instance = AuraDisplay:Get(key)
             if not instance then return end
 
             local entries = {
-                { text = L['Rename'],           onClick = function() RenameDisplayPrompt(key) end },
+                { text = instance.Enabled and L['Disable'] or L['Enable'], onClick = function() ToggleDisplay(key) end },
+                { text = L['Rename'],           onClick = function() MiniSidebar():BeginRename(key) end },
+                { text = L['Duplicate'],        onClick = function() DuplicateDisplay(key) end },
                 { text = L['Delete'],           onClick = function() DeleteDisplayPrompt(key) end },
                 { divider = true },
                 { text = L['Create New Group'], onClick = function() CreateGroupPrompt(key) end },
@@ -337,7 +482,7 @@ GUI:RegisterPage(PAGE, {
                         text = format(L['Add to %s'], group.name),
                         onClick = function()
                             AuraDisplay:SetGroup(key, group.key)
-                            Reopen(key)
+                            RefreshSidebar()
                         end,
                     }
                 end
@@ -348,7 +493,7 @@ GUI:RegisterPage(PAGE, {
                     text = L['Remove from Group'],
                     onClick = function()
                         AuraDisplay:SetGroup(key, nil)
-                        Reopen(key)
+                        RefreshSidebar()
                     end,
                 }
             end
@@ -360,7 +505,7 @@ GUI:RegisterPage(PAGE, {
         local tabs = { { id = 'layout', text = L['Layout'] } }
 
         local display = Resolve(itemKey)
-        if display and display.isInstance and not display.isBuiltin then
+        if display and display.isInstance then
             tabs[#tabs + 1] = { id = 'trigger', text = L['Trigger'] }
         end
         tabs[#tabs + 1] = { id = 'appearance', text = L['Appearance'] }

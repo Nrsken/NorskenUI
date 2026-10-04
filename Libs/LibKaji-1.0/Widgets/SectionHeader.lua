@@ -161,6 +161,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     local arrow = header:CreateTexture(nil, "OVERLAY")
     pixel.SetPixelSize(arrow, ARROW_SIZE, ARROW_SIZE)
     arrow:SetTexture(gui.theme.stepperTexture)
+    pixel.SetPixelSnap(arrow)
     header.arrow = arrow
 
     local label = header:CreateFontString(nil, "OVERLAY")

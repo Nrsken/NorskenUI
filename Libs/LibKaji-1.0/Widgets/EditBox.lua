@@ -33,6 +33,7 @@ local WIDGET_TYPE = "EditBox"
 ---@field container Frame|BackdropTemplate
 ---@field label FontString
 ---@field _callback? fun(text: string)
+---@field _onTextChanged? fun(text: string)
 ---@field _animateBorder fun(isHover: boolean)
 ---@field _syncBorder fun(r: number, g: number, b: number, a?: number)
 local EditBoxMixin = {}
@@ -52,14 +53,18 @@ function EditBoxMixin:SetEnabled(enabled)
     self:SetAlpha(enabled and 1 or 0.4)
     self.editBox:EnableMouse(enabled)
     self.editBox:EnableKeyboard(enabled)
-    if not enabled then self.editBox:ClearFocus() end
+    if not enabled then
+        self.editBox:ClearFocus()
+        self._hovered = false
+        self._paintGlow()
+    end
 end
 
 function EditBoxMixin:UpdateColors()
     local theme = self.gui.theme
     lib.RefreshBackdrop(self.container)
     self.label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
-    self.editBox:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
+    self.editBox:SetTextColor(theme.textPrimary[1], theme.textPrimary[2], theme.textPrimary[3], 1)
     self._syncBorder(theme.widgetBorder[1], theme.widgetBorder[2], theme.widgetBorder[3], theme.widgetBorder[4] or 1)
 end
 
@@ -92,6 +97,7 @@ function EditBoxMixin:OnAcquire(parent, labelText, config)
 
     self.label:SetText(labelText or "")
     self._callback = config.callback
+    self._onTextChanged = config.onTextChanged
 
     self.editBox:SetAutoFocus(autoFocus)
     self.editBox:SetText(tostring(config.value or ""))
@@ -108,7 +114,10 @@ function EditBoxMixin:OnAcquire(parent, labelText, config)
 end
 
 function EditBoxMixin:OnRelease()
+    self._hovered = false
+    self._paintGlow()
     self._callback = nil
+    self._onTextChanged = nil
     -- A released box that kept keyboard focus would go on swallowing input.
     self.editBox:ClearFocus()
     self.editBox:SetAutoFocus(false)
@@ -122,6 +131,7 @@ end
 ---@class KajiGUIEditBoxConfig
 ---@field value? string
 ---@field callback? fun(text: string)
+---@field onTextChanged? fun(text: string) fires on every keystroke the user types
 ---@field autoFocus? boolean
 ---@field tooltip? any
 ---@field inlineLabel? boolean Place the label left of the box instead of above it.
@@ -158,8 +168,17 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         function(r, g, b, a) container:SetBackdropBorderColor(r, g, b, a) end,
         theme.widgetBorder, theme.accent, theme.animDuration)
 
+    -- Neon: the field glows faintly while hovered, fully while focused.
+    local fieldGlow = lib.CreateFrameGlow(container, gui, lib.FIELD_GLOW_REACH, row)
+    row._paintGlow = function()
+        lib.SetFrameGlow(fieldGlow, gui, editBox:HasFocus() and lib.GLOW_ACTIVE or (row._hovered and lib.GLOW_HOVER or 0))
+    end
+
     -- Set once, reading the callback off the row, so a recycled box never fires the
     -- previous consumer's handler.
+    editBox:SetScript("OnTextChanged", function(eb, userInput)
+        if userInput then safecall(row._onTextChanged, eb:GetText()) end
+    end)
     editBox:SetScript("OnEscapePressed", function(eb) eb:ClearFocus() end)
     editBox:SetScript("OnEnterPressed", function(eb)
         eb:ClearFocus()
@@ -168,17 +187,23 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     editBox:SetScript("OnEditFocusLost", function(eb)
         local border = row.gui.theme.widgetBorder
         container:SetBackdropBorderColor(border[1], border[2], border[3], 1)
+        row._paintGlow()
         safecall(row._callback, eb:GetText())
     end)
     editBox:SetScript("OnEditFocusGained", function()
         local accent = row.gui.theme.accent
         container:SetBackdropBorderColor(accent[1], accent[2], accent[3], 1)
+        row._paintGlow()
     end)
     editBox:SetScript("OnEnter", function(eb)
+        row._hovered = true
+        row._paintGlow()
         if not eb:HasFocus() then row._animateBorder(true) end
         lib.ShowTooltip(row)
     end)
     editBox:SetScript("OnLeave", function(eb)
+        row._hovered = false
+        row._paintGlow()
         if not eb:HasFocus() then row._animateBorder(false) end
         lib.HideTooltip()
     end)

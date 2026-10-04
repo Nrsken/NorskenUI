@@ -22,7 +22,7 @@ local DividerMixin = {}
 
 function DividerMixin:NUIUpdateSkinColors()
     ---@cast self Texture
-    local border = Skinning.db.General.BorderColor
+    local border = NRSKNUI:GetBorderColor(Skinning.db.General)
     self:SetVertexColor(border[1], border[2], border[3], border[4])
 end
 

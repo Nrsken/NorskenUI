@@ -32,6 +32,7 @@
     <Script file="Widgets\SectionHeader.lua" />
     <Script file="Widgets\Checkbox.lua" />
     <Script file="Widgets\SlimCheckbox.lua" />
+    <Script file="Widgets\Radio.lua" />
     <Script file="Widgets\Slider.lua" />
     <Script file="Widgets\ColorPicker.lua" />
     <Script file="Widgets\Dropdown.lua" />
@@ -39,6 +40,7 @@
     <Script file="Widgets\MultiLineEditBox.lua" />
     <Script file="Widgets\Button.lua" />
     <Script file="Widgets\Text.lua" />
+    <Script file="Widgets\SortableStack.lua" />
     <Script file="Widgets\Icon.lua" />
     <Script file="Widgets\AnchorPicker.lua" />
 
@@ -47,6 +49,7 @@
     <Script file="PremadeCards\TextFormatCard.lua" />
     <Script file="PremadeCards\FontSettingsCard.lua" />
     <Script file="PremadeCards\SparkSettingsCard.lua" />
+    <Script file="PremadeCards\BackdropColorsCard.lua" />
     <Script file="PremadeCards\DynamicGroupCard.lua" />
     <Script file="PremadeCards\GlowSettingsCard.lua" />
     <Script file="PremadeCards\LoadConditionsCard.lua" />

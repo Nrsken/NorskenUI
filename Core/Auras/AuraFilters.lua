@@ -36,25 +36,27 @@ AuraFilters.BoolCandidateFields = {
     'nameplateShowPersonal',
 }
 
--- Table candidate fields that can be a table or nil.
+-- Table candidate fields that can be a table or nil. The spell ID fields are handled on their own.
 AuraFilters.TableCandidateFields = {
     'includeDispelTypes',
     'excludeDispelTypes',
-    'includeSpellIDs',
-    'excludeSpellIDs',
 }
 
 -- BL Debuffs that are never secret.
 AuraFilters.BloodlustDebuffs = {
     [160455] = true, -- Hunter Pet Fatigued
-    [26013] = true,  -- Deserter
     [264689] = true, -- Hunter Pet Fatigued
     [390435] = true, -- Exhaustion
     [57723] = true,  -- Exhaustion
     [57724] = true,  -- Sated
-    [71041] = true,  -- Dungeon Deserter
     [80354] = true,  -- Temporal Displacement
     [95809] = true,  -- Hunter Pet Insanity
+}
+
+-- Miscellaneous debuffs that are never secret.
+AuraFilters.Misc = {
+    [26013] = true,  -- Deserter
+    [71041] = true,  -- Dungeon Deserter
 }
 
 -- The two candidate fields the client only applies in one direction, see :BranchRestriction.
@@ -91,12 +93,24 @@ local function BuildFilterString(branch, baseType)
     return filterString
 end
 
+---The preset's shipped spells, plus Added, minus Removed.
+---@param shipped table { list, field, Added?, Removed? }
+---@return table map
+local function ShippedSpells(shipped)
+    local map = {}
+    for id in pairs(NRSKNUI.AuraFiltersPremade:GetShippedSpells(shipped.list) or {}) do map[id] = true end
+    for id in pairs(shipped.Added or {}) do map[id] = true end
+    for id in pairs(shipped.Removed or {}) do map[id] = nil end
+    return map
+end
+
 ---Build the candidateFilters table from a branch's candidate fields. Returns nil when none are defined.
 ---@param branch table
 ---@return table?
 local function BuildCandidateFilters(branch)
-    local specCandidates = branch.candidates
-    if not specCandidates then return nil end
+    local shipped = branch.shipped
+    if not branch.candidates and not shipped then return nil end
+    local specCandidates = branch.candidates or {}
 
     local cFilter
 
@@ -118,6 +132,26 @@ local function BuildCandidateFilters(branch)
         if type(map) == 'table' and next(map) ~= nil then
             cFilter = cFilter or {}
             cFilter[field] = CopyTable(map) -- copy so the native side never mutates the stored trigger
+        end
+    end
+
+    -- Spell lists store their group as the value, the client gets plain true.
+    for _, field in ipairs(SPELLID_CANDIDATE_FIELDS) do
+        local map = specCandidates[field]
+        if shipped and shipped.field == field then map = ShippedSpells(shipped) end
+        if type(map) == 'table' then
+            local ids = {}
+            for id, value in pairs(map) do
+                if value then ids[id] = true end
+            end
+            if next(ids) ~= nil then
+                cFilter = cFilter or {}
+                cFilter[field] = ids
+            elseif field == 'includeSpellIDs' then
+                -- An empty "only these" list would be no filter at all to the client, so it matches nothing instead.
+                cFilter = cFilter or {}
+                cFilter[field] = { [0] = true }
+            end
         end
     end
 

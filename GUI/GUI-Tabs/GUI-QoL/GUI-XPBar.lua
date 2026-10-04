@@ -207,27 +207,6 @@ local function BuildColorSettingsTab(page, db)
 
     colorCard:Separator()
 
-    local backdropColorRow = colorCard:Row(rowH)
-    backdropColorRow:ColorPicker(L['Backdrop Color'], {
-        width = 0.5,
-        value = db.BackgroundColor,
-        callback = function(r, g, b, a)
-            db.BackgroundColor = { r, g, b, a }
-            ApplySettings()
-        end
-    })
-
-    backdropColorRow:ColorPicker(L['Border Color'], {
-        width = 0.5,
-        value = db.BorderColor,
-        callback = function(r, g, b, a)
-            db.BorderColor = { r, g, b, a }
-            ApplySettings()
-        end
-    })
-
-    colorCard:Separator()
-
     local textColorRow = colorCard:Row(rowHL, 0)
     textColorRow:ColorPicker(L['Text Color'], {
         width = 1,
@@ -237,6 +216,8 @@ local function BuildColorSettingsTab(page, db)
             ApplySettings()
         end
     })
+
+    page:BackdropColorsCard({ db = db, backdropKey = 'BackgroundColor', onChangeCallback = ApplySettings })
 end
 
 -- Font Settings Tab.

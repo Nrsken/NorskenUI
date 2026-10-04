@@ -5,6 +5,7 @@ NRSKNUI.ProfileManager = ProfileManager
 local AceSerializer = NRSKNUI.Libs.AS
 local LibDeflate = NRSKNUI.Libs.LD
 local L = NRSKNUI.Libs.AL
+local LDS = NRSKNUI.Libs.LDS
 
 -- Globally exposed API table for WagoUI Packs & profile installer addons.
 local NorskenUIAPI = _G.NorskenUIAPI
@@ -30,6 +31,7 @@ local EXPORT_PREFIX = '!NRSKNUI2!' -- C_EncodingUtil: CBOR + Deflate + Base64
 local LEGACY_PREFIX = '!NRSKNUI1!' -- AceSerializer + LibDeflate, still decoded so old strings import
 local DEFAULT_PROFILE = 'Default'
 local suppressDepth = 0
+local promptMuteDepth = 0
 local promptsReady = false
 local reloadPrompted = false
 
@@ -38,6 +40,15 @@ local function WithoutRefresh(fn)
     suppressDepth = suppressDepth + 1
     local ok, err = pcall(fn)
     suppressDepth = suppressDepth - 1
+    if not ok then error(err, 0) end
+end
+
+---WagoUI reloads once itself after its setup.
+---@param fn fun()
+local function WithoutPrompt(fn)
+    promptMuteDepth = promptMuteDepth + 1
+    local ok, err = pcall(fn)
+    promptMuteDepth = promptMuteDepth - 1
     if not ok then error(err, 0) end
 end
 
@@ -60,7 +71,7 @@ end
 ---Open the reload prompt after a profile change. A refresh re-reads every setting, but anything
 ---already built (frames, hooks, skins) only fully matches the new profile once the UI reloads.
 function ProfileManager:PromptReload()
-    if suppressDepth > 0 or not promptsReady or reloadPrompted then return end
+    if suppressDepth > 0 or promptMuteDepth > 0 or not promptsReady or reloadPrompted then return end
     reloadPrompted = true
     NRSKNUI:RunWhenSafe(function()
         NRSKNUI:CreateReloadPrompt(L['Profile changed. A UI reload is recommended to fully apply all settings.'])
@@ -140,11 +151,12 @@ function ProfileManager:SetProfile(profileName)
     return true
 end
 
----Create a new profile with default values
+---Create a new profile, with default values or as a copy of another profile
 ---@param profileName string The name for the new profile
+---@param sourceProfile string|nil Profile to copy the settings from, defaults when nil
 ---@return boolean success
 ---@return string|nil error
-function ProfileManager:CreateProfile(profileName)
+function ProfileManager:CreateProfile(profileName, sourceProfile)
     if not profileName or profileName == '' then return false, 'Profile name cannot be empty' end
     if not NRSKNUI.db then return false, 'Database not initialized' end
 
@@ -163,6 +175,7 @@ function ProfileManager:CreateProfile(profileName)
         NRSKNUI.db:SetProfile(currentProfile)
     end)
 
+    if sourceProfile then return self:CopyProfile(sourceProfile, profileName) end
     return true
 end
 
@@ -232,13 +245,7 @@ function ProfileManager:DeleteProfile(profileName)
         return false, 'Profile: ' .. profileName .. ', does not exist'
     end
 
-    -- Check if this is the global profile
-    if NRSKNUI.db.global and NRSKNUI.db.global.UseGlobalProfile then
-        if NRSKNUI.db.global.GlobalProfile == profileName then
-            -- Reset global profile to Default
-            NRSKNUI.db.global.GlobalProfile = DEFAULT_PROFILE
-        end
-    end
+    if NRSKNUI.db.global.GlobalProfile == profileName then NRSKNUI.db.global.GlobalProfile = DEFAULT_PROFILE end
 
     -- Drop spec assignments first, while the profile still exists to be compared against.
     self:RemapDualSpecProfile(profileName, nil)
@@ -306,27 +313,51 @@ function ProfileManager:RenameProfile(oldName, newName)
         -- If old was current, stay on new, otherwise return to where we started
         if not isCurrentProfile then NRSKNUI.db:SetProfile(originalProfile) end
 
+        -- Repoint every character before DeleteProfile sends them to "Default"; SetDualSpecProfile would switch mid-rename.
+        local sv = NRSKNUI.db.sv
+        for charKey, name in pairs(sv.profileKeys) do
+            if name == oldName then sv.profileKeys[charKey] = newName end
+        end
+        local dualSpec = sv.namespaces and sv.namespaces['LibDualSpec-1.0']
+        for _, specs in pairs(dualSpec and dualSpec.char or {}) do
+            for spec, name in pairs(specs) do
+                if name == oldName then specs[spec] = newName end
+            end
+        end
+        for _, char in pairs(sv.char or {}) do
+            if char.OwnProfile == oldName then char.OwnProfile = newName end
+            for spec, name in pairs(char.SpecProfiles or {}) do
+                if name == oldName then char.SpecProfiles[spec] = newName end
+            end
+        end
+
         NRSKNUI.db:DeleteProfile(oldName)
     end)
 
-    -- Update global profile reference if needed
     if isGlobalProfile then NRSKNUI.db.global.GlobalProfile = newName end
-
-    -- Point any spec assignments at the new name so they don't dangle.
-    self:RemapDualSpecProfile(oldName, newName)
 
     -- Only the active profile being renamed changes what is on screen.
     if isCurrentProfile then self:RefreshAllModules() end
     return true
 end
 
----Reset current profile to defaults
+---Reset a profile to defaults
+---@param profileName string|nil the active profile when nil
 ---@return boolean success
-function ProfileManager:ResetProfile()
+function ProfileManager:ResetProfile(profileName)
     if not NRSKNUI.db then return false end
 
-    -- Fires OnProfileReset, which drives the refresh.
-    NRSKNUI.db:ResetProfile()
+    local currentProfile = self:GetCurrentProfile()
+    if not profileName or profileName == currentProfile then
+        NRSKNUI.db:ResetProfile() -- OnProfileReset drives the refresh
+        return true
+    end
+
+    WithoutRefresh(function()
+        NRSKNUI.db:SetProfile(profileName)
+        NRSKNUI.db:ResetProfile()
+        NRSKNUI.db:SetProfile(currentProfile)
+    end)
     return true
 end
 
@@ -384,25 +415,104 @@ function ProfileManager:ResetModuleSettings(dbPath, moduleName)
     return true
 end
 
----Enable or disable global profile mode
----@param enabled boolean Whether to use global profile
----@return boolean success
-function ProfileManager:SetUseGlobalProfile(enabled)
-    if not NRSKNUI.db or not NRSKNUI.db.global then return false end
-    NRSKNUI.db.global.UseGlobalProfile = enabled
+-- Profile mode --
 
-    if enabled then
-        -- Switch to the global profile, SetProfile drives the refresh.
-        local globalProfile = NRSKNUI.db.global.GlobalProfile or DEFAULT_PROFILE
-        NRSKNUI.db:SetProfile(globalProfile)
+---Join or leave the global profile; the character's own profile and spec profiles are parked in db.char meanwhile.
+function ProfileManager:SyncGlobalProfile()
+    local db = NRSKNUI.db
+    local char = db.char
+
+    if db.global.UseGlobalProfile then
+        if not char.GlobalProfileJoined then
+            char.OwnProfile = db:GetCurrentProfile()
+            local dualSpec = db:GetNamespace('LibDualSpec-1.0', true)
+            char.OwnSpecProfiles = dualSpec and dualSpec.char.enabled or nil -- IsDualSpecEnabled() is false at login
+            if char.OwnSpecProfiles then self:SetSpecProfilesEnabled(false) end
+            char.GlobalProfileJoined = true
+        end
+        db:SetProfile(db.global.GlobalProfile)
+    elseif char.GlobalProfileJoined then
+        if char.OwnSpecProfiles then
+            self:SetSpecProfilesEnabled(true)
+        elseif char.OwnProfile and db.profiles[char.OwnProfile] then
+            db:SetProfile(char.OwnProfile)
+        end
+        char.GlobalProfileJoined, char.OwnProfile, char.OwnSpecProfiles = nil, nil, nil
+    end
+end
+
+---@return 'char'|'spec'|'global'
+function ProfileManager:GetProfileMode()
+    local db = NRSKNUI.db
+    if db.global.UseGlobalProfile then return 'global' end
+    if db:IsDualSpecEnabled() then return 'spec' end
+    return 'char'
+end
+
+---@return boolean
+function ProfileManager:CanUseSpecProfiles()
+    return LDS.currentSpec > 0 -- no specialization yet
+end
+
+---@param mode 'char'|'spec'|'global'
+function ProfileManager:SetProfileMode(mode)
+    local db = NRSKNUI.db
+    local before = db:GetCurrentProfile()
+
+    WithoutRefresh(function()
+        db.global.UseGlobalProfile = mode == 'global'
+        self:SyncGlobalProfile()
+        if mode ~= 'global' and db:IsDualSpecEnabled() ~= (mode == 'spec') then
+            self:SetSpecProfilesEnabled(mode == 'spec')
+        end
+    end)
+
+    if db:GetCurrentProfile() ~= before then
+        self:RefreshAllModules()
+        self:PromptReload()
+    end
+end
+
+---Activate a profile the way the current mode assigns profiles.
+---@param profileName string
+function ProfileManager:UseProfile(profileName)
+    local mode = self:GetProfileMode()
+    if mode == 'global' then
+        self:SetGlobalProfile(profileName)
+    elseif mode == 'spec' then
+        NRSKNUI.db:SetDualSpecProfile(profileName) -- current spec
     else
-        -- Switch back to the per-spec profile, which may be the same as the global one. SetProfile drives the refresh.
-        local before = self:GetCurrentProfile()
-        if NRSKNUI.db.CheckDualSpecState then NRSKNUI.db:CheckDualSpecState() end
-        if self:GetCurrentProfile() == before then self:RefreshAllModules() end
+        NRSKNUI.db:SetProfile(profileName)
+    end
+end
+
+---Who points at each profile across the account: "Name - Realm" per character, plus the global profile.
+---@return table<string, string[]>
+function ProfileManager:GetProfileUsers()
+    local db = NRSKNUI.db
+    local sv = db.sv
+    local users = {} ---@type table<string, string[]>
+    local seen = {}
+    local function Add(profile, who)
+        if seen[profile .. '\0' .. who] then return end
+        seen[profile .. '\0' .. who] = true
+        users[profile] = users[profile] or {}
+        users[profile][#users[profile] + 1] = who
     end
 
-    return true
+    if db.global.UseGlobalProfile then Add(db.global.GlobalProfile, L['Global Profile']) end
+    for charKey, name in pairs(sv.profileKeys) do Add(name, charKey) end
+
+    local dualSpec = sv.namespaces and sv.namespaces['LibDualSpec-1.0']
+    for charKey, specs in pairs(dualSpec and dualSpec.char or {}) do
+        if specs.enabled then
+            for spec, name in pairs(specs) do
+                if type(spec) == 'number' then Add(name, charKey) end
+            end
+        end
+    end
+
+    return users
 end
 
 ---Get whether global profile mode is enabled
@@ -513,10 +623,10 @@ end
 ---Import a profile from a string
 ---@param importString string The export string
 ---@param targetName string|nil Name for the imported profile (uses embedded name if nil)
----@param installer boolean|nil Whether this import is being done by a profile installer.
+---@param activate boolean|nil Make the imported profile the one in use
 ---@return boolean success
 ---@return string|nil nameOrError
-function ProfileManager:ImportProfile(importString, targetName, installer)
+function ProfileManager:ImportProfile(importString, targetName, activate)
     if not importString or importString == '' then return false, 'Import string is empty' end
     if not NRSKNUI.db then return false, 'Database not initialized' end
 
@@ -556,27 +666,8 @@ function ProfileManager:ImportProfile(importString, targetName, installer)
         end
     end
 
-    local currentProfile = self:GetCurrentProfile()
-    NRSKNUI.db:SetProfile(finalName)
-
-    -- Copy imported data to profile
-    local profileRef = NRSKNUI.db.profile
-    if profileRef then
-        -- Wipe existing and copy new data
-        wipe(profileRef)
-        for k, v in pairs(exportData.d) do
-            profileRef[k] = v
-        end
-    end
-
-    -- If installer is true, switch to the new profile and set it as global.
-    if installer then
-        ProfileManager:SetUseGlobalProfile(true)
-        ProfileManager:SetGlobalProfile(finalName)
-    else
-        -- Switch back to original profile
-        NRSKNUI.db:SetProfile(currentProfile)
-    end
+    NRSKNUI.db.profiles[finalName] = exportData.d -- new name, so no profile hop or refresh to write it
+    if activate then self:UseProfile(finalName) end
 
     return true, finalName
 end
@@ -669,7 +760,11 @@ function NorskenUIAPI.ImportProfile(profileString, profileKey, methodKey)
     -- Prefixed strings carry the metadata envelope, so they need the full import path.
     if profileString:sub(1, #EXPORT_PREFIX) == EXPORT_PREFIX
         or profileString:sub(1, #LEGACY_PREFIX) == LEGACY_PREFIX then
-        return ProfileManager:ImportProfile(profileString, profileKey, true)
+        local success, nameOrError
+        WithoutPrompt(function()
+            success, nameOrError = ProfileManager:ImportProfile(profileString, profileKey, true)
+        end)
+        return success, nameOrError
     end
 
     local profileData = NorskenUIAPI:DecodeProfileString(profileString)
@@ -678,15 +773,19 @@ function NorskenUIAPI.ImportProfile(profileString, profileKey, methodKey)
     -- WagoUI re-imports into the same key on every pack update, so the key is used as given.
     profileKey = (type(profileKey) == 'string' and profileKey ~= '') and profileKey or 'Imported'
 
-    -- Store profile and switch to it. SetProfile fires OnProfileChanged, which refreshes without a
-    -- ReloadUI, switching to the profile we are already on does not, so cover that case.
-    local wasCurrent = NRSKNUI.db:GetCurrentProfile() == profileKey
-    NRSKNUI.db.profiles[profileKey] = profileData
-    NRSKNUI.db:SetProfile(profileKey)
-    if wasCurrent then
-        ProfileManager:RefreshAllModules()
-        ProfileManager:PromptReload()
-    end
+    WithoutPrompt(function()
+        local db = NRSKNUI.db
+        if db:GetCurrentProfile() == profileKey then
+            -- AceDB keeps serving its own table for the active profile, so refill that one.
+            wipe(db.profile)
+            for k, v in pairs(profileData) do db.profile[k] = v end
+            db:RegisterDefaults(db.defaults)
+            ProfileManager:RefreshAllModules()
+        else
+            db.profiles[profileKey] = profileData
+        end
+        ProfileManager:UseProfile(profileKey)
+    end)
 end
 
 ---Decode a profile string without importing
@@ -717,12 +816,17 @@ function NorskenUIAPI:SetProfile(profileKey)
 
     -- AceDB no-ops (and fires nothing) when asked for the profile already active, so refresh that
     -- case by hand: WagoUI calls this right after writing profile data and expects it applied.
-    local wasCurrent = NRSKNUI.db:GetCurrentProfile() == profileKey
-    NRSKNUI.db:SetProfile(profileKey)
-    if wasCurrent then
-        ProfileManager:RefreshAllModules()
-        ProfileManager:PromptReload()
-    end
+    WithoutPrompt(function()
+        local wasCurrent = NRSKNUI.db:GetCurrentProfile() == profileKey
+        ProfileManager:UseProfile(profileKey)
+        if wasCurrent then ProfileManager:RefreshAllModules() end
+    end)
+end
+
+---Which profile each character uses, keyed "Name - Realm". WagoUI restores alts from it.
+---@return table<string, string>|nil
+function NorskenUIAPI:GetProfileAssignments()
+    return NRSKNUI.db and NRSKNUI.db.sv.profileKeys
 end
 
 ---Get all profile keys
@@ -772,5 +876,6 @@ end
 
 *    NorskenUIAPI.ImportProfile(profileString, targetProfileName)
 
-* Profile imports done by a profile installer automatically switch to the imported profile and sets it as the global profile.
+* Profile imports done by a profile installer switch to the imported profile the way the user's profile mode assigns
+* profiles: this character, the current specialization, or the global profile.
 ]]

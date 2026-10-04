@@ -12,6 +12,7 @@ local setmetatable = setmetatable
 local CreateFrame = CreateFrame
 local format = string.format
 local CopyTable = CopyTable
+local wipe = wipe
 local min = math.min
 local type = type
 
@@ -27,11 +28,30 @@ local function GroupStore()
     return NRSKNUI.db.profile.AuraDisplayGroups
 end
 
+-- Triggers are seeded into saved data, not AceDB defaults, which would restore removed spells.
+local BUILTIN_PRESETS = {
+    ['builtin:advancedDebuffs'] = 'preset:advancedDebuffs',
+    ['builtin:defensives'] = 'preset:defensives',
+    ['builtin:speed'] = 'preset:speed',
+}
+
 ---@param id string
 ---@return table? instance
 function AuraDisplay:Get(id)
     local store = Store()
-    return id and store and store[id] or nil
+    local instance = id and store and store[id] or nil
+    local preset = instance and BUILTIN_PRESETS[id]
+
+    -- No Type or branches means a pre-rework save holding only the user's own keys.
+    local trigger = instance and instance.Trigger
+    if preset and not (trigger and trigger.Type and trigger.branches) then
+        local old = instance.Trigger or {} -- keeps its added and switched-off spells
+        instance.Trigger = NRSKNUI.AuraTriggers:ToAuraFilter({
+            Type = NRSKNUI.AuraTriggers.Types.Preset, Preset = preset, Unit = 'player', Added = old.Added, Removed = old.Removed,
+        })
+    end
+
+    return instance
 end
 
 ---@param id string?
@@ -97,30 +117,88 @@ function AuraDisplay:CreateGroup(name)
     return id
 end
 
----Move a display into a group or out of one when groupId is nil.
+---A group outlives its last member; only DeleteGroup removes it.
 ---@param id string
 ---@param groupId string?
 function AuraDisplay:SetGroup(id, groupId)
     local instance = self:Get(id)
-    if not instance then return end
+    if not instance or instance.group == groupId then return end
 
+    instance.order = nil
+    if not groupId then
+        instance.group = nil
+        return
+    end
+
+    -- Renumber existing members so the newcomer lands last.
+    local members = self:GetMembers(groupId)
+    for index, member in ipairs(members) do Store()[member.key].order = index end
     instance.group = groupId
-    self:PruneGroups()
+    instance.order = #members + 1
 end
 
----Forget any group nothing points at.
-function AuraDisplay:PruneGroups()
-    local store, groups = Store(), GroupStore()
-    if not (store and groups) then return end
-
-    local used = {}
-    for _, instance in pairs(store) do
-        if instance.group then used[instance.group] = true end
+---Trackers never placed by hand sort after the placed ones, by name.
+---@param groupId string
+---@return table[] members { key, text, order? }
+function AuraDisplay:GetMembers(groupId)
+    local members = {}
+    for id, instance in pairs(Store() or {}) do
+        if instance.group == groupId then
+            members[#members + 1] = { key = id, text = instance.name or id, order = instance.order }
+        end
     end
+    tsort(members, function(a, b)
+        if a.order and b.order and a.order ~= b.order then return a.order < b.order end
+        if (a.order ~= nil) ~= (b.order ~= nil) then return a.order ~= nil end
+        return a.text < b.text
+    end)
+    return members
+end
 
-    for id in pairs(groups) do
-        if not used[id] then groups[id] = nil end
+---Joins the target's group; an ungrouped target ungroups it, as the top level stays sorted by name.
+---@param id string
+---@param targetId string
+---@param position 'before'|'after'
+function AuraDisplay:MoveNextTo(id, targetId, position)
+    local instance, target = self:Get(id), self:Get(targetId)
+    if not (instance and target) or id == targetId then return end
+
+    local groupId = target.group
+    instance.group = groupId
+    instance.order = nil
+    if not groupId then return end
+
+    local members = self:GetMembers(groupId)
+    local ordered = {}
+    for _, member in ipairs(members) do
+        if member.key ~= id then
+            if member.key == targetId and position == 'before' then ordered[#ordered + 1] = id end
+            ordered[#ordered + 1] = member.key
+            if member.key == targetId and position == 'after' then ordered[#ordered + 1] = id end
+        end
     end
+    for index, key in ipairs(ordered) do Store()[key].order = index end
+end
+
+---@param groupId string
+---@param name string
+function AuraDisplay:RenameGroup(groupId, name)
+    local group = GroupStore()[groupId]
+    if not group or not name or name == '' then return end
+
+    group.name = name
+end
+
+---Removes a group; its trackers stay, outside any group.
+---@param groupId string
+function AuraDisplay:DeleteGroup(groupId)
+    for _, instance in pairs(Store() or {}) do
+        if instance.group == groupId then
+            instance.group = nil
+            instance.order = nil
+        end
+    end
+    GroupStore()[groupId] = nil
 end
 
 -- The page this module configures, so PreviewManager resolves it without an anchor lookup.
@@ -137,24 +215,18 @@ function AuraDisplay:OnInitialize()
     })
 end
 
----Layout anchor corner derived from growth direction.
----@param cfg table
----@return string
-local function AnchorCorner(cfg)
-    local vertical = (cfg.verticalGrowthDirection == 'DOWN') and 'TOP' or 'BOTTOM'
-    local horizontal = (cfg.horizontalGrowthDirection == 'LEFT') and 'RIGHT' or 'LEFT'
-    return vertical .. horizontal
-end
-
 ---The container config built from an instance's settings.
 ---@param db table
 ---@return table
 function AuraDisplay:GetContainerConfig(db)
+    local flowCorner, containerPoint, horizontal, vertical =
+        NRSKNUI:ResolveAuraGrowth(db.horizontalGrowthDirection, db.verticalGrowthDirection)
     return {
         maximumLineSize = db.perRow * (db.size + db.elementSpacing),
-        anchorPoint = AnchorCorner(db),
-        horizontalGrowthDirection = db.horizontalGrowthDirection,
-        verticalGrowthDirection = db.verticalGrowthDirection,
+        anchorPoint = flowCorner,
+        containerPoint = containerPoint,
+        horizontalGrowthDirection = horizontal,
+        verticalGrowthDirection = vertical,
         size = db.size,
         elementSpacing = db.elementSpacing,
         lineSpacing = db.lineSpacing,
@@ -236,7 +308,7 @@ function AuraDisplay:BuildContainer(id)
     if not container then return end
 
     container:ClearAllPoints()
-    container:SetPoint(config.anchorPoint, host, config.anchorPoint)
+    container:SetPoint(config.containerPoint, host, config.containerPoint)
 
     container:AddFilteredGroup(db.Trigger)
 
@@ -245,7 +317,7 @@ function AuraDisplay:BuildContainer(id)
     container:UpdateUnitGate() -- also starts the container watching what can move a gate verdict
     host.container = container
 
-    AuraPreview:Attach(container, host, config.anchorPoint)
+    AuraPreview:Attach(container, host, config.containerPoint)
     AuraPreview:Update(container, config, self:GetPreviewCount(db), db.Trigger)
 end
 
@@ -297,9 +369,9 @@ function AuraDisplay:ApplySettings(id)
         -- Layout re-applies live, button appearance does not (see container:ApplyLayout).
         local config = self:GetContainerConfig(db)
         container:ClearAllPoints()
-        container:SetPoint(config.anchorPoint, host, config.anchorPoint)
+        container:SetPoint(config.containerPoint, host, config.containerPoint)
         container:ApplyLayout(config)
-        AuraPreview:Attach(container, host, config.anchorPoint)
+        AuraPreview:Attach(container, host, config.containerPoint)
         AuraPreview:Update(container, config, self:GetPreviewCount(db), db.Trigger)
         return
     end
@@ -327,31 +399,70 @@ end
 
 -- Instance lifecycle --
 
----Add a user instance, copied from whichever built-in reads closest to a blank one.
----@param name string
----@return string? id
-function AuraDisplay:Create(name)
+---@return string id
+local function NextUserId()
     local store = Store()
-    if not store or not name or name == '' then return nil end
-
     local index = 1
     while store[USER_PREFIX .. index] do
         index = index + 1
     end
+    return USER_PREFIX .. index
+end
 
-    local id = USER_PREFIX .. index
+---Add a user instance, copied from whichever built-in reads closest to a blank one.
+---@param name string
+---@param presetKey string? start from this preset instead of empty
+---@return string? id
+function AuraDisplay:Create(name, presetKey)
+    local store = Store()
+    if not store or not name or name == '' then return nil end
+
+    local id = NextUserId()
     local template = store[BUILTIN_PREFIX .. 'defensives']
 
     local instance = template and CopyTable(template) or {}
     instance.name = name
     instance.Enabled = true
-    instance.Trigger = NRSKNUI.AuraTriggers:New()
+    instance.group = nil
+    instance.order = nil
+    instance.Trigger = presetKey
+        and NRSKNUI.AuraTriggers:ToAuraFilter({ Type = NRSKNUI.AuraTriggers.Types.Preset, Preset = presetKey, Unit = 'player' })
+        or NRSKNUI.AuraTriggers:New()
     instance.anchorFrameType = 'UIPARENT'
     instance.ParentFrame = 'UIParent'
     instance.Position = { AnchorFrom = 'CENTER', AnchorTo = 'CENTER', XOffset = 0, YOffset = 0 }
 
     store[id] = instance
     return id
+end
+
+---A user copy of any instance, built-ins included, with every setting and its trigger.
+---@param id string
+---@return string? newId
+function AuraDisplay:Duplicate(id)
+    local source = self:Get(id)
+    if not source then return nil end
+
+    local newId = NextUserId()
+    local copy = CopyTable(source)
+    copy.name = format(L['%s (Copy)'], self:GetName(id))
+    copy.group = nil
+    copy.order = nil
+
+    Store()[newId] = copy
+    return newId
+end
+
+---Put a built-in back to how it shipped, its spells and every setting.
+---@param id string
+function AuraDisplay:ResetBuiltin(id)
+    local instance = self:Get(id)
+    local shipped = NRSKNUI:GetDefaultDB().profile.AuraDisplays[id]
+    if not (instance and shipped and self:IsBuiltin(id)) then return end
+
+    wipe(instance)
+    for key, value in pairs(CopyTable(shipped)) do instance[key] = value end
+    self:Get(id) -- seeds the trigger again
 end
 
 ---@param id string
@@ -377,7 +488,6 @@ function AuraDisplay:Delete(id)
     end
 
     store[id] = nil
-    self:PruneGroups()
     return true
 end
 
@@ -412,7 +522,7 @@ function AuraDisplay:RefreshPreview(id)
     if not (db and container) then return false end
 
     local config = self:GetContainerConfig(db)
-    AuraPreview:Attach(container, host, config.anchorPoint)
+    AuraPreview:Attach(container, host, config.containerPoint)
     AuraPreview:Update(container, config, self:GetPreviewCount(db), db.Trigger)
 
     return true

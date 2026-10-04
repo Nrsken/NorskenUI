@@ -477,7 +477,7 @@ end
 -- unskinned over our panel. Only the hue changes, the dim keeps Blizzard's own weight.
 ---@param background Texture
 local function UpdateCoverBackground(background)
-    local color = Skinning.db.General.BackgroundColor
+    local color = NRSKNUI:GetBackdropColor(Skinning.db.General, 'BackgroundColor')
 
     background:SetColorTexture(color[1], color[2], color[3], COVER_DIM_ALPHA)
 end

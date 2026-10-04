@@ -19,8 +19,50 @@ for _, sep in ipairs({ '»', '«', '|', '-', '–', '•', '·', '/', ':' }) do
     SeparatorOptions[#SeparatorOptions + 1] = { value = sep, text = sep }
 end
 
-local function BuildGeneralTab(page, db)
-    -- Card 1: Enable
+-- Every section sits on one halves grid: a full-row toggle, then its settings two to a row.
+local half = 0.5
+
+local function ColorPicker(row, label, tbl, key, conditions)
+    row:ColorPicker(label, {
+        width = half,
+        conditions = conditions,
+        value = tbl[key],
+        callback = function(r, g, b, a)
+            tbl[key] = { r, g, b, a }
+            ApplySettings()
+        end,
+    })
+end
+
+local function TextureDropdown(row, label, tbl, key, conditions)
+    row:Dropdown(label, {
+        width = half,
+        media = 'statusbar',
+        searchable = true,
+        conditions = conditions,
+        value = tbl[key],
+        callback = function(value)
+            tbl[key] = value
+            ApplySettings()
+        end,
+    })
+end
+
+local function ToggleHeader(page, card, label, tbl, key, tooltip)
+    card:Row(rowH):Checkbox(label, {
+        width = 1,
+        tooltip = tooltip,
+        value = tbl[key],
+        callback = function(checked)
+            tbl[key] = checked
+            ApplySettings()
+            page:Refresh()
+        end,
+    })
+    card:Separator()
+end
+
+local function BuildGeneralSection(page, db)
     local conflictAddon = NRSKNUI:GetConflictingUFAddon()
     local enableCard = page:Card(L['Unit Frames'])
 
@@ -52,11 +94,9 @@ local function BuildGeneralTab(page, db)
         })
     end
 
-    -- Card 2: Behaviour
-    local behaviourCard = page:Card(L['Behaviour'], 'all')
-    local behaviourRow = behaviourCard:Row(rowHL, 0)
+    local behaviourRow = page:Card(L['Behaviour'], 'all'):Row(rowHL, 0)
     behaviourRow:Checkbox(L['Smooth Bars'], {
-        width = 0.5,
+        width = half,
         tooltip = L['Animate health and power bar changes. Units following the global setting inherit this.'],
         value = db.General.Smooth,
         callback = function(checked)
@@ -65,7 +105,7 @@ local function BuildGeneralTab(page, db)
         end,
     })
     behaviourRow:Checkbox(L['Hide Blizzard Raid Frames'], {
-        width = 0.5,
+        width = half,
         tooltip = L["Takes Blizzard's compact raid frames and the raid utility off screen. The party ones already go with the party header, and only the raid half is left."],
         value = db.HideBlizzardRaidFrames,
         callback = function(checked)
@@ -78,403 +118,46 @@ local function BuildGeneralTab(page, db)
         end,
     })
 
-    -- Card 3: Range Fade
+    local range = db.General.Range
     local rangeCard = page:Card(L['Range Fade'], 'all')
-    rangeCard:Row(rowH):Checkbox(L['Enable Range Fade'], {
-        width = 0.5,
-        value = db.General.Range.Enabled,
-        callback = function(checked)
-            db.General.Range.Enabled = checked
-            ApplySettings()
-            page:Refresh()
-        end,
-    })
-
-    rangeCard:Separator()
-
-    local alphaRow = rangeCard:Row(rowHL, 0)
-    alphaRow:Slider(L['In Range Alpha'], {
-        width = 0.5,
+    ToggleHeader(page, rangeCard, L['Enable Range Fade'], range, 'Enabled',
+        L['Fade frames of units that are too far away to heal or attack.'])
+    local rangeRow = rangeCard:Row(rowHL, 0)
+    rangeRow:Slider(L['In Range Alpha'], {
+        width = half,
         conditions = { 'rangeOn' },
         min = 0,
         max = 1,
         step = 0.05,
-        value = db.General.Range.InsideAlpha,
+        value = range.InsideAlpha,
         callback = function(val)
-            db.General.Range.InsideAlpha = val; ApplySettings()
+            range.InsideAlpha = val; ApplySettings()
         end,
         callbackOnRelease = true,
     })
-    alphaRow:Slider(L['Out of Range Alpha'], {
-        width = 0.5,
+    rangeRow:Slider(L['Out of Range Alpha'], {
+        width = half,
         conditions = { 'rangeOn' },
         min = 0,
         max = 1,
         step = 0.05,
-        value = db.General.Range.OutsideAlpha,
+        value = range.OutsideAlpha,
         callback = function(val)
-            db.General.Range.OutsideAlpha = val; ApplySettings()
+            range.OutsideAlpha = val; ApplySettings()
         end,
         callbackOnRelease = true,
     })
-
-    -- Card 4: Absorbs
-    local absorbCard = page:Card(L['Absorbs'], 'all')
-    local absorbRow = absorbCard:Row(rowHL, 0)
-    absorbRow:Checkbox(L['Enable Heal Absorb'], {
-        width = 0.5,
-        value = db.General.HealAbsorb.Enabled,
-        callback = function(checked)
-            db.General.HealAbsorb.Enabled = checked
-            ApplySettings()
-            page:Refresh()
-        end,
-    })
-    absorbRow:Checkbox(L['Enable Damage Absorb'], {
-        width = 0.5,
-        value = db.General.DamageAbsorb.Enabled,
-        callback = function(checked)
-            db.General.DamageAbsorb.Enabled = checked
-            ApplySettings()
-            page:Refresh()
-        end,
-    })
 end
 
-local function BuildColorsTab(page, db)
-    local general = db.General
-    local colors = general.Colors
-
-    -- Card 1: Health
-    local healthCard = page:Card(L['Health'], 'all')
-    local healthRow = healthCard:Row(rowH)
-    healthRow:Checkbox(L['Class Colored Health'], {
-        width = 1,
-        tooltip = L['Color health bars by class for players and by reaction for NPCs.'],
-        value = general.ColorByClass,
-        callback = function(checked)
-            general.ColorByClass = checked
-            ApplySettings()
-            page:Refresh()
-        end,
-    })
-
-    healthCard:Separator()
-
-    local healthBgClassRow = healthCard:Row(rowH)
-    healthBgClassRow:Slider(L['Class Color Alpha'], {
-        width = 0.5,
-        conditions = { 'healthClassColor' },
-        min = 0,
-        max = 1,
-        step = 0.05,
-        value = general.ForegroundAlphaWhenColorByClass,
-        callback = function(val)
-            general.ForegroundAlphaWhenColorByClass = val; ApplySettings()
-        end,
-        callbackOnRelease = true,
-    })
-    healthBgClassRow:ColorPicker(L['Background (Class Colored)'], {
-        width = 0.5,
-        conditions = { 'healthClassColor' },
-        value = colors.BackgroundWhenColorByClass,
-        callback = function(r, g, b, a)
-            colors.BackgroundWhenColorByClass = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
-
-    local healthBgRow = healthCard:Row(rowHL, 0)
-    healthBgRow:ColorPicker(L['Foreground'], {
-        width = 0.5,
-        conditions = { 'healthCustom' },
-        value = colors.Foreground,
-        callback = function(r, g, b, a)
-            colors.Foreground = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
-    healthBgRow:ColorPicker(L['Background'], {
-        width = 0.5,
-        conditions = { 'healthCustom' },
-        value = colors.Background,
-        callback = function(r, g, b, a)
-            colors.Background = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
-
-    -- Card 2: Power
-    local powerCard = page:Card(L['Power'], 'all')
-    local powerRow = powerCard:Row(rowHL, 0)
-    powerRow:Checkbox(L['Color By Power Type'], {
-        width = 0.5,
-        tooltip = L['Color the bar by the power type (mana, rage, energy...). Uncheck to use a flat color.'],
-        value = general.ColorByPower,
-        callback = function(checked)
-            general.ColorByPower = checked
-            ApplySettings()
-            page:Refresh()
-        end,
-    })
-    powerRow:ColorPicker(L['Power Color'], {
-        width = 0.5,
-        conditions = { 'powerCustom' },
-        value = colors.Power,
-        callback = function(r, g, b, a)
-            colors.Power = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
-
-    -- Card 3: Castbar
-    local castbarCard = page:Card(L['Castbar'], 'all')
-    local castbarRow = castbarCard:Row(rowH)
-    castbarRow:Checkbox(L['Class Colored Castbar'], {
-        width = 1,
-        value = general.CastbarColorByClass,
-        callback = function(checked)
-            general.CastbarColorByClass = checked
-            ApplySettings()
-            page:Refresh()
-        end,
-    })
-
-    castbarCard:Separator()
-
-    local castStateRow = castbarCard:Row(rowH)
-    castStateRow:ColorPicker(L['Castbar Color'], {
-        width = 0.5,
-        conditions = { 'castbarCustom' },
-        value = colors.Castbar,
-        callback = function(r, g, b, a)
-            colors.Castbar = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
-
-    castStateRow:ColorPicker(L['Non-Interruptible'], {
-        width = 0.5,
-        value = colors.CastbarNonInterruptible,
-        callback = function(r, g, b, a)
-            colors.CastbarNonInterruptible = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
-
-    local castBgRow = castbarCard:Row(rowHL, 0)
-    castBgRow:ColorPicker(L['Interrupted / Failed'], {
-        width = 0.5,
-        value = colors.CastbarFail,
-        callback = function(r, g, b, a)
-            colors.CastbarFail = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
-
-    castBgRow:ColorPicker(L['Background'], {
-        width = 0.5,
-        value = colors.CastbarBackground,
-        callback = function(r, g, b, a)
-            colors.CastbarBackground = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
-
-    -- Card 4: Safe Zone
-    local safeZoneCard = page:Card(L['Safe Zone'], 'all')
-    local safeZoneRow = safeZoneCard:Row(rowHL, 0)
-    safeZoneRow:Checkbox(L['Enable Safe Zone'], {
-        width = 0.5,
-        tooltip = L['Shows your latency at the end of the cast, on the player frame only.'],
-        value = general.SafeZone.Enabled,
-        callback = function(checked)
-            general.SafeZone.Enabled = checked
-            ApplySettings()
-            page:Refresh()
-        end,
-    })
-    safeZoneRow:ColorPicker(L['Safe Zone Color'], {
-        width = 0.5,
-        conditions = { 'safeZoneOn' },
-        value = general.SafeZone.Color,
-        callback = function(r, g, b, a)
-            general.SafeZone.Color = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
-
-    -- Card 5: Absorbs
-    local absorbCard = page:Card(L['Absorbs'], 'all')
-    local absorbRow = absorbCard:Row(rowHL, 0)
-    absorbRow:ColorPicker(L['Heal Absorb'], {
-        width = 0.5,
-        conditions = { 'healAbsorbOn' },
-        value = general.HealAbsorb.Color,
-        callback = function(r, g, b, a)
-            general.HealAbsorb.Color = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
-    absorbRow:ColorPicker(L['Damage Absorb'], {
-        width = 0.5,
-        conditions = { 'damageAbsorbOn' },
-        value = general.DamageAbsorb.Color,
-        callback = function(r, g, b, a)
-            general.DamageAbsorb.Color = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
-end
-
-local function BuildTexturesTab(page, db)
+local function BuildTextSection(page, db)
     local general = db.General
 
-    -- Card 1: Foreground
-    local barCard = page:Card(L['Foreground'], 'all')
-    local barRow = barCard:Row(rowHL, 0)
-    barRow:Checkbox(L['Use Global Bar Texture'], {
-        width = 0.5,
-        tooltip = L['Use the shared bar texture from the Global Settings page.'],
-        value = general.UseGlobalBar,
-        callback = function(checked)
-            general.UseGlobalBar = checked
-            ApplySettings()
-            page:Refresh()
-        end,
-    })
-    barRow:Dropdown(L['Foreground Texture'], {
-        width = 0.5,
-        media = 'statusbar',
-        searchable = true,
-        conditions = { 'ownBar' },
-        value = general.statusBar,
-        callback = function(key)
-            general.statusBar = key
-            ApplySettings()
-        end,
-    })
-
-    -- Card 2: Background
-    local bgCard = page:Card(L['Background'], 'all')
-    local bgRow = bgCard:Row(rowHL, 0)
-    bgRow:Checkbox(L['Match Foreground'], {
-        width = 0.5,
-        tooltip = L['Use the foreground texture for the missing-health background.'],
-        value = general.BackgroundTexture == '',
-        callback = function(checked)
-            general.BackgroundTexture = checked and '' or general.statusBar
-            ApplySettings()
-            page:Refresh()
-        end,
-    })
-    bgRow:Dropdown(L['Background Texture'], {
-        width = 0.5,
-        media = 'statusbar',
-        searchable = true,
-        conditions = { 'ownBackground' },
-        value = general.BackgroundTexture ~= '' and general.BackgroundTexture or general.statusBar,
-        callback = function(key)
-            general.BackgroundTexture = key
-            ApplySettings()
-        end,
-    })
-
-    -- Card 3: Castbar spark
-    page:SparkSettingsCard({
-        title = L['Castbar Spark'],
-        db = general,
-        onChangeCallback = ApplySettings,
-        globalOverride = { label = L['Use Global Spark'] },
-        labels = { texture = L['Spark Texture'], scale = L['Spark Scale'], width = L['Spark Width'], color = L['Spark Color'] },
-        scaleTooltip = L['Scales the spark against the bar height. Art sparks keep their own proportions.'],
-    })
-
-    -- Card 4: Absorbs
-    local absorbCard = page:Card(L['Absorbs'], 'all')
-    local absorbRow = absorbCard:Row(rowHL, 0)
-    absorbRow:Dropdown(L['Heal Absorb'], {
-        width = 0.5,
-        media = 'statusbar',
-        searchable = true,
-        conditions = { 'healAbsorbOn' },
-        value = general.HealAbsorb.StatusBarTexture,
-        callback = function(key)
-            general.HealAbsorb.StatusBarTexture = key
-            ApplySettings()
-        end,
-    })
-    absorbRow:Dropdown(L['Damage Absorb'], {
-        width = 0.5,
-        media = 'statusbar',
-        searchable = true,
-        conditions = { 'damageAbsorbOn' },
-        value = general.DamageAbsorb.StatusBarTexture,
-        callback = function(key)
-            general.DamageAbsorb.StatusBarTexture = key
-            ApplySettings()
-        end,
-    })
-
-    -- Card 5: Mouseover Highlight
-    local hlCard = page:Card(L['Mouseover Highlight'], 'all')
-    local hlRow = hlCard:Row(rowH)
-    hlRow:Checkbox(L['Enable Highlight'], {
-        width = 1,
-        value = general.Highlight.Enabled,
-        callback = function(checked)
-            general.Highlight.Enabled = checked
-            ApplySettings()
-            page:Refresh()
-        end,
-    })
-
-    hlCard:Separator()
-
-    local colorTexRow = hlCard:Row(rowHL, 0)
-    colorTexRow:Dropdown(L['Highlight Texture'], {
-        width = 0.5,
-        media = 'statusbar',
-        searchable = true,
-        conditions = { 'highlightOn' },
-        value = general.Highlight.StatusBarTexture,
-        callback = function(key)
-            general.Highlight.StatusBarTexture = key
-            ApplySettings()
-        end,
-    })
-    colorTexRow:ColorPicker(L['Highlight Color'], {
-        width = 0.5,
-        conditions = { 'highlightOn' },
-        value = general.Highlight.Color,
-        callback = function(r, g, b, a)
-            general.Highlight.Color = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
-end
-
-local function BuildFontsTab(page, db)
-    local general = db.General
-
-    local fontCard = page:Card(L['Font Settings'], 'all')
-    local fontRow = fontCard:Row(rowH)
-    fontRow:Checkbox(L['Use Global Font'], {
-        width = 1,
-        tooltip = L['Use the shared font from the Global Settings page.'],
-        value = general.UseGlobalFont,
-        callback = function(checked)
-            general.UseGlobalFont = checked
-            ApplySettings()
-            page:Refresh()
-        end,
-    })
-
-    fontCard:Separator()
-
-    local fontDropdownRow = fontCard:Row(rowHL, 0)
-    fontDropdownRow:Dropdown(L['Font'], {
-        width = 0.5,
+    local fontCard = page:Card(L['Font'], 'all')
+    ToggleHeader(page, fontCard, L['Use Global Font'], general, 'UseGlobalFont',
+        L['Use the shared font from the Global Settings page.'])
+    local fontRow = fontCard:Row(rowHL, 0)
+    fontRow:Dropdown(L['Font'], {
+        width = half,
         media = 'font',
         searchable = true,
         conditions = { 'ownFont' },
@@ -484,8 +167,8 @@ local function BuildFontsTab(page, db)
             ApplySettings()
         end,
     })
-    fontDropdownRow:Dropdown(L['Outline'], {
-        width = 0.5,
+    fontRow:Dropdown(L['Outline'], {
+        width = half,
         options = OutlineOptions,
         value = general.FontOutline,
         callback = function(key)
@@ -493,14 +176,11 @@ local function BuildFontsTab(page, db)
             ApplySettings()
         end,
     })
-end
 
-local function BuildTagsTab(page, db)
-    local tagCard = page:Card(L['Tag Settings'], 'all')
-    local tagRow = tagCard:Row(rowHL, 0)
+    local tagRow = page:Card(L['Tags'], 'all'):Row(rowHL, 0)
     tagRow:Dropdown(L['Separator'], {
-        width = 0.5,
-        tooltip = L['Separator used by tags that join two values.'],
+        width = half,
+        tooltip = L['Placed between two values in tags that show both, like current and max health.'],
         options = SeparatorOptions,
         value = db.TagSettings.Separator,
         callback = function(key)
@@ -509,8 +189,8 @@ local function BuildTagsTab(page, db)
         end,
     })
     tagRow:Slider(L['Update Interval'], {
-        width = 0.5,
-        tooltip = L['How often timer-driven units (target of target etc.) refresh their texts.'],
+        width = half,
+        tooltip = L['How often, in seconds, texts on units without their own events (like target of target) refresh.'],
         min = 0.1,
         max = 1,
         step = 0.05,
@@ -523,29 +203,170 @@ local function BuildTagsTab(page, db)
     })
 end
 
+-- Two toggles, so each sits above the dropdown it gates instead of taking a full row.
+local function BuildTexturesSection(page, db)
+    local general = db.General
+    local card = page:Card(L['Textures'], 'all')
+
+    local toggleRow = card:Row(rowH)
+    toggleRow:Checkbox(L['Use Global Bar Texture'], {
+        width = half,
+        tooltip = L['Use the shared bar texture from the Global Settings page.'],
+        value = general.UseGlobalBar,
+        callback = function(checked)
+            general.UseGlobalBar = checked
+            ApplySettings()
+            page:Refresh()
+        end,
+    })
+    toggleRow:Checkbox(L['Match Foreground'], {
+        width = half,
+        tooltip = L['Use the foreground texture for the missing-health background.'],
+        value = general.BackgroundTexture == '',
+        callback = function(checked)
+            general.BackgroundTexture = checked and '' or general.statusBar
+            ApplySettings()
+            page:Refresh()
+        end,
+    })
+    card:Separator()
+
+    local dropdownRow = card:Row(rowHL, 0)
+    TextureDropdown(dropdownRow, L['Foreground Texture'], general, 'statusBar', { 'ownBar' })
+    dropdownRow:Dropdown(L['Background Texture'], {
+        width = half,
+        media = 'statusbar',
+        searchable = true,
+        conditions = { 'ownBackground' },
+        value = general.BackgroundTexture ~= '' and general.BackgroundTexture or general.statusBar,
+        callback = function(key)
+            general.BackgroundTexture = key
+            ApplySettings()
+        end,
+    })
+end
+
+-- Both modes' colors stay up, custom on the left and class colored on the right.
+local function BuildHealthSection(page, db)
+    local general = db.General
+    local colors = general.Colors
+    local card = page:Card(L['Health'], 'all')
+
+    ToggleHeader(page, card, L['Class Colored'], general, 'ColorByClass',
+        L['Color health bars by class for players and by reaction for NPCs.'])
+
+    local fgRow = card:Row(rowH)
+    ColorPicker(fgRow, L['Foreground'], colors, 'Foreground')
+    fgRow:Slider(L['Class Color Alpha'], {
+        width = half,
+        min = 0,
+        max = 1,
+        step = 0.05,
+        value = general.ForegroundAlphaWhenColorByClass,
+        callback = function(val)
+            general.ForegroundAlphaWhenColorByClass = val; ApplySettings()
+        end,
+        callbackOnRelease = true,
+    })
+
+    local bgRow = card:Row(rowHL, 0)
+    ColorPicker(bgRow, L['Background'], colors, 'Background')
+    ColorPicker(bgRow, L['Background (Class Colored)'], colors, 'BackgroundWhenColorByClass')
+end
+
+local function BuildPowerSection(page, db)
+    local general = db.General
+    local card = page:Card(L['Power'], 'all')
+    ToggleHeader(page, card, L['Color By Power Type'], general, 'ColorByPower',
+        L['Color the bar by the power type (mana, rage, energy...). Uncheck to use a flat color.'])
+    ColorPicker(card:Row(rowHL, 0), L['Power Color'], general.Colors, 'Power', { 'powerCustom' })
+end
+
+local function BuildCastbarSection(page, db)
+    local general = db.General
+    local colors = general.Colors
+
+    local card = page:Card(L['Castbar'], 'all')
+    ToggleHeader(page, card, L['Class Colored'], general, 'CastbarColorByClass')
+
+    local colorRow = card:Row(rowH)
+    ColorPicker(colorRow, L['Castbar Color'], colors, 'Castbar', { 'castbarCustom' })
+    ColorPicker(colorRow, L['Background'], colors, 'CastbarBackground')
+
+    local stateRow = card:Row(rowHL, 0)
+    ColorPicker(stateRow, L['Non-Interruptible'], colors, 'CastbarNonInterruptible')
+    ColorPicker(stateRow, L['Interrupted / Failed'], colors, 'CastbarFail')
+
+    local safeZoneCard = page:Card(L['Safe Zone'], 'all')
+    ToggleHeader(page, safeZoneCard, L['Enable Safe Zone'], general.SafeZone, 'Enabled',
+        L['Shows your latency at the end of the cast, on the player frame only.'])
+    ColorPicker(safeZoneCard:Row(rowHL, 0), L['Color'], general.SafeZone, 'Color', { 'safeZoneOn' })
+
+    page:SparkSettingsCard({
+        title = L['Castbar Spark'],
+        db = general,
+        onChangeCallback = ApplySettings,
+        globalOverride = { label = L['Use Global Spark'] },
+        labels = { texture = L['Spark Texture'], scale = L['Spark Scale'], width = L['Spark Width'], color = L['Spark Color'] },
+        scaleTooltip = L['Scales the spark against the bar height. Art sparks keep their own proportions.'],
+    })
+end
+
+local function BuildOverlayCard(page, title, label, tbl, condition)
+    local card = page:Card(title, 'all')
+    ToggleHeader(page, card, label, tbl, 'Enabled')
+    local row = card:Row(rowHL, 0)
+    ColorPicker(row, L['Color'], tbl, 'Color', { condition })
+    TextureDropdown(row, L['Texture'], tbl, 'StatusBarTexture', { condition })
+end
+
+local function BuildAbsorbsSection(page, db)
+    BuildOverlayCard(page, L['Heal Absorb'], L['Enable Heal Absorb'], db.General.HealAbsorb, 'healAbsorbOn')
+    BuildOverlayCard(page, L['Damage Absorb'], L['Enable Damage Absorb'], db.General.DamageAbsorb, 'damageAbsorbOn')
+end
+
+local function BuildHighlightSection(page, db)
+    BuildOverlayCard(page, L['Mouseover Highlight'], L['Enable Highlight'], db.General.Highlight, 'highlightOn')
+end
+
+local Sections = {
+    general   = BuildGeneralSection,
+    text      = BuildTextSection,
+    dispel    = function(page, db) UF.GUIDispelTab(page, db) end,
+    textures  = BuildTexturesSection,
+    health    = BuildHealthSection,
+    power     = BuildPowerSection,
+    castbar   = BuildCastbarSection,
+    absorbs   = BuildAbsorbsSection,
+    highlight = BuildHighlightSection,
+}
+
 GUI:RegisterPage('unitFramesGeneral', {
-    mode = 'tabs',
-    search = {
-        L['Enable Unit Frames'], L['Smooth Bars'], L['Hide Blizzard Raid Frames'], L['Range Fade'], L['Class Colored Health'],
-        L['Class Colored Castbar'], L['Heal Absorb'], L['Damage Absorb'], L['Mouseover Highlight'],
-        L['Separator'], L['Update Interval'], L['Dispel Highlight'], L['Dispellable By'],
+    mode = 'clean',
+    search = {},
+    sidebar = {
+        items = {
+            { type = 'label', key = 'frames', text = L['Unit Frames'] },
+            { key = 'general',   text = L['General'] },
+            { key = 'text',      text = L['Text'] },
+            { key = 'dispel',    text = L['Dispel'] },
+            { type = 'label', key = 'bars', text = L['Bars'] },
+            { key = 'textures',  text = L['Textures'] },
+            { key = 'health',    text = L['Health'] },
+            { key = 'power',     text = L['Power'] },
+            { key = 'castbar',   text = L['Castbar'] },
+            { key = 'absorbs',   text = L['Absorbs'] },
+            { key = 'highlight', text = L['Mouseover Highlight'] },
+        },
     },
-    tabs = {
-        { id = 'general',  text = L['General Settings'] },
-        { id = 'colors',   text = L['Color Settings'] },
-        { id = 'textures', text = L['Texture Settings'] },
-        { id = 'dispel',   text = L['Dispel'] },
-        { id = 'fonts',    text = L['Font Settings'] },
-        { id = 'tags',     text = L['Tag Settings'] },
-    },
-    build = function(page, tabId)
+    build = function(page, _, itemKey)
         local db = NRSKNUI.db.profile.UnitFrames
-        if not db then return end
+        local build = db and Sections[itemKey]
+        -- Caption rows reach here from the search harvester, they have no section.
+        if not build then return end
 
         page:SetEnabled(function() return db.Enabled and not NRSKNUI.UFBlocked end)
         page:SetCondition('rangeOn', function() return db.General.Range.Enabled end)
-        page:SetCondition('healthCustom', function() return not db.General.ColorByClass end)
-        page:SetCondition('healthClassColor', function() return db.General.ColorByClass end)
         page:SetCondition('powerCustom', function() return not db.General.ColorByPower end)
         page:SetCondition('castbarCustom', function() return not db.General.CastbarColorByClass end)
         page:SetCondition('safeZoneOn', function() return db.General.SafeZone.Enabled end)
@@ -556,18 +377,6 @@ GUI:RegisterPage('unitFramesGeneral', {
         page:SetCondition('highlightOn', function() return db.General.Highlight.Enabled end)
         page:SetCondition('ownFont', function() return not db.General.UseGlobalFont end)
 
-        if tabId == 'general' then
-            BuildGeneralTab(page, db)
-        elseif tabId == 'colors' then
-            BuildColorsTab(page, db)
-        elseif tabId == 'textures' then
-            BuildTexturesTab(page, db)
-        elseif tabId == 'dispel' then
-            UF.GUIDispelTab(page, db)
-        elseif tabId == 'fonts' then
-            BuildFontsTab(page, db)
-        elseif tabId == 'tags' then
-            BuildTagsTab(page, db)
-        end
+        build(page, db)
     end,
 })

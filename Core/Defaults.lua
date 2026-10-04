@@ -21,11 +21,12 @@ local Defaults = {
         XPTable = {},
         SpellAlertCVars = {},
         CDMLayoutCache = {},
+        SidebarCollapsed = { ['*'] = {} }, -- [page][section key] = true, closed mini sidebar sections
     },
     profile = {
         Theme = {
             mode           = "preset",
-            selectedPreset = "NUI v3",
+            selectedPreset = "NUI Neon",
             customColors   = {},
             fontFace       = "Interface\\AddOns\\NorskenUI\\Media\\Fonts\\Expressway.TTF",
             fontSizeNormal = 12,
@@ -123,8 +124,9 @@ local Defaults = {
         globalMedia = {
             Enabled = true,
             profileFont = { Enabled = true, FontFace = "Expressway", },
-            profileBar = { Enabled = true, statusBar = "NorskenUI" },
-            profileSpark = { Enabled = true, sparkTexture = "Solid", Scale = 1, Width = 2, color = { 1, 1, 1, 1 } },
+            profileBar = { statusBar = "NorskenUI" },
+            profileSpark = { sparkTexture = "Solid", Scale = 1, Width = 2, color = { 1, 1, 1, 1 } },
+            profileBorder = { BorderColor = { 0, 0, 0, 1 }, BackdropColor = { 0, 0, 0, 0.8 } },
             -- Addons global formatter defaults.
             durationBreakpointColors = true,
             durationCurveColors = false,
@@ -343,6 +345,8 @@ local Defaults = {
                 YOffset = -433,                  -- Y offset
             },
             BackdropEnabled = false,             -- Enable/disable backdrop
+            UseGlobalBorder = true,
+            UseGlobalBackdrop = true,
             BackgroundColor = { 0, 0, 0, 0.8 },
             BorderColor = { 0, 0, 0, 1 },
             BackdropWidth = 4,
@@ -524,6 +528,8 @@ local Defaults = {
             },
             -- Backdrop Settings
             BackdropEnabled = true,
+            UseGlobalBorder = true,
+            UseGlobalBackdrop = true,
             BackgroundColor = { 0, 0, 0, 0.8 },
             BorderColor = { 0, 0, 0, 1 },
             BackdropWidth = 4,
@@ -983,6 +989,8 @@ local Defaults = {
                 RestedColor = { 0, 0.39, 0.88, 0.25 },
                 RestedShow = true,
                 -- Backdrop
+                UseGlobalBorder = true,
+                UseGlobalBackdrop = true,
                 BackgroundColor = { 0, 0, 0, 0.8 },
                 BorderColor = { 0, 0, 0, 1 },
             },
@@ -1057,6 +1065,8 @@ local Defaults = {
                 UseGlobalBar = true,
                 StatusBarTexture = "NorskenUI",
                 -- Backdrop
+                UseGlobalBorder = true,
+                UseGlobalBackdrop = true,
                 BackgroundColor = { 0, 0, 0, 0.8 },
                 BorderEnabled = true,
                 BorderColor = { 0, 0, 0, 1 },
@@ -1157,6 +1167,8 @@ local Defaults = {
                 TextColor = { 1, 1, 1, 1 },
 
                 -- Backdrop
+                UseGlobalBorder = true,
+                UseGlobalBackdrop = true,
                 BackdropColor = { 0, 0, 0, 0.8 },
                 BorderColor = { 0, 0, 0, 1 },
 
@@ -1243,6 +1255,8 @@ local Defaults = {
                     CustomColor = { 0, 1, 0.17, 1 },
                 },
                 General = {
+                    UseGlobalBorder = true,
+                    UseGlobalBackdrop = true,
                     BorderColor = { 0, 0, 0, 1 },
                     BackgroundColor = { 0, 0, 0, 0.8 },
                     WidgetBorderColor = { 0, 0, 0, 1 },
@@ -1335,15 +1349,21 @@ local Defaults = {
                 TimestampColor = { r = 0.6, g = 0.6, b = 0.6 }, -- Custom timestamp color
                 Backdrop = {
                     Enabled = true,
+                    UseGlobalBorder = true,
+                    UseGlobalBackdrop = true,
                     Color = { 0, 0, 0, 0.8 },
                     BorderColor = { 0, 0, 0, 1 },
                 },
                 EditBox = {
+                    UseGlobalBorder = true,
+                    UseGlobalBackdrop = true,
                     BackdropColor = { 0, 0, 0, 0.8 },
                     BorderColor = { 0, 0, 0, 1 },
                 },
                 TabBackdrop = {
                     Enabled = true,
+                    UseGlobalBorder = true,
+                    UseGlobalBackdrop = false, -- tabs are a lighter tint than the panel on purpose
                     Color = { 0, 0, 0, 0.2 },
                     BorderColor = { 0, 0, 0, 1 },
                 },
@@ -1426,6 +1446,8 @@ local Defaults = {
                         ButtonsPerLine = 12,
                         ParentFrame = "UIParent",
                         HideEmptyBackdrops = false,
+                        UseGlobalBorder = true,
+                        UseGlobalBackdrop = true,
                         BackdropColor = { 0, 0, 0, 0.8 },
                         BorderColor = { 0, 0, 0, 1 },
                         Position = {
@@ -1476,6 +1498,8 @@ local Defaults = {
                         ButtonsPerLine = 6,
                         ParentFrame = "UIParent",
                         HideEmptyBackdrops = false,
+                        UseGlobalBorder = true,
+                        UseGlobalBackdrop = true,
                         BackdropColor = { 0, 0, 0, 0.8 },
                         BorderColor = { 0, 0, 0, 1 },
                         Position = {
@@ -1526,6 +1550,8 @@ local Defaults = {
                         ButtonsPerLine = 12,
                         ParentFrame = "UIParent",
                         HideEmptyBackdrops = false,
+                        UseGlobalBorder = true,
+                        UseGlobalBackdrop = true,
                         BackdropColor = { 0, 0, 0, 0.8 },
                         BorderColor = { 0, 0, 0, 1 },
                         Position = {
@@ -1576,6 +1602,8 @@ local Defaults = {
                         ButtonsPerLine = 2,
                         ParentFrame = "UIParent",
                         HideEmptyBackdrops = false,
+                        UseGlobalBorder = true,
+                        UseGlobalBackdrop = true,
                         BackdropColor = { 0, 0, 0, 0.8 },
                         BorderColor = { 0, 0, 0, 1 },
                         Position = {
@@ -1626,6 +1654,8 @@ local Defaults = {
                         ButtonsPerLine = 6,
                         ParentFrame = "UIParent",
                         HideEmptyBackdrops = false,
+                        UseGlobalBorder = true,
+                        UseGlobalBackdrop = true,
                         BackdropColor = { 0, 0, 0, 0.8 },
                         BorderColor = { 0, 0, 0, 1 },
                         Position = {
@@ -1676,6 +1706,8 @@ local Defaults = {
                         ButtonsPerLine = 2,
                         ParentFrame = "UIParent",
                         HideEmptyBackdrops = false,
+                        UseGlobalBorder = true,
+                        UseGlobalBackdrop = true,
                         BackdropColor = { 0, 0, 0, 0.8 },
                         BorderColor = { 0, 0, 0, 1 },
                         Position = {
@@ -1726,6 +1758,8 @@ local Defaults = {
                         ButtonsPerLine = 1,
                         ParentFrame = "UIParent",
                         HideEmptyBackdrops = false,
+                        UseGlobalBorder = true,
+                        UseGlobalBackdrop = true,
                         BackdropColor = { 0, 0, 0, 0.8 },
                         BorderColor = { 0, 0, 0, 1 },
                         Position = {
@@ -1776,6 +1810,8 @@ local Defaults = {
                         ButtonsPerLine = 1,
                         ParentFrame = "UIParent",
                         HideEmptyBackdrops = false,
+                        UseGlobalBorder = true,
+                        UseGlobalBackdrop = true,
                         BackdropColor = { 0, 0, 0, 0.8 },
                         BorderColor = { 0, 0, 0, 1 },
                         Position = {
@@ -1825,6 +1861,8 @@ local Defaults = {
                         ButtonsPerLine = 2,
                         ParentFrame = "UIParent",
                         HideEmptyBackdrops = false,
+                        UseGlobalBorder = true,
+                        UseGlobalBackdrop = true,
                         BackdropColor = { 0, 0, 0, 0.8 },
                         BorderColor = { 0, 0, 0, 1 },
                         Position = {
@@ -1874,6 +1912,8 @@ local Defaults = {
                         ButtonsPerLine = 10,
                         ParentFrame = "UIParent",
                         HideEmptyBackdrops = true,
+                        UseGlobalBorder = true,
+                        UseGlobalBackdrop = true,
                         BackdropColor = { 0, 0, 0, 0.8 },
                         BorderColor = { 0, 0, 0, 1 },
                         Position = {
@@ -1996,6 +2036,8 @@ local Defaults = {
                 ButtonSpacing = -4,
                 BackdropSpacing = 0,
                 ShowBackdrop = true,
+                UseGlobalBorder = true,
+                UseGlobalBackdrop = true,
                 BackdropColor = { 0, 0, 0, 0.8 },
                 BackdropBorderColor = { 0, 0, 0, 1 },
                 anchorFrameType = "SELECTFRAME",
@@ -2079,6 +2121,8 @@ local Defaults = {
                 StatusBarTexture = "NorskenUI",
                 UseGlobalBar = true,
                 -- Coloring
+                UseGlobalBorder = true,
+                UseGlobalBackdrop = true,
                 BackgroundColor = { 0, 0, 0, 0.8 },
                 BorderColor = { 0, 0, 0, 1 },
                 MinionColor = { 0.5, 0.5, 0.5 },
@@ -2118,6 +2162,8 @@ local Defaults = {
                         detailsBars = 8,
                         width = 260,
                         height = 240,
+                        UseGlobalBorder = true,
+                        UseGlobalBackdrop = true,
                         BackgroundColor = { 0, 0, 0, 0.8 },
                         BorderColor = { 0, 0, 0, 1 },
                         anchorFrameType = "UIPARENT",
@@ -2136,6 +2182,8 @@ local Defaults = {
                         detailsBars = 8,
                         width = 260,
                         height = 240,
+                        UseGlobalBorder = true,
+                        UseGlobalBackdrop = true,
                         BackgroundColor = { 0, 0, 0, 0.8 },
                         BorderColor = { 0, 0, 0, 1 },
                         anchorFrameType = "UIPARENT",
@@ -2154,6 +2202,8 @@ local Defaults = {
                         detailsBars = 8,
                         width = 260,
                         height = 240,
+                        UseGlobalBorder = true,
+                        UseGlobalBackdrop = true,
                         BackgroundColor = { 0, 0, 0, 0.8 },
                         BorderColor = { 0, 0, 0, 1 },
                         anchorFrameType = "UIPARENT",
@@ -2172,6 +2222,8 @@ local Defaults = {
                         detailsBars = 8,
                         width = 260,
                         height = 240,
+                        UseGlobalBorder = true,
+                        UseGlobalBackdrop = true,
                         BackgroundColor = { 0, 0, 0, 0.8 },
                         BorderColor = { 0, 0, 0, 1 },
                         anchorFrameType = "UIPARENT",
@@ -2190,6 +2242,8 @@ local Defaults = {
                         detailsBars = 8,
                         width = 260,
                         height = 240,
+                        UseGlobalBorder = true,
+                        UseGlobalBackdrop = true,
                         BackgroundColor = { 0, 0, 0, 0.8 },
                         BorderColor = { 0, 0, 0, 1 },
                         anchorFrameType = "UIPARENT",
@@ -2248,6 +2302,8 @@ local Defaults = {
                 Icon = {
                     Enabled = true,
                 },
+                UseGlobalBorder = true,
+                UseGlobalBackdrop = true,
                 BackdropColor = { 0, 0, 0, 0.8 },
                 BorderColor = { 0, 0, 0, 1 },
             },
@@ -2371,6 +2427,8 @@ local Defaults = {
             ChannelColor = { 0.8, 0.4, 1.0, 1 },
             NotInterruptibleColor = { 0.780, 0.250, 0.250, 1 },
             TextColor = { 1, 1, 1, 1 },
+            UseGlobalBorder = true,
+            UseGlobalBackdrop = true,
             BackdropColor = { 0, 0, 0, 0.8 },
             BorderColor = { 0, 0, 0, 1 },
             ShowTime = true,
@@ -2431,6 +2489,7 @@ local Defaults = {
             Groups = {
                 Raid = {
                     IconSize = 40,
+                    UseGlobalBorder = true,
                     BorderColor = { 0, 0, 0, 1 },
                     Config = {
                         Grow = "HORIZONTAL",
@@ -2465,6 +2524,7 @@ local Defaults = {
                 },
                 Targeted = {
                     IconSize = 40,
+                    UseGlobalBorder = true,
                     BorderColor = { 0, 0, 0, 1 },
                     Config = {
                         Grow = "HORIZONTAL",
@@ -2583,7 +2643,6 @@ local Defaults = {
         AuraDisplays = {
             ['builtin:advancedDebuffs'] = {
                 name = "Advanced Debuffs",
-                Trigger = { Type = 'Preset', Unit = 'player', Preset = 'preset:advancedDebuffs' },
                 Enabled = true,
                 size = 50,
                 perRow = 6,
@@ -2641,7 +2700,6 @@ local Defaults = {
             },
             ['builtin:defensives'] = {
                 name = "Defensives",
-                Trigger = { Type = 'Preset', Unit = 'player', Preset = 'preset:defensives' },
                 Enabled = true,
                 size = 50,
                 perRow = 6,
@@ -2695,7 +2753,6 @@ local Defaults = {
             },
             ['builtin:speed'] = {
                 name = "Speed",
-                Trigger = { Type = 'Preset', Unit = 'player', Preset = 'preset:speed' },
                 Enabled = true,
                 size = 42,
                 perRow = 6,
@@ -2793,14 +2850,12 @@ local Defaults = {
                     UseGlobalBar = false,
                     StatusBarTexture = "StripesThick",
                     Color = { 0.8, 0, 0, 0.5 },
-                    Layer = 5,
                 },
                 DamageAbsorb = {
                     Enabled = true,
                     UseGlobalBar = false,
                     StatusBarTexture = "StripesThick",
                     Color = { 0, 0.58, 0.88, 0.81 },
-                    Layer = 4,
                 },
                 Highlight = {
                     Enabled = true,
@@ -2816,10 +2871,28 @@ local Defaults = {
                     ShowIcon = false,   -- the game's own dispel type icon
                     IconSize = 16,
                     IconPosition = { AnchorFrom = "TOPRIGHT", AnchorTo = "TOPRIGHT", XOffset = -2, YOffset = -2 },
-                    Attach = "frame",
-                    Layer = 3,
+                    Attach = "health",
                     Alpha = 0.6,
                     ShowWithoutDispelType = false,
+                    IgnoreTypes = {}, -- dispel types the highlight never picks, eg "Bleed"
+                },
+                -- Draw order above the health bar, higher draws on top. Keys are UF.LayerElements.
+                Layers = {
+                    IndicatorTints = 1,
+                    Power = 2,
+                    Castbar = 3,
+                    Dispel = 4,
+                    DamageAbsorb = 5,
+                    HealAbsorb = 6,
+                    Highlight = 7,
+                    Border = 8,
+                    Tags = 9,
+                    Buffs = 10,
+                    Debuffs = 10,
+                    Defensives = 11,
+                    IndicatorIcons = 12,
+                    RaidMark = 13,
+                    Status = 14,
                 },
             },
             TagSettings = {
@@ -2860,7 +2933,6 @@ local Defaults = {
                             UseGlobalBar = false,
                             StatusBarTexture = "StripesThick",
                             Color = { 0.4, 0, 0.8, 0.5 },
-                            Layer = 5,
                         },
                         DamageAbsorb = {
                             UseGlobal = true,
@@ -2868,7 +2940,6 @@ local Defaults = {
                             UseGlobalBar = false,
                             StatusBarTexture = "StripesThick",
                             Color = { 0, 0.39, 0.88, 0.81 },
-                            Layer = 4,
                         },
                     },
                     Power = {
@@ -2973,10 +3044,10 @@ local Defaults = {
                         ShowIcon = false,
                         IconSize = 16,
                         IconPosition = { AnchorFrom = "TOPRIGHT", AnchorTo = "TOPRIGHT", XOffset = -2, YOffset = -2 },
-                        Attach = "frame",
-                        Layer = 3,
+                        Attach = "health",
                         Alpha = 0.6,
                         ShowWithoutDispelType = false,
+                        IgnoreTypes = {},
                     },
                     Indicators = {
                         ["**"] = {
@@ -3211,6 +3282,53 @@ local Defaults = {
                                 AnchorTo = "TOPLEFT",
                                 XOffset = 0,
                                 YOffset = 1
+                            },
+                        },
+                        -- Party and raid only: their frames build this group, no other unit has it.
+                        Defensives = {
+                            Enabled = false,
+                            Trigger = { Type = 'Preset', Preset = 'preset:defensives' },
+                            size = 22,
+                            perRow = 4,
+                            maxFrameCount = 4,
+                            previewLimit = 4,
+                            elementSpacing = 1,
+                            lineSpacing = 1,
+                            horizontalGrowthDirection = "CENTER",
+                            verticalGrowthDirection = "CENTER",
+                            sortMethod = "ExpirationOnly",
+                            sortDirection = "Normal",
+                            showApplicationCount = false,
+                            showDurationText = true,
+                            drawSwipe = false,
+                            drawEdge = false,
+                            reverseSwipe = true,
+                            showBorder = false,
+                            showBorderWithoutDispelType = false,
+                            showDispelIcon = false,
+                            dispelIconSize = 10,
+                            disableMouse = true,
+                            tooltipHideInCombat = false,
+                            StackFont = {
+                                FontSize = 10,
+                                Position = {
+                                    AnchorFrom = "BOTTOMRIGHT",
+                                    XOffset = 0,
+                                    YOffset = 2
+                                },
+                            },
+                            DurationFont = {
+                                FontSize = 10,
+                                Position = {
+                                    AnchorFrom = "CENTER",
+                                    XOffset = 0,
+                                    YOffset = 0
+                                },
+                            },
+                            Position = {
+                                AnchorTo = "CENTER",
+                                XOffset = 0,
+                                YOffset = 0
                             },
                         },
                     },
@@ -3529,6 +3647,7 @@ local Defaults = {
                         UseGlobal = true,
                     },
                     Auras = {
+                        Defensives = { Enabled = true },
                         Buffs = {
                             Trigger = { Type = 'Preset', Preset = 'preset:partyBuffs' },
                             size = 26,
@@ -3577,6 +3696,8 @@ local Defaults = {
                         Visibility = "[@raid1,exists][nogroup] hide;show",
                     },
                     Power = {
+                        Roles = { TANK = true, HEALER = true, DAMAGER = true },
+                        Classes = {}, -- [classToken] = true; none picked means every class
                         Enabled = false,
                     },
                     Castbar = {
@@ -3634,6 +3755,7 @@ local Defaults = {
                         UseGlobal = true,
                     },
                     Auras = {
+                        Defensives = { Enabled = true },
                         Buffs = {
                             Trigger = { Type = 'Preset', Preset = 'preset:partyBuffs' },
                             size = 26,
@@ -3688,6 +3810,8 @@ local Defaults = {
                         NumGroups = 8,
                     },
                     Power = {
+                        Roles = { TANK = true, HEALER = true, DAMAGER = true },
+                        Classes = {}, -- [classToken] = true; none picked means every class
                         Enabled = false,
                     },
                     Castbar = {
@@ -3745,6 +3869,7 @@ local Defaults = {
                         UseGlobal = true,
                     },
                     Auras = {
+                        Defensives = { Enabled = true },
                         Buffs = {
                             Trigger = { Type = 'Preset', Preset = 'preset:partyBuffs' },
                             size = 26,
@@ -3798,6 +3923,8 @@ local Defaults = {
                         NumGroups = 8,
                     },
                     Power = {
+                        Roles = { TANK = true, HEALER = true, DAMAGER = true },
+                        Classes = {}, -- [classToken] = true; none picked means every class
                         Enabled = false,
                     },
                     Castbar = {
@@ -3855,6 +3982,7 @@ local Defaults = {
                         UseGlobal = true,
                     },
                     Auras = {
+                        Defensives = { Enabled = true },
                         Buffs = {
                             Trigger = { Type = 'Preset', Preset = 'preset:partyBuffs' },
                             size = 26,
@@ -3908,6 +4036,8 @@ local Defaults = {
                         NumGroups = 8,
                     },
                     Power = {
+                        Roles = { TANK = true, HEALER = true, DAMAGER = true },
+                        Classes = {}, -- [classToken] = true; none picked means every class
                         Enabled = false,
                     },
                     Castbar = {

@@ -102,23 +102,7 @@ local function BuildBarAppearance(page, db)
         end,
     })
 
-    local colorCard = page:Card(L['Colors'], 'all')
-    local colorRow = colorCard:Row(rowHL, 0)
-
-    colorRow:ColorPicker(L['Background'], {
-        width = 0.5,
-        value = db.BackdropColor,
-        callback = function(r, g, b, a)
-            db.BackdropColor = { r, g, b, a }; ApplySettings()
-        end,
-    })
-    colorRow:ColorPicker(L['Border'], {
-        width = 0.5,
-        value = db.BorderColor,
-        callback = function(r, g, b, a)
-            db.BorderColor = { r, g, b, a }; ApplySettings()
-        end,
-    })
+    page:BackdropColorsCard({ db = db, onChangeCallback = ApplySettings })
 end
 
 ---One registration for each group. The text group has nothing to put on an Appearance tab: its

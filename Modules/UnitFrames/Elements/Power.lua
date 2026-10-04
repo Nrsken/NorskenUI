@@ -4,6 +4,8 @@ local NRSKNUI = select(2, ...)
 local UF = NRSKNUI:GetModule('UnitFrames')
 
 local CreateFrame = CreateFrame
+local UnitClass = UnitClass
+local pairs, ipairs = pairs, ipairs
 
 local NO_POWER = UF.NoPower
 
@@ -18,6 +20,81 @@ local function Wanted(self, unit, pDB)
     return pDB.Enabled and not NO_POWER[self.nuiConfig or unit]
 end
 
+---An unassigned role passes only while every role is picked; no picked class lets every class through.
+---@param unit string
+---@param pDB table
+---@return boolean
+local function PassesFilter(unit, pDB)
+    local roles = pDB.Roles
+    local role = NRSKNUI:GetSafeRole(unit)
+    if role and role ~= 'NONE' then
+        if not roles[role] then return false end
+    elseif not (roles.TANK and roles.HEALER and roles.DAMAGER) then
+        return false
+    end
+
+    local anyClass = false
+    for _, picked in pairs(pDB.Classes) do
+        if picked then anyClass = true break end
+    end
+    if not anyClass then return true end
+
+    local _, class = UnitClass(unit)
+    return NRSKNUI:NotSecretValue(class) and pDB.Classes[class] == true
+end
+
+---Called from both elements, as their Configure order is not fixed.
+---@param frame oUF.UnitFrame
+function UF.LayoutBars(frame)
+    local power = frame.Power
+    local pDB = power and power.nuiDB
+    local docked = pDB and pDB.Enabled and pDB.Docked and power.nuiPasses ~= false
+    local health = frame.Health
+
+    if health then
+        local lift = docked and pDB.Height + 1 or 0
+        for _, bar in ipairs({ health, health.healthBackground, frame.healthBorderFrame }) do
+            bar:ClearAllPoints()
+            bar:NUISetPixelPoint('TOPLEFT', frame, 'TOPLEFT', 0, 0)
+            bar:NUISetPixelPoint('BOTTOMRIGHT', frame, 'BOTTOMRIGHT', 0, lift)
+        end
+    end
+
+    if pDB then
+        local y = pDB.Docked and 0 or -pDB.Height - 1
+        power:ClearAllPoints()
+        power:NUISetPixelPoint('BOTTOMLEFT', frame, 'BOTTOMLEFT', 0, y)
+        power:NUISetPixelPoint('BOTTOMRIGHT', frame, 'BOTTOMRIGHT', 0, y)
+        power:NUISetPixelHeight(pDB.Height)
+    end
+end
+
+---oUF shows the bar on every update, so hide it again on a filtered-out member.
+---@param element oUF.Power
+---@param unit string
+local function ApplyFilter(element, unit)
+    local pDB = element.nuiFilter
+    if not pDB then return end
+
+    local shown = PassesFilter(unit, pDB)
+    element:SetShown(shown)
+    local frame = element.__owner
+    frame.powerBackground:SetShown(shown)
+    frame.powerBorderFrame:SetShown(shown)
+
+    -- A docked bar coming or going moves the health bar, which is anchored to the secure frame.
+    if element.nuiPasses ~= shown then
+        element.nuiPasses = shown
+        if pDB.Docked then NRSKNUI:RunWhenSafe(function() UF.LayoutBars(frame) end) end
+    end
+end
+UF.ApplyPowerFilter = ApplyFilter
+
+-- A role change moves nobody, so the frame's unit never changes and oUF has no reason to update.
+local function RefreshFilter(frame)
+    if frame.Power and frame.Power.nuiFilter then frame.Power:ForceUpdate() end
+end
+
 ---Build the bar and its chrome.
 ---@param self oUF.UnitFrame
 local function BuildPower(self)
@@ -29,12 +106,10 @@ local function BuildPower(self)
     -- Power bar border frame
     local powerBorderFrame = CreateFrame('Frame', nil, self)
     powerBorderFrame:NUIAddBorders()
-    powerBorderFrame:SetFrameLevel(self:GetFrameLevel() + 3)
     self.powerBorderFrame = powerBorderFrame
 
     -- Power bar
     local powerBar = CreateFrame('StatusBar', nil, self) --[[@as oUF.Power]]
-    powerBar:SetFrameLevel(self:GetFrameLevel() + 2)
     powerBar:NUISetPixelSnap()
     powerBar.PostUpdate = UF.PostUpdatePower
     powerBar.PostUpdateColor = UF.PostUpdatePowerColor
@@ -73,12 +148,12 @@ UF.Elements.Power = {
         local powerBackground = self.powerBackground
         local powerBorderFrame = self.powerBorderFrame
 
-        -- Set power bar texture and sizing
         powerBar:SetStatusBarTexture(NRSKNUI:GetStatusbar(general, pDB.StatusBarTexture))
-        powerBar:ClearAllPoints()
-        powerBar:NUISetPixelPoint('BOTTOMLEFT', self, 'BOTTOMLEFT', 0, -pDB.Height - 1)
-        powerBar:NUISetPixelPoint('BOTTOMRIGHT', self, 'BOTTOMRIGHT', 0, -pDB.Height - 1)
-        powerBar:NUISetPixelHeight(pDB.Height)
+        powerBar.nuiDB = pDB
+        -- Only group frames filter; everyone else always passes.
+        powerBar.nuiFilter = UF.GroupConfigs[self.nuiConfig or unit] and pDB or nil
+        if not powerBar.nuiFilter then powerBar.nuiPasses = nil end
+        UF.LayoutBars(self)
 
         -- Set background and border frame sizing
         powerBackground:ClearAllPoints()
@@ -107,5 +182,11 @@ UF.Elements.Power = {
         powerBar.colorReaction = false
         UF.CacheColor(powerBar, 'nuiColor', color)
         powerBar.nuiColorByPower = colorByPower
+
+        -- The same handler every time, so oUF registers it once per frame.
+        if powerBar.nuiFilter then
+            self:RegisterEvent('PLAYER_ROLES_ASSIGNED', RefreshFilter, true)
+            self:RegisterEvent('GROUP_ROSTER_UPDATE', RefreshFilter, true)
+        end
     end,
 }

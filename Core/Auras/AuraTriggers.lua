@@ -7,7 +7,7 @@ local L = NRSKNUI.Libs.AL
 
 local CopyTable = CopyTable
 local pairs = pairs
-local tsort = table.sort
+local ipairs = ipairs
 local type = type
 local next = next
 
@@ -19,15 +19,18 @@ What an aura display matches, owned inline by whatever display owns it. There is
 trigger is edited on the display's own Trigger tab and read straight back by it.
 
     Trigger = {
-        Type = 'SpellIDs' | 'Preset' | 'AuraFilter',
+        Type = 'Preset' | 'AuraFilter',
         Unit = 'player' | 'target',      -- standalone displays only, unit frames use their own unit
         Base = 'HELPFUL' | 'HARMFUL',    -- applies to every branch, meaningless for Preset
 
-        SpellIDs = { [spellID] = true },                  -- Type == SpellIDs
-        OnlyMine = true,                                  -- Type == SpellIDs, adds the PLAYER token
         Preset   = 'preset:defensives',                   -- Type == Preset
-        branches = { { tokens =, candidates = }, ... },   -- Type == AuraFilter
+        Added    = { [spellID] = 'GROUP' },               -- Type == Preset, spells added to its list
+        Removed  = { [spellID] = true },                  -- Type == Preset, shipped spells switched off
+        branches = { { tokens =, candidates =, shipped = }, ... },   -- Type == AuraFilter
     }
+
+A branch's `shipped` links a spell condition to a preset's list, so it keeps getting list updates.
+Old 'SpellIDs'/'Preset' saves still compile; the trigger editor converts them to AuraFilter on open.
 
 Every type compiles to the same branch list through AuraFilters:Compile, so a container never learns
 which type produced it.
@@ -44,34 +47,15 @@ AuraTriggers.Types = {
 
 local Types = AuraTriggers.Types
 
--- Dropdown option lists, shared by every Trigger card.
-AuraTriggers.TypeOptions = {
-    { value = Types.SpellIDs,   text = L['Spell IDs'] },
-    { value = Types.Preset,     text = L['Preset'] },
-    { value = Types.AuraFilter, text = L['Aura Filter'] },
-}
-
 AuraTriggers.UnitOptions = {
     { value = 'player', text = L['Player'] },
     { value = 'target', text = L['Target'] },
-}
-
-AuraTriggers.BaseOptions = {
-    { value = AF.Helpful, text = L['Buffs (Helpful)'] },
-    { value = AF.Harmful, text = L['Debuffs (Harmful)'] },
-}
-
--- Only Preset carries its own base, so the head's Base dropdown is hidden for it.
-AuraTriggers.UsesBase = {
-    [Types.SpellIDs] = true,
-    [Types.AuraFilter] = true,
 }
 
 local Defaults = {
     Type = Types.AuraFilter,
     Unit = 'player',
     Base = AF.Harmful,
-    SpellIDs = {},
     Preset = '',
     branches = { {} },
 }
@@ -124,10 +108,10 @@ function NRSKNUI:GetTriggerBranches(trigger)
 
     if trigger.Type == Types.Preset then
         -- A preset ships its own per-branch types, so it needs no base of its own.
-        local preset = NRSKNUI.AuraFiltersPremade:Get(trigger.Preset)
-        if not preset then return Filters:Compile(nil, AF.Harmful) end
+        local branches = AuraTriggers:GetPresetBranches(trigger)
+        if not branches then return Filters:Compile(nil, AF.Harmful) end
 
-        return Filters:Compile(preset.branches, nil)
+        return Filters:Compile(branches, nil)
     end
 
     if trigger.Type == Types.SpellIDs then
@@ -153,6 +137,94 @@ function NRSKNUI:GetTriggerBranches(trigger)
     return Filters:Compile(branches, trigger.Base)
 end
 
+---A preset's branches with the trigger's added and switched-off spells applied.
+---@param trigger table
+---@return table[]? branches nil for an unknown preset
+function AuraTriggers:GetPresetBranches(trigger)
+    local preset = NRSKNUI.AuraFiltersPremade:Get(trigger.Preset)
+    if not preset then return nil end
+    if not (preset.spells and (trigger.Added or trigger.Removed)) then return preset.branches end
+
+    local branches = CopyTable(preset.branches)
+    local map = branches[1].candidates[preset.spellField]
+    for id, group in pairs(trigger.Added or {}) do map[id] = group end
+    for id in pairs(trigger.Removed or {}) do map[id] = nil end
+
+    return branches
+end
+
+---Rewrite an old Spell IDs trigger as the one Aura Filter branch it always compiled to.
+---@param trigger table
+function AuraTriggers:ConvertSpellIDs(trigger)
+    if trigger.Type ~= Types.SpellIDs then return end
+
+    local ids = {}
+    for id in pairs(trigger.SpellIDs or {}) do ids[id] = 'OTHER' end
+
+    trigger.branches = {
+        { tokens = trigger.OnlyMine and { [AF.Player] = true } or nil, candidates = { includeSpellIDs = ids } },
+    }
+    trigger.Type = Types.AuraFilter
+    trigger.SpellIDs, trigger.OnlyMine = nil, nil
+end
+
+---Type and branches are written explicitly so the AceDB Preset default can't revert it on load.
+---@param trigger table
+function AuraTriggers:ConvertPreset(trigger)
+    if trigger.Type ~= Types.Preset then return end
+
+    local converted = self:ToAuraFilter(trigger)
+    trigger.Type, trigger.Base, trigger.branches = converted.Type, converted.Base, converted.branches
+    trigger.Preset, trigger.Added, trigger.Removed = nil, nil, nil
+end
+
+---@param trigger table
+---@param presetKey string
+function AuraTriggers:LoadPreset(trigger, presetKey)
+    local loaded = self:ToAuraFilter({ Type = Types.Preset, Preset = presetKey, Unit = trigger.Unit })
+    trigger.Type, trigger.Base, trigger.branches = loaded.Type, loaded.Base, loaded.branches
+end
+
+---An editable preset's spell list stays linked to the shipped one rather than copied.
+---@param trigger table
+---@return table trigger
+function AuraTriggers:ToAuraFilter(trigger)
+    self:ConvertSpellIDs(trigger)
+
+    local branches
+    if trigger.Type == Types.Preset then
+        local preset = NRSKNUI.AuraFiltersPremade:Get(trigger.Preset)
+        branches = CopyTable(preset and preset.branches or { {} })
+        if preset and preset.spells then
+            branches[1].candidates[preset.spellField] = nil
+            branches[1].shipped = {
+                list = preset.key,
+                field = preset.spellField,
+                Added = trigger.Added and CopyTable(trigger.Added),
+                Removed = trigger.Removed and CopyTable(trigger.Removed),
+            }
+        end
+    else
+        branches = CopyTable(trigger.branches or { {} })
+    end
+
+    local base = branches[1].type or trigger.Base or AF.Harmful
+    -- Presets carry a type per branch; the editor only has the trigger-wide one, so it moves up.
+    for _, branch in ipairs(branches) do
+        if branch.type == base then branch.type = nil end
+    end
+
+    return self:New({ Unit = trigger.Unit, Base = base, branches = branches })
+end
+
+---@param trigger table?
+---@return table? shipped
+function AuraTriggers:GetShipped(trigger)
+    for _, branch in ipairs(trigger and trigger.branches or {}) do
+        if branch.shipped then return branch.shipped end
+    end
+end
+
 ---How many groups a trigger will build, one per branch. maxFrameCount is a per-group cap, so callers
 ---sizing a display's worst case have to multiply by this.
 ---@param trigger table?
@@ -167,21 +239,6 @@ end
 ---@return string heading
 function AuraTriggers:Describe(trigger)
     return NRSKNUI.AuraFilters:Describe(NRSKNUI:GetTriggerBranches(trigger))
-end
-
----Sorted spell IDs a SpellIDs trigger holds, so a card can list them back in a stable order.
----@param trigger table?
----@return number[]
-function AuraTriggers:GetSpellIDList(trigger)
-    local ids = {}
-    if type(trigger) ~= 'table' or type(trigger.SpellIDs) ~= 'table' then return ids end
-
-    for spellID in pairs(trigger.SpellIDs) do
-        ids[#ids + 1] = spellID
-    end
-    tsort(ids)
-
-    return ids
 end
 
 -- Consumers that want telling when any trigger changed, keyed by consumer table. A page can affect

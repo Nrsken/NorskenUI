@@ -76,7 +76,6 @@ UF.Elements.Health = {
 
         -- Mouseover highlight
         local highlightFrame = CreateFrame('Frame', nil, self)
-        highlightFrame:SetFrameLevel(UF.GetLayerLevel(self, UF.Layers.Highlight))
         self.nuiHighlightFrame = highlightFrame
 
         local highlight = highlightFrame:CreateTexture(nil, 'OVERLAY') --[[@as NUI.HighlightTexture]]
@@ -86,7 +85,6 @@ UF.Elements.Health = {
 
         -- Border frame
         local healthBorderFrame = CreateFrame('Frame', nil, self)
-        healthBorderFrame:SetFrameLevel(UF.GetLayerLevel(self, UF.Layers.Border))
         healthBorderFrame:NUIAddBorders()
         self.healthBorderFrame = healthBorderFrame
 
@@ -99,7 +97,6 @@ UF.Elements.Health = {
     ---@param general table
     Configure = function(self, unit, uDB, general)
         local healthBar = self.Health
-        local healthBorderFrame = self.healthBorderFrame
         local healthBackground = healthBar.healthBackground
         local hDB = uDB.Health
 
@@ -109,10 +106,8 @@ UF.Elements.Health = {
         healthBar:SetStatusBarTexture(texture)
         healthBackground:SetStatusBarTexture(bgName ~= '' and NRSKNUI:ResolveMediaPath('statusbar', bgName) or texture)
 
-        -- Set sizing
-        healthBar:SetAllPoints(self)
-        healthBackground:SetAllPoints(self)
-        healthBorderFrame:SetAllPoints(self)
+        -- Sizing: the whole frame, or the part above a docked power bar.
+        UF.LayoutBars(self)
 
         -- Prime to Immediate, postUpdate switches to the steady mode after the first paint.
         local smooth = hDB.UseGlobalSmooth and general.Smooth or (not hDB.UseGlobalSmooth and hDB.Smooth)
@@ -174,15 +169,6 @@ UF.Elements.Health = {
         local healColor = haDB.Color
         local dmgColor = daDB.Color
         local shield = NRSKNUI:GetStatusbar(daDB)
-
-        -- Both absorbs draw inside the health rect, so they claim layers like anything else on it. The
-        -- over-absorb pair belongs to the damage absorb and rides its layer.
-        local healAbsorbLevel = UF.GetLayerLevel(self, haDB.Layer)
-        local damageAbsorbLevel = UF.GetLayerLevel(self, daDB.Layer)
-        HealAbsorb:SetFrameLevel(healAbsorbLevel)
-        DamageAbsorb:SetFrameLevel(damageAbsorbLevel)
-        OverClip:SetFrameLevel(damageAbsorbLevel)
-        OverDamageAbsorb:SetFrameLevel(damageAbsorbLevel)
 
         -- oUF only drives an absorb whose element field is set, so disabling clears it.
         healthBar.HealAbsorb = haDB.Enabled and HealAbsorb or nil

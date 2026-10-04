@@ -1,7 +1,9 @@
 --[[
 # Separator
 
-* A thin horizontal divider, optionally with an accent label above it.
+* A thin horizontal divider.
+* With a label it is a heading inside a card: the accent label sits low in a taller row, with room
+  above it, and a visible rule runs from the label to the right edge.
 
 ## Examples
 
@@ -22,11 +24,13 @@ local CreateColor = CreateColor
 local Mixin = Mixin
 
 local WIDGET_TYPE = "Separator"
-local LABEL_OFFSET = 5
+local LABEL_BOTTOM = 4 -- the label sits this far above the row's bottom
+local RULE_GAP = 8 -- between the label and its rule
 
 ---@class KajiGUISeparatorMixin : Frame, BackdropTemplate
 ---@field gui KajiGUIInstance
 ---@field texture Texture
+---@field rule Texture the labelled heading's line
 ---@field label FontString
 ---@field _useLabel boolean
 local SeparatorMixin = {}
@@ -40,6 +44,7 @@ function SeparatorMixin:UpdateColors()
     local theme = self.gui.theme
     local r, g, b = theme.bgMedium[1], theme.bgMedium[2], theme.bgMedium[3]
     self.texture:SetGradient("HORIZONTAL", CreateColor(r, g, b, 1), CreateColor(r, g, b, 1))
+    self.rule:SetColorTexture(theme.widgetBorder[1], theme.widgetBorder[2], theme.widgetBorder[3], 1)
     self.label:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
 end
 
@@ -50,7 +55,6 @@ function SeparatorMixin:OnAcquire(parent, labelText, config)
     local useLabel = config.useLabel or false
     -- A labelled one fills its taller row, so the label and the rule both sit inside it.
     local height = config.height or (useLabel and self.gui.theme.rowHeightLabelSeparator or 6)
-    local offset = useLabel and LABEL_OFFSET or 0
 
     self:SetParent(parent)
     self:ClearAllPoints()
@@ -58,14 +62,11 @@ function SeparatorMixin:OnAcquire(parent, labelText, config)
     pixel.SetPixelPoint(self, "TOPLEFT", parent, "TOPLEFT", 0, 0)
     pixel.SetPixelPoint(self, "TOPRIGHT", parent, "TOPRIGHT", 0, 0)
 
-    -- The rule sits centred without a label and drops below it with one.
-    self.texture:ClearAllPoints()
-    pixel.SetPixelPoint(self.texture, "LEFT", self, "LEFT", 0, -offset)
-    pixel.SetPixelPoint(self.texture, "RIGHT", self, "RIGHT", 0, -offset)
-
     self._useLabel = useLabel
     self.label:SetText(useLabel and (labelText or "") or "")
     self.label:SetShown(useLabel)
+    self.rule:SetShown(useLabel)
+    self.texture:SetShown(not useLabel)
 
     self:SetAlpha(1)
     self:UpdateColors()
@@ -87,15 +88,25 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     pixel.SetPixelHeight(texture, 2)
     texture:SetColorTexture(1, 1, 1, 1)
     pixel.SetPixelSnap(texture)
+    pixel.SetPixelPoint(texture, "LEFT", separator, "LEFT", 0, 0)
+    pixel.SetPixelPoint(texture, "RIGHT", separator, "RIGHT", 0, 0)
     separator.texture = texture
 
-    -- Created unconditionally and hidden when unused: building it only for the labelled
-    -- variant would leave a recycled separator without one.
+    -- Always created: a recycled separator may later be the labelled variant.
     local label = separator:CreateFontString(nil, "OVERLAY")
-    pixel.SetPixelPoint(label, "LEFT", separator, "LEFT", 0, LABEL_OFFSET)
-    gui:ApplyFont(label, "normal")
+    pixel.SetPixelPoint(label, "BOTTOMLEFT", separator, "BOTTOMLEFT", 0, LABEL_BOTTOM)
+    gui:ApplyFont(label, "medium")
     label:Hide()
     separator.label = label
+
+    -- Centred on the label, so the heading reads as one line: "Filters ──────".
+    local rule = separator:CreateTexture(nil, "ARTWORK")
+    pixel.SetPixelHeight(rule, gui.theme.borderSize)
+    pixel.SetPixelPoint(rule, "LEFT", label, "RIGHT", RULE_GAP, 0)
+    pixel.SetPixelPoint(rule, "RIGHT", separator, "RIGHT", 0, 0)
+    pixel.SetPixelSnap(rule)
+    rule:Hide()
+    separator.rule = rule
 
     return Mixin(separator, SeparatorMixin)
 end)

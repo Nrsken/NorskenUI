@@ -23,6 +23,23 @@ local SOURCE_TOKENS = {
     any = AF.Dispellable,
 }
 
+-- RAID_PLAYER_DISPELLABLE counts Arcane Torrent as a Magic dispel; torrent-only Blood Elves drop Magic.
+local FRIENDLY_MAGIC_DISPELS = { 527, 32375, 4987, 88423, 77130, 115450, 360823, 378438, 412113, 132411 }
+local PET_MAGIC_DISPELS = { 89808 } -- Imp's Singe Magic
+
+local magicFromTorrentOnly = false
+
+---@return boolean
+local function KnowsFriendlyMagicDispel()
+    for _, spellID in ipairs(FRIENDLY_MAGIC_DISPELS) do
+        if C_SpellBook.IsSpellInSpellBook(spellID, nil, true) then return true end
+    end
+    for _, spellID in ipairs(PET_MAGIC_DISPELS) do
+        if C_SpellBook.IsSpellInSpellBook(spellID, Enum.SpellBookSpellBank.Pet, true) then return true end
+    end
+    return false
+end
+
 
 ---The compiled branch one Source resolves to, through the same compiler every trigger runs.
 ---@param source string
@@ -31,6 +48,26 @@ local function SourceBranch(source)
     local token = SOURCE_TOKENS[source] or SOURCE_TOKENS.raid
 
     return NRSKNUI.AuraFilters:Compile({ { tokens = { [token] = true } } }, AF.Harmful)[1]
+end
+
+---Exclusion applies before picking, so an ignored bleed never hides a Magic debuff on the same unit.
+---@param branch table
+---@param cfg table
+---@return table? filters
+local function SlotCandidates(branch, cfg)
+    local ignored = cfg.IgnoreTypes
+    local dropMagic = magicFromTorrentOnly and cfg.Source == 'raid'
+    if not (dropMagic or (ignored and ignored[1])) then return branch.candidateFilters end
+
+    local filters = CopyTable(branch.candidateFilters or {})
+    filters.excludeDispelTypes = {}
+    for _, dispelType in ipairs(ignored) do
+        filters.excludeDispelTypes[dispelType] = true
+    end
+    if dropMagic then
+        filters.excludeDispelTypes.Magic = true
+    end
+    return filters
 end
 
 ---@param uDB table
@@ -133,10 +170,11 @@ local function AnchorProxy(frame, cfg)
     return true
 end
 
----Build the container and the slot for a Source the frame has not shown yet.
+---The client builds a slot's button once, so the level given here holds until a reload.
 ---@param frame oUF.UnitFrame
 ---@param cfg table
-local function EnsureSlot(frame, cfg)
+---@param level number
+local function EnsureSlot(frame, cfg, level)
     local dispel = frame.nuiDispel
     if dispel.keys[cfg.Source] then return end
 
@@ -153,11 +191,9 @@ local function EnsureSlot(frame, cfg)
     local proxy = dispel.proxy
 
     local _, key, index = container:AddSlot(branch.filterString, {
-        candidateFilters = branch.candidateFilters,
+        candidateFilters = SlotCandidates(branch, cfg),
         assistOnly = true,
         initializeFrame = function(button)
-            local level = UF.GetLayerLevel(frame, cfg.Layer)
-
             button:EnableMouse(false) -- the highlight must never eat the unit frame's clicks
             button:SetFrameLevel(level)
             button:SetAllPoints(proxy)
@@ -202,6 +238,28 @@ end
 
 oUF:AddElement('NRSKNDispel', Update, Enable, Disable)
 
+-- Spec, talent and pet swaps all change what the player can dispel, so re-push live slots on a flip.
+local spellWatcher = CreateFrame('Frame')
+spellWatcher:RegisterEvent('SPELLS_CHANGED')
+spellWatcher:RegisterUnitEvent('UNIT_PET', 'player')
+spellWatcher:SetScript('OnEvent', function()
+    local torrentOnly = select(2, UnitRace('player')) == 'BloodElf' and not KnowsFriendlyMagicDispel()
+    if torrentOnly == magicFromTorrentOnly then return end
+    magicFromTorrentOnly = torrentOnly
+
+    NRSKNUI:RunWhenSafe(function()
+        for _, frame in ipairs(oUF.objects) do
+            local dispel = frame.nuiDispel
+            local cfg = dispel and dispel.config
+            local index = cfg and cfg.Enabled and dispel.slotIndex[cfg.Source]
+            if index then
+                dispel.container:SetSlotCandidates(index, SlotCandidates(SourceBranch(cfg.Source), cfg))
+                dispel.container:UpdateAllAuras()
+            end
+        end
+    end)
+end)
+
 ---@class UnitFramesElements
 ---@field Dispel UnitFramesDispelElement
 UF.Elements = UF.Elements or {}
@@ -235,9 +293,11 @@ UF.Elements.Dispel = {
         end
 
         NRSKNUI:RunWhenSafe(function()
-            EnsureSlot(self, cfg)
+            EnsureSlot(self, cfg, UF.GetElementLevel(self, 'Dispel'))
             if not dispel.container then return end
 
+            -- Ignored types can change without a reload, so the live slot takes them every time.
+            dispel.container:SetSlotCandidates(dispel.slotIndex[cfg.Source], SlotCandidates(SourceBranch(cfg.Source), cfg))
             for source in pairs(dispel.keys) do
                 SetSlotShown(dispel, source, source == cfg.Source)
             end

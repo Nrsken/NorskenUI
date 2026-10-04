@@ -55,8 +55,6 @@ end
 
 -- General Settings Tab.
 local function BuildGeneralSettingsTab(page, db)
-    page:SetCondition('backdrop', function() return db.Backdrop.Enabled end)
-
     -- Card 1: Enable
     local enableCard = page:Card(L['Chat'])
     local enableRow = enableCard:Row(rowHL, 0)
@@ -108,53 +106,15 @@ local function BuildGeneralSettingsTab(page, db)
     })
 
     -- Card 3: Backdrop
-    local backdropCard = page:Card(L['Backdrop'], 'all')
-    local toggleRow = backdropCard:Row(rowH)
-    toggleRow:Checkbox(L['Enable Backdrop'], {
-        width = 1,
-        value = db.Backdrop.Enabled,
-        callback = function(checked)
-            db.Backdrop.Enabled = checked
-            ApplySettings()
-            page:Refresh()
-        end,
+    page:BackdropColorsCard({
+        db = db.Backdrop,
+        title = L['Backdrop'],
+        backdropKey = 'Color',
+        enable = { dbKey = 'Enabled', label = L['Enable Backdrop'] },
+        onChangeCallback = ApplySettings,
     })
 
-    backdropCard:Separator()
-
-    local panelColorRow = backdropCard:Row(rowH)
-    panelColorRow:ColorPicker(L['Background'], {
-        width = 0.5,
-        conditions = { 'backdrop' },
-        value = db.Backdrop.Color,
-        callback = function(r, g, b, a)
-            db.Backdrop.Color = { r, g, b, a }; ApplySettings()
-        end,
-    })
-    panelColorRow:ColorPicker(L['Border'], {
-        width = 0.5,
-        conditions = { 'backdrop' },
-        value = db.Backdrop.BorderColor,
-        callback = function(r, g, b, a)
-            db.Backdrop.BorderColor = { r, g, b, a }; ApplySettings()
-        end,
-    })
-
-    local editBoxColorRow = backdropCard:Row(rowHL, 0)
-    editBoxColorRow:ColorPicker(L['Editbox Background'], {
-        width = 0.5,
-        value = db.EditBox.BackdropColor,
-        callback = function(r, g, b, a)
-            db.EditBox.BackdropColor = { r, g, b, a }; ApplySettings()
-        end,
-    })
-    editBoxColorRow:ColorPicker(L['Editbox Border'], {
-        width = 0.5,
-        value = db.EditBox.BorderColor,
-        callback = function(r, g, b, a)
-            db.EditBox.BorderColor = { r, g, b, a }; ApplySettings()
-        end,
-    })
+    page:BackdropColorsCard({ db = db.EditBox, title = L['Editbox'], onChangeCallback = ApplySettings })
 
     -- Card 4: Editbox & History
     local historyCard = page:Card(L['Editbox & History'], 'all')
@@ -292,7 +252,6 @@ local function BuildTabSettingsTab(page, db)
     page:SetCondition('selectedColor', function() return db.TabSelectedTextEnabled end)
     page:SetCondition('inactiveColor', function() return (db.TabTextColorMode or 'custom') == 'custom' end)
     page:SetCondition('selector', function() return db.TabSelector ~= 'NONE' end)
-    page:SetCondition('tabBackdrop', function() return db.TabBackdrop.Enabled end)
 
     -- Card 1: Text Colors
     local colorCard = page:Card(L['Tab Text Colors'], 'all')
@@ -364,36 +323,12 @@ local function BuildTabSettingsTab(page, db)
     })
 
     -- Card 3: Tab Backdrop
-    local backdropCard = page:Card(L['Tab Backdrop'], 'all')
-    local toggleRow = backdropCard:Row(rowH)
-    toggleRow:Checkbox(L['Enable Tab Backdrop'], {
-        width = 1,
-        value = db.TabBackdrop.Enabled,
-        callback = function(checked)
-            db.TabBackdrop.Enabled = checked
-            ApplySettings()
-            page:Refresh()
-        end,
-    })
-
-    backdropCard:Separator()
-
-    local backdropColorRow = backdropCard:Row(rowHL, 0)
-    backdropColorRow:ColorPicker(L['Background'], {
-        width = 0.5,
-        conditions = { 'tabBackdrop' },
-        value = db.TabBackdrop.Color,
-        callback = function(r, g, b, a)
-            db.TabBackdrop.Color = { r, g, b, a }; ApplySettings()
-        end,
-    })
-    backdropColorRow:ColorPicker(L['Border'], {
-        width = 0.5,
-        conditions = { 'tabBackdrop' },
-        value = db.TabBackdrop.BorderColor,
-        callback = function(r, g, b, a)
-            db.TabBackdrop.BorderColor = { r, g, b, a }; ApplySettings()
-        end,
+    page:BackdropColorsCard({
+        db = db.TabBackdrop,
+        title = L['Tab Backdrop'],
+        backdropKey = 'Color',
+        enable = { dbKey = 'Enabled', label = L['Enable Tab Backdrop'] },
+        onChangeCallback = ApplySettings,
     })
 end
 

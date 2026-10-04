@@ -164,8 +164,8 @@ function FocusCastbar:ApplySettings()
     local notReadyColor = self.db.KickIndicator.NotReadyColor
     local kickTickColor = self.db.KickIndicator.TickColor
     local textColor = self.db.TextColor
-    local bgColor = self.db.BackdropColor
-    local borderColor = self.db.BorderColor
+    local bgColor = NRSKNUI:GetBackdropColor(self.db)
+    local borderColor = NRSKNUI:GetBorderColor(self.db)
     local w, h = self.db.Width, self.db.Height
 
     self.durationFormatter = NRSKNUI:GetAuraDurationFormatter()
@@ -175,8 +175,10 @@ function FocusCastbar:ApplySettings()
     self.colNotReady = NRSKNUI:CreateColor(notReadyColor[1], notReadyColor[2], notReadyColor[3], notReadyColor[4]) --[[@as colorRGBA]]
 
     self.coreFrame:NUISetPixelSize(w, h)
+    self.coreFrame:SetBackgroundTexture(NRSKNUI:GetBarBackground(self.db))
     self.coreFrame:SetBackgroundColor(bgColor[1], bgColor[2], bgColor[3], bgColor[4])
-    self.coreFrame:SetBorderColor(borderColor[1], borderColor[2], borderColor[3], borderColor[4])
+    -- coreFrame's backdrop has no edges of its own, the visible border is borderFrame's.
+    self.borderFrame:SetBorderColor(borderColor[1], borderColor[2], borderColor[3], borderColor[4])
     self.coreFrame:NUIApplyPosition(self.db)
 
     self.borderFrame:SetAllPoints(self.coreFrame)

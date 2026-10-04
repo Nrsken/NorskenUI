@@ -34,6 +34,8 @@ if not lib then return end
 local InstanceMixin = lib.InstanceMixin
 
 local ipairs = ipairs
+local pairs = pairs
+local pi = math.pi
 local wipe = wipe
 local unpack = unpack
 local setmetatable = setmetatable
@@ -69,6 +71,20 @@ function FluentRow:_Add(constructor, label, config)
     return widget
 end
 
+---Adds a widget of any registered type, for host widgets with no fluent shortcut.
+---@param widgetType string
+---@param label? string
+---@param config? KajiGUIWidgetConfig
+---@return Frame widget
+function FluentRow:Widget(widgetType, label, config)
+    config = config or {}
+    local gui = self.card.page.gui
+    local widget = gui:BuildWidget(widgetType, self.real, label, config)
+    self.real:AddWidget(widget, config.width or config.widthPct, config.spacing, config.xOffset, config.yOffset)
+    self.card:_Track(widget, config)
+    return widget
+end
+
 ---@param label? string
 ---@param config? KajiGUIWidgetConfig
 ---@return Frame widget
@@ -78,6 +94,11 @@ function FluentRow:Checkbox(label, config) return self:_Add("CreateCheckbox", la
 ---@param config? KajiGUIWidgetConfig
 ---@return Frame widget
 function FluentRow:SlimCheckbox(label, config) return self:_Add("CreateSlimCheckbox", label, config) end
+
+---@param label? string
+---@param config? KajiGUIWidgetConfig|KajiGUIRadioConfig
+---@return Frame widget
+function FluentRow:Radio(label, config) return self:_Add("CreateRadio", label, config) end
 
 ---@param label? string
 ---@param config? KajiGUIWidgetConfig
@@ -118,6 +139,21 @@ function FluentRow:Text(label, config) return self:_Add("CreateText", label, con
 ---@param config? KajiGUIWidgetConfig
 ---@return KajiGUIAnchorPicker widget
 function FluentRow:AnchorPicker(label, config) return self:_Add("CreateAnchorPicker", label, config) end
+
+---Draws a thin rule along the row's bottom edge, for table-like lists.
+---@return KajiGUIFluentRow
+function FluentRow:Divider()
+    self.real:SetDivider(true)
+    return self
+end
+
+---Puts a light band behind the row; give it to every other row of a long list.
+---@param shown? boolean defaults to true
+---@return KajiGUIFluentRow
+function FluentRow:Stripe(shown)
+    self.real:SetStripe(shown ~= false)
+    return self
+end
 
 ---Icon has a (parent, config) signature, so it gets its own method.
 ---@param config? KajiGUIWidgetConfig|KajiGUIIconConfig
@@ -165,11 +201,20 @@ end
 ---Adds a row to the card.
 ---@param height number
 ---@param spacing? number trailing spacing; pass 0 for the last row in a card
+---@param indent? number left inset; the widgets share the width that is left
 ---@return KajiGUIFluentRow
-function FluentCard:Row(height, spacing)
-    local row = self.page.gui:CreateRow(self.real.content, height)
+function FluentCard:Row(height, spacing, indent)
+    local row = self.page.gui:CreateRow(self.real.content, height, indent)
     self.real:AddRow(row, height, spacing)
     return setmetatable({ real = row, card = self }, FluentRowMeta)
+end
+
+---Changes the card's title.
+---@param title string
+---@return self
+function FluentCard:SetTitle(title)
+    self.real:SetTitle(title)
+    return self
 end
 
 ---Gives the card its own enable logic, for cards whose controls gate each other.
@@ -205,24 +250,63 @@ end
 ---        card:Row(rowH):Dropdown('Base', {...})
 ---    end
 ---
+---The body animates and runs until the next Section, a Separator or :EndSection.
 ---@param title string
----@param config? { collapsed?: boolean, onToggle?: fun(), onMoveUp?: fun(), onMoveDown?: fun(), onDuplicate?: fun(), onDelete?: fun() }
+---@param config? { key?: any, collapsed?: boolean, onToggle?: fun(), onMoveUp?: fun(), onMoveDown?: fun(), onDuplicate?: fun(), onDelete?: fun() }
 ---@return boolean expanded
 function FluentCard:Section(title, config)
     config = config or {}
+    local real = self.real
+    real:EndBody()
 
-    local header = self.page.gui:CreateSectionHeader(self.real.content, title, config)
-    self.real:AddRow(header, header.layoutHeight)
+    -- Sections are told apart by their place in the card unless given a key: titles carry counts that change.
+    self._sectionCount = (self._sectionCount or 0) + 1
+    local key = config.key or self._sectionCount
 
+    local header
+    local headerConfig = {}
+    for k, v in pairs(config) do headerConfig[k] = v end
+    headerConfig.onToggle = config.onToggle and function()
+        local running = real:GetSectionAnim(key)
+        if running and running.to == 0 then
+            -- Turned round while closing: the section never closed, so the caller is not told.
+            real:AnimateSection(key, 1).header = header
+        elseif config.collapsed then
+            real:AnimateSection(key, 1).header = header
+            config.onToggle()
+        else
+            -- The arrow turns with the body; a rebuild hands the new header over.
+            real:AnimateSection(key, 0, config.onToggle).header = header
+        end
+    end
+
+    header = self.page.gui:CreateSectionHeader(real.content, title, headerConfig)
+    real:AddRow(header, header.layoutHeight)
+
+    local anim = real:GetSectionAnim(key)
+    if anim then
+        anim.header = header
+        header.arrow:SetRotation((1 - anim.p) * pi / 2)
+    end
+
+    if not config.collapsed then real:BeginBody(key) end
     return not config.collapsed
 end
 
----Adds a full-width separator row, with an accent label above the rule when config.useLabel is set.
+---Ends the current section's body, for rows after it that belong to the card itself.
+---@return self
+function FluentCard:EndSection()
+    self.real:EndBody()
+    return self
+end
+
+---Adds a full-width separator row; with config.useLabel it is a labelled heading with its own rule.
 ---@param label? string
 ---@param config? { useLabel?: boolean, height?: number }
 ---@return self
 function FluentCard:Separator(label, config)
     local theme = self.page.gui.theme
+    self.real:EndBody()
     local sep = self.page.gui:CreateSeparator(self.real.content, label, config)
     self.real:AddRow(sep, config and config.useLabel and theme.rowHeightLabelSeparator or theme.rowHeightSeparator)
     return self
@@ -239,14 +323,22 @@ function FluentCard:Rebuild(buildFn)
     end
     wipe(self.widgets)
 
-    self.real:Reset()
-    if self.buildFn then self.buildFn(self) end
+    local function Build()
+        self._sectionCount = 0
+        self.real:Reset()
+        if self.buildFn then self.buildFn(self) end
+        self.real:EndBody()
+    end
 
     -- During initial construction Finish() does the first layout/refresh, only reflow eagerly once the page is live.
-    if self.page.built then
-        self.page.stack:DoLayout()
-        self.page:Refresh()
+    if not self.page.built then
+        Build()
+        return self
     end
+
+    -- Laid out once at the end: a pass over the half-built card would cost the reader their scroll position.
+    self.page.stack:Batch(Build)
+    self.page:Refresh()
 
     return self
 end
@@ -355,6 +447,11 @@ function Page:FontSettingsCard(config, group) return self:PremadeCard("FontSetti
 ---@param group? string
 ---@return KajiGUIFluentCard
 function Page:SparkSettingsCard(config, group) return self:PremadeCard("SparkSettingsCard", config, group) end
+
+---@param config table
+---@param group? string
+---@return KajiGUIFluentCard
+function Page:BackdropColorsCard(config, group) return self:PremadeCard("BackdropColorsCard", config, group) end
 
 ---@param config table
 ---@param group? string

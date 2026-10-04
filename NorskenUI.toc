@@ -34,7 +34,8 @@ Modules/MissingBuffs/MissingBuffs.xml
 GUI/GUI-Core.lua
 GUI/GUI-SidebarConfig.lua
 GUI/GUI-AuraCards.lua
-GUI/GUI-TriggerCard.lua
+GUI/GUI-SpellList.lua
+GUI/GUI-TriggerEditor.lua
 
 # Load GUI Tab Files
 GUI/GUI-Tabs/GUI-Global/GUI-Global.xml

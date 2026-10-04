@@ -8,7 +8,9 @@
 * The dropdown can be populated with:
 * - a simple key -> text table
 * - an array of strings
-* - an array of {value/key, text, color?, tooltip?, indicator?}
+* - an array of {value/key, text, color?, valueColor?, tooltip?, indicator?}
+*   (`valueColor` tints the chosen value on the closed button only, not its line in the list)
+* `itemActions(value)` adds small icon buttons to the right of each option (rename, delete, ...).
 
 * The value-changed callback fires only after the close animation finishes,
 * so a callback that rebuilds the tab never interrupts the dropdown mid-close.
@@ -70,6 +72,18 @@ local SEARCH_INPUT_RIGHT_PADDING = 16
 local PREVIEW_SIZE = 12
 local ARROW_SIZE = 16
 local HOVER_DURATION = 0.12
+local HOVER_BAR_WIDTH = 2
+local TEXT_RIGHT_INSET = 24
+local SWATCH_INSET = 4 -- the media swatch's top/bottom inset inside its row
+local SWATCH_GAP = 8 -- between the name and the swatch
+local SWATCH_WIDTH = 96
+local SWATCH_REST_ALPHA = 0.6 -- unselected list swatches, brought up to full on hover
+local SPARK_FILL_WIDTH = 60 -- how far the bar under a spark preview runs into the swatch
+local SPARK_FILL_ALPHA = 0.2
+local SOLID_SPARK = "Interface\\Buttons\\WHITE8X8"
+local SOLID_SPARK_WIDTH = 2
+local ACTION_SIZE = 14
+local ACTION_GAP = 6
 
 local STANDARD_BACKDROP = { bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1 }
 local BORDER_ONLY_BACKDROP = { edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1 }
@@ -104,7 +118,88 @@ local function ApplyPreviewTexture(texture, value)
         texture:SetAtlas(value)
     else
         texture:SetTexture(value)
+        -- A pooled swatch that last drew an atlas keeps its texcoords, which crops the next file.
+        texture:SetTexCoord(0, 1, 0, 1)
     end
+end
+
+-- Explicit non-media options like "Flat" can share a media dropdown and must get no swatch.
+local function IsMediaKey(mediaType, key)
+    return key ~= nil and LSM ~= nil and LSM:IsValid(mediaType, key)
+end
+
+---@param height number explicit, since measured geometry can still read 0 here
+local function CreateSwatch(parent, rightInset, height)
+    local backing = parent:CreateTexture(nil, "BACKGROUND", nil, 1)
+    backing:SetColorTexture(0, 0, 0, 0.6)
+    pixel.SetPixelWidth(backing, SWATCH_WIDTH)
+    pixel.SetPixelPoint(backing, "TOPRIGHT", parent, "TOPRIGHT", -rightInset, -SWATCH_INSET)
+    pixel.SetPixelPoint(backing, "BOTTOMRIGHT", parent, "BOTTOMRIGHT", -rightInset, SWATCH_INSET)
+    backing:Hide()
+
+    local swatch = parent:CreateTexture(nil, "BORDER")
+    swatch:SetAllPoints(backing)
+    pixel.SetPixelSnap(swatch)
+    swatch:Hide()
+
+    local fill = parent:CreateTexture(nil, "BORDER")
+    fill:SetTexture("Interface\\Buttons\\WHITE8X8")
+    pixel.SetPixelWidth(fill, SPARK_FILL_WIDTH)
+    pixel.SetPixelPoint(fill, "TOPLEFT", backing, "TOPLEFT", 0, 0)
+    pixel.SetPixelPoint(fill, "BOTTOMLEFT", backing, "BOTTOMLEFT", 0, 0)
+    fill:Hide()
+
+    local spark = parent:CreateTexture(nil, "BORDER", nil, 1)
+    pixel.SetPixelPoint(spark, "CENTER", fill, "RIGHT", 0, 0)
+    spark:Hide()
+
+    swatch._backing, swatch._fill, swatch._spark = backing, fill, spark
+    swatch._height = height - SWATCH_INSET * 2
+    return swatch
+end
+
+---@param alpha number 0..1, how lit the preview is
+local function PaintSwatch(swatch, alpha)
+    swatch:SetVertexColor(1, 1, 1, alpha)
+    swatch._fill:SetVertexColor(1, 1, 1, SPARK_FILL_ALPHA * alpha)
+    swatch._spark:SetVertexColor(1, 1, 1, alpha)
+end
+
+-- Mirrors how a live spark is sized; desaturated because it is tinted in use.
+local function ShowSpark(swatch, value)
+    local spark = swatch._spark
+    local height = swatch._height
+    ApplyPreviewTexture(spark, value)
+    spark:SetDesaturated(true)
+    local info = GetAtlasInfo and type(value) == "string" and GetAtlasInfo(value)
+    if value == SOLID_SPARK then
+        pixel.SetPixelSize(spark, SOLID_SPARK_WIDTH, height - 2)
+    elseif info and info.height and info.height > 0 then
+        pixel.SetPixelSize(spark, min(height * info.width / info.height, SWATCH_WIDTH), height)
+    else
+        pixel.SetPixelSize(spark, height, height)
+    end
+end
+
+---@param isSpark boolean preview as a spark on a bar rather than a texture strip
+local function ShowSwatch(swatch, value, isSpark)
+    swatch._backing:Show()
+    swatch:SetShown(not isSpark)
+    swatch._fill:SetShown(isSpark)
+    swatch._spark:SetShown(isSpark)
+    if isSpark then
+        ShowSpark(swatch, value)
+    else
+        ApplyPreviewTexture(swatch, value)
+    end
+    PaintSwatch(swatch, 1)
+end
+
+local function HideSwatch(swatch)
+    swatch:Hide()
+    swatch._backing:Hide()
+    swatch._fill:Hide()
+    swatch._spark:Hide()
 end
 
 -- One shared watcher closes whichever dropdown is open when you click outside it.
@@ -128,13 +223,28 @@ end)
 
 -- Item button pool --
 
+-- Fades by repainting colours: a SetGradient texture does not hold a region alpha.
+local function PaintItemHover(btn, theme, p)
+    if btn._previewBar._backing:IsShown() then
+        local rest = btn._swatchRest or 1
+        PaintSwatch(btn._previewBar, rest + (1 - rest) * p)
+    end
+    local shown = p > 0.01
+    btn._hoverBg:SetShown(shown)
+    btn._hoverBar:SetShown(shown)
+    if not shown then return end
+    local a = theme.accent
+    btn._hoverBg:SetGradient("HORIZONTAL", CreateColor(a[1], a[2], a[3], theme.selectionGlowAlpha * p), CreateColor(a[1], a[2], a[3], 0))
+    btn._hoverBar:SetColorTexture(a[1], a[2], a[3], p)
+end
+
 local function AcquireItemButton(gui, parent)
     local pool = gui._dropdownPool
     local btn = tremove(pool)
     if btn then
         btn:SetParent(parent)
-        btn._hoverBg:SetAlpha(0)
-        btn._hoverTarget = 0
+        btn._hoverP, btn._hoverTarget = 0, 0
+        PaintItemHover(btn, gui.theme, 0)
         ClearPreviewFont(gui, btn._text)
         btn:Show()
         return btn
@@ -143,27 +253,32 @@ local function AcquireItemButton(gui, parent)
     btn = CreateFrame("Button", nil, parent)
     pixel.SetPixelHeight(btn, ITEM_HEIGHT)
 
-    local previewBar = btn:CreateTexture(nil, "BACKGROUND", nil, -2)
-    previewBar:SetAllPoints()
-    previewBar:Hide()
-    btn._previewBar = previewBar
+    btn._previewBar = CreateSwatch(btn, TEXT_RIGHT_INSET, ITEM_HEIGHT)
 
     local hoverBg = btn:CreateTexture(nil, "BACKGROUND")
     hoverBg:SetAllPoints()
-    hoverBg:SetColorTexture(1, 1, 1, 0.05)
-    hoverBg:SetAlpha(0)
+    hoverBg:SetTexture("Interface\\Buttons\\WHITE8X8")
     btn._hoverBg = hoverBg
-    btn._hoverTarget = 0
+
+    local hoverBar = btn:CreateTexture(nil, "ARTWORK")
+    pixel.SetPixelWidth(hoverBar, HOVER_BAR_WIDTH)
+    pixel.SetPixelPoint(hoverBar, "TOPLEFT", btn, "TOPLEFT", 0, 0)
+    pixel.SetPixelPoint(hoverBar, "BOTTOMLEFT", btn, "BOTTOMLEFT", 0, 0)
+    btn._hoverBar = hoverBar
+    btn._hoverP, btn._hoverTarget = 0, 0
+    PaintItemHover(btn, gui.theme, 0)
 
     btn:SetScript("OnUpdate", function(self, elapsed)
-        local current = self._hoverBg:GetAlpha()
+        local current = self._hoverP
         if abs(current - self._hoverTarget) > 0.01 then
             local speed = elapsed / HOVER_DURATION
             if self._hoverTarget > current then
-                self._hoverBg:SetAlpha(min(current + speed, self._hoverTarget))
+                current = min(current + speed, self._hoverTarget)
             else
-                self._hoverBg:SetAlpha(max(current - speed, self._hoverTarget))
+                current = max(current - speed, self._hoverTarget)
             end
+            self._hoverP = current
+            PaintItemHover(self, gui.theme, current)
         end
     end)
 
@@ -171,6 +286,7 @@ local function AcquireItemButton(gui, parent)
     pixel.SetPixelPoint(btnText, "LEFT", btn, "LEFT", 8, 0)
     pixel.SetPixelPoint(btnText, "RIGHT", btn, "RIGHT", -24, 0)
     btnText:SetJustifyH("LEFT")
+    btnText:SetWordWrap(false)
     gui:ApplyFont(btnText, "normal")
     btn._text = btnText
 
@@ -180,8 +296,56 @@ local function AcquireItemButton(gui, parent)
     indicator:SetText("•")
     indicator:Hide()
     btn._indicator = indicator
+    btn._actions = {}
 
     return btn
+end
+
+local function AcquireItemAction(gui, btn, index)
+    local action = btn._actions[index]
+    if action then return action end
+
+    action = CreateFrame("Button", nil, btn)
+    pixel.SetPixelSize(action, ACTION_SIZE, ACTION_SIZE)
+    local icon = action:CreateTexture(nil, "ARTWORK")
+    icon:SetAllPoints()
+    icon:SetTexelSnappingBias(0)
+    icon:SetSnapToPixelGrid(false)
+    action._icon = icon
+    action._rest = { 1, 1, 1, 1 }
+
+    -- Scripts read the fields set per open, so a pooled row never runs another list's action.
+    action:SetScript("OnEnter", function(self)
+        local theme = gui.theme
+        local accent = theme.accent
+        if not self._disabled then self._icon:SetVertexColor(accent[1], accent[2], accent[3], 1) end
+        btn._hoverTarget = 1
+        if self._tooltip then
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:SetText(self._tooltip, accent[1], accent[2], accent[3], 1, false)
+            local body = self._tooltipText
+            if type(body) == "table" then
+                for _, line in ipairs(body) do
+                    GameTooltip:AddLine(line, theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], false)
+                end
+            elseif body then
+                GameTooltip:AddLine(body, theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], true)
+            end
+            GameTooltip:Show()
+        end
+    end)
+    action:SetScript("OnLeave", function(self)
+        local rest = self._rest
+        self._icon:SetVertexColor(rest[1], rest[2], rest[3], rest[4])
+        btn._hoverTarget = 0
+        GameTooltip:Hide()
+    end)
+    action:SetScript("OnClick", function(self)
+        if not self._disabled then safecall(self._onClick) end
+    end)
+
+    btn._actions[index] = action
+    return action
 end
 
 local function ReleaseItemButton(gui, btn)
@@ -191,14 +355,20 @@ local function ReleaseItemButton(gui, btn)
     btn:SetScript("OnClick", nil)
     btn:SetScript("OnEnter", nil)
     btn:SetScript("OnLeave", nil)
-    btn._hoverBg:SetAlpha(0)
-    btn._hoverTarget = 0
+    btn._hoverP, btn._hoverTarget = 0, 0
+    PaintItemHover(btn, gui.theme, 0)
     btn._itemValue = nil
     btn._itemText = nil
+    btn._swatchRest = nil
     btn._updateState = nil
     btn._index = nil
-    if btn._previewBar then btn._previewBar:Hide() end
+    HideSwatch(btn._previewBar)
     if btn._indicator then btn._indicator:Hide() end
+    for _, action in ipairs(btn._actions) do
+        action:Hide()
+        action._onClick, action._tooltip, action._tooltipText, action._disabled = nil, nil, nil, nil
+        action._icon:SetRotation(0)
+    end
     tinsert(gui._dropdownPool, btn)
 end
 
@@ -218,12 +388,14 @@ end
 ---@field _selectedSet? table<any, boolean>
 ---@field _isOpen boolean
 ---@field _itemButtons table[]
+---@field _itemActions? fun(value: any): KajiGUIDropdownItemAction[]?
 local DropdownMixin = {}
 
 --- Normalizes an options table into keyed lookups + an ordered key list.
 local function NormalizeOptions(row, options)
     row._normalizedOptions = {}
     row._optionColors = {}
+    row._valueColors = {}
     row._optionTooltips = {}
     row._optionIndicators = {}
     row._orderedKeys = nil
@@ -235,6 +407,8 @@ local function NormalizeOptions(row, options)
             local optKey = opt.value or opt.key
             row._normalizedOptions[optKey] = opt.text
             if opt.color then row._optionColors[optKey] = opt.color end
+            -- Colours the value on the closed button only; the open list keeps its own colours.
+            if opt.valueColor then row._valueColors[optKey] = opt.valueColor end
             if opt.tooltip then row._optionTooltips[optKey] = opt.tooltip end
             if opt.indicator then row._optionIndicators[optKey] = opt.indicator end
             tinsert(row._orderedKeys, optKey)
@@ -297,6 +471,7 @@ function DropdownMixin:SetEnabled(enabled)
         self.label:SetAlpha(0.5)
         if self._isOpen then self._closeDropdown() end
     end
+    self._paintGlow()
 end
 
 ---@param newOptions table
@@ -322,6 +497,16 @@ DropdownMixin.SetOptions = DropdownMixin.UpdateOptions
 ---@field accentColor? number[] per-widget accent, overriding the theme's
 ---@field bgColor? number[] per-widget background for the closed row and its list, overriding the theme's
 ---@field tooltip? string
+---@field itemActions? fun(value: any): KajiGUIDropdownItemAction[]? icon buttons drawn on each option, left to right
+
+---@class KajiGUIDropdownItemAction
+---@field icon string|number
+---@field tooltip? string
+---@field tooltipText? string|string[] body under the tooltip title, a list draws one line each
+---@field disabled? boolean drawn faded, tooltip still shows, click does nothing
+---@field color? number[] resting icon tint, textSecondary by default; hover is always the accent
+---@field rotation? number radians
+---@field onClick fun(value: any) runs after the list starts closing
 
 ---@param parent Frame
 ---@param labelText string
@@ -380,12 +565,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     dropdownButton:SetBackdropBorderColor(theme.widgetBorder[1], theme.widgetBorder[2], theme.widgetBorder[3], 1)
     pixel.SetPixelSnap(dropdownButton)
 
-    -- Preview bar behind the selected text (statusbar media mode).
-    local selectedBar = dropdownButton:CreateTexture(nil, "BACKGROUND", nil, -1)
-    pixel.SetPixelPoint(selectedBar, "TOPLEFT", dropdownButton, "TOPLEFT", 1, -1)
-    pixel.SetPixelPoint(selectedBar, "BOTTOMRIGHT", dropdownButton, "BOTTOMRIGHT", -20, 1)
-    pixel.SetPixelSnap(selectedBar)
-    selectedBar:Hide()
+    local selectedBar = CreateSwatch(dropdownButton, ARROW_SIZE + theme.paddingSmall * 2, DROPDOWN_HEIGHT)
 
     local accent = row._accentColor
     local bg = row._bgColor
@@ -394,8 +574,15 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     pixel.SetPixelPoint(selectedText, "LEFT", dropdownButton, "LEFT", theme.paddingSmall, 0)
     pixel.SetPixelPoint(selectedText, "RIGHT", dropdownButton, "RIGHT", -24, 0)
     selectedText:SetJustifyH("LEFT")
+    selectedText:SetWordWrap(false)
     gui:ApplyFont(selectedText, "normal")
-    selectedText:SetTextColor(accent[1], accent[2], accent[3], accent[4] or 1)
+
+    -- Plain text unless the caller passed its own accentColor.
+    local function PaintValue()
+        local c = row._accentOverride and accent or row.gui.theme.textPrimary
+        selectedText:SetTextColor(c[1], c[2], c[3], c[4] or 1)
+    end
+    PaintValue()
     dropdownButton.selectedText = selectedText
     row._selectedText = selectedText
 
@@ -421,6 +608,23 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     local searchText = ""
     local firstVisibleKey = nil
 
+    -- Every text path runs this: a pooled button keeps its last owner's swatch.
+    local function FitSelectedSwatch(value)
+        local swatched = row._isStatusbarPreview and IsMediaKey(row._mediaType, value)
+        if swatched then
+            ShowSwatch(selectedBar, gui:ResolveMedia(row._mediaType, value), row._mediaType == "spark")
+        else
+            HideSwatch(selectedBar)
+        end
+        selectedText:ClearAllPoints()
+        pixel.SetPixelPoint(selectedText, "LEFT", dropdownButton, "LEFT", theme.paddingSmall, 0)
+        if swatched then
+            pixel.SetPixelPoint(selectedText, "RIGHT", selectedBar._backing, "LEFT", -SWATCH_GAP, 0)
+        else
+            pixel.SetPixelPoint(selectedText, "RIGHT", dropdownButton, "RIGHT", -24, 0)
+        end
+    end
+
     local function ApplySelected(value)
         if row._multiSelect then
             -- Only a lone pick is named. Listing every one of them outgrew the button, and the label
@@ -442,8 +646,8 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
 
             selectedText:SetText(text)
             gui:ApplyFont(selectedText, "normal")
-            selectedText:SetTextColor(accent[1], accent[2], accent[3], accent[4] or 1)
-            selectedBar:Hide()
+            PaintValue()
+            FitSelectedSwatch(nil)
             return
         end
 
@@ -453,11 +657,11 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
             selectedText:SetText(value ~= nil and tostring(value) or "Select...")
         end
 
-        local optionColor = row._optionColors and row._optionColors[value]
+        local optionColor = (row._optionColors and row._optionColors[value]) or (row._valueColors and row._valueColors[value])
         if optionColor then
             selectedText:SetTextColor(optionColor.r or optionColor[1], optionColor.g or optionColor[2], optionColor.b or optionColor[3], 1)
         else
-            selectedText:SetTextColor(accent[1], accent[2], accent[3], accent[4] or 1)
+            PaintValue()
         end
 
         -- Font and bar are independent: a statusbar dropdown recycled from a font one still
@@ -468,22 +672,17 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
             ClearPreviewFont(gui, selectedText)
         end
 
-        if row._isStatusbarPreview and value then
-            ApplyPreviewTexture(selectedBar, gui:ResolveMedia(row._mediaType, value))
-            selectedBar:SetVertexColor(accent[1], accent[2], accent[3], accent[4] or 0.4)
-            selectedBar:Show()
-        else
-            selectedBar:Hide()
-        end
+        FitSelectedSwatch(value)
     end
     row._applySelected = ApplySelected
 
     local dropdownList = CreateFrame("Frame", nil, row, "BackdropTemplate")
     pixel.SetPixelHeight(dropdownList, 1)
     dropdownList:SetBackdrop(STANDARD_BACKDROP)
-    dropdownList:SetBackdropColor(theme.bgMedium[1], theme.bgMedium[2], theme.bgMedium[3], 0.9)
+    -- Opaque: glows and scenery behind a translucent list bled through as a tint.
+    dropdownList:SetBackdropColor(theme.bgMedium[1], theme.bgMedium[2], theme.bgMedium[3], 1)
     dropdownList:SetBackdropBorderColor(theme.widgetBorder[1], theme.widgetBorder[2], theme.widgetBorder[3], 1)
-    dropdownList:SetFrameStrata("TOOLTIP")
+    dropdownList:SetFrameStrata("FULLSCREEN_DIALOG")
     dropdownList:SetClipsChildren(true)
     dropdownList:Hide()
 
@@ -556,10 +755,20 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         function(r, g, b, a) dropdownButton:SetBackdropBorderColor(r, g, b, a) end,
         theme.widgetBorder, accent, theme.animDuration)
 
+    -- Hover level even when open; full strength over the open list read as overkill.
+    local fieldGlow = lib.CreateFrameGlow(dropdownButton, gui, lib.FIELD_GLOW_REACH, row)
+    local function PaintFieldGlow()
+        local lit = dropdownButton:IsEnabled() and (row._isOpen or row._hovered)
+        lib.SetFrameGlow(fieldGlow, gui, lit and lib.GLOW_HOVER or 0, accent)
+    end
+    row._paintGlow = PaintFieldGlow
+
+
     local function CloseDropdown(instant)
         if scrollHold then return end
         if not row._isOpen then return end
         row._isOpen = false
+        PaintFieldGlow()
 
         if instant then
             pixel.SetPixelHeight(dropdownList, 1)
@@ -724,12 +933,11 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
                 ClearPreviewFont(gui, btn._text)
             end
 
-            if row._isStatusbarPreview then
-                ApplyPreviewTexture(btn._previewBar, gui:ResolveMedia(row._mediaType, key))
-                btn._previewBar:SetVertexColor(accent[1], accent[2], accent[3], accent[4] or 0.4)
-                btn._previewBar:Show()
+            local swatched = row._isStatusbarPreview and IsMediaKey(row._mediaType, key)
+            if swatched then
+                ShowSwatch(btn._previewBar, gui:ResolveMedia(row._mediaType, key), row._mediaType == "spark")
             else
-                btn._previewBar:Hide()
+                HideSwatch(btn._previewBar)
             end
 
             local optionColor = row._optionColors and row._optionColors[key]
@@ -737,6 +945,8 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
 
             local function UpdateItemState()
                 local isSelected = IsValueSelected(row, btn._itemValue)
+                btn._swatchRest = isSelected and 1 or SWATCH_REST_ALPHA
+                PaintItemHover(btn, theme, btn._hoverP)
                 local dot = indicatorColor or (isSelected and accent or nil)
                 if dot then btn._indicator:SetTextColor(dot[1], dot[2], dot[3], 1) end
                 btn._indicator:SetShown(dot ~= nil)
@@ -757,11 +967,14 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
                 self._hoverTarget = 1
                 self._text:SetTextColor(theme.textPrimary[1], theme.textPrimary[2], theme.textPrimary[3], 1)
                 local tooltip = row._optionTooltips[self._itemValue]
-                if tooltip then
+                -- A name cut short by its swatch or actions shows in full, even without a tooltip.
+                if tooltip or self._text:IsTruncated() then
                     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
                     GameTooltip:ClearLines()
                     GameTooltip:AddLine(self._itemText or self._itemValue, accent[1], accent[2], accent[3], false)
-                    GameTooltip:AddLine(tooltip, theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], true)
+                    if tooltip then
+                        GameTooltip:AddLine(tooltip, theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], true)
+                    end
                     GameTooltip:Show()
                 end
             end)
@@ -770,6 +983,37 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
                 UpdateItemState()
                 GameTooltip:Hide()
             end)
+
+            local actions = row._itemActions and row._itemActions(key)
+            local actionCount = actions and #actions or 0
+            for j = 1, actionCount do
+                local def = actions[j]
+                local action = AcquireItemAction(gui, btn, j)
+                -- The fade rides the vertex alpha: a texture's SetVertexColor alpha overrides SetAlpha.
+                local color = def.disabled and theme.textSecondary or def.color or theme.textSecondary
+                local rest = action._rest
+                rest[1], rest[2], rest[3], rest[4] = color[1], color[2], color[3], def.disabled and 0.3 or 1
+                action._icon:SetTexture(def.icon)
+                action._icon:SetRotation(def.rotation or 0)
+                action._icon:SetVertexColor(rest[1], rest[2], rest[3], rest[4])
+                action._disabled = def.disabled
+                action._tooltip = def.tooltip
+                action._tooltipText = def.tooltipText
+                action._onClick = function()
+                    CloseDropdown()
+                    safecall(def.onClick, key)
+                end
+                action:ClearAllPoints()
+                pixel.SetPixelPoint(action, "RIGHT", btn, "RIGHT", -TEXT_RIGHT_INSET - (actionCount - j) * (ACTION_SIZE + ACTION_GAP), 0)
+                action:Show()
+            end
+            btn._text:ClearAllPoints()
+            pixel.SetPixelPoint(btn._text, "LEFT", btn, "LEFT", 8, 0)
+            if swatched then
+                pixel.SetPixelPoint(btn._text, "RIGHT", btn._previewBar._backing, "LEFT", -SWATCH_GAP, 0)
+            else
+                pixel.SetPixelPoint(btn._text, "RIGHT", btn, "RIGHT", -TEXT_RIGHT_INSET - actionCount * (ACTION_SIZE + ACTION_GAP), 0)
+            end
 
             pixel.SetPixelPoint(btn, "TOPLEFT", scrollChild, "TOPLEFT", 0, -(i - 1) * ITEM_HEIGHT)
             pixel.SetPixelPoint(btn, "RIGHT", scrollChild, "RIGHT", 0, 0)
@@ -798,7 +1042,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         pixel.SetPixelPoint(searchEditBox, "TOPLEFT", searchContainer, "TOPLEFT", 6, -4)
         pixel.SetPixelPoint(searchEditBox, "BOTTOMRIGHT", searchContainer, "BOTTOMRIGHT", -6, 4)
         searchEditBox:SetFontObject("GameFontNormal")
-        searchEditBox:SetTextColor(accent[1], accent[2], accent[3], accent[4] or 1)
+        searchEditBox:SetTextColor(theme.textPrimary[1], theme.textPrimary[2], theme.textPrimary[3], 1)
         searchEditBox:SetAutoFocus(false)
         searchEditBox:SetText("")
         searchEditBox:SetScript("OnTextChanged", function(self, userInput)
@@ -847,7 +1091,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
 
         dropdownList._logicalParent = dropdownList:GetParent()
         dropdownList:SetParent(gui.overlay or UIParent)
-        dropdownList:SetFrameStrata("TOOLTIP")
+        dropdownList:SetFrameStrata("FULLSCREEN_DIALOG")
         dropdownList:ClearAllPoints()
         pixel.SetPixelPoint(dropdownList, "TOPLEFT", dropdownButton, "BOTTOMLEFT", 0, -2)
 
@@ -891,6 +1135,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         dropdownList:Show()
         pixel.SetPixelHeight(dropdownList, startHeight)
         row._isOpen = true
+        PaintFieldGlow()
 
         if gui._activeDropdown and gui._activeDropdown ~= dropdownButton then
             if gui._activeDropdown.closeDropdown then gui._activeDropdown.closeDropdown() end
@@ -918,10 +1163,14 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
 
     dropdownButton:SetScript("OnClick", ToggleDropdown)
     dropdownButton:SetScript("OnEnter", function()
+        row._hovered = true
+        PaintFieldGlow()
         SetBorderHover(true)
         if not row._isOpen then lib.ShowTooltip(row) end
     end)
     dropdownButton:SetScript("OnLeave", function()
+        row._hovered = false
+        PaintFieldGlow()
         SetBorderHover(false)
         lib.HideTooltip()
     end)
@@ -931,7 +1180,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     row._applySearchLayout = function()
         scrollFrame:ClearAllPoints()
         pixel.SetPixelPoint(scrollFrame, "TOPLEFT", dropdownList, "TOPLEFT", 0,
-            row._searchable and -(SEARCH_BOX_HEIGHT + SEARCH_PADDING) or 0)
+            row._searchable and -(SEARCH_BOX_HEIGHT + SEARCH_PADDING * 2) or 0)
         pixel.SetPixelPoint(scrollFrame, "BOTTOMRIGHT", dropdownList, "BOTTOMRIGHT", 0, 0)
         searchContainer:Hide()
         if emptyLabel then emptyLabel:Hide() end
@@ -942,10 +1191,12 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     row._setSelectedPlaceholder = function()
         selectedText:SetText("Select...")
         gui:ApplyFont(selectedText, "normal")
+        FitSelectedSwatch(nil)
     end
 
     dropdownList:SetScript("OnHide", function()
         row._isOpen = false
+        PaintFieldGlow()
         searchText = ""
         searchEditBox:SetText("")
         searchEditBox:ClearFocus()
@@ -979,13 +1230,14 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         local edge = active.widgetBorder
         dropdownButton:SetBackdropColor(bg[1], bg[2], bg[3], 0.9)
         dropdownButton:SetBackdropBorderColor(edge[1], edge[2], edge[3], 1)
-        dropdownList:SetBackdropColor(bg[1], bg[2], bg[3], 0.9)
+        dropdownList:SetBackdropColor(bg[1], bg[2], bg[3], 1)
         dropdownList:SetBackdropBorderColor(edge[1], edge[2], edge[3], 1)
+        PaintFieldGlow()
         row.label:SetTextColor(active.textSecondary[1], active.textSecondary[2], active.textSecondary[3], 1)
 
         searchContainer:SetBackdropColor(active.bgDark[1], active.bgDark[2], active.bgDark[3], 0.9)
         searchContainer:SetBackdropBorderColor(edge[1], edge[2], edge[3], 1)
-        searchEditBox:SetTextColor(accent[1], accent[2], accent[3], accent[4] or 1)
+        searchEditBox:SetTextColor(active.textPrimary[1], active.textPrimary[2], active.textPrimary[3], 1)
         if emptyLabel then
             emptyLabel:SetTextColor(active.textSecondary[1], active.textSecondary[2], active.textSecondary[3], 1)
         end
@@ -1061,6 +1313,7 @@ function DropdownMixin:OnAcquire(parent, labelText, config)
         self._setSelectedPlaceholder()
     end
     self._callback = config.callback
+    self._itemActions = config.itemActions
 
     self:SetEnabled(true)
     self:SetAlpha(1)
@@ -1071,6 +1324,7 @@ function DropdownMixin:OnAcquire(parent, labelText, config)
 end
 
 function DropdownMixin:OnRelease()
+    self._hovered = false
     -- Closing first matters most: an open list is reparented to the overlay and is driven
     -- by the shared mouseChecker, which would otherwise keep poking a recycled widget.
     if self._closeDropdown then self._closeDropdown(true) end
@@ -1085,6 +1339,7 @@ function DropdownMixin:OnRelease()
     self:ReleaseItemButtons()
 
     self._callback = nil
+    self._itemActions = nil
     self._currentValue = nil
     self._multiSelect = false
     self._accentOverride = nil

@@ -176,11 +176,12 @@ end
 function DungeonCasts:ConfigureBar(bar)
     local db = self.db
     local w, h = db.Width, db.Height
-    local bg, border, text = db.BackdropColor, db.BorderColor, db.TextColor
+    local bg, border, text = NRSKNUI:GetBackdropColor(db), NRSKNUI:GetBorderColor(db), db.TextColor
     local barTexture = NRSKNUI:GetStatusbar(db)
     local iconShown = db.Icon.Enabled
 
     bar:NUISetPixelSize(w, h)
+    bar:SetBackgroundTexture(NRSKNUI:GetBarBackground(db))
     bar:SetBackgroundColor(bg[1], bg[2], bg[3], bg[4])
 
     -- Bars border.

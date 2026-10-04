@@ -21,6 +21,9 @@ local SCROLLBAR_BACKDROP = {
     edgeFile = "Interface\\Buttons\\WHITE8X8",
     edgeSize = 1,
 }
+local THUMB_REST_ALPHA = 0.35
+local THUMB_ACTIVE_ALPHA = 0.8
+
 local BORDER_ONLY_BACKDROP = {
     edgeFile = "Interface\\Buttons\\WHITE8X8",
     edgeSize = 1,
@@ -38,12 +41,14 @@ local ScrollbarMixin = {}
 ---@param frameHeight number
 ---@return boolean visible
 function ScrollbarMixin:UpdateVisibility(contentHeight, frameHeight)
-    local needsScrollbar = contentHeight > frameHeight
+    -- A fractional max would clamp values back onto fractions at the bottom, defeating the snap.
+    local range = pixel.ToPixelGrid(contentHeight - frameHeight)
+    -- Snapped, not raw: a slider shown at 0..0 hides its thumb and won't restore it when the range grows.
+    local needsScrollbar = range > 0
     if needsScrollbar then
+        self:SetMinMaxValues(0, range)
         self:Show()
-        -- Keep the range on the pixel grid: a fractional max would clamp values back onto
-        -- fractions at the bottom of the scroll, defeating the snap below.
-        self:SetMinMaxValues(0, pixel.ToPixelGrid(contentHeight - frameHeight))
+        self.thumb:Show()
     else
         self:Hide()
         self:SetMinMaxValues(0, 0)
@@ -96,11 +101,28 @@ function InstanceMixin:CreateScrollbar(scrollFrame, options)
     thumb:HookScript("OnShow", function() thumbBorder:Show() end)
     thumb:HookScript("OnHide", function() thumbBorder:Hide() end)
 
+    -- The thumb rests dim so it never reads as a selection; it lights up while hovered or dragged.
+    local dragging = false
+    local function PaintThumb()
+        local alpha = (dragging or scrollbar:IsMouseOver()) and THUMB_ACTIVE_ALPHA or THUMB_REST_ALPHA
+        thumb:SetColorTexture(theme.accent[1], theme.accent[2], theme.accent[3], alpha)
+    end
+    scrollbar:SetScript("OnEnter", PaintThumb)
+    scrollbar:SetScript("OnLeave", PaintThumb)
+    scrollbar:SetScript("OnMouseDown", function()
+        dragging = true
+        PaintThumb()
+    end)
+    scrollbar:SetScript("OnMouseUp", function()
+        dragging = false
+        PaintThumb()
+    end)
+
     -- Colours: applied now and re-applied on every theme change.
     local function Restyle()
         scrollbar:SetBackdropColor(theme.bgDark[1], theme.bgDark[2], theme.bgDark[3], theme.bgDark[4])
         scrollbar:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
-        thumb:SetColorTexture(theme.accent[1], theme.accent[2], theme.accent[3], 0.8)
+        PaintThumb()
         thumbBorder:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
     end
     Restyle()

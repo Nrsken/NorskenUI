@@ -12,7 +12,7 @@ local CENTRED_POINTS = { CENTER = true, LEFT = true, RIGHT = true }
 local SkinnedStatusBarMixin = {}
 
 function SkinnedStatusBarMixin:NUIUpdateSkinColors()
-    local border = Skinning.db.General.BorderColor
+    local border = NRSKNUI:GetBorderColor(Skinning.db.General)
     self:SetBorderColor(border[1], border[2], border[3], border[4])
 
     if self.NUIKeepColor then return end

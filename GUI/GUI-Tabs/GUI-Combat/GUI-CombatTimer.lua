@@ -112,18 +112,7 @@ local function BuildBackdropSettingsTab(page, db)
 
     backdropCard:Separator()
 
-    local bgColorRow = backdropCard:Row(rowH)
-    bgColorRow:ColorPicker(L['Background Color'], {
-        width = 1,
-        conditions = { 'backdrop' },
-        value = db.BackgroundColor,
-        callback = function(r, g, b, a)
-            db.BackgroundColor = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
-
-    local sizeRow = backdropCard:Row(rowH)
+    local sizeRow = backdropCard:Row(rowHL, 0)
     sizeRow:Slider(L['Background Width'], {
         width = 0.5,
         min = 1,
@@ -149,18 +138,7 @@ local function BuildBackdropSettingsTab(page, db)
         end,
     })
 
-    backdropCard:Separator()
-
-    local borderColorRow = backdropCard:Row(rowHL, 0)
-    borderColorRow:ColorPicker(L['Border Color'], {
-        width = 1,
-        conditions = { 'backdrop' },
-        value = db.BorderColor,
-        callback = function(r, g, b, a)
-            db.BorderColor = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
+    page:BackdropColorsCard({ db = db, backdropKey = 'BackgroundColor', onChangeCallback = ApplySettings }, 'backdrop')
 end
 
 -- Font Settings Tab.

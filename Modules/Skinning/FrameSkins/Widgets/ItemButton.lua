@@ -25,16 +25,16 @@ end
 
 function SkinnedItemButtonMixin:NUIResetQualityColor()
     self.NUIQualityShown = nil
-    local border = Skinning.db.General.BorderColor
+    local border = NRSKNUI:GetBorderColor(Skinning.db.General)
     self:SetBorderColor(border[1], border[2], border[3], border[4])
 end
 
 function SkinnedItemButtonMixin:NUIUpdateSkinColors()
     local general = Skinning.db.General
-    local bg = general.BackgroundColor
+    local bg = NRSKNUI:GetBackdropColor(general, 'BackgroundColor')
     self.NUISlotBg:SetColorTexture(bg[1], bg[2], bg[3], bg[4])
     if self.NUIQualityShown then return end
-    local border = general.BorderColor
+    local border = NRSKNUI:GetBorderColor(general)
     self:SetBorderColor(border[1], border[2], border[3], border[4])
 end
 
@@ -91,7 +91,7 @@ function Skinning:HandleItemButton(button)
         end
     end
 
-    local bg = self.db.General.BackgroundColor
+    local bg = NRSKNUI:GetBackdropColor(self.db.General, 'BackgroundColor')
     local slotBg = button:CreateTexture(nil, 'BACKGROUND', nil, -8)
     slotBg:SetAllPoints(button)
     slotBg:SetColorTexture(bg[1], bg[2], bg[3], bg[4])

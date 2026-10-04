@@ -184,10 +184,11 @@ function BigWigsTimers:ConfigureDisplay(display)
 
     local db = self.db[BARS]
     local w, h = db.Width, db.Height
-    local bg, border = db.BackdropColor, db.BorderColor
+    local bg, border = NRSKNUI:GetBackdropColor(db), NRSKNUI:GetBorderColor(db)
     local iconShown = db.Icon.Enabled
 
     display:NUISetPixelSize(w, h)
+    display:SetBackgroundTexture(NRSKNUI:GetBarBackground(db))
     display:SetBackgroundColor(bg[1], bg[2], bg[3], bg[4])
 
     display.borderFrame:SetAllPoints(display)

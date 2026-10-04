@@ -11,6 +11,8 @@ local ipairs = ipairs
 local min = math.min
 
 local KINDS = { 'Buffs', 'Debuffs' }
+-- Party and raid frames also get defensives; no other unit has the group at all.
+local GROUP_KINDS = { 'Buffs', 'Debuffs', 'Defensives' }
 
 ---Most auras a container can put on screen.
 ---@param cfg table
@@ -19,25 +21,23 @@ local function PreviewCount(cfg)
     return min(cfg.maxFrameCount * NRSKNUI:GetTriggerBranchCount(cfg.Trigger), cfg.previewLimit)
 end
 
----Layout anchor corner derived from growth direction.
----@param cfg table
----@return string
-local function AnchorCorner(cfg)
-    local vertical = (cfg.verticalGrowthDirection == 'DOWN') and 'TOP' or 'BOTTOM'
-    local horizontal = (cfg.horizontalGrowthDirection == 'LEFT') and 'RIGHT' or 'LEFT'
-    return vertical .. horizontal
-end
-
 ---Get the configuration table for a container, derived from the unit's aura config and the general unit frame config.
 ---@param cfg table one of uDB.Auras.Buffs / uDB.Auras.Debuffs
 ---@param general table UnitFrames General, supplies the button font
 ---@return table
 local function GetContainerConfig(cfg, general)
+    local pos = cfg.Position
+    local flowCorner, containerPoint, horizontal, vertical =
+        NRSKNUI:ResolveAuraGrowth(cfg.horizontalGrowthDirection, cfg.verticalGrowthDirection, pos.AnchorTo)
+    -- Older saves keep the point they resolved to, written once so nothing moves.
+    if not pos.AnchorFrom then pos.AnchorFrom = containerPoint end
+    containerPoint = pos.AnchorFrom
     return {
         maximumLineSize = cfg.perRow * (cfg.size + cfg.elementSpacing),
-        anchorPoint = AnchorCorner(cfg),
-        horizontalGrowthDirection = cfg.horizontalGrowthDirection,
-        verticalGrowthDirection = cfg.verticalGrowthDirection,
+        anchorPoint = flowCorner,
+        containerPoint = containerPoint,
+        horizontalGrowthDirection = horizontal,
+        verticalGrowthDirection = vertical,
         size = cfg.size,
         elementSpacing = cfg.elementSpacing,
         lineSpacing = cfg.lineSpacing,
@@ -117,11 +117,10 @@ UF.Elements.Auras = {
         local general = UF.db.General
         local containers = {}
 
-        for _, kind in ipairs(KINDS) do
+        for _, kind in ipairs(UF.GroupConfigs[self.nuiConfig or unit] and GROUP_KINDS or KINDS) do
             local cfg = uDB.Auras[kind]
             local container = self:CreateAuraContainer(GetContainerConfig(cfg, general))
             if container then
-                container:SetFrameLevel(UF.TopLevels.Auras)
                 container:AddFilteredGroup(cfg.Trigger)
                 containers[kind] = container
             end
@@ -138,14 +137,19 @@ UF.Elements.Auras = {
         local containers = self.Auras
         if not containers then return end
 
+        -- The health bar, not the frame, so auras never cover a docked power bar.
+        local host = self.Health or self
+
         for kind, container in pairs(containers) do
             local cfg = uDB.Auras[kind]
             local pos = cfg.Position
             local config = GetContainerConfig(cfg, general)
+            -- ApplyFrameLayers levels the container, the preview dummies take it from here.
+            local level = UF.GetElementLevel(self, kind)
 
             -- Layout re-applies live, button appearance does not, see container:ApplyLayout.
             container:ClearAllPoints()
-            container:SetPoint(config.anchorPoint, self, pos.AnchorTo, pos.XOffset, pos.YOffset)
+            container:SetPoint(config.containerPoint, host, pos.AnchorTo, pos.XOffset, pos.YOffset)
             container:ApplyLayout(config)
             container:RebindFilteredGroups(cfg.Trigger)
             -- self.__unit is the live token, which a preview repoints away from the configured unit.
@@ -153,7 +157,7 @@ UF.Elements.Auras = {
             if container:UpdateUnitGate() then container:UpdateAllAuras() end
             container:SetShown(cfg.Enabled)
 
-            AuraPreview:Attach(container, self, pos.AnchorTo, pos.XOffset, pos.YOffset, UF.TopLevels.Auras)
+            AuraPreview:Attach(container, host, pos.AnchorTo, pos.XOffset, pos.YOffset, level)
             AuraPreview:Update(container, config, PreviewCount(cfg), cfg.Trigger)
         end
     end,

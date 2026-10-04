@@ -176,7 +176,7 @@ end
 local SkinnedBackdropMixin = {}
 
 local WIDGET_GLOW_ATLAS = 'glues-characterSelect-GS-TopHUD-middle-selectedGlow'
-local PRIMARY_TINT_ALPHA = 0.3
+local PRIMARY_TINT_ALPHA = 0.4
 Skinning.WidgetGlowAtlas = WIDGET_GLOW_ATLAS
 
 ---@param backdrop Frame
@@ -190,16 +190,23 @@ end
 
 function SkinnedBackdropMixin:NUIUpdateSkinColors()
     local general = Skinning.db.General
-    local bg = self.NUIIsWidget and general.WidgetBackgroundColor or general.BackgroundColor
-    local border = self.NUIIsWidget and general.WidgetBorderColor or general.BorderColor
+    local bg = self.NUIIsWidget and general.WidgetBackgroundColor or NRSKNUI:GetBackdropColor(general, 'BackgroundColor')
+    local border = self.NUIIsWidget and general.WidgetBorderColor or NRSKNUI:GetBorderColor(general)
 
-    if self.NUIPrimary then
-        local r, g, b = Skinning:GetAccentColor()
-        self:SetBackgroundColor(r, g, b, PRIMARY_TINT_ALPHA)
-    else
-        self:SetBackgroundColor(bg[1], bg[2], bg[3], self.NUIBgAlpha or bg[4])
-    end
+    self:SetBackgroundColor(bg[1], bg[2], bg[3], self.NUIBgAlpha or bg[4])
     self:SetBorderColor(border[1], border[2], border[3], border[4])
+
+    -- The tint layers over the regular fill so the primary button keeps the dark base. BACKGROUND/1 sits under the glow.
+    if self.NUIPrimary and not self.NUIPrimaryTint then
+        local tint = self:CreateTexture(nil, 'BACKGROUND', nil, 1)
+        tint:SetAllPoints(self.backdropBackground)
+        self.NUIPrimaryTint = tint
+    end
+    if self.NUIPrimaryTint then
+        local r, g, b = Skinning:GetAccentColor()
+        self.NUIPrimaryTint:SetColorTexture(r, g, b, PRIMARY_TINT_ALPHA)
+        self.NUIPrimaryTint:SetShown(self.NUIPrimary == true)
+    end
     UpdateWidgetGlow(self)
 end
 

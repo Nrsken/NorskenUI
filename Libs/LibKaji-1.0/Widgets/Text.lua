@@ -149,9 +149,11 @@ function TextMixin:OnAcquire(parent, titleText, config)
     -- pass, which would leave us measuring against the previous one.
     self.label:ClearAllPoints()
     pixel.SetPixelPoint(self.label, "TOPLEFT", self.container, "TOPLEFT", 0, -self._titleSpacer)
+    -- Set both ways: a pooled block that was auto-sized last time would keep TOP.
     if self._autoHeight then
         self.label:SetJustifyV("TOP")
     else
+        self.label:SetJustifyV("MIDDLE")
         pixel.SetPixelPoint(self.label, "BOTTOMRIGHT", self.container, "BOTTOMRIGHT", 0, 0)
     end
     self.label:SetJustifyH(config.justify or "LEFT")

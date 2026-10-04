@@ -39,7 +39,9 @@ local floor, max, min = math.floor, math.max, math.min
 local C_Timer = C_Timer
 
 local WIDGET_TYPE = "Slider"
+local FILL_GLOW_HEIGHT = 4 -- halo above and below the fill
 local THUMB_WIDTH, THUMB_HEIGHT = 19, 12
+local THUMB_GLOW_REACH = 8 -- the small glow
 local STEPPER_SIZE = 20
 local THROTTLE_DELAY = 0.1
 
@@ -48,7 +50,8 @@ local THROTTLE_DELAY = 0.1
 ---@field label FontString
 ---@field slider Slider
 ---@field sliderBG Frame|BackdropTemplate
----@field fill Texture
+---@field fillBar StatusBar
+---@field fillGlow Texture[] halo above and below the fill
 ---@field thumb Texture
 ---@field thumbFrame Frame|BackdropTemplate
 ---@field thumbFrameBG Frame|BackdropTemplate
@@ -83,11 +86,7 @@ end
 
 function SliderMixin:UpdateFill()
     local val = self.slider:GetValue()
-    local minVal, maxVal = self.slider:GetMinMaxValues()
-    if maxVal == minVal then return end
-
-    local pct = (val - minVal) / (maxVal - minVal)
-    pixel.SetPixelWidth(self.fill, max(1, (self.slider:GetWidth() - 2) * pct))
+    self.fillBar:SetValue(val)
 
     if not self._updating then
         self._updating = true
@@ -137,12 +136,19 @@ end
 ---@param minVal number
 ---@param maxVal number
 function SliderMixin:SetMinMaxValues(minVal, maxVal)
+    self.fillBar:SetMinMaxValues(minVal, maxVal)
     self.slider:SetMinMaxValues(minVal, maxVal)
     self:UpdateFill()
 end
 
 ---@param enabled boolean
 function SliderMixin:SetEnabled(enabled)
+    for _, halo in ipairs(self.fillGlow) do halo:SetShown(enabled) end
+    if not enabled then
+        self._thumbHovered, self._valueHovered = false, false
+        self._paintThumbGlow()
+        self._paintValueGlow()
+    end
     self:SetAlpha(enabled and 1 or 0.4)
     self.slider:EnableMouse(enabled)
     self.valueEdit:EnableMouse(enabled)
@@ -176,8 +182,13 @@ function SliderMixin:UpdateColors()
     lib.RefreshBackdrop(self.valueContainer)
 
     self.label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
-    self.fill:SetColorTexture(theme.accent[1], theme.accent[2], theme.accent[3], 1)
-    self.valueEdit:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
+    self.fillBar:SetStatusBarColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
+    -- VERTICAL runs bottom (first color) to top (second color): each halo is brightest at the bar.
+    local ac = theme.accent
+    local lit, clear = CreateColor(ac[1], ac[2], ac[3], theme.glowControlAlpha), CreateColor(ac[1], ac[2], ac[3], 0)
+    self.fillGlow[1]:SetGradient("VERTICAL", lit, clear)
+    self.fillGlow[2]:SetGradient("VERTICAL", clear, lit)
+    self.valueEdit:SetTextColor(theme.textPrimary[1], theme.textPrimary[2], theme.textPrimary[3], 1)
 
     for _, stepper in ipairs({ self.leftStepper, self.rightStepper }) do
         stepper.icon:SetTexture(theme.stepperTexture)
@@ -201,6 +212,9 @@ function SliderMixin:OnAcquire(parent, labelText, config)
 
     self:SetParent(parent)
     self:ClearAllPoints()
+    -- Reparenting resets levels; keep the thumb above the fill bar.
+    self.thumbFrameBG:SetFrameLevel(self.fillBar:GetFrameLevel() + 1)
+    self.thumbFrame:SetFrameLevel(self.fillBar:GetFrameLevel() + 1)
     pixel.SetPixelHeight(self, 36)
 
     self.label:SetText(labelText or "")
@@ -215,6 +229,7 @@ function SliderMixin:OnAcquire(parent, labelText, config)
     -- acquire must not look like the user just moved the slider.
     self._callback = nil
     self._suppressCallback = true
+    self.fillBar:SetMinMaxValues(sliderMin, sliderMax)
     self.slider:SetMinMaxValues(sliderMin, sliderMax)
     self.slider:SetValueStep(step)
     self.slider:SetValue(config.value or sliderMin)
@@ -237,7 +252,6 @@ function SliderMixin:OnAcquire(parent, labelText, config)
     local alive = lib.Generation(self)
     C_Timer.After(0, function()
         if not alive() then return end
-        self:UpdateFill()
         self:UpdateThumbPosition()
     end)
 
@@ -247,6 +261,10 @@ end
 function SliderMixin:OnRelease()
     self._callback = nil
     self._dragging = false
+    self._thumbHovered = false
+    self._paintThumbGlow()
+    self._valueHovered = false
+    self._paintValueGlow()
     self._suppressCallback = false
     self.valueEdit:ClearFocus()
     self.label:SetText("")
@@ -296,11 +314,25 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     lib.SetBackdrop(slider, gui, { bg = { 0, 0, 0 }, bgAlpha = 0, border = { 0, 0, 0 }, borderAlpha = 0 })
     row.slider = slider
 
-    local fill = slider:CreateTexture(nil, "ARTWORK")
-    pixel.SetPixelHeight(fill, 6)
-    pixel.SetPixelPoint(fill, "LEFT", sliderBG, "LEFT", 1, 0)
+    -- StatusBar so the engine sizes the fill at layout, never from unresolved geometry.
+    local fillBar = CreateFrame("StatusBar", nil, slider)
+    pixel.SetPixelHeight(fillBar, 6)
+    pixel.SetPixelPoint(fillBar, "LEFT", sliderBG, "LEFT", 1, 0)
+    pixel.SetPixelPoint(fillBar, "RIGHT", slider, "RIGHT", -10, 0)
+    fillBar:SetStatusBarTexture("Interface\\Buttons\\WHITE8X8")
+    local fill = fillBar:GetStatusBarTexture()
     pixel.SetPixelSnap(fill)
-    row.fill = fill
+    row.fillBar = fillBar
+
+    local function Halo(point, relPoint)
+        local t = fillBar:CreateTexture(nil, "ARTWORK", nil, -1)
+        t:SetTexture("Interface\\Buttons\\WHITE8X8")
+        pixel.SetPixelHeight(t, FILL_GLOW_HEIGHT)
+        pixel.SetPixelPoint(t, point .. "LEFT", fill, relPoint .. "LEFT", 0, 0)
+        pixel.SetPixelPoint(t, point .. "RIGHT", fill, relPoint .. "RIGHT", 0, 0)
+        return t
+    end
+    row.fillGlow = { Halo("BOTTOM", "TOP"), Halo("TOP", "BOTTOM") }
 
     local thumbFrameBG = CreateFrame("Frame", nil, slider, "BackdropTemplate")
     pixel.SetPixelSize(thumbFrameBG, THUMB_WIDTH, THUMB_HEIGHT)
@@ -311,6 +343,13 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     pixel.SetPixelSize(thumbFrame, THUMB_WIDTH, THUMB_HEIGHT)
     lib.SetBackdrop(thumbFrame, gui, { bg = "textSecondary", bgAlpha = 0.9, border = { 0, 0, 0 }, borderAlpha = 1 })
     row.thumbFrame = thumbFrame
+
+    -- Neon: the thumb glows faintly while hovered, fully while dragged.
+    local thumbGlow = lib.CreateFrameGlow(thumbFrame, gui, THUMB_GLOW_REACH, slider)
+    local function PaintThumbGlow()
+        lib.SetFrameGlow(thumbGlow, gui, row._dragging and lib.GLOW_ACTIVE or (row._thumbHovered and lib.GLOW_HOVER or 0))
+    end
+    row._paintThumbGlow = PaintThumbGlow
 
     local thumb = slider:CreateTexture(nil, "ARTWORK")
     thumb:SetColorTexture(0, 0, 0, 0)
@@ -396,7 +435,6 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     -- The thumb re-lays out a frame after the slider resizes, so re-true the sub-pixel
     -- correction once the new geometry has settled.
     slider:SetScript("OnSizeChanged", function()
-        row:UpdateFill()
         row:UpdateThumbPosition()
         if row._thumbSyncPending then return end
         row._thumbSyncPending = true
@@ -404,7 +442,6 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         C_Timer.After(0, function()
             row._thumbSyncPending = false
             if not alive() then return end
-            row:UpdateFill()
             row:UpdateThumbPosition()
         end)
     end)
@@ -415,18 +452,24 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         thumbFrame:SetBackdropColor(accent[1], accent[2], accent[3], 1)
         row._syncThumb(accent[1], accent[2], accent[3], 1)
         row._dragging = true
+        PaintThumbGlow()
     end)
     slider:SetScript("OnMouseUp", function(sliderFrame, button)
         if button ~= "LeftButton" then return end
         row._dragging = false
+        PaintThumbGlow()
         if row._callbackOnRelease then row:FireCallback(sliderFrame:GetValue()) end
         row:AnimateThumbColor(sliderFrame:IsMouseOver(), false)
     end)
     slider:SetScript("OnEnter", function()
+        row._thumbHovered = true
+        PaintThumbGlow()
         if not row._dragging then row:AnimateThumbColor(true, false) end
         lib.ShowTooltip(row)
     end)
     slider:SetScript("OnLeave", function()
+        row._thumbHovered = false
+        PaintThumbGlow()
         if not row._dragging then row:AnimateThumbColor(false, false) end
         lib.HideTooltip()
     end)
@@ -439,22 +482,34 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         editBox:ClearFocus()
         row:CommitText()
     end)
+    -- Neon: the value box glows faintly while hovered, fully while it's being typed in.
+    local valueGlow = lib.CreateFrameGlow(valueContainer, gui, lib.FIELD_GLOW_REACH, row)
+    row._paintValueGlow = function()
+        lib.SetFrameGlow(valueGlow, gui, valueEdit:HasFocus() and lib.GLOW_ACTIVE or (row._valueHovered and lib.GLOW_HOVER or 0))
+    end
+
     valueEdit:SetScript("OnEditFocusGained", function(editBox)
         local accent = row.gui.theme.accent
         valueContainer:SetBackdropBorderColor(accent[1], accent[2], accent[3], 1)
+        row._paintValueGlow()
         editBox:HighlightText()
     end)
     valueEdit:SetScript("OnEditFocusLost", function(editBox)
         local border = row.gui.theme.widgetBorder
         valueContainer:SetBackdropBorderColor(border[1], border[2], border[3], 1)
+        row._paintValueGlow()
         editBox:HighlightText(0, 0)
         row:CommitText()
     end)
     valueEdit:SetScript("OnEnter", function()
+        row._valueHovered = true
+        row._paintValueGlow()
         if not valueEdit:HasFocus() then row._animateValueBorder(true) end
         lib.ShowTooltip(row)
     end)
     valueEdit:SetScript("OnLeave", function()
+        row._valueHovered = false
+        row._paintValueGlow()
         if not valueEdit:HasFocus() then row._animateValueBorder(false) end
         lib.HideTooltip()
     end)

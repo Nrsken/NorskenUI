@@ -93,7 +93,7 @@ local function SyncIndicators(frame, unit)
             if container then
                 local handle = FindHandle(handles, placement)
                 local proxy = handle and handle.proxy or CreateFrame('Frame', nil, frame)
-                local level = UF.GetLayerLevel(frame, placement.Layer)
+                local level = UF.GetIndicatorLevel(frame, placements, placement)
                 local synced = NRSKNUI:SyncAuraIndicator(container, handle, placement, proxy, level, UF.db.General)
 
                 if synced and not handle then
@@ -198,7 +198,7 @@ UF.Elements.AuraIndicators = {
             local on = previewing[placement] == true
 
             if on then
-                AuraPreview:UpdateIndicator(handle, placement, UF.GetLayerLevel(self, placement.Layer), UF.db.General)
+                AuraPreview:UpdateIndicator(handle, placement, UF.GetIndicatorLevel(self, uDB.AuraIndicators, placement), UF.db.General)
                 NRSKNUI:SetAuraIndicatorShown(handle, false)
             end
 

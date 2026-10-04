@@ -119,7 +119,7 @@ Skinning:RegisterSkin(ADDON_NAME, 'BigWigsKeystones', function(S)
         if child.LeftActive then
             tabSyncs[#tabSyncs + 1] = SkinTab(child --[[@as BWKeystoneTab]])
         elseif child.GetScrollChild then
-            scrollArea = child
+            scrollArea = child --[[@as NUIScrollFrame]]
         end
     end
 

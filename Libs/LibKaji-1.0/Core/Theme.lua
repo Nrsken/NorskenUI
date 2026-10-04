@@ -31,8 +31,11 @@ local ipairs = ipairs
 local format = string.format
 local floor = math.floor
 local CreateFont = CreateFont
+local CreateFrame = CreateFrame
 
 local FALLBACK_FONT = STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF"
+-- Class mode fills its non-class keys from this preset; DEFAULT_THEME's colours mirror it for palettes with gaps.
+local BASELINE_PRESET = "NUI Neon"
 local MEDIA = lib.mediaBase
 
 ---Theme table.
@@ -55,31 +58,36 @@ local MEDIA = lib.mediaBase
 ---@field success number[]
 ---@field warning number[]
 local DEFAULT_THEME = {
+    -- Colours mirror BASELINE_PRESET
     -- Backgrounds
-    bgDark                  = { 0.0235, 0.0235, 0.0235, 0.6 },
-    bgMedium                = { 0.0431, 0.0431, 0.0431, 1 },
-    bgLight                 = { 0.1176, 0.1176, 0.1176, 1 },
-    bgHover                 = { 0.22, 0.22, 0.24, 1 },
+    bgDark                  = { 0.016, 0.016, 0.024, 0.9 },
+    bgMedium                = { 0.035, 0.035, 0.045, 0.9 },
+    bgLight                 = { 0.055, 0.055, 0.07, 0.9 },
+    bgHover                 = { 0.16, 0.16, 0.19, 1 },
     -- Border: `border` edges the window chrome, `widgetBorder` the controls inside it
-    border                  = { 0, 0, 0, 1 },
-    widgetBorder            = { 0.22, 0.22, 0.24, 1 },
+    border                  = { 0.114, 0.114, 0.133, 1 },
+    widgetBorder            = { 0.149, 0.149, 0.172, 1 },
     -- Accent
-    accent                  = { 0.8980, 0.0627, 0.2235, 1 },
-    accentHover             = { 0.8980, 0.0627, 0.2235, 0.25 },
-    accentDim               = { 0.8980, 0.0627, 0.2235, 1 },
+    accent                  = { 0.85, 1, 0.39, 1 },
+    accentHover             = { 0.85, 1, 0.39, 0.25 },
+    accentDim               = { 0.85, 1, 0.39, 1 },
     -- Text
-    textPrimary             = { 0.95, 0.95, 0.95, 1 },
-    textSecondary           = { 0.70, 0.70, 0.70, 1 },
-    textMuted               = { 0.50, 0.50, 0.50, 1 },
+    textPrimary             = { 1, 1, 1, 1 },
+    textSecondary           = { 0.86, 0.86, 0.88, 1 },
+    textMuted               = { 0.50, 0.50, 0.54, 1 },
     -- Selection
-    selectedBg              = { 0.8980, 0.0627, 0.2235, 0.25 },
-    selectedText            = { 0.8980, 0.0627, 0.2235, 1 },
+    selectedBg              = { 0.85, 1, 0.39, 0.15 },
+    selectedText            = { 0.85, 1, 0.39, 1 },
     -- Status
     error                   = { 0.90, 0.30, 0.30, 1 },
     success                 = { 0.30, 0.80, 0.40, 1 },
     warning                 = { 0.90, 0.75, 0.30, 1 },
     -- Dimensions
     headerHeight            = 35,
+    -- Band under the header, shared by search box, item-list buttons and sub-tabs so they share a baseline
+    barHeight               = 37,
+    barInset                = 4,
+    barControlHeight        = 27,
     footerHeight            = 28,
     sidebarWidth            = 242,
     contentWidth            = 679.1,
@@ -88,17 +96,18 @@ local DEFAULT_THEME = {
     paddingSmall            = 4,
     paddingMedium           = 8,
     paddingLarge            = 16,
-    scrollbarWidth          = 17,
+    scrollbarWidth          = 10, -- every window scrollbar: main sidebar, content and item list
     -- Row heights
     rowHeight               = 40,
     rowHeightLast           = 44,
     rowHeightTall           = 80,
     rowHeightSeparator      = 8,
-    rowHeightLabelSeparator = 22,
+    rowHeightLabelSeparator = 32,
     -- Fonts
     fontFace                = FALLBACK_FONT,
     fontSizeSmall           = 12,
     fontSizeNormal          = 12,
+    fontSizeMedium          = 14, -- navigation titles: main sidebar headers, item list sections
     fontSizeLarge           = 16,
     fontOutline             = "OUTLINE",
     fontShadow              = false, ---@type boolean presets and the font editor both flip this
@@ -109,14 +118,37 @@ local DEFAULT_THEME = {
     stepperTexture          = MEDIA .. "collapse.tga",
     colorSwatchTexture      = MEDIA .. "NUIcolorPickerBG.png",
     resizeHandleTexture     = MEDIA .. "NorskenCustomResizeHandle23px.png",
+    -- Drag cursors: an Enum.Cursormode or built-in cursor name, never a path (addon textures draw black)
+    dragCursor              = Enum.Cursormode and Enum.Cursormode.GrabbingHandCursor or "UI_MOVE_CURSOR",
+    dragCursorHeld          = Enum.Cursormode and Enum.Cursormode.HoldingHandCursor or "UI_MOVE_CURSOR",
+    -- Neon turns grain, corner ticks, sheen and highlight off at 0; raise a strength to bring one back.
+    -- Tiling grain over sidebars, content area, header and footer
+    surfaceTexture          = MEDIA .. "surface.png",
+    surfaceAlpha            = 0,
+    -- Accent ticks on two corners of every card
+    cardCornerLength        = 7,
+    cardCornerAlpha         = 0,
+    -- Top sheen on header bands, 1px top highlight on cards and tabs
+    sheenAlpha              = 0,
+    highlightAlpha          = 0,
+    -- Soft white 9-slice falloff, tinted per use: black for the window shadow, accent for the toggle glow
+    glowTexture             = MEDIA .. "glow.png",
+    glowSmallTexture        = MEDIA .. "glow_small.png", -- 8px falloff, for fields, buttons and thumbs
+    -- Window drop shadow and the window's accent edge
+    shadowSize              = 16, -- = glow.png's slice margin, so the shadow starts right at the window edge
+    shadowAlpha             = 0.2,
+    windowEdgeAlpha         = 0.35,
+    -- Glows on selection and controls
+    underlineGlowAlpha      = 0.28, -- the selected tab's glow rising from its underline
+    glowControlAlpha        = 0.35, -- on-state toggle and slider fill
+    iconGlowAlpha           = 0.6, -- baked icon glows, scaled by the icon's own hover alpha
+    selectionGlowAlpha      = 0.22, -- selected row tint, fading out to the right
+    barGlowAlpha            = 0.45, -- glow spilling right from the selected row's accent bar
     -- Animation
     animDuration            = 0.18,
 }
 lib.DEFAULT_THEME = DEFAULT_THEME
 
--- Expands a compact preset spec into the 17 color keys. Backgrounds share their RGB
--- (dark and medium differ only in alpha unless `medium` is given); accent variants are
--- derived from the accent color. Shared rows (text/status) are constant across presets.
 local function BuildPreset(spec)
     local aC = spec.accent
     local aH = spec.accentHover or { aC[1], aC[2], aC[3], 0.25 }
@@ -136,7 +168,7 @@ local function BuildPreset(spec)
         bgMedium = mBG,
         bgLight = lBG,
         bgHover = hBG,
-        border = { 0, 0, 0, 1 },
+        border = spec.border or { 0, 0, 0, 1 },
         widgetBorder = spec.widgetBorder or hBG,
         -- Accent Colors
         accent = aC,
@@ -157,57 +189,57 @@ end
 -- Bundled preset themes. Consumers may override the whole set via New{ presets = ... }.
 local THEME_PRESETS = {
     ["Warpaint"] = BuildPreset {
-        dark = { 0.0745, 0.0588, 0.0510, 0.6 },
+        dark = { 0.0745, 0.0588, 0.0510, 0.8 },
         light = { 0.1945, 0.1788, 0.1710, 1 },
         accent = { 0.7098, 0.2000, 0.1412 },
     },
     ["Greenwake"] = BuildPreset {
-        dark = { 0.031, 0.106, 0.106, 0.6 },
+        dark = { 0.031, 0.106, 0.106, 0.8 },
         light = { 0.125, 0.231, 0.216, 1 },
         accent = { 0.933, 0.910, 0.698 },
     },
     ["Timberfall"] = BuildPreset {
-        dark = { 0.092, 0.069, 0.018, 0.6 },
+        dark = { 0.092, 0.069, 0.018, 0.8 },
         light = { 0.286, 0.220, 0.118, 1 },
         accent = { 0.988, 0.361, 0.008 },
     },
     ["Obsidian"] = BuildPreset {
-        dark = { 0.014, 0.047, 0.063, 0.6 },
+        dark = { 0.014, 0.047, 0.063, 0.8 },
         light = { 0.114, 0.147, 0.163, 1 },
         accent = { 0.900, 0.467, 0.976 },
         selectedBg = { 0.900, 0.467, 0.976, 0.25 },
     },
     ["Mocha"] = BuildPreset {
-        dark = { 0.0588, 0.0559, 0.0294, 0.6 },
+        dark = { 0.0588, 0.0559, 0.0294, 0.8 },
         light = { 0.1019, 0.0969, 0.0510, 1 },
         accent = { 0.7451, 0.9412, 0.0000 },
     },
     ["Frost"] = BuildPreset {
-        dark = { 0.024, 0.078, 0.106, 0.6 },
+        dark = { 0.024, 0.078, 0.106, 0.8 },
         light = { 0.067, 0.129, 0.176, 1 },
         accent = { 0.790, 0.857, 0.872 },
     },
     ["Echo"] = BuildPreset {
-        dark = { 0.0666, 0.0000, 0.0000, 0.6 },
+        dark = { 0.0666, 0.0000, 0.0000, 0.8 },
         light = { 0.0705, 0.0705, 0.0705, 1 },
         accent = { 0.7803, 0.0000, 0.0000 },
     },
     ["Dark"] = BuildPreset {
-        dark = { 0.0235, 0.0235, 0.0235, 0.6 },
+        dark = { 0.0235, 0.0235, 0.0235, 0.8 },
         medium = { 0.0431, 0.0431, 0.0431, 0.8 },
         light = { 0.1176, 0.1176, 0.1176, 1 },
         accent = { 0.8980, 0.0627, 0.2235 },
     },
     ["NUI v2"] = BuildPreset {
-        dark = { 0.015, 0.047, 0.062, 0.6 },
+        dark = { 0.015, 0.047, 0.062, 0.8 },
         light = { 0.113, 0.145, 0.164, 1 },
         accent = { 0, 1, 0.588 },
         selectedBg = { 0.8980, 0.0627, 0.2235, 0.25 },
         bgHover = { 0.219, 0.219, 0.239, 1 },
     },
     ["NUI v3"] = BuildPreset {
-        dark = { 0, 0, 0, 0.5 },
-        medium = { 0, 0, 0, 0.5 },
+        dark = { 0, 0, 0, 0.8 },
+        medium = { 0, 0, 0, 0.8 },
         light = { 0.17, 0.17, 0.17, 0.8 },
         accent = { 0.85, 1, 0.39 },
         bgHover = { 0.22, 0.22, 0.24, 1 },
@@ -216,12 +248,25 @@ local THEME_PRESETS = {
         textMuted = { 0.5, 0.5, 0.5, 1 },
         selectedBg = { 0.68, 0.68, 0.68, 0.25 },
     },
+    ["NUI Neon"] = BuildPreset {
+        dark = { 0.016, 0.016, 0.024, 0.9 },
+        medium = { 0.035, 0.035, 0.045, 0.9 },
+        light = { 0.055, 0.055, 0.07, 0.9 },
+        accent = { 0.85, 1, 0.39 },
+        border = { 0.114, 0.114, 0.133, 1 },
+        widgetBorder = { 0.149, 0.149, 0.172, 1 },
+        bgHover = { 0.16, 0.16, 0.19, 1 },
+        textPrimary = { 1, 1, 1, 1 },
+        textSecondary = { 0.86, 0.86, 0.88, 1 },
+        textMuted = { 0.5, 0.5, 0.54, 1 },
+        selectedBg = { 0.85, 1, 0.39, 0.15 },
+    },
 }
 lib.THEME_PRESETS = THEME_PRESETS
 
 -- Ordered preset names for the theme picker.
 local THEME_PRESET_NAMES = {
-    "Echo", "Warpaint", "Greenwake", "Timberfall", "Obsidian", "Mocha", "Frost", "Dark", "NUI v2", "NUI v3",
+    "Echo", "Warpaint", "Greenwake", "Timberfall", "Obsidian", "Mocha", "Frost", "Dark", "NUI v2", "NUI v3", "NUI Neon",
 }
 lib.THEME_PRESET_NAMES = THEME_PRESET_NAMES
 
@@ -248,7 +293,7 @@ local THEME_COLOR_KEYS = {
 lib.THEME_COLOR_KEYS = THEME_COLOR_KEYS
 
 -- Font keys resolved from the store alongside colors.
-local FONT_KEYS = { "fontFace", "fontSizeNormal", "fontSizeSmall", "fontSizeLarge", "fontOutline", "fontShadow" }
+local FONT_KEYS = { "fontFace", "fontSizeNormal", "fontSizeSmall", "fontSizeMedium", "fontSizeLarge", "fontOutline", "fontShadow" }
 
 -- Valid theme modes.
 local VALID_MODES = { preset = true, class = true, custom = true }
@@ -265,10 +310,6 @@ local function overwriteArray(dst, src)
     for i = #src + 1, #dst do dst[i] = nil end
 end
 
----Merges src's keys into dst. Table values are merged into the table already at that
----key rather than replacing it: widgets, animators and the host addon hold direct
----references to theme colors, and swapping the table would leave every one of them
----pointing at the previous palette. Only the first merge allocates.
 local function mergeInto(dst, src)
     for key, value in pairs(src) do
         if type(value) == "table" then
@@ -296,10 +337,6 @@ local function resolveFont(face)
     return face or FALLBACK_FONT
 end
 
--- Cached Font objects keyed by path|size|flags. Applying a shared Font object via
--- SetFontObject is reliable on a fresh client login, unlike a bare FontString:SetFont,
--- which can render blank until the client's glyph cache is warmed (e.g. by a /reload) -
--- most visibly on larger sizes the default UI never requests first.
 local fontObjectCache = {}
 local fontObjectIndex = 0
 local function getFontObject(path, size, flags)
@@ -330,25 +367,45 @@ function InstanceMixin:_InitTheme(overrides)
     end
 end
 
----Returns the live theme table. Both it and every color table inside it keep their
----identity across theme changes (see mergeInto), so a held `theme.accent` reference
----always reads the current palette. Widgets and animators rely on this.
 ---@return KajiTheme
 function InstanceMixin:GetTheme()
     return self.theme
 end
 
----Merges overrides over the current theme and notifies subscribers.
+local WARM_SIZES = { "small", "normal", "medium", "large" }
+local WARM_TEXT = "AaBbGgQq0123"
+local warmFrame
+
+---@param gui KajiGUIInstanceMixin
+local function WarmFonts(gui)
+    if not warmFrame then
+        warmFrame = CreateFrame("Frame", nil, UIParent)
+        warmFrame:SetSize(1, 1)
+        warmFrame:SetPoint("TOPRIGHT", UIParent, "TOPLEFT", -100, 0)
+        warmFrame:SetAlpha(0)
+        warmFrame.strings = {}
+    end
+    for i, size in ipairs(WARM_SIZES) do
+        local fs = warmFrame.strings[i]
+        if not fs then
+            fs = warmFrame:CreateFontString(nil, "OVERLAY")
+            fs:SetPoint("TOPLEFT")
+            warmFrame.strings[i] = fs
+        end
+        gui:ApplyFont(fs, size)
+        fs:SetText(WARM_TEXT)
+    end
+end
+
 ---@param overrides table
 ---@return KajiGUIInstance self
 function InstanceMixin:SetTheme(overrides)
     if overrides then mergeInto(self.theme, overrides) end
+    WarmFonts(self)
     self:_FireThemeChanged()
     return self
 end
 
----Resets the persisted store to preset mode on the default preset (preserving fonts)
----and re-resolves. Notifies subscribers.
 ---@return KajiGUIInstance self
 function InstanceMixin:ResetTheme()
     local store = self:_Store()
@@ -360,7 +417,6 @@ function InstanceMixin:ResetTheme()
     return self:ApplyTheme()
 end
 
----Subscribes to theme changes. The callback receives the live theme table.
 ---@param callback fun(theme: KajiTheme)
 ---@return fun() unsubscribe
 function InstanceMixin:OnThemeChanged(callback)
@@ -374,9 +430,6 @@ function InstanceMixin:_FireThemeChanged()
         callback(self.theme)
     end
 
-    -- Widgets don't subscribe: the set of acquired widgets is already an exact,
-    -- bounded registry, so there is nothing to unsubscribe and nothing to leak.
-    -- Released widgets are skipped and pick the new palette up in OnAcquire.
     for widget in pairs(self._acquired) do
         if widget.UpdateColors then widget:UpdateColors() end
     end
@@ -413,7 +466,7 @@ end
 
 ---Applies the themed font to a FontString.
 ---@param fontString FontString
----@param size? "small"|"normal"|"large"|number
+---@param size? "small"|"normal"|"medium"|"large"|number
 function InstanceMixin:ApplyFont(fontString, size)
     if not fontString or not fontString.SetFontObject then return end
 
@@ -422,9 +475,7 @@ function InstanceMixin:ApplyFont(fontString, size)
     fontString:SetShadowColor(0, 0, 0, 0)
 end
 
----The resolved theme font, in the form FontString:SetFont takes. Only needed by callers that have to
----undo a direct SetFont, since ApplyFont's font object cannot outrank one.
----@param size? "small"|"normal"|"large"|number
+---@param size? "small"|"normal"|"medium"|"large"|number
 ---@return string path, number size, string flags
 function InstanceMixin:GetThemeFont(size)
     local theme = self.theme
@@ -433,6 +484,8 @@ function InstanceMixin:GetThemeFont(size)
         fontSize = size
     elseif size == "small" then
         fontSize = theme.fontSizeSmall or 12
+    elseif size == "medium" then
+        fontSize = theme.fontSizeMedium or 14
     elseif size == "large" then
         fontSize = theme.fontSizeLarge or 16
     else
@@ -480,9 +533,10 @@ function InstanceMixin:_ResolveColor(key, store, mode)
         if preset and preset[key] then return copyColor(preset[key]) end
     end
 
+    -- Class mode takes everything but its class-coloured keys from the baseline preset.
     if mode == "class" then
-        local dark = self.presets["Dark"]
-        if dark and dark[key] then return copyColor(dark[key]) end
+        local base = self.presets[BASELINE_PRESET]
+        if base and base[key] then return copyColor(base[key]) end
     end
 
     -- Custom palettes saved before this key existed get the hover background they already chose.

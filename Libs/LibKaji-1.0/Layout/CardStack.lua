@@ -15,6 +15,7 @@ local pixel = lib.Pixel
 
 local ipairs = ipairs
 local Mixin = Mixin
+local safecall = lib.safecall
 
 ---@class KajiGUICardStackMixin
 ---@field gui KajiGUIInstance owning instance (for theme)
@@ -70,6 +71,23 @@ function CardStackMixin:DoLayout()
     if self.onLayout then self.onLayout(y) end
 
     return y
+end
+
+---Runs fn with the stack paused, then lays it out once; half-built heights would clamp the scroll position.
+---@param fn fun()
+---@return number height
+function CardStackMixin:Batch(fn)
+    if self.laying then
+        safecall(fn)
+        self.pending = true
+        return self.parent:GetHeight()
+    end
+
+    self.laying = true
+    safecall(fn)
+    self.laying = false
+    self.pending = false
+    return self:DoLayout()
 end
 
 ---Creates a card stack anchored into a scroll child.

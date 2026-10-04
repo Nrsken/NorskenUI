@@ -75,7 +75,7 @@ local function BuildBackdropSettingsTab(page, db)
     page:SetCondition('backdrop', function() return db.ShowBackdrop end)
 
     local backdropCard = page:Card(L['Backdrop Settings'], 'all')
-    local toggleRow = backdropCard:Row(rowH)
+    local toggleRow = backdropCard:Row(rowHL, 0)
     toggleRow:Checkbox(L['Enable Backdrop'], {
         width = 0.5,
         value = db.ShowBackdrop,
@@ -97,25 +97,7 @@ local function BuildBackdropSettingsTab(page, db)
         end,
     })
 
-    backdropCard:Separator()
-
-    local colorRow = backdropCard:Row(rowHL, 0)
-    colorRow:ColorPicker(L['Backdrop Color'], {
-        width = 0.5,
-        conditions = { 'backdrop' },
-        value = db.BackdropColor,
-        callback = function(r, g, b, a)
-            db.BackdropColor = { r, g, b, a }; ApplySettings()
-        end,
-    })
-    colorRow:ColorPicker(L['Border Color'], {
-        width = 0.5,
-        conditions = { 'backdrop' },
-        value = db.BackdropBorderColor,
-        callback = function(r, g, b, a)
-            db.BackdropBorderColor = { r, g, b, a }; ApplySettings()
-        end,
-    })
+    page:BackdropColorsCard({ db = db, title = L['Colors'], borderKey = 'BackdropBorderColor', onChangeCallback = ApplySettings }, 'backdrop')
 end
 
 -- Mouseover Settings Tab.

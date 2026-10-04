@@ -9,293 +9,315 @@ local rowHL = Theme.rowHeightLast
 local pairs = pairs
 local ipairs = ipairs
 local format = string.format
+local sort = table.sort
+local rad = math.rad
+local strtrim = strtrim
 local GetNumSpecializations = GetNumSpecializations
 local GetSpecializationInfo = GetSpecializationInfo
 local GetSpecialization = GetSpecialization
 
-local function BuildProfileOptions()
-    local PM = NRSKNUI.ProfileManager
+local BUTTON_ROW_HEIGHT = 30
+local SPEC_ROW_HEIGHT = 30
+local SPEC_ICON_SIZE = 22
+local RADIO_ROW_HEIGHT = 32
+local RADIO_INDENT = 22 -- the dot plus its gap, so nested rows line up under the option title
+local GROUP_GAP = 12
+local TEX = 'Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\'
+local DELETE_COLOR = { 1, 0, 0 }
+
+local MODES = {
+    { id = 'char',   text = L['This Character'],     hint = L['This character uses one profile in every specialization.'] },
+    { id = 'spec',   text = L['Per Specialization'], hint = L['Changing specialization switches to its profile.'] },
+    { id = 'global', text = L['Global Profile'],     hint = L['Every character uses the same profile.'] },
+}
+
+---@param exclude? table<string, true>
+---@return table<string, string>
+local function BuildProfileOptions(exclude)
     local options = {}
-    if not PM then return options end
-    for _, name in pairs(PM:GetProfiles()) do
-        options[name] = name
+    for _, name in pairs(NRSKNUI.ProfileManager:GetProfiles()) do
+        if not (exclude and exclude[name]) then options[name] = name end
     end
     return options
 end
 
-local function GetSpecInfo()
-    local specs = {}
-    local numSpecs = GetNumSpecializations()
-    local currentSpec = GetSpecialization()
-    for i = 1, numSpecs do
-        local _, name = GetSpecializationInfo(i)
-        specs[i] = { index = i, name = name, isCurrent = (i == currentSpec) }
+---Reset, rename and delete icons on every profile row; delete is greyed out while anything uses the profile.
+---@param PM table
+---@param rebuildAll fun()
+---@return fun(name: string): KajiGUIDropdownItemAction[]
+local function ProfileActions(PM, rebuildAll)
+    return function(name)
+        local users = PM:GetProfileUsers()[name]
+        local usedBy
+        if users then
+            local chars = NRSKNUI.db.sv.char
+            usedBy = { L['In use by:'] }
+            sort(users)
+            for _, who in ipairs(users) do
+                local charName = who:match('^(.-) %- ') -- "Name - Realm"; the global profile entry has no realm
+                local class = charName and chars and chars[who] and chars[who].Class
+                usedBy[#usedBy + 1] = class and NRSKNUI:ColorTextByClass(charName, class) or charName or who
+            end
+        end
+
+        return {
+            {
+                icon = TEX .. 'profile-reset.png',
+                tooltip = L['Reset Profile'],
+                onClick = function()
+                    NRSKNUI:CreatePrompt({
+                        title = L['Reset Profile'],
+                        text = format(L["Reset all settings in '%s' to defaults?\nThis cannot be undone."], name),
+                        onAccept = function() PM:ResetProfile(name) end,
+                        acceptText = L['Reset'],
+                        cancelText = L['Cancel'],
+                    })
+                end,
+            },
+            {
+                icon = TEX .. 'profile-rename.png',
+                tooltip = L['Rename Profile'],
+                onClick = function()
+                    NRSKNUI:CreatePrompt({
+                        title = L['Rename Profile'],
+                        text = name,
+                        editBox = true,
+                        editBoxLabel = L['New Name'],
+                        onAccept = function(newName)
+                            newName = strtrim(newName or '')
+                            if newName == '' or newName == name then return end
+                            local ok, err = PM:RenameProfile(name, newName)
+                            if not ok then
+                                NRSKNUI:Print(format(L['Failed to rename: %s'], err or L['Unknown error']))
+                                return
+                            end
+                            rebuildAll()
+                        end,
+                        acceptText = L['Rename'],
+                        cancelText = L['Cancel'],
+                    })
+                end,
+            },
+            {
+                icon = TEX .. 'NorskenCustomCrossv3.png', -- same cross, tint and rotation as skinned close buttons
+                color = DELETE_COLOR,
+                rotation = rad(45),
+                tooltip = L['Delete Profile'],
+                tooltipText = usedBy,
+                disabled = users ~= nil,
+                onClick = function()
+                    NRSKNUI:CreatePrompt({
+                        title = L['Delete Profile'],
+                        text = format(L["Are you sure you want to delete '%s'?\nThis cannot be undone."], name),
+                        onAccept = function()
+                            local ok, err = PM:DeleteProfile(name)
+                            if not ok then
+                                NRSKNUI:Print(format(L['Failed to delete profile: %s'], err or L['Unknown error']))
+                                return
+                            end
+                            rebuildAll()
+                        end,
+                        acceptText = L['Delete'],
+                        cancelText = L['Cancel'],
+                    })
+                end,
+            },
+        }
     end
-    return specs
 end
 
--- Profiles tab.
-local function BuildProfilesTab(page, PM)
+---@param card KajiGUIFluentCard
+---@param PM table
+---@param rebuildAll fun()
+local function BuildActiveCard(card, PM, rebuildAll)
     local db = NRSKNUI.db
-    local hasSpecFeature = db and db.IsDualSpecEnabled
+    local mode = PM:GetProfileMode()
+    local currentSpec = GetSpecialization()
+    local actions = ProfileActions(PM, rebuildAll)
 
-    page:SetCondition('notGlobal', function() return not PM:GetUseGlobalProfile() end)
-    page:SetCondition('globalOn', function() return PM:GetUseGlobalProfile() end)
-    page:SetCondition('specOn', function() return hasSpecFeature and db:IsDualSpecEnabled() or false end)
-    page:SetCondition('notSpec', function() return not (hasSpecFeature and db:IsDualSpecEnabled()) end)
+    local previous
+    for i, info in ipairs(MODES) do
+        local selected = mode == info.id
+        local isLast = i == #MODES
+        local radio = card:Row(RADIO_ROW_HEIGHT, isLast and not selected and 0 or nil):Radio(info.text, {
+            width = 1,
+            description = info.hint,
+            selected = selected,
+            linkTo = previous,
+            callback = function()
+                local function Apply()
+                    PM:SetProfileMode(info.id)
+                    rebuildAll()
+                end
+                if info.id ~= 'global' and mode ~= 'global' then return Apply() end
 
-    -- Current profile
-    local currentCard = page:Card(L['Current Profile'])
-    currentCard:Row(rowHL, 0):Dropdown(L['Active Profile'], {
-        width = 1,
-        conditions = { 'notGlobal', 'notSpec' },
-        options = BuildProfileOptions(),
-        value = PM:GetCurrentProfile(),
-        -- No reload prompt here: ProfileManager raises one for any change to the active profile,
-        -- including the resets, copies and spec swaps that never passed through this page.
-        callback = function(key)
-            if key == PM:GetCurrentProfile() then return end
-            local success, err = PM:SetProfile(key)
-            if not success then
-                NRSKNUI:Print(format(L['Failed to switch profile: %s'], err or L['Unknown error']))
-            end
-        end,
-    })
-
-    -- Global profile.
-    local globalCard = page:Card(L['Global Profile'])
-    local globalRow = globalCard:Row(rowHL, 0)
-    globalRow:Checkbox(L['Use Global Profile'], {
-        width = 0.5,
-        value = PM:GetUseGlobalProfile(),
-        callback = function(checked)
-            if not PM:SetUseGlobalProfile(checked) then return end
-            page:Refresh()
-            NRSKNUI:Print(checked and L['Global profile mode enabled.'] or L['Global profile mode disabled'])
-        end,
-    })
-    globalRow:Dropdown(L['Global Profile'], {
-        width = 0.5,
-        conditions = { 'globalOn' },
-        options = BuildProfileOptions(),
-        value = PM:GetGlobalProfile(),
-        callback = function(key)
-            local success, err = PM:SetGlobalProfile(key)
-            if not success then
-                NRSKNUI:Print(format(L['Failed to set global profile: %s'], err or L['Unknown error']))
-            else
-                NRSKNUI:Print(format(L['Global profile set to: %s'], key))
-            end
-        end,
-    })
-
-    -- Specialization profiles
-    if hasSpecFeature then
-        local specCard = page:Card(L['Specialization Profiles'])
-        local toggleRow = specCard:Row(rowH)
-        toggleRow:Checkbox(L['Enable Spec Profiles'], {
-            width = 0.5,
-            conditions = { 'notGlobal' },
-            value = db:IsDualSpecEnabled(),
-            callback = function(checked)
-                PM:SetSpecProfilesEnabled(checked)
-                page:Refresh()
+                NRSKNUI:CreatePrompt({
+                    title = L['Global Profile'],
+                    text = info.id == 'global'
+                        and format(L['Use %s on every character?\nOther characters switch the next time they log in.'], PM:GetGlobalProfile())
+                        or L['Turn off the global profile?\nEvery character goes back to its own choice.'],
+                    onAccept = Apply,
+                    onCancel = function() card:Rebuild() end, -- the clicked option already drew itself selected
+                    acceptText = L['Confirm'],
+                    cancelText = L['Cancel'],
+                })
             end,
-        })
+        }) --[[@as KajiGUIRadio]]
+        if info.id == 'spec' and not PM:CanUseSpecProfiles() then radio:SetEnabled(false) end
+        previous = radio
 
-        specCard:Separator()
-
-        local specs = GetSpecInfo()
-        local numSpecs = #specs
-        local widthPerSpec = numSpecs == 2 and 0.5 or (numSpecs == 3 and (1 / 3) or 0.25)
-        local specRow = specCard:Row(rowHL, 0)
-        for _, spec in ipairs(specs) do
-            local label = spec.isCurrent and (spec.name .. " " .. L['(Active)']) or spec.name
-            specRow:Dropdown(label, {
-                width = widthPerSpec,
-                conditions = { 'notGlobal', 'specOn' },
-                options = BuildProfileOptions(),
-                value = db:GetDualSpecProfile(spec.index),
-                callback = function(key)
-                    db:SetDualSpecProfile(key, spec.index)
-                end,
-            })
+        if selected then
+            local gap = isLast and 0 or GROUP_GAP
+            if mode == 'char' then
+                card:Row(rowHL, gap, RADIO_INDENT):Dropdown(L['Profile'], {
+                    width = 0.5,
+                    options = BuildProfileOptions(),
+                    value = PM:GetCurrentProfile(),
+                    itemActions = actions,
+                    callback = function(key)
+                        PM:SetProfile(key)
+                        rebuildAll()
+                    end,
+                })
+            elseif mode == 'global' then
+                card:Row(rowHL, gap, RADIO_INDENT):Dropdown(L['Profile for All Characters'], {
+                    width = 0.5,
+                    options = BuildProfileOptions(),
+                    value = PM:GetGlobalProfile(),
+                    itemActions = actions,
+                    callback = function(key)
+                        PM:SetGlobalProfile(key)
+                        rebuildAll()
+                    end,
+                })
+            else
+                local numSpecs = GetNumSpecializations()
+                for spec = 1, numSpecs do
+                    local _, name, _, icon = GetSpecializationInfo(spec)
+                    if spec == currentSpec then
+                        name = NRSKNUI:ColorTextByTheme(name) .. ' ' .. NRSKNUI:ColorText(L['(Active)'], Theme.textMuted)
+                    end
+                    local row = card:Row(SPEC_ROW_HEIGHT, spec == numSpecs and gap or nil, RADIO_INDENT)
+                    row:Dropdown(nil, {
+                        width = 0.5,
+                        yOffset = 14 - (SPEC_ROW_HEIGHT - 24) / 2, -- no label, so lift the box level with the icon
+                        options = BuildProfileOptions(),
+                        value = db:GetDualSpecProfile(spec),
+                        itemActions = actions,
+                        callback = function(key)
+                            db:SetDualSpecProfile(key, spec)
+                            rebuildAll()
+                        end,
+                    })
+                    row:Icon({
+                        width = 0.5,
+                        size = SPEC_ICON_SIZE,
+                        yOffset = -(SPEC_ROW_HEIGHT - SPEC_ICON_SIZE) / 2, -- Icon sizes to itself and sits at the row top
+                        texture = icon,
+                        text = { text = name, position = 'RIGHT' },
+                    })
+                end
+            end
         end
     end
 end
 
--- Profile management tab: create, copy, rename, delete.
-local function BuildManageTab(page, PM)
-    local optionDropdowns = {}
-    local resetCard
+---@param card KajiGUIFluentCard
+---@param PM table
+---@param rebuildAll fun()
+local function BuildCreateCard(card, PM, rebuildAll)
+    local profiles = BuildProfileOptions()
+    local newName, source = '', ''
+    local createButton
 
-    local function RefreshProfiles()
-        local options = BuildProfileOptions()
-        for _, dropdown in ipairs(optionDropdowns) do dropdown:SetOptions(options) end
-        if resetCard then resetCard:Rebuild() end
-    end
-
-    -- Reset
-    resetCard = page:Card(L['Reset Profile'])
-    resetCard:Rebuild(function(card)
-        local row = card:Row(rowHL - 9, 0)
-        row:Text(L['Current Profile: '] .. NRSKNUI:ColorTextByTheme(PM:GetCurrentProfile()), {
-            width = 0.5,
-            height = rowHL - 9,
-            bgMode = 'hide',
-            yOffset = -6,
-        })
-        row:Button(L['Reset to Defaults'], {
-            width = 0.5,
-            height = 30,
-            yOffset = -2,
-            callback = function()
-                NRSKNUI:CreatePrompt({
-                    title = L['Reset Profile'],
-                    text = L['Reset all settings in current profile to defaults?\nThis cannot be undone.'],
-                    onAccept = function()
-                        if not PM:ResetProfile() then NRSKNUI:Print(L['Failed to reset profile']) end
-                    end,
-                    acceptText = L['Reset'],
-                    cancelText = L['Cancel'],
-                })
-            end,
-        })
-    end)
-
-    -- Create
-    local createCard = page:Card(L['Create New Profile'])
-    local createRow = createCard:Row(rowHL, 0)
-    local newProfileInput = createRow:EditBox(L['Profile Name'], { width = 0.5, value = "" })
-    createRow:Button(L['Create'], {
+    local row = card:Row(rowH)
+    row:EditBox(L['Profile Name'], {
         width = 0.5,
-        height = 24,
-        yOffset = -14,
+        onTextChanged = function(text)
+            newName = strtrim(text)
+            createButton:SetEnabled(newName ~= '' and not profiles[newName])
+        end,
+    })
+    local startFrom = BuildProfileOptions()
+    startFrom[''] = L['Defaults']
+    row:Dropdown(L['Start From'], {
+        width = 0.5,
+        options = startFrom,
+        value = '',
+        callback = function(key) source = key end,
+    })
+
+    createButton = card:Row(BUTTON_ROW_HEIGHT, 0):Button(L['Create'], {
+        width = 1,
+        height = BUTTON_ROW_HEIGHT - 4,
         callback = function()
-            local name = newProfileInput:GetValue()
-            if not name or name == "" then
-                NRSKNUI:Print(L['Please enter a profile name'])
+            local ok, err = PM:CreateProfile(newName, source ~= '' and source or nil)
+            if not ok then
+                NRSKNUI:Print(format(L['Failed to create profile: %s'], err or L['Unknown error']))
                 return
             end
-            local success, err = PM:CreateProfile(name)
-            if success then
-                NRSKNUI:Print(format(L['Created profile: %s'], name))
-                newProfileInput:SetValue("")
-                RefreshProfiles()
-            else
-                NRSKNUI:Print(format(L['Failed to create profile: %s'], err or L['Unknown error']))
-            end
+            rebuildAll()
+        end,
+    }) --[[@as KajiGUIButton]]
+    createButton:SetEnabled(false)
+end
+
+---@param card KajiGUIFluentCard
+---@param PM table
+local function BuildCopyCard(card, PM)
+    local from, to = nil, PM:GetCurrentProfile()
+    local copyButton
+    local function UpdateButton() copyButton:SetEnabled(from ~= nil and from ~= to) end
+
+    local row = card:Row(rowH)
+    row:Dropdown(L['Copy From'], {
+        width = 0.5,
+        options = BuildProfileOptions(),
+        callback = function(key)
+            from = key
+            UpdateButton()
+        end,
+    })
+    row:Dropdown(L['Copy Into'], {
+        width = 0.5,
+        options = BuildProfileOptions(),
+        value = to,
+        callback = function(key)
+            to = key
+            UpdateButton()
         end,
     })
 
-    -- Copy
-    local copyCard = page:Card(L['Copy Profile'])
-    local copyRow = copyCard:Row(rowHL, 0)
-    local copyDropdown = copyRow:Dropdown(L['Source Profile'], {
-        width = 0.5,
-        options = BuildProfileOptions(),
-        value = "",
-    })
-    optionDropdowns[#optionDropdowns + 1] = copyDropdown
-    copyRow:Button(L['Copy'], {
-        width = 0.5,
-        height = 24,
-        yOffset = -14,
+    copyButton = card:Row(BUTTON_ROW_HEIGHT, 0):Button(L['Copy'], {
+        width = 1,
+        height = BUTTON_ROW_HEIGHT - 4,
         callback = function()
-            local source = copyDropdown:GetValue()
-            if not source or source == "" then
-                NRSKNUI:Print(L['Please select a source profile'])
-                return
-            end
             NRSKNUI:CreatePrompt({
                 title = L['Copy Profile'],
-                text = format(L["Copy all settings from '%s' to current profile?\nThis will overwrite your current settings."], source),
+                text = format(L["Copy all settings from '%s' into '%s'?\nThis overwrites every setting in '%s'."], from, to, to),
                 onAccept = function()
-                    local success, err = PM:CopyProfile(source)
-                    if not success then NRSKNUI:Print(format(L['Failed to copy profile: %s'], err or L['Unknown error'])) end
+                    local ok, err = PM:CopyProfile(from, to)
+                    if not ok then NRSKNUI:Print(format(L['Failed to copy profile: %s'], err or L['Unknown error'])) end
                 end,
                 acceptText = L['Copy'],
                 cancelText = L['Cancel'],
             })
         end,
-    })
+    }) --[[@as KajiGUIButton]]
+    copyButton:SetEnabled(false)
+end
 
-    -- Rename
-    local renameCard = page:Card(L['Rename Profile'])
-    local renameDropdown = renameCard:Row(rowH):Dropdown(L['Profile to Rename'], {
-        width = 1,
-        options = BuildProfileOptions(),
-        value = "",
-    })
-    optionDropdowns[#optionDropdowns + 1] = renameDropdown
-    local renameRow = renameCard:Row(rowHL, 0)
-    local newNameInput = renameRow:EditBox(L['New Name'], { width = 0.5, value = "" })
-    renameRow:Button(L['Rename'], {
-        width = 0.5,
-        height = 24,
-        yOffset = -14,
-        callback = function()
-            local oldName = renameDropdown:GetValue()
-            local newName = newNameInput:GetValue()
-            if not oldName or oldName == "" then
-                NRSKNUI:Print(L['Please select a profile to rename'])
-                return
-            end
-            if not newName or newName == "" then
-                NRSKNUI:Print(L['Please enter a new name'])
-                return
-            end
-            local success, err = PM:RenameProfile(oldName, newName)
-            if success then
-                NRSKNUI:Print(format(L["Renamed '%s' to '%s'"], oldName, newName))
-                newNameInput:SetValue("")
-                RefreshProfiles()
-            else
-                NRSKNUI:Print(format(L['Failed to rename: %s'], err or L['Unknown error']))
-            end
-        end,
-    })
+local function BuildProfilesTab(page, PM)
+    local activeCard, createCard, copyCard
+    local function RebuildAll()
+        activeCard:Rebuild()
+        createCard:Rebuild()
+        copyCard:Rebuild()
+    end
 
-    -- Delete
-    local deleteCard = page:Card(L['Delete Profile'])
-    local deleteRow = deleteCard:Row(rowHL, 0)
-    local deleteDropdown = deleteRow:Dropdown(L['Profile to Delete'], {
-        width = 0.5,
-        options = BuildProfileOptions(),
-        value = "",
-    })
-    optionDropdowns[#optionDropdowns + 1] = deleteDropdown
-    deleteRow:Button(L['Delete'], {
-        width = 0.5,
-        height = 24,
-        yOffset = -14,
-        callback = function()
-            local toDelete = deleteDropdown:GetValue()
-            if not toDelete or toDelete == "" then
-                NRSKNUI:Print(L['Please select a profile to delete'])
-                return
-            end
-            if toDelete == PM:GetCurrentProfile() then
-                NRSKNUI:Print(L['Cannot delete the active profile'])
-                return
-            end
-            NRSKNUI:CreatePrompt({
-                title = L['Delete Profile'],
-                text = format(L["Are you sure you want to delete '%s'?\nThis cannot be undone."], toDelete),
-                onAccept = function()
-                    local success, err = PM:DeleteProfile(toDelete)
-                    if success then
-                        NRSKNUI:Print(format(L['Deleted profile: %s'], toDelete))
-                        RefreshProfiles()
-                    else
-                        NRSKNUI:Print(format(L['Failed to delete profile: %s'], err or L['Unknown error']))
-                    end
-                end,
-                acceptText = L['Delete'],
-                cancelText = L['Cancel'],
-            })
-        end,
-    })
+    activeCard = page:Card(L['Active Profile']):Rebuild(function(card) BuildActiveCard(card, PM, RebuildAll) end)
+    createCard = page:Card(L['Create Profile']):Rebuild(function(card) BuildCreateCard(card, PM, RebuildAll) end)
+    copyCard = page:Card(L['Copy Profile']):Rebuild(function(card) BuildCopyCard(card, PM) end)
 end
 
 -- Profile sharing tab: import/export.
@@ -338,7 +360,7 @@ local function BuildSharingTab(page, PM)
                         editBoxLabel = L['Enter profile name (leave empty for original)'],
                         onAccept = function(profileName)
                             local targetName = (profileName and profileName ~= "") and profileName or nil
-                            local success, nameOrErr = PM:ImportProfile(importString, targetName)
+                            local success, nameOrErr = PM:ImportProfile(importString, targetName, true)
                             if success then
                                 NRSKNUI:Print(format(L['Imported profile: %s'], nameOrErr))
                             else
@@ -361,7 +383,6 @@ GUI:RegisterPage('profilePage', {
     search = {},
     tabs = {
         { id = 'profiles', text = L['Profiles'] },
-        { id = 'manage',   text = L['Manage'] },
         { id = 'sharing',  text = L['Import/Export'] },
     },
     build = function(page, tabId)
@@ -378,8 +399,6 @@ GUI:RegisterPage('profilePage', {
 
         if tabId == 'profiles' then
             BuildProfilesTab(page, PM)
-        elseif tabId == 'manage' then
-            BuildManageTab(page, PM)
         elseif tabId == 'sharing' then
             BuildSharingTab(page, PM)
         end

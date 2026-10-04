@@ -5,11 +5,13 @@ local UF = NRSKNUI:GetModule('UnitFrames')
 ---@class NorskenUF
 local oUF = NRSKNUI.oUF
 local Anchors = NRSKNUI.Anchors
+local Pixel = NRSKNUI.Libs.KAJI.Pixel
 
 local UnregisterStateDriver = UnregisterStateDriver
 local format, upper = string.format, string.upper
 local RegisterStateDriver = RegisterStateDriver
 local min, max, ceil, floor = math.min, math.max, math.ceil, math.floor
+local GetNumGroupMembers, IsInGroup = GetNumGroupMembers, IsInGroup
 local ipairs, pairs = ipairs, pairs
 local CreateFrame = CreateFrame
 local tostring = tostring
@@ -132,6 +134,7 @@ end
 ---@param spacing number
 local function ApplyHeaderAttributes(header, uDB, gDB, dir, spacing)
     local xOffset, yOffset = dir.x * spacing, dir.y * spacing
+    local width, height = Pixel.ToPixelGrid(uDB.Width), Pixel.ToPixelGrid(uDB.Height)
 
     -- Only wipe children when a positioning attribute changes; that write then re-anchors them.
     if header:GetAttribute('point') ~= dir.point or header:GetAttribute('xOffset') ~= xOffset or header:GetAttribute('yOffset') ~= yOffset then
@@ -142,7 +145,27 @@ local function ApplyHeaderAttributes(header, uDB, gDB, dir, spacing)
     SetHeaderAttribute(header, 'xOffset', xOffset)
     SetHeaderAttribute(header, 'yOffset', yOffset)
     SetHeaderAttribute(header, 'showPlayer', gDB.ShowPlayer)
-    SetHeaderAttribute(header, 'oUF-initialConfigFunction', format('self:SetWidth(%d) self:SetHeight(%d)', uDB.Width, uDB.Height))
+    SetHeaderAttribute(header, 'oUF-initialConfigFunction', format('self:SetWidth(%s) self:SetHeight(%s)', width, height))
+end
+
+---The preview fills every slot.
+---@param group UnitFramesGroup
+---@param gDB table
+---@return number
+local function ShownMembers(group, gDB)
+    if group.container.nuiPreviewing or not IsInGroup() then return UF.GROUP_SIZE end
+    local count = min(GetNumGroupMembers(), UF.GROUP_SIZE)
+    if not gDB.ShowPlayer then count = count - 1 end
+    return max(count, 1)
+end
+
+---Centering the header on the container lands on a half pixel for odd widths; the bias fixes .5 rounding.
+---@param empty number empty slots
+---@param step number one frame plus spacing, on the pixel grid
+---@return number
+local function CenterShift(empty, step)
+    local mult = Pixel.GetMult()
+    return floor(empty * step / 2 / mult + 0.5 + 0.001) * mult
 end
 
 ---One header per subgroup on a grid. Party is the one-slot case.
@@ -158,7 +181,7 @@ local function LayoutPerGroup(group, uDB, gDB, dir, spacing, subgroups)
     local gdir = GroupDirection(gDB, dir)
     local wrap = dir -- subgroups wrap back along the unit axis, GroupDirection guarantees it crosses gdir
 
-    local groupSpacing = gDB.GroupSpacing or 0
+    local groupSpacing = Pixel.ToPixelGrid(gDB.GroupSpacing or 0)
     local perLine = min(max(gDB.GroupsPerRowColumn or count, 1), count)
     local lines = ceil(count / perLine)
     local slots = min(count, perLine)
@@ -184,9 +207,13 @@ local function LayoutPerGroup(group, uDB, gDB, dir, spacing, subgroups)
             -- Anchor first, attribute writes re-enter the update and an unanchored header draws nowhere.
             header:ClearAllPoints()
             if count == 1 and gDB.StartFromCenter then
-                -- The header sizes to its content, so centring it centres the column.
-                header:SetPoint('CENTER', container, 'CENTER', 0, 0)
+                local members = ShownMembers(group, gDB)
+                local step = (dir.x ~= 0 and Pixel.ToPixelGrid(uDB.Width) or Pixel.ToPixelGrid(uDB.Height)) + spacing
+                local shift = CenterShift(UF.GROUP_SIZE - members, step)
+                group.centeredFor = members
+                header:SetPoint(corner, container, corner, dir.x * shift, dir.y * shift)
             else
+                group.centeredFor = nil
                 header:SetPoint(corner, container, corner, x, y)
             end
 
@@ -211,7 +238,7 @@ function UF:LayoutGroup(key)
     local uDB = UF.GetUnitDB(key)
     local gDB = uDB.Group
     local dir = DIRECTION[gDB.GrowthDirection] or DIRECTION.DOWN
-    local spacing = (dir.x ~= 0) and gDB.HorizontalSpacing or gDB.VerticalSpacing
+    local spacing = Pixel.ToPixelGrid((dir.x ~= 0) and gDB.HorizontalSpacing or gDB.VerticalSpacing)
     local subgroups = UF.ActiveSubgroups(key, gDB)
 
     group.container:NUIApplyPosition(uDB)
@@ -278,7 +305,7 @@ function UF:SpawnGroup(key)
             'maxColumns', 1,
             'unitsPerColumn', UF.GROUP_SIZE,
             'oUF-initialConfigFunction',
-            format('self:SetWidth(%d) self:SetHeight(%d)', uDB.Width, uDB.Height)
+            format('self:SetWidth(%s) self:SetHeight(%s)', Pixel.ToPixelGrid(uDB.Width), Pixel.ToPixelGrid(uDB.Height))
         )
 
         header.nrsknConfig = key
@@ -350,7 +377,10 @@ function UF:GROUP_ROSTER_UPDATE()
 
         for key, group in pairs(UF.groups) do
             local gDB = UF.GetUnitDB(key).Group
-            if gDB.AutoGroups and concat(UF.ActiveSubgroups(key, gDB), ',') ~= group.shownGroups then
+            local regroup = gDB.AutoGroups and concat(UF.ActiveSubgroups(key, gDB), ',') ~= group.shownGroups
+            -- A centered party moves in by the empty slots, so a join or leave re-centers it.
+            local recenter = group.centeredFor and group.centeredFor ~= ShownMembers(group, gDB)
+            if regroup or recenter then
                 UF:LayoutGroup(key)
             end
         end

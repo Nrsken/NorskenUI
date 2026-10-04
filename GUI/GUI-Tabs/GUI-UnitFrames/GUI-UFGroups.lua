@@ -7,6 +7,9 @@ local Theme = NRSKNUI.Theme
 local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
 
+local format = string.format
+local tostring = tostring
+
 local function ApplySettings(unit) UF:ApplySettings(unit) end
 
 local GrowthOptions = NRSKNUI.GrowthOptions
@@ -35,91 +38,104 @@ local RoleOptions = {
     { value = 'DAMAGER', text = L['DPS'] },
 }
 
+---@param direction string?
+---@return boolean
+local function IsHorizontal(direction)
+    return direction == 'LEFT' or direction == 'RIGHT'
+end
+
 ---@param page table
 ---@param uDB table
 ---@param unit string
 local function BuildGroupSection(page, uDB, unit)
     local gDB = uDB.Group
+    local maxGroups = UF.GroupCounts[unit] or 1
+    local isRaid = maxGroups > 1
+    -- Several choices decide which controls exist at all, so they rebuild the page rather than dim them.
+    local function Reload()
+        NRSKNUI.GUIFrame.content:ShowPage(UF.GUIPageID(unit), { itemKey = 'group' })
+    end
 
-    -- INDEX and NAME already imply the sort, so the method dropdown does nothing for them.
-    page:SetCondition('groupSorted', function() return gDB.SortBy ~= 'INDEX' and gDB.SortBy ~= 'NAME' end)
-    page:SetCondition('groupByRole', function() return gDB.SortBy == 'ROLE' end)
+    -- Subgroups must cross the unit growth; a stale parallel value takes the one the layout already uses.
+    local unitHorizontal = IsHorizontal(gDB.GrowthDirection)
+    if IsHorizontal(gDB.GroupGrowthDirection) == unitHorizontal then
+        gDB.GroupGrowthDirection = unitHorizontal and 'DOWN' or 'RIGHT'
+    end
 
-    -- Card 1: Layout
-    local layoutCard = page:Card(L['Group'], 'unitOn')
-    local growthRow = layoutCard:Row(rowH)
-    growthRow:Dropdown(L['Growth Direction'], {
+    local spacingKey = unitHorizontal and 'HorizontalSpacing' or 'VerticalSpacing'
+    local growthConfig = {
         width = 0.5,
         options = GrowthOptions,
         value = gDB.GrowthDirection,
         callback = function(key)
-            gDB.GrowthDirection = key; ApplySettings(unit)
+            gDB.GrowthDirection = key
+            if IsHorizontal(gDB.GroupGrowthDirection) == IsHorizontal(key) then
+                gDB.GroupGrowthDirection = IsHorizontal(key) and 'DOWN' or 'RIGHT'
+            end
+            ApplySettings(unit)
+            Reload() -- the spacing axis and the subgroup choices follow it
         end,
-    })
-    growthRow:Checkbox(L['Display Player'], {
+    }
+    -- Only the spacing along the growth applies; the gap between subgroups is Group Spacing.
+    local spacingConfig = {
         width = 0.5,
-        tooltip = L['Include the player when not in a raid.'],
-        value = gDB.ShowPlayer,
-        callback = function(checked)
-            gDB.ShowPlayer = checked; ApplySettings(unit)
-        end,
-    })
-
-    local spacingRow = layoutCard:Row(rowHL, 0)
-    spacingRow:Slider(L['Horizontal Spacing'], {
-        width = 0.5,
+        tooltip = L['Gap between one frame and the next.'],
         min = 0,
         max = 50,
         step = 1,
-        value = gDB.HorizontalSpacing,
+        value = gDB[spacingKey],
         callback = function(val)
-            gDB.HorizontalSpacing = val; ApplySettings(unit)
+            gDB[spacingKey] = val; ApplySettings(unit)
         end,
         callbackOnRelease = true,
-    })
-    spacingRow:Slider(L['Vertical Spacing'], {
-        width = 0.5,
-        min = 0,
-        max = 50,
-        step = 1,
-        value = gDB.VerticalSpacing,
-        callback = function(val)
-            gDB.VerticalSpacing = val; ApplySettings(unit)
-        end,
-        callbackOnRelease = true,
-    })
+    }
 
-    -- Card 2: Subgroup arrangement, raid only.
-    local maxGroups = UF.GroupCounts[unit] or 1
-    if maxGroups > 1 then
-        local raidCard = page:Card(L['Raid Layout'], 'unitOn')
-        local raidRow = raidCard:Row(rowH)
-        raidRow:Dropdown(L['Group Growth Direction'], {
+    -- Card 1: Layout
+    local layoutCard = page:Card(L['Layout'], 'unitOn')
+    if not isRaid then
+        local growthRow = layoutCard:Row(rowH)
+        growthRow:Dropdown(L['Growth Direction'], growthConfig)
+        growthRow:Slider(L['Spacing'], spacingConfig)
+
+        -- In a raid the player is always one of the members, so these two only exist for party.
+        local partyRow = layoutCard:Row(rowHL, 0)
+        partyRow:Checkbox(L['Display Player'], {
+            width = 0.5,
+            tooltip = L['Include yourself in the party frames.'],
+            value = gDB.ShowPlayer,
+            callback = function(checked)
+                gDB.ShowPlayer = checked; ApplySettings(unit)
+            end,
+        })
+        partyRow:Checkbox(L['Start Near Center'], {
+            width = 0.5,
+            tooltip = L['Keep the frames centered on the group, growing out from the middle as members join.'],
+            value = gDB.StartFromCenter,
+            callback = function(checked)
+                gDB.StartFromCenter = checked; ApplySettings(unit)
+            end,
+        })
+    else
+        local groupOptions = {}
+        for _, option in ipairs(GrowthOptions) do
+            if IsHorizontal(option.value) ~= unitHorizontal then groupOptions[#groupOptions + 1] = option end
+        end
+
+        local directionRow = layoutCard:Row(rowH)
+        directionRow:Dropdown(L['Growth Direction'], growthConfig)
+        directionRow:Dropdown(L['Group Growth Direction'], {
             width = 0.5,
             tooltip = L['Which way each subgroup sits from the one before it.'],
-            options = GrowthOptions,
+            options = groupOptions,
             value = gDB.GroupGrowthDirection,
             callback = function(key)
                 gDB.GroupGrowthDirection = key; ApplySettings(unit)
             end,
         })
-        raidRow:Slider(L['Groups Per Row/Column'], {
-            width = 0.5,
-            tooltip = L['How many subgroups fit before the layout wraps onto a new row or column.'],
-            min = 1,
-            max = maxGroups,
-            step = 1,
-            value = gDB.GroupsPerRowColumn,
-            callback = function(val)
-                gDB.GroupsPerRowColumn = val; ApplySettings(unit)
-            end,
-            callbackOnRelease = true,
-        })
 
-        page:SetCondition('fixedGroups', function() return not gDB.AutoGroups end)
-
-        local countRow = raidCard:Row(rowH)
-        countRow:Slider(L['Group Spacing'], {
+        local spacingRow = layoutCard:Row(rowH)
+        spacingRow:Slider(L['Spacing'], spacingConfig)
+        spacingRow:Slider(L['Group Spacing'], {
             width = 0.5,
             tooltip = L['Gap between one subgroup and the next.'],
             min = 0,
@@ -131,46 +147,69 @@ local function BuildGroupSection(page, uDB, unit)
             end,
             callbackOnRelease = true,
         })
-        countRow:Checkbox(L['Auto Group Count'], {
-            width = 0.5,
-            tooltip = L['Show only the subgroups the raid actually fills. Updates when you leave combat.'],
-            value = gDB.AutoGroups,
-            callback = function(checked)
-                gDB.AutoGroups = checked
-                ApplySettings(unit)
-                page:Refresh()
-            end,
-        })
 
-        raidCard:Row(rowHL, 0):Slider(L['Number of Groups'], {
-            width = 1,
-            conditions = { 'fixedGroups' },
+        -- Auto is one of the counts rather than a separate toggle beside them.
+        local countOptions = { { value = 'auto', text = L['Auto'] } }
+        for count = 1, maxGroups do
+            countOptions[#countOptions + 1] = { value = count, text = tostring(count) }
+        end
+
+        local countRow = layoutCard:Row(rowHL, 0)
+        countRow:Slider(L['Groups Per Line'], {
+            width = 0.5,
+            tooltip = L['How many subgroups fit before the layout wraps onto a new line.'],
             min = 1,
             max = maxGroups,
             step = 1,
-            value = gDB.NumGroups,
+            value = gDB.GroupsPerRowColumn,
             callback = function(val)
-                gDB.NumGroups = val; ApplySettings(unit)
+                gDB.GroupsPerRowColumn = val; ApplySettings(unit)
             end,
             callbackOnRelease = true,
         })
+        countRow:Dropdown(L['Groups Shown'], {
+            width = 0.5,
+            tooltip = L['Auto shows only the subgroups the raid actually fills, updated when you leave combat.'],
+            options = countOptions,
+            value = gDB.AutoGroups and 'auto' or gDB.NumGroups,
+            callback = function(value)
+                gDB.AutoGroups = value == 'auto'
+                if value ~= 'auto' then gDB.NumGroups = value end
+                ApplySettings(unit)
+            end,
+        })
     end
 
-    -- Card 3: Sorting
+    -- Card 2: Grouping and order. Index and Name already are an order, so they carry no sort method.
+    local sorted = gDB.SortBy ~= 'INDEX' and gDB.SortBy ~= 'NAME'
+    local byRole = gDB.SortBy == 'ROLE'
+    local column = sorted and 1 / 3 or 0.5
+
     local sortCard = page:Card(L['Grouping & Sorting'], 'unitOn')
-    local sortRow = sortCard:Row(rowH)
+    local sortRow = sortCard:Row(byRole and rowH or rowHL, byRole and nil or 0)
     sortRow:Dropdown(L['Group By'], {
-        width = 0.5,
+        width = column,
         options = SortByOptions,
         value = gDB.SortBy,
         callback = function(key)
             gDB.SortBy = key
             ApplySettings(unit)
-            page:Refresh()
+            Reload()
         end,
     })
+    if sorted then
+        sortRow:Dropdown(L['Sort Method'], {
+            width = column,
+            tooltip = L['How members are ordered inside each group.'],
+            options = SortMethodOptions,
+            value = gDB.SortMethod,
+            callback = function(key)
+                gDB.SortMethod = key; ApplySettings(unit)
+            end,
+        })
+    end
     sortRow:Dropdown(L['Sort Direction'], {
-        width = 0.5,
+        width = column,
         options = SortDirectionOptions,
         value = gDB.SortDirection,
         callback = function(key)
@@ -178,41 +217,21 @@ local function BuildGroupSection(page, uDB, unit)
         end,
     })
 
-    local methodRow = sortCard:Row(rowHL, 0)
-    methodRow:Dropdown(L['Sort Method'], {
-        width = 0.5,
-        conditions = { 'groupSorted' },
-        options = SortMethodOptions,
-        value = gDB.SortMethod,
-        callback = function(key)
-            gDB.SortMethod = key; ApplySettings(unit)
-        end,
-    })
-    methodRow:Checkbox(L['Start Near Center'], {
-        width = 0.5,
-        tooltip = L['Grow outward from the middle rather than from one end.'],
-        value = gDB.StartFromCenter,
-        callback = function(checked)
-            gDB.StartFromCenter = checked; ApplySettings(unit)
-        end,
-    })
-
-    -- Card 4: Role order, only live when grouping by role.
-    local roleCard = page:Card(L['Role Order'], 'unitOn')
-    local roleRow = roleCard:Row(rowHL, 0)
-    for index = 1, 3 do
-        roleRow:Dropdown(L['Prio: '] .. index, {
-            width = 1 / 3,
-            conditions = { 'groupByRole' },
-            options = RoleOptions,
-            value = gDB.RoleOrder[index],
-            callback = function(key)
-                gDB.RoleOrder[index] = key; ApplySettings(unit)
-            end,
-        })
+    if byRole then
+        local roleRow = sortCard:Row(rowHL, 0)
+        for index = 1, 3 do
+            roleRow:Dropdown(format(L['Role Priority %d'], index), {
+                width = 1 / 3,
+                options = RoleOptions,
+                value = gDB.RoleOrder[index],
+                callback = function(key)
+                    gDB.RoleOrder[index] = key; ApplySettings(unit)
+                end,
+            })
+        end
     end
 
-    -- Card 5: Visibility
+    -- Card 3: Visibility
     local visCard = page:Card(L['Visibility'], 'unitOn')
     local visRow = visCard:Row(rowHL, 0)
     visRow:EditBox(L['Visibility Macro'], {
@@ -230,7 +249,7 @@ local function BuildGroupSection(page, uDB, unit)
         callback = function()
             gDB.Visibility = NRSKNUI:GetDefaultDB().profile.UnitFrames.Units[unit].Group.Visibility
             ApplySettings(unit)
-            page:Refresh()
+            Reload()
         end,
     })
 end
@@ -239,22 +258,20 @@ UF.GUISections.group = BuildGroupSection
 
 UF.GUIGroupSearch = {
     L['Group'],
+    L['Layout'],
     L['Growth Direction'],
+    L['Spacing'],
     L['Display Player'],
-    L['Horizontal Spacing'],
-    L['Vertical Spacing'],
-    L['Raid Layout'],
+    L['Start Near Center'],
     L['Group Growth Direction'],
-    L['Groups Per Row/Column'],
     L['Group Spacing'],
-    L['Auto Group Count'],
-    L['Number of Groups'],
+    L['Groups Per Line'],
+    L['Groups Shown'],
     L['Grouping & Sorting'],
     L['Group By'],
     L['Sort Method'],
     L['Sort Direction'],
     L['Role Order'],
-    L['Start Near Center'],
     L['Visibility'],
     L['Visibility Macro'],
 }

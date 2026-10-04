@@ -144,7 +144,6 @@ UF.Elements.Castbar = {
 
         -- Container frame for the castbar and icon.
         local container = CreateFrame('Frame', nil, self)
-        container:SetFrameLevel(self:GetFrameLevel() + 2)
         container:NUICreateBackdrop(true)
         container:NUIAddBorders()
         container:Hide()
@@ -156,7 +155,6 @@ UF.Elements.Castbar = {
 
         -- Main castbar frame, oUF handles the bar's min/max values and OnUpdate.
         local castBar = CreateFrame('StatusBar', nil, container) --[[@as oUF.Castbar]]
-        castBar:SetFrameLevel(container:GetFrameLevel() + 1)
         castBar:NUISetPixelSnap()
         castBar.nuiContainer = container -- PostCastStart shows it, OnHide hides it with the bar
         castBar:HookScript('OnHide', function() container:Hide() end)

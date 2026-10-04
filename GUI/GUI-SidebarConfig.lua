@@ -25,19 +25,22 @@ GUIFrame.SidebarConfig = {
             text = L['Profile Settings'],
         },
         {
-            id = 'globalPage',
-            type = 'item',
-            text = L['Global Settings'],
-        },
-        {
-            id = 'globalFonts',
-            type = 'item',
-            text = L['Font Settings'],
-        },
-        {
             id = 'auras',
             type = 'item',
             text = L['Auras'],
+        },
+        {
+            id = 'global_section',
+            type = 'header',
+            text = L['Global Settings'],
+            defaultExpanded = false,
+            items = {
+                { id = 'globalColors',       text = L['Colors'] },
+                { id = 'globalFonts',        text = L['Fonts'] },
+                { id = 'globalUIScale',      text = L['UI Scale'] },
+                { id = 'globalTextures',     text = L['Textures'] },
+                { id = 'globalDurationText', text = L['Duration Text'] },
+            }
         },
         {
             id = 'unitframes_section',
@@ -46,6 +49,7 @@ GUIFrame.SidebarConfig = {
             defaultExpanded = false,
             items = {
                 { id = 'unitFramesGeneral',       text = L['General'] },
+                { id = 'unitFramesLayers',        text = L['Layers'] },
                 { id = 'unitFramesIndicators',    text = L['Aura Indicators'] },
                 { id = 'unitFrames_player',       text = L['Player'] },
                 { id = 'unitFrames_target',       text = L['Target'] },

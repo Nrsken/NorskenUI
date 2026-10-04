@@ -8,7 +8,9 @@ local Theme = NRSKNUI.Theme
 local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
 local AuraIndicators = NRSKNUI.AuraIndicators
-local TriggerCard = NRSKNUI.GUITriggerCard
+local AuraTriggers = NRSKNUI.AuraTriggers
+local Premade = NRSKNUI.AuraFiltersPremade
+local TriggerEditor = NRSKNUI.GUITriggerEditor
 local AuraCards = NRSKNUI.GUIAuraCards
 local OutlineOptions = NRSKNUI:GetOutlineOptions(true)
 
@@ -29,9 +31,8 @@ local STYLE_OPTIONS = {
     { value = Styles.Duration, text = L['Duration Text'] },
 }
 
--- Shared with the dispel pages, which hang off the same three things.
+-- Shared with the dispel pages, which hang off the same two things.
 local ATTACH_OPTIONS = {
-    { value = AuraIndicators.Attach.Frame,      text = L['Whole Frame'] },
     { value = AuraIndicators.Attach.Health,     text = L['Health Bar'] },
     { value = AuraIndicators.Attach.HealthFill, text = L['Health Fill'] },
 }
@@ -39,25 +40,6 @@ UF.GUIAttachOptions = ATTACH_OPTIONS
 
 local function Store() return NRSKNUI.db.profile.AuraIndicators end
 local function Changed(key) AuraIndicators:Invalidate(key) end
-
----Layer choices.
----@return table[]
-function UF.GUILayerOptions()
-    local options = {}
-
-    for layer = UF.Layers.Min, UF.Layers.Max do
-        local text = format(L['Layer %d'], layer)
-        if layer == UF.Layers.Highlight then
-            text = format(L['Layer %d (mouseover highlight)'], layer)
-        elseif layer == UF.Layers.Border then
-            text = format(L['Layer %d (frame border)'], layer)
-        end
-
-        options[#options + 1] = { value = layer, text = text }
-    end
-
-    return options
-end
 
 ---@return table[] options
 local function IndicatorOptions()
@@ -75,10 +57,18 @@ local function Reopen(selectKey)
     window.content:ShowPage(PAGE, selectKey and { itemKey = selectKey } or nil)
 end
 
-local function CreateIndicatorPrompt()
+---@return table? miniSidebar
+local function MiniSidebar()
+    local content = NRSKNUI.GUIFrame and NRSKNUI.GUIFrame.content
+    return content and content.miniSidebar
+end
+
+---@param presetKey string? start from this preset
+---@param presetName string? its name, the suggested indicator name
+local function CreateIndicatorPrompt(presetKey, presetName)
     NRSKNUI:CreatePrompt({
         title = L['Create Indicator'],
-        text = '',
+        text = presetName or '',
         editBox = true,
         editBoxLabel = L['Indicator Name'],
         onAccept = function(name)
@@ -91,7 +81,7 @@ local function CreateIndicatorPrompt()
                 return
             end
 
-            AuraIndicators:Create(name, name)
+            AuraIndicators:Create(name, name, presetKey)
             Reopen(name)
         end,
         acceptText = L['Create'],
@@ -99,41 +89,18 @@ local function CreateIndicatorPrompt()
     })
 end
 
-local function RenameIndicatorPrompt(key)
-    local spec = AuraIndicators:GetSpec(key)
-    if not spec then return end
-
-    NRSKNUI:CreatePrompt({
-        title = L['Rename Indicator'],
-        text = '',
-        editBox = true,
-        editBoxLabel = L['New Name'],
-        onAccept = function(new)
-            if not new or new == '' then return end
-            local store = Store()
-            if store[new] then
-                NRSKNUI:Print(L['An indicator with that name already exists'])
-                return
-            end
-
-            -- Placements reference the store key, so every one of them has to follow the rename.
-            spec.name = new
-            store[new] = spec
-            store[key] = nil
-            for _, unit in ipairs(UF.Units) do
-                for _, placement in ipairs(UF.db.Units[unit].AuraIndicators) do
-                    for i, assigned in ipairs(placement.Keys) do
-                        if assigned == key then placement.Keys[i] = new end
-                    end
-                end
-            end
-
-            Changed(key)
-            Reopen(new)
-        end,
-        acceptText = L['Rename'],
-        cancelText = L['Cancel'],
-    })
+local function NewIndicatorMenu()
+    local entries = {
+        { text = L['Empty Indicator'], onClick = function() CreateIndicatorPrompt() end },
+        { divider = true },
+    }
+    for _, preset in ipairs(Premade:GetList()) do
+        entries[#entries + 1] = {
+            text = format(L['From %s'], preset.text),
+            onClick = function() CreateIndicatorPrompt(preset.key, preset.text) end,
+        }
+    end
+    GUI:ShowContextMenu(entries)
 end
 
 ---Make a group and move this indicator into it.
@@ -179,9 +146,62 @@ local function DeleteIndicatorPrompt(key)
     })
 end
 
+---@param key string
+local function DuplicateIndicator(key)
+    local newKey = AuraIndicators:Duplicate(key)
+    if newKey then Reopen(newKey) end
+end
+
+---@param key string
+local function BuiltinMenu(key)
+    local spec = AuraIndicators:GetSpec(key)
+    local shipped = AuraTriggers:GetShipped(spec.Trigger)
+    local entries = {
+        { text = L['Duplicate as Custom'], onClick = function() DuplicateIndicator(key) end },
+        { divider = true },
+    }
+
+    if shipped and (shipped.Added or shipped.Removed) then
+        entries[#entries + 1] = {
+            text = L['Reset Spells to Default'],
+            onClick = function()
+                NRSKNUI:CreatePrompt({
+                    title = L['Reset Spells to Default'],
+                    text = L['Remove the spells you added and switch every default spell back on?'],
+                    onAccept = function()
+                        shipped.Added, shipped.Removed = nil, nil
+                        Changed(key)
+                        Reopen(key)
+                    end,
+                    acceptText = L['Reset'],
+                    cancelText = L['Cancel'],
+                })
+            end,
+        }
+    end
+
+    entries[#entries + 1] = {
+        text = L['Reset Everything to Default'],
+        onClick = function()
+            NRSKNUI:CreatePrompt({
+                title = L['Reset Everything to Default'],
+                text = format(L["Put '%s' back to how it shipped, its triggers and color included?"], spec.name or key),
+                onAccept = function()
+                    AuraIndicators:ResetBuiltin(key)
+                    Reopen(key)
+                end,
+                acceptText = L['Reset'],
+                cancelText = L['Cancel'],
+            })
+        end,
+    }
+
+    GUI:ShowContextMenu(entries)
+end
+
 local function BuildLibraryPage(page, key, spec)
     spec.Trigger = spec.Trigger or NRSKNUI.AuraTriggers:New()
-    TriggerCard:Build(page, spec.Trigger, { hideUnit = true, onChange = function() Changed(key) end })
+    TriggerEditor:Build(page, spec.Trigger, { title = L['Indicator'], onChange = function() Changed(key) end })
 
     local look = page:Card(L['Appearance'])
     look:Row(rowHL, 0):ColorPicker(L['Color'], {
@@ -217,7 +237,27 @@ local function BuildLibraryPage(page, key, spec)
     })
 end
 
----Indicator list.
+---@param key string
+---@param text string
+---@param spec table
+---@return table
+local function IndicatorItem(key, text, spec)
+    return {
+        key = key,
+        text = text,
+        draggable = true,
+        renamable = true,
+        grouped = spec.group ~= nil,
+    }
+end
+
+---@param key string
+---@return boolean
+local function IsOpen(key)
+    return not NRSKNUI.db.global.SidebarCollapsed[PAGE][key]
+end
+
+---Defaults first, then groups and loose indicators by name; only a group's own indicators keep a manual order.
 ---@return table[]
 local function SidebarItems()
     local items = {}
@@ -234,39 +274,55 @@ local function SidebarItems()
             type = 'header',
             key = INDICATORS_SECTION,
             text = L['Default Indicators'],
-            defaultExpanded = true,
+            defaultExpanded = IsOpen(INDICATORS_SECTION),
             items = shipped,
         }
     end
 
+    -- An empty group stays listed, so an indicator can be dragged back into it.
     for _, group in ipairs(AuraIndicators:GetGroups()) do
         local members = {}
-        for _, entry in ipairs(AuraIndicators:GetList()) do
-            local spec = AuraIndicators:GetSpec(entry.key)
-            if spec and spec.group == group.key then
-                members[#members + 1] = { key = entry.key, text = entry.text }
-            end
+        for _, member in ipairs(AuraIndicators:GetMembers(group.key)) do
+            members[#members + 1] = IndicatorItem(member.key, member.text, AuraIndicators:GetSpec(member.key))
         end
 
-        if members[1] then
-            items[#items + 1] = {
-                type = 'header',
-                key = group.key,
-                text = group.name,
-                defaultExpanded = true,
-                items = members,
-            }
-        end
+        items[#items + 1] = {
+            type = 'header',
+            key = group.key,
+            text = group.name,
+            isGroup = true,
+            defaultExpanded = IsOpen(group.key),
+            items = members,
+        }
     end
 
     for _, entry in ipairs(AuraIndicators:GetList()) do
         local spec = AuraIndicators:GetSpec(entry.key)
         if spec and not spec.group and not AuraIndicators:IsBuiltin(entry.key) then
-            items[#items + 1] = { key = entry.key, text = entry.text }
+            items[#items + 1] = IndicatorItem(entry.key, entry.text, spec)
         end
     end
 
     return items
+end
+
+local function RefreshSidebar()
+    local sidebar = MiniSidebar()
+    if sidebar then sidebar:SetItems(SidebarItems()) end
+end
+
+---@param groupKey string
+local function GroupMenu(groupKey)
+    GUI:ShowContextMenu({
+        { text = L['Rename'], onClick = function() MiniSidebar():BeginRename(groupKey) end },
+        {
+            text = L['Delete Group'],
+            onClick = function()
+                AuraIndicators:DeleteGroup(groupKey)
+                RefreshSidebar()
+            end,
+        },
+    })
 end
 
 GUI:RegisterPage(PAGE, {
@@ -274,15 +330,52 @@ GUI:RegisterPage(PAGE, {
     search = {},
     sidebar = {
         buttons = {
-            { text = L['New Indicator'], onClick = CreateIndicatorPrompt },
+            { text = L['New Indicator'], onClick = NewIndicatorMenu },
         },
         items = SidebarItems,
-        onContextMenu = function(key)
-            local spec = not AuraIndicators:IsBuiltin(key) and AuraIndicators:GetSpec(key)
+        onToggle = function(key, expanded)
+            NRSKNUI.db.global.SidebarCollapsed[PAGE][key] = (not expanded) or nil
+        end,
+        onRename = function(key, text, item)
+            if item.isGroup then
+                AuraIndicators:RenameGroup(key, text)
+                RefreshSidebar()
+                return
+            end
+
+            -- An indicator is keyed by its name, so a taken name is refused and a rename moves the key.
+            local newKey = AuraIndicators:Rename(key, text)
+            if not newKey then return false end
+            if MiniSidebar():GetSelected() == key then
+                Reopen(newKey)
+            else
+                RefreshSidebar()
+            end
+        end,
+        -- Into a group, or next to a grouped indicator; next to a loose one only takes an indicator out of its group.
+        canDrop = function(item, target, position)
+            if position == 'into' then return target.isGroup == true end
+            return target.draggable == true and (target.grouped or item.grouped)
+        end,
+        onMove = function(key, targetKey, position)
+            if position == 'into' then
+                AuraIndicators:SetGroup(key, targetKey)
+            else
+                AuraIndicators:MoveNextTo(key, targetKey, position)
+            end
+            RefreshSidebar()
+            if position == 'into' then MiniSidebar():SetExpanded(targetKey, true) end
+        end,
+        onContextMenu = function(key, item)
+            if item and item.isGroup then return GroupMenu(key) end
+            if AuraIndicators:IsBuiltin(key) then return BuiltinMenu(key) end
+
+            local spec = AuraIndicators:GetSpec(key)
             if not spec then return end
 
             local entries = {
-                { text = L['Rename'],           onClick = function() RenameIndicatorPrompt(key) end },
+                { text = L['Rename'],           onClick = function() MiniSidebar():BeginRename(key) end },
+                { text = L['Duplicate'],        onClick = function() DuplicateIndicator(key) end },
                 { text = L['Delete'],           onClick = function() DeleteIndicatorPrompt(key) end },
                 { divider = true },
                 { text = L['Create New Group'], onClick = function() CreateGroupPrompt(key) end },
@@ -294,7 +387,7 @@ GUI:RegisterPage(PAGE, {
                         text = format(L['Add to %s'], group.name),
                         onClick = function()
                             AuraIndicators:SetGroup(key, group.key)
-                            Reopen(key)
+                            RefreshSidebar()
                         end,
                     }
                 end
@@ -305,7 +398,7 @@ GUI:RegisterPage(PAGE, {
                     text = L['Remove from Group'],
                     onClick = function()
                         AuraIndicators:SetGroup(key, nil)
-                        Reopen(key)
+                        RefreshSidebar()
                     end,
                 }
             end
@@ -526,9 +619,13 @@ local function Paste(unit, uDB, replace)
     local first = replace and 1 or #placements + 1
 
     if replace then wipe(placements) end
+    -- Pasted spots keep their order among themselves and land above what the unit already has.
+    local base = AuraIndicators:TopOrder(placements) - 1
     -- Copied again on the way out, so pasting the same setup onto two units never shares tables.
     for _, placement in ipairs(clipboard.placements) do
-        placements[#placements + 1] = CopyTable(placement)
+        local copy = CopyTable(placement)
+        copy.Order = base + (placement.Order or 0)
+        placements[#placements + 1] = copy
     end
 
     Changed(nil)
@@ -634,7 +731,7 @@ local function BuildUnitSection(page, uDB, unit, tabId)
                 tooltip = L['Every indicator that can fill this spot. Assign one per spec and the same spot works on all of them.'],
                 callback = function() Changed(nil) end,
             })
-            row:Button(L['Remove'], {
+            row:Button(L['Remove Spot'], {
                 yOffset = -14,
                 width = 0.5,
                 height = 24,
@@ -668,13 +765,17 @@ local function BuildUnitSection(page, uDB, unit, tabId)
         value = placement.Style,
         tooltip = L['The preview follows straight away. Aura buttons are built once by the game, so the real indicator only picks a new style up after a reload.'],
         callback = function(value)
+            -- A new style can mean a new draw group, and it arrives on top of it.
+            if UF.IndicatorGroup({ Style = value }) ~= UF.IndicatorGroup(placement) then
+                placement.Order = AuraIndicators:TopOrder(placements)
+            end
             placement.Style = value
             Changed(nil)
             Reload()
         end,
     })
 
-    local placeRow = typeCard:Row(rowH)
+    local placeRow = typeCard:Row(rowHL, 0)
     placeRow:Dropdown(L['Attach To'], {
         width = 0.5,
         options = ATTACH_OPTIONS,
@@ -684,19 +785,8 @@ local function BuildUnitSection(page, uDB, unit, tabId)
             Changed(nil)
         end,
     })
-    placeRow:Dropdown(L['Layer'], {
+    placeRow:Slider(L['Alpha'], {
         width = 0.5,
-        options = UF.GUILayerOptions(),
-        value = placement.Layer,
-        tooltip = L['Higher layers draw over lower ones. Damage absorb sits on 4 and heal absorb on 5 by default.'],
-        callback = function(value)
-            placement.Layer = value
-            Changed(nil)
-        end,
-    })
-
-    typeCard:Row(rowHL, 0):Slider(L['Alpha'], {
-        width = 1,
         min = 0,
         max = 1,
         step = 0.05,
@@ -708,6 +798,8 @@ local function BuildUnitSection(page, uDB, unit, tabId)
         end,
     })
 
+    -- Back on this spot's own tab after a reorder.
+    UF.GUIDrawOrderCard(page, uDB, placement, function() ReloadUnit(unit, index) end)
     BuildStyleOptions(page, page:Card(L['Style Settings']), placement)
 
     if AuraIndicators.FullCover[placement.Style] then return end

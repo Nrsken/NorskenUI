@@ -38,6 +38,7 @@ local KNOB_SIZE = 22
 local KNOB_CROSS = 22
 local KNOB_PADDING = 1
 local ANIMATION_DURATION = 0.18
+local TOGGLE_GLOW = 10 -- how far the on-state glow reaches past the track
 local OFF_POSITION = KNOB_PADDING
 local ON_POSITION = TOGGLE_WIDTH - KNOB_SIZE - KNOB_PADDING
 
@@ -45,6 +46,7 @@ local ON_POSITION = TOGGLE_WIDTH - KNOB_SIZE - KNOB_PADDING
 ---@field gui KajiGUIInstance
 ---@field label FontString
 ---@field toggle Frame|BackdropTemplate
+---@field glow Texture accent glow around the track while on
 ---@field knob Frame|BackdropTemplate
 ---@field knobTexture Texture
 ---@field checkmark Texture
@@ -53,9 +55,12 @@ local ON_POSITION = TOGGLE_WIDTH - KNOB_SIZE - KNOB_PADDING
 ---@field animGroup AnimationGroup
 ---@field slideAnim Animation
 ---@field _state boolean
+---@field _enabled boolean
 ---@field _animating boolean
 ---@field _targetX number
 ---@field _callback? fun(checked: boolean, revert?: fun(shouldRevert: boolean))
+---@field _animateEdge fun(isHover: boolean)
+---@field _syncEdge fun(r: number, g: number, b: number, a?: number)
 ---@field _msgPopup? boolean
 ---@field _msgText? string
 ---@field _msgOn string
@@ -98,6 +103,9 @@ function CheckboxMixin:ApplyStateColors(toState, instant)
         self._animateBg(bgR, bgG, bgB)
         self._animateKnob(kr, kg, kb, knobA)
     end
+
+    self.glow:SetVertexColor(kr, kg, kb, theme.glowControlAlpha)
+    self.glow:SetShown(toState and self._enabled)
 end
 
 ---@param toState boolean
@@ -131,6 +139,8 @@ end
 
 ---@param enabled boolean
 function CheckboxMixin:SetEnabled(enabled)
+    self._enabled = enabled
+    self.glow:SetShown(enabled and self._state)
     self.toggle:SetAlpha(enabled and 1 or 0.5)
     self.label:SetAlpha(enabled and 1 or 0.5)
     self.button:EnableMouse(enabled)
@@ -157,6 +167,7 @@ end
 function CheckboxMixin:UpdateColors()
     local theme = self.gui.theme
     lib.RefreshBackdrop(self.toggle)
+    self._syncEdge(theme.widgetBorder[1], theme.widgetBorder[2], theme.widgetBorder[3], 1)
     lib.RefreshBackdrop(self.knob)
     self.label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
     self.checkmark:SetTexture(theme.checkTexture)
@@ -188,6 +199,7 @@ function CheckboxMixin:OnAcquire(parent, labelText, config)
     lib.SetTooltip(self, self.gui, labelText, spec)
 
     self._animating = false
+    self._enabled = true
     self._state = not (config.value or false) -- force AnimateToState to settle the visuals
     self:AnimateToState(config.value or false, true)
 
@@ -244,6 +256,16 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     lib.SetBackdrop(toggle, gui, { bg = "bgMedium", bgAlpha = 0.9, border = "widgetBorder", borderAlpha = 1 })
     row.toggle = toggle
 
+    -- Under the track, so only the part spilling past its edge shows.
+    local glow = row:CreateTexture(nil, "BACKGROUND")
+    glow:SetTexture(theme.glowTexture)
+    glow:SetTextureSliceMargins(16, 16, 16, 16)
+    glow:SetTextureSliceMode(Enum.UITextureSliceMode.Stretched)
+    glow:SetPoint("TOPLEFT", toggle, "TOPLEFT", -TOGGLE_GLOW, TOGGLE_GLOW)
+    glow:SetPoint("BOTTOMRIGHT", toggle, "BOTTOMRIGHT", TOGGLE_GLOW, -TOGGLE_GLOW)
+    glow:Hide()
+    row.glow = glow
+
     local knob = CreateFrame("Frame", nil, toggle, "BackdropTemplate")
     pixel.SetPixelSize(knob, KNOB_SIZE, KNOB_SIZE)
     pixel.SetPixelPoint(knob, "LEFT", toggle, "LEFT", OFF_POSITION, 0)
@@ -290,6 +312,9 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     row._animateKnob, row._syncKnob = Animations:CreateColorAnimator(knob,
         function(r, g, b, a) knobTexture:SetColorTexture(r, g, b, a) end,
         { theme.accent[1], theme.accent[2], theme.accent[3], 0.6 }, ANIMATION_DURATION)
+    row._animateEdge, row._syncEdge = Animations:CreateHoverColorAnimator(toggle,
+        function(r, g, b) toggle:SetBackdropBorderColor(r, g, b, 1) end,
+        theme.widgetBorder, theme.accent, theme.animDuration)
 
     local button = CreateFrame("Button", nil, toggle)
     button:SetAllPoints(toggle)
@@ -345,6 +370,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         local hr, hg, hb = accent[1] * 1.2, accent[2] * 1.2, accent[3] * 1.2
         knobTexture:SetColorTexture(hr, hg, hb, baseA)
         row._syncKnob(hr, hg, hb, baseA)
+        row._animateEdge(true)
         lib.ShowTooltip(row)
     end)
     button:SetScript("OnLeave", function()
@@ -352,6 +378,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         local a = row._state and 1 or 0.4
         knobTexture:SetColorTexture(accent[1], accent[2], accent[3], a)
         row._syncKnob(accent[1], accent[2], accent[3], a)
+        row._animateEdge(false)
         lib.HideTooltip()
     end)
 

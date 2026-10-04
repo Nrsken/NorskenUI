@@ -62,8 +62,9 @@ end
 
 ---Post-update function for power elements.
 ---@param element table Power element
-function UF.PostUpdatePower(element)
+function UF.PostUpdatePower(element, unit)
     PrimeSmoothing(element)
+    UF.ApplyPowerFilter(element, unit)
 end
 
 ---Applies the flat power colour. oUF still runs its own colour pass with every flag off, so the

@@ -8,6 +8,7 @@ local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
 
 local ipairs = ipairs
+local pairs = pairs
 local format = string.format
 
 local function ApplySettings() UF:ApplySettings() end
@@ -15,6 +16,13 @@ local AnchorOptions = NRSKNUI.AnchorOptions
 local GrowthOptions = NRSKNUI.GrowthOptions
 local OutlineOptions = NRSKNUI:GetOutlineOptions(true)
 local TAG_SLOTS = { 'TagOne', 'TagTwo', 'TagThree', 'TagFour', 'TagFive' }
+local TAG_CATEGORIES = {
+    { key = 'health',   label = L['Health'] },
+    { key = 'power',    label = L['Power'] },
+    { key = 'name',     label = L['Name'] },
+    { key = 'misc',     label = L['Misc'] },
+    { key = 'prefixes', label = L['Prefix'] },
+}
 local INDICATOR_MAX_SIZE = { RaidIcon = 64 }
 
 local function AddPositionRows(card, slotDB, conditions, lastSpacing)
@@ -62,6 +70,45 @@ local function AddPositionRows(card, slotDB, conditions, lastSpacing)
             slotDB.Position.YOffset = val; ApplySettings()
         end,
         callbackOnRelease = true,
+    })
+end
+
+---@param text string
+---@return string
+local function Muted(text)
+    return NRSKNUI:ColorText(text, Theme.textMuted)
+end
+
+---A muted note in the half of a row a global toggle leaves empty, saying what the card follows instead.
+---@param row KajiGUIFluentRow
+---@param text string
+local function FollowingNote(row, text)
+    row:Text(nil, { width = 0.5, height = rowH, text = Muted(text), bgMode = 'hide' })
+end
+
+local SMOOTHING_OPTIONS = {
+    { value = 'global', text = L['Use Global'] },
+    { value = 'on',     text = L['On'] },
+    { value = 'off',    text = L['Off'] },
+}
+
+---Smoothing as one dropdown over the UseGlobalSmooth / Smooth pair.
+---@param row KajiGUIFluentRow
+---@param db table
+---@param config table? width / conditions / tooltip
+local function SmoothingDropdown(row, db, config)
+    config = config or {}
+    row:Dropdown(L['Smoothing'], {
+        width = config.width or 0.5,
+        conditions = config.conditions,
+        tooltip = config.tooltip or L['Use Global follows the smoothing setting from the general settings.'],
+        options = SMOOTHING_OPTIONS,
+        value = db.UseGlobalSmooth and 'global' or (db.Smooth and 'on' or 'off'),
+        callback = function(value)
+            db.UseGlobalSmooth = value == 'global'
+            if value ~= 'global' then db.Smooth = value == 'on' end
+            ApplySettings()
+        end,
     })
 end
 
@@ -177,107 +224,21 @@ end
 -- Healthbar Settings Page.
 local function BuildHealthSection(page, uDB, unit)
     local hDB = uDB.Health
-    page:SetCondition('ownHealthColors', function() return not hDB.UseGlobalColors end)
     page:SetCondition('ownHealthBg', function() return hDB.BackgroundTexture ~= '' end)
-    page:SetCondition('ownHealthSmooth', function() return not hDB.UseGlobalSmooth end)
-    page:SetCondition('ownHealAbsorb', function() return not hDB.HealAbsorb.UseGlobal end)
-    page:SetCondition('ownDamageAbsorb', function() return not hDB.DamageAbsorb.UseGlobal end)
 
-    -- Card 1: Health
-    local healthCard = page:Card(L['Health'], 'unitOn')
-    local healthRow = healthCard:Row(rowH)
-    healthRow:Checkbox(L['Use Global Smoothing'], {
-        width = 0.5,
-        tooltip = L['Follow the smoothing setting from the general settings.'],
-        value = hDB.UseGlobalSmooth,
-        callback = function(checked)
-            hDB.UseGlobalSmooth = checked
-            ApplySettings()
-            page:Refresh()
-        end,
-    })
-    healthRow:Checkbox(L['Smooth'], {
-        width = 0.5,
-        conditions = { 'ownHealthSmooth' },
-        value = hDB.Smooth,
-        callback = function(checked)
-            hDB.Smooth = checked; ApplySettings()
-        end,
-    })
-    healthCard:Row(rowHL, 0):Checkbox(L['Inverse Fill'], {
+    -- Card 1: the bar itself, motion and textures.
+    local barCard = page:Card(L['Bar'], 'unitOn')
+    local motionRow = barCard:Row(rowH)
+    SmoothingDropdown(motionRow, hDB)
+    motionRow:Checkbox(L['Inverse Fill'], {
         width = 0.5,
         value = hDB.Inverse,
         callback = function(checked)
             hDB.Inverse = checked; ApplySettings()
         end,
     })
-
-    -- Card 2: Colors
-    local colorCard = page:Card(L['Colors'], 'unitOn')
-    local modeRow = colorCard:Row(rowH)
-    modeRow:Checkbox(L['Use Global Colors'], {
-        width = 0.5,
-        value = hDB.UseGlobalColors,
-        callback = function(checked)
-            hDB.UseGlobalColors = checked
-            ApplySettings()
-            page:Refresh()
-        end,
-    })
-    modeRow:Checkbox(L['Class Colored Health'], {
-        width = 0.5,
-        conditions = { 'ownHealthColors' },
-        value = hDB.ColorByClass,
-        callback = function(checked)
-            hDB.ColorByClass = checked; ApplySettings()
-        end,
-    })
-    local fgRow = colorCard:Row(rowH)
-    fgRow:ColorPicker(L['Foreground'], {
-        width = 0.5,
-        conditions = { 'ownHealthColors' },
-        value = hDB.Foreground,
-        callback = function(r, g, b, a)
-            hDB.Foreground = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
-    fgRow:Slider(L['Class Color Alpha'], {
-        width = 0.5,
-        conditions = { 'ownHealthColors' },
-        min = 0,
-        max = 1,
-        step = 0.05,
-        value = hDB.ForegroundAlphaWhenColorByClass,
-        callback = function(val)
-            hDB.ForegroundAlphaWhenColorByClass = val; ApplySettings()
-        end,
-        callbackOnRelease = true,
-    })
-    local bgRow = colorCard:Row(rowHL, 0)
-    bgRow:ColorPicker(L['Background'], {
-        width = 0.5,
-        conditions = { 'ownHealthColors' },
-        value = hDB.Background,
-        callback = function(r, g, b, a)
-            hDB.Background = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
-    bgRow:ColorPicker(L['Background (Class Colored)'], {
-        width = 0.5,
-        conditions = { 'ownHealthColors' },
-        value = hDB.BackgroundWhenColorByClass,
-        callback = function(r, g, b, a)
-            hDB.BackgroundWhenColorByClass = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
-
-    -- Card 3: Textures
-    local textureCard = page:Card(L['Textures'], 'unitOn')
-    AddTextureOverrideRow(page, textureCard:Row(rowH), hDB, 'ownHealthTexture', nil)
-    local bgTexRow = textureCard:Row(rowHL, 0)
+    AddTextureOverrideRow(page, barCard:Row(rowH), hDB, 'ownHealthTexture', nil)
+    local bgTexRow = barCard:Row(rowHL, 0)
     bgTexRow:Checkbox(L['Match Foreground'], {
         width = 0.5,
         tooltip = L['Use the foreground texture for the missing-health background.'],
@@ -300,58 +261,129 @@ local function BuildHealthSection(page, uDB, unit)
         end,
     })
 
-    -- Card 4/5: one card per absorb, each with its own global-or-override toggle.
+    -- Card 2: Colors. Following the global colors, the unit's own are not drawn at all.
+    local colorCard = page:Card(L['Colors'], 'unitOn')
+    colorCard:Rebuild(function(card)
+        local own = not hDB.UseGlobalColors
+        local modeRow = card:Row(own and rowH or rowHL, not own and 0 or nil)
+        modeRow:Checkbox(L['Use Global Colors'], {
+            width = 0.5,
+            value = hDB.UseGlobalColors,
+            callback = function(checked)
+                hDB.UseGlobalColors = checked
+                ApplySettings()
+                card:Rebuild()
+            end,
+        })
+        if not own then
+            FollowingNote(modeRow, L['Following the colors in Unit Frames > General.'])
+            return
+        end
+
+        modeRow:Checkbox(L['Class Colored Health'], {
+            width = 0.5,
+            value = hDB.ColorByClass,
+            callback = function(checked)
+                hDB.ColorByClass = checked; ApplySettings()
+            end,
+        })
+        local fgRow = card:Row(rowH)
+        fgRow:ColorPicker(L['Foreground'], {
+            width = 0.5,
+            value = hDB.Foreground,
+            callback = function(r, g, b, a)
+                hDB.Foreground = { r, g, b, a }
+                ApplySettings()
+            end,
+        })
+        fgRow:Slider(L['Class Color Alpha'], {
+            width = 0.5,
+            min = 0,
+            max = 1,
+            step = 0.05,
+            value = hDB.ForegroundAlphaWhenColorByClass,
+            callback = function(val)
+                hDB.ForegroundAlphaWhenColorByClass = val; ApplySettings()
+            end,
+            callbackOnRelease = true,
+        })
+        local bgRow = card:Row(rowHL, 0)
+        bgRow:ColorPicker(L['Background'], {
+            width = 0.5,
+            value = hDB.Background,
+            callback = function(r, g, b, a)
+                hDB.Background = { r, g, b, a }
+                ApplySettings()
+            end,
+        })
+        bgRow:ColorPicker(L['Background (Class Colored)'], {
+            width = 0.5,
+            value = hDB.BackgroundWhenColorByClass,
+            callback = function(r, g, b, a)
+                hDB.BackgroundWhenColorByClass = { r, g, b, a }
+                ApplySettings()
+            end,
+        })
+    end)
+
+    -- Card 3/4: one card per absorb, each with its own global-or-override toggle.
     local absorbSlots = {
-        { db = hDB.HealAbsorb,   title = L['Heal Absorb'],   label = L['Enable Heal Absorb'],   cond = 'ownHealAbsorb',   onCond = 'healAbsorbOn' },
-        { db = hDB.DamageAbsorb, title = L['Damage Absorb'], label = L['Enable Damage Absorb'], cond = 'ownDamageAbsorb', onCond = 'damageAbsorbOn' },
+        { db = hDB.HealAbsorb,   title = L['Heal Absorb'],   label = L['Enable Heal Absorb'],   onCond = 'healAbsorbOn' },
+        { db = hDB.DamageAbsorb, title = L['Damage Absorb'], label = L['Enable Damage Absorb'], onCond = 'damageAbsorbOn' },
     }
     for _, slot in ipairs(absorbSlots) do
-        page:SetCondition(slot.onCond, function() return not slot.db.UseGlobal and slot.db.Enabled end)
+        page:SetCondition(slot.onCond, function() return slot.db.Enabled end)
 
-        local card = page:Card(slot.title, 'unitOn')
-        local headRow = card:Row(rowH)
-        headRow:Checkbox(L['Use Global Settings'], {
-            width = 0.5,
-            tooltip = L['Follow the shared absorb settings from the general settings.'],
-            value = slot.db.UseGlobal,
-            callback = function(checked)
-                slot.db.UseGlobal = checked
-                ApplySettings()
-                page:Refresh()
-            end,
-        })
-        headRow:Checkbox(slot.label, {
-            width = 0.5,
-            conditions = { slot.cond },
-            value = slot.db.Enabled,
-            callback = function(checked)
-                slot.db.Enabled = checked
-                ApplySettings()
-                page:Refresh()
-            end,
-        })
+        page:Card(slot.title, 'unitOn'):Rebuild(function(card)
+            local own = not slot.db.UseGlobal
+            local headRow = card:Row(own and rowH or rowHL, not own and 0 or nil)
+            headRow:Checkbox(L['Use Global Settings'], {
+                width = 0.5,
+                tooltip = L['Follow the shared absorb settings from the general settings.'],
+                value = slot.db.UseGlobal,
+                callback = function(checked)
+                    slot.db.UseGlobal = checked
+                    ApplySettings()
+                    card:Rebuild()
+                end,
+            })
+            if not own then
+                FollowingNote(headRow, L['Following the absorb settings in Unit Frames > General.'])
+                return
+            end
 
-        local overrideRow = card:Row(rowHL, 0)
-        overrideRow:Dropdown(L['Texture'], {
-            width = 0.5,
-            media = 'statusbar',
-            searchable = true,
-            conditions = { slot.onCond },
-            value = slot.db.StatusBarTexture,
-            callback = function(key)
-                slot.db.StatusBarTexture = key
-                ApplySettings()
-            end,
-        })
-        overrideRow:ColorPicker(L['Color'], {
-            width = 0.5,
-            conditions = { slot.onCond },
-            value = slot.db.Color,
-            callback = function(r, g, b, a)
-                slot.db.Color = { r, g, b, a }
-                ApplySettings()
-            end,
-        })
+            headRow:Checkbox(slot.label, {
+                width = 0.5,
+                value = slot.db.Enabled,
+                callback = function(checked)
+                    slot.db.Enabled = checked
+                    ApplySettings()
+                    page:Refresh()
+                end,
+            })
+
+            local overrideRow = card:Row(rowHL, 0)
+            overrideRow:Dropdown(L['Texture'], {
+                width = 0.5,
+                media = 'statusbar',
+                searchable = true,
+                conditions = { slot.onCond },
+                value = slot.db.StatusBarTexture,
+                callback = function(key)
+                    slot.db.StatusBarTexture = key
+                    ApplySettings()
+                end,
+            })
+            overrideRow:ColorPicker(L['Color'], {
+                width = 0.5,
+                conditions = { slot.onCond },
+                value = slot.db.Color,
+                callback = function(r, g, b, a)
+                    slot.db.Color = { r, g, b, a }
+                    ApplySettings()
+                end,
+            })
+        end)
     end
 end
 
@@ -359,8 +391,6 @@ end
 local function BuildPowerSection(page, uDB, unit)
     local pDB = uDB.Power
     page:SetCondition('powerOn', function() return pDB.Enabled end)
-    page:SetCondition('ownPowerSmooth', function() return not pDB.UseGlobalSmooth end)
-    page:SetCondition('ownPowerColors', function() return not pDB.UseGlobalColors end)
     page:SetCondition('powerFlatColor', function() return not pDB.UseGlobalColors and not pDB.ColorByPower end)
 
     -- Card 1: Power
@@ -375,7 +405,23 @@ local function BuildPowerSection(page, uDB, unit)
             page:Refresh()
         end,
     })
-    enableRow:Slider(L['Height'], {
+    enableRow:Dropdown(L['Mode'], {
+        width = 0.5,
+        conditions = { 'powerOn' },
+        options = {
+            { value = 'docked',   text = L['Docked'] },
+            { value = 'undocked', text = L['Undocked'] },
+        },
+        value = pDB.Docked and 'docked' or 'undocked',
+        tooltip = L['Docked sits inside the frame along its bottom, the health bar making room. Undocked hangs below the frame.'],
+        callback = function(value)
+            pDB.Docked = value == 'docked'
+            ApplySettings()
+        end,
+    })
+
+    local sizeRow = powerCard:Row(rowH)
+    sizeRow:Slider(L['Height'], {
         width = 0.5,
         conditions = { 'powerOn' },
         min = 1,
@@ -387,73 +433,115 @@ local function BuildPowerSection(page, uDB, unit)
         end,
         callbackOnRelease = true,
     })
-
-    local smoothRow = powerCard:Row(rowH)
-    smoothRow:Checkbox(L['Use Global Smoothing'], {
-        width = 0.5,
-        tooltip = L['Follow the smoothing setting from the general settings.'],
+    SmoothingDropdown(sizeRow, pDB, {
         conditions = { 'powerOn' },
-        value = pDB.UseGlobalSmooth,
-        callback = function(checked)
-            pDB.UseGlobalSmooth = checked
-            ApplySettings()
-            page:Refresh()
-        end,
-    })
-    smoothRow:Checkbox(L['Smooth'], {
-        width = 0.5,
-        tooltip = L['Power smoothing only applies to the player frame.'],
-        conditions = { 'powerOn', 'ownPowerSmooth' },
-        value = pDB.Smooth,
-        callback = function(checked)
-            pDB.Smooth = checked; ApplySettings()
-        end,
+        tooltip = L['Use Global follows the smoothing setting from the general settings. Power smoothing only applies to the player frame.'],
     })
 
     AddTextureOverrideRow(page, powerCard:Row(rowHL, 0), pDB, 'ownPowerTexture', { 'powerOn' })
 
-    -- Card 2: Colors
-    local colorCard = page:Card(L['Colors'], 'unitOn')
-    local modeRow = colorCard:Row(rowH)
-    modeRow:Checkbox(L['Use Global Colors'], {
-        width = 0.5,
-        conditions = { 'powerOn' },
-        value = pDB.UseGlobalColors,
-        callback = function(checked)
-            pDB.UseGlobalColors = checked
+    -- Group frames pick whose bar shows, e.g. tanks only, or Tank + Death Knight for Blood's runic power.
+    if UF.GroupConfigs[unit] then
+        ---@param map table<string, boolean> the saved picks, kept as a map so AceDB never refills one
+        ---@return string[]
+        local function Picked(map)
+            local list = {}
+            for key, on in pairs(map) do
+                if on then list[#list + 1] = key end
+            end
+            return list
+        end
+        ---@param map table<string, boolean>
+        ---@param options table[]
+        ---@param values string[]
+        local function Store(map, options, values)
+            local chosen = {}
+            for _, value in ipairs(values) do chosen[value] = true end
+            for _, option in ipairs(options) do map[option.value] = chosen[option.value] == true end
             ApplySettings()
-            page:Refresh()
-        end,
-    })
-    modeRow:Checkbox(L['Color By Power Type'], {
-        width = 0.5,
-        tooltip = L['Color the bar by the power type (mana, rage, energy...). Uncheck to use a flat color.'],
-        conditions = { 'powerOn', 'ownPowerColors' },
-        value = pDB.ColorByPower,
-        callback = function(checked)
-            pDB.ColorByPower = checked
-            ApplySettings()
-            page:Refresh()
-        end,
-    })
-    colorCard:Row(rowHL, 0):ColorPicker(L['Power Color'], {
-        width = 0.5,
-        conditions = { 'powerOn', 'powerFlatColor' },
-        value = pDB.Color,
-        callback = function(r, g, b, a)
-            pDB.Color = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
+        end
+
+        local roleOptions = {
+            { value = 'TANK',    text = L['Tank'] },
+            { value = 'HEALER',  text = L['Healer'] },
+            { value = 'DAMAGER', text = L['Damage'] },
+        }
+        local classOptions = {}
+        for _, class in ipairs(CLASS_SORT_ORDER) do
+            classOptions[#classOptions + 1] = { value = class, text = NRSKNUI:ColorTextByClass(LOCALIZED_CLASS_NAMES_MALE[class], class) }
+        end
+
+        local showRow = page:Card(L['Show For'], 'unitOn'):Row(rowHL, 0)
+        showRow:Dropdown(L['Roles'], {
+            width = 0.5,
+            multiSelect = true,
+            conditions = { 'powerOn' },
+            options = roleOptions,
+            value = Picked(pDB.Roles),
+            tooltip = L['Members whose role is picked get a power bar.'],
+            callback = function(values) Store(pDB.Roles, roleOptions, values) end,
+        })
+        showRow:Dropdown(L['Classes'], {
+            width = 0.5,
+            multiSelect = true,
+            searchable = true,
+            conditions = { 'powerOn' },
+            options = classOptions,
+            value = Picked(pDB.Classes),
+            tooltip = L['Only these classes get a power bar. Pick none for every class. Tank + Death Knight shows Blood runic power.'],
+            callback = function(values) Store(pDB.Classes, classOptions, values) end,
+        })
+    end
+
+    -- Card 2: Colors. Following the global colors, the unit's own are not drawn at all.
+    page:Card(L['Colors'], 'unitOn'):Rebuild(function(card)
+        local own = not pDB.UseGlobalColors
+        local modeRow = card:Row(own and rowH or rowHL, not own and 0 or nil)
+        modeRow:Checkbox(L['Use Global Colors'], {
+            width = 0.5,
+            conditions = { 'powerOn' },
+            value = pDB.UseGlobalColors,
+            callback = function(checked)
+                pDB.UseGlobalColors = checked
+                ApplySettings()
+                card:Rebuild()
+            end,
+        })
+        if not own then
+            FollowingNote(modeRow, L['Following the colors in Unit Frames > General.'])
+            return
+        end
+
+        modeRow:Checkbox(L['Color By Power Type'], {
+            width = 0.5,
+            tooltip = L['Color the bar by the power type (mana, rage, energy...). Uncheck to use a flat color.'],
+            conditions = { 'powerOn' },
+            value = pDB.ColorByPower,
+            callback = function(checked)
+                pDB.ColorByPower = checked
+                ApplySettings()
+                page:Refresh()
+            end,
+        })
+        card:Row(rowHL, 0):ColorPicker(L['Power Color'], {
+            width = 0.5,
+            conditions = { 'powerOn', 'powerFlatColor' },
+            value = pDB.Color,
+            callback = function(r, g, b, a)
+                pDB.Color = { r, g, b, a }
+                ApplySettings()
+            end,
+        })
+    end)
 end
 
 -- Castbar Settings Page.
 local function BuildCastbarSection(page, uDB, unit)
     local cDB = uDB.Castbar
     page:SetCondition('castbarOn', function() return cDB.Enabled end)
-    page:SetCondition('ownCastbarColors', function() return not cDB.UseGlobalColors end)
+    page:SetCondition('safeZoneOn', function() return cDB.SafeZone.Enabled end)
 
-    -- Card 1: Castbar
+    -- Card 1: the bar itself.
     local castbarCard = page:Card(L['Castbar'], 'unitOn')
     local enableRow = castbarCard:Row(rowH)
     enableRow:Checkbox(L['Enable Castbar'], {
@@ -477,8 +565,11 @@ local function BuildCastbarSection(page, uDB, unit)
         end,
         callbackOnRelease = true,
     })
+    AddTextureOverrideRow(page, castbarCard:Row(rowHL, 0), cDB, 'ownCastbarTexture', { 'castbarOn' })
 
-    local showRow = castbarCard:Row(rowH)
+    -- Card 2: what it shows.
+    local displayCard = page:Card(L['Display'], 'unitOn')
+    local showRow = displayCard:Row(rowH)
     showRow:Checkbox(L['Show Icon'], {
         width = 0.5,
         conditions = { 'castbarOn' },
@@ -495,8 +586,7 @@ local function BuildCastbarSection(page, uDB, unit)
             cDB.ShowSpellName = checked; ApplySettings()
         end,
     })
-
-    local holdRow = castbarCard:Row(rowH)
+    local holdRow = displayCard:Row(rowHL, 0)
     holdRow:Checkbox(L['Show Cast Time'], {
         width = 0.5,
         conditions = { 'castbarOn' },
@@ -519,108 +609,119 @@ local function BuildCastbarSection(page, uDB, unit)
         callbackOnRelease = true,
     })
 
-    AddTextureOverrideRow(page, castbarCard:Row(rowHL, 0), cDB, 'ownCastbarTexture', { 'castbarOn' })
+    -- Card 3: Colors. Following the global colors, the unit's own are not drawn at all.
+    page:Card(L['Colors'], 'unitOn'):Rebuild(function(card)
+        local own = not cDB.UseGlobalColors
+        local modeRow = card:Row(own and rowH or rowHL, not own and 0 or nil)
+        modeRow:Checkbox(L['Use Global Colors'], {
+            width = 0.5,
+            conditions = { 'castbarOn' },
+            value = cDB.UseGlobalColors,
+            callback = function(checked)
+                cDB.UseGlobalColors = checked
+                ApplySettings()
+                card:Rebuild()
+            end,
+        })
+        if not own then
+            FollowingNote(modeRow, L['Following the colors in Unit Frames > General.'])
+            return
+        end
 
-    -- Card 2: Colors
-    local colorCard = page:Card(L['Colors'], 'unitOn')
-    local modeRow = colorCard:Row(rowH)
-    modeRow:Checkbox(L['Use Global Colors'], {
-        width = 0.5,
-        conditions = { 'castbarOn' },
-        value = cDB.UseGlobalColors,
-        callback = function(checked)
-            cDB.UseGlobalColors = checked
-            ApplySettings()
-            page:Refresh()
-        end,
-    })
-    modeRow:Checkbox(L['Class Colored Castbar'], {
-        width = 0.5,
-        conditions = { 'castbarOn', 'ownCastbarColors' },
-        value = cDB.ColorByClass,
-        callback = function(checked)
-            cDB.ColorByClass = checked; ApplySettings()
-        end,
-    })
-    local castColorRow = colorCard:Row(rowH)
-    castColorRow:ColorPicker(L['Castbar Color'], {
-        width = 0.5,
-        conditions = { 'castbarOn', 'ownCastbarColors' },
-        value = cDB.Color,
-        callback = function(r, g, b, a)
-            cDB.Color = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
-    castColorRow:ColorPicker(L['Non-Interruptible'], {
-        width = 0.5,
-        conditions = { 'castbarOn', 'ownCastbarColors' },
-        value = cDB.NonInterruptibleColor,
-        callback = function(r, g, b, a)
-            cDB.NonInterruptibleColor = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
-    local stateRow = colorCard:Row(rowHL, 0)
-    stateRow:ColorPicker(L['Interrupted / Failed'], {
-        width = 0.5,
-        conditions = { 'castbarOn', 'ownCastbarColors' },
-        value = cDB.FailColor,
-        callback = function(r, g, b, a)
-            cDB.FailColor = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
-    stateRow:ColorPicker(L['Background'], {
-        width = 0.5,
-        conditions = { 'castbarOn', 'ownCastbarColors' },
-        value = cDB.Background,
-        callback = function(r, g, b, a)
-            cDB.Background = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
+        modeRow:Checkbox(L['Class Colored Castbar'], {
+            width = 0.5,
+            conditions = { 'castbarOn' },
+            value = cDB.ColorByClass,
+            callback = function(checked)
+                cDB.ColorByClass = checked; ApplySettings()
+            end,
+        })
+        local castColorRow = card:Row(rowH)
+        castColorRow:ColorPicker(L['Castbar Color'], {
+            width = 0.5,
+            conditions = { 'castbarOn' },
+            value = cDB.Color,
+            callback = function(r, g, b, a)
+                cDB.Color = { r, g, b, a }
+                ApplySettings()
+            end,
+        })
+        castColorRow:ColorPicker(L['Non-Interruptible'], {
+            width = 0.5,
+            conditions = { 'castbarOn' },
+            value = cDB.NonInterruptibleColor,
+            callback = function(r, g, b, a)
+                cDB.NonInterruptibleColor = { r, g, b, a }
+                ApplySettings()
+            end,
+        })
+        local stateRow = card:Row(rowHL, 0)
+        stateRow:ColorPicker(L['Interrupted / Failed'], {
+            width = 0.5,
+            conditions = { 'castbarOn' },
+            value = cDB.FailColor,
+            callback = function(r, g, b, a)
+                cDB.FailColor = { r, g, b, a }
+                ApplySettings()
+            end,
+        })
+        stateRow:ColorPicker(L['Background'], {
+            width = 0.5,
+            conditions = { 'castbarOn' },
+            value = cDB.Background,
+            callback = function(r, g, b, a)
+                cDB.Background = { r, g, b, a }
+                ApplySettings()
+            end,
+        })
+    end)
 
-    -- Card 3: Safe Zone. Its own override, independent of the color group.
-    page:SetCondition('ownSafeZone', function() return not cDB.SafeZone.UseGlobal end)
-    page:SetCondition('safeZoneOn', function() return not cDB.SafeZone.UseGlobal and cDB.SafeZone.Enabled end)
-    local safeZoneCard = page:Card(L['Safe Zone'], 'unitOn')
-    local safeZoneRow = safeZoneCard:Row(rowH)
-    safeZoneRow:Checkbox(L['Use Global Settings'], {
-        width = 0.5,
-        tooltip = L['Follow the safe zone settings from the general settings.'],
-        conditions = { 'castbarOn' },
-        value = cDB.SafeZone.UseGlobal,
-        callback = function(checked)
-            cDB.SafeZone.UseGlobal = checked
-            ApplySettings()
-            page:Refresh()
-        end,
-    })
-    safeZoneRow:Checkbox(L['Enable Safe Zone'], {
-        width = 0.5,
-        tooltip = L['Shows your latency at the end of the cast, on the player frame only.'],
-        conditions = { 'castbarOn', 'ownSafeZone' },
-        value = cDB.SafeZone.Enabled,
-        callback = function(checked)
-            cDB.SafeZone.Enabled = checked
-            ApplySettings()
-            page:Refresh()
-        end,
-    })
-    safeZoneCard:Row(rowHL, 0):ColorPicker(L['Safe Zone Color'], {
-        width = 0.5,
-        conditions = { 'castbarOn', 'safeZoneOn' },
-        value = cDB.SafeZone.Color,
-        callback = function(r, g, b, a)
-            cDB.SafeZone.Color = { r, g, b, a }
-            ApplySettings()
-        end,
-    })
+    -- Card 4: Safe Zone, latency at the end of the cast. Only the player's own casts have one.
+    if unit == 'player' then
+        page:Card(L['Safe Zone'], 'unitOn'):Rebuild(function(card)
+            local own = not cDB.SafeZone.UseGlobal
+            local headRow = card:Row(own and rowH or rowHL, not own and 0 or nil)
+            headRow:Checkbox(L['Use Global Settings'], {
+                width = 0.5,
+                tooltip = L['Follow the safe zone settings from the general settings.'],
+                conditions = { 'castbarOn' },
+                value = cDB.SafeZone.UseGlobal,
+                callback = function(checked)
+                    cDB.SafeZone.UseGlobal = checked
+                    ApplySettings()
+                    card:Rebuild()
+                end,
+            })
+            if not own then
+                FollowingNote(headRow, L['Following the safe zone in Unit Frames > General.'])
+                return
+            end
 
-    -- Card 3: Position
-    local posCard = page:Card(L['Position Settings'], 'unitOn')
-    local posRow = posCard:Row(rowHL, 0)
+            headRow:Checkbox(L['Enable Safe Zone'], {
+                width = 0.5,
+                tooltip = L['Shows your latency at the end of the cast.'],
+                conditions = { 'castbarOn' },
+                value = cDB.SafeZone.Enabled,
+                callback = function(checked)
+                    cDB.SafeZone.Enabled = checked
+                    ApplySettings()
+                    page:Refresh()
+                end,
+            })
+            card:Row(rowHL, 0):ColorPicker(L['Safe Zone Color'], {
+                width = 0.5,
+                conditions = { 'castbarOn', 'safeZoneOn' },
+                value = cDB.SafeZone.Color,
+                callback = function(r, g, b, a)
+                    cDB.SafeZone.Color = { r, g, b, a }
+                    ApplySettings()
+                end,
+            })
+        end)
+    end
+
+    -- Card 5: Position
+    local posRow = page:Card(L['Position'], 'unitOn'):Row(rowHL, 0)
     posRow:Slider(L['X Offset'], {
         width = 0.5,
         conditions = { 'castbarOn' },
@@ -659,12 +760,22 @@ local function BuildTagsSection(page, uDB, unit, selected)
 
         local headRow = card:Row(rowH)
         headRow:Checkbox(L['Enable'], {
-            width = 1,
+            width = 0.5,
             value = slotDB.Enabled,
             callback = function(checked)
                 slotDB.Enabled = checked
                 ApplySettings()
                 page:Refresh()
+            end,
+        })
+        headRow:EditBox(L['Name'], {
+            width = 0.5,
+            value = slotDB.Name or '',
+            tooltip = L['What to call this tag in the tab strip. Leave empty to number it.'],
+            callback = function(value)
+                if value == (slotDB.Name or '') then return end
+                slotDB.Name = value ~= '' and value or nil
+                NRSKNUI.GUIFrame.content:ShowPage(UF.GUIPageID(unit), { itemKey = 'tags', tabId = selected })
             end,
         })
 
@@ -688,31 +799,26 @@ local function BuildTagsSection(page, uDB, unit, selected)
             end
         end
 
-        local function AddInsertDropdown(row, label, category, tooltip, w)
-            row:Dropdown(label, {
-                width = w or 0.5,
-                conditions = { 'tagOn' },
-                tooltip = tooltip,
-                options = UF.TagOptions[category],
-                value = L['-- Select --'],
-                callback = function(key)
-                    slotDB.Tag = slotDB.Tag == '' and key or slotDB.Tag .. key
-                    ApplySettings()
-                    card:Rebuild()
-                end,
-            })
+        -- Every category in one searchable list, each entry naming its category after it.
+        local insertOptions = {}
+        for _, category in ipairs(TAG_CATEGORIES) do
+            for _, option in ipairs(UF.TagOptions[category.key]) do
+                insertOptions[#insertOptions + 1] = { value = option.value, text = option.text .. '  ' .. Muted(category.label) }
+            end
         end
-
-        local healthRow = card:Row(rowH)
-        AddInsertDropdown(healthRow, L['Insert Health Tag'], 'health', L['Inserts the picked health tag to the tag text above.'])
-        AddInsertDropdown(healthRow, L['Insert Power Tag'], 'power', L['Inserts the picked power tag to the tag text above.'])
-
-        local nameRow = card:Row(rowH)
-        AddInsertDropdown(nameRow, L['Insert Name Tag'], 'name', L['Inserts the picked name tag to the tag text above.'])
-        AddInsertDropdown(nameRow, L['Insert Misc Tag'], 'misc', L['Inserts the picked misc tag to the tag text above.'])
-
-        local styleRow = card:Row(rowH)
-        AddInsertDropdown(styleRow, L['Insert Prefix Tag'], 'prefixes', L['Inserts the picked prefix tag to the tag text above, add these before a tag and ||r after to close it.'], 1)
+        card:Row(rowH):Dropdown(L['Insert Tag'], {
+            width = 1,
+            searchable = true,
+            conditions = { 'tagOn' },
+            tooltip = L['Adds the picked tag to the end of the tag text. A prefix colors what follows it; close it with ||r.'],
+            options = insertOptions,
+            value = L['-- Select --'],
+            callback = function(key)
+                slotDB.Tag = slotDB.Tag == '' and key or slotDB.Tag .. key
+                ApplySettings()
+                card:Rebuild()
+            end,
+        })
 
         card:Separator()
 
@@ -900,9 +1006,17 @@ UF.GUISections = {
 ---@class UF.GUITagTab
 ---@field id string The tag slot's DB key.
 ---@field text string The tag slot's display name.
-UF.GUITagTabs = {}
-for i, name in ipairs(TAG_SLOTS) do
-    UF.GUITagTabs[i] = { id = name, text = format('%s %d', L['Tag'], i) }
+---One tab per tag slot, titled with the tag's name where it has one.
+---@param unit string config key
+---@return { id: string, text: string }[] tabs
+function UF.GUITagTabs(unit)
+    local tags = NRSKNUI.db.profile.UnitFrames.Units[unit].Tags
+    local tabs = {}
+    for i, slot in ipairs(TAG_SLOTS) do
+        local name = tags[slot].Name
+        tabs[i] = { id = slot, text = (name and name ~= '') and name or format('%s %d', L['Tag'], i) }
+    end
+    return tabs
 end
 
 ---One tab per indicator the unit can actually show, see UF.UnitIndicators.

@@ -524,7 +524,7 @@ local function Layout(state)
     -- it carries forbidden aspects and nothing unrestricted is allowed to hang off it.
     local columns = min(perLine, state.count)
     frame:ClearAllPoints()
-    frame:SetPoint(point, state.anchorTo, state.anchorPoint, state.anchorX, state.anchorY)
+    frame:SetPoint(config.containerPoint or point, state.anchorTo, state.anchorPoint, state.anchorX, state.anchorY)
     frame:SetSize(
         max(1, columns) * width + (max(1, columns) - 1) * (config.elementSpacing or 0),
         max(1, lines) * height + (max(1, lines) - 1) * (config.lineSpacing or 0)
