@@ -1236,7 +1236,9 @@ function CHAT:GetDateTime(useLocal)
     return useLocal and time() or GetServerTime()
 end
 
-function CHAT:AddMessageEdits(frame, msg, isHistory, historyTime)
+---@param msg string
+---@return string
+function CHAT:AddMessageEdits(msg)
     if not msg then return msg end
 
     local isProtected = self:MessageIsProtected(msg)
@@ -1245,11 +1247,9 @@ function CHAT:AddMessageEdits(frame, msg, isHistory, historyTime)
     if strmatch(msg, '^%s*$') or strmatch(msg, '^|Hnrsktime|h') then return msg end
 
     local db = self.db
-    local historyTimestamp
-    if isHistory == "NorskenUI_ChatHistory" then historyTimestamp = historyTime end
     if db.ShortChannels then msg = self:HandleShortChannels(msg, false) end
     if db.TimestampFormat and db.TimestampFormat ~= "NONE" then
-        local timestamp = BetterDate(db.TimestampFormat, historyTimestamp or self:GetDateTime(db.UseLocalTime))
+        local timestamp = BetterDate(db.TimestampFormat, self:GetDateTime(db.UseLocalTime))
         timestamp = gsub(timestamp, " ", "")
         timestamp = gsub(timestamp, "AM", " AM")
         timestamp = gsub(timestamp, "PM", " PM")
@@ -1265,10 +1265,10 @@ function CHAT:AddMessageEdits(frame, msg, isHistory, historyTime)
     return msg
 end
 
----@param self NUIChatFrame
-function CHAT.AddMessage(self, msg, infoR, infoG, infoB, infoID, accessID, typeID, event, eventArgs, msgFormatter, isHistory, historyTime)
-    local body = CHAT:AddMessageEdits(self, msg, isHistory, historyTime)
-    self.OldAddMessage(self, body, infoR, infoG, infoB, infoID, accessID, typeID, event, eventArgs, msgFormatter)
+---Rewrites a message after AddMessage stored it and before it renders, leaving Blizzard's call path untainted.
+---@param entry { message: string }
+local function EditStoredMessage(_, entry)
+    entry.message = CHAT:AddMessageEdits(entry.message)
 end
 
 function CHAT:GetClassColor(class)
@@ -1853,9 +1853,9 @@ function CHAT:StyleChat(chat)
     chat:SetFading(db.FadeEnabled ~= false)
 
     local allowHooks = id and not IGNORE_FRAMES[id]
-    if allowHooks and not chat.OldAddMessage then
-        chat.OldAddMessage = chat.AddMessage
-        chat.AddMessage = self.AddMessage
+    if allowHooks and not chat.nrsknMessageHooked then
+        chat.nrsknMessageHooked = true
+        hooksecurefunc(chat.historyBuffer, 'PushFront', EditStoredMessage)
     end
 
     if tab and not IsCombatLog(chat) then tab:SetScript("OnClick", CHAT.Tab_OnClick) end
