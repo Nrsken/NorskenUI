@@ -9,6 +9,7 @@ local pcall = pcall
 local pairs = pairs
 local ipairs = ipairs
 local xpcall = xpcall
+local wipe = wipe
 local CreateFrame = CreateFrame
 local geterrorhandler = geterrorhandler
 local UnitIsDND = UnitIsDND
@@ -216,6 +217,7 @@ end
 -- Combat Queue --
 
 local combatQueue = {}
+local queuedFns = {}
 
 ---Run fn now if out of combat lockdown, otherwise defer to PLAYER_REGEN_ENABLED.
 ---Used for any protected function call.
@@ -223,6 +225,8 @@ local combatQueue = {}
 function NRSKNUI:RunWhenSafe(fn)
     if not fn then return end
     if NRSKNUI:InCombat() then
+        if queuedFns[fn] then return end -- the same function queued twice would only redo the same work
+        queuedFns[fn] = true
         combatQueue[#combatQueue + 1] = fn
     else
         fn()
@@ -238,7 +242,7 @@ local pending = {}
 ---Check combat state, including the active.Combat flag which is set by PLAYER_REGEN_DISABLED/ENABLED events.
 ---@return boolean
 function NRSKNUI:InCombat()
-    return active.Combat or InCombatLockdown() or UnitAffectingCombat('Player')
+    return active.Combat or InCombatLockdown()
 end
 
 ---Current restriction state (0 none, 1 partial, 2 full).
@@ -316,6 +320,7 @@ function Restricted:PLAYER_REGEN_ENABLED()
     if #combatQueue > 0 then
         local snapshot = combatQueue
         combatQueue = {}
+        wipe(queuedFns)
         -- One erroring callback must not strand the protected work queued behind it.
         for i = 1, #snapshot do
             xpcall(snapshot[i], geterrorhandler())

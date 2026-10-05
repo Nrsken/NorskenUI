@@ -172,14 +172,17 @@ function NRSKNUI:OnInitialize()
     self:UpdateMult()
 end
 
-function NRSKNUI:ApplyToAllModules()
-    self:RunWhenSafe(function()
-        for _, aceModule in self:IterateModules() do
-            if aceModule:IsEnabled() and aceModule.ApplySettings then
-                aceModule:ApplySettings()
-            end
+-- One shared function, so RunWhenSafe collapses repeat calls made during combat.
+local function ApplyAllModules()
+    for _, aceModule in NRSKNUI:IterateModules() do
+        if aceModule:IsEnabled() and aceModule.ApplySettings then
+            aceModule:ApplySettings()
         end
-    end)
+    end
+end
+
+function NRSKNUI:ApplyToAllModules()
+    self:RunWhenSafe(ApplyAllModules)
 end
 
 -- Live GUI edits fire many times a second; re-applying every module on each one drops frames.
@@ -251,6 +254,7 @@ function NRSKNUI:OnEnable()
     end)
 
     self:SetupSlashCommands()
+    self:SetupGameMenuButton()
     self:SetUIScale()
     self:ApplyBlizzardFonts()
 
