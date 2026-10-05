@@ -27,6 +27,46 @@ function NRSKNUI:ResetGUIState()
     self:Print('GUI position and size reset to defaults.')
 end
 
+-- Game menu entry, kept out of Blizzard's button pool so its pooled buttons never carry our taint.
+function NRSKNUI:SetupGameMenuButton()
+    EventUtil.ContinueOnAddOnLoaded('Blizzard_GameMenu', function()
+        local menu = _G.GameMenuFrame
+        local button = CreateFrame('Button', 'NRSKNUI_GameMenuButton', menu, 'MainMenuFrameButtonTemplate')
+        button:SetScript('OnClick', function()
+            PlaySound(SOUNDKIT.IG_MAINMENU_OPTION)
+            menu:CloseMenu()
+            NRSKNUI.GUIFrame:Show()
+        end)
+
+        -- Layout re-anchors every pooled button from scratch, so this slots in below Macros each time.
+        hooksecurefunc(menu, 'Layout', function()
+            local anchor
+            for menuButton in menu.buttonPool:EnumerateActive() do
+                local text = menuButton:GetText()
+                if text == MACROS or (text == GAMEMENU_SUPPORT and not anchor) then anchor = menuButton end
+            end
+            if not anchor then
+                button:Hide()
+                return
+            end
+
+            local height = anchor:GetHeight()
+            button:SetText(NRSKNUI:ColorTextByTheme('Norsken') .. '|cffb3b3b3UI|r') -- per open, so a theme change shows
+            button:SetSize(anchor:GetWidth(), height)
+            button:ClearAllPoints()
+            button:SetPoint('TOP', anchor, 'BOTTOM')
+            button:Show()
+
+            for menuButton in menu.buttonPool:EnumerateActive() do
+                if menuButton.layoutIndex > anchor.layoutIndex then
+                    menuButton:AdjustPointsOffset(0, -height)
+                end
+            end
+            menu:SetHeight(menu:GetHeight() + height)
+        end)
+    end)
+end
+
 -- Setup slash commands
 function NRSKNUI:SetupSlashCommands()
     SLASH_NRSKNUI1 = '/nui'

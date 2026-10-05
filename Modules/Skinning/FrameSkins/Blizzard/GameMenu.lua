@@ -29,6 +29,11 @@ local function SkinMenuButtons(menu)
             Skinning:HandleButton(button)
         end
     end
+
+    local own = _G.NRSKNUI_GameMenuButton
+    if own and not own.NUISkinned then
+        Skinning:HandleButton(own)
+    end
 end
 
 Skinning:RegisterSkin('Blizzard_GameMenu', 'GameMenu', function(S)
