@@ -16,6 +16,7 @@ lib.Pixel = Pixel
 local Mixin = Mixin
 local CreateFrame = CreateFrame
 local GetPhysicalScreenSize = GetPhysicalScreenSize
+local InCombatLockdown = InCombatLockdown
 local canaccessvalue = canaccessvalue
 local issecrettable = issecrettable
 local floor = math.floor
@@ -102,6 +103,11 @@ local function SetPixelSnap(object)
     if type(target) == 'table' and target.SetSnapToPixelGrid then
         target:SetSnapToPixelGrid(false)
         target:SetTexelSnappingBias(0)
+    end
+
+    -- 12.1.5+: native layout rounding, protected so it waits out combat.
+    if object.SetRoundLayoutToNearestPixel and not InCombatLockdown() then
+        object:SetRoundLayoutToNearestPixel(true)
     end
 
     object.NUIPixelSnapDisabled = true
