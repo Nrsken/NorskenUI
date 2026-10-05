@@ -328,7 +328,9 @@ local function BuildHealthSection(page, uDB, unit)
 
     -- Card 3/4: one card per absorb, each with its own global-or-override toggle.
     local absorbSlots = {
-        { db = hDB.HealAbsorb,   title = L['Heal Absorb'],   label = L['Enable Heal Absorb'],   onCond = 'healAbsorbOn' },
+        { db = hDB.HealPrediction, title = L['Heal Prediction'], label = L['Enable Heal Prediction'], onCond = 'healPredictionOn' },
+        { db = hDB.TempLoss, title = L['Max Health Reduction'], label = L['Enable Max Health Reduction'], onCond = 'tempLossOn' },
+        { db = hDB.HealAbsorb,  title = L['Heal Absorb'],   label = L['Enable Heal Absorb'],   onCond = 'healAbsorbOn' },
         { db = hDB.DamageAbsorb, title = L['Damage Absorb'], label = L['Enable Damage Absorb'], onCond = 'damageAbsorbOn' },
     }
     for _, slot in ipairs(absorbSlots) do
@@ -533,6 +535,33 @@ local function BuildPowerSection(page, uDB, unit)
             end,
         })
     end)
+
+    if unit ~= 'player' then return end
+
+    local costDB = pDB.CostPrediction
+    page:SetCondition('costOn', function() return pDB.Enabled and costDB.Enabled end)
+
+    local costRow = page:Card(L['Spell Cost'], 'unitOn'):Row(rowHL, 0)
+    costRow:Checkbox(L['Show Spell Cost'], {
+        width = 0.5,
+        conditions = { 'powerOn' },
+        tooltip = L['Shades the part of the bar the spell you are casting will spend.'],
+        value = costDB.Enabled,
+        callback = function(checked)
+            costDB.Enabled = checked
+            ApplySettings()
+            page:Refresh()
+        end,
+    })
+    costRow:ColorPicker(L['Color'], {
+        width = 0.5,
+        conditions = { 'costOn' },
+        value = costDB.Color,
+        callback = function(r, g, b, a)
+            costDB.Color = { r, g, b, a }
+            ApplySettings()
+        end,
+    })
 end
 
 -- Castbar Settings Page.
@@ -584,6 +613,25 @@ local function BuildCastbarSection(page, uDB, unit)
         value = cDB.ShowSpellName,
         callback = function(checked)
             cDB.ShowSpellName = checked; ApplySettings()
+        end,
+    })
+    local nameRow = displayCard:Row(rowH)
+    nameRow:Checkbox(L['Show Cast Target'], {
+        width = 0.5,
+        conditions = { 'castbarOn' },
+        tooltip = L['Adds who the spell is being cast on after the spell name.'],
+        value = cDB.ShowTarget,
+        callback = function(checked)
+            cDB.ShowTarget = checked; ApplySettings()
+        end,
+    })
+    nameRow:Checkbox(L['Show Interrupter'], {
+        width = 0.5,
+        conditions = { 'castbarOn' },
+        tooltip = L['Names who interrupted the cast.'],
+        value = cDB.ShowInterrupter,
+        callback = function(checked)
+            cDB.ShowInterrupter = checked; ApplySettings()
         end,
     })
     local holdRow = displayCard:Row(rowHL, 0)
@@ -652,6 +700,25 @@ local function BuildCastbarSection(page, uDB, unit)
             value = cDB.NonInterruptibleColor,
             callback = function(r, g, b, a)
                 cDB.NonInterruptibleColor = { r, g, b, a }
+                ApplySettings()
+            end,
+        })
+        local importantRow = card:Row(rowH)
+        importantRow:Checkbox(L['Color Important Casts'], {
+            width = 0.5,
+            conditions = { 'castbarOn' },
+            tooltip = L['Casts the game flags as important, such as ones that are lethal if not interrupted.'],
+            value = cDB.ColorImportant,
+            callback = function(checked)
+                cDB.ColorImportant = checked; ApplySettings()
+            end,
+        })
+        importantRow:ColorPicker(L['Important'], {
+            width = 0.5,
+            conditions = { 'castbarOn' },
+            value = cDB.ImportantColor,
+            callback = function(r, g, b, a)
+                cDB.ImportantColor = { r, g, b, a }
                 ApplySettings()
             end,
         })

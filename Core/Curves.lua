@@ -32,17 +32,18 @@ DurationDecimals:AddPoint(0.1, 1)
 DurationDecimals:AddPoint(2.8, 1)
 DurationDecimals:AddPoint(2.9, 0)
 
+-- Decimal places for a percentage: 2 below 10%, 1 below 100%, 0 at full
+local PercentDecimals = CreateCurve()
+PercentDecimals:SetType(Step)
+PercentDecimals:AddPoint(0, 2)
+PercentDecimals:AddPoint(0.1, 1)
+PercentDecimals:AddPoint(1, 0)
+
 -- Curve that yields data for SetDesaturation based on cooldown remaining
 local ActionDesaturation = CreateCurve()
 ActionDesaturation:SetType(Step)
 ActionDesaturation:AddPoint(0, 0)
 ActionDesaturation:AddPoint(0.001, 1)
-
--- Curve that yields data for SetAlpha based on cooldown remaining
-local ActionAlpha = CreateCurve()
-ActionAlpha:SetType(Step)
-ActionAlpha:AddPoint(0, 1)
-ActionAlpha:AddPoint(0.001, 0.33)
 
 -- Curve that yields alpha based on health percent (0 at full, 1 when missing)
 local HealthMissingAlpha = CreateCurve()
@@ -82,15 +83,15 @@ local AuraDurationColor = BuildAuraDurationColorCurve()
 
 ---@class NRSKNUI.Curves
 ---@field DurationDecimals CurveObject
+---@field PercentDecimals CurveObject
 ---@field ActionDesaturation CurveObject
----@field ActionAlpha CurveObject
 ---@field HealthMissingAlpha CurveObject
 ---@field AuraDurationColor ColorCurveObject
 NRSKNUI.curves = {
     DurationDecimals = DurationDecimals,
+    PercentDecimals = PercentDecimals,
     HealthMissingAlpha = HealthMissingAlpha,
     ActionDesaturation = ActionDesaturation,
-    ActionAlpha = ActionAlpha,
     AuraDurationColor = AuraDurationColor,
 }
 

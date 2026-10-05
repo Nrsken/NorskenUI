@@ -53,10 +53,22 @@ function UF.LayoutBars(frame)
 
     if health then
         local lift = docked and pDB.Height + 1 or 0
-        for _, bar in ipairs({ health, health.healthBackground, frame.healthBorderFrame }) do
+        for _, bar in ipairs({ health, health.healthBackground, frame.healthBorderFrame, health.nuiTempLoss }) do
             bar:ClearAllPoints()
             bar:NUISetPixelPoint('TOPLEFT', frame, 'TOPLEFT', 0, 0)
             bar:NUISetPixelPoint('BOTTOMRIGHT', frame, 'BOTTOMRIGHT', 0, lift)
+        end
+
+        -- Health ends where the temporarily lost max health begins.
+        if health.TempLoss then
+            local edge = health.TempLoss:GetStatusBarTexture()
+            for _, bar in ipairs({ health, health.healthBackground }) do
+                if health.nuiInverse then
+                    bar:NUISetPixelPoint('TOPLEFT', edge, 'TOPRIGHT', 0, 0)
+                else
+                    bar:NUISetPixelPoint('BOTTOMRIGHT', edge, 'BOTTOMLEFT', 0, 0)
+                end
+            end
         end
     end
 
@@ -113,6 +125,14 @@ local function BuildPower(self)
     powerBar:NUISetPixelSnap()
     powerBar.PostUpdate = UF.PostUpdatePower
     powerBar.PostUpdateColor = UF.PostUpdatePowerColor
+
+    local costPrediction = CreateFrame('StatusBar', nil, powerBar)
+    costPrediction:NUISetPixelSnap()
+    costPrediction:SetReverseFill(true)
+    costPrediction:NUISetPixelPoint('TOP')
+    costPrediction:NUISetPixelPoint('BOTTOM')
+    costPrediction:NUISetPixelPoint('RIGHT', powerBar:GetStatusBarTexture())
+    powerBar.nuiCostPrediction = costPrediction
 
     self.Power = powerBar
 end
@@ -182,6 +202,21 @@ UF.Elements.Power = {
         powerBar.colorReaction = false
         UF.CacheColor(powerBar, 'nuiColor', color)
         powerBar.nuiColorByPower = colorByPower
+
+        local costDB = pDB.CostPrediction
+        local showCost = unit == 'player' and costDB.Enabled
+        local costPrediction = powerBar.nuiCostPrediction
+        costPrediction:SetStatusBarTexture(NRSKNUI:GetStatusbar(general, pDB.StatusBarTexture))
+        costPrediction:SetStatusBarColor(costDB.Color[1], costDB.Color[2], costDB.Color[3], costDB.Color[4])
+        costPrediction:SetShown(showCost)
+        powerBar.CostPrediction = showCost and costPrediction or nil
+
+        -- oUF registers the cast events on enable only.
+        if powerBar.nuiShowCost ~= nil and powerBar.nuiShowCost ~= showCost and self:IsElementEnabled('Power') then
+            self:DisableElement('Power')
+            self:EnableElement('Power')
+        end
+        powerBar.nuiShowCost = showCost
 
         -- The same handler every time, so oUF registers it once per frame.
         if powerBar.nuiFilter then

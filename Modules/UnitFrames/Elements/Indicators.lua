@@ -66,6 +66,17 @@ local function LeaderPostUpdate(element, isLeader)
     end
 end
 
+---12.1.5+ oUF shows PvP through alpha only, at atlas size, and never clears a Neutral unit's icon.
+---@param element oUF.PvPIndicator
+---@param status string? deprecated by oUF
+local function PvPPostUpdate(element, _, status)
+    element:NUISetPixelSize(element.nuiSize, element.nuiSize)
+    if not UnitFrameUtil then return end
+
+    element:Show()
+    if not status then element:SetAlpha(0) end
+end
+
 ---UnitHasIncomingResurrection covers the cast only, so true -> false on a still-dead unit is the
 ---closest thing to a signal that the offer is now waiting to be accepted.
 ---@param element oUF.ResurrectIndicator
@@ -109,8 +120,10 @@ end
 ---@field element string
 ---@field units? table<string, boolean> config keys it applies to, nil for every unit
 ---@field layer? string UF.LayerElements key, nil draws on Status
+---@field ignoreRange? boolean stays opaque on a range-faded frame
+---@field tooltip? boolean builds a click-through frame host with the art on .Icon
 ---@field art UnitFramesIndicatorArt[] the first entry is what an unrecognized Texture falls back to
----@field configure? fun(tex: Texture, db: table) settings beyond size and position
+---@field configure? fun(tex: Texture, db: table, frame: oUF.UnitFrame) settings beyond size and position
 ---@field postUpdate? fun(element: Texture, ...) oUF PostUpdate, for filtering what the element shows
 
 UF.IndicatorDefs = {
@@ -145,6 +158,7 @@ UF.IndicatorDefs = {
         key = 'ReadyCheck',
         label = L['Ready Check'],
         element = 'ReadyCheckIndicator',
+        ignoreRange = true,
         units = GROUP_UNITS,
         art = {
             { key = 'Blizzard', label = L['Blizzard'], atlas = 'UI-LFG-ReadyMark-Raid' },
@@ -158,7 +172,19 @@ UF.IndicatorDefs = {
         art = {
             { key = 'Blizzard', label = L['Blizzard'], atlas = 'UI-LFG-RoleIcon-Healer-Micro-Raid' },
         },
-        configure = function(tex, db) tex.nuiTankHealerOnly = db.TankHealerOnly end,
+        configure = function(tex, db, frame)
+            tex.nuiTankHealerOnly = db.TankHealerOnly
+
+            -- 12.1.5+ passes no role to postUpdate; oUF reads the atlas on enable only, hence the cycle.
+            local damageAtlas = db.TankHealerOnly and '' or nil
+            if tex.damageAtlas ~= damageAtlas then
+                tex.damageAtlas = damageAtlas
+                if frame:IsElementEnabled('GroupRoleIndicator') then
+                    frame:DisableElement('GroupRoleIndicator')
+                    frame:EnableElement('GroupRoleIndicator')
+                end
+            end
+        end,
         postUpdate = function(element, role)
             if element.nuiTankHealerOnly and role == Enum.LFGRole.Damage then
                 element:Hide()
@@ -169,6 +195,7 @@ UF.IndicatorDefs = {
         key = 'Summon',
         label = L['Summon'],
         element = 'SummonIndicator',
+        ignoreRange = true,
         units = GROUPED,
         art = {
             { key = 'Blizzard', label = L['Blizzard'], atlas = 'RaidFrame-Icon-SummonPending' },
@@ -178,6 +205,7 @@ UF.IndicatorDefs = {
         key = 'Resurrect',
         label = L['Resurrect'],
         element = 'ResurrectIndicator',
+        ignoreRange = true,
         units = GROUPED,
         art = {
             { key = 'Blizzard', label = L['Blizzard'], atlas = 'RaidFrame-Icon-Rez' },
@@ -192,11 +220,14 @@ UF.IndicatorDefs = {
         art = {
             { key = 'Blizzard', label = L['Blizzard'], texture = [[Interface\TargetingFrame\UI-PVP-Horde]], coords = { 0, 0.65625, 0, 0.65625 } },
         },
+        configure = function(tex, db) tex.nuiSize = db.Size end,
+        postUpdate = PvPPostUpdate,
     },
     {
         key = 'Phase',
         label = L['Phase'],
         element = 'PhaseIndicator',
+        tooltip = true,
         units = PLAYER_UNITS,
         art = {
             { key = 'Blizzard', label = L['Blizzard'], atlas = 'RaidFrame-Icon-Phasing' },
@@ -258,10 +289,11 @@ local function PreviewRoleAtlas(frame, db)
     return format('UI-LFG-RoleIcon-%s-Micro-Raid', roles[slot % #roles + 1])
 end
 
----@param tex Texture
+---@param host Texture|Frame a tooltip host carries its art on .Icon
 ---@param def UnitFramesIndicatorDef
 ---@param db table the unit's Indicators[def.key] block
-local function ApplyArt(tex, def, db)
+local function ApplyArt(host, def, db)
+    local tex = host.Icon or host --[[@as Texture]]
     local art = def.art[1]
     for _, variant in ipairs(def.art) do
         if variant.key == db.Texture then
@@ -312,8 +344,17 @@ UF.Elements.Indicators = {
                 self.nuiIndicatorHosts[def.layer] = parent
             end
 
-            local tex = parent:CreateTexture(nil, 'OVERLAY')
+            local tex
+            if def.tooltip then
+                tex = CreateFrame('Frame', nil, parent, 'InsecureMouseClicksPropagatorTemplate')
+                tex:EnableMouse(true) -- oUF hooks the tooltip onto a mouse-enabled host
+                tex.Icon = tex:CreateTexture(nil, 'OVERLAY')
+                tex.Icon:SetAllPoints()
+            else
+                tex = parent:CreateTexture(nil, 'OVERLAY')
+            end
             tex.PostUpdate = def.postUpdate
+            tex:SetIgnoreParentAlpha(def.ignoreRange or false)
             self[def.element] = tex
         end
     end,
@@ -334,7 +375,7 @@ UF.Elements.Indicators = {
             tex:NUISetPixelPoint(db.Position.AnchorFrom, container, db.Position.AnchorTo, db.Position.XOffset, db.Position.YOffset)
             ApplyArt(tex, def, db)
 
-            if def.configure then def.configure(tex, db) end
+            if def.configure then def.configure(tex, db, self) end
         end
     end,
 
@@ -354,15 +395,21 @@ UF.Elements.Indicators = {
 
         for _, def in ipairs(UF.UnitIndicators(unit)) do
             local tex = self[def.element]
+            local db = uDB.Indicators[def.key]
+            local roleSample = groupRoles and def.key == 'Role' and db.Enabled
 
-            if groupRoles and def.key == 'Role' and uDB.Indicators.Role.Enabled then
+            if roleSample or def.key == previewed then
                 tex.Override = function() NRSKNUI:NOP() end
-                tex:SetAtlas(PreviewRoleAtlas(self, uDB.Indicators.Role))
-                tex:SetDesaturated(nil)
-                tex:Show()
-            elseif def.key == previewed then
-                tex.Override = function() NRSKNUI:NOP() end
-                ApplyArt(tex, def, uDB.Indicators[def.key]) -- oUF only applies art on enable, so a disabled one has none yet
+                if roleSample then
+                    tex:SetAtlas(PreviewRoleAtlas(self, db))
+                    tex:SetDesaturated(nil)
+                else
+                    ApplyArt(tex, def, db) -- oUF only applies art on enable, so a disabled one has none yet
+                end
+
+                -- 12.1.5 shrinks a hidden role icon to 1px wide and hides PvP through alpha.
+                tex:NUISetPixelSize(db.Size, db.Size)
+                tex:SetAlpha(1)
                 tex:Show()
             elseif tex.Override then
                 tex.Override = nil

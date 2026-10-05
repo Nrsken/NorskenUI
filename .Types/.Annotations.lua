@@ -135,6 +135,12 @@
 ---@field NUIScoreText FontString? BigWigs' score string, which carries no parent key
 ---@field NUISkinned boolean?
 
+---@class ActionBarButtonTemplate
+---@field action number? Set at runtime by the action paging code
+---@field enableSpellFX boolean?
+---@field _nrsknIcon Texture? Our mirror of .icon when cooldown desaturation is on
+---@field _nrsknItemDuration LuaDurationObject?
+
 -- Font styling API injected onto FontString / Font / EditBox metatables (see Core/FontCore.lua).
 ---@class Font ---@diagnostic disable-line: class-shadows-builtin
 local Font
@@ -1397,7 +1403,7 @@ function FontString:GetWidestDigit() end
 ---@field chatTarget string?
 ---@field isTemporary boolean?
 ---@field minFrame Frame?
----@field OldAddMessage fun(self: NUIChatFrame, ...)?
+---@field nrsknMessageHooked boolean?
 
 ---Chatv2 persists which chat window the panel snapped to; not a default, so the generator never sees it.
 ---@class NRSKNUI.DBProfile.Skinning.Chatv2

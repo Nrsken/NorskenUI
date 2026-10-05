@@ -23,6 +23,7 @@ local select = select
 
 local GetClassColor = C_ClassColor and C_ClassColor.GetClassColor
 local WrapString = C_StringUtil and C_StringUtil.WrapString
+local TruncateWhenZero = C_StringUtil.TruncateWhenZero
 
 local DEAD = DEAD
 local PLAYER_LIST_DELIMITER = PLAYER_LIST_DELIMITER
@@ -297,6 +298,21 @@ UF:RegisterTag('NUF:perhp', L['Health %'], 'health', HEALTH_EVENTS, function(uni
 	if not unit or not UnitExists(unit) then return '' end
 
 	return format('%.f', UnitHealthPercent(unit, false, CurveConstants.ScaleTo100))
+end)
+
+--* Unit health as a percentage, with decimals that grow as health drops.
+UF:RegisterTag('NUF:perhp:precise', L['Health % (Precise)'], 'health', HEALTH_EVENTS, function(unit)
+	if not unit or not UnitExists(unit) then return '' end
+
+	local decimals = UnitHealthPercent(unit, false, NRSKNUI.curves.PercentDecimals)
+	return format('%.' .. decimals .. 'f', UnitHealthPercent(unit, false, CurveConstants.ScaleTo100))
+end)
+
+--* Unit absorb amount as a raw value, blank while there is none.
+UF:RegisterTag('NUF:absorb', L['Damage Absorb'], 'health', 'UNIT_ABSORB_AMOUNT_CHANGED', function(unit)
+	if not unit or not UnitExists(unit) then return '' end
+
+	return TruncateWhenZero(UnitGetTotalAbsorbs(unit))
 end)
 
 --* Unit absorb amount as an abbreviated raw value.

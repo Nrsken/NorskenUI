@@ -1114,6 +1114,7 @@ local Defaults = {
                 HideTalkingHead = true,
                 HideBossBanner = true,
                 EnterAccept = false,
+                FixBlizzardBugs = true,
 
                 WhisperSounds = {
                     Enabled = false,
@@ -1408,6 +1409,7 @@ local Defaults = {
                 FontOutline = "OUTLINE",
 
                 RangeOverlayColor = { 1, 0, 0, 0.2 },
+                DesaturateOnCooldown = false,
 
                 -- Global Font Sizes (used when bar's FontSizes.GlobalOverride is true)
                 FontSizes = {
@@ -2830,6 +2832,7 @@ local Defaults = {
                 ColorByClass = false,
                 ColorByPower = true,
                 CastbarColorByClass = true,
+                CastbarColorImportant = true,
                 ForegroundAlphaWhenColorByClass = 1,
                 Colors = {
                     Foreground = { 0, 0, 0, 0.8 },
@@ -2838,6 +2841,7 @@ local Defaults = {
                     Power = { 0.3, 0.5, 0.8, 1 },
                     Castbar = { 0.35, 0.55, 0.85, 1 },
                     CastbarNonInterruptible = { 0.78, 0.25, 0.25, 1 },
+                    CastbarImportant = { 0.85, 0.55, 0.15, 1 },
                     CastbarFail = { 0.8, 0.25, 0.2, 1 },
                     CastbarBackground = { 0, 0, 0, 0.8 },
                 },
@@ -2850,6 +2854,18 @@ local Defaults = {
                     UseGlobalBar = false,
                     StatusBarTexture = "StripesThick",
                     Color = { 0.8, 0, 0, 0.5 },
+                },
+                HealPrediction = {
+                    Enabled = true,
+                    UseGlobalBar = true,
+                    StatusBarTexture = "NorskenUI",
+                    Color = { 0, 0.8, 0.35, 0.5 },
+                },
+                TempLoss = {
+                    Enabled = true,
+                    UseGlobalBar = false,
+                    StatusBarTexture = "StripesThick",
+                    Color = { 0.3, 0.3, 0.3, 0.8 },
                 },
                 DamageAbsorb = {
                     Enabled = true,
@@ -2882,6 +2898,7 @@ local Defaults = {
                     Power = 2,
                     Castbar = 3,
                     Dispel = 4,
+                    HealPrediction = 5,
                     DamageAbsorb = 5,
                     HealAbsorb = 6,
                     Highlight = 7,
@@ -2934,6 +2951,20 @@ local Defaults = {
                             StatusBarTexture = "StripesThick",
                             Color = { 0.4, 0, 0.8, 0.5 },
                         },
+                        HealPrediction = {
+                            UseGlobal = true,
+                            Enabled = true,
+                            UseGlobalBar = true,
+                            StatusBarTexture = "NorskenUI",
+                            Color = { 0, 0.8, 0.35, 0.5 },
+                        },
+                        TempLoss = {
+                            UseGlobal = true,
+                            Enabled = true,
+                            UseGlobalBar = false,
+                            StatusBarTexture = "StripesThick",
+                            Color = { 0.3, 0.3, 0.3, 0.8 },
+                        },
                         DamageAbsorb = {
                             UseGlobal = true,
                             Enabled = true,
@@ -2951,6 +2982,10 @@ local Defaults = {
                         Color = { 0.3, 0.5, 0.8, 1 },
                         UseGlobalSmooth = true,
                         Smooth = true,
+                        CostPrediction = { -- player only
+                            Enabled = true,
+                            Color = { 0, 0, 0, 0.4 },
+                        },
                     },
                     Tags = {
                         TagOne = {
@@ -3172,11 +3207,15 @@ local Defaults = {
                         ShowIcon = true,
                         ShowSpellName = true,
                         ShowTime = true,
+                        ShowTarget = true,
+                        ShowInterrupter = true,
                         TimeToHold = 0.5,
                         UseGlobalColors = true,
                         ColorByClass = true,
+                        ColorImportant = true,
                         Color = { 0.35, 0.55, 0.85, 1 },
                         NonInterruptibleColor = { 0.78, 0.25, 0.25, 1 },
+                        ImportantColor = { 0.85, 0.55, 0.15, 1 },
                         FailColor = { 0.8, 0.25, 0.2, 1 },
                         Background = { 0, 0, 0, 0.8 },
                         SafeZone = {

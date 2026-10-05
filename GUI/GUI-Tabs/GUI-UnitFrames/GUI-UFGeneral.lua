@@ -293,6 +293,18 @@ local function BuildCastbarSection(page, db)
     ColorPicker(colorRow, L['Castbar Color'], colors, 'Castbar', { 'castbarCustom' })
     ColorPicker(colorRow, L['Background'], colors, 'CastbarBackground')
 
+    local importantRow = card:Row(rowH)
+    importantRow:Checkbox(L['Color Important Casts'], {
+        width = half,
+        tooltip = L['Casts the game flags as important, such as ones that are lethal if not interrupted.'],
+        value = general.CastbarColorImportant,
+        callback = function(checked)
+            general.CastbarColorImportant = checked
+            ApplySettings()
+        end,
+    })
+    ColorPicker(importantRow, L['Important'], colors, 'CastbarImportant')
+
     local stateRow = card:Row(rowHL, 0)
     ColorPicker(stateRow, L['Non-Interruptible'], colors, 'CastbarNonInterruptible')
     ColorPicker(stateRow, L['Interrupted / Failed'], colors, 'CastbarFail')
@@ -321,6 +333,8 @@ local function BuildOverlayCard(page, title, label, tbl, condition)
 end
 
 local function BuildAbsorbsSection(page, db)
+    BuildOverlayCard(page, L['Heal Prediction'], L['Enable Heal Prediction'], db.General.HealPrediction, 'healPredictionOn')
+    BuildOverlayCard(page, L['Max Health Reduction'], L['Enable Max Health Reduction'], db.General.TempLoss, 'tempLossOn')
     BuildOverlayCard(page, L['Heal Absorb'], L['Enable Heal Absorb'], db.General.HealAbsorb, 'healAbsorbOn')
     BuildOverlayCard(page, L['Damage Absorb'], L['Enable Damage Absorb'], db.General.DamageAbsorb, 'damageAbsorbOn')
 end
@@ -370,6 +384,8 @@ GUI:RegisterPage('unitFramesGeneral', {
         page:SetCondition('powerCustom', function() return not db.General.ColorByPower end)
         page:SetCondition('castbarCustom', function() return not db.General.CastbarColorByClass end)
         page:SetCondition('safeZoneOn', function() return db.General.SafeZone.Enabled end)
+        page:SetCondition('healPredictionOn', function() return db.General.HealPrediction.Enabled end)
+        page:SetCondition('tempLossOn', function() return db.General.TempLoss.Enabled end)
         page:SetCondition('healAbsorbOn', function() return db.General.HealAbsorb.Enabled end)
         page:SetCondition('damageAbsorbOn', function() return db.General.DamageAbsorb.Enabled end)
         page:SetCondition('ownBar', function() return not db.General.UseGlobalBar end)

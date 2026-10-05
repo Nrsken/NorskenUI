@@ -12,6 +12,12 @@ local pairs = pairs
 local next = next
 
 local C_Timer = C_Timer
+local UnitShouldDisplaySpellTargetName = UnitShouldDisplaySpellTargetName
+local UnitSpellTargetName, UnitSpellTargetClass = UnitSpellTargetName, UnitSpellTargetClass
+local UnitNameFromGUID, UnitClassFromGUID = UnitNameFromGUID, UnitClassFromGUID
+local IsSpellImportant = C_Spell.IsSpellImportant
+local GetClassColor = C_ClassColor.GetClassColor
+local INTERRUPTED = INTERRUPTED
 
 local EvaluateColorFromBoolean = C_CurveUtil and C_CurveUtil.EvaluateColorFromBoolean
 local CreateDuration = C_DurationUtil and C_DurationUtil.CreateDuration
@@ -35,13 +41,18 @@ end
 ---@param unit string
 ---@return ColorRGBAData | colorRGBA
 local function CastNormalColor(element, unit)
+    local color = element.nuiColor
     if element.nuiColorByClass and not NRSKNUI:IsSecretUnit(unit) then
         local class = select(2, UnitClass(unit))
         if class then
-            return NRSKNUI:CreateColor(NRSKNUI:GetClassColorRaw(class)) --[[@as colorRGBA]]
+            color = NRSKNUI:CreateColor(NRSKNUI:GetClassColorRaw(class)) --[[@as colorRGBA]]
         end
     end
-    return element.nuiColor
+
+    if element.nuiColorImportant and element.nuiImportant ~= nil then
+        return EvaluateColorFromBoolean(element.nuiImportant, element.nuiImportantColor, color)
+    end
+    return color
 end
 
 ---Color the bar for the interruptible state stored on the element.
@@ -55,11 +66,25 @@ end
 ---Post cast start handler, color the bar based on interruptibility.
 ---@param element table Castbar element
 ---@param unit string
+---@param spellID number
 ---@param notInterruptible boolean
-local function PostCastStart(element, unit, _, notInterruptible)
+---@param name string
+local function PostCastStart(element, unit, spellID, notInterruptible, name)
     element.nuiNotInterruptible = notInterruptible
+    element.nuiImportant = IsSpellImportant(spellID)
     element.nuiContainer:Show() -- Runs on every cast start, before oUF shows the bar
     ApplyCastColor(element, unit)
+
+    -- The plain flag gates the target name query, which is secret on enemies.
+    if not (element.nuiShowTarget and UnitShouldDisplaySpellTargetName(unit)) then return end
+
+    local target = UnitSpellTargetName(unit)
+    if target == nil then return end
+
+    local class = UnitSpellTargetClass(unit)
+    local color = class ~= nil and GetClassColor(class)
+    if color then target = color:WrapTextInColorCode(target) end
+    element.Text:SetFormattedText('%s %s %s', name, UF.TagSeparator, target)
 end
 
 ---Post cast interruptible handler, recolor when a cast flips interruptibility mid-cast.
@@ -75,6 +100,21 @@ end
 ---@param element table Castbar element
 local function PostCastFail(element)
     element:SetStatusBarColor(element.nuiFailColor:GetRGBA())
+end
+
+---@param element table Castbar element
+---@param interruptedBy string GUID
+local function PostCastInterrupted(element, _, _, interruptedBy)
+    PostCastFail(element)
+    if not element.nuiShowInterrupter then return end
+
+    local name = UnitNameFromGUID(interruptedBy)
+    if name == nil then return end
+
+    local _, class = UnitClassFromGUID(interruptedBy)
+    local color = class ~= nil and GetClassColor(class)
+    if color then name = color:WrapTextInColorCode(name) end
+    element.Text:SetFormattedText('%s (%s)', INTERRUPTED, name)
 end
 
 -- Preview --
@@ -102,6 +142,7 @@ local function StartPreviewCast(element)
     if element.Time then element.Time.binding:SetDuration(duration) end
 
     element.nuiContainer:Show()
+    element.nuiImportant = nil
     ApplyCastColor(element, element.nuiCastPreviewUnit)
     element:Show()
 end
@@ -162,7 +203,7 @@ UF.Elements.Castbar = {
         castBar.PostCastStart = PostCastStart
         castBar.PostCastInterruptible = PostCastInterruptible
         castBar.PostCastFail = PostCastFail
-        castBar.PostCastInterrupted = PostCastFail
+        castBar.PostCastInterrupted = PostCastInterrupted
         castBar.Icon = icon -- oUF sets its texture on cast start
 
         -- Spark, its texture comes from the global spark media in Configure.
@@ -202,17 +243,21 @@ UF.Elements.Castbar = {
         local pos = cDB.Position
 
         -- The whole colour set comes from General unless the unit overrides it.
-        local classColor, color, shieldColor, failColor, background
+        local classColor, colorImportant, color, shieldColor, importantColor, failColor, background
         if cDB.UseGlobalColors then
             classColor = general.CastbarColorByClass
+            colorImportant = general.CastbarColorImportant
             color = general.Colors.Castbar
             shieldColor = general.Colors.CastbarNonInterruptible
+            importantColor = general.Colors.CastbarImportant
             failColor = general.Colors.CastbarFail
             background = general.Colors.CastbarBackground
         else
             classColor = cDB.ColorByClass
+            colorImportant = cDB.ColorImportant
             color = cDB.Color
             shieldColor = cDB.NonInterruptibleColor
+            importantColor = cDB.ImportantColor
             failColor = cDB.FailColor
             background = cDB.Background
         end
@@ -252,6 +297,10 @@ UF.Elements.Castbar = {
         castBar.nuiColorByClass = classColor
         castBar.nuiColor = NRSKNUI:CreateColor(color[1], color[2], color[3], color[4])
         castBar.nuiShieldColor = NRSKNUI:CreateColor(shieldColor[1], shieldColor[2], shieldColor[3], shieldColor[4])
+        castBar.nuiColorImportant = colorImportant
+        castBar.nuiImportantColor = NRSKNUI:CreateColor(importantColor[1], importantColor[2], importantColor[3], importantColor[4])
+        castBar.nuiShowTarget = cDB.ShowTarget
+        castBar.nuiShowInterrupter = cDB.ShowInterrupter
         castBar.nuiFailColor = NRSKNUI:CreateColor(failColor[1], failColor[2], failColor[3], failColor[4])
 
         -- Latency safe zone, player only (oUF positions it on cast start and skips a nil field).

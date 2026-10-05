@@ -364,6 +364,11 @@ local frame
 ---@field OverDamageAbsorbClip Frame Clip frame keeping the overflow bar inside the frame
 ---@field nuiHealAbsorb StatusBar Kept reachable when `HealAbsorb` is cleared to disable it
 ---@field nuiDamageAbsorb StatusBar Kept reachable when `DamageAbsorb` is cleared to disable it
+---@field nuiHealingAll StatusBar Kept reachable when `HealingAll` is cleared to disable it
+---@field nuiSubWidgets? number Bitmask of the enabled prediction/absorb sub-widgets
+---@field nuiTempLoss StatusBar Kept reachable when `TempLoss` is cleared to disable it
+---@field nuiInverse? boolean Health fills right to left
+---@field nuiOverHealAbsorb Texture Kept reachable when `OverHealAbsorbIndicator` is cleared to disable it
 ---@field nuiSmoothing number Steady smoothing mode; PostUpdate switches to it after the first paint
 ---@field nuiColorByClass? boolean
 ---@field nuiForeground number[] Configured foreground colour as r, g, b, a
@@ -403,6 +408,8 @@ local frame
 ---@field nuiSmoothing number Steady smoothing mode; PostUpdate switches to it after the first paint
 ---@field nuiColor number[] Flat colour as r, g, b, a, re-applied over oUF's pick
 ---@field nuiColorByPower? boolean
+---@field nuiCostPrediction StatusBar Kept reachable when `CostPrediction` is cleared to disable it
+---@field nuiShowCost? boolean
 
 -- Additional / Alternative power --
 
@@ -651,9 +658,12 @@ function auras:AddSlot(filter, options) end
 ---@field PostUpdate? fun(self: oUF.CombatIndicator, inCombat: boolean)
 
 ---@class oUF.GroupRoleIndicator : Texture, oUF.Element
----@field useAtlasSize? boolean
+---@field useAtlasSize? boolean Deprecated
+---@field tankAtlas? string
+---@field healerAtlas? string
+---@field damageAtlas? string '' hides the role
 ---@field PreUpdate? fun(self: oUF.GroupRoleIndicator)
----@field PostUpdate? fun(self: oUF.GroupRoleIndicator, role: string)
+---@field PostUpdate? fun(self: oUF.GroupRoleIndicator, role: number?) role is nil from 12.1.5
 
 ---@class oUF.LeaderIndicator : Texture, oUF.Element
 ---@field useAtlasSize? boolean
@@ -669,8 +679,12 @@ function auras:AddSlot(filter, options) end
 
 ---@class oUF.PvPIndicator : Texture, oUF.Element
 ---@field Badge? Texture
+---@field Background? Texture
+---@field useAtlasSize? boolean
 ---@field PreUpdate? fun(self: oUF.PvPIndicator, unit: string)
----@field PostUpdate? fun(self: oUF.PvPIndicator, unit: string, status: string?)
+---@field PostUpdate? fun(self: oUF.PvPIndicator, unit: string, status: string?, info: table?)
+--- NorskenUI additions
+---@field nuiSize? number Configured size, re-applied over oUF's atlas size
 
 ---@class oUF.PvPClassificationIndicator : Texture, oUF.Element
 ---@field useAtlasSize? boolean

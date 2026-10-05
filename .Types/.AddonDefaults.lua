@@ -1196,6 +1196,7 @@
 ---@field [string] any
 ---@field Enabled boolean
 ---@field EnterAccept boolean
+---@field FixBlizzardBugs boolean
 ---@field HideBossBanner boolean
 ---@field HideTalkingHead boolean
 ---@field WhisperSounds NRSKNUI.DBProfile.Miscellaneous.Tweaks.WhisperSounds
@@ -1794,6 +1795,7 @@
 ---@field CooldownAnchor string
 ---@field CooldownXOffset number
 ---@field CooldownYOffset number
+---@field DesaturateOnCooldown boolean
 ---@field Enabled boolean
 ---@field FontFace string
 ---@field FontOutline string
@@ -2927,6 +2929,7 @@
 ---@field [string] any
 ---@field BackgroundTexture string
 ---@field CastbarColorByClass boolean
+---@field CastbarColorImportant boolean
 ---@field ColorByClass boolean
 ---@field ColorByPower boolean
 ---@field Colors NRSKNUI.DBProfile.UnitFrames.General.Colors
@@ -2936,6 +2939,7 @@
 ---@field FontOutline string
 ---@field ForegroundAlphaWhenColorByClass number
 ---@field HealAbsorb NRSKNUI.DBProfile.UnitFrames.General.HealAbsorb
+---@field HealPrediction NRSKNUI.DBProfile.UnitFrames.General.HealPrediction
 ---@field Highlight NRSKNUI.DBProfile.UnitFrames.General.Highlight
 ---@field Layers NRSKNUI.DBProfile.UnitFrames.General.Layers
 ---@field Range NRSKNUI.DBProfile.UnitFrames.General.Range
@@ -2945,6 +2949,7 @@
 ---@field SparkScale number
 ---@field SparkTexture string
 ---@field SparkWidth number
+---@field TempLoss NRSKNUI.DBProfile.UnitFrames.General.TempLoss
 ---@field UseGlobalBar boolean
 ---@field UseGlobalFont boolean
 ---@field UseGlobalSpark boolean
@@ -2957,6 +2962,7 @@
 ---@field Castbar table
 ---@field CastbarBackground table
 ---@field CastbarFail table
+---@field CastbarImportant table
 ---@field CastbarNonInterruptible table
 ---@field Foreground table
 ---@field Power table
@@ -2999,6 +3005,13 @@
 ---@field StatusBarTexture string
 ---@field UseGlobalBar boolean
 
+---@class NRSKNUI.DBProfile.UnitFrames.General.HealPrediction
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field StatusBarTexture string
+---@field UseGlobalBar boolean
+
 ---@class NRSKNUI.DBProfile.UnitFrames.General.Highlight
 ---@field [string] any
 ---@field Color table
@@ -3016,6 +3029,7 @@
 ---@field Defensives number
 ---@field Dispel number
 ---@field HealAbsorb number
+---@field HealPrediction number
 ---@field Highlight number
 ---@field IndicatorIcons number
 ---@field IndicatorTints number
@@ -3034,6 +3048,13 @@
 ---@field [string] any
 ---@field Color table
 ---@field Enabled boolean
+
+---@class NRSKNUI.DBProfile.UnitFrames.General.TempLoss
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field StatusBarTexture string
+---@field UseGlobalBar boolean
 
 ---@class NRSKNUI.DBProfile.UnitFrames.TagSettings
 ---@field [string] any

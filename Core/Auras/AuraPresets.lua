@@ -420,7 +420,74 @@ Premade.Presets = {
             },
         },
     },
+    -- Defensives and control --
+    {
+        key = 'preset:externalDefensives',
+        name = L['External Defensives'],
+        branches = {
+            {
+                type = Filters.Helpful,
+                tokens = { [Filters.ExternalDefensive] = true },
+            },
+        },
+    },
+    {
+        key = 'preset:bigDefensives',
+        name = L['Big Defensives'],
+        branches = {
+            {
+                type = Filters.Helpful,
+                tokens = {
+                    [Filters.BigDefensive] = true,
+                    [Filters.ExternalDefensive] = false,
+                },
+            },
+        },
+    },
+    {
+        key = 'preset:crowdControl',
+        name = L['Crowd Control'],
+        branches = {
+            {
+                type = Filters.Harmful,
+                tokens = { [Filters.CrowdControl] = true },
+            },
+        },
+    },
+    {
+        key = 'preset:roleDebuffs',
+        name = L['Boss / Role Debuffs'],
+        branches = {
+            {
+                type = Filters.Harmful,
+                candidates = { isBossOrRoleAura = true },
+            },
+        },
+    },
     -- Target and boss --
+    {
+        key = 'preset:enemyBuffs',
+        name = L['Enemy Buffs'],
+        branches = {
+            {
+                type = Filters.Helpful,
+                tokens = { [Filters.Player] = true },
+            },
+            {
+                type = Filters.Helpful,
+                tokens = { [Filters.Player] = false, [Filters.Important] = true },
+            },
+            {
+                type = Filters.Helpful,
+                tokens = { [Filters.Player] = false, [Filters.Important] = false, [Filters.Dispellable] = true },
+            },
+            {
+                type = Filters.Helpful,
+                tokens = { [Filters.Player] = false, [Filters.Important] = false, [Filters.Dispellable] = false },
+                candidates = { isBossOrRoleAura = true },
+            },
+        },
+    },
     {
         key = 'preset:targetBuffs',
         name = L['Target Buffs'],

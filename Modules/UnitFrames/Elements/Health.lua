@@ -43,11 +43,26 @@ UF.Elements.Health = {
         healthBar.PostUpdate = UF.PostUpdateHealth
         healthBar.PostUpdateColor = UF.PostUpdateHealthColor
 
+        -- Temporary max health loss, LayoutBars ends the health bar at its fill.
+        local TempLoss = CreateFrame('StatusBar', nil, self)
+        TempLoss:SetFrameLevel(self:GetFrameLevel() + UF.BaseLevels.Bar)
+        TempLoss:NUISetPixelSnap()
+        healthBar.nuiTempLoss = TempLoss
+
+        -- Incoming heal bar
+        local HealingAll = CreateFrame('StatusBar', nil, healthBar)
+        HealingAll:NUISetPixelSnap()
+        HealingAll:NUISetPixelWidth(self:GetWidth())
+
         -- Heal absorb bar
         local HealAbsorb = CreateFrame('StatusBar', nil, healthBar)
         HealAbsorb:NUISetPixelSnap()
         HealAbsorb:NUISetPixelWidth(self:GetWidth())
         healthBar.HealAbsorb = HealAbsorb
+
+        local OverHealAbsorb = HealAbsorb:CreateTexture(nil, 'OVERLAY')
+        OverHealAbsorb:NUISetPixelSnap()
+        healthBar.nuiOverHealAbsorb = OverHealAbsorb
 
         -- Damage absorb bar
         local DamageAbsorb = CreateFrame('StatusBar', nil, healthBar)
@@ -73,6 +88,7 @@ UF.Elements.Health = {
         -- oUF skips an absorb whose field is nil, so disabling clears the field, these keep the bars reachable for configuration.
         healthBar.nuiHealAbsorb = HealAbsorb
         healthBar.nuiDamageAbsorb = DamageAbsorb
+        healthBar.nuiHealingAll = HealingAll
 
         -- Mouseover highlight
         local highlightFrame = CreateFrame('Frame', nil, self)
@@ -105,6 +121,15 @@ UF.Elements.Health = {
         local bgName = hDB.BackgroundTexture ~= '' and hDB.BackgroundTexture or general.BackgroundTexture
         healthBar:SetStatusBarTexture(texture)
         healthBackground:SetStatusBarTexture(bgName ~= '' and NRSKNUI:ResolveMediaPath('statusbar', bgName) or texture)
+
+        local tlDB = hDB.TempLoss.UseGlobal and general.TempLoss or hDB.TempLoss
+        local TempLoss = healthBar.nuiTempLoss
+        healthBar.TempLoss = tlDB.Enabled and TempLoss or nil
+        healthBar.nuiInverse = hDB.Inverse or false
+        TempLoss:SetShown(tlDB.Enabled)
+        TempLoss:SetStatusBarTexture(NRSKNUI:GetStatusbar(tlDB))
+        TempLoss:SetStatusBarColor(tlDB.Color[1], tlDB.Color[2], tlDB.Color[3], tlDB.Color[4])
+        TempLoss:SetReverseFill(not healthBar.nuiInverse)
 
         -- Sizing: the whole frame, or the part above a docked power bar.
         UF.LayoutBars(self)
@@ -158,6 +183,7 @@ UF.Elements.Health = {
         -- Absorb bars
         local HealAbsorb = healthBar.nuiHealAbsorb
         local DamageAbsorb = healthBar.nuiDamageAbsorb
+        local HealingAll = healthBar.nuiHealingAll
         local OverDamageAbsorb = healthBar.OverDamageAbsorb
         local OverClip = healthBar.OverDamageAbsorbClip
         local fill = healthBar:GetStatusBarTexture()
@@ -166,6 +192,19 @@ UF.Elements.Health = {
         -- Each absorb reads the General slot unless the unit overrides the whole slot.
         local haDB = hDB.HealAbsorb.UseGlobal and general.HealAbsorb or hDB.HealAbsorb
         local daDB = hDB.DamageAbsorb.UseGlobal and general.DamageAbsorb or hDB.DamageAbsorb
+        local hpDB = hDB.HealPrediction.UseGlobal and general.HealPrediction or hDB.HealPrediction
+
+        healthBar.HealingAll = hpDB.Enabled and HealingAll or nil
+        HealingAll:SetShown(hpDB.Enabled)
+        HealingAll:SetStatusBarTexture(NRSKNUI:GetStatusbar(hpDB))
+        HealingAll:SetStatusBarColor(hpDB.Color[1], hpDB.Color[2], hpDB.Color[3], hpDB.Color[4])
+        HealingAll:ClearAllPoints()
+        HealingAll:NUISetPixelPoint('TOP')
+        HealingAll:NUISetPixelPoint('BOTTOM')
+        HealingAll:SetReverseFill(inverse)
+
+        -- The damage absorb continues past incoming heals.
+        local absorbEdge = hpDB.Enabled and HealingAll:GetStatusBarTexture() or fill
         local healColor = haDB.Color
         local dmgColor = daDB.Color
         local shield = NRSKNUI:GetStatusbar(daDB)
@@ -177,12 +216,29 @@ UF.Elements.Health = {
         DamageAbsorb:SetShown(daDB.Enabled)
         OverClip:SetShown(daDB.Enabled)
 
+        -- oUF registers each sub-widget's event on enable only, so a changed set re-enables the element.
+        local subWidgets = (hpDB.Enabled and 1 or 0) + (haDB.Enabled and 2 or 0) + (daDB.Enabled and 4 or 0) + (tlDB.Enabled and 8 or 0)
+        if healthBar.nuiSubWidgets and healthBar.nuiSubWidgets ~= subWidgets and self:IsElementEnabled('Health') then
+            self:DisableElement('Health')
+            self:EnableElement('Health')
+        end
+        healthBar.nuiSubWidgets = subWidgets
+
         -- Heal absorb bar config
         HealAbsorb:SetStatusBarTexture(NRSKNUI:GetStatusbar(haDB))
         HealAbsorb:SetStatusBarColor(healColor[1], healColor[2], healColor[3], healColor[4])
         HealAbsorb:ClearAllPoints()
         HealAbsorb:NUISetPixelPoint('TOP')
         HealAbsorb:NUISetPixelPoint('BOTTOM')
+
+        -- Marks a heal absorb larger than current health, at the bar's empty end.
+        local OverHealAbsorb = healthBar.nuiOverHealAbsorb
+        healthBar.OverHealAbsorbIndicator = haDB.Enabled and OverHealAbsorb or nil
+        OverHealAbsorb:SetColorTexture(healColor[1], healColor[2], healColor[3], 1)
+        OverHealAbsorb:ClearAllPoints()
+        OverHealAbsorb:NUISetPixelPoint('TOP' .. (inverse and 'RIGHT' or 'LEFT'), healthBar)
+        OverHealAbsorb:NUISetPixelPoint('BOTTOM' .. (inverse and 'RIGHT' or 'LEFT'), healthBar)
+        OverHealAbsorb:NUISetPixelWidth(2)
 
         -- Damage absorb bar config
         DamageAbsorb:SetStatusBarTexture(shield)
@@ -202,7 +258,8 @@ UF.Elements.Health = {
             -- Foreground fills right to left, so the current-health edge is on the left.
             HealAbsorb:NUISetPixelPoint('LEFT', fill)
             HealAbsorb:SetReverseFill(false)
-            DamageAbsorb:NUISetPixelPoint('RIGHT', fill, 'LEFT')
+            HealingAll:NUISetPixelPoint('RIGHT', fill, 'LEFT')
+            DamageAbsorb:NUISetPixelPoint('RIGHT', absorbEdge, 'LEFT')
             DamageAbsorb:SetReverseFill(true)
 
             OverClip:NUISetPixelPoint('TOPRIGHT', healthBar, 'TOPRIGHT')
@@ -214,7 +271,8 @@ UF.Elements.Health = {
             -- Foreground fills left to right, so the current-health edge is on the right.
             HealAbsorb:NUISetPixelPoint('RIGHT', fill)
             HealAbsorb:SetReverseFill(true)
-            DamageAbsorb:NUISetPixelPoint('LEFT', fill, 'RIGHT')
+            HealingAll:NUISetPixelPoint('LEFT', fill, 'RIGHT')
+            DamageAbsorb:NUISetPixelPoint('LEFT', absorbEdge, 'RIGHT')
             DamageAbsorb:SetReverseFill(false)
 
             OverClip:NUISetPixelPoint('TOPLEFT', healthBar, 'TOPLEFT')

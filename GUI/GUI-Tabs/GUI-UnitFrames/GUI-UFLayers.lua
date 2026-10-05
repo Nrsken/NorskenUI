@@ -172,7 +172,7 @@ local function IconSpec(key)
         RaidMark = { icon = RAID_ICON, iconCoords = { 0.5, 0.75, 0, 0.25 }, iconBare = true },
         Status = { icon = STATE_ICON, iconCoords = { 0.5, 1, 0, 0.49 }, iconBare = true },
     }
-    for _, overlay in ipairs({ 'HealAbsorb', 'DamageAbsorb', 'Highlight' }) do
+    for _, overlay in ipairs({ 'HealPrediction', 'HealAbsorb', 'DamageAbsorb', 'Highlight' }) do
         spec[overlay] = { icon = NRSKNUI:GetStatusbar(general[overlay]), iconColor = RGBA(general[overlay].Color) }
     end
     return spec[key] or {}

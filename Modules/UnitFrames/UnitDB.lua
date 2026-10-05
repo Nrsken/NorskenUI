@@ -61,6 +61,7 @@ UF.LayerElements = {
     { key = 'Power',        label = L['Power'] },
     { key = 'Castbar',      label = L['Castbar'] },
     { key = 'Dispel',       label = L['Dispel Highlight'] },
+    { key = 'HealPrediction', label = L['Heal Prediction'] },
     { key = 'DamageAbsorb', label = L['Damage Absorb'] },
     { key = 'HealAbsorb',   label = L['Heal Absorb'] },
     { key = 'Highlight',    label = L['Mouseover Highlight'] },
@@ -130,6 +131,7 @@ function UF.ApplyFrameLayers(frame, map)
         local damage = Level('DamageAbsorb')
         health.nuiHealAbsorb:SetFrameLevel(Level('HealAbsorb'))
         health.nuiDamageAbsorb:SetFrameLevel(damage)
+        health.nuiHealingAll:SetFrameLevel(Level('HealPrediction'))
         -- The over-absorb pair belongs to the damage absorb and rides its layer.
         health.OverDamageAbsorbClip:SetFrameLevel(damage)
         health.OverDamageAbsorb:SetFrameLevel(damage)
