@@ -233,17 +233,17 @@ local function GetUnitColor(tooltip)
     local tooltipData = tooltip.processingInfo and tooltip.processingInfo.tooltipData
     local unitGUID = tooltipData and tooltipData.guid
     if unitGUID then
+        -- Unit is a player, no unit token needed
+        local classToken = select(2, GetPlayerInfoByGUID(unitGUID))
+        if classToken ~= nil then
+            return GetClassColor(classToken)
+        end
+
         local unit = ResolveUnit(unitGUID)
-        if issecretvalue(unit) then
-            local classToken = select(2, GetPlayerInfoByGUID(unitGUID))
-            -- Unit is a player
-            if classToken ~= nil then
-                return GetClassColor(classToken)
-            end
-        elseif unit ~= nil then
-            -- Unit is a player
+        if not issecretvalue(unit) and unit ~= nil then
+            -- Unit is displayed as a player, e.g. a follower dungeon companion
             if UnitIsPlayer(unit) or UnitTreatAsPlayerForDisplay(unit) then
-                local classToken = select(2, UnitClass(unit))
+                classToken = select(2, UnitClass(unit))
                 if classToken ~= nil then
                     return GetClassColor(classToken)
                 end
