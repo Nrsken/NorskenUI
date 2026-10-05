@@ -70,6 +70,13 @@ function Map:StripBlizzMap()
     missionBtn:SetParent(Minimap)
 
     Minimap:SetMaskTexture('Interface\\BUTTONS\\WHITE8X8')
+    -- Zones drawn by the hybrid map carry their own round mask.
+    EventUtil.ContinueOnAddOnLoaded('Blizzard_HybridMinimap', function()
+        HybridMinimap.CircleMask:SetTexture('Interface\\BUTTONS\\WHITE8X8', 'CLAMPTOBLACKADDITIVE', 'CLAMPTOBLACKADDITIVE')
+    end)
+    Minimap:SetArchBlobRingScalar(0)
+    Minimap:SetQuestBlobRingScalar(0)
+    _G.GetMinimapShape = function() return 'SQUARE' end -- LibDBIcon and other button addons read this
     MinimapCompassTexture:SetTexture(nil)
 
     _G['MinimapCluster']:NUIBanish()
