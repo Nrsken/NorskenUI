@@ -152,8 +152,17 @@ local function BuildGlobalPage(page, db)
     generalCard:Separator()
 
     local overlayRow = generalCard:Row(rowHL, 0)
+    overlayRow:Checkbox(L['Desaturate On Cooldown'], {
+        width = 0.5,
+        value = db.DesaturateOnCooldown,
+        tooltip = L['Greys out buttons while their action is on cooldown, ignoring the global cooldown.'],
+        callback = function(checked)
+            db.DesaturateOnCooldown = checked
+            NRSKNUI:RequestReload(L['Cooldown desaturation changes show after a reload.'])
+        end,
+    })
     overlayRow:ColorPicker(L['Range Overlay'], {
-        width = 1,
+        width = 0.5,
         value = db.RangeOverlayColor,
         tooltip = L['Tint drawn over buttons whose action is out of range.'],
         callback = function(r, g, b, a)

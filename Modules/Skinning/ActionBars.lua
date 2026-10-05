@@ -33,6 +33,84 @@ local BAR_FRAME_MAP = {
     StanceBar = { frame = "StanceBar", prefix = "StanceButton" },
 }
 
+-- Cooldown desaturation --
+
+local HasAction, GetActionInfo = C_ActionBar.HasAction, GetActionInfo
+local GetActionCooldownDuration = C_ActionBar.GetActionCooldownDuration
+local GetItemCooldown = C_Item.GetItemCooldown
+local CreateDuration = C_DurationUtil.CreateDuration
+
+---@type ActionBarButtonTemplate[]
+local cooldownButtons = {}
+
+---@param button ActionBarButtonTemplate
+local function UpdateCooldownDesaturation(button)
+    local icon = button._nrsknIcon
+    if icon._nrsknBlizzDesaturated then
+        icon:SetDesaturation(1)
+        return
+    end
+
+    local action = button.action
+    local duration
+    if action and HasAction(action) then
+        local actionType, actionID = GetActionInfo(action)
+        if actionType == 'item' then
+            local start, length = GetItemCooldown(actionID)
+            if length > 1.5 then -- skips the global cooldown
+                duration = button._nrsknItemDuration or CreateDuration()
+                button._nrsknItemDuration = duration
+                duration:SetTimeFromStart(start, length)
+            end
+        else
+            duration = GetActionCooldownDuration(action, true)
+        end
+    end
+
+    icon:SetDesaturation(duration and duration:EvaluateRemainingDuration(NRSKNUI.curves.ActionDesaturation) or 0)
+end
+
+---Draw the icon on our own texture: a secret desaturation on Blizzard's icon would taint its usable checks.
+---@param button ActionBarButtonTemplate
+local function MirrorIcon(button)
+    local original = button.icon
+    local layer, sublevel = original:GetDrawLayer()
+    local icon = button:CreateTexture(nil, layer, nil, sublevel)
+    icon:SetAllPoints(original)
+    icon:NUISetPixelSnap()
+    icon:NUISetZoom()
+    icon:SetTexture(original:GetTexture())
+    icon:SetVertexColor(original:GetVertexColor())
+    icon:SetShown(original:IsShown())
+    original:SetAlpha(0)
+    button._nrsknIcon = icon
+
+    hooksecurefunc(original, 'SetTexture', function(_, texture) icon:SetTexture(texture) end)
+    hooksecurefunc(original, 'SetVertexColor', function(_, ...) icon:SetVertexColor(...) end)
+    hooksecurefunc(original, 'Show', function() icon:Show() end)
+    hooksecurefunc(original, 'Hide', function() icon:Hide() end)
+    hooksecurefunc(original, 'SetDesaturated', function(_, desaturated)
+        icon._nrsknBlizzDesaturated = desaturated
+        UpdateCooldownDesaturation(button)
+    end)
+
+    hooksecurefunc(button, 'UpdateAction', UpdateCooldownDesaturation)
+    button.cooldown:HookScript('OnCooldownDone', function() UpdateCooldownDesaturation(button) end)
+    cooldownButtons[#cooldownButtons + 1] = button
+    UpdateCooldownDesaturation(button)
+
+    if #cooldownButtons == 1 then
+        local watcher = CreateFrame('Frame')
+        watcher:RegisterEvent('SPELL_UPDATE_COOLDOWN')
+        watcher:RegisterEvent('BAG_UPDATE_COOLDOWN')
+        watcher:SetScript('OnEvent', function()
+            for _, mirrored in ipairs(cooldownButtons) do
+                UpdateCooldownDesaturation(mirrored)
+            end
+        end)
+    end
+end
+
 -- Function used to make sure blizzards own actionabars do not interfere with clicking on my custom ones
 -- Mainly for actionbar 1 since it cannot be turned off properly.
 local function BlizzBarMouseToggle(barKey)
@@ -272,22 +350,15 @@ function ACB:StyleButtonText(button, barKey)
     if cooldown then
         local fontSize = math.max(8, fontSizes.cooldown)
 
-        -- Iterate through each button and apply cooldown text styling
-        for _, region in ipairs({ cooldown:GetRegions() }) do
-            if region:GetObjectType() == "FontString" then
-                pcall(function()
-                    region:ClearAllPoints()
-                    region:SetPoint(textPos.cooldownAnchor, button, textPos.cooldownAnchor,
-                        textPos.cooldownXOffset, textPos.cooldownYOffset)
-                    region:SetFont(fontpath, fontSize, self.db.FontOutline)
-                    region:SetTextColor(1, 1, 1, 1)
-                    region:SetShadowOffset(0, 0)
-                    region:SetShadowColor(0, 0, 0, 0)
-                    region:SetAlpha(1)
-                    region:SetJustifyH("CENTER")
-                end)
-            end
-        end
+        local text = cooldown:GetCountdownFontString()
+        text:ClearAllPoints()
+        text:SetPoint(textPos.cooldownAnchor, button, textPos.cooldownAnchor, textPos.cooldownXOffset, textPos.cooldownYOffset)
+        text:SetFont(fontpath, fontSize, self.db.FontOutline)
+        text:SetTextColor(1, 1, 1, 1)
+        text:SetShadowOffset(0, 0)
+        text:SetShadowColor(0, 0, 0, 0)
+        text:SetAlpha(1)
+        text:SetJustifyH("CENTER")
     end
 
     -- Store barKey on button for hooks to access
@@ -634,8 +705,7 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
 
     -- Blizzard elements hide/skin
     if button.IconMask then button.IconMask:Hide() end                          -- Hides the default circular mask on icons
-    if button.InterruptDisplay then button.InterruptDisplay:SetAlpha(0) end     -- Hides the "slash" texture for interruptible spells
-    if button.SpellCastAnimFrame then button.SpellCastAnimFrame:SetAlpha(0) end -- Hides the "shine" animation
+    button.enableSpellFX = nil -- Blizzard skips the cast shine, interrupt slash and target reticle; a nil write doesn't taint
     if button.icon then
         button.icon:NUISetPixelSnap()
         button.icon:SetAllPoints(button)
@@ -673,6 +743,9 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
 
     -- Icon zoom stuff bcs blizz border uggy
     button.icon:NUISetZoom()
+    if self.db.DesaturateOnCooldown and button.UpdateAction and not button._nrsknIcon then
+        MirrorIcon(button)
+    end
 
     -- Create range overlay, red tint when out of range
     local rangeOverlay = button:CreateTexture(nil, "OVERLAY", nil, 1)
