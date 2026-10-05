@@ -540,21 +540,20 @@ function Automation:SetupAutoFillDelete()
     -- Extract the part of the DELETE_GOOD_ITEM string that comes after the first line break.
     local DeleteLine = select(2, strsplit("@", gsub(DELETE_GOOD_ITEM, "[\r\n]", "@"), 2))
 
-    hooksecurefunc(StaticPopupDialogs['DELETE_GOOD_ITEM'], 'OnShow', function()
+    -- The dialog lands in whichever popup slot is free, so act on the one passed in.
+    hooksecurefunc(StaticPopupDialogs['DELETE_GOOD_ITEM'], 'OnShow', function(dialog)
         if not Automation.db.AutoFillDelete then return end
 
-        local StaticPopup1EditBox = _G.StaticPopup1EditBox
-        local StaticPopup1Button1 = _G.StaticPopup1Button1
-        local StaticPopup1Text = _G.StaticPopup1Text
-
-        if StaticPopup1EditBox:IsShown() then
+        local editBox = dialog:GetEditBox()
+        if editBox:IsShown() then
             -- Hide the edit box and enable the confirmation button to allow automatic deletion without user input.
-            StaticPopup1EditBox:Hide()
-            StaticPopup1Button1:Enable()
+            editBox:Hide()
+            dialog:GetButton1():Enable()
 
-            local ngt = gsub(StaticPopup1Text:GetText(), gsub(DeleteLine, "@", ""), "")
+            local text = dialog:GetTextFontString()
+            local ngt = gsub(text:GetText(), gsub(DeleteLine, "@", ""), "")
             local link = select(3, GetCursorInfo())
-            StaticPopup1Text:SetText(ngt .. link)
+            text:SetText(ngt .. link)
         end
     end)
 end
