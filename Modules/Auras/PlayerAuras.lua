@@ -7,7 +7,7 @@ local AuraPreview = NRSKNUI.AuraPreview
 
 local CreateFrame = CreateFrame
 local CopyTable = CopyTable
-local pairs = pairs
+local pairs, ipairs = pairs, ipairs
 local min = math.min
 local RunNextFrame = RunNextFrame
 
@@ -21,6 +21,7 @@ local KINDS = {
         displayName = 'Standard Buffs',
         guiPath = 'standardBuffs',
         blizzardFrame = 'BuffFrame',
+        cvarCallbacks = { 'consolidateBuffs', 'collapseExpandBuffs' }, -- banishing leaves these live
     },
     Debuffs = {
         filter = 'HARMFUL',
@@ -164,7 +165,7 @@ function PlayerAuras:BuildContainer(kind)
         end)
     end
 
-    container:SetUnit('player')
+    container:SetUnit(self.unit or 'player')
     container:UpdateUnitGate() -- also starts the container watching what can move a gate verdict
 
     host.container = container
@@ -220,8 +221,31 @@ function PlayerAuras:OnEnable()
     NRSKNUI:RunWhenSafe(function()
         for kind, info in pairs(KINDS) do
             if self.db[kind].Enabled then
-                _G[info.blizzardFrame]:NUIBanish()
+                local frame = _G[info.blizzardFrame]
+                frame:NUIBanish()
+                for _, cvar in ipairs(info.cvarCallbacks or {}) do
+                    CVarCallbackRegistry:UnregisterCallback(cvar, frame)
+                end
             end
+        end
+
+        -- Under a vehicle UI the vehicle's auras are the ones that matter.
+        if not self.unitDriver then
+            local driver = CreateFrame('Frame', nil, nil, 'SecureHandlerStateTemplate')
+            driver:SetScript('OnAttributeChanged', function(_, attribute, unit)
+                if attribute ~= 'unit' then return end
+                self.unit = unit
+                for _, host in pairs(self.hosts) do
+                    local container = host.container
+                    if container then
+                        container:SetUnit(unit)
+                        container:UpdateUnitGate()
+                        container:UpdateAllAuras()
+                    end
+                end
+            end)
+            RegisterAttributeDriver(driver, 'unit', '[vehicleui] vehicle; player')
+            self.unitDriver = driver
         end
     end)
 end
