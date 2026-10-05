@@ -102,6 +102,18 @@ end
 -- Misc Tweaks Tab.
 local function BuildMiscTweaksTab(page, db)
     local miscCard = page:Card(L['Misc Tweaks'], 'all')
+    miscCard:Row(rowH):Checkbox(L['Fix Blizzard Bugs'], {
+        width = 1,
+        tooltip = L['On login, untracks hidden quests and completed achievements stuck in the tracker, and keeps the dressing room maximized after a reset.'],
+        value = db.FixBlizzardBugs,
+        callback = function(checked)
+            db.FixBlizzardBugs = checked
+            ApplySettings()
+        end
+    })
+
+    miscCard:Separator()
+
     local confirmPopupsRow = miscCard:Row(rowHL, 0)
     confirmPopupsRow:Checkbox(L['Confirm Popups with Enter'], {
         width = 1,
