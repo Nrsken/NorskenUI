@@ -21,9 +21,24 @@ local GetSpellName = C_Spell.GetSpellName
 
 local PAGE = 'cooldownManager'
 local GENERAL = 'cdm:general'
-local SECTION_PREFIX = 'section:'
+local SECTION_LOADED = 'cdm:section:loaded'
+local SECTION_UNLOADED = 'cdm:section:unloaded'
+local QUESTION_MARK = 134400
 
-local RefreshSidebar -- defined with the sidebar below
+-- WeakAuras' tab order; the ones without settings yet stay empty.
+local TABS = {
+    { id = 'group',       text = L['Group'] },
+    { id = 'display',     text = L['Display'] },
+    { id = 'trigger',     text = L['Trigger'] },
+    { id = 'conditions',  text = L['Conditions'] },
+    { id = 'actions',     text = L['Actions'] },
+    { id = 'animations',  text = L['Animations'] },
+    { id = 'load',        text = L['Load'] },
+    { id = 'custom',      text = L['Custom Options'] },
+    { id = 'information', text = L['Information'] },
+}
+
+local sectionCollapsed = {} -- [section key] = true, for this session
 
 ---@param text string?
 ---@return SpellInfo? info
@@ -35,11 +50,22 @@ local function Lookup(text)
     return info and info.spellID and info or nil
 end
 
+---@return table? tree
+local function Tree()
+    local content = NRSKNUI.GUIFrame and NRSKNUI.GUIFrame.content
+    return content and content.miniSidebar
+end
+
 local function Reopen(selectKey)
     local window = NRSKNUI.GUIFrame
     if not (window and window.content) then return end
 
     window.content:ShowPage(PAGE, selectKey and { itemKey = selectKey } or nil)
+end
+
+local function RefreshTree()
+    local tree = Tree()
+    if tree and tree.frame:IsShown() and tree.Render then tree:Render() end
 end
 
 local function EnsureModuleEnabled()
@@ -52,6 +78,12 @@ end
 ---@return fun()
 local function Applier(id)
     return function() CDM:ApplySettings(id) end
+end
+
+---@param key string
+---@return boolean
+local function IsCollapsed(key)
+    return NRSKNUI.db.global.SidebarCollapsed[PAGE][key] == true
 end
 
 -- Style --
@@ -74,16 +106,35 @@ local function SetPath(own, resolved, path, value)
     node[path[#path]] = value
 end
 
----@param page table
+---A collapsible WeakAuras-style section, remembered for the session. Its rows only exist while it is open.
+---@param card table
+---@param key string
+---@param title string
+---@return boolean expanded
+local function Section(card, key, title)
+    return card:Section(title, {
+        key = key,
+        collapsed = sectionCollapsed[key] == true,
+        onToggle = function()
+            sectionCollapsed[key] = not sectionCollapsed[key] or nil
+            card:Rebuild()
+        end,
+    })
+end
+
+---@param card table
 ---@param own table the layer being edited
 ---@param resolved table what that layer currently resolves to
 ---@param apply fun()
 ---@param fontKey string 'CountdownFont'|'ChargeFont'
----@param title string
----@param showToggle string? style key of a checkbox leading the card
-local function TextCard(page, own, resolved, apply, fontKey, title, showToggle)
+---@param showToggle string? style key of a checkbox leading the section
+local function TextRows(card, own, resolved, apply, fontKey, showToggle)
     local font = resolved[fontKey]
-    local card = page:Card(title)
+
+    local function Set(path, value)
+        SetPath(own, resolved, path, value)
+        apply()
+    end
 
     if showToggle then
         card:Row(rowH):Checkbox(L['Show'], {
@@ -94,11 +145,6 @@ local function TextCard(page, own, resolved, apply, fontKey, title, showToggle)
                 apply()
             end,
         })
-    end
-
-    local function Set(path, value)
-        SetPath(own, resolved, path, value)
-        apply()
     end
 
     local sizeRow = card:Row(rowH)
@@ -116,7 +162,7 @@ local function TextCard(page, own, resolved, apply, fontKey, title, showToggle)
         callback = function(point) Set({ fontKey, 'Position', 'AnchorFrom' }, point) end,
     })
 
-    local offsetRow = card:Row(rowHL, 0)
+    local offsetRow = card:Row(rowH)
     offsetRow:Slider(L['X Offset'], {
         width = 0.5,
         min = -30,
@@ -141,7 +187,7 @@ end
 ---@param apply fun()
 ---@param inheritsFrom string? name of the layer below, nil when editing the base style
 ---@param reopenKey string
-local function BuildStyleTab(page, own, resolved, apply, inheritsFrom, reopenKey)
+local function BuildStyle(page, own, resolved, apply, inheritsFrom, reopenKey)
     if inheritsFrom then
         local overrideCard = page:Card(L['Overrides'])
         overrideCard:Row(rowH):Text(format(L['Settings changed here override %s. Untouched settings keep following it.'], inheritsFrom), { width = 1 })
@@ -160,60 +206,69 @@ local function BuildStyleTab(page, own, resolved, apply, inheritsFrom, reopenKey
         apply()
     end
 
-    local iconCard = page:Card(L['Icon'])
-    local iconRow = iconCard:Row(rowHL, 0)
-    iconRow:Slider(L['Size'], {
-        width = 0.5,
-        min = 16,
-        max = 96,
-        step = 1,
-        value = resolved.Size,
-        callback = function(value) Set('Size', value) end,
-    })
-    iconRow:ColorPicker(L['Border Color'], {
-        width = 0.5,
-        value = resolved.BorderColor,
-        callback = function(r, g, b, a) Set('BorderColor', { r, g, b, a }) end,
-    })
+    page:Card(L['Display']):Rebuild(function(card)
+        if Section(card, 'icon', L['Icon Settings']) then
+            local iconRow = card:Row(rowH)
+            iconRow:Slider(L['Size'], {
+                width = 0.5,
+                min = 16,
+                max = 96,
+                step = 1,
+                value = resolved.Size,
+                callback = function(value) Set('Size', value) end,
+            })
+            iconRow:ColorPicker(L['Border Color'], {
+                width = 0.5,
+                value = resolved.BorderColor,
+                callback = function(r, g, b, a) Set('BorderColor', { r, g, b, a }) end,
+            })
+        end
 
-    local cooldownCard = page:Card(L['Cooldown'])
-    local swipeRow = cooldownCard:Row(rowH)
-    swipeRow:Checkbox(L['Draw Swipe'], {
-        width = 0.5,
-        value = resolved.DrawSwipe,
-        callback = function(checked) Set('DrawSwipe', checked) end,
-    })
-    swipeRow:Checkbox(L['Reverse Swipe'], {
-        width = 0.5,
-        value = resolved.Reverse,
-        callback = function(checked) Set('Reverse', checked) end,
-    })
-    local edgeRow = cooldownCard:Row(rowH)
-    edgeRow:Checkbox(L['Draw Edge'], {
-        width = 0.5,
-        value = resolved.DrawEdge,
-        callback = function(checked) Set('DrawEdge', checked) end,
-    })
-    edgeRow:Checkbox(L['Show Global Cooldown'], {
-        width = 0.5,
-        tooltip = L['Run the swipe for the global cooldown too.'],
-        value = resolved.ShowGCD,
-        callback = function(checked) Set('ShowGCD', checked) end,
-    })
-    local colorRow = cooldownCard:Row(rowHL, 0)
-    colorRow:ColorPicker(L['Swipe Color'], {
-        width = 0.5,
-        value = resolved.SwipeColor,
-        callback = function(r, g, b, a) Set('SwipeColor', { r, g, b, a }) end,
-    })
-    colorRow:Checkbox(L['Desaturate on Cooldown'], {
-        width = 0.5,
-        value = resolved.DesaturateOnCooldown,
-        callback = function(checked) Set('DesaturateOnCooldown', checked) end,
-    })
+        if Section(card, 'cooldown', L['Cooldown Settings']) then
+            local swipeRow = card:Row(rowH)
+            swipeRow:Checkbox(L['Draw Swipe'], {
+                width = 0.5,
+                value = resolved.DrawSwipe,
+                callback = function(checked) Set('DrawSwipe', checked) end,
+            })
+            swipeRow:Checkbox(L['Reverse Swipe'], {
+                width = 0.5,
+                value = resolved.Reverse,
+                callback = function(checked) Set('Reverse', checked) end,
+            })
+            local edgeRow = card:Row(rowH)
+            edgeRow:Checkbox(L['Draw Edge'], {
+                width = 0.5,
+                value = resolved.DrawEdge,
+                callback = function(checked) Set('DrawEdge', checked) end,
+            })
+            edgeRow:Checkbox(L['Show Global Cooldown'], {
+                width = 0.5,
+                tooltip = L['Run the swipe for the global cooldown too.'],
+                value = resolved.ShowGCD,
+                callback = function(checked) Set('ShowGCD', checked) end,
+            })
+            local colorRow = card:Row(rowH)
+            colorRow:ColorPicker(L['Swipe Color'], {
+                width = 0.5,
+                value = resolved.SwipeColor,
+                callback = function(r, g, b, a) Set('SwipeColor', { r, g, b, a }) end,
+            })
+            colorRow:Checkbox(L['Desaturate on Cooldown'], {
+                width = 0.5,
+                value = resolved.DesaturateOnCooldown,
+                callback = function(checked) Set('DesaturateOnCooldown', checked) end,
+            })
+        end
 
-    TextCard(page, own, resolved, apply, 'CountdownFont', L['Countdown Text'], 'ShowCountdown')
-    TextCard(page, own, resolved, apply, 'ChargeFont', L['Charge Text'])
+        if Section(card, 'countdown', L['Countdown Text']) then
+            TextRows(card, own, resolved, apply, 'CountdownFont', 'ShowCountdown')
+        end
+
+        if Section(card, 'charges', L['Charge Text']) then
+            TextRows(card, own, resolved, apply, 'ChargeFont')
+        end
+    end)
 end
 
 -- Tabs --
@@ -230,7 +285,7 @@ local function EnableCard(page, display, apply)
             display.Enabled = checked
             apply()
             page:Refresh()
-            RefreshSidebar()
+            RefreshTree()
         end,
     })
 end
@@ -291,7 +346,7 @@ local function BuildTriggerTab(page, id)
             if info and info.isKnown and info.spellID then
                 options[#options + 1] = {
                     value = cooldownID,
-                    text = format('|T%d:16:16:0:0:64:64:5:59:5:59|t %s', GetSpellTexture(info.spellID) or 134400, GetSpellName(info.spellID) or info.spellID),
+                    text = format('|T%d:16:16:0:0:64:64:5:59:5:59|t %s', GetSpellTexture(info.spellID) or QUESTION_MARK, GetSpellName(info.spellID) or info.spellID),
                 }
             end
         end
@@ -311,25 +366,50 @@ end
 
 ---@param page table
 ---@param id string
-local function BuildLayoutTab(page, id)
+local function BuildGroupTab(page, id)
     local display = CDM:Get(id)
     local apply = Applier(id)
 
     EnableCard(page, display, apply)
-    page:DynamicGroupCard({ db = display.Layout, onChangeCallback = apply })
+    page:DynamicGroupCard({ title = L['Dynamic Group Settings'], db = display.Layout, onChangeCallback = apply })
+
+    page:Card(L['Group Icon']):Row(rowHL, 0):EditBox(L['Spell or Icon ID'], {
+        width = 1,
+        tooltip = L['The icon this group shows in the list. Empty uses its first icon.'],
+        value = display.Icon and tostring(display.Icon) or '',
+        callback = function(text)
+            local number = tonumber(text)
+            display.Icon = number and (GetSpellTexture(number) or number) or nil
+            RefreshTree()
+        end,
+    })
+
+    page:PositionCard({
+        title = L['Position and Size Settings'],
+        db = display,
+        showAnchorFrameType = true,
+        showStrata = true,
+        disableAnchorFrom = true, -- a group anchors from its grow direction
+        onChangeCallback = apply,
+    })
 end
 
 ---@param page table
 ---@param id string
-local function BuildPositionTab(page, id)
+local function BuildDisplayTab(page, id)
     local display = CDM:Get(id)
-    page:PositionCard({
-        db = display,
-        showAnchorFrameType = true,
-        showStrata = true,
-        disableAnchorFrom = display.type == 'group', -- a group anchors from its grow direction
-        onChangeCallback = Applier(id),
-    })
+    local inheritsFrom = display.parent and CDM:GetName(display.parent) or L['the General style']
+    BuildStyle(page, display.Style, CDM:ResolveStyle(display), Applier(id), inheritsFrom, id)
+
+    if display.type == 'icon' and not display.parent then
+        page:PositionCard({
+            title = L['Position and Size Settings'],
+            db = display,
+            showAnchorFrameType = true,
+            showStrata = true,
+            onChangeCallback = Applier(id),
+        })
+    end
 end
 
 ---@param page table
@@ -357,73 +437,116 @@ local function BuildGeneralTab(page)
     card:Row(rowHL, 0):Text(L['Groups and icons are listed on the left. Right-click them for more options.'], { width = 1 })
 end
 
--- Sidebar --
+-- Tree data --
 
----@return table? miniSidebar
-local function MiniSidebar()
-    local content = NRSKNUI.GUIFrame and NRSKNUI.GUIFrame.content
-    return content and content.miniSidebar
-end
+---@param id string
+---@return number
+local function DisplayIcon(id)
+    local display = CDM:Get(id)
+    if display.type ~= 'group' then return GetSpellTexture(display.Trigger.SpellID) or QUESTION_MARK end
+    if display.Icon then return display.Icon end
 
----@param key string
----@return boolean
-local function IsOpen(key)
-    return not NRSKNUI.db.global.SidebarCollapsed[PAGE][key]
+    local first = CDM:GetChildren(id)[1]
+    return first and DisplayIcon(first.key) or QUESTION_MARK
 end
 
 ---@param id string
+---@param index number? position among its group's icons
+---@param count number? icons in its group
 ---@return table
-local function IconItem(id)
+local function RowData(id, index, count)
     local display = CDM:Get(id)
-    return {
+    local isGroup = display.type == 'group'
+    local children = isGroup and CDM:GetChildren(id) or nil
+
+    local data = {
         key = id,
         text = display.name,
-        icon = GetSpellTexture(display.Trigger.SpellID),
-        disabled = not display.Enabled,
-        draggable = true,
-        renamable = true,
-        grouped = display.parent ~= nil,
+        icon = DisplayIcon(id),
+        isGroup = isGroup,
+        depth = display.parent and 1 or 0,
+        enabled = display.Enabled,
+        loadState = CDM:GetLoadState(id),
+        preview = CDM:GetPreview(id),
+        draggable = not isGroup,
+        expanded = isGroup and not IsCollapsed(id),
+        childCount = children and #children or 0,
+        canMoveUp = index ~= nil and index > 1,
+        canMoveDown = index ~= nil and index < count,
     }
+
+    data.tooltip = function(tooltip)
+        tooltip:SetText(display.name, 1, 1, 1)
+        if isGroup then
+            if #children == 0 then tooltip:AddLine(L['No Children'], 0.7, 0.7, 0.7) end
+            for _, child in ipairs(children) do tooltip:AddLine('  ' .. child.text, 0.8, 0.8, 0.8) end
+        end
+        tooltip:AddLine(' ')
+        tooltip:AddLine(L['Right-click for more options'], 0.4, 0.8, 1)
+        if not isGroup then tooltip:AddLine(L['Drag to move'], 0.4, 0.8, 1) end
+    end
+
+    if isGroup then
+        data.children = {}
+        for i, child in ipairs(children) do data.children[i] = RowData(child.key, i, #children) end
+    end
+    return data
 end
 
----Groups by name, each opening on its own settings, then the icons outside any group.
----@return table[]
-local function SidebarItems()
-    local items, loose = {}, {}
+---@param section table
+---@return number level
+local function SectionPreview(section)
+    local pinned, hidden, total = 0, 0, 0
+    for _, row in ipairs(section.rows) do
+        for _, leaf in ipairs(row.isGroup and row.children or { row }) do
+            total = total + 1
+            if leaf.preview == 2 then pinned = pinned + 1 elseif leaf.preview == 0 then hidden = hidden + 1 end
+        end
+    end
+    if total == 0 or hidden == total then return 0 end
+    return pinned == total and 2 or 1
+end
 
+---Top-level rows go under Loaded/Standby unless every icon they hold is not loaded, as in WeakAuras.
+---@return table
+local function TreeContent()
+    local loaded = {
+        key = SECTION_LOADED,
+        text = L['Loaded/Standby'],
+        collapseText = L['Show or hide the loaded displays'],
+        previewText = L['Toggle the visibility of all loaded displays'],
+        rows = {},
+    }
+    local unloaded = {
+        key = SECTION_UNLOADED,
+        text = L['Not Loaded'],
+        collapseText = L['Show or hide the displays that are not loaded'],
+        previewText = L['Toggle the visibility of all displays that are not loaded'],
+        rows = {},
+    }
+
+    local groups, loose = {}, {}
     for _, root in ipairs(CDM:GetRoots()) do
-        if root.isGroup then
-            local children = { { key = root.key, text = L['Group Settings'], disabled = not CDM:Get(root.key).Enabled } }
-            for _, child in ipairs(CDM:GetChildren(root.key)) do
-                children[#children + 1] = IconItem(child.key)
-            end
+        local list = root.isGroup and groups or loose
+        list[#list + 1] = root.key
+    end
 
-            local sectionKey = SECTION_PREFIX .. root.key
-            items[#items + 1] = {
-                type = 'header',
-                key = sectionKey,
-                text = root.text,
-                groupId = root.key,
-                defaultExpanded = IsOpen(sectionKey),
-                items = children,
-            }
-        else
-            loose[#loose + 1] = IconItem(root.key)
+    for _, list in ipairs({ groups, loose }) do
+        for _, id in ipairs(list) do
+            local section = CDM:GetLoadState(id) == 'unloaded' and unloaded or loaded
+            section.rows[#section.rows + 1] = RowData(id)
         end
     end
 
-    if #loose > 0 then
-        items[#items + 1] = { type = 'label', key = 'cdm:loose', text = L['Ungrouped'] }
-        for _, item in ipairs(loose) do items[#items + 1] = item end
+    for _, section in ipairs({ loaded, unloaded }) do
+        section.collapsed = IsCollapsed(section.key)
+        section.preview = SectionPreview(section)
     end
 
-    return items
+    return { general = { key = GENERAL, text = L['General'] }, sections = { loaded, unloaded } }
 end
 
-function RefreshSidebar()
-    local sidebar = MiniSidebar()
-    if sidebar then sidebar:SetItems(SidebarItems()) end
-end
+-- Actions --
 
 ---@param groupId string?
 local function NewIconPrompt(groupId)
@@ -476,7 +599,8 @@ local function ToggleDisplay(id)
     local display = CDM:Get(id)
     display.Enabled = not display.Enabled
     CDM:ApplySettings(id)
-    Reopen(id)
+    local tree = Tree()
+    Reopen(tree and tree:GetSelected() or id)
 end
 
 ---@param id string
@@ -509,13 +633,12 @@ local function DeletePrompt(id, keepChildren)
 end
 
 ---@param groupId string
----@param sectionKey string
-local function GroupMenu(groupId, sectionKey)
+local function GroupMenu(groupId)
     local display = CDM:Get(groupId)
     GUI:ShowContextMenu({
         { text = L['Add Icon'],                                    onClick = function() NewIconPrompt(groupId) end },
         { text = display.Enabled and L['Disable'] or L['Enable'], onClick = function() ToggleDisplay(groupId) end },
-        { text = L['Rename'],                                      onClick = function() MiniSidebar():BeginRename(sectionKey) end },
+        { text = L['Rename'],                                      onClick = function() Tree():BeginRename(groupId) end },
         { text = L['Duplicate'],                                   onClick = function() DuplicateDisplay(groupId) end },
         { divider = true },
         { text = L['Ungroup'],                                     onClick = function() DeletePrompt(groupId, true) end },
@@ -528,7 +651,7 @@ local function IconMenu(id)
     local display = CDM:Get(id)
     local entries = {
         { text = display.Enabled and L['Disable'] or L['Enable'], onClick = function() ToggleDisplay(id) end },
-        { text = L['Rename'],                                      onClick = function() MiniSidebar():BeginRename(id) end },
+        { text = L['Rename'],                                      onClick = function() Tree():BeginRename(id) end },
         { text = L['Duplicate'],                                   onClick = function() DuplicateDisplay(id) end },
         { text = L['Delete'],                                      onClick = function() DeletePrompt(id) end },
         { divider = true },
@@ -541,7 +664,7 @@ local function IconMenu(id)
                 onClick = function()
                     CDM:SetParent(id, root.key)
                     CDM:ApplySettings(id)
-                    RefreshSidebar()
+                    RefreshTree()
                 end,
             }
         end
@@ -561,66 +684,104 @@ local function IconMenu(id)
     GUI:ShowContextMenu(entries)
 end
 
+---@param ids string[]
+local function TogglePreviews(ids)
+    local allPinned = #ids > 0
+    for _, id in ipairs(ids) do
+        if (CDM.preview[id] or 0) ~= 2 then allPinned = false end
+    end
+    for _, id in ipairs(ids) do CDM.preview[id] = (not allPinned) and 2 or nil end
+    CDM:RefreshLoad()
+end
+
 GUI:RegisterPage(PAGE, {
     mode = 'tabs',
     search = { L['Cooldown Manager'], L['Countdown Text'], L['Charge Text'] },
+    onEnter = function()
+        CDM.onStateChanged = RefreshTree
+    end,
+    onLeave = function()
+        CDM.onStateChanged = nil
+        CDM:SetSelectionPreview(nil)
+    end,
     sidebar = {
-        buttons = {
-            { text = L['General'],   key = GENERAL },
-            { text = L['New Group'], onClick = NewGroupPrompt },
-            { text = L['New Icon'],  onClick = function() NewIconPrompt() end },
-        },
-        items = SidebarItems,
-        onToggle = function(key, expanded)
+        width = 260,
+        create = NRSKNUI.CreateCDMTree,
+        items = TreeContent,
+        onNew = function()
+            GUI:ShowContextMenu({
+                { text = L['New Group'], onClick = NewGroupPrompt },
+                { text = L['New Icon'],  onClick = function() NewIconPrompt() end },
+            })
+        end,
+        onSelectionChanged = function(key)
+            CDM:SetSelectionPreview(CDM:Get(key) and key or nil)
+        end,
+        onToggleExpanded = function(key, expanded)
             NRSKNUI.db.global.SidebarCollapsed[PAGE][key] = (not expanded) or nil
         end,
-        onRename = function(key, text, item)
-            CDM:Rename(item.groupId or key, text)
-            RefreshSidebar()
+        onRename = function(key, text)
+            CDM:Rename(key, text)
+            RefreshTree()
         end,
-        -- Icons go into a group, or next to another icon; groups themselves stay sorted by name.
-        canDrop = function(_, target, position)
-            if position == 'into' then return target.groupId ~= nil end
-            return target.draggable == true
+        -- An icon goes into a group, or next to an icon inside one; top-level rows stay alphabetical.
+        canDrop = function(item, target, position)
+            if not item.draggable then return false end
+            if position == 'into' then return target.isGroup end
+            return target.depth > 0
         end,
         onMove = function(key, targetKey, position)
             if position == 'into' then
-                CDM:SetParent(key, targetKey:sub(#SECTION_PREFIX + 1))
+                CDM:SetParent(key, targetKey, true)
             else
                 CDM:MoveNextTo(key, targetKey, position)
             end
             CDM:ApplySettings(key)
             local display = CDM:Get(key)
             if display.parent then CDM:ApplySettings(display.parent) end
-            RefreshSidebar()
+            RefreshTree()
         end,
-        onContextMenu = function(key, item)
-            if item and item.groupId then return GroupMenu(item.groupId, key) end
+        onMoveInGroup = function(key, delta)
+            CDM:MoveInGroup(key, delta)
+            CDM:ApplySettings(CDM:Get(key).parent)
+            RefreshTree()
+        end,
+        onUngroup = function(key)
+            CDM:SetParent(key, nil)
+            CDM:ApplySettings(key)
+            RefreshTree()
+        end,
+        onToggleEnabled = ToggleDisplay,
+        onTogglePreview = function(key)
+            CDM:SetPreview(key, CDM:GetPreview(key) == 2 and 0 or 2)
+        end,
+        onSectionPreview = function(sectionKey)
+            local ids = {}
+            for _, section in ipairs(TreeContent().sections) do
+                if section.key == sectionKey then
+                    for _, row in ipairs(section.rows) do
+                        for _, leaf in ipairs(row.isGroup and row.children or { row }) do ids[#ids + 1] = leaf.key end
+                    end
+                end
+            end
+            TogglePreviews(ids)
+        end,
+        onContextMenu = function(key)
             if not CDM:Get(key) then return end
-            if CDM:IsGroup(key) then return GroupMenu(key, SECTION_PREFIX .. key) end
+            if CDM:IsGroup(key) then return GroupMenu(key) end
             IconMenu(key)
         end,
     },
     tabs = function(itemKey)
-        if itemKey == GENERAL or not CDM:Get(itemKey) then
-            return { { id = 'general', text = L['General'] }, { id = 'style', text = L['Style'] } }
+        local display = CDM:Get(itemKey)
+        if not display then
+            return { { id = 'general', text = L['General'] }, { id = 'display', text = L['Display'] } }
         end
 
-        if CDM:IsGroup(itemKey) then
-            return {
-                { id = 'layout',   text = L['Layout'] },
-                { id = 'style',    text = L['Style'] },
-                { id = 'load',     text = L['Load'] },
-                { id = 'position', text = L['Position Settings'] },
-            }
+        local tabs = {}
+        for _, tab in ipairs(TABS) do
+            if tab.id ~= 'group' or display.type == 'group' then tabs[#tabs + 1] = tab end
         end
-
-        local tabs = {
-            { id = 'trigger', text = L['Trigger'] },
-            { id = 'style',   text = L['Style'] },
-            { id = 'load',    text = L['Load'] },
-        }
-        if not CDM:Get(itemKey).parent then tabs[#tabs + 1] = { id = 'position', text = L['Position Settings'] } end
         return tabs
     end,
     build = function(page, tabId, itemKey)
@@ -629,9 +790,9 @@ GUI:RegisterPage(PAGE, {
         if not display then
             if tabId == 'general' then
                 BuildGeneralTab(page)
-            elseif tabId == 'style' then
+            elseif tabId == 'display' then
                 local apply = function() CDM:ApplySettings() end
-                BuildStyleTab(page, CDM.db.Style, CDM.db.Style, apply, nil, GENERAL)
+                BuildStyle(page, CDM.db.Style, CDM.db.Style, apply, nil, GENERAL)
                 page:FontSettingsCard({ db = CDM.db.Style, hideFontSize = true, onChangeCallback = apply })
             end
             return
@@ -639,17 +800,14 @@ GUI:RegisterPage(PAGE, {
 
         page:SetEnabled(function() return CDM.db.Enabled end)
 
-        if tabId == 'trigger' then
+        if tabId == 'group' then
+            BuildGroupTab(page, itemKey)
+        elseif tabId == 'display' then
+            BuildDisplayTab(page, itemKey)
+        elseif tabId == 'trigger' and display.type == 'icon' then
             BuildTriggerTab(page, itemKey)
-        elseif tabId == 'layout' then
-            BuildLayoutTab(page, itemKey)
-        elseif tabId == 'style' then
-            local inheritsFrom = display.parent and CDM:GetName(display.parent) or L['the General style']
-            BuildStyleTab(page, display.Style, CDM:ResolveStyle(display), Applier(itemKey), inheritsFrom, itemKey)
         elseif tabId == 'load' then
             BuildLoadTab(page, itemKey)
-        elseif tabId == 'position' then
-            BuildPositionTab(page, itemKey)
         end
     end,
 })

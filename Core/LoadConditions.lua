@@ -171,6 +171,14 @@ local checkers = {
     Zone = CheckZone,
 }
 
+-- Conditions that change during a session; failing only these is WeakAuras' "standby".
+local SITUATIONAL = {
+    Instance = true,
+    Group = true,
+    Combat = true,
+    Zone = true,
+}
+
 local function FireCallbacks()
     for aceModule, callback in pairs(callbacks) do
         if aceModule:IsEnabled() then
@@ -205,14 +213,15 @@ local function SetupEventFrame()
 end
 
 ---@param conditions table LoadConditions config with category tables
+---@param skipSituational? boolean ignore conditions that change during a session (combat, zone, group, instance)
 ---@return boolean
-function LoadConditions:Check(conditions)
+function LoadConditions:Check(conditions, skipSituational)
     if not conditions then return true end
     if not conditions.Enabled then return true end
 
     for category, checker in pairs(checkers) do
         local config = conditions[category]
-        if config and not checker(config) then return false end
+        if config and not (skipSituational and SITUATIONAL[category]) and not checker(config) then return false end
     end
 
     return true

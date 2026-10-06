@@ -40,9 +40,15 @@ end
 -- Trigger types. Resolve runs on build and on spell changes, Update on every relevant event.
 CDM.TriggerTypes = {
     spell = {
+        ---@param trigger table
+        ---@return boolean
+        IsKnown = function(trigger)
+            local base = trigger.SpellID
+            return IsSpellKnown(base) or IsSpellKnown(GetOverrideSpell(base) or base)
+        end,
+
         ---@param frame CDMIcon
         ---@param trigger table
-        ---@return boolean known
         Resolve = function(frame, trigger)
             local base = trigger.SpellID
             frame.baseSpellID = base
@@ -50,7 +56,6 @@ CDM.TriggerTypes = {
             Index(base, frame.id)
             Index(frame.spellID, frame.id)
             frame.Icon:SetTexture(GetSpellTexture(frame.spellID))
-            return IsSpellKnown(base) or IsSpellKnown(frame.spellID)
         end,
 
         -- Only isActive/isOnGCD/isEnabled/maxCharges are documented NeverSecret; every timing value
@@ -74,7 +79,11 @@ CDM.TriggerTypes = {
             else
                 duration = GetSpellCooldownDuration(spellID, not style.ShowGCD)
             end
-            frame.Cooldown:SetCooldownFromDurationObject(duration)
+            if duration then
+                frame.Cooldown:SetCooldownFromDurationObject(duration)
+            else
+                frame.Cooldown:Clear() -- previewing a spell this character doesn't have
+            end
             frame.Charges:SetText(state.hasCharges and GetSpellDisplayCount(spellID) or '')
             frame.Icon:SetDesaturated(style.DesaturateOnCooldown and state.onCooldown)
         end,
@@ -84,19 +93,17 @@ CDM.TriggerTypes = {
 ---Resolve an icon's trigger and start watching what it needs.
 ---@param frame CDMIcon
 ---@param trigger table
----@return boolean known
 function CDM:ResolveTrigger(frame, trigger)
     self:UnwatchIcon(frame.id)
     local triggerType = self.TriggerTypes[trigger.Type]
-    if not triggerType then return false end
-    return triggerType.Resolve(frame, trigger)
+    if triggerType then triggerType.Resolve(frame, trigger) end
 end
 
 ---@param id string
 function CDM:UpdateIcon(id)
     local frame = self.icons[id]
     local display = self:Get(id)
-    if not (frame and display and frame.loaded) then return end
+    if not (frame and display and frame.shown) then return end
 
     self.TriggerTypes[display.Trigger.Type].Update(frame, frame.style)
 end

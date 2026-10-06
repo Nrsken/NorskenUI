@@ -7,7 +7,9 @@
 *     clean -> a single scrollable fluent page (build(page))
 *     tabs  -> a sub-tab strip over per-tab pages (build(page, tabId))
 * A `sidebar` field adds a full-height left item list (MiniSidebar) beside the scroll region, orthogonal to mode:
-*     sidebar = { items: table|fun():table, width?, buttons?, renderItem?, onContextMenu?, default? }
+*     sidebar = { items: table|fun():table, width?, buttons?, renderItem?, onContextMenu?, default?, create? }
+* `create(gui, parent, { onSelect })` swaps MiniSidebar for a column of the page's own, which answers the
+* same calls: .frame, SetConfig(sd) -> selectable leaves, SetSelected, Select, SetItems, Render, BeginRename, SetExpanded.
 * All layouts share the uniform contract build(page, tabId, itemKey, item) — trailing args are nil
 * when no tab strip / sidebar is active, so plain pages just declare build(page).
 *
@@ -576,28 +578,40 @@ function InstanceMixin:CreateContentHost(parent, opts)
         pixel.SetPixelPoint(msf, "BOTTOMLEFT", frame, "BOTTOMLEFT", 0, 0)
     end
 
-    local function EnsureMiniSidebar()
-        if miniSidebar then return miniSidebar end
-        miniSidebar = gui:CreateMiniSidebar(frame, {
-            onSelect = function(key, item)
-                local descriptor = host._descriptor
-                if not descriptor then return end
-                host._itemMemory[ItemMemoryKey()] = key
-                host._currentItem, host._currentItemData = key, item
-                ClearScrollChild(gui, scrollChild)
-                host.page = nil
-                -- Sidebar-outer: the new item may offer a different tab set, and re-selecting a
-                -- tab rebuilds the page, so ApplyTabsForItem owns the build in that case.
-                if IsSidebarOuter(descriptor) then
-                    ApplyTabsForItem(descriptor, key, item)
-                else
-                    BuildPage(descriptor, host._currentTab, key, item)
-                end
-                ResetScroll()
-            end,
-        })
-        host.miniSidebar = miniSidebar
-        return miniSidebar
+    local function OnColumnSelect(key, item)
+        local descriptor = host._descriptor
+        if not descriptor then return end
+        host._itemMemory[ItemMemoryKey()] = key
+        host._currentItem, host._currentItemData = key, item
+        ClearScrollChild(gui, scrollChild)
+        host.page = nil
+        -- Sidebar-outer: the new item may offer a different tab set, and re-selecting a
+        -- tab rebuilds the page, so ApplyTabsForItem owns the build in that case.
+        if IsSidebarOuter(descriptor) then
+            ApplyTabsForItem(descriptor, key, item)
+        else
+            BuildPage(descriptor, host._currentTab, key, item)
+        end
+        ResetScroll()
+    end
+
+    local columns = {} -- [sd.create or "default"] = column, each built once
+
+    ---The left column a sidebar descriptor asks for, made the active one.
+    ---@param sd table
+    local function EnsureMiniSidebar(sd)
+        local slot = sd.create or "default"
+        local column = columns[slot]
+        if not column then
+            local opts = { onSelect = OnColumnSelect }
+            column = sd.create and sd.create(gui, frame, opts) or gui:CreateMiniSidebar(frame, opts)
+            columns[slot] = column
+        end
+
+        if miniSidebar and miniSidebar ~= column then miniSidebar.frame:Hide() end
+        miniSidebar = column
+        host.miniSidebar = column
+        return column
     end
 
     -- The per-tab sidebar (tabs) or the page-level one (clean / sidebar-outer).
@@ -637,7 +651,7 @@ function InstanceMixin:CreateContentHost(parent, opts)
         local sd = ResolveSidebar(descriptor, tabId)
         local stripFrame = tabId and tabStrip and tabStrip.frame or nil
         if sd then
-            local ms = EnsureMiniSidebar()
+            local ms = EnsureMiniSidebar(sd)
             local items = ms:SetConfig(sd)
             ms.frame:Show()
             sidebarInset = sd.width or 192
@@ -744,7 +758,7 @@ function InstanceMixin:CreateContentHost(parent, opts)
     local function ShowSidebarOuter(descriptor)
         local target = host._pendingTarget -- ApplyTabsForItem clears it; read the item here first.
         local sd = descriptor.sidebar
-        local ms = EnsureMiniSidebar()
+        local ms = EnsureMiniSidebar(sd)
         local items = ms:SetConfig(sd)
         ms.frame:Show()
         sidebarInset = sd.width or 192

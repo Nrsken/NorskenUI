@@ -16,8 +16,7 @@ local unpack = unpack
 ---@field Countdown FontString
 ---@field style table effective style, see CDM:ResolveStyle
 ---@field state table trigger state the conditions read
----@field known boolean
----@field loaded boolean
+---@field shown boolean loaded or previewed
 ---@field groupId string?
 ---@field spellID number?
 ---@field baseSpellID number?

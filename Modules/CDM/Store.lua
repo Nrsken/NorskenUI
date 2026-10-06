@@ -86,10 +86,11 @@ local function Renumber(ordered)
     for index, key in ipairs(ordered) do store[key].order = index end
 end
 
----Move an icon into a group (last) or out of every group.
+---Move an icon into a group or out of every group.
 ---@param id string
 ---@param groupId string?
-function CDM:SetParent(id, groupId)
+---@param first boolean? lead the group instead of trailing it
+function CDM:SetParent(id, groupId, first)
     local display = self:Get(id)
     if not display or display.type == 'group' or display.parent == groupId then return end
     if groupId and not self:IsGroup(groupId) then return end
@@ -98,12 +99,34 @@ function CDM:SetParent(id, groupId)
     display.parent = groupId
     if not groupId then return end
 
-    local ordered = {}
+    local ordered = first and { id } or {}
     for _, child in ipairs(self:GetChildren(groupId)) do
         if child.key ~= id then ordered[#ordered + 1] = child.key end
     end
-    ordered[#ordered + 1] = id
+    if not first then ordered[#ordered + 1] = id end
     Renumber(ordered)
+end
+
+---Swap an icon with its neighbour in its group.
+---@param id string
+---@param delta number -1 up, 1 down
+function CDM:MoveInGroup(id, delta)
+    local display = self:Get(id)
+    if not (display and display.parent) then return end
+
+    local ordered = {}
+    for _, child in ipairs(self:GetChildren(display.parent)) do ordered[#ordered + 1] = child.key end
+
+    for index, key in ipairs(ordered) do
+        if key == id then
+            local other = index + delta
+            if ordered[other] then
+                ordered[index], ordered[other] = ordered[other], ordered[index]
+                Renumber(ordered)
+            end
+            return
+        end
+    end
 end
 
 ---Place an icon before or after another, joining that one's group.

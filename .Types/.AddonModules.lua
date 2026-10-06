@@ -68,7 +68,11 @@
 ---@field groups table<string, NRSKNUI.DynamicGroup>
 ---@field spareGroups NRSKNUI.DynamicGroup[]
 ---@field Catalogue CDMCatalogue
----@field TriggerTypes table<string, { Resolve: fun(frame: CDMIcon, trigger: table): boolean, Update: fun(frame: CDMIcon, style: table) }>
+---@field TriggerTypes table<string, { IsKnown: fun(trigger: table): boolean, Resolve: fun(frame: CDMIcon, trigger: table), Update: fun(frame: CDMIcon, style: table) }>
+---@field preview table<string, number> icon id -> preview level (1 selected, 2 pinned)
+---@field selectionPreview string[] icons the current selection raised to level 1
+---@field previewing boolean? the options page is open
+---@field onStateChanged fun()? set by the options page while it is open
 ---@class BlizzardMessagesModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class ActionBarsModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class Chatv2Module : NRSKNUI.ModuleBase, AceEvent-3.0, AceHook-3.0
