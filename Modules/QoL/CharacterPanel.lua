@@ -5,6 +5,7 @@ local CharacterPanel = NRSKNUI:GetModule('CharacterPanel')
 function CharacterPanel:UpdateDB() self.db = NRSKNUI.db.profile.CharacterPanel end
 
 local Theme = NRSKNUI.Theme
+local Pixel = NRSKNUI.Libs.KAJI.Pixel
 
 local string_match, string_gsub, string_find = string.match, string.gsub, string.find
 local math_abs, math_max, math_min = math.abs, math.max, math.min
@@ -14,6 +15,7 @@ local GetInventoryItemLink = GetInventoryItemLink
 local SocketInventoryItem = SocketInventoryItem
 local tinsert, twipe = table.insert, table.wipe
 local UnitFactionGroup = UnitFactionGroup
+local InCombatLockdown = InCombatLockdown
 local CloseSocketInfo = CloseSocketInfo
 local hooksecurefunc = hooksecurefunc
 local AcceptSockets = AcceptSockets
@@ -34,7 +36,6 @@ local GetContainerNumSlots = C_Container and C_Container.GetContainerNumSlots
 local GetContainerItemInfo = C_Container and C_Container.GetContainerItemInfo
 local GetSlotTooltipData = C_TooltipInfo and C_TooltipInfo.GetInventoryItem
 local PickupContainerItem = C_Container and C_Container.PickupContainerItem
-local UseContainerItem = C_Container and C_Container.UseContainerItem
 local GetTooltipData = C_TooltipInfo and C_TooltipInfo.GetHyperlink
 local GetItemLevel = C_Item and C_Item.GetDetailedItemLevelInfo
 local GetItemInfoInstant = C_Item and C_Item.GetItemInfoInstant
@@ -49,7 +50,6 @@ local C_Timer = C_Timer
 local MAX_SOCKETS = 3
 local _G = _G
 
-local ARMOR_KIT_SLOT = INVSLOT_LEGS
 local ENCHANT_BUTTON_ICON = 4620672
 local EMPTY_SOCKET_ICON = 458977
 
@@ -519,10 +519,6 @@ local function GetEnchantTargetSlots(itemLink)
     end
 end
 
-local function IsArmorKit(targetSlots)
-    return targetSlots and #targetSlots == 1 and targetSlots[1] == ARMOR_KIT_SLOT
-end
-
 local function IsMultiSlot(targetSlots)
     return targetSlots and #targetSlots > 1
 end
@@ -576,7 +572,7 @@ function CharacterPanel:ScanBagsForEnchants()
         end
 
         local targetSlots = GetEnchantTargetSlots(info.hyperlink)
-        if not targetSlots or IsArmorKit(targetSlots) then return end
+        if not targetSlots then return end
 
         enchantCache[info.itemID] = {
             itemID = info.itemID,
@@ -696,7 +692,7 @@ local function CreateQualityOverlay(parent, anchor)
     return frame, texture
 end
 
-local function CreateListPopup(globalName, titleText, onClick)
+local function CreateListPopup(globalName, titleText, onClick, rowTemplate)
     local popup = CreateFrame('Frame', globalName, UIParent)
     popup:NUISetPixelSize(POPUP_WIDTH, 50)
     popup:SetFrameStrata('TOOLTIP')
@@ -730,6 +726,7 @@ local function CreateListPopup(globalName, titleText, onClick)
 
     popup.rows = {}
     popup.onClick = onClick
+    popup.rowTemplate = rowTemplate
 
     return popup
 end
@@ -737,12 +734,11 @@ end
 local function CreateListRow(popup, index)
     if popup.rows[index] then return popup.rows[index] end
 
-    local row = CreateFrame('Button', nil, popup)
+    local row = CreateFrame('Button', nil, popup, popup.rowTemplate)
     row:NUISetPixelHeight(POPUP_ICON_SIZE + ROW_PADDING)
 
     row.iconFrame = CreateFrame('Frame', nil, row)
     row.iconFrame:NUISetPixelSize(POPUP_ICON_SIZE, POPUP_ICON_SIZE)
-    row.iconFrame:NUISetPixelPoint('LEFT', row, 'LEFT', -1, 0)
     row.iconFrame:NUIAddBorders()
     row.iconFrame:SetBorderColor(unpack(Theme.border))
 
@@ -752,11 +748,18 @@ local function CreateListRow(popup, index)
 
     row.qualityFrame, row.quality = CreateQualityOverlay(row, row.iconFrame)
 
+    row.label = row:CreateFontString(nil, 'OVERLAY')
+    row.label:SetFontStyle(nil, 11, 'OUTLINE')
+    row.label:SetTextColor(Theme.textMuted[1], Theme.textMuted[2], Theme.textMuted[3])
+    row.label:NUISetPixelPoint('TOPLEFT', row, 'TOPLEFT', POPUP_ICON_SIZE + 5, -ROW_PADDING)
+    row.label:SetJustifyH('LEFT')
+    row.label:SetWordWrap(false)
+
     row.text = row:CreateFontString(nil, 'OVERLAY')
     row.text:SetFontStyle(nil, 12, 'OUTLINE')
     row.text:SetTextColor(Theme.textPrimary[1], Theme.textPrimary[2], Theme.textPrimary[3])
-    row.text:NUISetPixelPoint('LEFT', row.iconFrame, 'RIGHT', 6, 0)
     row.text:NUISetPixelWidth(POPUP_WIDTH - POPUP_ICON_SIZE - 60)
+    row.label:NUISetPixelWidth(POPUP_WIDTH - POPUP_ICON_SIZE - 60)
     row.text:SetJustifyH('LEFT')
     row.text:SetWordWrap(true)
 
@@ -799,9 +802,13 @@ local function CreateListRow(popup, index)
         CloseAfterLeave()
     end)
 
-    row:SetScript('OnClick', function(button)
-        popup.onClick(button)
-    end)
+    if popup.rowTemplate then
+        row:RegisterForClicks('AnyUp')
+        row:SetAttribute('useOnKeyDown', false) -- otherwise ActionButtonUseKeyDown fires on a down we never register
+        row:SetScript('PostClick', popup.onClick)
+    else
+        row:SetScript('OnClick', popup.onClick)
+    end
 
     popup.rows[index] = row
     return row
@@ -833,10 +840,25 @@ local function LayoutRows(popup, entries, fill)
         row.hoverBg:SetAlpha(0)
         row.hoverTarget = 0
 
+        row.label:SetText('')
         fill(row, entry)
 
-        local rowHeight = math_max(minRowHeight, row.text:GetStringHeight() + ROW_PADDING)
+        local hasLabel = row.label:GetText() ~= ''
+        row.label:SetShown(hasLabel)
+        row.text:ClearAllPoints()
+        local textHeight = row.text:GetStringHeight()
+        if hasLabel then
+            row.text:NUISetPixelPoint('TOPLEFT', row.label, 'BOTTOMLEFT', 0, -2)
+            textHeight = row.label:GetStringHeight() + 2 + textHeight + ROW_PADDING
+        else
+            row.text:NUISetPixelPoint('LEFT', row.iconFrame, 'RIGHT', 6, 0)
+        end
+
+        local rowHeight = Pixel.ToPixelGrid(math_max(minRowHeight, textHeight + ROW_PADDING))
         row:NUISetPixelHeight(rowHeight)
+        -- Centring leaves the icon on a half pixel when the leftover height is odd.
+        row.iconFrame:ClearAllPoints()
+        row.iconFrame:NUISetPixelPoint('TOPLEFT', row, 'TOPLEFT', -1, -(rowHeight - POPUP_ICON_SIZE) / 2)
         row:ClearAllPoints()
         row:NUISetPixelPoint('TOPLEFT', popup, 'TOPLEFT', POPUP_PADDING, -yOffset)
         row:NUISetPixelPoint('TOPRIGHT', popup, 'TOPRIGHT', -POPUP_PADDING, -yOffset)
@@ -936,17 +958,11 @@ end
 function CharacterPanel:CreateEnchantPopup()
     if self.enchantPopup then return self.enchantPopup end
 
-    self.enchantPopup = CreateListPopup('NRSKNUI_EnchantPopup', 'Enchants', function(row)
-        if NRSKNUI:InCombat() then
-            NRSKNUI:Print('Cannot enchant during combat')
-            return
-        end
-        if not row.data then return end
-
-        UseContainerItem(row.data.bagID, row.data.slotID)
+    -- Addon code can't start an armor kit, so the secure template uses the item and targets the slot.
+    self.enchantPopup = CreateListPopup('NRSKNUI_EnchantPopup', 'Enchants', function()
         CharacterPanel:HideEnchantPopup()
         CharacterPanel:HideSlotHighlight()
-    end)
+    end, 'SecureActionButtonTemplate')
 
     self.enchantPopup.empty:SetText('No enchants in bags')
 
@@ -954,6 +970,8 @@ function CharacterPanel:CreateEnchantPopup()
 end
 
 function CharacterPanel:ShowEnchantPopup(anchor)
+    if InCombatLockdown() then return end
+
     local popup = self:CreateEnchantPopup()
     local entries = {}
 
@@ -966,17 +984,28 @@ function CharacterPanel:ShowEnchantPopup(anchor)
     end
 
     LayoutRows(popup, entries, function(row, entry)
-        row.targetSlotID = entry.resolvedSlotID
-        -- Ring and weapon enchants apply to either of two slots, so highlight both.
-        row.highlightSlots = IsMultiSlot(entry.targetSlots) and entry.targetSlots or entry.resolvedSlotID
-        row.text:SetText(GetItemName(entry.link) or '')
+        local multiSlot = IsMultiSlot(entry.targetSlots)
+        row:SetAttribute('type', 'item')
+        row:SetAttribute('item', entry.bagID .. ' ' .. entry.slotID)
+        -- Ring and weapon enchants keep the targeting cursor so either slot can be picked.
+        row:SetAttribute('target-slot', not multiSlot and entry.resolvedSlotID or nil)
+        row.highlightSlots = multiSlot and entry.targetSlots or entry.resolvedSlotID
+
+        local fullName = GetItemName(entry.link) or ''
+        local prefix, name = string_match(fullName, '^(.-)%s+%-%s+(.+)$')
+        if not prefix then
+            local slotFrame = NRSKNUI.ITEM_SLOT_INFO[entry.resolvedSlotID].frame
+            prefix, name = _G[PaperDollItemSlotButton_GetSlotName(slotFrame):upper()], fullName
+        end
+        row.label:SetText(prefix or '')
+        row.text:SetText(name)
     end)
 
     AnchorPopup(popup, anchor)
 end
 
 function CharacterPanel:HideEnchantPopup()
-    if self.enchantPopup then self.enchantPopup:Hide() end
+    if self.enchantPopup and not InCombatLockdown() then self.enchantPopup:Hide() end
 end
 
 -- Socket bar --
@@ -1209,6 +1238,8 @@ function CharacterPanel:SetupPanel()
             if self.db.TrackIndicators.Enabled then self:UpdateSlotTrackIndicator(slotID) end
             self:RefreshSocketBar()
         end)
+
+        self:RegisterEvent('PLAYER_REGEN_DISABLED', function() self:HideEnchantPopup() end)
 
         self:RegisterEvent('BAG_UPDATE_DELAYED', function()
             if self.socketBar and self.socketBar:IsShown() then self:RefreshSocketBar() end
