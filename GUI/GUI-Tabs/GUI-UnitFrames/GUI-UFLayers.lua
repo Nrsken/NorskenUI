@@ -3,7 +3,6 @@ local NRSKNUI = select(2, ...)
 ---@class UnitFramesModule
 local UF = NRSKNUI:GetModule('UnitFrames')
 local L = NRSKNUI.Libs.AL
-local GUI = NRSKNUI.GUI
 local Theme = NRSKNUI.Theme
 local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
@@ -214,10 +213,10 @@ end
 
 -- Page --
 
-local PAGE = 'unitFramesLayers'
+local PAGE = 'unitFramesGeneral'
 
 local function Reopen()
-    NRSKNUI.GUIFrame:ShowPage(PAGE)
+    NRSKNUI.GUIFrame:ShowPage(PAGE, { itemKey = 'layers' })
 end
 
 ---@param layers table<string, number>? nil when there was nowhere to go
@@ -245,7 +244,7 @@ local function BuildStackCard(page)
     local card = page:Card(L['Layers'], 'all')
     card:Row(rowH):Widget('SortableStack', nil, {
         width = 1,
-        id = PAGE,
+        id = 'unitFramesLayers',
         groups = groups,
         sharedCaption = L['Shared Layer %s'],
         onMove = function(id, targetId, position) Apply(Plan(occupants, id, targetId, position)) end,
@@ -310,14 +309,4 @@ function UF.GUIDrawOrderCard(page, uDB, placement, reload)
     })
 end
 
-GUI:RegisterPage(PAGE, {
-    mode = 'clean',
-    search = { L['Layers'], L['Shared Layer'] },
-    build = function(page)
-        local db = NRSKNUI.db.profile.UnitFrames
-        if not db then return end
-
-        page:SetEnabled(function() return db.Enabled and not NRSKNUI.UFBlocked end)
-        BuildStackCard(page)
-    end,
-})
+UF.GUILayersTab = BuildStackCard

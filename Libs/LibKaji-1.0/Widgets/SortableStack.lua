@@ -117,12 +117,20 @@ function StackMixin:Settle()
     if self._config.id then memory[self._config.id].settle = GetTime() + SETTLE_TIME end
 end
 
+---Tracked from OnEnter/OnLeave, IsMouseOver is true for both rows on a shared seam.
+---@param row table
+---@return boolean
+local function IsRowHovered(row)
+    return row.hovered or row.steps[1].hovered or row.steps[2].hovered
+end
+
 ---@param row table
 function StackMixin:PaintRow(row)
     local theme = self.gui.theme
     local item = row.item
     local selected = item.key == self._config.highlight
-    local hovered = row:IsMouseOver() and not self.drag and not item.locked and not self:IsSettling()
+    local settled = not self.drag and not self:IsSettling()
+    local hovered = settled and not item.locked and IsRowHovered(row)
 
     local name = selected and theme.accent or (item.locked and theme.textMuted or theme.textPrimary)
     row.nameColor(hovered and theme.accent or name)
@@ -130,7 +138,7 @@ function StackMixin:PaintRow(row)
     row.stripe:SetColorTexture(1, 1, 1, STRIPE_ALPHA)
 
     for _, step in ipairs(row.steps) do
-        step.tint(step:IsMouseOver() and theme.accent or theme.textMuted)
+        step.tint(settled and step.hovered and theme.accent or theme.textMuted)
     end
 
     row:SetAlpha(self.drag and self.drag.key == row.key and DRAG_ALPHA or 1)
@@ -234,10 +242,14 @@ function StackMixin:AcquireRow(index)
             self:Settle()
             safecall(onStep, row.key, dir)
         end)
-        step:SetScript("OnEnter", function() self:PaintRow(row) end)
-        step:SetScript("OnLeave", function()
+        step:SetScript("OnEnter", function()
+            step.hovered = true
             self:PaintRow(row)
-            if not row:IsMouseOver() then self:QueueBlur() end
+        end)
+        step:SetScript("OnLeave", function()
+            step.hovered = false
+            self:PaintRow(row)
+            self:QueueBlur()
         end)
         row.steps[i] = step
     end
@@ -250,6 +262,7 @@ function StackMixin:AcquireRow(index)
     end)
     row:SetScript("OnEnter", function(r)
         local stack = r.stack
+        r.hovered = true
         stack._blurToken = (stack._blurToken or 0) + 1 -- a pending blur from the row just left is void
         stack:PaintRow(r)
         if not r.item.locked and not stack.drag then ApplyCursor(stack.gui.theme.dragCursor) end
@@ -257,8 +270,7 @@ function StackMixin:AcquireRow(index)
     end)
     row:SetScript("OnLeave", function(r)
         local stack = r.stack
-        -- Moving onto the row's own arrows is not leaving it.
-        if r:IsMouseOver() then return end
+        r.hovered = false
         if not stack.drag then ResetCursor() end
         stack:PaintRow(r)
         stack:QueueBlur()
@@ -537,7 +549,7 @@ function StackMixin:QueueBlur()
         end
         if not self._config.onFocus then return end
         for _, row in ipairs(self.rows) do
-            if row:IsShown() and row:IsMouseOver() then return end
+            if row:IsShown() and IsRowHovered(row) then return end
         end
         safecall(self._config.onFocus, nil)
     end)
@@ -710,6 +722,8 @@ function StackMixin:OnRelease()
     self.explicitHeight = nil
     for _, row in ipairs(self.rows) do
         row:Hide(); row.item = nil; row.key = nil
+        row.hovered = nil
+        for _, step in ipairs(row.steps) do step.hovered = nil end
         row.glide:Hide()
     end
     for _, caption in ipairs(self.captions) do caption:Hide() end
