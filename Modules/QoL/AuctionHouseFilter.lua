@@ -13,8 +13,6 @@ function AuctionHouseFilter:ApplyAuctionHouseFilter()
     if not self.db.Enabled then return end
     if not AuctionHouseFrame then return end
 
-    -- Hook needed when using auctionator
-    -- Otherwise when you click between blizzard tab and auctionator tab, filter is lost
     if not displayModeHooked and IsAddOnLoaded('Auctionator') then
         displayModeHooked = true
         if AuctionHouseFrame.BrowseResultsFrame then
@@ -37,8 +35,8 @@ function AuctionHouseFilter:ApplyFilter()
 
         if self.db.AuctionHouse.CurrentExpansion then
             local filterButton = AuctionHouseFrame.SearchBar and AuctionHouseFrame.SearchBar.FilterButton
-            if filterButton and filterButton.filters then
-                filterButton.filters[Enum.AuctionHouseFilter.CurrentExpansionOnly] = true
+            if filterButton and not filterButton:GetFilters()[Enum.AuctionHouseFilter.CurrentExpansionOnly] then
+                filterButton:ToggleFilter(Enum.AuctionHouseFilter.CurrentExpansionOnly)
             end
         end
 
