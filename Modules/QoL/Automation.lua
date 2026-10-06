@@ -553,7 +553,7 @@ function Automation:SetupAutoFillDelete()
             local text = dialog:GetTextFontString()
             local ngt = gsub(text:GetText(), gsub(DeleteLine, "@", ""), "")
             local link = select(3, GetCursorInfo())
-            text:SetText(ngt .. link)
+            text:SetText(link and ngt .. link or ngt)
         end
     end)
 end
