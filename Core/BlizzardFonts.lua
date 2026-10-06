@@ -346,7 +346,7 @@ function NRSKNUI:ApplyBlizzardFonts(force)
     self:SetFont(_G.GameTooltipHeader, false)    -- Tooltip header / Suggested quest description text
     self:SetFont(_G.PriceFont, true)
     self:SetFont(_G.TextStatusBarText, true)     -- Some '0/0' text for bars
-    self:SetFont(_G.InvoiceTextFontNormal, true) -- Invoice frame text
+    self:SetFont(_G.InvoiceTextFontNormal, false) -- Invoice frame text
     self:SetFont(_G.MailFont_Large, false)       -- Mail frame subject text
     self:SetFont(_G.DestinyFontHuge, false)      -- Garrison Mission Report / Suggested content text
     self:SetFont(_G.SplashHeaderFont, true)      -- Splash screen header text
