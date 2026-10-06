@@ -7,21 +7,28 @@ local LoadConditions = NRSKNUI.LoadConditions
 
 local pairs, ipairs = pairs, ipairs
 local tremove = table.remove
+local tsort = table.sort
 local tostring = tostring
+local format = string.format
+local GetPhysicalScreenSize = GetPhysicalScreenSize
 local wipe = wipe
+local CreateFrame = CreateFrame
 local GetSpellName = C_Spell.GetSpellName
 
 local GUI_PAGE = 'cooldownManager'
+local STATIC_GROUP_SIZE = 32 -- a static group draws nothing; this is what its mover grabs
 
 function CDM:UpdateDB()
     self.db = NRSKNUI.db.profile.CDM
+    self:Migrate(self.db)
 end
 
 function CDM:OnInitialize()
     self:UpdateDB()
     self.icons = {} ---@type table<string, CDMIcon>
-    self.groups = {} ---@type table<string, NRSKNUI.DynamicGroup>
-    self.spareGroups = {} ---@type NRSKNUI.DynamicGroup[]
+    self.containers = {} ---@type table<string, Frame|NRSKNUI.DynamicGroup>
+    self.spareStatic = {} ---@type Frame[]
+    self.spareDynamic = {} ---@type NRSKNUI.DynamicGroup[]
     self.preview = {} ---@type table<string, number>
     self.selectionPreview = {} ---@type string[]
 end
@@ -36,29 +43,70 @@ local function AnchorOptions(id)
     }
 end
 
--- Groups --
+---Top-level displays sit on the screen with a mover; inside a static group they hang off its frame.
+---@param frame Frame
+---@param id string
+---@param display table
+---@param point string? the frame's own anchor, when it isn't Position.AnchorFrom (a dynamic group's grow anchor)
+function CDM:Place(frame, id, display, point)
+    local parent = display.parent and self:Get(display.parent)
+    local position = display.Position
+
+    if parent then
+        local host = self.containers[display.parent]
+        frame:SetParent(host)
+        frame:ClearAllPoints()
+        frame:NUISetPixelPoint(point or position.AnchorFrom, host, position.AnchorTo, position.XOffset, position.YOffset)
+        Anchors:Unregister(id)
+        return
+    end
+
+    frame:SetParent(UIParent)
+    if point then
+        ---@cast frame NRSKNUI.DynamicGroup
+        frame:UpdateGroupPosition(display, display.Layout.Grow)
+    else
+        frame:NUIApplyPosition(display)
+    end
+    Anchors:Register(self, id, frame, GUI_PAGE, AnchorOptions(id))
+end
+
+-- Containers --
 
 ---@param id string
-function CDM:BuildGroup(id)
+function CDM:BuildContainer(id)
     local display = self:Get(id)
     if not display then return self:Release(id) end
 
-    local group = self.groups[id]
-    if not group then
-        group = tremove(self.spareGroups) or NRSKNUI:CreateDynamicGroup(nil, UIParent)
-        self.groups[id] = group
+    if display.parent and not self.containers[display.parent] then self:BuildContainer(display.parent) end
+
+    local dynamic = display.type == 'dynamicgroup'
+    local frame = self.containers[id]
+    if not frame then
+        if dynamic then
+            frame = tremove(self.spareDynamic) or NRSKNUI:CreateDynamicGroup(nil, UIParent)
+        else
+            frame = tremove(self.spareStatic) or CreateFrame('Frame', nil, UIParent)
+            frame:NUISetPixelSize(STATIC_GROUP_SIZE, STATIC_GROUP_SIZE)
+        end
+        self.containers[id] = frame
     end
 
-    group:SetConfig(display.Layout)
-    group:UpdateGroupPosition(display, display.Layout.Grow)
-    Anchors:Register(self, id, group, GUI_PAGE, AnchorOptions(id))
+    if dynamic then
+        ---@cast frame NRSKNUI.DynamicGroup
+        frame:SetConfig(display.Layout)
+        self:Place(frame, id, display, frame:GetResolvedAnchor(display.Layout.Grow))
+    else
+        self:Place(frame, id, display)
+    end
 end
 
 -- Icons --
 
 ---@param frame CDMIcon
 local function DetachFromGroup(frame)
-    local group = frame.groupId and CDM.groups[frame.groupId]
+    local group = frame.groupId and CDM.containers[frame.groupId]
+    ---@cast group NRSKNUI.DynamicGroup?
     if group then group:DetachChild(frame) end
     frame.groupId = nil
 end
@@ -68,7 +116,7 @@ function CDM:BuildIcon(id)
     -- Disabled displays keep a frame too: hidden, but the options page can still preview them.
     local display = self:Get(id)
     if not display then return self:Release(id) end
-    local parent = display.parent and self:Get(display.parent)
+    if display.parent and not self.containers[display.parent] then self:BuildContainer(display.parent) end
 
     local frame = self.icons[id]
     if not frame then
@@ -77,13 +125,13 @@ function CDM:BuildIcon(id)
         self.icons[id] = frame
     end
 
-    frame.style = self:ResolveStyle(display)
+    frame.style = self:GetStyle(display)
     self:StyleIcon(frame, frame.style)
     self:ResolveTrigger(frame, display.Trigger)
 
-    if parent then
-        if not self.groups[display.parent] then self:BuildGroup(display.parent) end
-        local group = self.groups[display.parent]
+    if self:IsDynamic(display.parent) then
+        local group = self.containers[display.parent]
+        ---@cast group NRSKNUI.DynamicGroup
         if frame.groupId ~= display.parent then
             DetachFromGroup(frame)
             group:AttachChild(frame, id, display.order)
@@ -95,9 +143,7 @@ function CDM:BuildIcon(id)
         Anchors:Unregister(id)
     else
         DetachFromGroup(frame)
-        frame:SetParent(UIParent)
-        frame:NUIApplyPosition(display)
-        Anchors:Register(self, id, frame, GUI_PAGE, AnchorOptions(id))
+        self:Place(frame, id, display)
     end
 end
 
@@ -119,17 +165,13 @@ function CDM:Release(id)
         self.icons[id] = nil
     end
 
-    local group = self.groups[id]
-    if group then
-        local childIds = {}
-        for _, child in group:IterateChildren() do
-            ---@cast child CDMIcon
-            childIds[#childIds + 1] = child.id
-        end
-        for _, childId in ipairs(childIds) do self:Release(childId) end
-        group:Hide()
-        self.groups[id] = nil
-        self.spareGroups[#self.spareGroups + 1] = group
+    local container = self.containers[id]
+    if container then
+        container:Hide()
+        container:ClearAllPoints()
+        self.containers[id] = nil
+        local spare = container.SetConfig and self.spareDynamic or self.spareStatic
+        spare[#spare + 1] = container
     end
 
     Anchors:Unregister(id)
@@ -140,42 +182,49 @@ end
 local STATE_RANK = { loaded = 3, standby = 2, unloaded = 1 }
 
 ---WeakAuras' three states: loaded, standby when only situational conditions fail, unloaded when
----a hard one does (disabled, unknown spell, a role or spec that can't change mid-fight).
+---a hard one does (disabled, unknown spell, a role that can't change mid-fight). A group takes the
+---best state of the icons inside it.
 ---@param id string
 ---@return 'loaded'|'standby'|'unloaded'
 function CDM:GetLoadState(id)
     local display = self:Get(id)
     if not display or not display.Enabled then return 'unloaded' end
 
-    if display.type == 'group' then
+    if display.type ~= 'icon' then
         local best
-        for _, child in ipairs(self:GetChildren(id)) do
-            local state = self:GetLoadState(child.key)
+        for _, iconId in ipairs(self:GetIcons(id)) do
+            local state = self:GetLoadState(iconId)
             if not best or STATE_RANK[state] > STATE_RANK[best] then best = state end
         end
         return best or 'loaded'
     end
 
-    local parent = display.parent and self:Get(display.parent)
-    if parent and not parent.Enabled then return 'unloaded' end
+    for _, ancestor in ipairs(self:GetAncestors(id)) do
+        if not self:Get(ancestor).Enabled then return 'unloaded' end
+    end
     if not self.TriggerTypes[display.Trigger.Type].IsKnown(display.Trigger) then return 'unloaded' end
-
-    local parentLoad = parent and parent.Load
-    if not (LoadConditions:Check(display.Load, true) and LoadConditions:Check(parentLoad, true)) then return 'unloaded' end
-    if not (LoadConditions:Check(display.Load) and LoadConditions:Check(parentLoad)) then return 'standby' end
+    if not LoadConditions:Check(display.Load, true) then return 'unloaded' end
+    if not LoadConditions:Check(display.Load) then return 'standby' end
     return 'loaded'
 end
 
 -- Previews: WeakAuras' visibility levels, 1 shown by selection, 2 pinned by the eye.
 
 ---@param id string
----@return number level 0 hidden, 1 some (group) or selected, 2 pinned
+---@return string[]
+function CDM:GetPreviewTargets(id)
+    if self:IsGroup(id) then return self:GetIcons(id) end
+    return { id }
+end
+
+---@param id string
+---@return number level 0 hidden, 1 shown by selection or partly (a group), 2 pinned
 function CDM:GetPreview(id)
     if not self:IsGroup(id) then return self.preview[id] or 0 end
 
     local pinned, hidden, total = 0, 0, 0
-    for _, child in ipairs(self:GetChildren(id)) do
-        local level = self.preview[child.key] or 0
+    for _, iconId in ipairs(self:GetIcons(id)) do
+        local level = self.preview[iconId] or 0
         total = total + 1
         if level == 2 then pinned = pinned + 1 elseif level == 0 then hidden = hidden + 1 end
     end
@@ -187,11 +236,7 @@ end
 ---@param id string
 ---@param level number
 function CDM:SetPreview(id, level)
-    if self:IsGroup(id) then
-        for _, child in ipairs(self:GetChildren(id)) do self.preview[child.key] = level end
-    else
-        self.preview[id] = level
-    end
+    for _, iconId in ipairs(self:GetPreviewTargets(id)) do self.preview[iconId] = level end
     self:RefreshLoad()
 end
 
@@ -203,13 +248,11 @@ function CDM:SetSelectionPreview(id)
     end
     wipe(self.selectionPreview)
 
-    local display = id and self:Get(id)
-    if display then
-        local targets = display.type == 'group' and self:GetChildren(id) or { { key = id } }
-        for _, target in ipairs(targets) do
-            if (self.preview[target.key] or 0) == 0 then
-                self.preview[target.key] = 1
-                self.selectionPreview[#self.selectionPreview + 1] = target.key
+    if id and self:Get(id) then
+        for _, iconId in ipairs(self:GetPreviewTargets(id)) do
+            if (self.preview[iconId] or 0) == 0 then
+                self.preview[iconId] = 1
+                self.selectionPreview[#self.selectionPreview + 1] = iconId
             end
         end
     end
@@ -223,41 +266,38 @@ function CDM:IsPreviewed(id)
 end
 
 ---Show what is loaded and hide the rest; while the options page is open only previewed icons show,
----as WeakAuras pauses everything else. Hidden icons stop updating.
+---as WeakAuras pauses everything else. A group shows while anything inside it does. Hidden icons stop updating.
 function CDM:RefreshLoad()
     local previewing = self.previewing
-    local groupShown = {}
-    for id, group in pairs(self.groups) do
-        local display = self:Get(id)
-        local shown = not previewing and display.Enabled and LoadConditions:Check(display.Load)
+    local shown = {}
+    for id in pairs(self.icons) do
         if previewing then
-            for _, child in ipairs(self:GetChildren(id)) do
-                if self:IsPreviewed(child.key) then shown = true break end
-            end
+            shown[id] = self:IsPreviewed(id)
+        else
+            shown[id] = self:GetLoadState(id) == 'loaded'
         end
-        groupShown[id] = shown
-        group:SetShown(shown)
+    end
+
+    for id, container in pairs(self.containers) do
+        local any = false
+        for _, iconId in ipairs(self:GetIcons(id)) do
+            if shown[iconId] then any = true break end
+        end
+        container:SetShown(any)
     end
 
     for id, frame in pairs(self.icons) do
-        local display = self:Get(id)
-        local shown
-        if previewing then
-            shown = self:IsPreviewed(id)
-        else
-            shown = self:GetLoadState(id) == 'loaded'
-        end
-        if display.parent and not groupShown[display.parent] then shown = false end
-        frame.shown = shown
+        frame.shown = shown[id]
 
-        local group = frame.groupId and self.groups[frame.groupId]
+        local group = frame.groupId and self.containers[frame.groupId]
+        ---@cast group NRSKNUI.DynamicGroup?
         if group then
-            if shown then group:ActivateChild(id) else group:DeactivateChild(id) end
+            if shown[id] then group:ActivateChild(id) else group:DeactivateChild(id) end
         else
-            frame:SetShown(shown)
+            frame:SetShown(shown[id])
         end
 
-        if shown then self:UpdateIcon(id) end
+        if shown[id] then self:UpdateIcon(id) end
     end
 
     if self.onStateChanged then self.onStateChanged() end
@@ -285,23 +325,32 @@ end
 
 -- Apply --
 
+---@param id string
+local function ApplySubtree(id)
+    if CDM:IsGroup(id) then
+        CDM:BuildContainer(id)
+        for _, child in ipairs(CDM:GetChildren(id)) do ApplySubtree(child.key) end
+    else
+        CDM:BuildIcon(id)
+    end
+end
+
 ---@param id string? nil applies every display
 function CDM:ApplySettings(id)
     if not self:IsEnabled() then return end
 
     if id then
-        if self:IsGroup(id) then
-            self:BuildGroup(id)
-            for _, child in ipairs(self:GetChildren(id)) do self:BuildIcon(child.key) end
-        else
-            self:BuildIcon(id)
-        end
+        ApplySubtree(id)
     else
-        local displays = self.db.Displays
-        for key, display in pairs(displays) do
-            if display.type == 'group' then self:BuildGroup(key) end
+        -- Parents before children, so every display finds the frame it hangs off.
+        local containers = {}
+        for key, display in pairs(self.db.Displays) do
+            if display.type ~= 'icon' then containers[#containers + 1] = key end
         end
-        for key, display in pairs(displays) do
+        tsort(containers, function(a, b) return self:GetDepth(a) < self:GetDepth(b) end)
+        for _, key in ipairs(containers) do self:BuildContainer(key) end
+
+        for key, display in pairs(self.db.Displays) do
             if display.type == 'icon' then self:BuildIcon(key) end
         end
     end
@@ -323,17 +372,17 @@ function CDM:OnDisable()
     LoadConditions:UnregisterCallback(self)
 
     for id in pairs(self.icons) do self:Release(id) end
-    for id in pairs(self.groups) do self:Release(id) end
+    for id in pairs(self.containers) do self:Release(id) end
 end
 
 -- Dev commands --
 
----Seed one group per Blizzard cooldown category from the known spells it lists.
+---Seed one dynamic group per Blizzard cooldown category from the known spells it lists.
 local function Seed()
     local Category = Enum.CooldownViewerCategory
     local yOffset = -180
     for _, category in ipairs({ Category.Essential, Category.Utility }) do
-        local groupId = CDM:CreateGroup(category == Category.Essential and 'Essential' or 'Utility')
+        local groupId = CDM:CreateGroup(category == Category.Essential and 'Essential' or 'Utility', true)
         CDM:Get(groupId).Position.YOffset = yOffset
         yOffset = yOffset - 50
 
@@ -356,10 +405,28 @@ function CDM:HandleCommand(args)
         self.db.Enabled = true
         NRSKNUI:ToggleModule('CDM', true)
         self:ApplySettings()
+    elseif args == 'px' then
+        -- Physical-pixel edges of the shown icons in each dynamic group, to see where a gap renders wider.
+        local _, physicalHeight = GetPhysicalScreenSize()
+        local scale = UIParent:GetEffectiveScale()
+        local toPixels = scale * physicalHeight / 768
+        NRSKNUI:Print(format('UIParent scale %.4f, perfect %.4f, 1 unit = %.4f px', scale, 768 / physicalHeight, toPixels))
+        for id, container in pairs(self.containers) do
+            if container.IterateActive and container:IsShown() then
+                local line, previousRight = self:GetName(id) .. ':', nil
+                for _, child in container:IterateActive() do
+                    local left, right = child:GetLeft() * toPixels, child:GetRight() * toPixels
+                    if previousRight then line = line .. format(' gap %.2f |', left - previousRight) end
+                    line = line .. format(' [%.2f-%.2f]', left, right)
+                    previousRight = right
+                end
+                print(line)
+            end
+        end
     elseif args == 'wipe' then
         for id in pairs(self.db.Displays) do self:Release(id) end
         wipe(self.db.Displays)
     else
-        NRSKNUI:Print('/nui cdm dump | seed | wipe')
+        NRSKNUI:Print("/nui cdm dump | seed | wipe | px")
     end
 end

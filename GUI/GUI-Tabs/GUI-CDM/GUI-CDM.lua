@@ -9,9 +9,9 @@ local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
 
 local ipairs = ipairs
+local type = type
 local tostring = tostring
 local format = string.format
-local wipe = wipe
 local strtrim = strtrim
 local tonumber = tonumber
 local CopyTable = CopyTable
@@ -24,6 +24,7 @@ local GENERAL = 'cdm:general'
 local SECTION_LOADED = 'cdm:section:loaded'
 local SECTION_UNLOADED = 'cdm:section:unloaded'
 local QUESTION_MARK = 134400
+local NEW_ROW_HEIGHT = 40
 
 -- WeakAuras' tab order; the ones without settings yet stay empty.
 local TABS = {
@@ -37,6 +38,15 @@ local TABS = {
     { id = 'custom',      text = L['Custom Options'] },
     { id = 'information', text = L['Information'] },
 }
+
+local TYPE_NAMES = {
+    icon = L['Icon'],
+    group = L['Group'],
+    dynamicgroup = L['Dynamic Group'],
+}
+
+-- Font keys FontSettingsCard writes, copied across a group's icons after each change.
+local FONT_KEYS = { 'UseGlobalFont', 'FontFace', 'FontOutline', 'FontShadow' }
 
 local sectionCollapsed = {} -- [section key] = true, for this session
 
@@ -74,7 +84,7 @@ local function EnsureModuleEnabled()
     NRSKNUI:ToggleModule('CDM', true)
 end
 
----@param id string
+---@param id string?
 ---@return fun()
 local function Applier(id)
     return function() CDM:ApplySettings(id) end
@@ -86,21 +96,20 @@ local function IsCollapsed(key)
     return NRSKNUI.db.global.SidebarCollapsed[PAGE][key] == true
 end
 
--- Style --
+-- Display (style) --
 
--- Overrides copy a whole nested table on first write, so later edits never touch the layer below.
+-- A nested table is copied before its first edit, so icons never share one.
 ---@param own table
----@param resolved table
 ---@param path string[]
 ---@param value any
-local function SetPath(own, resolved, path, value)
+local function SetPath(own, path, value)
     local key = path[1]
     if #path == 1 then
-        own[key] = value
+        own[key] = type(value) == 'table' and CopyTable(value) or value
         return
     end
 
-    own[key] = own[key] or CopyTable(resolved[key])
+    own[key] = CopyTable(own[key] or CDM.STYLE_TEMPLATE[key])
     local node = own[key]
     for i = 2, #path - 1 do node = node[path[i]] end
     node[path[#path]] = value
@@ -123,27 +132,18 @@ local function Section(card, key, title)
 end
 
 ---@param card table
----@param own table the layer being edited
----@param resolved table what that layer currently resolves to
----@param apply fun()
+---@param style table read side
+---@param set fun(path: string[], value: any)
 ---@param fontKey string 'CountdownFont'|'ChargeFont'
 ---@param showToggle string? style key of a checkbox leading the section
-local function TextRows(card, own, resolved, apply, fontKey, showToggle)
-    local font = resolved[fontKey]
-
-    local function Set(path, value)
-        SetPath(own, resolved, path, value)
-        apply()
-    end
+local function TextRows(card, style, set, fontKey, showToggle)
+    local font = style[fontKey]
 
     if showToggle then
         card:Row(rowH):Checkbox(L['Show'], {
             width = 1,
-            value = resolved[showToggle],
-            callback = function(checked)
-                own[showToggle] = checked
-                apply()
-            end,
+            value = style[showToggle],
+            callback = function(checked) set({ showToggle }, checked) end,
         })
     end
 
@@ -154,12 +154,12 @@ local function TextRows(card, own, resolved, apply, fontKey, showToggle)
         max = 40,
         step = 1,
         value = font.FontSize,
-        callback = function(value) Set({ fontKey, 'FontSize' }, value) end,
+        callback = function(value) set({ fontKey, 'FontSize' }, value) end,
     })
     sizeRow:AnchorPicker(L['Anchor'], {
         width = 0.5,
         value = font.Position.AnchorFrom,
-        callback = function(point) Set({ fontKey, 'Position', 'AnchorFrom' }, point) end,
+        callback = function(point) set({ fontKey, 'Position', 'AnchorFrom' }, point) end,
     })
 
     local offsetRow = card:Row(rowH)
@@ -169,7 +169,7 @@ local function TextRows(card, own, resolved, apply, fontKey, showToggle)
         max = 30,
         step = 1,
         value = font.Position.XOffset,
-        callback = function(value) Set({ fontKey, 'Position', 'XOffset' }, value) end,
+        callback = function(value) set({ fontKey, 'Position', 'XOffset' }, value) end,
     })
     offsetRow:Slider(L['Y Offset'], {
         width = 0.5,
@@ -177,32 +177,26 @@ local function TextRows(card, own, resolved, apply, fontKey, showToggle)
         max = 30,
         step = 1,
         value = font.Position.YOffset,
-        callback = function(value) Set({ fontKey, 'Position', 'YOffset' }, value) end,
+        callback = function(value) set({ fontKey, 'Position', 'YOffset' }, value) end,
     })
 end
 
+---Style controls for one icon, or every icon in a group at once (WeakAuras' group editing).
+---Controls show the first icon's values.
 ---@param page table
----@param own table the layer being edited
----@param resolved table what that layer currently resolves to
+---@param iconIds string[]
 ---@param apply fun()
----@param inheritsFrom string? name of the layer below, nil when editing the base style
----@param reopenKey string
-local function BuildStyle(page, own, resolved, apply, inheritsFrom, reopenKey)
-    if inheritsFrom then
-        local overrideCard = page:Card(L['Overrides'])
-        overrideCard:Row(rowH):Text(format(L['Settings changed here override %s. Untouched settings keep following it.'], inheritsFrom), { width = 1 })
-        overrideCard:Row(rowHL, 0):Button(L['Reset Overrides'], {
-            width = 1,
-            callback = function()
-                wipe(own)
-                apply()
-                Reopen(reopenKey)
-            end,
-        })
+local function BuildStyle(page, iconIds, apply)
+    if #iconIds == 0 then
+        page:Card(L['Display']):Row(rowHL, 0):Text(L['This group has no icons yet.'], { width = 1 })
+        return
     end
 
-    local function Set(key, value)
-        own[key] = value
+    local first = CDM:Get(iconIds[1])
+    local style = CDM:GetStyle(first)
+
+    local function Set(path, value)
+        for _, id in ipairs(iconIds) do SetPath(CDM:Get(id).Style, path, value) end
         apply()
     end
 
@@ -214,13 +208,13 @@ local function BuildStyle(page, own, resolved, apply, inheritsFrom, reopenKey)
                 min = 16,
                 max = 96,
                 step = 1,
-                value = resolved.Size,
-                callback = function(value) Set('Size', value) end,
+                value = style.Size,
+                callback = function(value) Set({ 'Size' }, value) end,
             })
             iconRow:ColorPicker(L['Border Color'], {
                 width = 0.5,
-                value = resolved.BorderColor,
-                callback = function(r, g, b, a) Set('BorderColor', { r, g, b, a }) end,
+                value = style.BorderColor,
+                callback = function(r, g, b, a) Set({ 'BorderColor' }, { r, g, b, a }) end,
             })
         end
 
@@ -228,47 +222,62 @@ local function BuildStyle(page, own, resolved, apply, inheritsFrom, reopenKey)
             local swipeRow = card:Row(rowH)
             swipeRow:Checkbox(L['Draw Swipe'], {
                 width = 0.5,
-                value = resolved.DrawSwipe,
-                callback = function(checked) Set('DrawSwipe', checked) end,
+                value = style.DrawSwipe,
+                callback = function(checked) Set({ 'DrawSwipe' }, checked) end,
             })
             swipeRow:Checkbox(L['Reverse Swipe'], {
                 width = 0.5,
-                value = resolved.Reverse,
-                callback = function(checked) Set('Reverse', checked) end,
+                value = style.Reverse,
+                callback = function(checked) Set({ 'Reverse' }, checked) end,
             })
             local edgeRow = card:Row(rowH)
             edgeRow:Checkbox(L['Draw Edge'], {
                 width = 0.5,
-                value = resolved.DrawEdge,
-                callback = function(checked) Set('DrawEdge', checked) end,
+                value = style.DrawEdge,
+                callback = function(checked) Set({ 'DrawEdge' }, checked) end,
             })
             edgeRow:Checkbox(L['Show Global Cooldown'], {
                 width = 0.5,
                 tooltip = L['Run the swipe for the global cooldown too.'],
-                value = resolved.ShowGCD,
-                callback = function(checked) Set('ShowGCD', checked) end,
+                value = style.ShowGCD,
+                callback = function(checked) Set({ 'ShowGCD' }, checked) end,
             })
             local colorRow = card:Row(rowH)
             colorRow:ColorPicker(L['Swipe Color'], {
                 width = 0.5,
-                value = resolved.SwipeColor,
-                callback = function(r, g, b, a) Set('SwipeColor', { r, g, b, a }) end,
+                value = style.SwipeColor,
+                callback = function(r, g, b, a) Set({ 'SwipeColor' }, { r, g, b, a }) end,
             })
             colorRow:Checkbox(L['Desaturate on Cooldown'], {
                 width = 0.5,
-                value = resolved.DesaturateOnCooldown,
-                callback = function(checked) Set('DesaturateOnCooldown', checked) end,
+                value = style.DesaturateOnCooldown,
+                callback = function(checked) Set({ 'DesaturateOnCooldown' }, checked) end,
             })
         end
 
         if Section(card, 'countdown', L['Countdown Text']) then
-            TextRows(card, own, resolved, apply, 'CountdownFont', 'ShowCountdown')
+            TextRows(card, style, Set, 'CountdownFont', 'ShowCountdown')
         end
 
         if Section(card, 'charges', L['Charge Text']) then
-            TextRows(card, own, resolved, apply, 'ChargeFont')
+            TextRows(card, style, Set, 'ChargeFont')
         end
     end)
+
+    page:FontSettingsCard({
+        db = first.Style,
+        hideFontSize = true,
+        onChangeCallback = function()
+            for i = 2, #iconIds do
+                local other = CDM:Get(iconIds[i]).Style
+                for _, key in ipairs(FONT_KEYS) do
+                    local value = first.Style[key]
+                    other[key] = type(value) == 'table' and CopyTable(value) or value
+                end
+            end
+            apply()
+        end,
+    })
 end
 
 -- Tabs --
@@ -287,6 +296,20 @@ local function EnableCard(page, display, apply)
             page:Refresh()
             RefreshTree()
         end,
+    })
+end
+
+---@param page table
+---@param id string
+local function PositionCard(page, id)
+    local display = CDM:Get(id)
+    page:PositionCard({
+        title = L['Position and Size Settings'],
+        db = display,
+        showAnchorFrameType = display.parent == nil, -- inside a group it anchors to the group
+        showStrata = display.parent == nil,
+        disableAnchorFrom = display.type == 'dynamicgroup', -- a dynamic group anchors from its grow direction
+        onChangeCallback = Applier(id),
     })
 end
 
@@ -371,7 +394,9 @@ local function BuildGroupTab(page, id)
     local apply = Applier(id)
 
     EnableCard(page, display, apply)
-    page:DynamicGroupCard({ title = L['Dynamic Group Settings'], db = display.Layout, onChangeCallback = apply })
+    if display.type == 'dynamicgroup' then
+        page:DynamicGroupCard({ title = L['Dynamic Group Settings'], db = display.Layout, onChangeCallback = apply })
+    end
 
     page:Card(L['Group Icon']):Row(rowHL, 0):EditBox(L['Spell or Icon ID'], {
         width = 1,
@@ -384,57 +409,40 @@ local function BuildGroupTab(page, id)
         end,
     })
 
-    page:PositionCard({
-        title = L['Position and Size Settings'],
-        db = display,
-        showAnchorFrameType = true,
-        showStrata = true,
-        disableAnchorFrom = true, -- a group anchors from its grow direction
-        onChangeCallback = apply,
-    })
+    PositionCard(page, id)
 end
 
 ---@param page table
 ---@param id string
 local function BuildDisplayTab(page, id)
     local display = CDM:Get(id)
-    local inheritsFrom = display.parent and CDM:GetName(display.parent) or L['the General style']
-    BuildStyle(page, display.Style, CDM:ResolveStyle(display), Applier(id), inheritsFrom, id)
-
-    if display.type == 'icon' and not display.parent then
-        page:PositionCard({
-            title = L['Position and Size Settings'],
-            db = display,
-            showAnchorFrameType = true,
-            showStrata = true,
-            onChangeCallback = Applier(id),
-        })
+    if display.type ~= 'icon' then
+        BuildStyle(page, CDM:GetIcons(id), Applier(id))
+        return
     end
+
+    BuildStyle(page, { id }, Applier(id))
+    if not CDM:IsDynamic(display.parent) then PositionCard(page, id) end
 end
 
+---A group's load settings are its icons', edited together as in WeakAuras.
 ---@param page table
 ---@param id string
 local function BuildLoadTab(page, id)
-    page:LoadConditionsCard({
-        db = CDM:Get(id).Load,
-        onChangeCallback = function() CDM:RefreshLoad() end,
-    })
-end
+    local iconIds = CDM:IsGroup(id) and CDM:GetIcons(id) or { id }
+    if #iconIds == 0 then
+        page:Card(L['Load']):Row(rowHL, 0):Text(L['This group has no icons yet.'], { width = 1 })
+        return
+    end
 
----@param page table
-local function BuildGeneralTab(page)
-    local card = page:Card(L['Cooldown Manager'])
-    card:Row(rowH):Checkbox(L['Enable Cooldown Manager'], {
-        width = 1,
-        master = true,
-        value = CDM.db.Enabled,
-        callback = function(checked)
-            CDM.db.Enabled = checked
-            NRSKNUI:ToggleModule('CDM', checked)
-            page:Refresh()
+    local first = CDM:Get(iconIds[1])
+    page:LoadConditionsCard({
+        db = first.Load,
+        onChangeCallback = function()
+            for i = 2, #iconIds do CDM:Get(iconIds[i]).Load = CopyTable(first.Load) end
+            CDM:RefreshLoad()
         end,
     })
-    card:Row(rowHL, 0):Text(L['Groups and icons are listed on the left. Right-click them for more options.'], { width = 1 })
 end
 
 -- Tree data --
@@ -443,20 +451,20 @@ end
 ---@return number
 local function DisplayIcon(id)
     local display = CDM:Get(id)
-    if display.type ~= 'group' then return GetSpellTexture(display.Trigger.SpellID) or QUESTION_MARK end
+    if display.type == 'icon' then return GetSpellTexture(display.Trigger.SpellID) or QUESTION_MARK end
     if display.Icon then return display.Icon end
 
-    local first = CDM:GetChildren(id)[1]
-    return first and DisplayIcon(first.key) or QUESTION_MARK
+    local first = CDM:GetIcons(id)[1]
+    return first and DisplayIcon(first) or QUESTION_MARK
 end
 
 ---@param id string
----@param index number? position among its group's icons
----@param count number? icons in its group
+---@param index number? position among its group's children
+---@param count number? children in its group
 ---@return table
 local function RowData(id, index, count)
     local display = CDM:Get(id)
-    local isGroup = display.type == 'group'
+    local isGroup = display.type ~= 'icon'
     local children = isGroup and CDM:GetChildren(id) or nil
 
     local data = {
@@ -464,11 +472,11 @@ local function RowData(id, index, count)
         text = display.name,
         icon = DisplayIcon(id),
         isGroup = isGroup,
-        depth = display.parent and 1 or 0,
+        depth = CDM:GetDepth(id),
         enabled = display.Enabled,
         loadState = CDM:GetLoadState(id),
         preview = CDM:GetPreview(id),
-        draggable = not isGroup,
+        draggable = true,
         expanded = isGroup and not IsCollapsed(id),
         childCount = children and #children or 0,
         canMoveUp = index ~= nil and index > 1,
@@ -477,13 +485,14 @@ local function RowData(id, index, count)
 
     data.tooltip = function(tooltip)
         tooltip:SetText(display.name, 1, 1, 1)
+        tooltip:AddLine(TYPE_NAMES[display.type], 0.7, 0.7, 0.7)
         if isGroup then
             if #children == 0 then tooltip:AddLine(L['No Children'], 0.7, 0.7, 0.7) end
             for _, child in ipairs(children) do tooltip:AddLine('  ' .. child.text, 0.8, 0.8, 0.8) end
         end
         tooltip:AddLine(' ')
         tooltip:AddLine(L['Right-click for more options'], 0.4, 0.8, 1)
-        if not isGroup then tooltip:AddLine(L['Drag to move'], 0.4, 0.8, 1) end
+        tooltip:AddLine(L['Drag to move'], 0.4, 0.8, 1)
     end
 
     if isGroup then
@@ -493,18 +502,34 @@ local function RowData(id, index, count)
     return data
 end
 
----@param section table
----@return number level
-local function SectionPreview(section)
-    local pinned, hidden, total = 0, 0, 0
-    for _, row in ipairs(section.rows) do
-        for _, leaf in ipairs(row.isGroup and row.children or { row }) do
-            total = total + 1
-            if leaf.preview == 2 then pinned = pinned + 1 elseif leaf.preview == 0 then hidden = hidden + 1 end
-        end
+---@param row table
+---@param into string[]
+local function CollectIcons(row, into)
+    if not row.isGroup then
+        into[#into + 1] = row.key
+        return
     end
-    if total == 0 or hidden == total then return 0 end
-    return pinned == total and 2 or 1
+    for _, child in ipairs(row.children) do CollectIcons(child, into) end
+end
+
+---@param section table
+---@return string[]
+local function SectionIcons(section)
+    local ids = {}
+    for _, row in ipairs(section.rows) do CollectIcons(row, ids) end
+    return ids
+end
+
+---@param ids string[]
+---@return number level
+local function PreviewLevel(ids)
+    local pinned, hidden = 0, 0
+    for _, id in ipairs(ids) do
+        local level = CDM.preview[id] or 0
+        if level == 2 then pinned = pinned + 1 elseif level == 0 then hidden = hidden + 1 end
+    end
+    if #ids == 0 or hidden == #ids then return 0 end
+    return pinned == #ids and 2 or 1
 end
 
 ---Top-level rows go under Loaded/Standby unless every icon they hold is not loaded, as in WeakAuras.
@@ -525,22 +550,14 @@ local function TreeContent()
         rows = {},
     }
 
-    local groups, loose = {}, {}
     for _, root in ipairs(CDM:GetRoots()) do
-        local list = root.isGroup and groups or loose
-        list[#list + 1] = root.key
-    end
-
-    for _, list in ipairs({ groups, loose }) do
-        for _, id in ipairs(list) do
-            local section = CDM:GetLoadState(id) == 'unloaded' and unloaded or loaded
-            section.rows[#section.rows + 1] = RowData(id)
-        end
+        local section = CDM:GetLoadState(root.key) == 'unloaded' and unloaded or loaded
+        section.rows[#section.rows + 1] = RowData(root.key)
     end
 
     for _, section in ipairs({ loaded, unloaded }) do
         section.collapsed = IsCollapsed(section.key)
-        section.preview = SectionPreview(section)
+        section.preview = PreviewLevel(SectionIcons(section))
     end
 
     return { general = { key = GENERAL, text = L['General'] }, sections = { loaded, unloaded } }
@@ -548,8 +565,8 @@ end
 
 -- Actions --
 
----@param groupId string?
-local function NewIconPrompt(groupId)
+---@param parentId string?
+local function NewIconPrompt(parentId)
     NRSKNUI:CreatePrompt({
         title = L['New Icon'],
         text = '',
@@ -562,7 +579,7 @@ local function NewIconPrompt(groupId)
                 return
             end
 
-            local id = CDM:CreateIcon(info.name, { Type = 'spell', SpellID = info.spellID }, groupId)
+            local id = CDM:CreateIcon(info.name, { Type = 'spell', SpellID = info.spellID }, parentId)
             EnsureModuleEnabled()
             CDM:ApplySettings(id)
             Reopen(id)
@@ -572,9 +589,11 @@ local function NewIconPrompt(groupId)
     })
 end
 
-local function NewGroupPrompt()
+---@param dynamic boolean
+---@param parentId string?
+local function NewGroupPrompt(dynamic, parentId)
     NRSKNUI:CreatePrompt({
-        title = L['New Group'],
+        title = dynamic and L['New Dynamic Group'] or L['New Group'],
         text = '',
         editBox = true,
         editBoxLabel = L['Group Name'],
@@ -584,7 +603,7 @@ local function NewGroupPrompt()
                 return
             end
 
-            local id = CDM:CreateGroup(name)
+            local id = CDM:CreateGroup(name, dynamic, parentId)
             EnsureModuleEnabled()
             CDM:ApplySettings(id)
             Reopen(id)
@@ -608,7 +627,7 @@ local function DuplicateDisplay(id)
     local newId = CDM:Duplicate(id)
     if not newId then return end
 
-    CDM:ApplySettings(newId)
+    CDM:ApplySettings()
     Reopen(newId)
 end
 
@@ -616,7 +635,7 @@ end
 ---@param keepChildren boolean?
 local function DeletePrompt(id, keepChildren)
     local text = keepChildren
-        and format(L["Remove the group '%s'? Its icons stay, outside any group."], CDM:GetName(id))
+        and format(L["Remove the group '%s'? Everything inside it stays."], CDM:GetName(id))
         or format(L["Delete '%s'? This cannot be undone."], CDM:GetName(id))
 
     NRSKNUI:CreatePrompt({
@@ -632,38 +651,31 @@ local function DeletePrompt(id, keepChildren)
     })
 end
 
----@param groupId string
-local function GroupMenu(groupId)
-    local display = CDM:Get(groupId)
-    GUI:ShowContextMenu({
-        { text = L['Add Icon'],                                    onClick = function() NewIconPrompt(groupId) end },
-        { text = display.Enabled and L['Disable'] or L['Enable'], onClick = function() ToggleDisplay(groupId) end },
-        { text = L['Rename'],                                      onClick = function() Tree():BeginRename(groupId) end },
-        { text = L['Duplicate'],                                   onClick = function() DuplicateDisplay(groupId) end },
-        { divider = true },
-        { text = L['Ungroup'],                                     onClick = function() DeletePrompt(groupId, true) end },
-        { text = L['Delete Group and Icons'],                      onClick = function() DeletePrompt(groupId) end },
-    })
-end
-
 ---@param id string
-local function IconMenu(id)
+local function ContextMenu(id)
     local display = CDM:Get(id)
-    local entries = {
-        { text = display.Enabled and L['Disable'] or L['Enable'], onClick = function() ToggleDisplay(id) end },
-        { text = L['Rename'],                                      onClick = function() Tree():BeginRename(id) end },
-        { text = L['Duplicate'],                                   onClick = function() DuplicateDisplay(id) end },
-        { text = L['Delete'],                                      onClick = function() DeletePrompt(id) end },
-        { divider = true },
-    }
+    local isGroup = display.type ~= 'icon'
+    local entries = {}
+    if isGroup then
+        entries[#entries + 1] = { text = L['Add Icon'], onClick = function() NewIconPrompt(id) end }
+        if display.type == 'group' then
+            entries[#entries + 1] = { text = L['Add Group'], onClick = function() NewGroupPrompt(false, id) end }
+            entries[#entries + 1] = { text = L['Add Dynamic Group'], onClick = function() NewGroupPrompt(true, id) end }
+        end
+        entries[#entries + 1] = { divider = true }
+    end
+    entries[#entries + 1] = { text = display.Enabled and L['Disable'] or L['Enable'], onClick = function() ToggleDisplay(id) end }
+    entries[#entries + 1] = { text = L['Rename'], onClick = function() Tree():BeginRename(id) end }
+    entries[#entries + 1] = { text = L['Duplicate'], onClick = function() DuplicateDisplay(id) end }
+    entries[#entries + 1] = { divider = true }
 
     for _, root in ipairs(CDM:GetRoots()) do
-        if root.isGroup and root.key ~= display.parent then
+        if root.key ~= display.parent and CDM:CanContain(root.key, id) then
             entries[#entries + 1] = {
                 text = format(L['Move to %s'], root.text),
                 onClick = function()
                     CDM:SetParent(id, root.key)
-                    CDM:ApplySettings(id)
+                    CDM:ApplySettings()
                     RefreshTree()
                 end,
             }
@@ -674,24 +686,71 @@ local function IconMenu(id)
         entries[#entries + 1] = {
             text = L['Remove from Group'],
             onClick = function()
-                CDM:SetParent(id, nil)
-                CDM:ApplySettings(id)
+                CDM:Ungroup(id)
+                CDM:ApplySettings()
                 Reopen(id)
             end,
         }
     end
 
+    entries[#entries + 1] = { divider = true }
+    if isGroup then
+        entries[#entries + 1] = { text = L['Ungroup'], onClick = function() DeletePrompt(id, true) end }
+        entries[#entries + 1] = { text = L['Delete Group and Contents'], onClick = function() DeletePrompt(id) end }
+    else
+        entries[#entries + 1] = { text = L['Delete'], onClick = function() DeletePrompt(id) end }
+    end
+
     GUI:ShowContextMenu(entries)
 end
 
----@param ids string[]
-local function TogglePreviews(ids)
-    local allPinned = #ids > 0
-    for _, id in ipairs(ids) do
-        if (CDM.preview[id] or 0) ~= 2 then allPinned = false end
+-- New display page: shown when nothing is selected, WeakAuras' New Aura view --
+
+local NEW_TYPES = {
+    {
+        text = L['Group'],
+        description = L['Controls the positioning and configuration of multiple displays at the same time'],
+        icon = 'Interface\Icons\INV_Misc_Bag_10',
+        create = function() NewGroupPrompt(false) end,
+    },
+    {
+        text = L['Dynamic Group'],
+        description = L['A group that dynamically controls the positioning of its children'],
+        icon = 'Interface\Icons\Ability_Rogue_Sprint',
+        create = function() NewGroupPrompt(true) end,
+    },
+    {
+        text = L['Icon'],
+        description = L['Shows a spell icon with an optional cooldown overlay'],
+        icon = 'Interface\Icons\Spell_Nature_Lightning',
+        create = function() NewIconPrompt() end,
+    },
+}
+
+---@param page table
+local function BuildNewPage(page)
+    page:Card(L['Cooldown Manager']):Row(rowHL, 0):Checkbox(L['Enable Cooldown Manager'], {
+        width = 1,
+        master = true,
+        value = CDM.db.Enabled,
+        callback = function(checked)
+            CDM.db.Enabled = checked
+            NRSKNUI:ToggleModule('CDM', checked)
+            page:Refresh()
+        end,
+    })
+
+    local card = page:Card(L['New'])
+    for i, entry in ipairs(NEW_TYPES) do
+        card:Row(NEW_ROW_HEIGHT, i == #NEW_TYPES and 0 or nil):Icon({
+            width = 1,
+            size = 32,
+            texture = entry.icon,
+            text = { text = entry.text, description = entry.description, color = Theme.accent },
+            tooltip = function(tooltip) tooltip:SetText(entry.text, 1, 1, 1) tooltip:AddLine(entry.description, nil, nil, nil, true) end,
+            onClick = function(button) if button == 'LeftButton' then entry.create() end end,
+        })
     end
-    for _, id in ipairs(ids) do CDM.preview[id] = (not allPinned) and 2 or nil end
-    CDM:RefreshLoad()
 end
 
 GUI:RegisterPage(PAGE, {
@@ -708,12 +767,6 @@ GUI:RegisterPage(PAGE, {
         width = 260,
         create = NRSKNUI.CreateCDMTree,
         items = TreeContent,
-        onNew = function()
-            GUI:ShowContextMenu({
-                { text = L['New Group'], onClick = NewGroupPrompt },
-                { text = L['New Icon'],  onClick = function() NewIconPrompt() end },
-            })
-        end,
         onSelectionChanged = function(key)
             CDM:SetSelectionPreview(CDM:Get(key) and key or nil)
         end,
@@ -724,11 +777,11 @@ GUI:RegisterPage(PAGE, {
             CDM:Rename(key, text)
             RefreshTree()
         end,
-        -- An icon goes into a group, or next to an icon inside one; top-level rows stay alphabetical.
+        -- Into a group that can hold it, or next to a display inside one; the top level stays alphabetical.
         canDrop = function(item, target, position)
-            if not item.draggable then return false end
-            if position == 'into' then return target.isGroup end
-            return target.depth > 0
+            if position == 'into' then return target.isGroup and CDM:CanContain(target.key, item.key) end
+            local parent = CDM:Get(target.key).parent
+            return parent ~= nil and CDM:CanContain(parent, item.key)
         end,
         onMove = function(key, targetKey, position)
             if position == 'into' then
@@ -736,9 +789,7 @@ GUI:RegisterPage(PAGE, {
             else
                 CDM:MoveNextTo(key, targetKey, position)
             end
-            CDM:ApplySettings(key)
-            local display = CDM:Get(key)
-            if display.parent then CDM:ApplySettings(display.parent) end
+            CDM:ApplySettings()
             RefreshTree()
         end,
         onMoveInGroup = function(key, delta)
@@ -747,8 +798,8 @@ GUI:RegisterPage(PAGE, {
             RefreshTree()
         end,
         onUngroup = function(key)
-            CDM:SetParent(key, nil)
-            CDM:ApplySettings(key)
+            CDM:Ungroup(key)
+            CDM:ApplySettings()
             RefreshTree()
         end,
         onToggleEnabled = ToggleDisplay,
@@ -756,31 +807,26 @@ GUI:RegisterPage(PAGE, {
             CDM:SetPreview(key, CDM:GetPreview(key) == 2 and 0 or 2)
         end,
         onSectionPreview = function(sectionKey)
-            local ids = {}
             for _, section in ipairs(TreeContent().sections) do
                 if section.key == sectionKey then
-                    for _, row in ipairs(section.rows) do
-                        for _, leaf in ipairs(row.isGroup and row.children or { row }) do ids[#ids + 1] = leaf.key end
-                    end
+                    local ids = SectionIcons(section)
+                    local level = PreviewLevel(ids) ~= 2 and 2 or nil
+                    for _, id in ipairs(ids) do CDM.preview[id] = level end
+                    CDM:RefreshLoad()
                 end
             end
-            TogglePreviews(ids)
         end,
         onContextMenu = function(key)
-            if not CDM:Get(key) then return end
-            if CDM:IsGroup(key) then return GroupMenu(key) end
-            IconMenu(key)
+            if CDM:Get(key) then ContextMenu(key) end
         end,
     },
     tabs = function(itemKey)
         local display = CDM:Get(itemKey)
-        if not display then
-            return { { id = 'general', text = L['General'] }, { id = 'display', text = L['Display'] } }
-        end
+        if not display then return {} end -- the new display page has no tabs
 
         local tabs = {}
         for _, tab in ipairs(TABS) do
-            if tab.id ~= 'group' or display.type == 'group' then tabs[#tabs + 1] = tab end
+            if tab.id ~= 'group' or display.type ~= 'icon' then tabs[#tabs + 1] = tab end
         end
         return tabs
     end,
@@ -788,13 +834,7 @@ GUI:RegisterPage(PAGE, {
         local display = CDM:Get(itemKey)
 
         if not display then
-            if tabId == 'general' then
-                BuildGeneralTab(page)
-            elseif tabId == 'display' then
-                local apply = function() CDM:ApplySettings() end
-                BuildStyle(page, CDM.db.Style, CDM.db.Style, apply, nil, GENERAL)
-                page:FontSettingsCard({ db = CDM.db.Style, hideFontSize = true, onChangeCallback = apply })
-            end
+            BuildNewPage(page)
             return
         end
 

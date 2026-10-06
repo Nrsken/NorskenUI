@@ -2639,24 +2639,7 @@ local Defaults = {
         CDM = {
             Enabled = false,
             HideBlizzard = false,
-            -- Base icon style; a group's and an icon's own Style only hold the keys they override.
-            Style = {
-                Size = 40,
-                BorderColor = { 0, 0, 0, 1 },
-                DrawSwipe = true,
-                DrawEdge = false,
-                Reverse = false,
-                SwipeColor = { 0, 0, 0, 0.7 },
-                ShowGCD = false,
-                DesaturateOnCooldown = true,
-                ShowCountdown = true,
-                UseGlobalFont = true,
-                FontFace = "Expressway",
-                FontOutline = "OUTLINE",
-                FontShadow = { Enabled = false, Color = { 0, 0, 0, 1 }, OffsetX = 1, OffsetY = -1 },
-                CountdownFont = { FontSize = 16, Position = { AnchorFrom = "CENTER", XOffset = 0, YOffset = 0 } },
-                ChargeFont = { FontSize = 13, Position = { AnchorFrom = "BOTTOMRIGHT", XOffset = -1, YOffset = 2 } },
-            },
+            Version = 0,
             Displays = {}, -- 'cdm:N' keys, user data only
         },
 

@@ -34,7 +34,6 @@ local DOT_SIZE = 8
 local DISABLED_ALPHA = 0.45
 local DRAG_SOURCE_ALPHA = 0.35
 local ACCENT_BAR_WIDTH = 2
-local TOOLBAR_GAP = 4
 
 -- collapse.tga points down at rotation 0.
 local ARROW_UP, ARROW_LEFT = pi, -pi / 2
@@ -151,20 +150,7 @@ local function CreateTree(gui, parent, opts)
         toolbar:NUISetPixelPoint('TOPRIGHT', frame, 'TOPRIGHT', -pad - (scrollbarShown and theme.scrollbarWidth or theme.borderSize), -theme.barInset)
     end
     AnchorToolbar(false)
-    toolbar:NUISetPixelHeight(theme.barControlHeight * 2 + TOOLBAR_GAP)
-
-    local generalButton = gui:CreateButton(toolbar, L['General'], {
-        height = theme.barControlHeight,
-        callback = function() if tree.generalKey then tree:Select(tree.generalKey) end end,
-    })
-    local newButton = gui:CreateButton(toolbar, L['New'], {
-        height = theme.barControlHeight,
-        callback = function() if tree.sd and tree.sd.onNew then tree.sd.onNew() end end,
-    })
-    generalButton:NUISetPixelPoint('TOPLEFT', toolbar, 'TOPLEFT', 0, 0)
-    generalButton:NUISetPixelPoint('TOPRIGHT', toolbar, 'TOP', -TOOLBAR_GAP / 2, 0)
-    newButton:NUISetPixelPoint('TOPLEFT', toolbar, 'TOP', TOOLBAR_GAP / 2, 0)
-    newButton:NUISetPixelPoint('TOPRIGHT', toolbar, 'TOPRIGHT', 0, 0)
+    toolbar:NUISetPixelHeight(theme.barControlHeight)
 
     local searchBox = CreateFrame('EditBox', nil, toolbar, 'BackdropTemplate')
     searchBox:SetAutoFocus(false)
@@ -351,7 +337,8 @@ local function CreateTree(gui, parent, opts)
                 if tree.sd.onContextMenu then tree.sd.onContextMenu(self.data.key, self.data) end
                 return
             end
-            if self.data.key ~= tree.selected then tree:Select(self.data.key) end
+            -- Clicking the selected row again clears the selection, back to the new-display page.
+            tree:Select(self.data.key ~= tree.selected and self.data.key or tree.generalKey)
         end)
         row:SetScript('OnDoubleClick', function(self, button)
             if button == 'LeftButton' then tree:BeginRename(self.data.key) end
@@ -373,7 +360,7 @@ local function CreateTree(gui, parent, opts)
         row:NUISetPixelPoint('TOPRIGHT', scrollChild, 'TOPRIGHT', 0, -y)
 
         local child = data.depth > 0
-        local left = child and CHILD_INDENT or 1
+        local left = child and data.depth * CHILD_INDENT or 1
 
         row.bg:ClearAllPoints()
         row.bg:NUISetPixelPoint('TOPLEFT', row, 'TOPLEFT', left, 0)
@@ -552,32 +539,39 @@ local function CreateTree(gui, parent, opts)
         local leaves = {}
         if content.general then leaves[1] = content.general end
 
+        local searching = self.search ~= ''
+
+        -- A row stays while it or anything under it matches the search.
+        local function Visible(data)
+            if Matches(data.text) then return true end
+            for _, child in ipairs(data.children or {}) do
+                if Visible(child) then return true end
+            end
+            return false
+        end
+
+        local function Collect(data)
+            leaves[#leaves + 1] = data
+            for _, child in ipairs(data.children or {}) do Collect(child) end
+        end
+
         local y = 0
+        local function Add(data)
+            if searching and not Visible(data) then return end
+            ConfigureRow(Acquire(rowPool, CreateRow), data, y)
+            y = y + ROW_HEIGHT + ROW_GAP
+            if data.expanded or searching then
+                for _, child in ipairs(data.children or {}) do Add(child) end
+            end
+        end
+
         for _, section in ipairs(content.sections) do
             ConfigureSection(Acquire(sectionPool, CreateSection), section, y)
             y = y + SECTION_HEIGHT + ROW_GAP
 
             for _, data in ipairs(section.rows) do
-                leaves[#leaves + 1] = data
-                for _, child in ipairs(data.children or {}) do leaves[#leaves + 1] = child end
-
-                -- A matching group keeps its own row; a matching child keeps its group's row too.
-                local matchingChildren = {}
-                for _, child in ipairs(data.children or {}) do
-                    if Matches(child.text) then matchingChildren[#matchingChildren + 1] = child end
-                end
-                local visible = Matches(data.text) or #matchingChildren > 0
-
-                if visible and not section.collapsed then
-                    ConfigureRow(Acquire(rowPool, CreateRow), data, y)
-                    y = y + ROW_HEIGHT + ROW_GAP
-                    if data.expanded or self.search ~= '' then
-                        for _, child in ipairs(self.search ~= '' and matchingChildren or data.children or {}) do
-                            ConfigureRow(Acquire(rowPool, CreateRow), child, y)
-                            y = y + ROW_HEIGHT + ROW_GAP
-                        end
-                    end
-                end
+                Collect(data)
+                if not section.collapsed then Add(data) end
             end
         end
 

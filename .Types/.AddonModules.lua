@@ -65,8 +65,10 @@
 ---@class AuraDisplayModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class CDMModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@field icons table<string, CDMIcon>
----@field groups table<string, NRSKNUI.DynamicGroup>
----@field spareGroups NRSKNUI.DynamicGroup[]
+---@field containers table<string, Frame|NRSKNUI.DynamicGroup> static group frames and dynamic groups
+---@field spareStatic Frame[]
+---@field spareDynamic NRSKNUI.DynamicGroup[]
+---@field STYLE_TEMPLATE table
 ---@field Catalogue CDMCatalogue
 ---@field TriggerTypes table<string, { IsKnown: fun(trigger: table): boolean, Resolve: fun(frame: CDMIcon, trigger: table), Update: fun(frame: CDMIcon, style: table) }>
 ---@field preview table<string, number> icon id -> preview level (1 selected, 2 pinned)

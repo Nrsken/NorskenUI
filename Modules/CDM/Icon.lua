@@ -5,7 +5,6 @@ local CDM = NRSKNUI:GetModule('CDM')
 
 local CreateFrame = CreateFrame
 local CreateObjectPool = CreateObjectPool
-local setmetatable = setmetatable
 local unpack = unpack
 
 ---@class CDMIcon : Frame, PublicBackdropMixin
@@ -14,7 +13,7 @@ local unpack = unpack
 ---@field Cooldown Cooldown
 ---@field Charges FontString
 ---@field Countdown FontString
----@field style table effective style, see CDM:ResolveStyle
+---@field style table the icon's style, see CDM:GetStyle
 ---@field state table trigger state the conditions read
 ---@field shown boolean loaded or previewed
 ---@field groupId string?
@@ -75,32 +74,6 @@ end
 ---@param frame CDMIcon
 function CDM:ReleaseIcon(frame)
     pool:Release(frame)
-end
-
----Reads fall through the given layers in order; never written to, so saved tables stay plain.
----@param ... table
----@return table
-local function Layered(...)
-    local layers = { ... }
-    return setmetatable({}, {
-        __index = function(_, key)
-            for i = 1, #layers do
-                local value = layers[i][key]
-                if value ~= nil then return value end
-            end
-        end,
-    })
-end
-
----An icon's effective style: its own overrides, then its group's, then the module base.
----@param display table
----@return table
-function CDM:ResolveStyle(display)
-    local group = display.parent and self:Get(display.parent)
-    if group then
-        return Layered(display.Style, group.Style, self.db.Style)
-    end
-    return Layered(display.Style, self.db.Style)
 end
 
 ---@param frame CDMIcon
