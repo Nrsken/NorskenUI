@@ -22,6 +22,7 @@ Core/Core.xml
 # Load Modules
 Modules/UnitFrames/UnitFrames.xml
 Modules/Auras/Auras.xml
+Modules/CDM/CDM.xml
 Modules/Combat/Combat.xml
 Modules/QoL/QoL.xml
 Modules/Skinning/Skinning.xml

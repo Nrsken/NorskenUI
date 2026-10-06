@@ -46,6 +46,7 @@
 ---@field BattleRes NRSKNUI.DBProfile.BattleRes
 ---@field BigWigsTimers NRSKNUI.DBProfile.BigWigsTimers
 ---@field BlizzardRM NRSKNUI.DBProfile.BlizzardRM
+---@field CDM NRSKNUI.DBProfile.CDM
 ---@field CharacterPanel NRSKNUI.DBProfile.CharacterPanel
 ---@field Colors NRSKNUI.DBProfile.Colors
 ---@field CombatCross NRSKNUI.DBProfile.CombatCross
@@ -437,6 +438,15 @@
 ---@class NRSKNUI.DBProfile.BlizzardRM.Position
 ---@field [string] any
 ---@field YOffset number
+
+---@class NRSKNUI.DBProfile.CDM
+---@field [string] any
+---@field Displays NRSKNUI.DBProfile.CDM.Displays
+---@field Enabled boolean
+---@field HideBlizzard boolean
+
+---@class NRSKNUI.DBProfile.CDM.Displays
+---@field [string] any
 
 ---@class NRSKNUI.DBProfile.CharacterPanel
 ---@field [string] any

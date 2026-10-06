@@ -63,6 +63,7 @@
 ---@class SpeedModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class CharacterPanelModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class AuraDisplayModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class CDMModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class BlizzardMessagesModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class ActionBarsModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class Chatv2Module : NRSKNUI.ModuleBase, AceEvent-3.0, AceHook-3.0
@@ -139,6 +140,7 @@
 ---@field PetTexts PetTextsModule
 ---@field PlayerAuras PlayerAurasModule
 ---@field AuraDisplay AuraDisplayModule
+---@field CDM CDMModule
 ---@field CombatTimer CombatTimerModule
 ---@field PotionReady PotionReadyModule
 ---@field RangeChecker RangeCheckerModule
@@ -197,6 +199,7 @@ local NRSKNUI
 ---@overload fun(self: NRSKNUI, name: "FocusCastbar", silent?: boolean): FocusCastbarModule
 ---@overload fun(self: NRSKNUI, name: "CharacterPanel", silent?: boolean): CharacterPanelModule
 ---@overload fun(self: NRSKNUI, name: "AuraDisplay", silent?: boolean): AuraDisplayModule
+---@overload fun(self: NRSKNUI, name: "CDM", silent?: boolean): CDMModule
 ---@overload fun(self: NRSKNUI, name: "BlizzardMessages", silent?: boolean): BlizzardMessagesModule
 ---@overload fun(self: NRSKNUI, name: "ActionBars", silent?: boolean): ActionBarsModule
 ---@overload fun(self: NRSKNUI, name: "Chatv2", silent?: boolean): Chatv2Module
@@ -246,6 +249,7 @@ function NRSKNUI:GetModule(name, silent) end
 ---@overload fun(self: NRSKNUI, name: "FocusCastbar", ...: string): FocusCastbarModule
 ---@overload fun(self: NRSKNUI, name: "CharacterPanel", ...: string): CharacterPanelModule
 ---@overload fun(self: NRSKNUI, name: "AuraDisplay", ...: string): AuraDisplayModule
+---@overload fun(self: NRSKNUI, name: "CDM", ...: string): CDMModule
 ---@overload fun(self: NRSKNUI, name: "BlizzardMessages", ...: string): BlizzardMessagesModule
 ---@overload fun(self: NRSKNUI, name: "ActionBars", ...: string): ActionBarsModule
 ---@overload fun(self: NRSKNUI, name: "Chatv2", ...: string): Chatv2Module

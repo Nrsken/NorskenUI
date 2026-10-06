@@ -169,6 +169,9 @@ NRSKNUI.PetTexts = NRSKNUI:NewModule('PetTexts', 'AceEvent-3.0')
 NRSKNUI.PlayerAuras = NRSKNUI:NewModule('PlayerAuras', 'AceEvent-3.0')
 NRSKNUI.AuraDisplay = NRSKNUI:NewModule('AuraDisplay', 'AceEvent-3.0')
 
+-- Cooldown Manager
+NRSKNUI.CDM = NRSKNUI:NewModule('CDM', 'AceEvent-3.0')
+
 -- Dev tools
 --NRSKNUI.AuraMatrix = NRSKNUI:NewModule('AuraMatrix', 'AceEvent-3.0')
 

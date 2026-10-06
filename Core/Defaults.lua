@@ -2636,6 +2636,12 @@ local Defaults = {
                 WeaponOilOffHand = { Expiring = 10 },
             },
         },
+        CDM = {
+            Enabled = false,
+            HideBlizzard = false,
+            Displays = {}, -- 'cdm:N' keys, user data only
+        },
+
         -- Optional headers the display list groups user displays under. Created on demand from the
         -- display's right-click menu and dropped again once nothing points at them.
         AuraDisplayGroups = {},

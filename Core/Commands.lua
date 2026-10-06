@@ -85,6 +85,8 @@ function NRSKNUI:SetupSlashCommands()
             end
         elseif msg == 'guireset' then
             NRSKNUI:ResetGUIState()
+        elseif msg:match('^cdm') then
+            NRSKNUI.CDM:HandleCommand(msg:match('^cdm%s*(.*)$'))
         end
     end
 
