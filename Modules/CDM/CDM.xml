@@ -4,4 +4,6 @@
     <Script file="CDM.lua" />
     <Script file="Store.lua" />
     <Script file="Catalogue.lua" />
+    <Script file="Icon.lua" />
+    <Script file="Triggers.lua" />
 </Ui>

@@ -444,9 +444,57 @@
 ---@field Displays NRSKNUI.DBProfile.CDM.Displays
 ---@field Enabled boolean
 ---@field HideBlizzard boolean
+---@field Style NRSKNUI.DBProfile.CDM.Style
 
 ---@class NRSKNUI.DBProfile.CDM.Displays
 ---@field [string] any
+
+---@class NRSKNUI.DBProfile.CDM.Style
+---@field [string] any
+---@field BorderColor table
+---@field ChargeFont NRSKNUI.DBProfile.CDM.Style.ChargeFont
+---@field CountdownFont NRSKNUI.DBProfile.CDM.Style.CountdownFont
+---@field DesaturateOnCooldown boolean
+---@field DrawEdge boolean
+---@field DrawSwipe boolean
+---@field FontFace string
+---@field FontOutline string
+---@field FontShadow NRSKNUI.DBProfile.CDM.Style.FontShadow
+---@field Reverse boolean
+---@field ShowCountdown boolean
+---@field ShowGCD boolean
+---@field Size number
+---@field SwipeColor table
+---@field UseGlobalFont boolean
+
+---@class NRSKNUI.DBProfile.CDM.Style.ChargeFont
+---@field [string] any
+---@field FontSize number
+---@field Position NRSKNUI.DBProfile.CDM.Style.ChargeFont.Position
+
+---@class NRSKNUI.DBProfile.CDM.Style.ChargeFont.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.CDM.Style.CountdownFont
+---@field [string] any
+---@field FontSize number
+---@field Position NRSKNUI.DBProfile.CDM.Style.CountdownFont.Position
+
+---@class NRSKNUI.DBProfile.CDM.Style.CountdownFont.Position
+---@field [string] any
+---@field AnchorFrom string
+---@field XOffset number
+---@field YOffset number
+
+---@class NRSKNUI.DBProfile.CDM.Style.FontShadow
+---@field [string] any
+---@field Color table
+---@field Enabled boolean
+---@field OffsetX number
+---@field OffsetY number
 
 ---@class NRSKNUI.DBProfile.CharacterPanel
 ---@field [string] any

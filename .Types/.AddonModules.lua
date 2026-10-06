@@ -64,6 +64,11 @@
 ---@class CharacterPanelModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class AuraDisplayModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class CDMModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@field icons table<string, CDMIcon>
+---@field groups table<string, NRSKNUI.DynamicGroup>
+---@field spareGroups NRSKNUI.DynamicGroup[]
+---@field Catalogue CDMCatalogue
+---@field TriggerTypes table<string, { Resolve: fun(frame: CDMIcon, trigger: table): boolean, Update: fun(frame: CDMIcon, style: table) }>
 ---@class BlizzardMessagesModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class ActionBarsModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class Chatv2Module : NRSKNUI.ModuleBase, AceEvent-3.0, AceHook-3.0
