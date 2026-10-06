@@ -4,13 +4,7 @@ local NRSKNUI = select(2, ...)
 local Skinning = NRSKNUI:GetModule('Skinning')
 
 local ipairs = ipairs
-local CreateFrame = CreateFrame
-local issecretvalue = issecretvalue
 local hooksecurefunc = hooksecurefunc
-local select = select
-
-local GetSpecializationInfoByID = GetSpecializationInfoByID
-local GetInspectSpecialization = GetInspectSpecialization
 
 local SLOT_NAMES = {
     'Head', 'Neck',
@@ -23,35 +17,6 @@ local SLOT_NAMES = {
     'Trinket0', 'Trinket1',
     'MainHand', 'SecondaryHand',
 }
-
-local function SetupCustomPortrait()
-    if Skinning.CustomPortraitFrame then return end
-
-    local frame = CreateFrame('Frame', nil, InspectFrame)
-    frame:SetSize(45, 45)
-    frame:SetPoint('TOPLEFT', InspectFrame, 'TOPLEFT', 7, -7)
-    frame:NUIAddBorders()
-
-    frame.icon = frame:CreateTexture(nil, 'ARTWORK')
-    frame.icon:SetAllPoints(frame)
-    frame.icon:NUISetZoom()
-    Skinning.CustomPortraitFrame = frame
-end
-
--- Update the custom portrait icon with spec icon texture.
-local function UpdateCustomPortrait(frame)
-    local unit = _G.InspectFrame.unit
-    if not unit or issecretvalue(unit) then
-        frame:Hide()
-        return
-    end
-    local icon = select(4, GetSpecializationInfoByID(GetInspectSpecialization(unit)))
-    if not icon then
-        frame:Hide()
-        return
-    end
-    frame.icon:SetTexture(icon)
-end
 
 local function SkinModelScene(S)
     local scene = CharacterModelScene
@@ -100,10 +65,6 @@ Skinning:RegisterSkin('Blizzard_InspectUI', 'InspectFrame', function(S)
     SkinTabs(S)
 
     hooksecurefunc('InspectPaperDollItemSlotButton_Update', function()
-        SetupCustomPortrait()
-        if Skinning.CustomPortraitFrame then
-            UpdateCustomPortrait(Skinning.CustomPortraitFrame)
-        end
         S:HandleButton(_G.InspectPaperDollItemsFrame.InspectTalents)
         _G.InspectPaperDollItemsFrame.InspectTalents:ClearAllPoints()
         _G.InspectPaperDollItemsFrame.InspectTalents:SetPoint('TOPRIGHT', _G.InspectFrame, 'BOTTOMRIGHT', 0, 1)
