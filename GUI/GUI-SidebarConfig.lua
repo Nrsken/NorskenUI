@@ -30,6 +30,11 @@ GUIFrame.SidebarConfig = {
             text = L['Auras'],
         },
         {
+            id = 'cooldownManager',
+            type = 'item',
+            text = L['Cooldown Manager'],
+        },
+        {
             id = 'global_section',
             type = 'header',
             text = L['Global Settings'],
