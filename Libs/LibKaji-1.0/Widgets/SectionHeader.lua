@@ -181,6 +181,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
 
         local icon = button:CreateTexture(nil, "ARTWORK")
         icon:SetAllPoints()
+        pixel.SetPixelSnap(icon)
         SetIcon(icon, action, gui.theme)
         icon:SetAlpha(0.7)
 

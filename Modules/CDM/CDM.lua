@@ -5,15 +5,17 @@ local CDM = NRSKNUI:GetModule('CDM')
 local Anchors = NRSKNUI.Anchors
 local LoadConditions = NRSKNUI.LoadConditions
 
-local pairs, ipairs = pairs, ipairs
-local tremove = table.remove
-local tsort = table.sort
-local tostring = tostring
-local format = string.format
 local GetPhysicalScreenSize = GetPhysicalScreenSize
-local wipe = wipe
+local tremove, tsort = table.remove, table.sort
+local pairs, ipairs = pairs, ipairs
 local CreateFrame = CreateFrame
-local GetSpellName = C_Spell.GetSpellName
+local format = string.format
+local tostring = tostring
+local floor = math.floor
+local wipe = wipe
+
+local SetCVar = C_CVar and C_CVar.SetCVar
+local GetSpellName = C_Spell and C_Spell.GetSpellName
 
 local GUI_PAGE = 'cooldownManager'
 local STATIC_GROUP_SIZE = 32 -- a static group draws nothing; this is what its mover grabs
@@ -38,7 +40,7 @@ end
 local function AnchorOptions(id)
     return {
         db = function() return CDM:Get(id) end,
-        apply = function(module) module:ApplySettings(id) end,
+        apply = function(aceModule) aceModule:ApplySettings(id) end,
         displayName = CDM:GetName(id),
     }
 end
@@ -57,6 +59,7 @@ function CDM:Place(frame, id, display, point)
         frame:SetParent(host)
         frame:ClearAllPoints()
         frame:NUISetPixelPoint(point or position.AnchorFrom, host, position.AnchorTo, position.XOffset, position.YOffset)
+        frame:SetFrameStrata(display.Strata or host:GetFrameStrata())
         Anchors:Unregister(id)
         return
     end
@@ -69,6 +72,47 @@ function CDM:Place(frame, id, display, point)
         frame:NUIApplyPosition(display)
     end
     Anchors:Register(self, id, frame, GUI_PAGE, AnchorOptions(id))
+end
+
+---@param frame Frame
+---@param point string
+---@return number? x, number? y screen coordinates
+local function PointCoords(frame, point)
+    local left, bottom, width, height = frame:GetRect()
+    if not left then return end
+    local scale = frame:GetEffectiveScale()
+    local x = point:find('LEFT') and left or point:find('RIGHT') and left + width or left + width / 2
+    local y = point:find('TOP') and bottom + height or point:find('BOTTOM') and bottom or bottom + height / 2
+    return x * scale, y * scale
+end
+
+---Rewrite a display's offsets so it stays where it is on screen under a new parent.
+---@param id string
+---@param parentId string?
+function CDM:KeepPlace(id, parentId)
+    local display = self:Get(id)
+    local position = display and display.Position
+    local frame = self.containers[id] or self.icons[id]
+    if not (position and frame) then return end
+
+    local host
+    if parentId then
+        host = self.containers[parentId]
+    elseif display.anchorFrameType == 'SELECTFRAME' then
+        host = _G[display.ParentFrame] or UIParent
+    else
+        host = UIParent
+    end
+    if not host then return end
+
+    local point = display.type == 'dynamicgroup' and frame:GetResolvedAnchor(display.Layout.Grow) or position.AnchorFrom
+    local fx, fy = PointCoords(frame, point)
+    local hx, hy = PointCoords(host, position.AnchorTo)
+    if not (fx and hx) then return end
+
+    local scale = frame:GetEffectiveScale()
+    position.XOffset = floor((fx - hx) / scale * 10 + 0.5) / 10
+    position.YOffset = floor((fy - hy) / scale * 10 + 0.5) / 10
 end
 
 -- Containers --
@@ -121,13 +165,12 @@ function CDM:BuildIcon(id)
     local frame = self.icons[id]
     if not frame then
         frame = self:AcquireIcon(id)
-        frame.state = {}
         self.icons[id] = frame
     end
 
     frame.style = self:GetStyle(display)
-    self:StyleIcon(frame, frame.style)
-    self:ResolveTrigger(frame, display.Trigger)
+    self:StyleIcon(frame, display, frame.style)
+    self:ResolveTriggers(frame, display)
 
     if self:IsDynamic(display.parent) then
         local group = self.containers[display.parent]
@@ -139,7 +182,7 @@ function CDM:BuildIcon(id)
             frame:Show()
         end
         group:SetChildOrder(id, display.order or 0)
-        group:NotifyChildResized(id)
+        group:NotifyChildResized(id, frame.style.Width, frame.style.Height)
         Anchors:Unregister(id)
     else
         DetachFromGroup(frame)
@@ -150,7 +193,7 @@ end
 ---Re-resolve every icon's trigger, for spell changes (talents, overrides, icons).
 function CDM:ResolveAll()
     for id, frame in pairs(self.icons) do
-        self:ResolveTrigger(frame, self:Get(id).Trigger)
+        self:ResolveTriggers(frame, self:Get(id))
     end
     self:RefreshLoad()
 end
@@ -202,7 +245,12 @@ function CDM:GetLoadState(id)
     for _, ancestor in ipairs(self:GetAncestors(id)) do
         if not self:Get(ancestor).Enabled then return 'unloaded' end
     end
-    if not self.TriggerTypes[display.Trigger.Type].IsKnown(display.Trigger) then return 'unloaded' end
+    local known = false
+    for _, trigger in ipairs(display.Triggers) do
+        local triggerType = self.TriggerTypes[trigger.Type]
+        if triggerType and triggerType.IsKnown(trigger) then known = true break end
+    end
+    if not known then return 'unloaded' end
     if not LoadConditions:Check(display.Load, true) then return 'unloaded' end
     if not LoadConditions:Check(display.Load) then return 'standby' end
     return 'loaded'
@@ -281,7 +329,10 @@ function CDM:RefreshLoad()
     for id, container in pairs(self.containers) do
         local any = false
         for _, iconId in ipairs(self:GetIcons(id)) do
-            if shown[iconId] then any = true break end
+            if shown[iconId] then
+                any = true
+                break
+            end
         end
         container:SetShown(any)
     end
@@ -300,7 +351,34 @@ function CDM:RefreshLoad()
         if shown[id] then self:UpdateIcon(id) end
     end
 
+    local UF = NRSKNUI.UnitFrames
+    if UF:IsEnabled() then UF:ScheduleCDMAnchorUpdate() end
     if self.onStateChanged then self.onStateChanged() end
+end
+
+---The shown dynamic groups carrying the unit frame anchor roles; the first in tree order wins.
+---@return Frame? primary, Frame? secondary
+function CDM:GetAnchorGroups()
+    local found = {}
+    local function Walk(entries)
+        for _, entry in ipairs(entries) do
+            local display = self:Get(entry.key)
+            local container = self.containers[entry.key]
+            if display.UFAnchor and not found[display.UFAnchor] and container and container:IsShown() then
+                found[display.UFAnchor] = container
+            end
+            if display.type == 'group' then Walk(self:GetChildren(entry.key)) end
+        end
+    end
+    Walk(self:GetRoots())
+
+    if not found.primary then return found.secondary end
+    return found.primary, found.secondary
+end
+
+---@param hide boolean
+function CDM:SetBlizzardViewers(hide)
+    NRSKNUI:RunWhenSafe(function() SetCVar('cooldownViewerEnabled', hide and '0' or '1') end)
 end
 
 CDM.previewPages = GUI_PAGE
@@ -362,12 +440,14 @@ function CDM:OnCatalogueChanged()
 end
 
 function CDM:OnEnable()
+    if self.db.HideBlizzard then self:SetBlizzardViewers(true) end
     self:RegisterTriggerEvents()
     LoadConditions:RegisterCallback(self, function(module) module:RefreshLoad() end)
     self:ApplySettings()
 end
 
 function CDM:OnDisable()
+    if self.db.HideBlizzard then self:SetBlizzardViewers(false) end
     self:UnregisterTriggerEvents()
     LoadConditions:UnregisterCallback(self)
 

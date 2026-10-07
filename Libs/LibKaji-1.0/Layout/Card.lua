@@ -41,6 +41,9 @@ local HEADER_HEIGHT = 32
 local STRIPE_ALPHA = 0.05
 local EXPAND_DURATION = 0.2
 local COLLAPSE_DURATION = 0.15
+-- A section body reaches this far past its rows on three sides, so a glow drawn around a widget
+-- still fits inside the body's clip while it animates. Matches glow_small.png's falloff.
+local BODY_BLEED = 8
 
 -- Card --
 
@@ -59,7 +62,7 @@ local COLLAPSE_DURATION = 0.15
 ---@field _onHeightChanged? fun(card: KajiGUICard) set by the card stack, for rows that resize themselves
 ---@field _enabledHandler? fun(enabled: boolean) see FluentCard:SetEnabledHandler
 ---@field _yOffset number
----@field _body? Frame the section body new rows go into, between BeginBody and EndBody
+---@field _body? Frame the section body new rows go into, between BeginBody and EndBody; a sub-section's body sits inside its section's
 ---@field _bodies Frame[] pooled section bodies
 ---@field _anims table<any, table> [section key] = { p, from, to, t, duration, onDone?, header? }
 ---@field _driver? Frame steps the section animations
@@ -81,6 +84,21 @@ function CardMixin:GetSectionAnim(key)
     return self._anims[key]
 end
 
+---Anchors a row in its host's flow; a body row grows out by the bleed so its rows stay where they'd be.
+---@param row Frame
+---@param host Frame
+---@param left number
+---@param top number
+---@param right number
+local function PlaceRow(row, host, left, top, right)
+    if row._isBody then
+        left, top, right = left - BODY_BLEED, top - BODY_BLEED, right + BODY_BLEED
+    end
+    row:ClearAllPoints()
+    pixel.SetPixelPoint(row, "TOPLEFT", host, "TOPLEFT", left, -top)
+    pixel.SetPixelPoint(row, "TOPRIGHT", host, "TOPRIGHT", right, -top)
+end
+
 ---Lays a body's rows out and sizes the body to the open part of them, then reflows the card.
 ---@param body Frame
 local function RelayoutBody(body)
@@ -89,17 +107,23 @@ local function RelayoutBody(body)
     local y = 0
     for _, row in ipairs(body.rows) do
         local offset = y + (row._layoutOffsetY or 0)
-        row:ClearAllPoints()
-        pixel.SetPixelPoint(row, "TOPLEFT", body, "TOPLEFT", 0, -offset)
-        pixel.SetPixelPoint(row, "TOPRIGHT", body, "TOPRIGHT", 0, -offset)
+        PlaceRow(row, body, BODY_BLEED + (row._layoutIndent or 0), BODY_BLEED + offset, -BODY_BLEED)
         y = y + (row._layoutHeight or 24) + (row._layoutSpacing or pad)
     end
 
-    local height = floor(y * card:GetSectionProgress(body._key) + 0.5)
+    -- Clipping only while it moves: a settled body would cut off glows that reach past a widget's edge.
+    -- The bottom is the edge that reveals, so only the other three get the bleed.
+    local progress = card:GetSectionProgress(body._key)
+    local height = floor(y * progress + 0.5)
     body._layoutHeight = height
-    pixel.SetPixelHeight(body, max(height, 1))
+    pixel.SetPixelHeight(body, max(height + BODY_BLEED, 1))
+    body:SetClipsChildren(progress < 1)
     body:SetShown(height > 0)
-    card:Relayout()
+    if body._parentBody then
+        RelayoutBody(body._parentBody)
+    else
+        card:Relayout()
+    end
 end
 
 -- A body stands in for the card to the rows inside it: they reflow it, and it passes that on.
@@ -115,9 +139,12 @@ function BodyMixin:_onHeightChanged()
 end
 
 ---Starts a section body: rows added until EndBody are clipped to how far the section is open.
+---A nested body is a sub-section's: it opens inside the current section and ends at EndNestedBody.
 ---@param key any the section's key, stable across rebuilds
-function CardMixin:BeginBody(key)
-    self:EndBody()
+---@param nested? boolean
+function CardMixin:BeginBody(key, nested)
+    if nested then self:EndNestedBody() else self:EndBody() end
+    local parent = self._body
 
     local body
     for _, b in ipairs(self._bodies) do
@@ -134,7 +161,8 @@ function CardMixin:BeginBody(key)
     body._inUse = true
     body._key = key
     body._isBody = true
-    body:SetParent(self.content)
+    body._parentBody = parent
+    body:SetParent(parent or self.content)
     body:Show()
     self:AddRow(body, 1, 0)
     self._body = body
@@ -143,6 +171,12 @@ end
 
 function CardMixin:EndBody()
     self._body = nil
+end
+
+---Ends a sub-section's body, back to the section around it.
+function CardMixin:EndNestedBody()
+    local body = self._body
+    if body and body._parentBody then self._body = body._parentBody end
 end
 
 ---Eases a section's body open or shut, then calls onDone; reversing mid-way starts from where it is.
@@ -205,9 +239,7 @@ function CardMixin:Relayout()
 
     for _, row in ipairs(self.rows) do
         local offset = y + (row._layoutOffsetY or 0)
-        row:ClearAllPoints()
-        pixel.SetPixelPoint(row, "TOPLEFT", self.content, "TOPLEFT", 0, -offset)
-        pixel.SetPixelPoint(row, "TOPRIGHT", self.content, "TOPRIGHT", 0, -offset)
+        PlaceRow(row, self.content, row._layoutIndent or 0, offset, 0)
         y = y + (row._layoutHeight or 24) + (row._layoutSpacing or pad)
     end
 
@@ -258,7 +290,7 @@ function CardMixin:Reset()
     for _, body in ipairs(self._bodies) do
         for _, row in ipairs(body.rows) do
             row._card = nil
-            self.gui:ReleaseWidget(row)
+            if not row._isBody then self.gui:ReleaseWidget(row) end
         end
         wipe(body.rows)
         body._inUse = false

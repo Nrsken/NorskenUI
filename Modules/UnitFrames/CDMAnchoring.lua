@@ -17,6 +17,12 @@ local function GetCDMFrames()
     elseif IsAddOnLoaded('Coolinator') then
         return _G['CoolinatorPrimaryGroupAnchor'], nil
     end
+
+    local CDM = NRSKNUI.CDM
+    if CDM:IsEnabled() then
+        local primary, secondary = CDM:GetAnchorGroups()
+        if primary then return primary, secondary, CDM.db.AnchorMinWidth end
+    end
     return _G['EssentialCooldownViewer'], _G['UtilityCooldownViewer']
 end
 
@@ -25,8 +31,10 @@ local function ApplyCDMAnchorSize()
     local anchor = UF.CDMAnchor
     if not anchor then return end
 
-    local essential, utility = GetCDMFrames()
+    local essential, utility, minWidth = GetCDMFrames()
     if not essential then return end
+    UF:HookCDMFrame(essential)
+    if not NRSKNUI:SafeValue(essential:IsShown()) then return end
 
     local width = NRSKNUI:SafeValue(essential:GetWidth())
     local height = NRSKNUI:SafeValue(essential:GetHeight())
@@ -40,13 +48,22 @@ local function ApplyCDMAnchorSize()
         end
     end
 
-    anchor:NUISetPixelWidth(width)
+    local x, y = essential:GetCenter()
+    if minWidth and not x then return end
+
+    anchor:NUISetPixelWidth(max(width, minWidth or 0))
     anchor:NUISetPixelHeight(height)
     anchor:ClearAllPoints()
-    anchor:NUISetGridPoint('CENTER', essential, 'CENTER', 0, 0) -- Without this we would need to use .1 offsets to avoid scuffed pixels.
+    if minWidth then
+        -- Our groups get a copied rect: anchoring them under the secure unit frames would protect their Show/Hide.
+        local scale = essential:GetEffectiveScale() / UIParent:GetEffectiveScale()
+        anchor:NUISetGridPoint('CENTER', UIParent, 'BOTTOMLEFT', x * scale, y * scale)
+    else
+        anchor:NUISetGridPoint('CENTER', essential, 'CENTER', 0, 0) -- Without this we would need to use .1 offsets to avoid scuffed pixels.
+    end
 end
 
-local function ScheduleCDMAnchorUpdate()
+function UF:ScheduleCDMAnchorUpdate()
     if UF.CDMAnchor then
         UF.CDMAnchor:NUIScheduleUpdate()
     end
@@ -56,31 +73,32 @@ function UF:HookCDMFrame(frame)
     if not frame or frame.nuiCDMHooked then return end
     frame.nuiCDMHooked = true
 
-    frame:HookScript('OnSizeChanged', ScheduleCDMAnchorUpdate)
-    frame:HookScript('OnShow', ScheduleCDMAnchorUpdate)
-    frame:HookScript('OnHide', ScheduleCDMAnchorUpdate)
+    frame:HookScript('OnSizeChanged', UF.ScheduleCDMAnchorUpdate)
+    frame:HookScript('OnShow', UF.ScheduleCDMAnchorUpdate)
+    frame:HookScript('OnHide', UF.ScheduleCDMAnchorUpdate)
 end
 
 -- Re-evaluate the anchor span on CDM layout changes.
 function UF:CDMLayoutEvent()
-    ScheduleCDMAnchorUpdate()
-    C_Timer.After(0.5, ScheduleCDMAnchorUpdate)
+    UF:ScheduleCDMAnchorUpdate()
+    C_Timer.After(0.5, UF.ScheduleCDMAnchorUpdate)
 end
 
 function UF:CreateCDMAnchor()
-    local essential = GetCDMFrames()
-    if not (essential and NRSKNUI:SafeValue(essential:IsShown())) then return end
-
-    local anchor = _G['NRSKNUF_CDMAnchor'] or CreateFrame('Frame', 'NRSKNUF_CDMAnchor', UIParent)
+    local anchor = _G['NRSKNUF_CDMAnchor']
+    if not anchor then
+        anchor = CreateFrame('Frame', 'NRSKNUF_CDMAnchor', UIParent)
+        anchor:NUISetPixelSize(1, 1)
+        anchor:SetPoint('CENTER')
+    end
     UF.CDMAnchor = anchor
     anchor:NUISetScheduledUpdate(function()
         NRSKNUI:RunWhenSafe(ApplyCDMAnchorSize)
     end)
 
-    UF:HookCDMFrame(essential)
     UF:RegisterEvent('PLAYER_ENTERING_WORLD', 'CDMLayoutEvent')
     UF:RegisterEvent('ACTIVE_PLAYER_SPECIALIZATION_CHANGED', 'CDMLayoutEvent')
     UF:RegisterEvent('TRAIT_CONFIG_UPDATED', 'CDMLayoutEvent')
     UF:RegisterEvent('EDIT_MODE_LAYOUTS_UPDATED', 'CDMLayoutEvent')
-    ScheduleCDMAnchorUpdate()
+    UF:ScheduleCDMAnchorUpdate()
 end

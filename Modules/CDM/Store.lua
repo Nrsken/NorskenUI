@@ -8,29 +8,76 @@ local ipairs, pairs = ipairs, pairs
 local tsort = table.sort
 local format = string.format
 local setmetatable = setmetatable
+local rawget = rawget
+local type = type
 local CopyTable = CopyTable
 
 local ID_PREFIX = 'cdm:'
-local SCHEMA_VERSION = 1
+local SCHEMA_VERSION = 3
 
 -- Every new icon starts from this; an icon owns its full style from then on.
 CDM.STYLE_TEMPLATE = {
-    Size = 40,
-    BorderColor = { 0, 0, 0, 1 },
+    Width = 40,
+    Height = 40,
+    KeepAspectRatio = false,
+    Color = { 1, 1, 1, 1 },
+    Desaturate = false,
+    DesaturateOnCooldown = true,
+    IconSource = 'auto',
+    Tooltip = false,
+    Alpha = 1,
     DrawSwipe = true,
-    DrawEdge = false,
     Reverse = false,
+    DrawEdge = false,
     SwipeColor = { 0, 0, 0, 0.7 },
     ShowGCD = false,
-    DesaturateOnCooldown = true,
-    ShowCountdown = true,
-    UseGlobalFont = true,
-    FontFace = 'Expressway',
-    FontOutline = 'OUTLINE',
-    FontShadow = { Enabled = false, Color = { 0, 0, 0, 1 }, OffsetX = 1, OffsetY = -1 },
-    CountdownFont = { FontSize = 16, Position = { AnchorFrom = 'CENTER', XOffset = 0, YOffset = 0 } },
-    ChargeFont = { FontSize = 13, Position = { AnchorFrom = 'BOTTOMRIGHT', XOffset = -1, YOffset = 2 } },
+    HideCountdown = true,
 }
+
+CDM.SUBREGION_TEMPLATES = {
+    text = {
+        type = 'text',
+        Enabled = true,
+        Text = '%p',
+        UseGlobalFont = true,
+        FontFace = 'Expressway',
+        FontOutline = 'OUTLINE',
+        FontShadow = { Enabled = false, Color = { 0, 0, 0, 1 }, OffsetX = 1, OffsetY = -1 },
+        FontSize = 16,
+        Color = { 1, 1, 1, 1 },
+        Position = { AnchorFrom = 'CENTER', XOffset = 0, YOffset = 0 },
+    },
+    border = {
+        type = 'border',
+        Enabled = true,
+        Style = 'Pixel',
+        Color = { 0, 0, 0, 1 },
+        Size = 1,
+        Offset = 0,
+    },
+}
+
+---A new sub element of a type, optionally changed by overrides.
+---@param kind string
+---@param overrides table?
+---@return table
+function CDM:NewSubRegion(kind, overrides)
+    local element = CopyTable(CDM.SUBREGION_TEMPLATES[kind])
+    for key, value in pairs(overrides or {}) do
+        element[key] = type(value) == 'table' and CopyTable(value) or value
+    end
+    return element
+end
+
+---WeakAuras' icon defaults: time left in the middle, charges in the corner, a 1px black border.
+---@return table[]
+local function DefaultSubRegions()
+    return {
+        CDM:NewSubRegion('text'),
+        CDM:NewSubRegion('text', { Text = '%s', FontSize = 13, Position = { AnchorFrom = 'BOTTOMRIGHT', XOffset = -1, YOffset = 2 } }),
+        CDM:NewSubRegion('border'),
+    }
+end
 
 local function Store()
     return NRSKNUI.db.profile.CDM.Displays
@@ -172,15 +219,6 @@ function CDM:CanContain(parentId, childId)
     return true
 end
 
--- A display's offsets mean something else under a new parent, so it starts centred there, as in WeakAuras.
----@param display table
-local function ResetOffsets(display)
-    local position = display.Position
-    if not position then return end
-    position.AnchorFrom, position.AnchorTo = 'CENTER', 'CENTER'
-    position.XOffset, position.YOffset = 0, 0
-end
-
 ---@param ordered string[]
 local function Renumber(ordered)
     local store = Store()
@@ -196,9 +234,9 @@ function CDM:SetParent(id, parentId, first)
     if not display or display.parent == parentId then return end
     if parentId and not self:CanContain(parentId, id) then return end
 
+    self:KeepPlace(id, parentId)
     display.order = nil
     display.parent = parentId
-    ResetOffsets(display)
     if not parentId then return end
 
     local ordered = first and { id } or {}
@@ -219,7 +257,7 @@ function CDM:MoveNextTo(id, targetId, position)
     if not self:CanContain(target.parent, id) then return end
 
     local parentId = target.parent
-    if display.parent ~= parentId then ResetOffsets(display) end
+    if display.parent ~= parentId then self:KeepPlace(id, parentId) end
     display.parent = parentId
     display.order = nil
 
@@ -304,9 +342,10 @@ function CDM:CreateIcon(name, trigger, parentId)
         type = 'icon',
         name = name,
         Enabled = true,
-        Trigger = trigger,
+        Triggers = { trigger },
         Conditions = {},
         Style = CopyTable(CDM.STYLE_TEMPLATE),
+        SubRegions = DefaultSubRegions(),
         Load = NRSKNUI.LoadConditions:GetDefaults(),
     }
     PlaceAt(display)
@@ -383,11 +422,22 @@ local function Overlay(target, source)
     end
 end
 
+-- The icon style before schema 2, which held the two texts and the border itself.
+local LEGACY_STYLE = {
+    Size = 40,
+    BorderColor = { 0, 0, 0, 1 },
+    ShowCountdown = true,
+    UseGlobalFont = true,
+    FontFace = 'Expressway',
+    FontOutline = 'OUTLINE',
+    FontShadow = { Enabled = false, Color = { 0, 0, 0, 1 }, OffsetX = 1, OffsetY = -1 },
+    CountdownFont = { FontSize = 16, Position = { AnchorFrom = 'CENTER', XOffset = 0, YOffset = 0 } },
+    ChargeFont = { FontSize = 13, Position = { AnchorFrom = 'BOTTOMRIGHT', XOffset = -1, YOffset = 2 } },
+}
+
 ---Schema 1: groups became dynamic groups, styles moved onto the icons, groups lost their own load.
 ---@param db table profile.CDM
-function CDM:Migrate(db)
-    if (db.Version or 0) >= SCHEMA_VERSION then return end
-
+local function MigrateToOne(db)
     for _, display in pairs(db.Displays) do
         if display.type == 'group' and display.Layout then display.type = 'dynamicgroup' end
     end
@@ -395,7 +445,7 @@ function CDM:Migrate(db)
     for _, display in pairs(db.Displays) do
         if display.type == 'icon' then
             local parent = display.parent and db.Displays[display.parent]
-            local style = CopyTable(CDM.STYLE_TEMPLATE)
+            local style = CopyTable(LEGACY_STYLE)
             Overlay(style, db.Style)
             Overlay(style, parent and parent.Style)
             Overlay(style, display.Style)
@@ -414,7 +464,69 @@ function CDM:Migrate(db)
             display.Load = nil
         end
     end
-
     db.Style = nil
+end
+
+---@param style table schema 1 icon style
+---@param fontKey string
+---@param text string
+---@param enabled boolean
+---@return table
+local function LegacyText(style, fontKey, text, enabled)
+    local font = style[fontKey] or LEGACY_STYLE[fontKey]
+    return CDM:NewSubRegion('text', {
+        Enabled = enabled,
+        Text = text,
+        UseGlobalFont = style.UseGlobalFont,
+        FontFace = style.FontFace,
+        FontOutline = style.FontOutline,
+        FontShadow = style.FontShadow,
+        FontSize = font.FontSize,
+        Position = font.Position,
+    })
+end
+
+---Schema 2: the two texts and the border became sub elements, size split into width and height.
+---@param db table profile.CDM
+local function MigrateToTwo(db)
+    for _, display in pairs(db.Displays) do
+        if display.type == 'icon' then
+            local old = setmetatable(display.Style or {}, { __index = LEGACY_STYLE })
+            display.SubRegions = {
+                LegacyText(old, 'CountdownFont', '%p', old.ShowCountdown ~= false),
+                LegacyText(old, 'ChargeFont', '%s', true),
+                CDM:NewSubRegion('border', { Color = old.BorderColor }),
+            }
+
+            local style = CopyTable(CDM.STYLE_TEMPLATE)
+            for key in pairs(style) do
+                if rawget(old, key) ~= nil then style[key] = old[key] end
+            end
+            style.Width, style.Height = old.Size, old.Size
+            style.HideCountdown = true
+            display.Style = style
+        end
+    end
+end
+
+---Schema 3: one trigger became an ordered list, the first active one shown.
+---@param db table profile.CDM
+local function MigrateToThree(db)
+    for _, display in pairs(db.Displays) do
+        if display.type == 'icon' then
+            display.Triggers = { display.Trigger }
+            display.Trigger = nil
+        end
+    end
+end
+
+---@param db table profile.CDM
+function CDM:Migrate(db)
+    local version = db.Version or 0
+    if version >= SCHEMA_VERSION then return end
+
+    if version < 1 then MigrateToOne(db) end
+    if version < 2 then MigrateToTwo(db) end
+    if version < 3 then MigrateToThree(db) end
     db.Version = SCHEMA_VERSION
 end

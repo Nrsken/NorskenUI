@@ -441,12 +441,17 @@
 
 ---@class NRSKNUI.DBProfile.CDM
 ---@field [string] any
+---@field AnchorMinWidth number
 ---@field Displays NRSKNUI.DBProfile.CDM.Displays
 ---@field Enabled boolean
 ---@field HideBlizzard boolean
+---@field TrinketBlacklist NRSKNUI.DBProfile.CDM.TrinketBlacklist
 ---@field Version number
 
 ---@class NRSKNUI.DBProfile.CDM.Displays
+---@field [string] any
+
+---@class NRSKNUI.DBProfile.CDM.TrinketBlacklist
 ---@field [string] any
 
 ---@class NRSKNUI.DBProfile.CharacterPanel

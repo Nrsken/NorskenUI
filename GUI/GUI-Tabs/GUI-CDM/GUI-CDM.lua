@@ -9,18 +9,21 @@ local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
 
 local ipairs = ipairs
-local type = type
 local tostring = tostring
 local format = string.format
-local strtrim = strtrim
 local tonumber = tonumber
 local CopyTable = CopyTable
-local GetSpellInfo = C_Spell.GetSpellInfo
-local GetSpellTexture = C_Spell.GetSpellTexture
-local GetSpellName = C_Spell.GetSpellName
+local tinsert, tremove = table.insert, table.remove
+local floor = math.floor
+
+local GetSpellTexture = C_Spell and C_Spell.GetSpellTexture
+local GetSpellName = C_Spell and C_Spell.GetSpellName
+local GetItemIconByID = C_Item and C_Item.GetItemIconByID
+local GetItemNameByID = C_Item and C_Item.GetItemNameByID
 
 local PAGE = 'cooldownManager'
 local GENERAL = 'cdm:general'
+local TRINKETS = 'cdm:trinkets'
 local SECTION_LOADED = 'cdm:section:loaded'
 local SECTION_UNLOADED = 'cdm:section:unloaded'
 local QUESTION_MARK = 134400
@@ -44,21 +47,6 @@ local TYPE_NAMES = {
     group = L['Group'],
     dynamicgroup = L['Dynamic Group'],
 }
-
--- Font keys FontSettingsCard writes, copied across a group's icons after each change.
-local FONT_KEYS = { 'UseGlobalFont', 'FontFace', 'FontOutline', 'FontShadow' }
-
-local sectionCollapsed = {} -- [section key] = true, for this session
-
----@param text string?
----@return SpellInfo? info
-local function Lookup(text)
-    text = strtrim(text or '')
-    if text == '' then return nil end
-    -- Names only resolve for spells in the player's own spellbook, IDs always do.
-    local info = GetSpellInfo(tonumber(text) or text)
-    return info and info.spellID and info or nil
-end
 
 ---@return table? tree
 local function Tree()
@@ -96,208 +84,7 @@ local function IsCollapsed(key)
     return NRSKNUI.db.global.SidebarCollapsed[PAGE][key] == true
 end
 
--- Display (style) --
-
--- A nested table is copied before its first edit, so icons never share one.
----@param own table
----@param path string[]
----@param value any
-local function SetPath(own, path, value)
-    local key = path[1]
-    if #path == 1 then
-        own[key] = type(value) == 'table' and CopyTable(value) or value
-        return
-    end
-
-    own[key] = CopyTable(own[key] or CDM.STYLE_TEMPLATE[key])
-    local node = own[key]
-    for i = 2, #path - 1 do node = node[path[i]] end
-    node[path[#path]] = value
-end
-
----A collapsible WeakAuras-style section, remembered for the session. Its rows only exist while it is open.
----@param card table
----@param key string
----@param title string
----@return boolean expanded
-local function Section(card, key, title)
-    return card:Section(title, {
-        key = key,
-        collapsed = sectionCollapsed[key] == true,
-        onToggle = function()
-            sectionCollapsed[key] = not sectionCollapsed[key] or nil
-            card:Rebuild()
-        end,
-    })
-end
-
----@param card table
----@param style table read side
----@param set fun(path: string[], value: any)
----@param fontKey string 'CountdownFont'|'ChargeFont'
----@param showToggle string? style key of a checkbox leading the section
-local function TextRows(card, style, set, fontKey, showToggle)
-    local font = style[fontKey]
-
-    if showToggle then
-        card:Row(rowH):Checkbox(L['Show'], {
-            width = 1,
-            value = style[showToggle],
-            callback = function(checked) set({ showToggle }, checked) end,
-        })
-    end
-
-    local sizeRow = card:Row(rowH)
-    sizeRow:Slider(L['Font Size'], {
-        width = 0.5,
-        min = 6,
-        max = 40,
-        step = 1,
-        value = font.FontSize,
-        callback = function(value) set({ fontKey, 'FontSize' }, value) end,
-    })
-    sizeRow:AnchorPicker(L['Anchor'], {
-        width = 0.5,
-        value = font.Position.AnchorFrom,
-        callback = function(point) set({ fontKey, 'Position', 'AnchorFrom' }, point) end,
-    })
-
-    local offsetRow = card:Row(rowH)
-    offsetRow:Slider(L['X Offset'], {
-        width = 0.5,
-        min = -30,
-        max = 30,
-        step = 1,
-        value = font.Position.XOffset,
-        callback = function(value) set({ fontKey, 'Position', 'XOffset' }, value) end,
-    })
-    offsetRow:Slider(L['Y Offset'], {
-        width = 0.5,
-        min = -30,
-        max = 30,
-        step = 1,
-        value = font.Position.YOffset,
-        callback = function(value) set({ fontKey, 'Position', 'YOffset' }, value) end,
-    })
-end
-
----Style controls for one icon, or every icon in a group at once (WeakAuras' group editing).
----Controls show the first icon's values.
----@param page table
----@param iconIds string[]
----@param apply fun()
-local function BuildStyle(page, iconIds, apply)
-    if #iconIds == 0 then
-        page:Card(L['Display']):Row(rowHL, 0):Text(L['This group has no icons yet.'], { width = 1 })
-        return
-    end
-
-    local first = CDM:Get(iconIds[1])
-    local style = CDM:GetStyle(first)
-
-    local function Set(path, value)
-        for _, id in ipairs(iconIds) do SetPath(CDM:Get(id).Style, path, value) end
-        apply()
-    end
-
-    page:Card(L['Display']):Rebuild(function(card)
-        if Section(card, 'icon', L['Icon Settings']) then
-            local iconRow = card:Row(rowH)
-            iconRow:Slider(L['Size'], {
-                width = 0.5,
-                min = 16,
-                max = 96,
-                step = 1,
-                value = style.Size,
-                callback = function(value) Set({ 'Size' }, value) end,
-            })
-            iconRow:ColorPicker(L['Border Color'], {
-                width = 0.5,
-                value = style.BorderColor,
-                callback = function(r, g, b, a) Set({ 'BorderColor' }, { r, g, b, a }) end,
-            })
-        end
-
-        if Section(card, 'cooldown', L['Cooldown Settings']) then
-            local swipeRow = card:Row(rowH)
-            swipeRow:Checkbox(L['Draw Swipe'], {
-                width = 0.5,
-                value = style.DrawSwipe,
-                callback = function(checked) Set({ 'DrawSwipe' }, checked) end,
-            })
-            swipeRow:Checkbox(L['Reverse Swipe'], {
-                width = 0.5,
-                value = style.Reverse,
-                callback = function(checked) Set({ 'Reverse' }, checked) end,
-            })
-            local edgeRow = card:Row(rowH)
-            edgeRow:Checkbox(L['Draw Edge'], {
-                width = 0.5,
-                value = style.DrawEdge,
-                callback = function(checked) Set({ 'DrawEdge' }, checked) end,
-            })
-            edgeRow:Checkbox(L['Show Global Cooldown'], {
-                width = 0.5,
-                tooltip = L['Run the swipe for the global cooldown too.'],
-                value = style.ShowGCD,
-                callback = function(checked) Set({ 'ShowGCD' }, checked) end,
-            })
-            local colorRow = card:Row(rowH)
-            colorRow:ColorPicker(L['Swipe Color'], {
-                width = 0.5,
-                value = style.SwipeColor,
-                callback = function(r, g, b, a) Set({ 'SwipeColor' }, { r, g, b, a }) end,
-            })
-            colorRow:Checkbox(L['Desaturate on Cooldown'], {
-                width = 0.5,
-                value = style.DesaturateOnCooldown,
-                callback = function(checked) Set({ 'DesaturateOnCooldown' }, checked) end,
-            })
-        end
-
-        if Section(card, 'countdown', L['Countdown Text']) then
-            TextRows(card, style, Set, 'CountdownFont', 'ShowCountdown')
-        end
-
-        if Section(card, 'charges', L['Charge Text']) then
-            TextRows(card, style, Set, 'ChargeFont')
-        end
-    end)
-
-    page:FontSettingsCard({
-        db = first.Style,
-        hideFontSize = true,
-        onChangeCallback = function()
-            for i = 2, #iconIds do
-                local other = CDM:Get(iconIds[i]).Style
-                for _, key in ipairs(FONT_KEYS) do
-                    local value = first.Style[key]
-                    other[key] = type(value) == 'table' and CopyTable(value) or value
-                end
-            end
-            apply()
-        end,
-    })
-end
-
 -- Tabs --
-
----@param page table
----@param display table
----@param apply fun()
-local function EnableCard(page, display, apply)
-    page:Card(display.name):Row(rowHL, 0):Checkbox(L['Enable'], {
-        width = 1,
-        master = true,
-        value = display.Enabled,
-        callback = function(checked)
-            display.Enabled = checked
-            apply()
-            page:Refresh()
-            RefreshTree()
-        end,
-    })
-end
 
 ---@param page table
 ---@param id string
@@ -306,85 +93,394 @@ local function PositionCard(page, id)
     page:PositionCard({
         title = L['Position and Size Settings'],
         db = display,
-        showAnchorFrameType = display.parent == nil, -- inside a group it anchors to the group
+        showAnchorFrameType = display.parent == nil,        -- inside a group it anchors to the group
         showStrata = display.parent == nil,
         disableAnchorFrom = display.type == 'dynamicgroup', -- a dynamic group anchors from its grow direction
         onChangeCallback = Applier(id),
     })
 end
 
----@param page table
+--[[
+-- Info dump on what can be used for triggers.
+
+- Info we can get from CDM:
+    - CDM Spell Cooldowns, including racial abilities
+    - CDM Aura, including racial abilities, both buffs on the player and debuffs on enemies e.g. flame shock or rupture.
+    - CDM Item Cooldowns, including: trinket 1 and 2, Healthstone, combat potion and health potion
+    - CDM Item Aura, including: trinket 1 and 2 (these can have 2 buffs each e.g one active buff and one passive buff coming from the same trinket) and combat potion
+
+- Info we can grab ourselves via API's:
+    - Basically any item info about any item.
+    - We can create timer based uptime trackers based on cast success by the player, for example on holy paladin, aura mastery has no buff uptime, but we can create a 8s long timer to track its uptime.
+    - Totem information, needs some digging on how it is achieved the best, but should be possible.
+]]
+
+
+local TRIGGER_TYPES = {
+    { value = 'spell', text = L['Cooldown'] },
+    { value = 'aura',  text = L['Aura'] },
+    { value = 'item',  text = L['Item'] },
+    { value = 'timer', text = L['Cast Timer'] },
+    { value = 'totem', text = L['Totem'] },
+}
+local TRIGGER_NAMES = {}
+for _, entry in ipairs(TRIGGER_TYPES) do TRIGGER_NAMES[entry.value] = entry.text end
+
+-- What a trigger starts with when it's added or its type changes.
+local TRIGGER_DEFAULTS = {
+    spell = {},
+    aura  = { Source = 'cdm', Unit = 'player', OwnOnly = true, Pandemic = false, UseSpellIcon = false },
+    item  = { Item = 'trinket1', HidePassive = true },
+    timer = { Duration = 8 },
+    totem = {},
+}
+local AURA_SOURCES = {
+    { value = 'cdm',    text = L['Cooldown Manager'] },
+    { value = 'custom', text = L['Custom'] },
+}
+local AURA_UNITS = {
+    { value = 'player', text = L['Player'] },
+    { value = 'target', text = L['Target'] },
+}
+local ITEMS = {
+    { value = 'trinket1',     text = L['Trinket 1'] },
+    { value = 'trinket2',     text = L['Trinket 2'] },
+    { value = 'healthstone',  text = L['Healthstone'] },
+    { value = 'combatPotion', text = L['Combat Potion'] },
+    { value = 'custom',       text = L['Custom Item'] },
+}
+local triggerOpen = {} -- [index] = open, for the session; a lone trigger starts open
+local trinketReturnKey ---@type string?
+
+---A new aura trigger for the Cooldown Manager aura that shares a spell with one of the icon's cooldowns.
+---@param display table
+---@return table? trigger
+local function LinkedAuraTrigger(display)
+    for _, trigger in ipairs(display.Triggers) do
+        local cooldownID = trigger.Type == 'spell' and trigger.SpellID and CDM.Catalogue:FindBySpell(trigger.SpellID, 'aura')
+        local info = cooldownID and CDM.Catalogue:GetEntry(cooldownID)
+        if info then
+            local new = CopyTable(TRIGGER_DEFAULTS.aura)
+            new.Type, new.CooldownID, new.SpellID = 'aura', cooldownID, info.spellID
+            return new
+        end
+    end
+end
+
+---Every spell the Cooldown Manager has for these categories: known ones first, the rest dimmed after them.
+---@param categories number[] Enum.CooldownViewerCategory values
+---@return table[] options
+local function CatalogueOptions(categories)
+    local known, unknown = {}, {}
+    local muted = Theme.textMuted
+    local tint = format('%d:%d:%d', floor(muted[1] * 255 + 0.5), floor(muted[2] * 255 + 0.5), floor(muted[3] * 255 + 0.5))
+    for _, category in ipairs(categories) do
+        for _, cooldownID in ipairs(CDM.Catalogue:GetList(category)) do
+            local info = CDM.Catalogue:GetEntry(cooldownID)
+            if info and info.spellID then
+                local texture = GetSpellTexture(info.spellID) or QUESTION_MARK
+                local name = GetSpellName(info.spellID) or info.spellID
+                if info.isKnown then
+                    known[#known + 1] = { value = cooldownID, text = format('|T%d:16:16:0:0:64:64:5:59:5:59|t %s', texture, name) }
+                else
+                    unknown[#unknown + 1] = {
+                        value = cooldownID,
+                        text = format('|T%d:16:16:0:0:64:64:5:59:5:59:%s|t %s', texture, tint, name),
+                        color = muted,
+                    }
+                end
+            end
+        end
+    end
+    for _, option in ipairs(unknown) do known[#known + 1] = option end
+    return known
+end
+
+---@param trigger table
+---@param display table
 ---@param id string
-local function BuildTriggerTab(page, id)
-    local display = CDM:Get(id)
-    local trigger = display.Trigger
-    local apply = Applier(id)
-
-    EnableCard(page, display, apply)
-
-    local function SetSpell(spellID, cooldownID)
-        -- An icon still named after its spell follows the new one.
-        if display.name == GetSpellName(trigger.SpellID) then display.name = GetSpellName(spellID) or display.name end
-        trigger.SpellID = spellID
+---@param apply fun()
+---@return fun(cooldownID: number)
+local function CataloguePicker(trigger, display, id, apply)
+    return function(cooldownID)
+        local info = CDM.Catalogue:GetEntry(cooldownID)
+        if not info or cooldownID == trigger.CooldownID then return end
+        -- A new icon, or one still named after its spell, takes the new spell's name.
+        if display.name == L['New Icon'] or (trigger.SpellID and display.name == GetSpellName(trigger.SpellID)) then
+            display.name = GetSpellName(info.spellID) or display.name
+        end
+        trigger.SpellID = info.spellID
         trigger.CooldownID = cooldownID
         apply()
         Reopen(id)
     end
+end
 
-    local card = page:Card(L['Spell'])
-    card:Row(rowH):Icon({
-        width = 1,
-        size = 28,
-        texture = GetSpellTexture(trigger.SpellID),
-        text = { text = GetSpellName(trigger.SpellID) or L['Unknown Spell'], description = tostring(trigger.SpellID) },
-        tooltip = function(tooltip) tooltip:SetSpellByID(trigger.SpellID) end,
-    })
+-- Rows per trigger type: the first row opens with the Type dropdown, the rest follow.
+local TriggerRows = {}
 
-    local found
-    local useButton
-    local inputRow = card:Row(rowH)
-    inputRow:EditBox(L['Spell ID or Name'], {
-        width = 0.5,
-        tooltip = L['A spell ID, or the name of a spell you know.'],
-        onTextChanged = function(text)
-            found = Lookup(text)
-            local label = (found and format(L['Use %s'], found.name)) or (strtrim(text) == '' and L['Use Spell']) or L['No spell found']
-            useButton:SetLabel(label)
-            useButton:SetEnabled(found ~= nil)
-        end,
-    })
-    useButton = inputRow:Button(L['Use Spell'], {
-        width = 0.5,
-        height = 24,
-        yOffset = -14,
-        callback = function() if found then SetSpell(found.spellID) end end,
-    }) --[[@as KajiGUIButton]]
-    useButton:SetEnabled(false)
-
+function TriggerRows.spell(card, typeRow, display, trigger, id, apply)
     local Category = Enum.CooldownViewerCategory
-    local options = {}
-    for _, category in ipairs({ Category.Essential, Category.Utility }) do
-        for _, cooldownID in ipairs(CDM.Catalogue:GetList(category)) do
-            local info = CDM.Catalogue:GetEntry(cooldownID)
-            if info and info.isKnown and info.spellID then
-                options[#options + 1] = {
-                    value = cooldownID,
-                    text = format('|T%d:16:16:0:0:64:64:5:59:5:59|t %s', GetSpellTexture(info.spellID) or QUESTION_MARK, GetSpellName(info.spellID) or info.spellID),
-                }
-            end
-        end
+    typeRow:Dropdown(L['Cooldown Manager'], {
+        width = 0.5,
+        tooltip = L["Spells Blizzard's Cooldown Manager tracks for your current spec."],
+        options = CatalogueOptions({ Category.Essential, Category.Utility }),
+        value = trigger.CooldownID,
+        callback = CataloguePicker(trigger, display, id, apply),
+    })
+end
+
+function TriggerRows.aura(card, typeRow, display, trigger, id, apply)
+    local Category = Enum.CooldownViewerCategory
+    local function set(key, value)
+        trigger[key] = value
+        apply()
     end
 
-    card:Row(rowHL, 0):Dropdown(L['From Cooldown Manager'], {
-        width = 1,
-        tooltip = L["Spells Blizzard's Cooldown Manager tracks for your current spec."],
-        options = options,
-        value = trigger.CooldownID,
-        callback = function(cooldownID)
-            local info = CDM.Catalogue:GetEntry(cooldownID)
-            if info then SetSpell(info.spellID, cooldownID) end
+    typeRow:Dropdown(L['Source'], {
+        width = 0.5,
+        options = AURA_SOURCES,
+        value = trigger.Source,
+        callback = function(value)
+            set('Source', value)
+            card:Rebuild()
         end,
     })
+
+    local auraRow = card:Row(rowH)
+    if trigger.Source == 'custom' then
+        auraRow:EditBox(L['Spell IDs'], {
+            width = 0.5,
+            tooltip = L['Aura spell IDs, separated by commas.'],
+            value = trigger.SpellIDs and table.concat(trigger.SpellIDs, ', ') or '',
+            callback = function(text)
+                local ids = {}
+                for number in text:gmatch('%d+') do ids[#ids + 1] = tonumber(number) end
+                set('SpellIDs', ids)
+            end,
+        })
+    else
+        auraRow:Dropdown(L['Aura'], {
+            width = 0.5,
+            tooltip = L["Auras Blizzard's Cooldown Manager tracks for your current spec."],
+            options = CatalogueOptions({ Category.TrackedBuff, Category.TrackedBar }),
+            value = trigger.CooldownID,
+            callback = CataloguePicker(trigger, display, id, apply),
+        })
+    end
+    auraRow:Dropdown(L['Unit'], {
+        width = 0.5,
+        options = AURA_UNITS,
+        value = trigger.Unit,
+        callback = function(value) set('Unit', value) end,
+    })
+
+    local optionsRow = card:Row(rowH)
+    optionsRow:Checkbox(L['Cast by Me'], {
+        width = 0.5,
+        value = trigger.OwnOnly,
+        callback = function(checked) set('OwnOnly', checked) end,
+    })
+    optionsRow:Checkbox(L['Pandemic Highlight'], {
+        width = 0.5,
+        tooltip = L['Highlights the aura while refreshing it would carry over its remaining time.'],
+        value = trigger.Pandemic,
+        callback = function(checked) set('Pandemic', checked) end,
+    })
+    card:Row(rowH):Checkbox(L['Use Spell Icon'], {
+        width = 0.5,
+        tooltip = L["Shows the spell's icon instead of the aura's own."],
+        value = trigger.UseSpellIcon,
+        callback = function(checked) set('UseSpellIcon', checked) end,
+    })
+end
+
+function TriggerRows.item(card, typeRow, display, trigger, id, apply)
+    typeRow:Dropdown(L['Item'], {
+        width = 0.5,
+        options = ITEMS,
+        value = trigger.Item,
+        callback = function(value)
+            trigger.Item = value
+            apply()
+            card:Rebuild()
+        end,
+    })
+    if trigger.Item == 'trinket1' or trigger.Item == 'trinket2' then
+        local trinketRow = card:Row(rowH)
+        trinketRow:Button(L['Trinket Blacklist'], {
+            width = 0.5,
+            height = 24,
+            yOffset = -14,
+            tooltip = L['Trinkets that are never tracked, for on-use effects that only switch a mode.'],
+            callback = function()
+                trinketReturnKey = id
+                Reopen(TRINKETS)
+            end,
+        })
+        trinketRow:Checkbox(L['Hide Passive Trinkets'], {
+            width = 0.5,
+            tooltip = L['A trinket without an on-use effect is not tracked.'],
+            value = trigger.HidePassive,
+            callback = function(checked)
+                trigger.HidePassive = checked
+                apply()
+            end,
+        })
+    elseif trigger.Item == 'custom' then
+        local itemRow = card:Row(rowH)
+        itemRow:EditBox(L['Item ID'], {
+            width = 0.5,
+            value = trigger.ItemID and tostring(trigger.ItemID) or '',
+            callback = function(text)
+                trigger.ItemID = tonumber(text)
+                apply()
+                card:Rebuild()
+            end,
+        })
+        itemRow:Icon({
+            width = 0.1,
+            size = 24,
+            yOffset = -14,
+            texture = trigger.ItemID and GetItemIconByID(trigger.ItemID) or QUESTION_MARK,
+            tooltip = function(tooltip)
+                if trigger.ItemID then tooltip:SetItemByID(trigger.ItemID) end
+            end,
+        })
+    end
+end
+
+function TriggerRows.timer(card, typeRow, display, trigger, id, apply)
+    typeRow:EditBox(L['Spell ID'], {
+        width = 0.5,
+        tooltip = L['The timer starts when you cast this spell.'],
+        value = trigger.SpellID and tostring(trigger.SpellID) or '',
+        callback = function(text)
+            trigger.SpellID = tonumber(text)
+            apply()
+            card:Rebuild()
+        end,
+    })
+    card:Row(rowH):Slider(L['Duration'], {
+        width = 0.5,
+        min = 1,
+        max = 60,
+        step = 0.5,
+        value = trigger.Duration,
+        callback = function(value)
+            trigger.Duration = value
+            apply()
+        end,
+    })
+end
+
+function TriggerRows.totem(card, typeRow, display, trigger, id, apply)
+    local Category = Enum.CooldownViewerCategory
+    typeRow:Dropdown(L['Cooldown Manager'], {
+        width = 0.5,
+        tooltip = L['The spell that summons the totem.'],
+        options = CatalogueOptions({ Category.Essential, Category.Utility }),
+        value = trigger.CooldownID,
+        callback = CataloguePicker(trigger, display, id, apply),
+    })
+end
+
+---WeakAuras' trigger list: the first active trigger is the one shown, so the order is the priority.
+---@param page table
+---@param id string
+local function BuildTriggerTab(page, id)
+    local display = CDM:Get(id)
+    local triggers = display.Triggers
+    local apply = Applier(id)
+
+    page:Card():Rebuild(function(card)
+        local function Edit(fn)
+            fn()
+            apply()
+            card:Rebuild()
+        end
+
+        for index, trigger in ipairs(triggers) do
+            local title = format(L['Trigger %d: %s'], index, TRIGGER_NAMES[trigger.Type] or trigger.Type)
+            local name = CDM:GetTriggerName(trigger)
+            if name then title = title .. ' - ' .. name end
+
+            local open = triggerOpen[index]
+            if open == nil then open = #triggers == 1 end
+
+            local expanded = card:Section(title, {
+                key = 'cdm:trigger:' .. index,
+                collapsed = not open,
+                onToggle = function()
+                    triggerOpen[index] = not open
+                    card:Rebuild()
+                end,
+                onMoveUp = index > 1 and function()
+                    Edit(function() triggers[index], triggers[index - 1] = triggers[index - 1], triggers[index] end)
+                end or nil,
+                onMoveDown = index < #triggers and function()
+                    Edit(function() triggers[index], triggers[index + 1] = triggers[index + 1], triggers[index] end)
+                end or nil,
+                onDuplicate = function()
+                    Edit(function() tinsert(triggers, index + 1, CopyTable(trigger)) end)
+                end,
+                onDelete = #triggers > 1 and function()
+                    Edit(function() tremove(triggers, index) end)
+                end or nil,
+            })
+
+            if expanded then
+                local typeRow = card:Row(rowH)
+                typeRow:Dropdown(L['Type'], {
+                    width = 0.5,
+                    options = TRIGGER_TYPES,
+                    value = trigger.Type,
+                    callback = function(value)
+                        if value == trigger.Type then return end
+                        Edit(function()
+                            local new = value == 'aura' and LinkedAuraTrigger(display) or CopyTable(TRIGGER_DEFAULTS[value])
+                            new.Type = value
+                            triggers[index] = new
+                        end)
+                    end,
+                })
+                local rows = TriggerRows[trigger.Type]
+                if rows then rows(card, typeRow, display, trigger, id, apply) end
+            end
+        end
+        card:EndSection()
+
+        card:Row(30, 0):Button(L['Add Trigger'], {
+            width = 0.5,
+            height = 24,
+            callback = function()
+                Edit(function()
+                    local hasAura = false
+                    for _, trigger in ipairs(triggers) do
+                        if trigger.Type == 'aura' then hasAura = true end
+                    end
+                    -- A cooldown with a matching aura gets it on top, WeakAuras' aura-over-cooldown pair.
+                    local aura = not hasAura and LinkedAuraTrigger(display)
+                    if aura then
+                        tinsert(triggers, 1, aura)
+                    else
+                        triggers[#triggers + 1] = { Type = 'spell', SpellID = triggers[1] and triggers[1].SpellID }
+                    end
+                end)
+            end,
+        })
+    end)
+end
+
+local ANCHOR_ROLES = {
+    { value = 'none',      text = L['None'] },
+    { value = 'primary',   text = L['Primary'] },
+    { value = 'secondary', text = L['Secondary'] },
+}
+
+local function ScheduleAnchorUpdate()
+    local UF = NRSKNUI.UnitFrames
+    if UF:IsEnabled() then UF:ScheduleCDMAnchorUpdate() end
 end
 
 ---@param page table
@@ -393,9 +489,18 @@ local function BuildGroupTab(page, id)
     local display = CDM:Get(id)
     local apply = Applier(id)
 
-    EnableCard(page, display, apply)
     if display.type == 'dynamicgroup' then
         page:DynamicGroupCard({ title = L['Dynamic Group Settings'], db = display.Layout, onChangeCallback = apply })
+        page:Card(L['Unit Frame Anchor']):Row(rowHL, 0):Dropdown(L['Anchor Role'], {
+            width = 1,
+            options = ANCHOR_ROLES,
+            value = display.UFAnchor or 'none',
+            tooltip = L['The unit frame anchor follows the loaded group with this role. Give one group per class or spec the Primary role.'],
+            callback = function(value)
+                display.UFAnchor = value ~= 'none' and value or nil
+                ScheduleAnchorUpdate()
+            end,
+        })
     end
 
     page:Card(L['Group Icon']):Row(rowHL, 0):EditBox(L['Spell or Icon ID'], {
@@ -417,12 +522,11 @@ end
 local function BuildDisplayTab(page, id)
     local display = CDM:Get(id)
     if display.type ~= 'icon' then
-        BuildStyle(page, CDM:GetIcons(id), Applier(id))
+        NRSKNUI.CDMDisplayTab:Build(page, CDM:GetIcons(id), Applier(id))
         return
     end
 
-    BuildStyle(page, { id }, Applier(id))
-    if not CDM:IsDynamic(display.parent) then PositionCard(page, id) end
+    NRSKNUI.CDMDisplayTab:Build(page, { id }, Applier(id))
 end
 
 ---A group's load settings are its icons', edited together as in WeakAuras.
@@ -451,7 +555,10 @@ end
 ---@return number
 local function DisplayIcon(id)
     local display = CDM:Get(id)
-    if display.type == 'icon' then return GetSpellTexture(display.Trigger.SpellID) or QUESTION_MARK end
+    if display.type == 'icon' then
+        local first = display.Triggers[1]
+        return first and CDM:GetTriggerTexture(first) or QUESTION_MARK
+    end
     if display.Icon then return display.Icon end
 
     local first = CDM:GetIcons(id)[1]
@@ -484,15 +591,16 @@ local function RowData(id, index, count)
     }
 
     data.tooltip = function(tooltip)
-        tooltip:SetText(display.name, 1, 1, 1)
-        tooltip:AddLine(TYPE_NAMES[display.type], 0.7, 0.7, 0.7)
+        local accent, secondary, muted = Theme.accent, Theme.textSecondary, Theme.textMuted
+        tooltip:SetText(display.name, accent[1], accent[2], accent[3], 1, false)
+        tooltip:AddLine(TYPE_NAMES[display.type], secondary[1], secondary[2], secondary[3])
         if isGroup then
-            if #children == 0 then tooltip:AddLine(L['No Children'], 0.7, 0.7, 0.7) end
-            for _, child in ipairs(children) do tooltip:AddLine('  ' .. child.text, 0.8, 0.8, 0.8) end
+            if #children == 0 then tooltip:AddLine(L['No Children'], muted[1], muted[2], muted[3]) end
+            for _, child in ipairs(children) do tooltip:AddLine('  ' .. child.text, secondary[1], secondary[2], secondary[3]) end
         end
         tooltip:AddLine(' ')
-        tooltip:AddLine(L['Right-click for more options'], 0.4, 0.8, 1)
-        tooltip:AddLine(L['Drag to move'], 0.4, 0.8, 1)
+        tooltip:AddLine(L['Right-click for more options'], muted[1], muted[2], muted[3])
+        tooltip:AddLine(L['Drag to move'], muted[1], muted[2], muted[3])
     end
 
     if isGroup then
@@ -565,52 +673,27 @@ end
 
 -- Actions --
 
----@param parentId string?
-local function NewIconPrompt(parentId)
-    NRSKNUI:CreatePrompt({
-        title = L['New Icon'],
-        text = '',
-        editBox = true,
-        editBoxLabel = L['Spell ID or Name'],
-        onAccept = function(text)
-            local info = Lookup(text)
-            if not info then
-                NRSKNUI:Print(L['No spell found'])
-                return
-            end
+---Select a display that was just created and open its name for editing in the tree.
+---@param id string
+local function SelectAndRename(id)
+    EnsureModuleEnabled()
+    CDM:ApplySettings(id)
+    Reopen(id)
+    RunNextFrame(function()
+        local tree = Tree()
+        if tree then tree:BeginRename(id) end
+    end)
+end
 
-            local id = CDM:CreateIcon(info.name, { Type = 'spell', SpellID = info.spellID }, parentId)
-            EnsureModuleEnabled()
-            CDM:ApplySettings(id)
-            Reopen(id)
-        end,
-        acceptText = L['Create'],
-        cancelText = L['Cancel'],
-    })
+---@param parentId string?
+local function NewIcon(parentId)
+    SelectAndRename(CDM:CreateIcon(L['New Icon'], { Type = 'spell' }, parentId))
 end
 
 ---@param dynamic boolean
 ---@param parentId string?
-local function NewGroupPrompt(dynamic, parentId)
-    NRSKNUI:CreatePrompt({
-        title = dynamic and L['New Dynamic Group'] or L['New Group'],
-        text = '',
-        editBox = true,
-        editBoxLabel = L['Group Name'],
-        onAccept = function(name)
-            if not name or name == '' then
-                NRSKNUI:Print(L['Please enter a name'])
-                return
-            end
-
-            local id = CDM:CreateGroup(name, dynamic, parentId)
-            EnsureModuleEnabled()
-            CDM:ApplySettings(id)
-            Reopen(id)
-        end,
-        acceptText = L['Create'],
-        cancelText = L['Cancel'],
-    })
+local function NewGroup(dynamic, parentId)
+    SelectAndRename(CDM:CreateGroup(dynamic and L['New Dynamic Group'] or L['New Group'], dynamic, parentId))
 end
 
 ---@param id string
@@ -657,10 +740,10 @@ local function ContextMenu(id)
     local isGroup = display.type ~= 'icon'
     local entries = {}
     if isGroup then
-        entries[#entries + 1] = { text = L['Add Icon'], onClick = function() NewIconPrompt(id) end }
+        entries[#entries + 1] = { text = L['Add Icon'], onClick = function() NewIcon(id) end }
         if display.type == 'group' then
-            entries[#entries + 1] = { text = L['Add Group'], onClick = function() NewGroupPrompt(false, id) end }
-            entries[#entries + 1] = { text = L['Add Dynamic Group'], onClick = function() NewGroupPrompt(true, id) end }
+            entries[#entries + 1] = { text = L['Add Group'], onClick = function() NewGroup(false, id) end }
+            entries[#entries + 1] = { text = L['Add Dynamic Group'], onClick = function() NewGroup(true, id) end }
         end
         entries[#entries + 1] = { divider = true }
     end
@@ -709,23 +792,70 @@ end
 local NEW_TYPES = {
     {
         text = L['Group'],
-        description = L['Controls the positioning and configuration of multiple displays at the same time'],
-        icon = 'Interface\Icons\INV_Misc_Bag_10',
-        create = function() NewGroupPrompt(false) end,
+        description = L['Controls settings of multiple displays at the same time'],
+        icon = 'Interface\\Icons\\INV_Misc_Bag_10',
+        create = function() NewGroup(false) end,
     },
     {
         text = L['Dynamic Group'],
         description = L['A group that dynamically controls the positioning of its children'],
-        icon = 'Interface\Icons\Ability_Rogue_Sprint',
-        create = function() NewGroupPrompt(true) end,
+        icon = 'Interface\\Icons\\Ability_Rogue_Sprint',
+        create = function() NewGroup(true) end,
     },
     {
         text = L['Icon'],
-        description = L['Shows a spell icon with an optional cooldown overlay'],
-        icon = 'Interface\Icons\Spell_Nature_Lightning',
-        create = function() NewIconPrompt() end,
+        description = L['Shows a spell icon with a variety of customization options'],
+        icon = 'Interface\\Icons\\Spell_Nature_Lightning',
+        create = function() NewIcon() end,
     },
 }
+
+---The trinket blacklist, its own page so the main page stays short; Back returns to the trigger it came from.
+---@param page table
+local function BuildTrinketPage(page)
+    if trinketReturnKey and CDM:Get(trinketReturnKey) then
+        page:Card():Row(30, 0):Button(format(L['Back to %s'], CDM:GetName(trinketReturnKey)), {
+            width = 0.5,
+            height = 24,
+            callback = function() Reopen(trinketReturnKey) end,
+        })
+    end
+
+    page:Card(L['Trinket Blacklist']):Rebuild(function(card)
+        local ids = {}
+        for itemID in pairs(CDM.db.TrinketBlacklist) do ids[#ids + 1] = itemID end
+        table.sort(ids)
+        for _, itemID in ipairs(ids) do
+            card:Row(28):Icon({
+                width = 1,
+                size = 24,
+                texture = GetItemIconByID(itemID) or QUESTION_MARK,
+                text = { text = GetItemNameByID(itemID) or tostring(itemID), description = tostring(itemID) },
+                tooltip = function(tooltip)
+                    tooltip:SetItemByID(itemID)
+                    tooltip:AddLine(L['Click to remove it from the blacklist.'], Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3], true)
+                end,
+                onClick = function(button)
+                    if button ~= 'LeftButton' then return end
+                    CDM.db.TrinketBlacklist[itemID] = nil
+                    CDM:ApplySettings()
+                    card:Rebuild()
+                end,
+            })
+        end
+        card:Row(rowHL, 0):EditBox(L['Add Trinket'], {
+            width = 1,
+            tooltip = L["An item ID. Trinkets on this list are never tracked, for on-use effects that only switch the trinket's mode."],
+            callback = function(text)
+                local itemID = tonumber(text)
+                if not itemID then return end
+                CDM.db.TrinketBlacklist[itemID] = true
+                CDM:ApplySettings()
+                card:Rebuild()
+            end,
+        })
+    end)
+end
 
 ---@param page table
 local function BuildNewPage(page)
@@ -740,22 +870,56 @@ local function BuildNewPage(page)
         end,
     })
 
+    local integration = page:Card(L['Integration'])
+    integration:Row(rowH):Checkbox(L['Hide Blizzard Cooldown Manager'], {
+        width = 1,
+        value = CDM.db.HideBlizzard,
+        tooltip = L["Turns off Blizzard's Cooldown Manager. Its spell list still feeds the icon picker."],
+        callback = function(checked)
+            CDM.db.HideBlizzard = checked
+            if CDM:IsEnabled() then CDM:SetBlizzardViewers(checked) end
+        end,
+    })
+    integration:Separator()
+    integration:Row(rowHL, 0):Slider(L['Unit Frame Anchor Minimum Width'], {
+        width = 1,
+        min = 0,
+        max = 600,
+        step = 1,
+        value = CDM.db.AnchorMinWidth,
+        tooltip = L['The unit frame anchor is never narrower than this, so frames beside it keep their distance from a short group.'],
+        callback = function(value)
+            CDM.db.AnchorMinWidth = value
+            ScheduleAnchorUpdate()
+        end,
+    })
+
     local card = page:Card(L['New'])
     for i, entry in ipairs(NEW_TYPES) do
-        card:Row(NEW_ROW_HEIGHT, i == #NEW_TYPES and 0 or nil):Icon({
+        local entryNum = i == #NEW_TYPES and 0 or nil
+
+        card:Row(NEW_ROW_HEIGHT, entryNum):Icon({
             width = 1,
             size = 32,
             texture = entry.icon,
             text = { text = entry.text, description = entry.description, color = Theme.accent },
-            tooltip = function(tooltip) tooltip:SetText(entry.text, 1, 1, 1) tooltip:AddLine(entry.description, nil, nil, nil, true) end,
+            tooltip = function(tooltip)
+                local accent, secondary = Theme.accent, Theme.textSecondary
+                tooltip:SetText(entry.text, accent[1], accent[2], accent[3], 1, false)
+                tooltip:AddLine(entry.description, secondary[1], secondary[2], secondary[3], true)
+            end,
             onClick = function(button) if button == 'LeftButton' then entry.create() end end,
         })
+
+        if entryNum ~= 0 then
+            card:Separator()
+        end
     end
 end
 
 GUI:RegisterPage(PAGE, {
     mode = 'tabs',
-    search = { L['Cooldown Manager'], L['Countdown Text'], L['Charge Text'] },
+    search = { L['Cooldown Manager'], L['Sub Elements'], L['Swipe Overlay Settings'] },
     onEnter = function()
         CDM.onStateChanged = RefreshTree
     end,
@@ -777,7 +941,7 @@ GUI:RegisterPage(PAGE, {
             CDM:Rename(key, text)
             RefreshTree()
         end,
-        -- Into a group that can hold it, or next to a display inside one; the top level stays alphabetical.
+        -- Into a group that can hold it, or next to a display inside one, the top level stays alphabetical.
         canDrop = function(item, target, position)
             if position == 'into' then return target.isGroup and CDM:CanContain(target.key, item.key) end
             local parent = CDM:Get(target.key).parent
@@ -802,7 +966,6 @@ GUI:RegisterPage(PAGE, {
             CDM:ApplySettings()
             RefreshTree()
         end,
-        onToggleEnabled = ToggleDisplay,
         onTogglePreview = function(key)
             CDM:SetPreview(key, CDM:GetPreview(key) == 2 and 0 or 2)
         end,
@@ -833,7 +996,10 @@ GUI:RegisterPage(PAGE, {
     build = function(page, tabId, itemKey)
         local display = CDM:Get(itemKey)
 
-        if not display then
+        if itemKey == TRINKETS then
+            BuildTrinketPage(page)
+            return
+        elseif not display then
             BuildNewPage(page)
             return
         end

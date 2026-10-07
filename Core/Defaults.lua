@@ -2639,6 +2639,8 @@ local Defaults = {
         CDM = {
             Enabled = false,
             HideBlizzard = false,
+            AnchorMinWidth = 0,
+            TrinketBlacklist = {}, -- [itemID] = true, trinkets whose on-use isn't worth tracking
             Version = 0,
             Displays = {}, -- 'cdm:N' keys, user data only
         },

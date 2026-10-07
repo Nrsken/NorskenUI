@@ -67,7 +67,6 @@ local STATE_TEXT = {
 ---@field title FontString
 ---@field expand CDMTreeSmallButton
 ---@field state CDMTreeSmallButton
----@field enable Button|BackdropTemplate
 ---@field eye CDMTreeSmallButton
 
 ---@class CDMTreeSection : Frame
@@ -78,13 +77,16 @@ local STATE_TEXT = {
 ---@field collapse CDMTreeSmallButton
 ---@field eye CDMTreeSmallButton
 
+-- Kaji's tooltip look: accent title, secondary body, beside the cursor.
 ---@param owner Frame
 ---@param title string
 ---@param text string?
 local function ShowTooltip(owner, title, text)
-    GameTooltip:SetOwner(owner, 'ANCHOR_RIGHT')
-    GameTooltip:SetText(title, 1, 1, 1)
-    if text then GameTooltip:AddLine(text, nil, nil, nil, true) end
+    local theme = NRSKNUI.Theme
+    local accent, secondary = theme.accent, theme.textSecondary
+    GameTooltip:SetOwner(owner, 'ANCHOR_CURSOR_RIGHT', 30, 0)
+    GameTooltip:SetText(title, accent[1], accent[2], accent[3], 1, false)
+    if text then GameTooltip:AddLine(text, secondary[1], secondary[2], secondary[3], true) end
     GameTooltip:Show()
 end
 
@@ -296,20 +298,6 @@ local function CreateTree(gui, parent, opts)
 
         row.state = SmallButton(row, MEDIA .. 'whiteCircle.png', DOT_SIZE)
 
-        row.enable = CreateFrame('Button', nil, row, 'BackdropTemplate')
-        row.enable:NUISetPixelSize(SMALL_BUTTON, SMALL_BUTTON)
-        row.enable:SetBackdrop(BOX_BACKDROP)
-        row.enable.check = row.enable:CreateTexture(nil, 'ARTWORK')
-        row.enable.check:NUISetPixelSnap()
-        row.enable.check:SetTexture(MEDIA .. 'check.png')
-        row.enable.check:NUISetPixelPoint('TOPLEFT', row.enable, 'TOPLEFT', 2, -2)
-        row.enable.check:NUISetPixelPoint('BOTTOMRIGHT', row.enable, 'BOTTOMRIGHT', -2, 2)
-        row.enable:SetScript('OnEnter', function(self)
-            ShowTooltip(self, row.data.enabled and L['Disable'] or L['Enable'], L['Turn this display on or off'])
-        end)
-        row.enable:SetScript('OnLeave', HideTooltip)
-        row.enable:SetScript('OnClick', function() tree.sd.onToggleEnabled(row.data.key) end)
-
         row.eye = SmallButton(row, MEDIA .. 'eye.png', SMALL_BUTTON + 2)
         row.eye.tipTitle, row.eye.tipText = L['View'], L['Toggle the visibility of this display']
         row.eye:SetScript('OnClick', function() tree.sd.onTogglePreview(row.data.key) end)
@@ -322,7 +310,9 @@ local function CreateTree(gui, parent, opts)
             end
             ApplyRowState(self)
             if self.data.tooltip then
-                GameTooltip:SetOwner(self, 'ANCHOR_RIGHT')
+                GameTooltip:SetOwner(self, 'ANCHOR_NONE')
+                GameTooltip:ClearAllPoints()
+                GameTooltip:SetPoint('LEFT', self, 'RIGHT', 4, 0)
                 self.data.tooltip(GameTooltip)
                 GameTooltip:Show()
             end
@@ -425,15 +415,8 @@ local function CreateTree(gui, parent, opts)
         row.state.tipTitle = STATE_TEXT[data.loadState][1]
         row.state.tipText = data.stateText or STATE_TEXT[data.loadState][2]
 
-        row.enable:ClearAllPoints()
-        row.enable:NUISetPixelPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', -pad, 4)
-        row.enable:SetBackdropColor(theme.bgDark[1], theme.bgDark[2], theme.bgDark[3], 1)
-        row.enable:SetBackdropBorderColor(theme.widgetBorder[1], theme.widgetBorder[2], theme.widgetBorder[3], 1)
-        row.enable.check:SetVertexColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
-        row.enable.check:SetShown(data.enabled)
-
         row.eye:ClearAllPoints()
-        row.eye:NUISetPixelPoint('RIGHT', row.enable, 'LEFT', -6, 0)
+        row.eye:NUISetPixelPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', -pad, 3)
         if data.preview == 2 then
             row.eye.tex:SetVertexColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
         elseif data.preview == 1 then

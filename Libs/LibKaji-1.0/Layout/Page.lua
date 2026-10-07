@@ -281,6 +281,7 @@ function FluentCard:Section(title, config)
     end
 
     header = self.page.gui:CreateSectionHeader(real.content, title, headerConfig)
+    header._layoutIndent = nil -- a pooled header may last have been a sub-section's
     real:AddRow(header, header.layoutHeight)
 
     local anim = real:GetSectionAnim(key)
@@ -300,15 +301,67 @@ function FluentCard:EndSection()
     return self
 end
 
+---A collapsible header inside an open section, with its own animated body, for the less used settings
+---of that section. Runs until the next SubSection, :EndSubSection, or the section's end.
+---@param title string
+---@param config { key: any, collapsed?: boolean, onToggle?: fun(), indent?: number }
+---@return boolean expanded
+function FluentCard:SubSection(title, config)
+    local real = self.real
+    real:EndNestedBody()
+    local key = config.key
+
+    local header
+    local headerConfig = { collapsed = config.collapsed }
+    headerConfig.onToggle = config.onToggle and function()
+        local running = real:GetSectionAnim(key)
+        if running and running.to == 0 then
+            real:AnimateSection(key, 1).header = header
+        elseif config.collapsed then
+            real:AnimateSection(key, 1).header = header
+            config.onToggle()
+        else
+            real:AnimateSection(key, 0, config.onToggle).header = header
+        end
+    end
+
+    header = self.page.gui:CreateSectionHeader(real.content, title, headerConfig)
+    header._layoutIndent = config.indent
+    real:AddRow(header, header.layoutHeight)
+
+    local anim = real:GetSectionAnim(key)
+    if anim then
+        anim.header = header
+        header.arrow:SetRotation((1 - anim.p) * pi / 2)
+    end
+
+    if not config.collapsed then real:BeginBody(key, true) end
+    return not config.collapsed
+end
+
+---Ends the current sub-section's body; rows after it belong to the section around it again.
+---@return self
+function FluentCard:EndSubSection()
+    self.real:EndNestedBody()
+    return self
+end
+
 ---Adds a full-width separator row; with config.useLabel it is a labelled heading with its own rule.
+---config.inSection keeps it inside the open section instead of ending it; height and spacing
+---override the theme's row height and the gap after it.
 ---@param label? string
----@param config? { useLabel?: boolean, height?: number }
+---@param config? { useLabel?: boolean, centered?: boolean, height?: number, spacing?: number, inSection?: boolean }
 ---@return self
 function FluentCard:Separator(label, config)
     local theme = self.page.gui.theme
-    self.real:EndBody()
+    if config and config.inSection then
+        self.real:EndNestedBody()
+    else
+        self.real:EndBody()
+    end
     local sep = self.page.gui:CreateSeparator(self.real.content, label, config)
-    self.real:AddRow(sep, config and config.useLabel and theme.rowHeightLabelSeparator or theme.rowHeightSeparator)
+    local height = config and config.height or (config and config.useLabel and theme.rowHeightLabelSeparator or theme.rowHeightSeparator)
+    self.real:AddRow(sep, height, config and config.spacing)
     return self
 end
 
