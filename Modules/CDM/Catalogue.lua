@@ -4,18 +4,19 @@ local NRSKNUI = select(2, ...)
 local CDM = NRSKNUI:GetModule('CDM')
 
 local ipairs, pairs = ipairs, pairs
-local wipe = wipe
+local CreateFrame = CreateFrame
 local format = string.format
 local tostring = tostring
-local CreateFrame = CreateFrame
-local GetCategorySet = C_CooldownViewer.GetCooldownViewerCategorySet
-local GetCooldownInfo = C_CooldownViewer.GetCooldownViewerCooldownInfo
-local IsCooldownViewerAvailable = C_CooldownViewer.IsCooldownViewerAvailable
-local GetSpellName = C_Spell.GetSpellName
-local GetSpellCooldownSecrecy = C_Secrets.GetSpellCooldownSecrecy
-local GetSpellAuraSecrecy = C_Secrets.GetSpellAuraSecrecy
+local wipe = wipe
 
-local Category = Enum.CooldownViewerCategory
+local GetCategorySet = C_CooldownViewer and C_CooldownViewer.GetCooldownViewerCategorySet
+local GetCooldownInfo = C_CooldownViewer and C_CooldownViewer.GetCooldownViewerCooldownInfo
+local IsCooldownViewerAvailable = C_CooldownViewer and C_CooldownViewer.IsCooldownViewerAvailable
+local GetSpellName = C_Spell and C_Spell.GetSpellName
+local GetSpellCooldownSecrecy = C_Secrets and C_Secrets.GetSpellCooldownSecrecy
+local GetSpellAuraSecrecy = C_Secrets and C_Secrets.GetSpellAuraSecrecy
+
+local Category = Enum and Enum.CooldownViewerCategory
 
 -- Read-only view of Blizzard's cooldown catalogue for the current spec. We never write to the CDM.
 ---@class CDMCatalogue
@@ -34,7 +35,7 @@ Catalogue.CATEGORIES = {
     Category.TrackedBar,
 }
 
--- One spell can sit in a cooldown category and an aura category at once (Crash Lightning, Astral Shift).
+-- One spell can sit in a cooldown category and an aura category at once.
 local KIND = {
     [Category.Essential] = 'cooldown',
     [Category.Utility] = 'cooldown',

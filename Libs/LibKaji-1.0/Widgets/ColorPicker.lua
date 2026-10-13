@@ -26,8 +26,10 @@ local pixel = lib.Pixel
 local CreateFrame = CreateFrame
 local Mixin = Mixin
 local ColorPickerFrame = ColorPickerFrame
+local C_Timer = C_Timer
 
 local WIDGET_TYPE = "ColorPicker"
+local THROTTLE_DELAY = 0.1 -- Blizzard's picker reports every mouse move, and consumers may rebuild on each
 
 ---@alias KajiGUIColorChanged fun(r: number, g: number, b: number, a: number)
 
@@ -44,6 +46,8 @@ local WIDGET_TYPE = "ColorPicker"
 ---@field label FontString
 ---@field hexText FontString
 ---@field _callback? KajiGUIColorChanged
+---@field _pendingColor? number[] the latest pick the callback hasn't seen yet
+---@field _flushScheduled? boolean
 ---@field _animateBorder fun(isHover: boolean)
 ---@field _syncBorder fun(r: number, g: number, b: number, a?: number)
 local ColorPickerMixin = {}
@@ -71,7 +75,21 @@ end
 ---@param a? number
 function ColorPickerMixin:SetColor(r, g, b, a)
     self:SetColorSilent(r, g, b, a)
-    safecall(self._callback, r, g, b, a or 1)
+    self._pendingColor = { r, g, b, a or 1 }
+    if self._flushScheduled then return end
+    self._flushScheduled = true
+    C_Timer.After(THROTTLE_DELAY, function()
+        self._flushScheduled = false
+        self:FlushColor()
+    end)
+end
+
+---Hand the consumer the latest pick now instead of waiting for the throttle.
+function ColorPickerMixin:FlushColor()
+    local color = self._pendingColor
+    if not color then return end
+    self._pendingColor = nil
+    safecall(self._callback, color[1], color[2], color[3], color[4])
 end
 
 ---@return number, number, number, number
@@ -105,6 +123,7 @@ function ColorPickerMixin:OnAcquire(parent, labelText, config)
     pixel.SetPixelHeight(self, 34)
 
     self.label:SetText(labelText or "")
+    self._pendingColor = nil
     self._callback = nil -- set after the initial color, so seeding never notifies
     self:SetColorSilent(color[1], color[2], color[3], color[4] or 1)
     self._callback = config.callback
@@ -118,6 +137,7 @@ function ColorPickerMixin:OnAcquire(parent, labelText, config)
 end
 
 function ColorPickerMixin:OnRelease()
+    self:FlushColor() -- a page rebuilt or closed mid-drag still keeps the last pick
     self._callback = nil
     self.label:SetText("")
     self.hexText:SetText("")

@@ -12,7 +12,8 @@ local PANEL_PADDING = 6
 local BUTTON_HEIGHT = 22
 local BUTTON_GAP = 4
 local TAB_OVERLAP = -1
-local TAB_NAMES = { 'BugSackTabAll', 'BugSackTabSession', 'BugSackTabLast' }
+local CHECK_INSET = 4
+local TAB_NAMES = { 'BugSackTabAll', 'BugSackTabSession', 'BugSackTabLast', 'BugSackTabOptions' }
 local skinned = false
 
 ---@param S SkinningModule
@@ -54,6 +55,16 @@ local function SkinNavButtons(S, window)
     nextButton:ClearAllPoints()
     nextButton:NUISetPixelPoint('BOTTOMRIGHT', window, 'BOTTOMRIGHT', -PANEL_PADDING, PANEL_PADDING)
 
+    -- Shown on the Options tab in place of the nav buttons, between their spots.
+    local wipeButton = _G.BugSackWipeButton
+    if wipeButton then
+        S:HandleButton(wipeButton)
+        wipeButton:NUISetPixelHeight(BUTTON_HEIGHT)
+        wipeButton:ClearAllPoints()
+        wipeButton:NUISetPixelPoint('LEFT', prevButton, 'RIGHT', BUTTON_GAP, 0)
+        wipeButton:NUISetPixelPoint('RIGHT', nextButton, 'LEFT', -BUTTON_GAP, 0)
+    end
+
     -- Only built when AceSerializer is embedded.
     local sendButton = _G.BugSackSendButton
     if not sendButton then return end
@@ -72,6 +83,50 @@ local function SkinScroll(S)
     if not scroll or not scroll.ScrollBar then return end
 
     S:HandleTrimScrollBar(scroll.ScrollBar)
+end
+
+---@param frame Frame
+---@return boolean
+local function HoldsCheckBox(frame)
+    for _, child in ipairs({ frame:GetChildren() }) do
+        if child:IsObjectType('CheckButton') then return true end
+    end
+    return false
+end
+
+---The Options tab is an unnamed frame on the window: checkboxes, then label + dropdown rows.
+---@param S SkinningModule
+---@param window Frame
+local function SkinOptions(S, window)
+    local options
+    for _, child in ipairs({ window:GetChildren() }) do
+        if child:GetObjectType() == 'Frame' and HoldsCheckBox(child) then
+            options = child
+            break
+        end
+    end
+    if not options then return end
+
+    for _, child in ipairs({ options:GetChildren() }) do
+        if child:IsObjectType('CheckButton') then
+            local check = child --[[@as UICheckButtonTemplate]]
+            S:HandleCheckBox(check, CHECK_INSET)
+            S:HandleAccentFont(check.Text)
+        else
+            for _, rowChild in ipairs({ child:GetChildren() }) do
+                if rowChild.Arrow and rowChild.SetupMenu then
+                    ---@cast rowChild WowStyle1DropdownTemplate
+                    S:HandleDropdownButton(rowChild)
+                end
+            end
+            for _, region in ipairs({ child:GetRegions() }) do
+                if region:IsObjectType('FontString') then
+                    ---@cast region FontString
+                    S:HandleAccentFont(region)
+                end
+            end
+        end
+    end
 end
 
 ---@param S SkinningModule
@@ -107,6 +162,7 @@ local function SkinBugSack()
     if window.TitleContainer then SkinTitleBar(S, window.TitleContainer) end
     SkinNavButtons(S, window)
     SkinScroll(S)
+    SkinOptions(S, window)
     SkinTabs(S, window)
 end
 

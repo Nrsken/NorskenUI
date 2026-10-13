@@ -445,6 +445,7 @@
 ---@field Displays NRSKNUI.DBProfile.CDM.Displays
 ---@field Enabled boolean
 ---@field HideBlizzard boolean
+---@field HidePlayerCastBar boolean
 ---@field TrinketBlacklist NRSKNUI.DBProfile.CDM.TrinketBlacklist
 ---@field Version number
 
@@ -503,6 +504,8 @@
 ---@field Dispel NRSKNUI.DBProfile.Colors.Dispel
 ---@field Power NRSKNUI.DBProfile.Colors.Power
 ---@field Reaction NRSKNUI.DBProfile.Colors.Reaction
+---@field Runes NRSKNUI.DBProfile.Colors.Runes
+---@field Stagger NRSKNUI.DBProfile.Colors.Stagger
 ---@field Status NRSKNUI.DBProfile.Colors.Status
 
 ---@class NRSKNUI.DBProfile.Colors.Class
@@ -536,6 +539,14 @@
 ---@field [number] any
 
 ---@class NRSKNUI.DBProfile.Colors.Reaction
+---@field [string] any
+---@field [number] any
+
+---@class NRSKNUI.DBProfile.Colors.Runes
+---@field [string] any
+---@field [number] any
+
+---@class NRSKNUI.DBProfile.Colors.Stagger
 ---@field [string] any
 ---@field [number] any
 
@@ -4553,6 +4564,7 @@
 ---@field pointFive NRSKNUI.DBProfile.globalMedia.profileBreakPoints.pointFive
 ---@field pointFour NRSKNUI.DBProfile.globalMedia.profileBreakPoints.pointFour
 ---@field pointOne NRSKNUI.DBProfile.globalMedia.profileBreakPoints.pointOne
+---@field pointSix NRSKNUI.DBProfile.globalMedia.profileBreakPoints.pointSix
 ---@field pointThree NRSKNUI.DBProfile.globalMedia.profileBreakPoints.pointThree
 ---@field pointTwo NRSKNUI.DBProfile.globalMedia.profileBreakPoints.pointTwo
 
@@ -4572,10 +4584,14 @@
 ---@field step number
 ---@field threshold number
 
+---@class NRSKNUI.DBProfile.globalMedia.profileBreakPoints.pointSix
+---@field [string] any
+---@field format string
+---@field threshold number
+
 ---@class NRSKNUI.DBProfile.globalMedia.profileBreakPoints.pointThree
 ---@field [string] any
 ---@field format string
----@field step number
 ---@field threshold number
 
 ---@class NRSKNUI.DBProfile.globalMedia.profileBreakPoints.pointTwo
@@ -4589,6 +4605,7 @@
 ---@field colorFive table
 ---@field colorFour table
 ---@field colorOne table
+---@field colorSix table
 ---@field colorThree table
 ---@field colorTwo table
 
@@ -4597,6 +4614,7 @@
 ---@field colorFive table
 ---@field colorFour table
 ---@field colorOne table
+---@field colorSix table
 ---@field colorThree table
 ---@field colorTwo table
 

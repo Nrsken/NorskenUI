@@ -11,7 +11,8 @@
         width = 1,
         height = 120,
         value = db.Script,
-        callback = function(text) db.Script = text end,
+        callback = function(text) db.Script = text end, -- on focus lost
+        onTextChanged = function(text) Preview(text) end, -- every keystroke and paste
     })
 
 --]]
@@ -41,6 +42,7 @@ local LABEL_HEIGHT = 14
 ---@field label FontString
 ---@field rowHeight number
 ---@field _callback? fun(text: string)
+---@field _onTextChanged? fun(text: string)
 ---@field _animateBorder fun(isHover: boolean)
 ---@field _syncBorder fun(r: number, g: number, b: number, a?: number)
 local MultiLineEditBoxMixin = {}
@@ -95,6 +97,7 @@ function MultiLineEditBoxMixin:OnAcquire(parent, labelText, config)
 
     self.label:SetText(labelText or "")
     self._callback = config.callback
+    self._onTextChanged = config.onTextChanged
 
     self.editBox:EnableMouse(true)
     self.editBox:EnableKeyboard(true)
@@ -114,6 +117,7 @@ function MultiLineEditBoxMixin:OnRelease()
     self._hovered = false
     self._paintGlow()
     self._callback = nil
+    self._onTextChanged = nil
     self.editBox:ClearFocus()
     self.editBox:SetText("")
     self.label:SetText("")
@@ -197,7 +201,8 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         end
     end)
 
-    editBox:SetScript("OnTextChanged", function()
+    editBox:SetScript("OnTextChanged", function(eb, userInput)
+        if userInput then safecall(row._onTextChanged, eb:GetText()) end
         -- Deferred one frame so the edit box has resized first. Guarded because the
         -- widget may have been released and re-acquired by something else by then.
         local alive = lib.Generation(row)

@@ -79,7 +79,10 @@ function UF:HookCDMFrame(frame)
 end
 
 -- Re-evaluate the anchor span on CDM layout changes.
-function UF:CDMLayoutEvent()
+---@param event string?
+function UF:CDMLayoutEvent(event)
+    -- A reload in combat locks the anchor right after this, before a scheduled update would run.
+    if event == 'PLAYER_ENTERING_WORLD' then NRSKNUI:RunWhenSafe(ApplyCDMAnchorSize) end
     UF:ScheduleCDMAnchorUpdate()
     C_Timer.After(0.5, UF.ScheduleCDMAnchorUpdate)
 end

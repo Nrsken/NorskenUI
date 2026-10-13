@@ -1,9 +1,11 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 
+local CreateColor = CreateColor
+local unpack = unpack
+
 local CreateCurve = C_CurveUtil and C_CurveUtil.CreateCurve
 local CreateColorCurve = C_CurveUtil and C_CurveUtil.CreateColorCurve
-local CreateColor = CreateColor
 
 local Step = Enum.LuaCurveType.Step
 
@@ -21,6 +23,7 @@ local DEFAULT_DURATION_CURVE_COLORS = {
     colorThree = { 1, 0.7, 0.38, 1 },
     colorFour = { 1, 0.76, 0.61, 1 },
     colorFive = { 1, 1, 1, 1 },
+    colorSix = { 1, 1, 1, 1 },
 }
 
 -- if the duration is < 3 seconds then we want 1 decimal point, otherwise 0
@@ -52,6 +55,19 @@ HealthMissingAlpha:AddPoint(0, 1)
 HealthMissingAlpha:AddPoint(0.999, 1)
 HealthMissingAlpha:AddPoint(1, 0)
 
+-- Curve that yields a bar spark's alpha from its fill: hidden when empty or full
+local BarSparkAlpha = CreateCurve()
+BarSparkAlpha:SetType(Step)
+BarSparkAlpha:AddPoint(0, 0)
+BarSparkAlpha:AddPoint(0.001, 1)
+BarSparkAlpha:AddPoint(1, 0)
+
+-- Curve that yields a countdown text's alpha from its cooldown's total duration: hidden for a GCD or cast lockout
+local CountdownAlpha = CreateCurve()
+CountdownAlpha:SetType(Step)
+CountdownAlpha:AddPoint(0, 0)
+CountdownAlpha:AddPoint(1.5, 1)
+
 local function BuildAuraDurationColorCurve()
     local db = GetColorCurveDB()
     local c, points
@@ -60,10 +76,11 @@ local function BuildAuraDurationColorCurve()
         c = DEFAULT_DURATION_CURVE_COLORS
         points = {
             pointOne = { threshold = 0 },
-            pointTwo = { threshold = 3 },
-            pointThree = { threshold = 10 },
-            pointFour = { threshold = 60 },
+            pointTwo = { threshold = 1 },
+            pointThree = { threshold = 60 },
+            pointFour = { threshold = 600 },
             pointFive = { threshold = 3600 },
+            pointSix = { threshold = 86400 },
         }
     else
         c = db.profileColorCurve
@@ -76,6 +93,7 @@ local function BuildAuraDurationColorCurve()
     curve:AddPoint(points.pointThree.threshold, CreateColor(unpack(c.colorThree or DEFAULT_DURATION_CURVE_COLORS.colorThree)))
     curve:AddPoint(points.pointFour.threshold, CreateColor(unpack(c.colorFour or DEFAULT_DURATION_CURVE_COLORS.colorFour)))
     curve:AddPoint(points.pointFive.threshold, CreateColor(unpack(c.colorFive or DEFAULT_DURATION_CURVE_COLORS.colorFive)))
+    curve:AddPoint(points.pointSix.threshold, CreateColor(unpack(c.colorSix or DEFAULT_DURATION_CURVE_COLORS.colorSix)))
     return curve
 end
 
@@ -86,11 +104,15 @@ local AuraDurationColor = BuildAuraDurationColorCurve()
 ---@field PercentDecimals CurveObject
 ---@field ActionDesaturation CurveObject
 ---@field HealthMissingAlpha CurveObject
+---@field BarSparkAlpha CurveObject
+---@field CountdownAlpha CurveObject
 ---@field AuraDurationColor ColorCurveObject
 NRSKNUI.curves = {
     DurationDecimals = DurationDecimals,
     PercentDecimals = PercentDecimals,
     HealthMissingAlpha = HealthMissingAlpha,
+    BarSparkAlpha = BarSparkAlpha,
+    CountdownAlpha = CountdownAlpha,
     ActionDesaturation = ActionDesaturation,
     AuraDurationColor = AuraDurationColor,
 }

@@ -195,6 +195,18 @@ local function CreateDisplayPrompt(presetKey, presetName)
                 return
             end
 
+            if AuraDisplay:IsMerged() then
+                -- New trackers are aura groups in the Cooldown & Aura Manager now.
+                local CDM = NRSKNUI:GetModule('CDM')
+                local id = CDM:CreateAuraGroup(name, presetKey)
+                if not id then return end
+                CDM.db.Enabled = true
+                NRSKNUI:ToggleModule('CDM', true)
+                CDM:ApplySettings(id)
+                NRSKNUI.GUIFrame.content:ShowPage('cooldownManager', { itemKey = id })
+                return
+            end
+
             local id = AuraDisplay:Create(name, presetKey)
             if not id then return end
 
@@ -359,9 +371,10 @@ end
 ---@return table[]
 local function SidebarItems()
     local items = {}
+    local merged = AuraDisplay:IsMerged() -- the trackers are listed in the Cooldown & Aura Manager
 
     local shipped = {}
-    for _, entry in ipairs(AuraDisplay:GetList()) do
+    for _, entry in ipairs(merged and {} or AuraDisplay:GetList()) do
         if AuraDisplay:IsBuiltin(entry.key) then
             local instance = AuraDisplay:Get(entry.key)
             shipped[#shipped + 1] = { key = entry.key, text = entry.text, disabled = not instance.Enabled }
@@ -378,6 +391,8 @@ local function SidebarItems()
         defaultExpanded = IsOpen(DISPLAYS_SECTION),
         items = shipped,
     }
+
+    if merged then return items end
 
     -- An empty group stays listed, so a tracker can be dragged back into it.
     for _, group in ipairs(AuraDisplay:GetGroups()) do

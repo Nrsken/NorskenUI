@@ -13,7 +13,6 @@ local CreateFrame = CreateFrame
 local format = string.format
 local CopyTable = CopyTable
 local wipe = wipe
-local min = math.min
 local type = type
 
 local BUILTIN_PREFIX = 'builtin:'
@@ -32,6 +31,7 @@ end
 local BUILTIN_PRESETS = {
     ['builtin:advancedDebuffs'] = 'preset:advancedDebuffs',
     ['builtin:defensives'] = 'preset:defensives',
+    ['builtin:generalBuffs'] = 'preset:generalBuffs',
     ['builtin:speed'] = 'preset:speed',
 }
 
@@ -52,6 +52,12 @@ function AuraDisplay:Get(id)
     end
 
     return instance
+end
+
+---This profile's trackers live in the Cooldown & Aura Manager now (CDM schema 8).
+---@return boolean
+function AuraDisplay:IsMerged()
+    return NRSKNUI.db.profile.CDM.AurasMerged == true
 end
 
 ---@param id string?
@@ -215,46 +221,17 @@ function AuraDisplay:OnInitialize()
     })
 end
 
----The container config built from an instance's settings.
+---The container config built from an instance's settings; the CDM's aura groups own it now.
 ---@param db table
 ---@return table
 function AuraDisplay:GetContainerConfig(db)
-    local flowCorner, containerPoint, horizontal, vertical =
-        NRSKNUI:ResolveAuraGrowth(db.horizontalGrowthDirection, db.verticalGrowthDirection)
-    return {
-        maximumLineSize = db.perRow * (db.size + db.elementSpacing),
-        anchorPoint = flowCorner,
-        containerPoint = containerPoint,
-        horizontalGrowthDirection = horizontal,
-        verticalGrowthDirection = vertical,
-        size = db.size,
-        elementSpacing = db.elementSpacing,
-        lineSpacing = db.lineSpacing,
-        maxFrameCount = db.maxFrameCount,
-        sortMethod = AuraContainerSortMethod[db.sortMethod],
-        sortDirection = AuraContainerSortDirection[db.sortDirection],
-        showApplicationCount = db.showApplicationCount,
-        showDurationText = db.showDurationText,
-        durationTextColorCurve = true,
-        drawSwipe = db.drawSwipe,
-        drawEdge = db.drawEdge,
-        reverseSwipe = db.reverseSwipe,
-        showDebuffBorder = db.showBorder or nil,
-        showWithoutDispelType = db.showBorderWithoutDispelType,
-        showDebuffDispelIcon = db.showDebuffDispelIcon,
-        dispelIconSize = db.dispelIconSize,
-        fontDB = db,
-        stackFont = db.StackFont,
-        durationFont = db.DurationFont,
-        tooltipHideInCombat = db.tooltipHideInCombat,
-    }
+    return NRSKNUI:GetModule('CDM'):GetAuraContainerConfig(db)
 end
 
----Most auras an instance's settings can put on screen, one group per trigger branch.
 ---@param db table
 ---@return number
 function AuraDisplay:GetPreviewCount(db)
-    return min(db.maxFrameCount * NRSKNUI:GetTriggerBranchCount(db.Trigger), db.previewLimit)
+    return NRSKNUI:GetModule('CDM'):GetAuraPreviewCount(db)
 end
 
 ---Size a host to the largest grid its settings can produce, so the mover covers the full footprint.
@@ -280,21 +257,11 @@ function AuraDisplay:CreateHost(id)
     return self.hosts[id]
 end
 
----The unit an instance's trigger watches. Saved variables outlive the unit list the GUI offers,
----so a profile from an older schema can still hold a token the event system won't take.
 ---@param db table
 ---@param id string
 ---@return string
 local function ResolveTriggerUnit(db, id)
-    local unit = db.Trigger and db.Trigger.Unit
-    if not unit then return 'player' end
-
-    if not NRSKNUI:IsValidUnitToken(unit) then
-        NRSKNUI:Print(format('Aura display "%s" has an unusable unit (%s), falling back to player.', id, tostring(unit)))
-        return 'player'
-    end
-
-    return unit
+    return NRSKNUI:GetModule('CDM'):ResolveAuraUnit(db, id)
 end
 
 ---Attach the native aura container to an instance's host.
@@ -350,6 +317,10 @@ function AuraDisplay:ApplySettings(id)
 
     local db = self:Get(id)
     if not db then return end
+    if self:IsMerged() then
+        if self.hosts[id] then self.hosts[id]:Hide() end
+        return
+    end
 
     local host = self:CreateHost(id)
     if not host then return end
@@ -391,6 +362,7 @@ end
 ---Is any instance turned on?
 ---@return boolean
 function AuraDisplay:AnyEnabled()
+    if self:IsMerged() then return false end
     for _, instance in pairs(Store() or {}) do
         if instance.Enabled then return true end
     end

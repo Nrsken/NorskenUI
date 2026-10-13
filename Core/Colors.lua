@@ -206,6 +206,8 @@ NRSKNUI.Colors = {
     class = {},
     reaction = {},
     power = {},
+    runes = {},
+    stagger = {},
     status = {},
     dispel = {},
     white = CreateColor(1, 1, 1, 1),
@@ -214,6 +216,27 @@ NRSKNUI.Colors = {
     selectedColor = { 0.8, 0.8, 0.8, 0.25 },
     blackBgColor = { 0, 0, 0, 0.8 },
     enchantColor = { 0.6, 0, 1, 1 }
+}
+
+-- oUF elements look power colors up by token as well as by type (the runes element reads RUNES).
+local POWER_TOKENS = {
+    [0] = 'MANA',
+    [1] = 'RAGE',
+    [2] = 'FOCUS',
+    [3] = 'ENERGY',
+    [4] = 'COMBO_POINTS',
+    [5] = 'RUNES',
+    [6] = 'RUNIC_POWER',
+    [7] = 'SOUL_SHARDS',
+    [8] = 'LUNAR_POWER',
+    [9] = 'HOLY_POWER',
+    [11] = 'MAELSTROM',
+    [12] = 'CHI',
+    [13] = 'INSANITY',
+    [16] = 'ARCANE_CHARGES',
+    [17] = 'FURY',
+    [18] = 'PAIN',
+    [19] = 'ESSENCE',
 }
 
 ---Custom color palette (db.profile.Colors), pushed into oUF.colors and NRSKNUI.Colors.
@@ -228,6 +251,24 @@ function NRSKNUI:LoadCustomColors()
         local col = oUF:CreateColor(c[1], c[2], c[3])
         oUF.colors.power[powerType] = col
         palette.power[powerType] = col
+        local token = POWER_TOKENS[powerType]
+        if token then
+            oUF.colors.power[token] = col
+            palette.power[token] = col
+        end
+    end
+
+    for spec, c in next, db.Runes do
+        local col = oUF:CreateColor(c[1], c[2], c[3])
+        oUF.colors.runes[spec] = col
+        palette.runes[spec] = col
+    end
+
+    oUF.colors.power.STAGGER = oUF.colors.power.STAGGER or {}
+    for level, c in next, db.Stagger do
+        local col = oUF:CreateColor(c[1], c[2], c[3])
+        oUF.colors.power.STAGGER[level] = col
+        palette.stagger[level] = col
     end
 
     for index, c in next, db.Reaction do

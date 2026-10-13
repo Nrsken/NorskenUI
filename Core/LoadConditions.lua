@@ -1,19 +1,29 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 
-local IsInGroup = IsInGroup
-local IsInRaid = IsInRaid
-local IsInInstance = IsInInstance
-local GetInstanceInfo = GetInstanceInfo
-local UnitAffectingCombat = UnitAffectingCombat
-local pairs = pairs
-local ipairs = ipairs
+--TODO: Add: Race, spell known, NOT spell known, item equipped, in encounter, mounted, skyriding, player level, alive
+--TODO: Some of these might need triple state widget, for example in encounter can be: In Encounter, Not In Encounter or Off
+
 local select = select
 local tonumber = tonumber
+local IsInRaid = IsInRaid
+local IsInGroup = IsInGroup
+local wipe, next = wipe, next
 local CreateFrame = CreateFrame
-local GetBestMapForUnit = C_Map.GetBestMapForUnit
-local GetMapGroupID = C_Map.GetMapGroupID
-local GetMapChildrenInfo = C_Map.GetMapChildrenInfo
+local IsInInstance = IsInInstance
+local ipairs, pairs = ipairs, pairs
+local GetInstanceInfo = GetInstanceInfo
+
+local GetSpecialization = C_SpecializationInfo and C_SpecializationInfo.GetSpecialization
+local GetSpecializationInfo = C_SpecializationInfo and C_SpecializationInfo.GetSpecializationInfo
+local GetActiveConfigID = C_ClassTalents and C_ClassTalents.GetActiveConfigID
+local GetConfigInfo = C_Traits and C_Traits.GetConfigInfo
+local GetTreeNodes = C_Traits and C_Traits.GetTreeNodes
+local GetNodeInfo = C_Traits and C_Traits.GetNodeInfo
+local GetSubTreeInfo = C_Traits and C_Traits.GetSubTreeInfo
+local GetBestMapForUnit = C_Map and C_Map.GetBestMapForUnit
+local GetMapGroupID = C_Map and C_Map.GetMapGroupID
+local GetMapChildrenInfo = C_Map and C_Map.GetMapChildrenInfo
 
 ---@class LoadConditions
 local LoadConditions = {}
@@ -162,6 +172,72 @@ local function CheckZone(config)
     return not zones.hasInclude or InZones(zones.include, mapID, groupID, instanceID)
 end
 
+---@return number? specID
+local function PlayerSpecID()
+    local index = GetSpecialization()
+    return index and GetSpecializationInfo(index) or nil
+end
+
+-- Spec condition: any picked specID; none picked means any spec.
+local function CheckSpec(config)
+    if not config or not config.Types or not HasAnyEnabled(config.Types) then return true end
+    local specID = PlayerSpecID()
+    return specID ~= nil and config.Types[specID] == true
+end
+
+-- Talents the player has taken, by C_Traits entryID; rebuilt when talents or the spec change.
+local takenTalents = {}
+local talentsDirty = true
+
+local function RebuildTalents()
+    talentsDirty = false
+    wipe(takenTalents)
+    local configID = GetActiveConfigID()
+    local config = configID and GetConfigInfo(configID)
+    if not config then return end
+
+    for _, treeID in ipairs(config.treeIDs) do
+        for _, nodeID in ipairs(GetTreeNodes(treeID)) do
+            local node = GetNodeInfo(configID, nodeID)
+            if node and node.ID ~= 0 then
+                -- WeakAuras' rank rule: a choice node counts only its picked entry, a hero node only in its active tree.
+                local heroInactive = node.subTreeID and not (GetSubTreeInfo(configID, node.subTreeID) or {}).isActive
+                for _, entryID in ipairs(node.entryIDs) do
+                    local rank = node.activeRank
+                    if node.activeEntry then rank = node.activeEntry.entryID == entryID and node.activeEntry.rank or 0 end
+                    if rank > 0 and not heroInactive then takenTalents[entryID] = true end
+                end
+            end
+        end
+    end
+end
+
+---@param config table
+---@return number? specID the one spec picked, which talents need
+local function SingleSpec(config)
+    local single
+    for specID, enabled in pairs(config and config.Types or {}) do
+        if enabled then
+            if single then return nil end
+            single = specID
+        end
+    end
+    return single
+end
+
+-- Talent condition, per spec: only with exactly one spec picked and active; true = must have, false = must not.
+local function CheckTalent(config, conditions)
+    local spec = SingleSpec(conditions.Spec)
+    local entries = spec and config and config.Specs and config.Specs[spec]
+    if not entries or next(entries) == nil or spec ~= PlayerSpecID() then return true end
+
+    if talentsDirty then RebuildTalents() end
+    for entryID, wanted in pairs(entries) do
+        if (takenTalents[entryID] == true) ~= wanted then return false end
+    end
+    return true
+end
+
 local checkers = {
     Instance = CheckInstance,
     Group = CheckGroup,
@@ -169,6 +245,8 @@ local checkers = {
     Role = CheckRole,
     Position = CheckPosition,
     Zone = CheckZone,
+    Spec = CheckSpec,
+    Talent = CheckTalent,
 }
 
 -- Conditions that change during a session; failing only these is WeakAuras' "standby".
@@ -191,7 +269,16 @@ end
 local ZONE_EVENTS = { ZONE_CHANGED = true, ZONE_CHANGED_INDOORS = true, ZONE_CHANGED_NEW_AREA = true }
 local lastMapID
 
+-- Talent and spec changes rebuild the taken-talent set on the next check.
+local TALENT_EVENTS = {
+    TRAIT_CONFIG_CREATED = true,
+    TRAIT_CONFIG_UPDATED = true,
+    PLAYER_TALENT_UPDATE = true,
+    ACTIVE_PLAYER_SPECIALIZATION_CHANGED = true,
+}
+
 local function OnEvent(_, event)
+    if TALENT_EVENTS[event] or event == "PLAYER_SPECIALIZATION_CHANGED" then talentsDirty = true end
     local mapID = GetBestMapForUnit("player")
     if ZONE_EVENTS[event] and mapID == lastMapID then return end
     lastMapID = mapID
@@ -207,6 +294,7 @@ local function SetupEventFrame()
     eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
     eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
     eventFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+    for event in pairs(TALENT_EVENTS) do eventFrame:RegisterEvent(event) end
     for event in pairs(ZONE_EVENTS) do eventFrame:RegisterEvent(event) end
 
     eventFrame:SetScript("OnEvent", OnEvent)
@@ -215,13 +303,14 @@ end
 ---@param conditions table LoadConditions config with category tables
 ---@param skipSituational? boolean ignore conditions that change during a session (combat, zone, group, instance)
 ---@return boolean
+---@return string? failed the category that failed
 function LoadConditions:Check(conditions, skipSituational)
     if not conditions then return true end
     if not conditions.Enabled then return true end
 
     for category, checker in pairs(checkers) do
         local config = conditions[category]
-        if config and not (skipSituational and SITUATIONAL[category]) and not checker(config) then return false end
+        if config and not (skipSituational and SITUATIONAL[category]) and not checker(config, conditions) then return false, category end
     end
 
     return true
@@ -238,19 +327,21 @@ function LoadConditions:GetDefaults()
         Role = { Types = {} },
         Position = { Types = {} },
         Zone = {},
+        Spec = { Types = {} },
+        Talent = { Specs = {} },
     }
 end
 
 ---Register a module to receive callbacks when load conditions may have changed
----@param module table AceModule with IsEnabled method
+---@param aceModule table AceModule with IsEnabled method
 ---@param callback function Called with module as argument when state changes
-function LoadConditions:RegisterCallback(module, callback)
+function LoadConditions:RegisterCallback(aceModule, callback)
     SetupEventFrame()
-    callbacks[module] = callback
+    callbacks[aceModule] = callback
 end
 
 ---Unregister a module's callback
----@param module table
-function LoadConditions:UnregisterCallback(module)
-    callbacks[module] = nil
+---@param aceModule table
+function LoadConditions:UnregisterCallback(aceModule)
+    callbacks[aceModule] = nil
 end

@@ -11,7 +11,10 @@ local tonumber = tonumber
 local unpack = unpack
 
 local enumUp = Enum and Enum.NumericRuleFormatRounding.Up
+local enumDown = Enum and Enum.NumericRuleFormatRounding.Down
 local enumNearest = Enum and Enum.NumericRuleFormatRounding.Nearest
+
+NRSKNUI.MINUTES_SECONDS_FORMAT = '%d:%02d' -- the one breakpoint format with two numbers, 2:10
 
 local CreateNumericRuleFormatter = C_StringUtil and C_StringUtil.CreateNumericRuleFormatter
 
@@ -154,16 +157,17 @@ end
 
 -- Aura duration text --
 
-local POINT_KEYS = { 'pointOne', 'pointTwo', 'pointThree', 'pointFour', 'pointFive' }
-local COLOR_KEYS = { 'colorOne', 'colorTwo', 'colorThree', 'colorFour', 'colorFive' }
+local POINT_KEYS = { 'pointOne', 'pointTwo', 'pointThree', 'pointFour', 'pointFive', 'pointSix' }
+local COLOR_KEYS = { 'colorOne', 'colorTwo', 'colorThree', 'colorFour', 'colorFive', 'colorSix' }
 local formatterCache = {}
 
----Minutes and hours round to nearest, seconds round up so a running timer never reads 0.
+---Minutes, hours and days round to nearest, seconds round up so a running timer never reads 0.
 ---@param fmt string
 ---@return number div seconds per displayed unit
 ---@return number step
 ---@return boolean nearest
 function NRSKNUI:GetDurationFormatUnit(fmt)
+    if fmt:find('dd$') then return 86400, 1, true end -- '%dd'; a bare d$ would also match seconds' '%d'
     if fmt:find('h$') then return 3600, 1, true end
     if fmt:find('m$') then return 60, 1, true end
     return 1, fmt:find('%.1f') and 0.1 or 1, false
@@ -178,7 +182,9 @@ end
 ---Ordered rgba per breakpoint, nil when the format strings should stay uncolored.
 local function ResolveBreakpointColors(useBreakpointColors, singleColor)
     if singleColor then
-        return { singleColor, singleColor, singleColor, singleColor, singleColor }
+        local colors = {}
+        for i = 1, #COLOR_KEYS do colors[i] = singleColor end
+        return colors
     elseif not useBreakpointColors then
         return nil
     end
@@ -200,22 +206,58 @@ local function BuildDurationBreakpoints(colors)
         local threshold = (i == 1) and 0 or math_max(tonumber(point.threshold) or 0, previous + 1)
         local format = colors and CreateColor(unpack(colors[i])):WrapTextInColorCode(point.format) or point.format
 
-        breakpoints[i] = {
-            threshold = threshold,
-            format = format,
-            components = { DurationComponent(point.format) },
-        }
+        if point.format == NRSKNUI.MINUTES_SECONDS_FORMAT then
+            -- Whole seconds rounded up first, like the seconds formats, then split into minutes and the rest.
+            breakpoints[i] = {
+                threshold = threshold,
+                step = 1,
+                rounding = enumUp,
+                format = format,
+                components = { { div = 60, step = 1, rounding = enumDown }, { mod = 60, step = 1, rounding = enumDown } },
+            }
+        else
+            breakpoints[i] = {
+                threshold = threshold,
+                format = format,
+                components = { DurationComponent(point.format) },
+            }
+        end
         previous = threshold
     end
 
     return breakpoints
 end
 
+---A text's own Time Format: `precision` decimals below `below` seconds, whole seconds to a minute, then m / h / d.
+---@param below number seconds, 0 for no decimals
+---@param precision number decimals, 1 or 2
+---@return table formatter
+function NRSKNUI:GetPrecisionDurationFormatter(below, precision)
+    local key = 'precision:' .. below .. ':' .. precision
+    local formatter = formatterCache[key]
+    if not formatter then
+        local breakpoints = {}
+        if below > 0 then
+            breakpoints[1] = { threshold = 0, format = '%.' .. precision .. 'f', components = { { step = 10 ^ -precision, rounding = enumUp } } }
+        end
+        if below < 60 then
+            breakpoints[#breakpoints + 1] = { threshold = below, format = '%d', components = { DurationComponent('%d') } }
+        end
+        breakpoints[#breakpoints + 1] = { threshold = 60, format = '%dm', components = { DurationComponent('%dm') } }
+        breakpoints[#breakpoints + 1] = { threshold = 3600, format = '%dh', components = { DurationComponent('%dh') } }
+        breakpoints[#breakpoints + 1] = { threshold = 86400, format = '%dd', components = { DurationComponent('%dd') } }
+        formatter = CreateNumericRuleFormatter()
+        formatter:SetBreakpoints(breakpoints)
+        formatterCache[key] = formatter
+    end
+    return formatter
+end
+
 function NRSKNUI:RefreshAuraDurationFormatter()
     formatterCache = {}
 end
 
----Formatter for aura duration text, tenths below the second breakpoint, whole seconds, then m / h.
+---Formatter for aura duration text, tenths below the second breakpoint, whole seconds, then m / h / d.
 ---@param useBreakpointColors? boolean Use per-breakpoint colorized format strings for instant threshold color changes.
 ---@param singleColor? number[] Optional single RGBA color to apply across all breakpoints.
 ---@return table formatter A NumericFormatter usable as SetDurationText's `textFormatter` option.

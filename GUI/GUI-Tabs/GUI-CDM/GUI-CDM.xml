@@ -1,7 +1,14 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
 
+    <Button name="NRSKNUI_IconPickerButtonTemplate" virtual="true">
+        <Size x="36" y="36" />
+    </Button>
+
+    <Script file="GUI-CDMIconPicker.lua" />
+    <Script file="GUI-CDMThumbnail.lua" />
     <Script file="GUI-CDMTree.lua" />
     <Script file="GUI-CDMDisplay.lua" />
+    <Script file="GUI-CDMConditions.lua" />
     <Script file="GUI-CDM.lua" />
 </Ui>

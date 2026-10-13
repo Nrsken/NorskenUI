@@ -108,3 +108,4 @@
 ---@field BugSackPrevButton Button
 ---@field BugSackNextButton Button
 ---@field BugSackSendButton Button? Only built when AceSerializer is embedded
+---@field BugSackWipeButton Button? Options tab only, added in BugSack v12.1.6

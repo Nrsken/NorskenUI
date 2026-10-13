@@ -1010,6 +1010,14 @@ end
 
 -- Socket bar --
 
+local function LayoutSocketBar()
+    CharacterPanel:LayoutSocketBar()
+end
+
+local function HideSocketBar()
+    CharacterPanel.socketBar:Hide()
+end
+
 function CharacterPanel:CreateSocketBar()
     if self.socketBar then return self.socketBar end
 
@@ -1019,6 +1027,8 @@ function CharacterPanel:CreateSocketBar()
     bar:Hide()
 
     bar.buttons = {}
+    -- Anchored into the Character Frame's protected family: its hooks can run inside ShowUIPanel's secure stack.
+    bar:NUISetScheduledUpdate(function() NRSKNUI:RunWhenSafe(LayoutSocketBar) end)
     self.socketBar = bar
     return bar
 end
@@ -1141,6 +1151,10 @@ end
 
 ---The bar hosts both features, so it stays alive while either one is on.
 function CharacterPanel:RefreshSocketBar()
+    if self.socketBar then self.socketBar:NUIScheduleUpdate() end
+end
+
+function CharacterPanel:LayoutSocketBar()
     if not self.socketBar then return end
 
     local db = self.db.Sockets
@@ -1196,7 +1210,6 @@ function CharacterPanel:RefreshSocketBar()
 end
 
 function CharacterPanel:OnPaperDollHidden()
-    if self.socketBar then self.socketBar:Hide() end
     self:HideGemPopup()
     self:HideEnchantPopup()
     self:HideSlotHighlight()
@@ -1242,7 +1255,7 @@ function CharacterPanel:SetupPanel()
         self:RegisterEvent('PLAYER_REGEN_DISABLED', function() self:HideEnchantPopup() end)
 
         self:RegisterEvent('BAG_UPDATE_DELAYED', function()
-            if self.socketBar and self.socketBar:IsShown() then self:RefreshSocketBar() end
+            if self.socketBar and self.socketBar:IsVisible() then self:RefreshSocketBar() end
         end)
 
         PaperDollFrame:HookScript('OnShow', function()
@@ -1289,4 +1302,5 @@ function CharacterPanel:OnDisable()
     self:HideAllTrackIndicators()
     self:HideRaceText()
     self:OnPaperDollHidden()
+    if self.socketBar then NRSKNUI:RunWhenSafe(HideSocketBar) end
 end

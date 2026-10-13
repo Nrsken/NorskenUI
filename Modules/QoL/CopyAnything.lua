@@ -52,9 +52,10 @@ function CopyAnything:CreateKeyboardFrame()
     if not self.frame then
         self.frame = CreateFrame('Frame', 'NRSKNUI_CopyFrame')
         self.frame:SetScript('OnKeyDown', function(frame, key)
-            if NRSKNUI:InCombat() then return end
-            frame:SetPropagateKeyboardInput(not self:TryCopy(key))
+            if InCombatLockdown() then return end -- propagation is protected; it stays on from the last key
+            frame:SetPropagateKeyboardInput(NRSKNUI:InCombat() or not self:TryCopy(key))
         end)
+        self.frame:SetPropagateKeyboardInput(true) -- off by default, which would swallow every key until the first handled one
     end
     self.frame:EnableKeyboard(true)
 end

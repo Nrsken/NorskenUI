@@ -12,6 +12,7 @@
 
 API: card:Section('1. Big Defensives', { collapsed = false, onToggle = fn, onDelete = fn })
 API: GUI:CreateSectionHeader(parent, 'Conditions', { onToggle = fn })
+API: card:SubSection('Anchors', { key = 'anchors', summary = "Anchored to frame's Center" })
 
 --]]
 
@@ -23,6 +24,7 @@ local safecall = lib.safecall
 local pixel = lib.Pixel
 
 local CreateFrame = CreateFrame
+local format = string.format
 local Mixin = Mixin
 local ipairs = ipairs
 local mpi = math.pi
@@ -37,10 +39,10 @@ local ACTION_SPACING = 2
 -- Right to left, so the rightmost action is the destructive one and the cluster keeps its order
 -- however many of them a caller opts into.
 local ACTIONS = {
-    { key = "onDelete",    atlas = "transmog-icon-remove",            rotation = 0,   tooltipKey = "deleteTooltip" },
-    { key = "onDuplicate", atlas = "communities-icon-addchannelplus", rotation = 0,   tooltipKey = "duplicateTooltip" },
-    { key = "onMoveDown",  atlas = "channels-icon-arrowdown",         rotation = 0,   tooltipKey = "moveDownTooltip" },
-    { key = "onMoveUp",    atlas = "channels-icon-arrowup",           rotation = mpi, tooltipKey = "moveUpTooltip" },
+    { key = "onDelete",    texture = "crossCustomTexture", color = "error",         size = 12, rotation = 0, title = "Delete",    tooltipKey = "deleteTooltip" },
+    { key = "onDuplicate", texture = "plusTexture",        color = "textSecondary", size = 12, rotation = 0, title = "Duplicate", tooltipKey = "duplicateTooltip" },
+    { key = "onMoveDown",  atlas = "channels-icon-arrowdown",         rotation = 0,   title = "Move Down", tooltipKey = "moveDownTooltip" },
+    { key = "onMoveUp",    atlas = "channels-icon-arrowup",           rotation = mpi, title = "Move Up",   tooltipKey = "moveUpTooltip" },
 }
 
 ---Atlas if the client still has one by that name, otherwise fall back to theme media so a button is
@@ -49,6 +51,13 @@ local ACTIONS = {
 ---@param action table
 ---@param theme table
 local function SetIcon(texture, action, theme)
+    if action.texture then
+        local color = theme[action.color]
+        texture:SetTexture(theme[action.texture])
+        texture:SetRotation(action.rotation)
+        texture:SetVertexColor(color[1], color[2], color[3])
+        return
+    end
     if GetAtlasInfo and GetAtlasInfo(action.atlas) then
         texture:SetAtlas(action.atlas)
         texture:SetRotation(0)
@@ -64,6 +73,8 @@ end
 ---@field arrow Texture
 ---@field label FontString
 ---@field actions Button[]
+---@field _title string
+---@field _summary string?
 local SectionHeaderMixin = {}
 
 ---@param enabled boolean
@@ -77,6 +88,22 @@ function SectionHeaderMixin:UpdateColors()
     lib.RefreshBackdrop(self)
     self.label:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
     self.arrow:SetVertexColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 0.9)
+    for _, action in ipairs(ACTIONS) do
+        if action.texture then SetIcon(self.actions[action.key].icon, action, theme) end
+    end
+    self:SetSummary(self._summary)
+end
+
+---The text after the title, in the primary text colour; nil shows the title alone.
+---@param summary string?
+function SectionHeaderMixin:SetSummary(summary)
+    self._summary = summary
+    if summary then
+        local text = self.gui.theme.textPrimary
+        self.label:SetText(format("%s: |cff%02x%02x%02x%s|r", self._title, text[1] * 255, text[2] * 255, text[3] * 255, summary))
+    else
+        self.label:SetText(self._title)
+    end
 end
 
 ---@param parent Frame
@@ -99,7 +126,7 @@ function SectionHeaderMixin:OnAcquire(parent, labelText, config)
     self.arrow:SetRotation(config.collapsed and mpi / 2 or 0)
 
     self.gui:ApplyFont(self.label, "normal")
-    self.label:SetText(labelText or "")
+    self._title, self._summary = labelText or "", config.summary
 
     -- Actions are laid out right to left, so an omitted one leaves no gap.
     local x = -theme.paddingSmall
@@ -109,7 +136,7 @@ function SectionHeaderMixin:OnAcquire(parent, labelText, config)
 
         button:SetShown(callback ~= nil)
         button._callback = callback
-        lib.SetTooltip(button, self.gui, nil, config[action.tooltipKey], { anchor = "ANCHOR_TOP", x = 0, y = 4 })
+        lib.SetTooltip(button, self.gui, action.title, config[action.tooltipKey], { anchor = "ANCHOR_TOP", x = 0, y = 4 })
 
         if callback then
             button:ClearAllPoints()
@@ -130,7 +157,7 @@ function SectionHeaderMixin:OnAcquire(parent, labelText, config)
 end
 
 function SectionHeaderMixin:OnRelease()
-    self._onToggle = nil
+    self._onToggle, self._summary = nil, nil
     self.label:SetText("")
     for _, action in ipairs(ACTIONS) do
         local button = self.actions[action.key]
@@ -180,10 +207,16 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         pixel.SetPixelSize(button, ACTION_SIZE, ACTION_SIZE)
 
         local icon = button:CreateTexture(nil, "ARTWORK")
-        icon:SetAllPoints()
+        if action.size then
+            pixel.SetPixelSize(icon, action.size, action.size)
+            icon:SetPoint("CENTER")
+        else
+            icon:SetAllPoints()
+        end
         pixel.SetPixelSnap(icon)
         SetIcon(icon, action, gui.theme)
         icon:SetAlpha(0.7)
+        button.icon = icon
 
         button:SetScript("OnEnter", function(self)
             icon:SetAlpha(1)
@@ -206,7 +239,7 @@ end)
 
 ---@param parent Frame
 ---@param labelText? string
----@param config? { collapsed?: boolean, onToggle?: fun(), onMoveUp?: fun(), onMoveDown?: fun(), onDuplicate?: fun(), onDelete?: fun() }
+---@param config? { collapsed?: boolean, summary?: string, onToggle?: fun(), onMoveUp?: fun(), onMoveDown?: fun(), onDuplicate?: fun(), onDelete?: fun() }
 ---@return KajiGUISectionHeader
 function InstanceMixin:CreateSectionHeader(parent, labelText, config)
     return self:BuildWidget(WIDGET_TYPE, parent, labelText, config)

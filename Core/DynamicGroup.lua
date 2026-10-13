@@ -23,6 +23,7 @@ NRSKNUI.GrowTypes = {
 }
 
 ---@class NRSKNUI.DynamicGroup
+---@field onLayout fun(group: NRSKNUI.DynamicGroup)? runs after every layout pass
 local GroupMixin = {}
 
 ---@type table<string, NRSKNUI.DynamicGroupGrower>
@@ -294,6 +295,7 @@ local function RunLayout(group)
     end
     group._needPosition = false
     PositionChildren(group)
+    if group.onLayout then group.onLayout(group) end
 end
 
 ---Request a layout pass, either immediately or via the scheduled update if available.
@@ -592,6 +594,21 @@ end
 ---@return number width, number height
 function GroupMixin:GetContentSize()
     return self._contentW, self._contentH
+end
+
+---The control points at the left and right ends of the laid out children; the group's own edges are snapped apart from them.
+---@return Frame? left, Frame? right
+function GroupMixin:GetHorizontalEnds()
+    local point = self._growPoint
+    if not point then return nil, nil end
+    local shift = point:find('LEFT') and 0 or point:find('RIGHT') and 1 or 0.5
+    local left, right, minX, maxX
+    for rec, pos in pairs(self._positions) do
+        local x = pos[1] - rec.width * shift
+        if not minX or x < minX then minX, left = x, rec.controlPoint end
+        if not maxX or x + rec.width > maxX then maxX, right = x + rec.width, rec.controlPoint end
+    end
+    return left, right
 end
 
 ---Resolve the anchor point for the current grow type.

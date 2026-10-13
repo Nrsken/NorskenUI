@@ -140,6 +140,13 @@ function FluentRow:Text(label, config) return self:_Add("CreateText", label, con
 ---@return KajiGUIAnchorPicker widget
 function FluentRow:AnchorPicker(label, config) return self:_Add("CreateAnchorPicker", label, config) end
 
+---Equal shares come out equally wide (a grid of tiles), instead of starting each widget at its share of the row.
+---@return self
+function FluentRow:Even()
+    self.real._even = true
+    return self
+end
+
 ---Draws a thin rule along the row's bottom edge, for table-like lists.
 ---@return KajiGUIFluentRow
 function FluentRow:Divider()
@@ -304,15 +311,16 @@ end
 ---A collapsible header inside an open section, with its own animated body, for the less used settings
 ---of that section. Runs until the next SubSection, :EndSubSection, or the section's end.
 ---@param title string
----@param config { key: any, collapsed?: boolean, onToggle?: fun(), indent?: number }
+---@param config { key: any, collapsed?: boolean, summary?: string, onToggle?: fun(), indent?: number }
 ---@return boolean expanded
+---@return KajiGUISectionHeader header for SetSummary while its settings change
 function FluentCard:SubSection(title, config)
     local real = self.real
     real:EndNestedBody()
     local key = config.key
 
     local header
-    local headerConfig = { collapsed = config.collapsed }
+    local headerConfig = { collapsed = config.collapsed, summary = config.summary }
     headerConfig.onToggle = config.onToggle and function()
         local running = real:GetSectionAnim(key)
         if running and running.to == 0 then
@@ -336,7 +344,7 @@ function FluentCard:SubSection(title, config)
     end
 
     if not config.collapsed then real:BeginBody(key, true) end
-    return not config.collapsed
+    return not config.collapsed, header
 end
 
 ---Ends the current sub-section's body; rows after it belong to the section around it again.
@@ -352,6 +360,16 @@ end
 ---@param label? string
 ---@param config? { useLabel?: boolean, centered?: boolean, height?: number, spacing?: number, inSection?: boolean }
 ---@return self
+---An icon action at the right end of the card's header.
+---
+---    page:Card('New', 'all'):HeaderButton({ atlas = 'questlog-icon-setting', tooltip = 'Settings', onClick = OpenSettings })
+---@param config { atlas?: string, texture?: string|number, size?: number, rotation?: number, tooltip?: string, onClick: fun() }
+---@return self
+function FluentCard:HeaderButton(config)
+    self.real:SetHeaderButton(config)
+    return self
+end
+
 function FluentCard:Separator(label, config)
     local theme = self.page.gui.theme
     if config and config.inSection then

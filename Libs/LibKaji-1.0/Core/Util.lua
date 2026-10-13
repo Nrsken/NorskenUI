@@ -122,7 +122,7 @@ end
 ---@param gui KajiGUIInstance
 ---@param title? string shown in the accent color
 ---@param tooltip? string|{ text?: string, default?: any }|fun(tooltip: GameTooltip, frame: Frame) body text, or a filler that writes the tooltip itself
----@param opts? { anchor?: string, x?: number, y?: number, owner?: Frame }
+---@param opts? { anchor?: string, x?: number, y?: number, owner?: Frame, beside?: boolean } beside: the tooltip's left edge on the owner's right
 function lib.SetTooltip(frame, gui, title, tooltip, opts)
     opts = opts or {}
     local text, default, content
@@ -142,6 +142,7 @@ function lib.SetTooltip(frame, gui, title, tooltip, opts)
     frame._tooltipDefault = default ~= nil and (type(default) == "boolean" and (default and "On" or "Off") or tostring(default)) or nil
     frame._tooltipOwner = opts.owner
     frame._tooltipAnchor = opts.anchor
+    frame._tooltipBeside = opts.beside
     frame._tooltipX = opts.x
     frame._tooltipY = opts.y
 end
@@ -165,7 +166,14 @@ function lib.ShowTooltip(frame)
 
     local theme = frame._kajiGui.theme
     local accent = frame._accentColor or theme.accent -- a config.accentColor widget titles in its own accent
-    GameTooltip:SetOwner(frame._tooltipOwner or frame, frame._tooltipAnchor or "ANCHOR_CURSOR_RIGHT", frame._tooltipX or 30, frame._tooltipY or 0)
+    local owner = frame._tooltipOwner or frame
+    if frame._tooltipBeside then
+        GameTooltip:SetOwner(owner, "ANCHOR_NONE")
+        GameTooltip:ClearAllPoints()
+        GameTooltip:SetPoint("TOPLEFT", owner, "TOPRIGHT", frame._tooltipX or 4, frame._tooltipY or 0)
+    else
+        GameTooltip:SetOwner(owner, frame._tooltipAnchor or "ANCHOR_CURSOR_RIGHT", frame._tooltipX or 30, frame._tooltipY or 0)
+    end
 
     -- A filler writes its own header, so the widget's title is its to set and ours only appends.
     if content then

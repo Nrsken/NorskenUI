@@ -89,10 +89,10 @@ local SetCVar = C_CVar and C_CVar.SetCVar
 local SetCVarBitfield = C_CVar and C_CVar.SetCVarBitfield
 local RegisterCVar = C_CVar and C_CVar.RegisterCVar
 
---TODO: See if still needed in 12.1.0+
-local BONUSROLL_GOLD_QUEST_ID = 95279
-local BONUSROLL_MARL_QUEST_ID = 95290
-local BONUSROLL_CREST_QUEST_ID = 95304
+--TODO: See if still needed in 12.1.0+ /yep was needed
+local BONUSROLL_GOLD_QUEST_ID = 98016
+local BONUSROLL_MARL_QUEST_ID = 98015
+local BONUSROLL_CREST_QUEST_ID = 98012
 
 function Automation:UpdateDB()
     self.db = NRSKNUI.db.profile.Miscellaneous.Automation

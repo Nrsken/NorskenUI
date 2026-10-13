@@ -5,15 +5,24 @@ local CDM = NRSKNUI:GetModule('CDM')
 local L = NRSKNUI.Libs.AL
 
 local ipairs, pairs = ipairs, pairs
-local tsort = table.sort
-local format = string.format
 local setmetatable = setmetatable
-local rawget = rawget
-local type = type
+local format = string.format
 local CopyTable = CopyTable
+local tsort, tconcat = table.sort, table.concat
+local random = math.random
+local type = type
+local wipe = wipe
 
 local ID_PREFIX = 'cdm:'
-local SCHEMA_VERSION = 3
+local SCHEMA_VERSION = 12
+
+-- The Auras page's built-in trackers and the preset each one's trigger starts from.
+local BUILTIN_PRESETS = {
+    ['builtin:advancedDebuffs'] = 'preset:advancedDebuffs',
+    ['builtin:defensives'] = 'preset:defensives',
+    ['builtin:generalBuffs'] = 'preset:generalBuffs',
+    ['builtin:speed'] = 'preset:speed',
+}
 
 -- Every new icon starts from this; an icon owns its full style from then on.
 CDM.STYLE_TEMPLATE = {
@@ -22,7 +31,6 @@ CDM.STYLE_TEMPLATE = {
     KeepAspectRatio = false,
     Color = { 1, 1, 1, 1 },
     Desaturate = false,
-    DesaturateOnCooldown = true,
     IconSource = 'auto',
     Tooltip = false,
     Alpha = 1,
@@ -33,6 +41,46 @@ CDM.STYLE_TEMPLATE = {
     ShowGCD = false,
     HideCountdown = true,
 }
+
+-- Every new bar starts from this; the icon keys stay so a bar's icon reads the same as an icon's.
+CDM.BAR_STYLE_TEMPLATE = CopyTable(CDM.STYLE_TEMPLATE)
+for key, value in pairs({
+    Width = 200,
+    Height = 20,
+    DrawSwipe = false,
+    UseGlobalBar = true,
+    StatusBarTexture = 'NorskenUI',
+    BarColorMode = 'custom',
+    BarColor = { 0.35, 0.55, 0.85, 1 },
+    BackgroundColor = { 0, 0, 0, 0.8 },
+    Orientation = 'HORIZONTAL',
+    ReverseFill = false,
+    Inverse = false,
+    Smooth = true,
+    Spark = true,
+    UseGlobalSpark = true,
+    SparkTexture = 'Solid',
+    SparkScale = 1,
+    SparkWidth = 2,
+    SparkColor = { 1, 1, 1, 1 },
+    IconShow = true,
+    IconSide = 'LEFT',
+    LatencyColor = { 1, 0.2, 0.2, 0.5 },
+    PipSpacing = 1,
+}) do
+    CDM.BAR_STYLE_TEMPLATE[key] = value
+end
+
+-- A text has no icon; Width/Height are only its cell in a Grid dynamic group, everywhere else it fits its text.
+CDM.TEXT_STYLE_TEMPLATE = CopyTable(CDM.STYLE_TEMPLATE)
+CDM.TEXT_STYLE_TEMPLATE.Width = 100
+CDM.TEXT_STYLE_TEMPLATE.Height = 20
+CDM.TEXT_STYLE_TEMPLATE.DrawSwipe = false
+
+local STYLE_TEMPLATES = { bar = CDM.BAR_STYLE_TEMPLATE, text = CDM.TEXT_STYLE_TEMPLATE }
+
+-- Displays built from per-trigger layers: they have triggers, conditions and a style.
+CDM.LAYERED_TYPES = { icon = true, bar = true, text = true }
 
 CDM.SUBREGION_TEMPLATES = {
     text = {
@@ -45,15 +93,53 @@ CDM.SUBREGION_TEMPLATES = {
         FontShadow = { Enabled = false, Color = { 0, 0, 0, 1 }, OffsetX = 1, OffsetY = -1 },
         FontSize = 16,
         Color = { 1, 1, 1, 1 },
-        Position = { AnchorFrom = 'CENTER', XOffset = 0, YOffset = 0 },
+        TimeFormat = 'global',
+        PrecisionBelow = 3,
+        Precision = 1,
+        ReadyText = '',                -- what a time shows once it has run out, WeakAuras' empty by default
+        TimeColor = { Enabled = false, Below = 3, Color = { 1, 0.25, 0.25, 1 } },
+        NumberFormat = 'auto',         -- values (power, stats): auto, decimals, abbreviate, large, breakup
+        Decimals = 1,
+        ValueColor = { Enabled = false, Low = { 1, 0.25, 0.25, 1 }, High = { 0.25, 1, 0.25, 1 } },
+        Rotation = 'NONE',
+        Justify = 'AUTO',
+        WidthMode = 'auto',
+        FixedWidth = 64,
+        WordWrap = true,
+        -- AnchorFrom is the text's own point; AUTO puts it inside the icon at AnchorTo, as WeakAuras does for icons.
+        Position = { AnchorFrom = 'AUTO', AnchorTo = 'CENTER', XOffset = 0, YOffset = 0 },
     },
     border = {
         type = 'border',
         Enabled = true,
-        Style = 'Pixel',
         Color = { 0, 0, 0, 1 },
         Size = 1,
         Offset = 0,
+    },
+    -- WeakAuras' tick: Automatic draws power segments, channel ticks and empower stages.
+    tick = {
+        type = 'tick',
+        Enabled = true,
+        Color = { 0, 0, 0, 1 },
+        Placement = 'auto',
+        Placements = '50',
+        Thickness = 1,
+        AutoLength = true,
+        Length = 10,
+    },
+    -- Hidden until a condition shows it, as in WeakAuras.
+    glow = {
+        type = 'glow',
+        Enabled = false,
+        Type = 'modern',
+        ColorMode = 'default',
+        Color = { 0.95, 0.95, 0.32, 1 },
+        Lines = 8,
+        Frequency = 0.25,
+        Length = 10,
+        Thickness = 2,
+        Border = true,
+        StartAnim = true,
     },
 }
 
@@ -69,13 +155,16 @@ function CDM:NewSubRegion(kind, overrides)
     return element
 end
 
----WeakAuras' icon defaults: time left in the middle, charges in the corner, a 1px black border.
+local DEFAULT_GLOW = 2 -- the hidden glow in DefaultSubRegions, which the proc condition shows
+
+---WeakAuras' icon defaults: a 1px black border, a hidden glow, time left in the middle, charges in the corner.
 ---@return table[]
 local function DefaultSubRegions()
     return {
-        CDM:NewSubRegion('text'),
-        CDM:NewSubRegion('text', { Text = '%s', FontSize = 13, Position = { AnchorFrom = 'BOTTOMRIGHT', XOffset = -1, YOffset = 2 } }),
         CDM:NewSubRegion('border'),
+        CDM:NewSubRegion('glow'),
+        CDM:NewSubRegion('text'),
+        CDM:NewSubRegion('text', { Text = '%s', FontSize = 13, Position = { AnchorFrom = 'AUTO', AnchorTo = 'BOTTOMRIGHT', XOffset = -1, YOffset = 2 } }),
     }
 end
 
@@ -93,6 +182,46 @@ local function NextId()
     return ID_PREFIX .. index
 end
 
+---@return string id
+function CDM:NextId()
+    return NextId()
+end
+
+---@return number
+function CDM:GetSchemaVersion()
+    return SCHEMA_VERSION
+end
+
+local UID_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789()'
+
+---WeakAuras' uid: 11 random characters that follow a display through exports, so a re-import can find it.
+---@return string
+function CDM:NewUid()
+    local chars = {}
+    for i = 1, 11 do
+        local n = random(1, #UID_CHARS)
+        chars[i] = UID_CHARS:sub(n, n)
+    end
+    return tconcat(chars)
+end
+
+---Every display gets a uid, and a uid two displays share is replaced on one of them.
+function CDM:EnsureUids()
+    local seen = {}
+    for _, display in pairs(Store()) do
+        if type(display.uid) ~= 'string' or seen[display.uid] then display.uid = self:NewUid() end
+        seen[display.uid] = true
+    end
+end
+
+---@param uid string
+---@return string? id
+function CDM:GetByUid(uid)
+    for id, display in pairs(Store()) do
+        if display.uid == uid then return id end
+    end
+end
+
 ---@param id string?
 ---@return table? display
 function CDM:Get(id)
@@ -104,7 +233,15 @@ end
 ---@return boolean
 function CDM:IsGroup(id)
     local display = self:Get(id)
-    return display ~= nil and display.type ~= 'icon'
+    return display ~= nil and (display.type == 'group' or display.type == 'dynamicgroup')
+end
+
+---A tracker of many auras at once, drawn by one native aura group: a leaf like an icon.
+---@param id string?
+---@return boolean
+function CDM:IsAuraGroup(id)
+    local display = self:Get(id)
+    return display ~= nil and display.type == 'auragroup'
 end
 
 ---@param id string?
@@ -121,14 +258,15 @@ function CDM:GetName(id)
     return (display and display.name) or format(L['Display %s'], id)
 end
 
----An icon's style; keys added after it was saved read from the template.
+---An icon's, bar's or text's style; keys added after it was saved read from its type's template.
 ---@param display table
 ---@return table
 function CDM:GetStyle(display)
+    local template = STYLE_TEMPLATES[display.type] or CDM.STYLE_TEMPLATE
     return setmetatable({}, {
         __index = function(_, key)
             local value = display.Style[key]
-            if value == nil then return CDM.STYLE_TEMPLATE[key] end
+            if value == nil then return template[key] end
             return value
         end,
     })
@@ -165,6 +303,22 @@ function CDM:GetIcons(groupId, into)
     for _, child in ipairs(self:GetChildren(groupId)) do
         if self:IsGroup(child.key) then
             self:GetIcons(child.key, into)
+        elseif not self:IsAuraGroup(child.key) then
+            into[#into + 1] = child.key
+        end
+    end
+    return into
+end
+
+---Every display under a group that draws something, icons and aura groups, in display order.
+---@param groupId string
+---@param into string[]?
+---@return string[]
+function CDM:GetLeaves(groupId, into)
+    into = into or {}
+    for _, child in ipairs(self:GetChildren(groupId)) do
+        if self:IsGroup(child.key) then
+            self:GetLeaves(child.key, into)
         else
             into[#into + 1] = child.key
         end
@@ -204,14 +358,14 @@ function CDM:GetRoots()
     return roots
 end
 
----A dynamic group holds icons only; a static group holds anything but itself or a group above it.
+---A dynamic group holds icons, bars and texts only; a static group holds anything but itself or a group above it.
 ---@param parentId string
 ---@param childId string
 ---@return boolean
 function CDM:CanContain(parentId, childId)
     local parent, child = self:Get(parentId), self:Get(childId)
-    if not (parent and child) or parentId == childId or parent.type == 'icon' then return false end
-    if parent.type == 'dynamicgroup' then return child.type == 'icon' end
+    if not (parent and child) or parentId == childId or not self:IsGroup(parentId) then return false end
+    if parent.type == 'dynamicgroup' then return CDM.LAYERED_TYPES[child.type] == true end
 
     for _, ancestor in ipairs(self:GetAncestors(parentId)) do
         if ancestor == childId then return false end
@@ -343,7 +497,7 @@ function CDM:CreateIcon(name, trigger, parentId)
         name = name,
         Enabled = true,
         Triggers = { trigger },
-        Conditions = {},
+        Conditions = { CDM:DesaturateOnCooldownCondition(1), CDM:ProcGlowCondition(1, DEFAULT_GLOW) },
         Style = CopyTable(CDM.STYLE_TEMPLATE),
         SubRegions = DefaultSubRegions(),
         Load = NRSKNUI.LoadConditions:GetDefaults(),
@@ -355,6 +509,169 @@ function CDM:CreateIcon(name, trigger, parentId)
     return id
 end
 
+---WeakAuras' bar defaults: a 1px border, a hidden glow, the name on the left and the time or value on the right.
+---@return table[]
+local function DefaultBarSubRegions()
+    return {
+        CDM:NewSubRegion('border'),
+        CDM:NewSubRegion('tick'),
+        CDM:NewSubRegion('text', { Text = '%n', FontSize = 12, Position = { AnchorFrom = 'AUTO', AnchorTo = 'LEFT', XOffset = 4, YOffset = 0 } }),
+        CDM:NewSubRegion('text', { Text = '%p', FontSize = 12, Position = { AnchorFrom = 'AUTO', AnchorTo = 'RIGHT', XOffset = -4, YOffset = 0 } }),
+    }
+end
+
+---@param name string
+---@param trigger table
+---@param parentId string?
+---@return string? id
+function CDM:CreateBar(name, trigger, parentId)
+    if not name or name == '' or not trigger then return nil end
+
+    local id = NextId()
+    local display = {
+        type = 'bar',
+        name = name,
+        Enabled = true,
+        Triggers = { trigger },
+        Conditions = trigger.Type == 'cast' and CDM:CastBarConditions(1) or {},
+        Style = CopyTable(CDM.BAR_STYLE_TEMPLATE),
+        SubRegions = DefaultBarSubRegions(),
+        Load = NRSKNUI.LoadConditions:GetDefaults(),
+    }
+    PlaceAt(display)
+    Store()[id] = display
+
+    if parentId then self:SetParent(id, parentId) end
+    return id
+end
+
+---WeakAuras' text region: one text, its frame sized to it. The text is the display's only sub element.
+---@param name string
+---@param trigger table
+---@param parentId string?
+---@return string? id
+function CDM:CreateText(name, trigger, parentId)
+    if not name or name == '' or not trigger then return nil end
+
+    local id = NextId()
+    local display = {
+        type = 'text',
+        name = name,
+        Enabled = true,
+        Triggers = { trigger },
+        Conditions = {},
+        Style = CopyTable(CDM.TEXT_STYLE_TEMPLATE),
+        SubRegions = { CDM:NewSubRegion('text', { FontSize = 20, Justify = 'LEFT' }) },
+        Load = NRSKNUI.LoadConditions:GetDefaults(),
+    }
+    PlaceAt(display)
+    Store()[id] = display
+
+    if parentId then self:SetParent(id, parentId) end
+    return id
+end
+
+local PowerType = Enum.PowerType
+-- The resource a class counts in points, as EllesmereUI's resource bars pick its secondary.
+local CLASS_RESOURCES = {
+    DEATHKNIGHT = PowerType.Runes,
+    PALADIN = PowerType.HolyPower,
+    ROGUE = PowerType.ComboPoints,
+    DRUID = PowerType.ComboPoints,
+    MONK = PowerType.Chi,
+    WARLOCK = PowerType.SoulShards,
+    MAGE = PowerType.ArcaneCharges,
+    EVOKER = PowerType.Essence,
+}
+CDM.CLASS_RESOURCES = CLASS_RESOURCES
+local RESOURCE_WIDTH, RESOURCE_HEIGHT = 240, 12
+
+---The class resource as one split bar, EllesmereUI's look: runes and Essence in Progress with a timer, other
+---resources Static, and a grey recharge for all. Nil for a class without one.
+---@param parentId string?
+---@return string? id
+function CDM:CreateResourceBar(parentId)
+    local powerType = CLASS_RESOURCES[NRSKNUI.MyClass]
+    if not powerType then return nil end
+    local recharges = powerType == PowerType.Runes or powerType == PowerType.Essence
+
+    local trigger = { Type = 'power', PowerType = powerType, Mode = recharges and 'progress' or 'static' }
+    local id = self:CreateBar(CDM.POWER_NAMES[powerType], trigger, parentId)
+    local bar = id and self:Get(id)
+    if not bar then return nil end
+    bar.Style.Width, bar.Style.Height = RESOURCE_WIDTH, RESOURCE_HEIGHT
+    bar.Style.BarColorMode = 'power'
+    bar.Style.IconShow = false
+    bar.SubRegions = {
+        self:NewSubRegion('border', { EachPip = true }),
+        self:NewSubRegion('text', { Text = '%p', FontSize = 10, EachPip = true, Enabled = recharges }),
+    }
+    -- Also for Static resources, so switching to Recharging Segments with a Progress Source already reads as unearned.
+    bar.Conditions = {
+        { check = { trigger = 1, variable = 'recharging', value = true }, changes = { { property = 'barColor', value = { 0.5, 0.5, 0.5, 1 } } } },
+    }
+    return id
+end
+
+---A tracker of many auras, starting from the shipped Defensives tracker's look, as the Auras page did.
+---@param name string
+---@param presetKey string? start from this aura preset instead of an empty trigger
+---@param parentId string?
+---@return string? id
+function CDM:CreateAuraGroup(name, presetKey, parentId)
+    if not name or name == '' then return nil end
+
+    local template = NRSKNUI:GetDefaultDB().profile.AuraDisplays['builtin:defensives']
+    local display = template and CopyTable(template) or {}
+    display.type = 'auragroup'
+    display.name = name
+    display.Enabled = true
+    display.group, display.order = nil, nil
+    display.Trigger = presetKey
+        and NRSKNUI.AuraTriggers:ToAuraFilter({ Type = NRSKNUI.AuraTriggers.Types.Preset, Preset = presetKey, Unit = 'player' })
+        or NRSKNUI.AuraTriggers:New()
+    display.Load = NRSKNUI.LoadConditions:GetDefaults()
+    PlaceAt(display)
+
+    local id = NextId()
+    Store()[id] = display
+    if parentId then self:SetParent(id, parentId) end
+    return id
+end
+
+---An Auras page tracker's settings as an aura group under `parentId`.
+---@param tracker table
+---@param parentId string?
+---@return table display
+local function FromTracker(tracker, parentId)
+    local display = CopyTable(tracker)
+    display.type = 'auragroup'
+    display.parent = parentId
+    display.group = nil
+    display.Load = display.Load or NRSKNUI.LoadConditions:GetDefaults()
+    if parentId and (display.anchorFrameType or 'UIPARENT') == 'UIPARENT' then
+        -- Inside a static group a screen anchor means the group's frame; a picked UIParent keeps it where it was.
+        display.anchorFrameType, display.ParentFrame = 'SELECTFRAME', 'UIParent'
+    end
+    return display
+end
+
+---Put a built-in aura group back to how it shipped, spells, layout and position included; it keeps its place in the tree.
+---@param id string
+function CDM:ResetBuiltin(id)
+    local display = self:Get(id)
+    local shipped = display and display.builtin and NRSKNUI:GetDefaultDB().profile.AuraDisplays[display.builtin]
+    if not shipped then return end
+
+    local reset = FromTracker(shipped, display.parent)
+    reset.builtin, reset.order, reset.Load = display.builtin, display.order, display.Load
+    reset.Trigger = NRSKNUI.AuraTriggers:ToAuraFilter({
+        Type = NRSKNUI.AuraTriggers.Types.Preset, Preset = BUILTIN_PRESETS[display.builtin], Unit = 'player',
+    })
+    wipe(display)
+    for key, value in pairs(reset) do display[key] = value end
+end
+
 ---@param id string
 ---@param parentId string?
 ---@return string newId
@@ -362,10 +679,26 @@ local function CopySubtree(id, parentId)
     local newId = NextId()
     local copy = CopyTable(Store()[id])
     copy.parent = parentId or copy.parent
+    copy.uid = CDM:NewUid()
+    copy.preferToUpdate = nil
     Store()[newId] = copy
 
     for _, child in ipairs(CDM:GetChildren(id)) do CopySubtree(child.key, newId) end
     return newId
+end
+
+---WeakAuras' naming: the first free "<name> N", the name taken without a number it already ends in.
+---@param name string
+---@return string
+local function CopyName(name)
+    local base = name:match('^(.-) %d+$') or name
+    local taken = {}
+    for _, display in pairs(Store()) do
+        if display.name then taken[display.name] = true end
+    end
+    local number = 1
+    while taken[format('%s %d', base, number)] do number = number + 1 end
+    return format('%s %d', base, number)
 end
 
 ---A copy beside the original; a group copies everything inside it.
@@ -377,8 +710,9 @@ function CDM:Duplicate(id)
 
     local newId = CopySubtree(id)
     local copy = self:Get(newId)
-    copy.name = format(L['%s (Copy)'], self:GetName(id))
+    copy.name = CopyName(self:GetName(id))
     copy.order = nil
+    copy.builtin = nil -- a copy of a built-in is the user's own
     if source.parent then self:MoveNextTo(newId, id, 'after') end
     return newId
 end
@@ -409,124 +743,365 @@ function CDM:Delete(id, keepChildren)
 
     self:Release(id)
     Store()[id] = nil
+    for _, other in pairs(Store()) do
+        if other.MatchWidth == id then other.MatchWidth = nil end
+    end
+end
+
+-- Copy settings --
+
+-- What a Display paste leaves alone: identity, tree placement and the other parts.
+local NOT_DISPLAY = {
+    type = true,
+    name = true,
+    parent = true,
+    order = true,
+    Enabled = true,
+    builtin = true,
+    uid = true,
+    preferToUpdate = true,
+    Description = true,
+    Triggers = true,
+    Activation = true,
+    DynamicTrigger = true,
+    Conditions = true,
+    Load = true,
+    Trigger = true, -- an aura group's one trigger
+}
+
+local PART_KEYS = {
+    trigger = { 'Triggers', 'Activation', 'DynamicTrigger', 'Trigger' },
+    conditions = { 'Conditions' },
+    load = { 'Load' },
+}
+
+---@param source table
+---@param target table
+---@param part string
+local function CopyPart(source, target, part)
+    local all = part == 'all'
+    if part == 'display' or part == 'group' or all then
+        for key in pairs(target) do
+            if not NOT_DISPLAY[key] and source[key] == nil then target[key] = nil end
+        end
+        for key, value in pairs(source) do
+            if not NOT_DISPLAY[key] then target[key] = type(value) == 'table' and CopyTable(value) or value end
+        end
+    end
+    for name, keys in pairs(PART_KEYS) do
+        if part == name or all then
+            for _, key in ipairs(keys) do
+                local value = source[key]
+                target[key] = type(value) == 'table' and CopyTable(value) or value
+            end
+        end
+    end
+end
+
+---Icon settings go onto an icon or every icon in a group, bar and text settings onto their own type; group settings only onto the same kind of group.
+---@param source table
+---@param id string
+---@return boolean
+function CDM:CanPasteSettings(source, id)
+    local target = self:Get(id)
+    if not target then return false end
+    if CDM.LAYERED_TYPES[source.type] then return target.type == source.type or self:IsGroup(id) end
+    return source.type == target.type
+end
+
+---Paste a part of a copied display (`all`, `display`, `group`, `trigger`, `conditions`, `load`) onto another.
+---@param source table a snapshot from the time it was copied
+---@param id string
+---@param part string
+function CDM:PasteSettings(source, id, part)
+    if not self:CanPasteSettings(source, id) then return end
+
+    if CDM.LAYERED_TYPES[source.type] and self:IsGroup(id) then
+        for _, iconId in ipairs(self:GetIcons(id)) do
+            local target = self:Get(iconId)
+            if target.type == source.type then CopyPart(source, target, part) end
+        end
+    else
+        CopyPart(source, self:Get(id), part)
+    end
+end
+
+---Desaturate while on cooldown, a condition every new icon starts with.
+---@param triggerIndex number
+---@return table
+function CDM:DesaturateOnCooldownCondition(triggerIndex)
+    return {
+        check = { trigger = triggerIndex, variable = 'onCooldown', value = true },
+        changes = { { property = 'desaturate', value = true } },
+    }
+end
+
+---@param triggerIndex number
+---@param variable string
+---@param color number[]
+---@return table
+local function CastColorCheck(triggerIndex, variable, color)
+    return {
+        check = { trigger = triggerIndex, variable = variable, value = true },
+        changes = { { property = 'barColor', value = color } },
+    }
+end
+
+---A new cast bar's state colours: channels, a finished cast, an interrupted or failed one.
+---@param triggerIndex number
+---@return table[]
+function CDM:CastBarConditions(triggerIndex)
+    local failed = CastColorCheck(triggerIndex, 'interrupted', { 0.85, 0.25, 0.25, 1 })
+    failed.check = {
+        variable = 'OR',
+        checks = {
+            { trigger = triggerIndex, variable = 'interrupted', value = true },
+            { trigger = triggerIndex, variable = 'failed',      value = true },
+        },
+    }
+    return {
+        CastColorCheck(triggerIndex, 'channeling', { 0.35, 0.75, 0.45, 1 }),
+        CastColorCheck(triggerIndex, 'succeeded', { 0.3, 0.8, 0.3, 1 }),
+        failed,
+    }
+end
+
+---Blizzard's proc glow while the spell is lit up, on by default.
+---@param triggerIndex number
+---@return table
+---@param glowIndex number the glow sub element it shows
+function CDM:ProcGlowCondition(triggerIndex, glowIndex)
+    return {
+        check = { trigger = triggerIndex, variable = 'proc', value = true },
+        changes = { { property = 'sub.' .. glowIndex .. '.visible', value = true } },
+    }
 end
 
 -- Migration --
 
----@param target table
----@param source table?
-local function Overlay(target, source)
-    if not source then return end
-    for key, value in pairs(source) do
-        target[key] = type(value) == 'table' and CopyTable(value) or value
+---The Auras page's trackers become aura groups, its folders plain Groups holding them.
+---@param db table profile.CDM
+local function MigrateAuraDisplays(db)
+    local profile = NRSKNUI.db.profile
+    local AuraDisplay = NRSKNUI:GetModule('AuraDisplay')
+    local store = db.Displays
+
+    local groups = {}
+    for groupKey, group in pairs(profile.AuraDisplayGroups or {}) do
+        local folder = { type = 'group', name = group.name or groupKey, Enabled = true, Icon = group.Icon }
+        PlaceAt(folder)
+        folder.Strata = group.Strata
+        local id = NextId()
+        store[id] = folder
+        groups[groupKey] = id
     end
+
+    -- A profile with its own General Buffs tracker keeps that one rather than gaining the newer built-in beside it.
+    local ownNames = {}
+    for key, tracker in pairs(profile.AuraDisplays or {}) do
+        if not BUILTIN_PRESETS[key] then ownNames[tracker.name or key] = true end
+    end
+
+    local anyEnabled = false
+    for key in pairs(profile.AuraDisplays or {}) do
+        local skip = key == 'builtin:generalBuffs' and ownNames[profile.AuraDisplays[key].name]
+        local tracker = not skip and AuraDisplay:Get(key) -- seeds a built-in's preset trigger on an old save
+        if tracker then
+            local display = FromTracker(tracker, tracker.group and groups[tracker.group] or nil)
+            display.builtin = BUILTIN_PRESETS[key] and key or nil
+            anyEnabled = anyEnabled or display.Enabled == true
+            store[NextId()] = display
+        end
+    end
+
+    db.AurasMerged = true -- the Auras page and its module stand down for this profile
+    if anyEnabled then db.Enabled = true end
 end
 
--- The icon style before schema 2, which held the two texts and the border itself.
-local LEGACY_STYLE = {
-    Size = 40,
-    BorderColor = { 0, 0, 0, 1 },
-    ShowCountdown = true,
-    UseGlobalFont = true,
-    FontFace = 'Expressway',
-    FontOutline = 'OUTLINE',
-    FontShadow = { Enabled = false, Color = { 0, 0, 0, 1 }, OffsetX = 1, OffsetY = -1 },
-    CountdownFont = { FontSize = 16, Position = { AnchorFrom = 'CENTER', XOffset = 0, YOffset = 0 } },
-    ChargeFont = { FontSize = 13, Position = { AnchorFrom = 'BOTTOMRIGHT', XOffset = -1, YOffset = 2 } },
-}
+-- Style keys a lone aura's old Active conditions stood in for.
+local AURA_STYLE_KEYS = { desaturate = 'Desaturate', color = 'Color', swipe = 'DrawSwipe', inverse = 'Reverse', edge = 'DrawEdge', swipeColor = 'SwipeColor' }
+-- The old Active changes an overlay keeps for its Aura Icon.
+local OVERLAY_KEYS = { color = 'auraColor', desaturate = 'auraDesaturate', swipe = 'auraSwipe' }
 
----Schema 1: groups became dynamic groups, styles moved onto the icons, groups lost their own load.
+---@param value any
+---@return any
+local function Copy(value)
+    return type(value) == 'table' and CopyTable(value) or value
+end
+
+---An aura alone is the icon; with other triggers it becomes an Aura Overlay. Its old Active changes (conditions,
+---or v9's AuraLook) fold into the style, or become the overlay's While Up changes so it looks the same.
 ---@param db table profile.CDM
-local function MigrateToOne(db)
+local function MigrateAuraOverlays(db)
     for _, display in pairs(db.Displays) do
-        if display.type == 'group' and display.Layout then display.type = 'dynamicgroup' end
-    end
+        local triggers = display.Triggers
+        if triggers then
+            local looks = {} -- [trigger index] = { active = {}, pandemic = {} }
+            local function Look(index)
+                looks[index] = looks[index] or { active = {}, pandemic = {} }
+                return looks[index]
+            end
 
-    for _, display in pairs(db.Displays) do
-        if display.type == 'icon' then
-            local parent = display.parent and db.Displays[display.parent]
-            local style = CopyTable(LEGACY_STYLE)
-            Overlay(style, db.Style)
-            Overlay(style, parent and parent.Style)
-            Overlay(style, display.Style)
-            display.Style = style
+            local kept, breakChain = {}, false
+            for _, condition in ipairs(display.Conditions or {}) do
+                local check = condition.check or {}
+                local variable = check.variable
+                local trigger = check.trigger and check.trigger > 0 and triggers[check.trigger]
+                if trigger and trigger.Type == 'aura' and (variable == 'active' or variable == 'pandemic') then
+                    if check.value ~= false then
+                        local set = Look(check.trigger)[variable]
+                        for _, change in ipairs(condition.changes or {}) do
+                            if change.property and change.property ~= 'sound' then set[change.property] = change.value end
+                        end
+                    end
+                    -- It never matched, so an Else If chained only to it was always checked on its own.
+                    if not condition.linked then breakChain = true end
+                else
+                    if breakChain and condition.linked then condition.linked = nil end
+                    breakChain = false
+                    kept[#kept + 1] = condition
+                end
+            end
+            display.Conditions = kept
 
-            local parentLoad = parent and parent.Load
-            if parentLoad and parentLoad.Enabled and not (display.Load and display.Load.Enabled) then
-                display.Load = CopyTable(parentLoad)
+            local subRegions = display.SubRegions or {}
+            display.SubRegions = subRegions
+            local solo = #triggers == 1
+            for index, trigger in ipairs(triggers) do
+                if trigger.Type == 'aura' then
+                    local look = Look(index)
+                    local old = trigger.AuraLook
+                    if old then
+                        for key, value in pairs(old.active or {}) do look.active[key] = value end
+                        for key, value in pairs(old.pandemic or {}) do look.pandemic[key] = value end
+                        if old.pandemicColor then look.pandemic.pandemicColor = old.pandemicColor end
+                    end
+
+                    local changes = {}
+                    if trigger.ShowAs == 'glow' then
+                        subRegions[#subRegions + 1] = CDM:NewSubRegion('glow', trigger.Glow)
+                        if solo then
+                            subRegions[#subRegions].Enabled = true
+                        else
+                            changes[1] = { property = 'sub.' .. #subRegions .. '.visible', value = true }
+                        end
+                    elseif solo then
+                        display.Style = display.Style or {}
+                        for property, key in pairs(AURA_STYLE_KEYS) do
+                            if look.active[property] ~= nil then display.Style[key] = Copy(look.active[property]) end
+                        end
+                        for key, value in pairs(look.active) do
+                            local n, name = key:match('^sub%.(%d+)%.(%a+)$')
+                            local element = n and subRegions[tonumber(n)]
+                            if element and name == 'visible' then
+                                element.Enabled = value
+                            elseif element and name == 'color' then
+                                element.Color = Copy(value)
+                            end
+                        end
+                    else
+                        changes[1] = { property = 'auraIcon', value = true }
+                        for property, key in pairs(OVERLAY_KEYS) do
+                            if look.active[property] ~= nil then changes[#changes + 1] = { property = key, value = Copy(look.active[property]) } end
+                        end
+                        for n, element in ipairs(subRegions) do
+                            if element.type == 'glow' or element.type == 'text' then
+                                local visible = look.active['sub.' .. n .. '.visible']
+                                if visible == nil then visible = element.Enabled end
+                                -- The base draws its own shown glows above the overlay already.
+                                if visible and not (element.type == 'glow' and element.Enabled) then
+                                    changes[#changes + 1] = { property = 'sub.' .. n .. '.visible', value = true }
+                                end
+                                local color = look.active['sub.' .. n .. '.color']
+                                if color then changes[#changes + 1] = { property = 'sub.' .. n .. '.color', value = Copy(color) } end
+                            end
+                        end
+                    end
+                    if changes[1] then
+                        kept[#kept + 1] = { check = { trigger = index, variable = 'active', value = true }, changes = changes }
+                    end
+
+                    local pandemic = {}
+                    for key, value in pairs(look.pandemic) do pandemic[#pandemic + 1] = { property = key, value = Copy(value) } end
+                    if pandemic[1] then
+                        kept[#kept + 1] = { check = { trigger = index, variable = 'pandemic', value = true }, changes = pandemic }
+                    end
+
+                    trigger.ShowAs, trigger.Glow, trigger.AuraLook = nil, nil, nil
+                    if not solo then trigger.Type = 'auraoverlay' end
+                end
             end
         end
     end
-
-    for _, display in pairs(db.Displays) do
-        if display.type ~= 'icon' then
-            display.Style = nil
-            display.Load = nil
-        end
-    end
-    db.Style = nil
 end
 
----@param style table schema 1 icon style
----@param fontKey string
----@param text string
----@param enabled boolean
----@return table
-local function LegacyText(style, fontKey, text, enabled)
-    local font = style[fontKey] or LEGACY_STYLE[fontKey]
-    return CDM:NewSubRegion('text', {
-        Enabled = enabled,
-        Text = text,
-        UseGlobalFont = style.UseGlobalFont,
-        FontFace = style.FontFace,
-        FontOutline = style.FontOutline,
-        FontShadow = style.FontShadow,
-        FontSize = font.FontSize,
-        Position = font.Position,
-    })
-end
-
----Schema 2: the two texts and the border became sub elements, size split into width and height.
+---Use Spell Icon leaves the trigger: a lone aura takes the spell's icon as its Manual Icon, an overlay as its While Up Aura Icon Texture.
 ---@param db table profile.CDM
-local function MigrateToTwo(db)
+local function MigrateSpellIcons(db)
     for _, display in pairs(db.Displays) do
-        if display.type == 'icon' then
-            local old = setmetatable(display.Style or {}, { __index = LEGACY_STYLE })
-            display.SubRegions = {
-                LegacyText(old, 'CountdownFont', '%p', old.ShowCountdown ~= false),
-                LegacyText(old, 'ChargeFont', '%s', true),
-                CDM:NewSubRegion('border', { Color = old.BorderColor }),
-            }
-
-            local style = CopyTable(CDM.STYLE_TEMPLATE)
-            for key in pairs(style) do
-                if rawget(old, key) ~= nil then style[key] = old[key] end
+        for index, trigger in ipairs(display.Triggers or {}) do
+            local spellID = trigger.UseSpellIcon and CDM:GetTriggerSpell(trigger)
+            local texture = spellID and C_Spell.GetSpellTexture(spellID)
+            if texture and trigger.Type == 'aura' then
+                display.Style = display.Style or {}
+                if display.Style.IconSource ~= 'manual' then display.Style.IconSource, display.Style.ManualIcon = 'manual', texture end
+            elseif texture and trigger.Type == 'auraoverlay' then
+                for _, condition in ipairs(display.Conditions or {}) do
+                    local check = condition.check
+                    if check and check.trigger == index and check.variable == 'active' then
+                        condition.changes[#condition.changes + 1] = { property = 'auraTexture', value = texture }
+                        break
+                    end
+                end
             end
-            style.Width, style.Height = old.Size, old.Size
-            style.HideCountdown = true
-            display.Style = style
+            trigger.UseSpellIcon = nil
         end
     end
 end
 
----Schema 3: one trigger became an ordered list, the first active one shown.
+-- The old fixed stack, bottom first: borders, glows, texts; with an overlay the texts went under it.
+local STACK_RANK = { tick = 0, border = 1, glow = 2, text = 3 }
+local OVERLAY_STACK_RANK = { tick = 0, text = 1, border = 2, glow = 3 }
+
+---Sub elements now draw in list order, so each list is reordered into the stack it used to draw in.
 ---@param db table profile.CDM
-local function MigrateToThree(db)
+local function MigrateDrawOrder(db)
     for _, display in pairs(db.Displays) do
-        if display.type == 'icon' then
-            display.Triggers = { display.Trigger }
-            display.Trigger = nil
+        local list = display.SubRegions
+        if list and list[1] and display.Triggers then
+            local overlays = {}
+            for _, trigger in ipairs(display.Triggers) do
+                if trigger.Type == 'auraoverlay' then overlays[#overlays + 1] = trigger end
+            end
+            local rank = overlays[1] and OVERLAY_STACK_RANK or STACK_RANK
+            local order = {}
+            for n in ipairs(list) do order[n] = n end
+            tsort(order, function(a, b)
+                local ra, rb = rank[list[a].type] or 0, rank[list[b].type] or 0
+                if ra ~= rb then return ra < rb end
+                return a < b
+            end)
+            local sorted, newIndex, texts = {}, {}, 0
+            for position, old in ipairs(order) do
+                sorted[position] = list[old]
+                newIndex[old] = position
+                if list[old].type == 'text' then texts = texts + 1 end
+            end
+            display.SubRegions = sorted
+            CDM:RemapConditionSubRegions(display, function(n) return newIndex[n] end)
+            for _, trigger in ipairs(overlays) do trigger.Slot = texts end
         end
     end
 end
 
+---Steps from 13 on must only read db.Displays: imports migrate a bare { Version, Displays } table.
 ---@param db table profile.CDM
 function CDM:Migrate(db)
     local version = db.Version or 0
     if version >= SCHEMA_VERSION then return end
-
-    if version < 1 then MigrateToOne(db) end
-    if version < 2 then MigrateToTwo(db) end
-    if version < 3 then MigrateToThree(db) end
+    if version < 8 then MigrateAuraDisplays(db) end
+    if version < 10 then MigrateAuraOverlays(db) end
+    if version < 11 then MigrateSpellIcons(db) end
+    if version < 12 then MigrateDrawOrder(db) end
     db.Version = SCHEMA_VERSION
 end

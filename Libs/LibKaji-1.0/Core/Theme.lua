@@ -115,6 +115,7 @@ local DEFAULT_THEME = {
     checkTexture            = MEDIA .. "ok-iconBlack.tga",
     crossTexture            = MEDIA .. "cross-small.png",
     crossCustomTexture      = MEDIA .. "NorskenCustomCross.png",
+    plusTexture             = MEDIA .. "NorskenCustomCrossv3.png",
     stepperTexture          = MEDIA .. "collapse.tga",
     colorSwatchTexture      = MEDIA .. "NUIcolorPickerBG.png",
     resizeHandleTexture     = MEDIA .. "NorskenCustomResizeHandle23px.png",

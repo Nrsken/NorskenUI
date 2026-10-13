@@ -338,6 +338,51 @@ Premade.Presets = {
         },
     },
     {
+        key = 'preset:generalBuffs',
+        name = L['General Buffs'],
+        spellField = 'includeSpellIDs',
+        spells = {
+            {
+                group = 'BLOODLUST',
+                ids = {
+                    2825,    -- Bloodlust
+                    32182,   -- Heroism
+                    80353,   -- Time Warp
+                    390386,  -- Fury of the Aspects
+                    466904,  -- Harrier's Cry
+                    1243972, -- Void-touched Drums
+                }
+            },
+            {
+                group = 'EXTERNALS',
+                ids = {
+                    10060, -- Power Infusion
+                    29166, -- Innervate
+                }
+            },
+            {
+                group = 'RACIALS',
+                ids = {
+                    26297, -- Berserking
+                }
+            },
+            {
+                group = 'OTHER',
+                ids = {
+                    271107,  -- Golden Luster
+                    431932,  -- Tempered Potion
+                    1236994, -- Potion of Recklessness
+                    1250533, -- Freightrunner's Flask
+                    1293316, -- Empowering Venom
+                    1297761, -- Voracious Heart of Ula'tek
+                }
+            },
+        },
+        branches = {
+            { type = Filters.Helpful },
+        },
+    },
+    {
         key = 'preset:healerhots',
         name = L['Healer HoTs'],
         spellField = 'includeSpellIDs',

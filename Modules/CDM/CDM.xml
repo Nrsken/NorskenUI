@@ -3,7 +3,16 @@
 
     <Script file="CDM.lua" />
     <Script file="Store.lua" />
+    <Script file="Transfer.lua" />
     <Script file="Catalogue.lua" />
     <Script file="Icon.lua" />
     <Script file="Triggers.lua" />
+    <Script file="Bar.lua" />
+    <Script file="Cast.lua" />
+    <Script file="Stat.lua" />
+    <Script file="ViewerBar.lua" />
+    <Script file="Glow.lua" />
+    <Script file="ChainGroup.lua" />
+    <Script file="Conditions.lua" />
+    <Script file="AuraGroup.lua" />
 </Ui>

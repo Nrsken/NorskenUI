@@ -32,7 +32,7 @@ GUIFrame.SidebarConfig = {
         {
             id = 'cooldownManager',
             type = 'item',
-            text = L['Cooldown Manager'],
+            text = L['Cooldown & Aura Manager'],
         },
         {
             id = 'global_section',

@@ -27,6 +27,25 @@ local PowerColorSpecs = {
     { key = 13, label = _G.INSANITY },
     { key = 17, label = _G.FURY },
     { key = 18, label = _G.PAIN },
+    { key = 4,  label = L['Combo Points'] },
+    { key = 9,  label = L['Holy Power'] },
+    { key = 7,  label = L['Soul Shards'] },
+    { key = 12, label = L['Chi'] },
+    { key = 16, label = L['Arcane Charges'] },
+    { key = 19, label = L['Essence'] },
+    { key = 5,  label = L['Runes'] },
+}
+
+local RuneColorSpecs = {
+    { key = 1, label = L['Blood'] },
+    { key = 2, label = L['Frost'] },
+    { key = 3, label = L['Unholy'] },
+}
+
+local StaggerColorSpecs = {
+    { key = 1, label = L['Light Stagger'] },
+    { key = 2, label = L['Moderate Stagger'] },
+    { key = 3, label = L['Heavy Stagger'] },
 }
 
 local ReactionColorSpecs = {}
@@ -64,8 +83,10 @@ local formatOptions = {
     { key = '%0.1fs', text = L['Tenths with s (2.4s)'] },
     { key = '%d',     text = L['Seconds (7)'] },
     { key = '%ds',    text = L['Seconds with s (7s)'] },
+    { key = NRSKNUI.MINUTES_SECONDS_FORMAT, text = L['Minutes and Seconds (2:10)'] },
     { key = '%dm',    text = L['Minutes (3m)'] },
     { key = '%dh',    text = L['Hours (2h)'] },
+    { key = '%dd',    text = L['Days (3d)'] },
 }
 
 -- Aura buttons are built once by the game, so formatter edits only show after a reload.
@@ -80,6 +101,8 @@ local ColorCategories = {
     { type = 'label', key = 'colors', text = L['Colors'] },
     { key = 'Class',    text = L['Class'],    title = L['Class Colors'],    specs = ClassColorSpecs },
     { key = 'Power',    text = L['Power'],    title = L['Power Colors'],    specs = PowerColorSpecs },
+    { key = 'Runes',    text = L['Runes'],    title = L['Rune Colors'],     specs = RuneColorSpecs },
+    { key = 'Stagger',  text = L['Stagger'],  title = L['Stagger Colors'],  specs = StaggerColorSpecs },
     { key = 'Reaction', text = L['Reaction'], title = L['Reaction Colors'], specs = ReactionColorSpecs },
     { key = 'Status',   text = L['Status'],   title = L['Status Colors'],   specs = StatusColorSpecs, storeAlpha = true },
     { key = 'Dispel',   text = L['Dispel'],   title = L['Dispel Colors'],   specs = DispelColorTypes, storeAlpha = true },
@@ -408,6 +431,7 @@ local POINTS = {
     { key = 'pointThree', color = 'colorThree' },
     { key = 'pointFour',  color = 'colorFour' },
     { key = 'pointFive',  color = 'colorFive' },
+    { key = 'pointSix',   color = 'colorSix' },
 }
 
 local COLOR_MODES = {
@@ -419,17 +443,18 @@ local COLOR_MODES = {
 local RADIO_ROW_HEIGHT = 32
 local TABLE_ROW_HEIGHT = 32
 local FIELD_TOP = 14 -- label-less fields still leave their label strip empty, lift them into it
-local SECONDS_PER_UNIT = { s = 1, m = 60, h = 3600 }
+local SECONDS_PER_UNIT = { s = 1, m = 60, h = 3600, d = 86400 }
 
 local function FormatSeconds(seconds)
+    if seconds >= 86400 and seconds % 86400 == 0 then return (seconds / 86400) .. 'd' end
     if seconds >= 3600 and seconds % 3600 == 0 then return (seconds / 3600) .. 'h' end
     if seconds >= 60 and seconds % 60 == 0 then return (seconds / 60) .. 'm' end
     return seconds .. 's'
 end
 
--- Accepts whole seconds with an optional s/m/h unit: 90, 90s, 5m, 1h.
+-- Accepts whole seconds with an optional s/m/h/d unit: 90, 90s, 5m, 1h, 1d.
 local function ParseSeconds(text)
-    local num, unit = text:lower():match('^%s*(%d+)%s*([smh]?)%s*$')
+    local num, unit = text:lower():match('^%s*(%d+)%s*([smhd]?)%s*$')
     if not num then return end
     return tonumber(num) * SECONDS_PER_UNIT[unit ~= '' and unit or 's']
 end
@@ -443,7 +468,7 @@ local function TooltipFiller(title, body)
 end
 
 local startTooltip = TooltipFiller(L['Start Time'],
-    L['Kicks in when this much time is left. Type 90, 5m or 1h.'])
+    L['Kicks in when this much time is left. Type 90, 5m, 1h or 1d.'])
 
 local function BuildDurationTextPage(page, db)
     local points = db.profileBreakPoints
@@ -479,7 +504,8 @@ local function BuildDurationTextPage(page, db)
         end
         local color = db.durationSingleColor and db.durationSingleColorValue
             or (db.durationCurveColors and db.profileColorCurve or db.profileColorBreakPoint)[POINTS[i].color]
-        return CreateColor(unpack(color)):WrapTextInColorCode(format(fmt, value))
+        local text = fmt == NRSKNUI.MINUTES_SECONDS_FORMAT and format(fmt, floor(value / 60), value % 60) or format(fmt, value)
+        return CreateColor(unpack(color)):WrapTextInColorCode(text)
     end
 
     local function RefreshExamples()

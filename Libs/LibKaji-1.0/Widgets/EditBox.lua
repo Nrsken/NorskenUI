@@ -104,7 +104,7 @@ function EditBoxMixin:OnAcquire(parent, labelText, config)
     self.editBox:EnableMouse(true)
     self.editBox:EnableKeyboard(true)
 
-    lib.SetTooltip(self, self.gui, labelText, config.tooltip)
+    lib.SetTooltip(self, self.gui, labelText, config.tooltip, config.tooltipBeside and { owner = self.container, beside = true } or nil)
 
     self:SetAlpha(1)
     self:UpdateColors()
@@ -134,6 +134,7 @@ end
 ---@field onTextChanged? fun(text: string) fires on every keystroke the user types
 ---@field autoFocus? boolean
 ---@field tooltip? any
+---@field tooltipBeside? boolean the tooltip opens to the right of the input box instead of at the cursor
 ---@field inlineLabel? boolean Place the label left of the box instead of above it.
 ---@field labelWidth? number Width reserved for an inline label.
 

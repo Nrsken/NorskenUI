@@ -321,7 +321,7 @@ end
 ---@return KajiGUIFluentCard
 local function BuildContainerCard(page, trigger, ctx, apply, show, changed)
     local card
-    card = page:Card(ctx.title):Rebuild(function(c)
+    card = page:Card(ctx.title, ctx.group):Rebuild(function(c)
         local index = Picked(trigger)
         local options = {}
         for i = 1, #trigger.branches do
@@ -449,10 +449,11 @@ end
 ---@param trigger table
 ---@param apply fun()
 ---@param retype fun() after the aura type changed, which the container card names
+---@param group string? the page condition group its widgets join
 ---@return KajiGUIFluentCard
-local function BuildTriggerCard(page, trigger, apply, retype)
+local function BuildTriggerCard(page, trigger, apply, retype, group)
     local card
-    card = page:Card(format(L['Trigger %d'], Picked(trigger))):Rebuild(function(c)
+    card = page:Card(format(L['Trigger %d'], Picked(trigger)), group):Rebuild(function(c)
         local index = Picked(trigger)
         local branch = trigger.branches[index]
         local function Changed()
@@ -500,7 +501,7 @@ end
 
 ---@param page table
 ---@param trigger table
----@param ctx { title: string, showUnit?: boolean, onChange: fun() }
+---@param ctx { title: string, group?: string, showUnit?: boolean, onChange: fun() }
 function TriggerEditor:Build(page, trigger, ctx)
     AuraTriggers:ConvertSpellIDs(trigger)
     AuraTriggers:ConvertPreset(trigger)
@@ -525,5 +526,5 @@ function TriggerEditor:Build(page, trigger, ctx)
     end
 
     containerCard = BuildContainerCard(page, trigger, ctx, Apply, Show, Changed)
-    triggerCard = BuildTriggerCard(page, trigger, Apply, function() containerCard:Rebuild() end)
+    triggerCard = BuildTriggerCard(page, trigger, Apply, function() containerCard:Rebuild() end, ctx.group)
 end

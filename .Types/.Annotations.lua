@@ -248,6 +248,7 @@ local Frame
 ---@field UpdateAllAuras fun(self: NUIAuraContainer)
 ---@field UpdateUnitGate fun(self: NUIAuraContainer): boolean
 ---@field ApplyLayout fun(self: NUIAuraContainer, config: table)
+---@field SetEnabled fun(self: NUIAuraContainer, enabled: boolean) Blizzard_AuraContainer.lua AuraContainerSharedMixin
 
 ---@class NUIAuraHostFrame : Frame
 ---@field container NUIAuraContainer?

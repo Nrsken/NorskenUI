@@ -1341,10 +1341,16 @@ function ACB:OnEnable()
     NRSKNUI:RunWhenSafe(function()
         self:BuildConfigTable()
 
-        -- Delay skinning until after Blizzard's initial setup to ensure all elements exist
-        C_Timer.After(0.5, function()
+        if NRSKNUI.enteredWorld then
+            -- Enabled later from the options: Blizzard's setup is long done.
             self:InitializeBars()
-        end)
+        else
+            -- Blizzard's bars are set up by then, and a reload in combat enters lockdown right after it.
+            self:RegisterEvent('PLAYER_ENTERING_WORLD', function()
+                self:UnregisterEvent('PLAYER_ENTERING_WORLD')
+                NRSKNUI:RunWhenSafe(function() self:InitializeBars() end)
+            end)
+        end
     end)
 end
 
@@ -1889,8 +1895,9 @@ end
 -- Apply all settings, standard module interface
 function ACB:ApplySettings()
     if NRSKNUI:ShouldNotLoadModule() then return end
-    NRSKNUI:RunWhenSafe(function()
-        C_Timer.After(0.1, function()
+    -- Checked when the delay ends: a reload in combat enters lockdown in between.
+    C_Timer.After(0.1, function()
+        NRSKNUI:RunWhenSafe(function()
             self:HideBlizzardBars()
 
             -- Rebuild config with new profile settings

@@ -69,6 +69,12 @@
 ---@field spareStatic Frame[]
 ---@field spareDynamic NRSKNUI.DynamicGroup[]
 ---@field STYLE_TEMPLATE table
+---@field BAR_STYLE_TEMPLATE table
+---@field BAR_ELAPSED number Enum.StatusBarTimerDirection.ElapsedTime
+---@field BAR_REMAINING number Enum.StatusBarTimerDirection.RemainingTime
+---@field POWER_TYPES table[] power trigger choices, { value, text }
+---@field IsPreviewingLayer fun(layer: CDMLayer): boolean
+---@field PreviewDuration fun(layer: CDMLayer, length: number): LuaDurationObject
 ---@field Catalogue CDMCatalogue
 ---@field TriggerTypes table<string, { IsKnown: fun(trigger: table): boolean, Resolve: fun(frame: CDMIcon, trigger: table), Update: fun(frame: CDMIcon, style: table) }>
 ---@field preview table<string, number> icon id -> preview level (1 selected, 2 pinned)

@@ -76,6 +76,25 @@ local Defaults = {
                 [13] = { 0.4, 0, 0.8 },            -- Insanity
                 [17] = { 0.788, 0.259, 0.992 },    -- Fury
                 [18] = { 1, 0.61176470588235, 0 }, -- Pain
+                [4] = { 1, 0.96, 0.41 },           -- Combo Points
+                [5] = { 0.5, 0.5, 0.5 },           -- Runes
+                [7] = { 0.5, 0.32, 0.55 },         -- Soul Shards
+                [9] = { 0.95, 0.9, 0.6 },          -- Holy Power
+                [12] = { 0.71, 1, 0.92 },          -- Chi
+                [16] = { 0.1, 0.1, 0.98 },         -- Arcane Charges
+                [19] = { 0.392, 0.678, 0.808 },    -- Essence (oUF's, Blizzard has none)
+            },
+            -- oUF's rune colors per Death Knight spec: Blood, Frost, Unholy.
+            Runes = {
+                [1] = { 0.969, 0.255, 0.224 },
+                [2] = { 0.580, 0.796, 0.969 },
+                [3] = { 0.678, 0.922, 0.259 },
+            },
+            -- Blizzard's PowerBarColor.STAGGER: light, moderate, heavy.
+            Stagger = {
+                [1] = { 0.52, 1, 0.52 },
+                [2] = { 1, 0.98, 0.72 },
+                [3] = { 1, 0.42, 0.42 },
             },
             -- Original reaction colors from blizzard's FACTION_BAR_COLORS table.
             Reaction = {
@@ -133,10 +152,11 @@ local Defaults = {
             durationSingleColor = false,
             profileBreakPoints = {
                 pointOne = { threshold = 0, step = 0.1, format = '%0.1f', },
-                pointTwo = { threshold = 3, step = 1, format = '%d', },
-                pointThree = { threshold = 10, step = 1, format = '%d', },
-                pointFour = { threshold = 60, format = '%dm', },
+                pointTwo = { threshold = 1, step = 1, format = '%d', },
+                pointThree = { threshold = 60, format = '%d:%02d', },
+                pointFour = { threshold = 600, format = '%dm', },
                 pointFive = { threshold = 3600, format = '%dh', },
+                pointSix = { threshold = 86400, format = '%dd', },
             },
             profileColorCurve = {
                 colorOne = { 1, 0.25, 0.25, 1 },
@@ -144,6 +164,7 @@ local Defaults = {
                 colorThree = { 1.00, 0.75, 0.20, 1 },
                 colorFour = { 1.00, 0.95, 0.70, 1 },
                 colorFive = { 1.00, 0.95, 0.70, 1 },
+                colorSix = { 1.00, 0.95, 0.70, 1 },
             },
             profileColorBreakPoint = {
                 colorOne = { 1, 0.25, 0.25, 1 },
@@ -151,6 +172,7 @@ local Defaults = {
                 colorThree = { 1, 1, 1, 1 },
                 colorFour = { 1, 1, 1, 1 },
                 colorFive = { 1, 1, 1, 1 },
+                colorSix = { 1, 1, 1, 1 },
             },
             durationSingleColorValue = { 1, 1, 1, 1 },
             -- Blizzard Fonts
@@ -2639,6 +2661,7 @@ local Defaults = {
         CDM = {
             Enabled = false,
             HideBlizzard = false,
+            HidePlayerCastBar = false,
             AnchorMinWidth = 0,
             TrinketBlacklist = {}, -- [itemID] = true, trinkets whose on-use isn't worth tracking
             Version = 0,
@@ -2647,7 +2670,9 @@ local Defaults = {
 
         -- Optional headers the display list groups user displays under. Created on demand from the
         -- display's right-click menu and dropped again once nothing points at them.
-        AuraDisplayGroups = {},
+        AuraDisplayGroups = {
+            ['group:general'] = { name = "General Trackers", Icon = 4548871, Strata = "HIGH" },
+        },
 
         -- Standalone aura displays, all run by the one AuraDisplay module. Built-ins are seeded
         -- here; a user's own land beside them under a 'user:' key and are otherwise identical.
@@ -2655,6 +2680,8 @@ local Defaults = {
             ['builtin:advancedDebuffs'] = {
                 name = "Advanced Debuffs",
                 Enabled = true,
+                group = 'group:general',
+                Icon = 1396978,
                 size = 50,
                 perRow = 6,
                 maxFrameCount = 6,
@@ -2712,6 +2739,8 @@ local Defaults = {
             ['builtin:defensives'] = {
                 name = "Defensives",
                 Enabled = true,
+                group = 'group:general',
+                Icon = 132360,
                 size = 50,
                 perRow = 6,
                 maxFrameCount = 6,
@@ -2762,9 +2791,66 @@ local Defaults = {
                     YOffset = 40
                 },
             },
+            ['builtin:generalBuffs'] = {
+                name = "General Buffs",
+                Enabled = true,
+                group = 'group:general',
+                Icon = 4374707,
+                size = 36,
+                perRow = 1,
+                maxFrameCount = 10,
+                previewLimit = 5,
+                elementSpacing = 1,
+                lineSpacing = 1,
+                horizontalGrowthDirection = "LEFT",
+                verticalGrowthDirection = "UP",
+                sortMethod = "AuraInstanceIDOnly",
+                sortDirection = "Normal",
+                showApplicationCount = true,
+                showDurationText = true,
+                drawSwipe = false,
+                drawEdge = false,
+                reverseSwipe = true,
+                tooltipHideInCombat = false,
+                UseGlobalFont = true,
+                FontFace = "Expressway",
+                FontOutline = "OUTLINE",
+                StackFont = {
+                    FontSize = 12,
+                    Position = {
+                        AnchorFrom = "BOTTOMRIGHT",
+                        XOffset = 0,
+                        YOffset = 2
+                    },
+                },
+                DurationFont = {
+                    FontSize = 14,
+                    Position = {
+                        AnchorFrom = "CENTER",
+                        XOffset = 0,
+                        YOffset = 0
+                    },
+                },
+                FontShadow = {
+                    Enabled = false,
+                    Color = { 0, 0, 0, 1 },
+                    OffsetX = 1,
+                    OffsetY = -1,
+                },
+                anchorFrameType = "SELECTFRAME",
+                ParentFrame = "NUF_Target",
+                Position = {
+                    AnchorFrom = "BOTTOMRIGHT",
+                    AnchorTo = "TOPLEFT",
+                    XOffset = -30,
+                    YOffset = 120
+                },
+            },
             ['builtin:speed'] = {
                 name = "Speed",
                 Enabled = true,
+                group = 'group:general',
+                Icon = 648208,
                 size = 42,
                 perRow = 6,
                 maxFrameCount = 6,

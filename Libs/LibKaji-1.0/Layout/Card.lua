@@ -329,6 +329,55 @@ function CardMixin:GetNextOffset()
     return self._yOffset + self:GetContentHeight() + self.gui.theme.paddingSmall
 end
 
+---An icon action at the right end of the header, tinted in the accent; nil removes it.
+---@param config? { atlas?: string, texture?: string|number, size?: number, rotation?: number, tooltip?: string, onClick: fun() }
+function CardMixin:SetHeaderButton(config)
+    local button = self.headerButton
+    if not config then
+        if button then
+            button:Hide()
+            button._onClick = nil
+            lib.ClearTooltip(button)
+        end
+        return
+    end
+    if not button then
+        button = CreateFrame("Button", nil, self.header)
+        local icon = button:CreateTexture(nil, "ARTWORK")
+        icon:SetAllPoints()
+        pixel.SetPixelSnap(icon)
+        button.icon = icon
+        button:SetScript("OnEnter", function(b)
+            b.icon:SetAlpha(1)
+            lib.ShowTooltip(b)
+        end)
+        button:SetScript("OnLeave", function(b)
+            b.icon:SetAlpha(0.7)
+            lib.HideTooltip()
+        end)
+        button:SetScript("OnClick", function(b) if b._onClick then safecall(b._onClick) end end)
+        self.headerButton = button
+    end
+
+    local size = config.size or 16
+    button:ClearAllPoints()
+    pixel.SetPixelSize(button, size, size)
+    pixel.SetPixelPoint(button, "RIGHT", self.header, "RIGHT", -self.gui.theme.paddingMedium, 0)
+    if config.atlas then
+        button.icon:SetAtlas(config.atlas, false)
+    else
+        button.icon:SetTexture(config.texture)
+        button.icon:SetTexCoord(0, 1, 0, 1) -- an atlas leaves its texcoords behind
+    end
+    button.icon:SetRotation(config.rotation or 0)
+    button.icon:SetDesaturated(true)
+    button.icon:SetAlpha(0.7)
+    button._onClick = config.onClick
+    lib.SetTooltip(button, self.gui, config.tooltip)
+    self:UpdateColors()
+    button:Show()
+end
+
 ---Only the card's own chrome. Rows and widgets are acquired in their own right, so the
 ---theme fire reaches them directly rather than being recursed into from here.
 function CardMixin:UpdateColors()
@@ -336,6 +385,7 @@ function CardMixin:UpdateColors()
     lib.RefreshBackdrop(self)
     lib.RefreshBackdrop(self.header)
     self.titleText:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
+    if self.headerButton then self.headerButton.icon:SetVertexColor(theme.accent[1], theme.accent[2], theme.accent[3]) end
     for _, tick in ipairs(self.cornerTicks) do
         tick:SetColorTexture(theme.accent[1], theme.accent[2], theme.accent[3], theme.cardCornerAlpha)
     end
@@ -391,6 +441,7 @@ end
 
 function CardMixin:OnRelease()
     self:Reset()
+    self:SetHeaderButton(nil)
     wipe(self._anims)
     if self._driver then self._driver:SetScript("OnUpdate", nil) end
     self._onHeightChanged = nil
@@ -556,10 +607,18 @@ function RowMixin:LayoutWidgets(width)
     local x = self._indent
     width = width - x
     local count = #self.widgets
+    -- An even row takes its shares from the width left after the gaps, so equal shares come out equally wide;
+    -- otherwise each widget starts at its share of the full width, which keeps columns lined up across rows.
+    local gaps = 0
+    if self._even then
+        for i, widget in ipairs(self.widgets) do
+            if i < count then gaps = gaps + (widget._spacing or pad) end
+        end
+    end
 
     for i, widget in ipairs(self.widgets) do
         local spacing = (i == count) and 0 or (widget._spacing or pad)
-        local widgetWidth = width * widget._widthPct - spacing
+        local widgetWidth = self._even and (width - gaps) * widget._widthPct or width * widget._widthPct - spacing
         widget:ClearAllPoints()
         pixel.SetPixelPoint(widget, "TOPLEFT", self, "TOPLEFT", x + (widget._xOffset or 0), widget._yOffset or 0)
         pixel.SetPixelWidth(widget, widgetWidth)
@@ -629,6 +688,7 @@ function RowMixin:OnRelease()
     self._card = nil
     self._rowHeight = 24
     self._indent = 0
+    self._even = nil
     self._layoutHeight = nil
     self._layoutSpacing = nil
     self._layoutOffsetY = nil

@@ -4,6 +4,7 @@
 * Premade card for a module's load conditions:
 * an enable toggle plus a compact category selector (Instance / Group / Combat / Role / Position / Zone), each category showing its own set of checkboxes.
 * Zone takes a map ID list (g/c/i prefixes, - to leave one out); its tooltip lists this season's instances and where you stand.
+* `specs = true` adds Spec (specIDs, every class) and Talent (a TalentTree for the one picked spec, picks stored per spec).
 * Toggling enable or switching category changes the visible rows, so the card rebuilds in place (no full page refresh).
 
 ## Examples
@@ -18,10 +19,17 @@
 local lib = LibStub and LibStub("LibKaji-1.0", true)
 if not lib then return end
 
+local TALENT_SECTIONS = { main = "Class & Spec Talents", apex = "Apex Talents", hero = "Hero Talents" }
+local SPEC_ROW_HEIGHT = 30
+local SPEC_ICON_SIZE = 24
+local SPEC_CLASS_WIDTH = 0.26
+local SPEC_ICON_WIDTH = 0.08
+
 lib.premadeCards = lib.premadeCards or {}
 
 local ipairs = ipairs
 local pairs = pairs
+local next = next
 local tostring = tostring
 local sformat = string.format
 local C_Timer = C_Timer
@@ -75,6 +83,19 @@ local function HasAnyEnabled(tbl)
     return false
 end
 
+---@param db table
+---@return number? specID the only spec picked, which the Talent category needs
+local function SingleSpec(db)
+    local single
+    for specID, enabled in pairs(db.Spec and db.Spec.Types or {}) do
+        if enabled then
+            if single then return nil end
+            single = specID
+        end
+    end
+    return single
+end
+
 local function IsCategoryActive(db, category)
     if category == "Instance" then
         return HasAnyEnabled(db.Instance and db.Instance.Types)
@@ -88,6 +109,11 @@ local function IsCategoryActive(db, category)
         return HasAnyEnabled(db.Position and db.Position.Types)
     elseif category == "Zone" then
         return db.Zone ~= nil and db.Zone.MapIDs ~= nil and db.Zone.MapIDs:find("%d") ~= nil
+    elseif category == "Spec" then
+        return HasAnyEnabled(db.Spec and db.Spec.Types)
+    elseif category == "Talent" then
+        local spec = SingleSpec(db)
+        return spec ~= nil and next(db.Talent and db.Talent.Specs and db.Talent.Specs[spec] or {}) ~= nil
     end
     return false
 end
@@ -100,6 +126,8 @@ local function GetActiveCount(db)
     if IsCategoryActive(db, "Role") then count = count + 1 end
     if IsCategoryActive(db, "Position") then count = count + 1 end
     if IsCategoryActive(db, "Zone") then count = count + 1 end
+    if IsCategoryActive(db, "Spec") then count = count + 1 end
+    if IsCategoryActive(db, "Talent") then count = count + 1 end
     return count
 end
 
@@ -219,8 +247,8 @@ local function FillZoneTooltip(tooltip, theme)
 end
 
 ---A category only marks itself when it carries conditions.
-local function BuildCategoryOptions(db)
-    return {
+local function BuildCategoryOptions(db, specs)
+    local options = {
         { key = "Instance", text = "Instance", indicator = IsCategoryActive(db, "Instance") and GREEN or nil },
         { key = "Group",    text = "Group",    indicator = IsCategoryActive(db, "Group") and GREEN or nil },
         { key = "Combat",   text = "Combat",   indicator = IsCategoryActive(db, "Combat") and GREEN or nil },
@@ -228,6 +256,31 @@ local function BuildCategoryOptions(db)
         { key = "Position", text = "Position", indicator = IsCategoryActive(db, "Position") and GREEN or nil },
         { key = "Zone",     text = "Zone",     indicator = IsCategoryActive(db, "Zone") and GREEN or nil },
     }
+    if specs then
+        options[#options + 1] = { key = "Spec", text = "Spec", indicator = IsCategoryActive(db, "Spec") and GREEN or nil }
+        options[#options + 1] = { key = "Talent", text = "Talent", indicator = IsCategoryActive(db, "Talent") and GREEN or nil }
+    end
+    return options
+end
+
+---Every class with its specs, the player's class first.
+---@return { name: string, color: string, specs: { id: number, name: string, icon: number }[] }[]
+local function ClassSpecs()
+    local classes = {}
+    local _, _, playerClassID = UnitClass("player")
+    for classID = 1, GetNumClasses() do
+        local info = C_CreatureInfo.GetClassInfo(classID)
+        if info then
+            local color = C_ClassColor.GetClassColor(info.classFile)
+            local entry = { name = info.className, color = color and color:GenerateHexColor() or "ffffffff", specs = {} }
+            for index = 1, C_SpecializationInfo.GetNumSpecializationsForClassID(classID) do
+                local specID, name, _, icon = GetSpecializationInfoForClassID(classID, index)
+                if specID then entry.specs[#entry.specs + 1] = { id = specID, name = name, icon = icon } end
+            end
+            if classID == playerClassID then table.insert(classes, 1, entry) else classes[#classes + 1] = entry end
+        end
+    end
+    return classes
 end
 
 ---Load conditions card with a compact category selector.
@@ -250,6 +303,10 @@ lib.premadeCards.LoadConditionsCard = {
         db.Role = db.Role or { Types = {} }
         db.Position = db.Position or { Types = {} }
         db.Zone = db.Zone or {}
+        if config.specs then
+            db.Spec = db.Spec or { Types = {} }
+            db.Talent = db.Talent or { Specs = {} }
+        end
 
         local function fireChange()
             if onChange then onChange() end
@@ -321,7 +378,7 @@ lib.premadeCards.LoadConditionsCard = {
         if isEnabled then
             mainRow:Dropdown("Category", {
                 width = 0.5,
-                options = BuildCategoryOptions(db),
+                options = BuildCategoryOptions(db, config.specs),
                 value = selectedCategory,
                 callback = function(value)
                     db.SelectedCategory = value
@@ -341,12 +398,101 @@ lib.premadeCards.LoadConditionsCard = {
                 local isLastRow = i + 1 >= #INSTANCE_TYPES
                 AddCheckRow(instanceDb.Types, INSTANCE_TYPES[i], INSTANCE_TYPES[i + 1], isLastRow)
             end
+        elseif selectedCategory == "Spec" and config.specs then
+            local types = db.Spec.Types
+            local shortcuts = card:Row(30)
+            shortcuts:Button("Select My Class", {
+                width = 0.5,
+                height = 24,
+                callback = function()
+                    local _, _, classID = UnitClass("player")
+                    for index = 1, C_SpecializationInfo.GetNumSpecializationsForClassID(classID) do
+                        local specID = GetSpecializationInfoForClassID(classID, index)
+                        if specID then types[specID] = true end
+                    end
+                    fireChange()
+                    ScheduleRebuild()
+                end,
+            })
+            shortcuts:Button("Clear", {
+                width = 0.5,
+                height = 24,
+                callback = function()
+                    for specID in pairs(types) do types[specID] = nil end
+                    fireChange()
+                    ScheduleRebuild()
+                end,
+            })
+
+            card:Separator()
+
+            -- Each class a row of spec icons: picked ones in full colour on an accent border, like the talent tree.
+            local classes = ClassSpecs()
+            for classIndex, class in ipairs(classes) do
+                local isLast = classIndex == #classes
+                local row = isLast and card:Row(SPEC_ROW_HEIGHT + 4, 0) or card:Row(SPEC_ROW_HEIGHT)
+                row:Text(nil, {
+                    width = SPEC_CLASS_WIDTH,
+                    height = SPEC_ROW_HEIGHT,
+                    text = sformat("|c%s%s|r", class.color, class.name),
+                    bgMode = "hide",
+                })
+                for _, spec in ipairs(class.specs) do
+                    local picked = types[spec.id] == true
+                    row:Icon({
+                        width = SPEC_ICON_WIDTH,
+                        size = SPEC_ICON_SIZE,
+                        texture = spec.icon,
+                        dimmed = not picked,
+                        borderColor = picked and theme.accent or nil,
+                        tooltipTitle = sformat("|c%s%s|r", class.color, spec.name),
+                        tooltip = picked and "Loads in this spec. Click to remove it." or "Click to load in this spec.",
+                        onClick = function()
+                            types[spec.id] = not picked or nil
+                            fireChange()
+                            ScheduleRebuild()
+                        end,
+                    })
+                end
+            end
+        elseif selectedCategory == "Talent" and config.specs then
+            local spec = SingleSpec(db)
+            if not spec then
+                card:Row(theme.rowHeightLast, 0):Text(nil, { width = 1, text = "Pick exactly one spec under Spec to filter by talents.", bgMode = "hide" })
+                return
+            end
+            db.Talent.Specs[spec] = db.Talent.Specs[spec] or {}
+            local picks = db.Talent.Specs[spec]
+            local width = card.real and card.real.content and card.real.content:GetWidth() or 0
+            if width <= 0 then width = 400 end -- the card hasn't been laid out yet
+            for _, section in ipairs(lib.TalentTreeSections(spec)) do
+                card:Separator(TALENT_SECTIONS[section], { useLabel = true, centered = true, height = 20, spacing = 10 })
+                card:Row(lib.TalentTreeHeight(spec, width, section)):Widget("TalentTree", nil, {
+                    width = 1,
+                    specID = spec,
+                    section = section,
+                    entries = picks,
+                    onChange = fireChange,
+                })
+            end
+
+            card:Separator()
+            card:Row(30, 0):Button("Clear", {
+                width = 1,
+                height = 24,
+                callback = function()
+                    for entryID in pairs(picks) do picks[entryID] = nil end
+                    fireChange()
+                    ScheduleRebuild()
+                end,
+            })
         elseif selectedCategory == "Zone" then
             local zoneDb = db.Zone
             card:Row(theme.rowHeight):EditBox("Map IDs", {
                 width = 1,
                 value = zoneDb.MapIDs or "",
                 tooltip = function(tooltip) FillZoneTooltip(tooltip, theme) end,
+                tooltipBeside = true,
                 callback = function(text)
                     zoneDb.MapIDs = text
                     fireChange()

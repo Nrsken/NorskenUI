@@ -45,7 +45,8 @@ function NRSKNUI:SetupGameMenuButton()
                 local text = menuButton:GetText()
                 if text == MACROS or (text == GAMEMENU_SUPPORT and not anchor) then anchor = menuButton end
             end
-            if not anchor then
+            -- A secure frame anchored to the menu protects it, and resizing it is blocked in combat.
+            if not anchor or (InCombatLockdown() and menu:IsProtected()) then
                 button:Hide()
                 return
             end

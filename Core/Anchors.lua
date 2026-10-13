@@ -397,9 +397,9 @@ local function OnDragStart(overlay)
     dragCursorX, dragCursorY = dragCursorX / scale, dragCursorY / scale
 
     dragRatio = scale / UIParent:GetEffectiveScale()
-    local left, bottom, width, height = frame:GetRect()
-    dragCenterX = left and (left + width / 2) * dragRatio or 0
-    dragCenterY = bottom and (bottom + height / 2) * dragRatio or 0
+    local left, bottom, width, height = NRSKNUI:ScrubSecrets(frame:GetRect()) -- a text display's size turns secret with its text
+    dragCenterX = left and width and (left + width / 2) * dragRatio or 0
+    dragCenterY = bottom and height and (bottom + height / 2) * dragRatio or 0
 
     dragDBX, dragDBY = Anchors:GetOffsets(entry.key)
     dragDeltaX, dragDeltaY = 0, 0

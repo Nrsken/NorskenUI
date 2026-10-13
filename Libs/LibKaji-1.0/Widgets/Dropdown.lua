@@ -8,8 +8,11 @@
 * The dropdown can be populated with:
 * - a simple key -> text table
 * - an array of strings
-* - an array of {value/key, text, color?, valueColor?, tooltip?, indicator?}
-*   (`valueColor` tints the chosen value on the closed button only, not its line in the list)
+* - an array of {value/key, text, color?, valueColor?, tooltip?, indicator?, spellID?, header?}
+*   (`header` makes the option an unselectable group title, and indents the options under it;
+*   `action` fires the callback without the option ever showing as the selected value;
+*   `valueColor` tints the chosen value on the closed button only, not its line in the list;
+*   `spellID` shows the game's spell tooltip beside the open list while the option is hovered)
 * `itemActions(value)` adds small icon buttons to the right of each option (rename, delete, ...).
 
 * The value-changed callback fires only after the close animation finishes,
@@ -47,7 +50,7 @@ local LSM = LibStub("LibSharedMedia-3.0", true)
 local tostring = tostring
 local CreateFrame = CreateFrame
 local type = type
-local ipairs, pairs = ipairs, pairs
+local ipairs, pairs, next = ipairs, pairs, next
 local wipe = wipe
 local abs = math.abs
 local max, min = math.max, math.min
@@ -65,6 +68,7 @@ local GetAtlasInfo = C_Texture and C_Texture.GetAtlasInfo
 local WIDGET_TYPE = "Dropdown"
 local DROPDOWN_HEIGHT = 24
 local ITEM_HEIGHT = 24
+local HEADER_INDENT = 10
 local MAX_DROPDOWN_HEIGHT = 400
 local SEARCH_BOX_HEIGHT = 24
 local SEARCH_PADDING = 6
@@ -397,7 +401,10 @@ local function NormalizeOptions(row, options)
     row._optionColors = {}
     row._valueColors = {}
     row._optionTooltips = {}
+    row._optionSpells = {}
     row._optionIndicators = {}
+    row._optionHeaders = {}
+    row._optionActions = {}
     row._orderedKeys = nil
     if type(options) ~= "table" then return end
 
@@ -410,7 +417,10 @@ local function NormalizeOptions(row, options)
             -- Colours the value on the closed button only; the open list keeps its own colours.
             if opt.valueColor then row._valueColors[optKey] = opt.valueColor end
             if opt.tooltip then row._optionTooltips[optKey] = opt.tooltip end
+            if opt.spellID then row._optionSpells[optKey] = opt.spellID end
             if opt.indicator then row._optionIndicators[optKey] = opt.indicator end
+            if opt.header then row._optionHeaders[optKey] = true end
+            if opt.action then row._optionActions[optKey] = true end
             tinsert(row._orderedKeys, optKey)
         end
     elseif options[1] ~= nil and type(options[1]) == "string" then
@@ -488,7 +498,7 @@ DropdownMixin.SetOptions = DropdownMixin.UpdateOptions
 -- Constructor --
 
 ---@class KajiGUIDropdownConfig
----@field options? table key→text, array of strings, or array of {value/key, text, color?, tooltip?, indicator?}
+---@field options? table key→text, array of strings, or array of {value/key, text, color?, tooltip?, indicator?, spellID?}
 ---@field media? "font"|"statusbar"|"sound"|"border"|"background" auto-populate + preview from LSM; explicit options are kept in front
 ---@field value? any
 ---@field callback? fun(value: any)
@@ -870,7 +880,9 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         local searchLower = strlower(tostring(searchText or ""))
         for _, key in ipairs(sortedKeys) do
             local haystack = strlower(tostring(row._normalizedOptions[key] or key or ""))
-            if searchLower == "" or strfind(haystack, searchLower, 1, true) then
+            if row._optionHeaders[key] then
+                if searchLower == "" then tinsert(filteredKeys, key) end
+            elseif searchLower == "" or strfind(haystack, searchLower, 1, true) then
                 tinsert(filteredKeys, key)
                 if not firstVisibleKey then firstVisibleKey = key end
             end
@@ -904,8 +916,10 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
             return
         end
 
-        row._currentValue = value
-        ApplySelected(value)
+        if not row._optionActions[value] then
+            row._currentValue = value
+            ApplySelected(value)
+        end
         row._pendingValue = value
         row._hasPending = true
         CloseDropdown()
@@ -916,6 +930,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         wipe(row._itemButtons)
 
         BuildFilteredKeys()
+        local grouped = next(row._optionHeaders) ~= nil and (searchText or "") == ""
 
         for i, key in ipairs(filteredKeys) do
             local displayText = row._normalizedOptions[key]
@@ -940,6 +955,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
                 HideSwatch(btn._previewBar)
             end
 
+            local isHeader = row._optionHeaders[key]
             local optionColor = row._optionColors and row._optionColors[key]
             local indicatorColor = row._optionIndicators and row._optionIndicators[key]
 
@@ -959,30 +975,44 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
                     btn._text:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
                 end
             end
-            btn._updateState = UpdateItemState
-            UpdateItemState()
-
-            btn:SetScript("OnClick", function() SelectValue(btn._itemValue) end)
-            btn:SetScript("OnEnter", function(self)
-                self._hoverTarget = 1
-                self._text:SetTextColor(theme.textPrimary[1], theme.textPrimary[2], theme.textPrimary[3], 1)
-                local tooltip = row._optionTooltips[self._itemValue]
-                -- A name cut short by its swatch or actions shows in full, even without a tooltip.
-                if tooltip or self._text:IsTruncated() then
-                    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                    GameTooltip:ClearLines()
-                    GameTooltip:AddLine(self._itemText or self._itemValue, accent[1], accent[2], accent[3], false)
-                    if tooltip then
-                        GameTooltip:AddLine(tooltip, theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], true)
-                    end
-                    GameTooltip:Show()
-                end
-            end)
-            btn:SetScript("OnLeave", function(self)
-                self._hoverTarget = 0
+            if isHeader then
+                btn._indicator:Hide()
+                btn._text:SetTextColor(accent[1], accent[2], accent[3], accent[4] or 1)
+            else
+                btn._updateState = UpdateItemState
                 UpdateItemState()
-                GameTooltip:Hide()
-            end)
+
+                btn:SetScript("OnClick", function() SelectValue(btn._itemValue) end)
+                btn:SetScript("OnEnter", function(self)
+                    self._hoverTarget = 1
+                    self._text:SetTextColor(theme.textPrimary[1], theme.textPrimary[2], theme.textPrimary[3], 1)
+                    local tooltip = row._optionTooltips[self._itemValue]
+                    local spellID = row._optionSpells[self._itemValue]
+                    if spellID then
+                        -- Beside the list rather than over it, level with the hovered option.
+                        local list = row._dropdownList
+                        GameTooltip:SetOwner(self, "ANCHOR_NONE")
+                        GameTooltip:ClearAllPoints()
+                        GameTooltip:SetPoint("TOPLEFT", self, "TOPRIGHT", (list:GetRight() or 0) - (self:GetRight() or 0) + 2, 0)
+                        GameTooltip:SetSpellByID(spellID)
+                        GameTooltip:Show()
+                    -- A name cut short by its swatch or actions shows in full, even without a tooltip.
+                    elseif tooltip or self._text:IsTruncated() then
+                        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                        GameTooltip:ClearLines()
+                        GameTooltip:AddLine(self._itemText or self._itemValue, accent[1], accent[2], accent[3], false)
+                        if tooltip then
+                            GameTooltip:AddLine(tooltip, theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], true)
+                        end
+                        GameTooltip:Show()
+                    end
+                end)
+                btn:SetScript("OnLeave", function(self)
+                    self._hoverTarget = 0
+                    UpdateItemState()
+                    GameTooltip:Hide()
+                end)
+            end
 
             local actions = row._itemActions and row._itemActions(key)
             local actionCount = actions and #actions or 0
@@ -1008,7 +1038,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
                 action:Show()
             end
             btn._text:ClearAllPoints()
-            pixel.SetPixelPoint(btn._text, "LEFT", btn, "LEFT", 8, 0)
+            pixel.SetPixelPoint(btn._text, "LEFT", btn, "LEFT", 8 + (grouped and not isHeader and HEADER_INDENT or 0), 0)
             if swatched then
                 pixel.SetPixelPoint(btn._text, "RIGHT", btn._previewBar._backing, "LEFT", -SWATCH_GAP, 0)
             else
@@ -1191,6 +1221,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     row._setSelectedPlaceholder = function()
         selectedText:SetText("Select...")
         gui:ApplyFont(selectedText, "normal")
+        PaintValue()
         FitSelectedSwatch(nil)
     end
 

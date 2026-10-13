@@ -42,6 +42,7 @@
     <Script file="Widgets\Text.lua" />
     <Script file="Widgets\SortableStack.lua" />
     <Script file="Widgets\Icon.lua" />
+    <Script file="Widgets\TalentTree.lua" />
     <Script file="Widgets\AnchorPicker.lua" />
 
     <!-- Premade cards -->

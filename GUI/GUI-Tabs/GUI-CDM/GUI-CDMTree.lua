@@ -8,12 +8,17 @@ local GetCursorPosition = GetCursorPosition
 local InCombatLockdown = InCombatLockdown
 local GameTooltip = GameTooltip
 local UIParent = UIParent
-local ipairs = ipairs
+local ipairs, pairs, next = ipairs, pairs, next
 local wipe = wipe
+local IsShiftKeyDown, IsControlKeyDown = IsShiftKeyDown, IsControlKeyDown
+local mmin = math.min
 local strtrim = strtrim
 local strlower = string.lower
 local strfind = string.find
+local format = string.format
 local mmax = math.max
+local floor = math.floor
+local tremove = table.remove
 local C_Timer = C_Timer
 local pi = math.pi
 
@@ -34,6 +39,9 @@ local DOT_SIZE = 8
 local DISABLED_ALPHA = 0.45
 local DRAG_SOURCE_ALPHA = 0.35
 local ACCENT_BAR_WIDTH = 2
+local HOVER_DURATION = 0.12
+local EXPAND_DURATION = 0.2
+local COLLAPSE_DURATION = 0.15
 
 -- collapse.tga points down at rotation 0.
 local ARROW_UP, ARROW_LEFT = pi, -pi / 2
@@ -55,6 +63,7 @@ local STATE_TEXT = {
 ---@field inUse boolean
 ---@field bg Texture
 ---@field hoverBg Texture
+---@field hoverTarget number
 ---@field selectedBg Texture
 ---@field dropFill Texture
 ---@field accentBar Texture
@@ -64,6 +73,7 @@ local STATE_TEXT = {
 ---@field down CDMTreeSmallButton
 ---@field iconBorder Texture
 ---@field icon Texture
+---@field canvas Frame the drawn picture, shown instead of icon when the display has one
 ---@field title FontString
 ---@field expand CDMTreeSmallButton
 ---@field state CDMTreeSmallButton
@@ -137,8 +147,12 @@ local function CreateTree(gui, parent, opts)
     local tree = {
         frame = frame,
         selected = nil,
+        picked = {},  -- [key] = true, every selected row; ctrl and shift click add to it
+        rowKeys = {}, -- [key] = true, every display row, collapsed ones included
+        order = {},   -- drawn row keys top to bottom, for shift click ranges
         leaves = {},
         search = '',
+        anims = {}, -- [key] = { p, from, to, t, duration }, a group or section opening or closing
     }
 
     -- Toolbar --
@@ -211,7 +225,7 @@ local function CreateTree(gui, parent, opts)
 
     local rowPool, activeRows = {}, {}
     local sectionPool, activeSections = {}, {}
-    local BeginDrag, EndRename
+    local BeginDrag, EndRename, FadeHover
 
     -- Rows --
 
@@ -219,7 +233,7 @@ local function CreateTree(gui, parent, opts)
     local function ApplyRowState(row)
         local data = row.data
         local alpha = data.enabled and 1 or DISABLED_ALPHA
-        local selected = data.key == tree.selected
+        local selected = data.key == tree.selected or tree.picked[data.key]
         if selected then
             row.accentBar:SetColorTexture(theme.accent[1], theme.accent[2], theme.accent[3], 1)
             row.accentBar:Show()
@@ -230,7 +244,24 @@ local function CreateTree(gui, parent, opts)
             local c = row:IsMouseOver() and theme.textPrimary or theme.textSecondary
             row.title:SetTextColor(c[1], c[2], c[3], alpha)
         end
-        row:SetAlpha(tree.drag and tree.drag.key == data.key and DRAG_SOURCE_ALPHA or 1)
+        local dragged = tree.drag and tree.drag.moving[data.key]
+        row:SetAlpha(dragged and DRAG_SOURCE_ALPHA or tree.locked and DISABLED_ALPHA or 1)
+    end
+
+    ---@param row CDMTreeRow
+    ---@param elapsed number
+    local function StepHover(row, elapsed)
+        local current, step = row.hoverBg:GetAlpha(), elapsed / HOVER_DURATION
+        local alpha = row.hoverTarget > current and mmin(current + step, 1) or mmax(current - step, 0)
+        row.hoverBg:SetAlpha(alpha)
+        if alpha == row.hoverTarget then row:SetScript('OnUpdate', nil) end
+    end
+
+    ---@param row CDMTreeRow
+    ---@param target number
+    function FadeHover(row, target)
+        row.hoverTarget = target
+        row:SetScript('OnUpdate', StepHover)
     end
 
     ---@return CDMTreeRow
@@ -245,7 +276,8 @@ local function CreateTree(gui, parent, opts)
 
         row.hoverBg = row:CreateTexture(nil, 'BACKGROUND', nil, 1)
         row.hoverBg:SetColorTexture(1, 1, 1, 0.05)
-        row.hoverBg:Hide()
+        row.hoverBg:SetAlpha(0)
+        row.hoverTarget = 0
 
         row.selectedBg = row:CreateTexture(nil, 'BACKGROUND', nil, 1)
         row.selectedBg:Hide()
@@ -285,6 +317,11 @@ local function CreateTree(gui, parent, opts)
         row.icon:NUISetPixelPoint('CENTER', row.iconBorder, 'CENTER', 0, 0)
         row.icon:SetTexCoord(ICON_CROP, 1 - ICON_CROP, ICON_CROP, 1 - ICON_CROP)
 
+        -- A display's WeakAuras-style picture (a mini bar, a group's blocks), drawn over the icon square.
+        row.canvas = CreateFrame('Frame', nil, row)
+        row.canvas:NUISetPixelSize(ICON_SIZE - 2, ICON_SIZE - 2)
+        row.canvas:NUISetPixelPoint('CENTER', row.iconBorder, 'CENTER', 0, 0)
+
         row.title = row:CreateFontString(nil, 'OVERLAY')
         row.title:SetJustifyH('LEFT')
         row.title:SetWordWrap(false)
@@ -292,8 +329,7 @@ local function CreateTree(gui, parent, opts)
         row.expand = SmallButton(row, MEDIA .. 'plus-sign.png', SMALL_BUTTON - 2)
         row.expand:SetScript('OnClick', function()
             local data = row.data
-            tree.sd.onToggleExpanded(data.key, not data.expanded)
-            tree:Render()
+            tree:ToggleExpanded(data.key, not data.expanded)
         end)
 
         row.state = SmallButton(row, MEDIA .. 'whiteCircle.png', DOT_SIZE)
@@ -303,8 +339,8 @@ local function CreateTree(gui, parent, opts)
         row.eye:SetScript('OnClick', function() tree.sd.onTogglePreview(row.data.key) end)
 
         row:SetScript('OnEnter', function(self)
-            self.hoverBg:Show()
-            if self.data.key ~= tree.selected then
+            FadeHover(self, 1)
+            if self.data.key ~= tree.selected and not tree.picked[self.data.key] then
                 self.accentBar:SetColorTexture(theme.accent[1], theme.accent[2], theme.accent[3], Kaji.HOVER_BAR_ALPHA)
                 self.accentBar:Show()
             end
@@ -318,23 +354,36 @@ local function CreateTree(gui, parent, opts)
             end
         end)
         row:SetScript('OnLeave', function(self)
-            self.hoverBg:Hide()
+            FadeHover(self, 0)
             ApplyRowState(self)
             HideTooltip()
         end)
         row:SetScript('OnClick', function(self, button)
+            local key = self.data.key
             if button == 'RightButton' then
-                if tree.sd.onContextMenu then tree.sd.onContextMenu(self.data.key, self.data) end
+                if tree.locked then return end
+                local picked = tree:GetPicked()
+                if tree.picked[key] and #picked > 1 and tree.sd.onMultiContextMenu then
+                    tree.sd.onMultiContextMenu(picked)
+                elseif tree.sd.onContextMenu then
+                    tree.sd.onContextMenu(key, self.data)
+                end
+                return
+            end
+            -- WeakAuras' multi select, from a display that is already selected.
+            local anchor = tree.rowKeys[tree.selected] and tree.selected
+            if anchor and IsShiftKeyDown() then
+                tree:PickRange(anchor, key)
+                return
+            elseif anchor and IsControlKeyDown() then
+                tree:TogglePick(key)
                 return
             end
             -- Clicking the selected row again clears the selection, back to the new-display page.
-            tree:Select(self.data.key ~= tree.selected and self.data.key or tree.generalKey)
-        end)
-        row:SetScript('OnDoubleClick', function(self, button)
-            if button == 'LeftButton' then tree:BeginRename(self.data.key) end
+            tree:Select(key ~= tree.selected and key or tree.generalKey)
         end)
         row:SetScript('OnDragStart', function(self)
-            if self.data.draggable and tree.sd.onMove then BeginDrag(self) end
+            if self.data.draggable and tree.sd.onMove and not tree.locked then BeginDrag(self) end
         end)
 
         return row
@@ -342,12 +391,8 @@ local function CreateTree(gui, parent, opts)
 
     ---@param row CDMTreeRow
     ---@param data table
-    ---@param y number
-    local function ConfigureRow(row, data, y)
+    local function ConfigureRow(row, data)
         row.data = data
-        row:ClearAllPoints()
-        row:NUISetPixelPoint('TOPLEFT', scrollChild, 'TOPLEFT', 0, -y)
-        row:NUISetPixelPoint('TOPRIGHT', scrollChild, 'TOPRIGHT', 0, -y)
 
         local child = data.depth > 0
         local left = child and data.depth * CHILD_INDENT or 1
@@ -372,8 +417,9 @@ local function CreateTree(gui, parent, opts)
             row.up:NUISetPixelPoint('TOPLEFT', row.bg, 'TOPLEFT', 0, 0)
             row.ungroup:NUISetPixelPoint('LEFT', row.bg, 'LEFT', 0, 0)
             row.down:NUISetPixelPoint('BOTTOMLEFT', row.bg, 'BOTTOMLEFT', 0, 0)
-            row.up:SetEnabled(data.canMoveUp == true)
-            row.down:SetEnabled(data.canMoveDown == true)
+            row.up:SetEnabled(not tree.locked and data.canMoveUp == true)
+            row.down:SetEnabled(not tree.locked and data.canMoveDown == true)
+            row.ungroup:SetEnabled(not tree.locked)
             if not data.canMoveUp then row.up.tex:SetVertexColor(muted[1], muted[2], muted[3], 0.4) end
             if not data.canMoveDown then row.down.tex:SetVertexColor(muted[1], muted[2], muted[3], 0.4) end
             row.iconBorder:NUISetPixelPoint('LEFT', row.bg, 'LEFT', ARROW_SIZE + 2, 0)
@@ -384,6 +430,10 @@ local function CreateTree(gui, parent, opts)
         row.icon:SetTexture(data.icon or 134400)
         row.icon:SetDesaturated(not data.enabled)
         row.icon:SetAlpha(data.enabled and 1 or DISABLED_ALPHA)
+        local drawn = data.draw ~= nil and data.draw(row.canvas, ICON_SIZE - 2) == true
+        row.canvas:SetShown(drawn)
+        row.canvas:SetAlpha(data.enabled and 1 or DISABLED_ALPHA)
+        row.icon:SetShown(not drawn)
 
         gui:ApplyFont(row.title, 'normal')
         row.title:SetText(data.text or '')
@@ -416,6 +466,7 @@ local function CreateTree(gui, parent, opts)
         row.state.tipText = data.stateText or STATE_TEXT[data.loadState][2]
 
         row.eye:ClearAllPoints()
+        row.eye:SetEnabled(not tree.locked)
         row.eye:NUISetPixelPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', -pad, 3)
         if data.preview == 2 then
             row.eye.tex:SetVertexColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
@@ -449,8 +500,7 @@ local function CreateTree(gui, parent, opts)
         section.collapse = SmallButton(section, MEDIA .. 'minus-sign.png', SMALL_BUTTON - 2)
         section.collapse:NUISetPixelPoint('RIGHT', section, 'RIGHT', -pad, 0)
         section.collapse:SetScript('OnClick', function()
-            tree.sd.onToggleExpanded(section.data.key, section.data.collapsed)
-            tree:Render()
+            tree:ToggleExpanded(section.data.key, section.data.collapsed == true)
         end)
 
         section.eye = SmallButton(section, MEDIA .. 'eye.png', SMALL_BUTTON + 2)
@@ -462,12 +512,8 @@ local function CreateTree(gui, parent, opts)
 
     ---@param section CDMTreeSection
     ---@param data table
-    ---@param y number
-    local function ConfigureSection(section, data, y)
+    local function ConfigureSection(section, data)
         section.data = data
-        section:ClearAllPoints()
-        section:NUISetPixelPoint('TOPLEFT', scrollChild, 'TOPLEFT', 0, -y)
-        section:NUISetPixelPoint('TOPRIGHT', scrollChild, 'TOPRIGHT', 0, -y)
         section.bg:SetColorTexture(theme.widgetBorder[1], theme.widgetBorder[2], theme.widgetBorder[3], 0.9)
 
         gui:ApplyFont(section.label, 'normal')
@@ -482,6 +528,8 @@ local function CreateTree(gui, parent, opts)
         local c = data.preview == 2 and theme.accent or (data.preview == 1 and theme.textPrimary or theme.textMuted)
         section.eye.tex:SetVertexColor(c[1], c[2], c[3], data.preview == 0 and 0.3 or 1)
         section.eye.tipTitle, section.eye.tipText = L['View'], data.previewText
+        section.eye:SetEnabled(not tree.locked)
+        section.eye:SetAlpha(tree.locked and DISABLED_ALPHA or 1)
 
         activeSections[#activeSections + 1] = section
     end
@@ -502,6 +550,53 @@ local function CreateTree(gui, parent, opts)
         return f
     end
 
+    local clipPool = {}
+    local layout = {} -- rows and section headers top to bottom, with open/close markers around an animating block
+
+    ---@return Frame
+    local function CreateClip()
+        local clip = CreateFrame('Frame', nil, scrollChild)
+        clip:SetClipsChildren(true)
+        return clip
+    end
+
+    local Snap = Kaji.Pixel.ToPixelGrid
+
+    ---Places everything every frame; offsets are differences of snapped absolute y, so a row in a clip never rounds twice.
+    local function Relayout()
+        local y, stack = 0, {}
+        local container, origin = scrollChild, 0
+        for _, item in ipairs(layout) do
+            if item.clip then
+                local anim = item.open and tree.anims[item.open]
+                stack[#stack + 1] = { container = container, origin = origin, start = y, clip = item.clip, p = anim and anim.p or 1 }
+                local clip = item.clip
+                clip:SetParent(container)
+                clip:ClearAllPoints()
+                local offset = Snap(origin) - Snap(y)
+                clip:SetPoint('TOPLEFT', container, 'TOPLEFT', 0, offset)
+                clip:SetPoint('TOPRIGHT', container, 'TOPRIGHT', 0, offset)
+                container, origin = clip, y
+            elseif item.close then
+                local block = tremove(stack)
+                local shown = floor((y - block.start) * block.p + 0.5)
+                block.clip:SetHeight(mmax(Snap(block.start + shown) - Snap(block.start), 1))
+                block.clip:SetShown(shown > 0)
+                container, origin, y = block.container, block.origin, block.start + shown
+            else
+                local f = item.frame
+                f:SetParent(container)
+                f:ClearAllPoints()
+                local offset = Snap(origin) - Snap(y)
+                f:SetPoint('TOPLEFT', container, 'TOPLEFT', 0, offset)
+                f:SetPoint('TOPRIGHT', container, 'TOPRIGHT', 0, offset)
+                y = y + item.height + ROW_GAP
+            end
+        end
+        scrollChild:NUISetPixelHeight(mmax(y, 1))
+        UpdateScrollbar()
+    end
+
     ---@param text string?
     ---@return boolean
     local function Matches(text)
@@ -511,16 +606,20 @@ local function CreateTree(gui, parent, opts)
     function tree:Render()
         if not self.sd then return end
         EndRename(false)
-        for _, pool in ipairs({ rowPool, sectionPool }) do
+        for _, pool in ipairs({ rowPool, sectionPool, clipPool }) do
             for _, f in ipairs(pool) do f.inUse = false end
         end
+        wipe(layout)
         wipe(activeRows)
         wipe(activeSections)
 
+        -- The module is off: rows can still be browsed, nothing in them edits.
+        self.locked = self.sd.locked ~= nil and self.sd.locked() == true
         local content = self.sd.items()
         self.generalKey = content.general and content.general.key
         local leaves = {}
         if content.general then leaves[1] = content.general end
+        for _, page in ipairs(content.pages or {}) do leaves[#leaves + 1] = page end -- selectable, never drawn as rows
 
         local searching = self.search ~= ''
 
@@ -533,40 +632,93 @@ local function CreateTree(gui, parent, opts)
             return false
         end
 
+        local rowKeys, order = self.rowKeys, self.order
+        wipe(rowKeys)
+        wipe(order)
         local function Collect(data)
             leaves[#leaves + 1] = data
+            rowKeys[data.key] = true
             for _, child in ipairs(data.children or {}) do Collect(child) end
         end
 
-        local y = 0
+        -- Every open block keeps its rows in a clip, as MiniSidebar sections do, so an animation never reparents them.
         local function Add(data)
             if searching and not Visible(data) then return end
-            ConfigureRow(Acquire(rowPool, CreateRow), data, y)
-            y = y + ROW_HEIGHT + ROW_GAP
-            if data.expanded or searching then
-                for _, child in ipairs(data.children or {}) do Add(child) end
+            order[#order + 1] = data.key
+            local row = Acquire(rowPool, CreateRow)
+            ConfigureRow(row, data)
+            layout[#layout + 1] = { frame = row, height = ROW_HEIGHT }
+            local children = data.children
+            if children and children[1] and (data.expanded or searching or self.anims[data.key]) then
+                layout[#layout + 1] = { open = not searching and data.key or nil, clip = Acquire(clipPool, CreateClip) }
+                for _, child in ipairs(children) do Add(child) end
+                layout[#layout + 1] = { close = true }
             end
         end
 
         for _, section in ipairs(content.sections) do
-            ConfigureSection(Acquire(sectionPool, CreateSection), section, y)
-            y = y + SECTION_HEIGHT + ROW_GAP
+            local header = Acquire(sectionPool, CreateSection)
+            ConfigureSection(header, section)
+            layout[#layout + 1] = { frame = header, height = SECTION_HEIGHT }
 
+            local open = not section.collapsed or self.anims[section.key] ~= nil
+            if open and section.rows[1] then
+                layout[#layout + 1] = { open = section.key, clip = Acquire(clipPool, CreateClip) }
+            end
             for _, data in ipairs(section.rows) do
                 Collect(data)
-                if not section.collapsed then Add(data) end
+                if open then Add(data) end
             end
+            if open and section.rows[1] then layout[#layout + 1] = { close = true } end
         end
 
-        for _, pool in ipairs({ rowPool, sectionPool }) do
+        for _, pool in ipairs({ rowPool, sectionPool, clipPool }) do
             for _, f in ipairs(pool) do
                 if not f.inUse then f:Hide() end
             end
         end
 
+        for key in pairs(self.picked) do
+            if not rowKeys[key] then self.picked[key] = nil end
+        end
+
         self.leaves = leaves
-        scrollChild:NUISetPixelHeight(mmax(y, 1))
-        UpdateScrollbar()
+        Relayout()
+    end
+
+    -- Expand animation --
+
+    -- Expand eases out, collapse eases in, as Kaji's MiniSidebar; a finished block renders once to drop closed rows.
+    local driver = CreateFrame('Frame', nil, frame)
+    local function StepAnimations(_, elapsed)
+        local finished = false
+        for key, anim in pairs(tree.anims) do
+            anim.t = mmin(anim.t + elapsed, anim.duration)
+            local x = anim.t / anim.duration
+            local eased = anim.to > anim.from and (1 - (1 - x) ^ 3) or x * x
+            anim.p = anim.from + (anim.to - anim.from) * eased
+            if anim.t >= anim.duration then
+                tree.anims[key] = nil
+                finished = true
+            end
+        end
+        if not next(tree.anims) then driver:SetScript('OnUpdate', nil) end
+        if finished then tree:Render() else Relayout() end
+    end
+
+    ---Opens or closes a group or section with the animation; the host remembers the state.
+    ---@param key string
+    ---@param expanded boolean
+    function tree:ToggleExpanded(key, expanded)
+        self.sd.onToggleExpanded(key, expanded)
+        if self.search == '' then
+            -- Toggling mid-animation turns around from wherever the block is.
+            local running = self.anims[key]
+            local from = running and running.p or (expanded and 0 or 1)
+            self.anims[key] = { p = from, from = from, to = expanded and 1 or 0, t = 0, duration = expanded and EXPAND_DURATION or COLLAPSE_DURATION }
+            driver:SetScript('OnUpdate', StepAnimations)
+        end
+        self:Render()
     end
 
     -- Rename --
@@ -681,16 +833,21 @@ local function CreateTree(gui, parent, opts)
         cursorY = cursorY / scrollChild:GetEffectiveScale()
 
         for _, row in ipairs(activeRows) do
-            if row:IsVisible() and row:IsMouseOver() and row.data.key ~= drag.key then
+            if row:IsVisible() and row:IsMouseOver() and not drag.moving[row.data.key] then
                 local position
                 if row.data.isGroup then
                     position = 'into'
                 else
                     position = (row:GetTop() - cursorY) < row:GetHeight() / 2 and 'before' or 'after'
                 end
-                if not tree.sd.canDrop or tree.sd.canDrop(drag.data, row.data, position) then
-                    return row, row.data.key, position
+                local fits = true
+                for _, key in ipairs(drag.keys) do
+                    if tree.sd.canDrop and not tree.sd.canDrop(key == drag.key and drag.data or { key = key }, row.data, position) then
+                        fits = false
+                        break
+                    end
                 end
+                if fits then return row, row.data.key, position end
             end
         end
         return nil
@@ -725,7 +882,7 @@ local function CreateTree(gui, parent, opts)
     dragFrame:SetScript('OnEvent', function(_, _, button)
         if button ~= 'LeftButton' then return end
         local drag = StopDrag()
-        if drag and drag.target then tree.sd.onMove(drag.key, drag.target, drag.position) end
+        if drag and drag.target then tree.sd.onMove(drag.keys, drag.target, drag.position) end
     end)
 
     ghost:SetScript('OnKeyDown', function(self, key)
@@ -736,14 +893,22 @@ local function CreateTree(gui, parent, opts)
     ---@param row CDMTreeRow
     function BeginDrag(row)
         EndRename(false)
-        tree.drag = { key = row.data.key, data = row.data }
+        -- A row of a multi selection carries the whole selection, as in WeakAuras.
+        local keys = { row.data.key }
+        if tree.picked[row.data.key] then
+            local picked = tree:GetPicked()
+            if #picked > 1 then keys = picked end
+        end
+        local moving = {}
+        for _, key in ipairs(keys) do moving[key] = true end
+        tree.drag = { key = row.data.key, data = row.data, keys = keys, moving = moving }
 
         ghost:SetBackdropColor(theme.bgMedium[1], theme.bgMedium[2], theme.bgMedium[3], 0.95)
         ghost:SetBackdropBorderColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
         ghost:NUISetPixelWidth(row:GetWidth())
         ghostIcon:SetTexture(row.data.icon or 134400)
         gui:ApplyFont(ghostLabel, 'normal')
-        ghostLabel:SetText(row.data.text or '')
+        ghostLabel:SetText(#keys > 1 and format(L['%d Displays'], #keys) or row.data.text or '')
         ghostLabel:SetTextColor(theme.textPrimary[1], theme.textPrimary[2], theme.textPrimary[3], 1)
         ghost:Show()
         if not InCombatLockdown() then ghost:EnableKeyboard(true) end -- keyboard capture is protected in combat
@@ -794,13 +959,23 @@ local function CreateTree(gui, parent, opts)
 
     ---@param key string?
     function tree:SetSelected(key)
+        -- Selected from outside (a new or duplicated display): the old multi selection goes.
+        if not (key and self.picked[key]) then
+            wipe(self.picked)
+            if key then self.picked[key] = true end
+        end
         self.selected = key
         for _, row in ipairs(activeRows) do ApplyRowState(row) end
         if self.sd and self.sd.onSelectionChanged then self.sd.onSelectionChanged(key) end
     end
 
     ---@param key string
-    function tree:Select(key)
+    ---@param keepPicked boolean? leave the multi selection alone, when it only moves the shown display
+    function tree:Select(key, keepPicked)
+        if not keepPicked then
+            wipe(self.picked)
+            if self.rowKeys[key] then self.picked[key] = true end
+        end
         self:SetSelected(key)
         for _, data in ipairs(self.leaves) do
             if data.key == key then
@@ -811,6 +986,60 @@ local function CreateTree(gui, parent, opts)
     end
 
     function tree:GetSelected() return self.selected end
+
+    ---Every selected display, top to bottom as drawn.
+    ---@return string[]
+    function tree:GetPicked()
+        local list, listed = {}, {}
+        for _, key in ipairs(self.order) do
+            if self.picked[key] then
+                list[#list + 1] = key
+                listed[key] = true
+            end
+        end
+        for key in pairs(self.picked) do
+            if not listed[key] then list[#list + 1] = key end -- inside a collapsed group
+        end
+        return list
+    end
+
+    ---Ctrl click: add or remove one row; removing the shown display shows another picked one.
+    ---@param key string
+    function tree:TogglePick(key)
+        local picked = self.picked
+        picked[self.selected] = true
+        if not picked[key] then
+            picked[key] = true
+        else
+            picked[key] = nil
+            if key == self.selected then
+                local nextKey = next(picked)
+                if not nextKey then
+                    self:Select(self.generalKey)
+                    return
+                end
+                self:Select(nextKey, true)
+                return
+            end
+        end
+        for _, row in ipairs(activeRows) do ApplyRowState(row) end
+    end
+
+    ---Shift click: everything drawn between the shown display and this row.
+    ---@param anchor string
+    ---@param key string
+    function tree:PickRange(anchor, key)
+        local from, to
+        for index, rowKey in ipairs(self.order) do
+            if rowKey == anchor then from = index end
+            if rowKey == key then to = index end
+        end
+        if not (from and to) then return self:TogglePick(key) end
+
+        wipe(self.picked)
+        for index = mmin(from, to), mmax(from, to) do self.picked[self.order[index]] = true end
+        for _, row in ipairs(activeRows) do ApplyRowState(row) end
+    end
 
     return tree
 end

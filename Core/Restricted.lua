@@ -98,6 +98,14 @@ function NRSKNUI:HasSecretValues(object)
     return object and object.HasSecretValues and object:HasSecretValues() or false
 end
 
+---May the current (possibly tainted) context touch this frame? Forbidden or access-restricted ones (aura buttons while auras are secret) say no.
+---@param object table
+---@return boolean
+function NRSKNUI:CanAccessObject(object)
+    local access = object:CanBeAccessedInContext()
+    return not issecretvalue(access) and access == true
+end
+
 ---Strip secrets (and non-primitives) from a vararg list before format/concat/print.
 ---@return ... scrubbed
 function NRSKNUI:Scrub(...)
@@ -218,13 +226,16 @@ end
 
 local combatQueue = {}
 local queuedFns = {}
+-- Combat lockdown only, never the Combat restriction: a reload in combat may still do protected setup until
+-- PLAYER_REGEN_DISABLED, which follows PLAYER_ENTERING_WORLD (warcraft.wiki.gg, AddOn loading process).
+local lockdown = false
 
 ---Run fn now if out of combat lockdown, otherwise defer to PLAYER_REGEN_ENABLED.
 ---Used for any protected function call.
 ---@param fn function
 function NRSKNUI:RunWhenSafe(fn)
     if not fn then return end
-    if NRSKNUI:InCombat() then
+    if lockdown or InCombatLockdown() then
         if queuedFns[fn] then return end -- the same function queued twice would only redo the same work
         queuedFns[fn] = true
         combatQueue[#combatQueue + 1] = fn
@@ -308,11 +319,13 @@ end
 -- Lifecycle --
 
 function Restricted:PLAYER_REGEN_DISABLED()
+    lockdown = true
     active.Combat = true
     Recompute()
 end
 
 function Restricted:PLAYER_REGEN_ENABLED()
+    lockdown = false
     active.Combat = false
     Recompute()
 
@@ -345,6 +358,7 @@ function Restricted:OnEnable()
     end
 
     active.Combat = active.Combat or InCombatLockdown() or UnitAffectingCombat('Player')
+    lockdown = InCombatLockdown()
     Recompute()
 
     self:RegisterEvent('ADDON_RESTRICTION_STATE_CHANGED')

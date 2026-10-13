@@ -354,7 +354,7 @@ local function TooltipInit()
     -- Source: https://warcraft.wiki.gg/wiki/API_EnumerateFrames
     local nextFrame = EnumerateFrames() -- If omitted, returns the first frame.
     while nextFrame do                  -- Returns nil if there are no more frames.
-        if nextFrame:GetObjectType() == 'GameTooltip' then
+        if NRSKNUI:CanAccessObject(nextFrame) and nextFrame:GetObjectType() == 'GameTooltip' then
             SetupSkinning(nextFrame)
         end
         nextFrame = EnumerateFrames(nextFrame)

@@ -242,6 +242,7 @@ end
 
 function NRSKNUI:PLAYER_ENTERING_WORLD()
     self:UnregisterEvent('PLAYER_ENTERING_WORLD')
+    self.enteredWorld = true
     self:ApplyToAllModules()
 
     after(1, function() self:SendMessage('NRSKNUI_WORLD_READY') end)
