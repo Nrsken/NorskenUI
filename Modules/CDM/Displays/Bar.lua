@@ -11,6 +11,9 @@ local tonumber, tostring = tonumber, tostring
 
 local CreateDuration = C_DurationUtil and C_DurationUtil.CreateDuration
 
+local Text, Layer = CDM.Text, CDM.Layer
+local PlaceText, ConfigureText, StyleBorder = Text.Place, Text.Configure, Layer.StyleBorder
+
 local IMMEDIATE = Enum and Enum.StatusBarInterpolation.Immediate
 local SMOOTH = Enum and Enum.StatusBarInterpolation.ExponentialEaseOut
 local ELAPSED = Enum and Enum.StatusBarTimerDirection.ElapsedTime
@@ -800,4 +803,67 @@ function CDM:SetBarLatency(layer, fraction, atStart, color)
     latency:SetValue(fraction > 1 and 1 or fraction)
     latency:SetStatusBarColor(unpack(color))
     latency:Show()
+end
+
+-- Pip texts and borders --
+
+---Copy the texts and borders marked Each Rune onto every pip of a split bar; the layer's own copies hide.
+---@param layer CDMLayer
+function CDM:StylePips(layer)
+    local count = layer.pipCount or 0
+    for _, pip in ipairs(layer.pips or {}) do
+        for _, text in pairs(pip.texts) do
+            if text.binding then text.binding:SetToDefaults() end
+            text.kind = 'static'
+            text.fs:Hide()
+        end
+        for _, border in pairs(pip.borders) do border:Hide() end
+    end
+    -- Un-splitting runs from StyleBarLayer, before StyleLayer grows layer.texts for a newly added element.
+    if count == 0 then
+        for _, own in ipairs(layer.texts) do own.eachPip = nil end
+        for _, own in ipairs(layer.borders) do own.eachPip = nil end
+        return
+    end
+
+    local display = layer.owner.id and self:Get(layer.owner.id)
+    local triggers = display and display.Triggers or {}
+    local spellName = triggers[layer.index] and self:GetTriggerName(triggers[layer.index]) or ''
+    local textOrdinal, borderOrdinal = 0, 0
+    for _, element in ipairs(layer.subRegions or {}) do
+        local each = count > 0 and element.EachPip == true
+        if element.type == 'text' then
+            textOrdinal = textOrdinal + 1
+            local own = layer.texts[textOrdinal]
+            own.eachPip = each
+            if each then
+                own.fs:Hide()
+                for i = 1, count do
+                    local pip = layer.pips[i]
+                    local text = pip.texts[textOrdinal]
+                    if not text then
+                        text = { fs = own.host:CreateFontString(nil, 'OVERLAY'), host = own.host, kind = 'static', format = '', tokens = 0 } --[[@as CDMIconText]]
+                        pip.texts[textOrdinal] = text
+                    end
+                    text.fs:SetFontStyle(element, element.FontSize, nil, nil, true)
+                    PlaceText(text.fs, element, pip)
+                    text.fs:SetTextColor(unpack(element.Color))
+                    ConfigureText(text, element, spellName, layer, triggers)
+                    text.fs:SetShown(element.Enabled)
+                end
+            end
+        elseif element.type == 'border' then
+            borderOrdinal = borderOrdinal + 1
+            local own = layer.borders[borderOrdinal]
+            own.eachPip = each
+            if each then
+                own:Hide()
+                for i = 1, count do
+                    local pip = layer.pips[i]
+                    pip.borders[borderOrdinal] = StyleBorder(pip.borders[borderOrdinal], layer.borderHost, pip, element, true)
+                    pip.borders[borderOrdinal]:SetFrameLevel(own:GetFrameLevel())
+                end
+            end
+        end
+    end
 end
