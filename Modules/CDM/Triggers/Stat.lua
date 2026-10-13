@@ -204,6 +204,14 @@ eventFrame:SetScript('OnEvent', function()
     end
 end)
 
+---@param trigger table
+---@return string name
+CDM.TriggerTypes.stat.Name = function(trigger)
+    return CDM:GetStat(trigger).name
+end
+
+CDM.TriggerTypes.stat.Texture = CDM.TriggerTypes.power.Texture -- the spec's icon, as power's
+
 CDM.TriggerTypes.stat.RegisterEvents = function()
     for _, event in pairs(EVENTS) do eventFrame:RegisterEvent(event) end
     for _, event in pairs(UNIT_EVENTS) do eventFrame:RegisterUnitEvent(event, 'player') end

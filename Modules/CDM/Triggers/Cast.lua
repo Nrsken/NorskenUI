@@ -364,4 +364,14 @@ CDM.TriggerTypes.cast = {
         eventFrame:UnregisterAllEvents()
         CancelStageTimers()
     end,
+
+    ---@return string name
+    Name = function() return L['Cast Bar'] end,
+
+    ---@param i number
+    ---@param trigger table
+    ---@param warnings string[]
+    Warnings = function(i, trigger, warnings)
+        for _, spellID in ipairs(trigger.SpellIDs or {}) do CDM:WarnUnknownSpell(warnings, i, spellID) end
+    end,
 }
