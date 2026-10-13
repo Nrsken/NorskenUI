@@ -8,7 +8,13 @@
     <Script file="Widgets\IconPicker.lua" />
     <Script file="Widgets\Thumbnail.lua" />
     <Script file="Widgets\Tree.lua" />
-    <Script file="Tabs\DisplaySettings.lua" />
+    <Script file="Tabs\DisplaySettings\Common.lua" />
+    <Script file="Tabs\DisplaySettings\Icon.lua" />
+    <Script file="Tabs\DisplaySettings\Bar.lua" />
+    <Script file="Tabs\DisplaySettings\Layout.lua" />
+    <Script file="Tabs\DisplaySettings\Text.lua" />
+    <Script file="Tabs\DisplaySettings\Elements.lua" />
+    <Script file="Tabs\DisplaySettings\Build.lua" />
     <Script file="Tabs\Conditions.lua" />
     <Script file="Shared.lua" />
     <Script file="Triggers\Triggers.lua" />
