@@ -68,6 +68,7 @@
 ---@field containers table<string, Frame|NRSKNUI.DynamicGroup> static group frames and dynamic groups
 ---@field spareStatic Frame[]
 ---@field spareDynamic NRSKNUI.DynamicGroup[]
+---@field spareChain CDMChainGroup[]
 ---@field STYLE_TEMPLATE table
 ---@field BAR_STYLE_TEMPLATE table
 ---@field BAR_ELAPSED number Enum.StatusBarTimerDirection.ElapsedTime
