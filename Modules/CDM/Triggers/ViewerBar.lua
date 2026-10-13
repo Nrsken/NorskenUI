@@ -177,3 +177,9 @@ CDM.TriggerTypes.viewerbar = {
         driver:Hide()
     end,
 }
+
+-- Conditions --
+
+CDM.ConditionChecks.viewerbar = {
+    active = { type = 'bool', get = function(layer, trigger) return CDM.TriggerTypes.viewerbar.IsActive(layer, trigger) end },
+}

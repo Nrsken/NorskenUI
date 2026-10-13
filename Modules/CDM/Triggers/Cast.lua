@@ -375,3 +375,16 @@ CDM.TriggerTypes.cast = {
         for _, spellID in ipairs(trigger.SpellIDs or {}) do CDM:WarnUnknownSpell(warnings, i, spellID) end
     end,
 }
+
+-- Conditions --
+
+CDM.ConditionChecks.cast = {
+    active       = { type = 'bool', get = function(layer, trigger) return CDM.TriggerTypes.cast.IsActive(layer, trigger) end },
+    casting      = { type = 'bool', get = function(layer, trigger) return CDM:GetCastStatus(layer, trigger) == 'cast' end },
+    channeling   = { type = 'bool', get = function(layer, trigger) return CDM:GetCastStatus(layer, trigger) == 'channel' end },
+    empowering   = { type = 'bool', get = function(layer, trigger) return CDM:GetCastStatus(layer, trigger) == 'empower' end },
+    empowerStage = { type = 'number', get = function(layer, trigger) return (select(2, CDM:GetCastStatus(layer, trigger))) end },
+    succeeded    = { type = 'bool', get = function(layer, trigger) return select(3, CDM:GetCastStatus(layer, trigger)) == 'success' end },
+    interrupted  = { type = 'bool', get = function(layer, trigger) return select(3, CDM:GetCastStatus(layer, trigger)) == 'interrupted' end },
+    failed       = { type = 'bool', get = function(layer, trigger) return select(3, CDM:GetCastStatus(layer, trigger)) == 'failed' end },
+}

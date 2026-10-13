@@ -293,3 +293,16 @@ CDM.TriggerTypes.aura.Warnings = function(i, trigger, warnings)
         warnings[#warnings + 1] = format(L['Trigger %d: no aura chosen.'], i)
     end
 end
+
+-- Conditions --
+
+-- A lone aura is the icon, so only its pandemic window and its placeholder's look are left; an overlay draws nothing until While Up adds to it.
+CDM.ConditionChecks.aura = {
+    pandemic = { type = 'bool', secret = true },
+    missing  = { type = 'bool', secret = true },
+}
+
+CDM.ConditionChecks.auraoverlay = {
+    active   = { type = 'bool', secret = true },
+    pandemic = { type = 'bool', secret = true },
+}

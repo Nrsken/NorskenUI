@@ -311,3 +311,24 @@ end
 CDM.TriggerTypes.power.UnregisterEvents = function()
     powerFrame:UnregisterAllEvents()
 end
+
+-- Conditions --
+
+-- The value can be secret, so nothing compares it; a split bar's Recharging is plain, and per rune for Bar Color.
+CDM.ConditionChecks.power = {
+    active     = { type = 'bool', get = function(layer, trigger) return CDM.TriggerTypes.power.IsActive(layer, trigger) end },
+    recharging = {
+        type = 'bool',
+        get = function(layer, _, pip)
+            if pip then return pip.recharging == true end
+            return layer.state.recharging == true
+        end,
+    },
+    waiting = {
+        type = 'bool',
+        get = function(layer, _, pip)
+            if pip then return pip.waiting == true end
+            return layer.state.waiting == true
+        end,
+    },
+}

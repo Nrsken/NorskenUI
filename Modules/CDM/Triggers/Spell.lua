@@ -197,3 +197,17 @@ end
 CDM.TriggerTypes.spell.UnregisterEvents = function()
     eventFrame:UnregisterAllEvents()
 end
+
+-- Conditions --
+
+CDM.ConditionChecks.spell = {
+    active     = { type = 'bool', get = function(layer, trigger) return CDM.TriggerTypes.spell.IsActive(layer, trigger) end },
+    onCooldown = { type = 'bool', get = function(layer) return layer.state.onCooldown == true end },
+    onGCD      = { type = 'bool', get = function(layer) return layer.state.onGCD == true end },
+    recharging = { type = 'bool', get = function(layer) return layer.state.recharging == true end },
+    noCharges  = { type = 'bool', get = function(layer) return layer.state.hasCharges == true and layer.state.onCooldown == true end },
+    usable     = { type = 'bool', get = function(layer) return layer.state.usable == true end },
+    noPower    = { type = 'bool', get = function(layer) return layer.state.noPower == true end },
+    inRange    = { type = 'bool', get = function(layer) return layer.state.inRange ~= false end },
+    proc       = { type = 'bool', get = function(layer) return layer.state.proc == true end },
+}

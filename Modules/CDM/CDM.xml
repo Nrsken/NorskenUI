@@ -14,6 +14,7 @@
     <Script file="Displays\Icon.lua" />
     <Script file="Displays\TextDisplay.lua" />
     <Script file="Displays\AuraButton.lua" />
+    <Script file="Conditions\Checks.lua" />
     <Script file="Triggers\Triggers.lua" />
     <Script file="Triggers\Spell.lua" />
     <Script file="Triggers\Item.lua" />
@@ -26,6 +27,8 @@
     <Script file="Triggers\ViewerBar.lua" />
     <Script file="Displays\Glow.lua" />
     <Script file="Groups\ChainGroup.lua" />
-    <Script file="Conditions.lua" />
+    <Script file="Conditions\Properties.lua" />
+    <Script file="Conditions\Engine.lua" />
+    <Script file="Conditions\AuraConditions.lua" />
     <Script file="Groups\AuraGroup.lua" />
 </Ui>

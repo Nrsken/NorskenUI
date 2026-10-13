@@ -194,3 +194,14 @@ end
 CDM.TriggerTypes.item.UnregisterEvents = function()
     eventFrame:UnregisterAllEvents()
 end
+
+-- Conditions --
+
+CDM.ConditionChecks.item = {
+    active     = { type = 'bool', get = function(layer, trigger) return CDM.TriggerTypes.item.IsActive(layer, trigger) end },
+    onCooldown = { type = 'bool', get = function(layer) return layer.state.onCooldown == true end },
+    remaining  = { type = 'number', get = function(layer) return layer.endTime and layer.endTime - GetTime() or 0 end },
+    count      = { type = 'number', get = function(layer) return layer.count or 0 end },
+    owned      = { type = 'bool', get = function(layer) return layer.state.owned ~= false end },
+    usable     = { type = 'bool', get = function(layer) return layer.state.usable == true end },
+}

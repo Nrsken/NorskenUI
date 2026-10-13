@@ -122,3 +122,10 @@ end
 CDM.TriggerTypes.timer.UnregisterEvents = function()
     castFrame:UnregisterAllEvents()
 end
+
+-- Conditions --
+
+CDM.ConditionChecks.timer = {
+    active    = { type = 'bool', get = function(layer, trigger) return CDM.TriggerTypes.timer.IsActive(layer, trigger) end },
+    remaining = { type = 'number', get = function(layer) return layer.endTime and layer.endTime - GetTime() or 0 end },
+}

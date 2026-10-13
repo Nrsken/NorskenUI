@@ -220,3 +220,10 @@ end
 CDM.TriggerTypes.stat.UnregisterEvents = function()
     eventFrame:UnregisterAllEvents()
 end
+
+-- Conditions --
+
+-- Its value is secret in combat, so nothing compares it.
+CDM.ConditionChecks.stat = {
+    active = { type = 'bool', get = function() return true end },
+}
