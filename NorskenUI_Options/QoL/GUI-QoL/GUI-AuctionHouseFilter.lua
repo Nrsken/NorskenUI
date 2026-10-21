@@ -1,5 +1,6 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
+if not C_AddOns.IsAddOnLoaded('NorskenUI_QoL') then return end
 local L = NRSKNUI.Libs.AL
 local GUI = NRSKNUI.GUI
 local Theme = NRSKNUI.Theme

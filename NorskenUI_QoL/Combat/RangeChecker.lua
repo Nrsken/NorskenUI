@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 ---@class RangeCheckerModule
 local RangeChecker = NRSKNUI:GetModule('RangeChecker')
 local LRC = NRSKNUI.Libs.LRC

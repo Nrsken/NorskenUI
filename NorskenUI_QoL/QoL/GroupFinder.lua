@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 ---@class GroupFinderModule
 local GroupFinder = NRSKNUI:GetModule('GroupFinder')
 function GroupFinder:UpdateDB() self.db = self.namespace.profile end

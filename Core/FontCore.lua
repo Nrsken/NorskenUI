@@ -374,7 +374,7 @@ local function SetFontJustify(self, source, parent, offsetX, offsetY, skip, boun
     end
 
     -- Flip the X offset value depending on the anchor side, useful for texts that have backdrop and need to be offset inward from the edge of the frame.
-    -- See 'Modules\Combat\CombatTimer.lua' for example usage.
+    -- See 'NorskenUI_QoL\Combat\CombatTimer.lua' for example usage.
     if flip then
         if anchor == 'LEFT' then
             offsetX = offsetX

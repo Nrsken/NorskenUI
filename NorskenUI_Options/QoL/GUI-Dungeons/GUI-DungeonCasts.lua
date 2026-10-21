@@ -1,5 +1,6 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
+if not C_AddOns.IsAddOnLoaded('NorskenUI_QoL') then return end
 ---@class DungeonCastsModule
 local DungeonCasts = NRSKNUI:GetModule('DungeonCasts', true)
 local L = NRSKNUI.Libs.AL

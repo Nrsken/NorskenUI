@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 ---@class TweaksModule
 local Tweaks = NRSKNUI:GetModule('Tweaks')
 function Tweaks:UpdateDB() self.db = self.namespace.profile end

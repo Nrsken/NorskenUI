@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 
 local BigWigsTimers = NRSKNUI:GetModule('BigWigsTimers')
 BigWigsTimers.Defaults = {

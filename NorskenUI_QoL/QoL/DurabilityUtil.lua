@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 ---@class DurabilityModule
 local Durability = NRSKNUI:GetModule('Durability')
 local Anchors = NRSKNUI.Anchors

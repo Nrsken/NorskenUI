@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 ---@class CooldownStringsModule
 local CooldownStrings = NRSKNUI:GetModule('CooldownStrings')
 local L = NRSKNUI.Libs.AL

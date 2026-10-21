@@ -7,9 +7,14 @@
 ## Author: Norsken
 ## IconTexture: Interface\AddOns\NorskenUI\Media\Logo\LogoRed.png
 ## Dependencies: NorskenUI
-## OptionalDeps: NorskenUI_Auras, NorskenUI_UnitFrames, NorskenUI_Skinning
+## OptionalDeps: NorskenUI_Auras, NorskenUI_UnitFrames, NorskenUI_Skinning, NorskenUI_QoL
 
 # each module's pages return early when that module is disabled
 Auras\GUI-CDM.xml
 UnitFrames\GUI-UnitFrames.xml
 Skinning\GUI-Skinning.xml
+QoL\GUI-Combat\GUI-Combat.xml
+QoL\GUI-ClassUtility\GUI-ClassUtility.xml
+QoL\GUI-QoL\GUI-QoL.xml
+QoL\GUI-Dungeons\GUI-Dungeons.xml
+QoL\GUI-MissingBuffs\GUI-MissingBuffs.xml

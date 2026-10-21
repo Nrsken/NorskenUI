@@ -18,14 +18,6 @@ Locales/Locales.xml
 # Load Core Files
 Core/Core.xml
 
-# Load Modules
-Modules/Combat/Combat.xml
-Modules/QoL/QoL.xml
-Modules/ClassUtility/ClassUtility.xml
-Modules/Dungeons/Dungeons.xml
-Modules/BigWigsTimers/BigWigsTimers.xml
-Modules/MissingBuffs/MissingBuffs.xml
-
 # Load GUI Core File
 GUI/GUI-Core.lua
 GUI/GUI-SidebarConfig.lua
@@ -35,9 +27,4 @@ GUI/GUI-TriggerEditor.lua
 
 # Load GUI Tab Files
 GUI/GUI-Tabs/GUI-Global/GUI-Global.xml
-GUI/GUI-Tabs/GUI-Combat/GUI-Combat.xml
-GUI/GUI-Tabs/GUI-ClassUtility/GUI-ClassUtility.xml
-GUI/GUI-Tabs/GUI-QoL/GUI-QoL.xml
-GUI/GUI-Tabs/GUI-Dungeons/GUI-Dungeons.xml
 GUI/GUI-Tabs/GUI-Miscellaneous/GUI-Miscellaneous.xml
-GUI/GUI-Tabs/GUI-MissingBuffs/GUI-MissingBuffs.xml

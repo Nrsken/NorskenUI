@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 ---@class PotionReadyModule
 local PotionReady = NRSKNUI:GetModule("PotionReady")
 local Anchors = NRSKNUI.Anchors

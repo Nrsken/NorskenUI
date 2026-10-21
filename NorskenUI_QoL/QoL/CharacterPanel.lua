@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 ---@class CharacterPanelModule
 local CharacterPanel = NRSKNUI:GetModule('CharacterPanel')
 function CharacterPanel:UpdateDB() self.db = self.namespace.profile end

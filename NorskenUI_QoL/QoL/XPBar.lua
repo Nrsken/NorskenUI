@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 ---@class XPBarModule
 local XPBar = NRSKNUI:GetModule('XPBar')
 local Anchors = NRSKNUI.Anchors

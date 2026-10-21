@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 
 NRSKNUI.AuctionHouseFilter = NRSKNUI:NewModule('AuctionHouseFilter', 'AceEvent-3.0')
 NRSKNUI.Automation = NRSKNUI:NewModule('Automation', 'AceEvent-3.0')

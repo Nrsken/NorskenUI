@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 ---@class RerollKeystoneModule
 local RerollKeystone = NRSKNUI:GetModule('RerollKeystone')
 function RerollKeystone:UpdateDB() self.db = self.namespace.profile end

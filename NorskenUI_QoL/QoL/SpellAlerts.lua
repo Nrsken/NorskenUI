@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 ---@class SpellAlertModule
 local SpellAlert = NRSKNUI:GetModule('SpellAlert')
 function SpellAlert:UpdateDB() self.db = self.namespace.profile end

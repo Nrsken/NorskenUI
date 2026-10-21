@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 ---@class DungeonCastsModule
 local DungeonCasts = NRSKNUI:GetModule('DungeonCasts')
 function DungeonCasts:UpdateDB() self.db = self.namespace.profile end

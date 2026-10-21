@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 ---@class CombatMessageModule
 local CombatMessage = NRSKNUI:GetModule('CombatMessage')
 local Anchors = NRSKNUI.Anchors
