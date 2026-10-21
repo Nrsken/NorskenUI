@@ -1,5 +1,7 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
+---@class BlizzardMessagesModule
+local BlizzardMessages = NRSKNUI:GetModule('BlizzardMessages')
 
 local _G = _G
 local pairs = pairs
@@ -19,7 +21,7 @@ local pinnedSizes = {
 -- Special fonts that can be styled independently of the master blizzardFonts settings.
 -- Runtime fields: objects/globalVar (application path), lodAddon, relog.
 -- GUI fields: sizeRange, position, hideLabel, preview (BlizzardMessages method), note, noOutline.
-NRSKNUI.SpecialFonts = {
+BlizzardMessages.SpecialFonts = {
     {
         key = 'ZoneText',
         label = 'Zone Text',
@@ -228,14 +230,14 @@ end
 ---@param outlineMode boolean? apply the configured outline (false keeps the object outline-free)
 ---@param noSlug boolean? hard-block slug for this object, for fonts that read poorly with it
 ---@param spec table? Specials db entry, FontFace/Size/Outline/HideShadow override the globals
-function NRSKNUI:SetFont(obj, outlineMode, noSlug, spec)
+function BlizzardMessages:SetFont(obj, outlineMode, noSlug, spec)
     if not obj then return end
-    local font = self.db.profile.globalMedia.profileFont.FontFace
-    local blizDB = self.db.profile.globalMedia.blizzardFonts
+    local font = NRSKNUI.db.profile.globalMedia.profileFont.FontFace
+    local blizDB = self.db
 
     local orig = StoreOriginalFontData(obj)
     if not orig then return end -- unrealized or tainted, skip so we never index a nil capture
-    local path = self:ResolveMediaPath('font', spec and spec.FontFace or font)
+    local path = NRSKNUI:ResolveMediaPath('font', spec and spec.FontFace or font)
 
     local name = obj:GetName()
     local size, flags, slug, hideShadow = ResolveStyle(name, orig, blizDB, outlineMode, noSlug, spec)
@@ -260,10 +262,10 @@ end
 
 local lastSignature
 ---@param force boolean? force a full re-apply even if nothing changed.
-function NRSKNUI:ApplyBlizzardFonts(force)
-    local db = self.db.profile.globalMedia
+function BlizzardMessages:ApplyBlizzardFonts(force)
+    local cfg = self.db
 
-    if not db.blizzardFonts.Enabled then
+    if not cfg.Enabled then
         if force or lastSignature ~= 'disabled' then
             lastSignature = 'disabled'
             for obj in pairs(originalData) do
@@ -275,8 +277,7 @@ function NRSKNUI:ApplyBlizzardFonts(force)
     end
 
     -- Skip the full pass when nothing that shapes it changed.
-    local cfg = db.blizzardFonts
-    local sig = self:ResolveMediaPath('font', db.profileFont.FontFace) .. '|' .. tostring(cfg.Outline) .. '|' .. tostring(cfg.Slug) .. '|' .. tostring(cfg.HideShadow)
+    local sig = NRSKNUI:ResolveMediaPath('font', NRSKNUI.db.profile.globalMedia.profileFont.FontFace) .. '|' .. tostring(cfg.Outline) .. '|' .. tostring(cfg.Slug) .. '|' .. tostring(cfg.HideShadow)
     if not force and sig == lastSignature then return end
     lastSignature = sig
 
@@ -427,9 +428,9 @@ local function LookupObject(name)
 end
 
 ---Apply the global font variables for special fonts.
-function NRSKNUI:ApplyGlobalFontVars()
-    local media = self.db.profile.globalMedia
-    local specials = media.blizzardFonts.Specials
+function BlizzardMessages:ApplyGlobalFontVars()
+    local profileFont = NRSKNUI.db.profile.globalMedia.profileFont
+    local specials = self.db.Specials
     if not specials then return end
 
     for i = 1, #self.SpecialFonts do
@@ -439,15 +440,15 @@ function NRSKNUI:ApplyGlobalFontVars()
             local sdb = specials[entry.key]
 
             if sdb and sdb.Enabled then
-                _G[entry.globalVar] = self:ResolveMediaPath('font', sdb.FontFace or media.profileFont.FontFace)
+                _G[entry.globalVar] = NRSKNUI:ResolveMediaPath('font', sdb.FontFace or profileFont.FontFace)
             end
         end
     end
 end
 
 ---Apply the Specials settings to the objects they control, skipping any that are not enabled.
-function NRSKNUI:ApplySpecialFonts()
-    local specials = self.db.profile.globalMedia.blizzardFonts.Specials
+function BlizzardMessages:ApplySpecialFonts()
+    local specials = self.db.Specials
     if not specials then return end
 
     self:ApplyGlobalFontVars()
@@ -474,7 +475,19 @@ end
 
 -- CombatTextFont only exists once the LoD Blizzard_CombatText addon loads (fires immediately if already loaded).
 EventUtil.ContinueOnAddOnLoaded('Blizzard_CombatText', function()
-    if NRSKNUI.db then
-        NRSKNUI:ApplySpecialFonts()
+    if BlizzardMessages.db then
+        BlizzardMessages:ApplySpecialFonts()
     end
 end)
+
+-- Events --
+
+-- The specials still apply with the master toggle off, so the fonts follow login and the profile font
+-- through their own listener rather than the module, which only runs while that toggle is on.
+local listener = {}
+LibStub('AceEvent-3.0'):Embed(listener)
+local function Restyle()
+    BlizzardMessages:ApplyBlizzardFonts()
+end
+listener:RegisterEvent('PLAYER_LOGIN', Restyle)
+listener:RegisterMessage('NRSKNUI_PROFILE_FONT_CHANGED', Restyle)

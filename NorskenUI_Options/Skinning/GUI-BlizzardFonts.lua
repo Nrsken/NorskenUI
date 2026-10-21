@@ -1,16 +1,15 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
+if not C_AddOns.IsAddOnLoaded('NorskenUI_Skinning') then return end
 local L = NRSKNUI.Libs.AL
 local GUI = NRSKNUI.GUI
 local Theme = NRSKNUI.Theme
 local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
 ---@class BlizzardMessagesModule
-local BlizzardMessages = NRSKNUI:GetModule('BlizzardMessages', true) -- a Skinning module, so it can be missing
+local BlizzardMessages = NRSKNUI:GetModule('BlizzardMessages')
 local function ApplySettings()
-    if BlizzardMessages then
-        BlizzardMessages:ApplySettings()
-    end
+    BlizzardMessages:ApplySettings()
 end
 
 local ipairs = ipairs
@@ -32,55 +31,10 @@ local function OutlineOptions(globalLabel)
     return options
 end
 
-local function BuildGlobalView(page)
-    local media = NRSKNUI.db.profile.globalMedia
-    local fontDB = media.profileFont
-    local blizzDB = media.blizzardFonts
+local function BuildBlizzardView(page)
+    local blizzDB = BlizzardMessages.db
 
-    page:SetCondition('globFontON', function() return fontDB.Enabled end)
     page:SetCondition('blizzFontsON', function() return blizzDB.Enabled end)
-
-    local globalCard = page:Card(L['Global Font'])
-    local globalRow = globalCard:Row(rowHL, 0)
-    globalRow:Checkbox(L['Use Global Font'], {
-        width = 0.5,
-        value = fontDB.Enabled,
-        msgPopup = true,
-        msgText = L['Global Font'],
-        callback = function(checked)
-            fontDB.Enabled = checked
-            NRSKNUI:ApplyToAllModules()
-            NRSKNUI:RefreshFontStyles()
-            page:Refresh()
-        end,
-    })
-    globalRow:Dropdown(L['Font'], {
-        width = 0.5,
-        media = 'font',
-        value = fontDB.FontFace,
-        searchable = true,
-        conditions = { 'globFontON' },
-        callback = function(key)
-            fontDB.FontFace = key
-            NRSKNUI:ApplyToAllModules()
-            NRSKNUI:RefreshFontStyles()
-            NRSKNUI:ApplyBlizzardFonts()
-        end,
-    })
-
-    globalCard:Separator()
-
-    local infoHeight = 50
-    globalCard:Row(infoHeight, 0):Text(NRSKNUI:ColorTextByTheme(L['Global Font Info']), {
-        width = 1,
-        height = infoHeight,
-        autoHeight = true,
-        bgMode = 'hide',
-        text = {
-            L['Font selected above is applied to all modules and blizzard texts that support it.'],
-            L['Each module can override the global font with its own font face.'],
-        },
-    })
 
     local blizzCard = page:Card(L['Blizzard UI Font'])
     local blizzRow1 = blizzCard:Row(rowH)
@@ -92,7 +46,7 @@ local function BuildGlobalView(page)
         tooltip = L["Apply your global font face across Blizzard's UI, adding an outline where it reads cleanly. Big display text and unsafe fonts keep their native outline."],
         callback = function(checked)
             blizzDB.Enabled = checked
-            NRSKNUI:ApplyBlizzardFonts(true)
+            BlizzardMessages:ApplyBlizzardFonts(true)
             ApplySettings()
             page:Refresh()
         end,
@@ -107,7 +61,7 @@ local function BuildGlobalView(page)
         conditions = { 'blizzFontsON' },
         callback = function(checked)
             blizzDB.HideShadow = checked
-            NRSKNUI:ApplyBlizzardFonts()
+            BlizzardMessages:ApplyBlizzardFonts()
         end,
     })
 
@@ -119,7 +73,7 @@ local function BuildGlobalView(page)
         conditions = { 'blizzFontsON' },
         callback = function(key)
             blizzDB.Outline = key
-            NRSKNUI:ApplyBlizzardFonts()
+            BlizzardMessages:ApplyBlizzardFonts()
         end,
     })
 
@@ -130,7 +84,7 @@ local function BuildGlobalView(page)
         conditions = { 'blizzFontsON' },
         callback = function(checked)
             blizzDB.Slug = checked
-            NRSKNUI:ApplyBlizzardFonts()
+            BlizzardMessages:ApplyBlizzardFonts()
         end,
     })
 
@@ -147,7 +101,7 @@ local function BuildGlobalView(page)
             tooltip = tooltip,
             callback = function(val)
                 blizzDB.Families[famKey] = val
-                NRSKNUI:ApplyBlizzardFonts(true)
+                BlizzardMessages:ApplyBlizzardFonts(true)
             end,
         })
     end
@@ -180,13 +134,12 @@ local function BuildGlobalView(page)
 end
 
 local function BuildSpecialView(page, entry)
-    local media = NRSKNUI.db.profile.globalMedia
-    local fontDB = media.profileFont
-    local blizzDB = media.blizzardFonts
+    local fontDB = NRSKNUI.db.profile.globalMedia.profileFont
+    local blizzDB = BlizzardMessages.db
     local sdb = blizzDB.Specials[entry.key]
 
     local function Apply()
-        NRSKNUI:ApplySpecialFonts()
+        BlizzardMessages:ApplySpecialFonts()
         if (entry.position or entry.hideLabel) then
             ApplySettings()
         end
@@ -214,7 +167,7 @@ local function BuildSpecialView(page, entry)
             yOffset = -6,
             conditions = { 'spEnabled' },
             callback = function()
-                if BlizzardMessages and BlizzardMessages[entry.preview] then
+                if BlizzardMessages[entry.preview] then
                     BlizzardMessages[entry.preview](BlizzardMessages)
                 end
             end,
@@ -329,25 +282,25 @@ local function BuildSpecialView(page, entry)
     end
 end
 
-local items = { { key = 'globalFonts', text = L['Global Fonts'] } }
-for _, entry in ipairs(NRSKNUI.SpecialFonts) do
+local items = { { key = 'blizzardFonts', text = L['Blizzard UI Font'] } }
+for _, entry in ipairs(BlizzardMessages.SpecialFonts) do
     items[#items + 1] = { key = entry.key, text = entry.label }
 end
 
-GUI:RegisterPage('globalFonts', {
+GUI:RegisterPage('blizzardFonts', {
     mode = 'clean',
     search = {
-        L['Use Global Font'], L['Style Blizzard Fonts'], L['Outline'], L['Use Slug Rendering'],
+        L['Style Blizzard Fonts'], L['Outline'], L['Use Slug Rendering'],
         L['Hide Shadows'], L['Tiny Size'], L['Small Size'], L['Medium Size'], L['Large Size'],
         L['Huge Size'], L['Display Size'], L['Font Size'],
     },
     sidebar = { items = items },
     build = function(page, _, itemKey)
-        if not itemKey or itemKey == 'globalFonts' then
-            BuildGlobalView(page)
+        if not itemKey or itemKey == 'blizzardFonts' then
+            BuildBlizzardView(page)
             return
         end
-        for _, entry in ipairs(NRSKNUI.SpecialFonts) do
+        for _, entry in ipairs(BlizzardMessages.SpecialFonts) do
             if entry.key == itemKey then
                 BuildSpecialView(page, entry)
                 return

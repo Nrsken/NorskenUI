@@ -13,6 +13,7 @@ GUIFrame:AddSidebarEntry({
     defaultExpanded = false,
     items = {
         { id = 'actionBars',        text = L['Action Bars'] },
+        { id = 'blizzardFonts',     text = L['Blizzard UI Font'] },
         { id = 'blizzardMouseover', text = L['Blizzard Mouseover'], elvUIDisabled = true },
         { id = 'buffsDebuffs',      text = L['Buffs & Debuffs'] },
         { id = 'chat',              text = L['Chat'] },

@@ -835,7 +835,6 @@ function ProfileManager:RefreshAllModules()
     SafeCall(NRSKNUI, 'LoadCustomColors')
     SafeCall(NRSKNUI, 'RefreshCurves')
     SafeCall(NRSKNUI, 'RefreshAuraDurationFormatter')
-    SafeCall(NRSKNUI, 'ApplyBlizzardFonts', true)
 
     -- Every module points at the new profile before anything is allowed to read a module db.
     -- AceDB strips default-valued keys out of the old profile table in place during SetProfile, so a

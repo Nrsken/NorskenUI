@@ -120,7 +120,7 @@ do
         lastResolvedPath = path
 
         NRSKNUI:DeferUntilUnrestricted(0, function()
-            NRSKNUI:ApplyBlizzardFonts()
+            NRSKNUI:SendMessage('NRSKNUI_PROFILE_FONT_CHANGED')
             NRSKNUI:RefreshFontStyles()
         end)
     end

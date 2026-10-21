@@ -2,7 +2,14 @@
 local NRSKNUI = _G.NorskenUI
 ---@class BlizzardMessagesModule
 local BlizzardMessages = NRSKNUI:GetModule('BlizzardMessages')
-function BlizzardMessages:UpdateDB() self.db = NRSKNUI.db.profile.globalMedia.blizzardFonts end
+function BlizzardMessages:UpdateDB()
+    self.db = self.namespace.profile
+    self:ApplyGlobalFontVars()
+    -- a profile switch restyles at once, the first pass waits for login
+    if IsLoggedIn() then
+        self:ApplyBlizzardFonts(true)
+    end
+end
 
 local GetTime = GetTime
 local UIParent = UIParent

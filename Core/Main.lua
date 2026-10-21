@@ -68,7 +68,6 @@ function NRSKNUI:OnInitialize()
     self.db.RegisterCallback(self, 'OnProfileCopied', OnProfileRefresh)
     self.db.RegisterCallback(self, 'OnProfileReset', OnProfileRefresh)
 
-    self:ApplyGlobalFontVars()
     self:UpdateMult()
 end
 
@@ -157,7 +156,6 @@ function NRSKNUI:OnEnable()
     self:SetupSlashCommands()
     self:SetupGameMenuButton()
     self:SetUIScale()
-    self:ApplyBlizzardFonts()
 
     -- Show login message if enabled
     if self.db.profile.Minimap.hideMessage ~= true then

@@ -7,6 +7,7 @@
     <Include file="BlizzardMouseover\BlizzardMouseover.xml" />
 
     <Script file='BlizzObjectiveTracker.lua' />
+    <Script file='BlizzardFonts.lua' />
     <Script file='BlizzardSpecialFonts.lua' />
     <Script file='Minimap.lua' />
     <Script file='Tooltips.lua' />

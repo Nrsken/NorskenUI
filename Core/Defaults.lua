@@ -180,42 +180,6 @@ local Defaults = {
                 colorSix = { 1, 1, 1, 1 },
             },
             durationSingleColorValue = { 1, 1, 1, 1 },
-            -- Blizzard Fonts
-            blizzardFonts = {
-                Enabled = true,
-                Outline = "OUTLINE",
-                Slug = true,
-                HideShadow = true,
-                Families = {},
-                Overrides = {},
-                Specials = {
-                    ZoneText = {
-                        Enabled = true,
-                        Size = 40,
-                        Hide = false,
-                        Position = { Anchor = "TOP", X = 0, Y = -200 },
-                    },
-                    SubZoneText = { Enabled = true, Size = 20 },
-                    PvPZoneText = { Enabled = true, Size = 20 },
-                    ErrorText = {
-                        Enabled = true,
-                        Size = 14,
-                        Hide = false,
-                        Position = { Anchor = "TOP", X = 0, Y = -281 },
-                    },
-                    ActionStatus = {
-                        Enabled = true,
-                        Size = 14,
-                        Hide = false,
-                        Position = { Anchor = "TOP", X = 0, Y = -251 },
-                    },
-                    ChatBubbles = { Enabled = true, Size = 8 },
-                    Nameplates = { Enabled = false },
-                    CombatText = { Enabled = false },
-                    CombatFont = { Enabled = false }, -- DAMAGE_TEXT_FONT, relog to apply/revert
-                    NameFont = { Enabled = false },   -- UNIT_NAME_FONT, relog to apply/revert
-                },
-            },
         },
 
         BlizzardRM = {
