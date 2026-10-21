@@ -231,7 +231,7 @@ GUI:RegisterPage('cursorCircle', {
         { id = 'gcd',     text = L['GCD Ring'] },
     },
     build = function(page, tabId)
-        local db = NRSKNUI.db.profile.Miscellaneous.CursorCircle
+        local db = NRSKNUI.CombatCursor.db
         if not db then return end
         page:SetEnabled(function() return db.Enabled end)
 

@@ -33,7 +33,7 @@ end
 local function SidebarItems()
     local items = {}
     for _, frame in ipairs(FRAMES) do
-        items[#items + 1] = { key = frame.key, text = frame.title, disabled = not NRSKNUI.db.profile.Auras[frame.dbKey].Enabled }
+        items[#items + 1] = { key = frame.key, text = frame.title, disabled = not NRSKNUI.PlayerAuras.db[frame.dbKey].Enabled }
     end
     return items
 end
@@ -56,7 +56,7 @@ local function BuildLayoutTab(page, frame, db, ctx)
         msgText = frame.title,
         callback = function(checked)
             db.Enabled = checked
-            local auras = NRSKNUI.db.profile.Auras
+            local auras = NRSKNUI.PlayerAuras.db
             auras.Enabled = auras.Buffs.Enabled or auras.Debuffs.Enabled
             NRSKNUI:ToggleModule('PlayerAuras', auras.Enabled)
             if auras.Enabled then Apply() end
@@ -126,7 +126,7 @@ GUI:RegisterPage(PAGE, {
     build = function(page, tabId, itemKey)
         local frame = FRAMES[itemKey or 'buffs']
         if not frame then return end
-        local db = NRSKNUI.db.profile.Auras[frame.dbKey]
+        local db = NRSKNUI.PlayerAuras.db[frame.dbKey]
 
         page:SetEnabled(function() return db.Enabled end)
         local ctx = { Apply = Apply, filtered = false, dispelIconKey = 'showDebuffDispelIcon', withoutDispelType = true }

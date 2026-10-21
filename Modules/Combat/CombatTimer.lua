@@ -10,13 +10,10 @@ local unpack = unpack
 
 local IsEncounterInProgress = C_InstanceEncounter and C_InstanceEncounter.IsEncounterInProgress
 
-function CombatTimer:UpdateDB()
-    self.db = NRSKNUI.db.profile.CombatTimer
-end
+CombatTimer.lastCombatDuration = 0
 
-function CombatTimer:OnInitialize()
-    self:UpdateDB()
-    self.lastCombatDuration = 0
+function CombatTimer:UpdateDB()
+    self.db = self.namespace.profile
 end
 
 function CombatTimer:CreateFrame()

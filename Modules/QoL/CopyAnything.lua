@@ -24,7 +24,7 @@ local GetItemInfo = C_Item and C_Item.GetItemInfo
 local lastCopyTime = 0
 
 function CopyAnything:UpdateDB()
-    self.db = NRSKNUI.db.profile.Miscellaneous.CopyAnything
+    self.db = self.namespace.profile
 end
 
 local function CheckModifiers(modifier)

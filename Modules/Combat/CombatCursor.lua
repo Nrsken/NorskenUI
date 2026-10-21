@@ -76,7 +76,7 @@ local function ConfigureCooldown(cooldown, frameLevel)
 end
 
 function CursorCircle:UpdateDB()
-    self.db = NRSKNUI.db.profile.Miscellaneous.CursorCircle
+    self.db = self.namespace.profile
 end
 
 function CursorCircle:CreateFrames()

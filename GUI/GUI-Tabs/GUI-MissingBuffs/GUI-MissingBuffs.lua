@@ -129,7 +129,7 @@ end
 ---@return fun(): table[]
 local function SidebarItems(groupPage)
     return function()
-        local buffs = NRSKNUI.db.profile.MissingBuffs.Buffs
+        local buffs = NRSKNUI.MissingBuffs.db.Buffs
         local items = {
             { type = 'label', key = 'category:general', text = L['General Settings'] },
             { key = GENERAL, text = L['Dynamic Group'], icon = GENERAL_ICON },
@@ -274,7 +274,7 @@ local function DescribeTracked(entry, info)
     if entry.itemList == 'WeaponOil' then return L['Whether the weapon has an oil or stone on it.'] end
     if entry.check == 'Runeforge' then return L['Whether your weapon has one of the runes ticked below, or any rune if you leave a column empty.'] end
     if entry.itemList == 'InkyBlackPotion' then return L['Whether you have the buff. Pick the zones under Load Conditions, Zone.'] end
-    if info == CATEGORIES.Raid and NRSKNUI.db.profile.MissingBuffs.RaidBuffMode == 'personal'
+    if info == CATEGORIES.Raid and NRSKNUI.MissingBuffs.db.RaidBuffMode == 'personal'
         and entry.class ~= NRSKNUI.MyClass then
         return L['Whether you have the buff, when someone in the group can cast it.']
     end
@@ -297,7 +297,7 @@ end
 local function DescribeClick(entry)
     if entry.noClick then return L['Display only.'] end
     if entry.itemList then
-        local modifier = MODIFIER_TEXT[NRSKNUI.db.profile.MissingBuffs.FlyoutModifier]
+        local modifier = MODIFIER_TEXT[NRSKNUI.MissingBuffs.db.FlyoutModifier]
         local picked = entry.itemList == 'Flask' and L['Uses a cauldron flask when you have one, otherwise the flask this spec last picked.']
             or entry.itemList == 'WeaponOil' and L['Uses the oil or stone this spec last picked that fits your weapon.']
             or L['Uses the one this spec last picked.']
@@ -311,7 +311,7 @@ end
 
 -- Every spec's runes on one card: runes down the side, each spec and weapon slot a column.
 local function BuildRuneforgeCard(page)
-    local runeforge = NRSKNUI.db.profile.MissingBuffs.Runeforge
+    local runeforge = NRSKNUI.MissingBuffs.db.Runeforge
     local runes = MissingBuffs.Runeforges
     local card = page:Card(L['Preferred Runes'], 'all')
 
@@ -459,7 +459,7 @@ for _, groupPage in ipairs(GROUP_PAGES) do
             return itemKey == GENERAL and GENERAL_TABS or BUFF_TABS
         end,
         build = function(page, tabId, itemKey)
-            local db = NRSKNUI.db.profile.MissingBuffs
+            local db = NRSKNUI.MissingBuffs.db
             if not db then return end
             page:SetEnabled(function() return db.Enabled == true end)
 

@@ -2,7 +2,7 @@
 local NRSKNUI = select(2, ...)
 ---@class TweaksModule
 local Tweaks = NRSKNUI:GetModule('Tweaks')
-function Tweaks:UpdateDB() self.db = NRSKNUI.db.profile.Miscellaneous.Tweaks end
+function Tweaks:UpdateDB() self.db = self.namespace.profile end
 
 local GetAchievementInfo = GetAchievementInfo
 local select = select

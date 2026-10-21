@@ -29,7 +29,7 @@ local petStates = {
 }
 
 function PetTexts:UpdateDB()
-    self.db = NRSKNUI.db.profile.PetTexts
+    self.db = self.namespace.profile
 end
 
 -- Check if the player's pet is on passive mode.

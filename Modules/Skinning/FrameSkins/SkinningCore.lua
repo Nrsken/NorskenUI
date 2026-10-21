@@ -317,12 +317,6 @@ end
 
 -- Module lifecycle --
 
--- One namespace for every skinning module, each reads its own part of it
-function Skinning:OnInitialize()
-    self.namespace = NRSKNUI.ProfileManager:RegisterNamespace('Skinning', self.Defaults)
-    self:UpdateDB()
-end
-
 function Skinning:UpdateDB()
     self.db = self.namespace.profile.BlizzardElements
 

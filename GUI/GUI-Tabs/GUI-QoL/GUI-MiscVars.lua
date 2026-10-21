@@ -155,7 +155,7 @@ GUI:RegisterPage('miscVars', {
         { id = 'devCvars',        text = L['Dev CVars'] },
     },
     build = function(page, tabId)
-        local db = NRSKNUI.db.profile.Miscellaneous.MiscVars
+        local db = NRSKNUI.MiscVars.db
         if not db then return end
         page:SetEnabled(function() return db.Enabled end)
 

@@ -2,7 +2,7 @@
 local NRSKNUI = select(2, ...)
 ---@class MiscVarsModule
 local MiscVars = NRSKNUI:GetModule('MiscVars')
-function MiscVars:UpdateDB() self.db = NRSKNUI.db.profile.Miscellaneous.MiscVars end
+function MiscVars:UpdateDB() self.db = self.namespace.profile end
 
 local ipairs = ipairs
 local tonumber = tonumber

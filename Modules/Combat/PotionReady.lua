@@ -21,7 +21,7 @@ local POTION_ID = 241308
 local potionOnCooldown = false
 
 function PotionReady:UpdateDB()
-    self.db = NRSKNUI.db.profile.PotionReady
+    self.db = self.namespace.profile
 end
 
 function PotionReady:CreateAlertFrame()

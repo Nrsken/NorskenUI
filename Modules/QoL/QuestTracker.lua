@@ -33,7 +33,7 @@ local RESET_PERIOD = { daily = 86400, weekly = 604800 }
 local RESET_TIMER = { daily = GetSecondsUntilDailyReset, weekly = GetSecondsUntilWeeklyReset }
 
 function QuestTracker:UpdateDB()
-    self.db = NRSKNUI.db.profile.Miscellaneous.QuestTracker
+    self.db = self.namespace.profile
     self.data = NRSKNUI.db.global.QuestTracker --[[@as QuestTrackerData]]
 end
 
@@ -345,13 +345,10 @@ end
 
 -- Module --
 
-function QuestTracker:OnInitialize()
-    self:UpdateDB()
-    self.RunQueuedSnapshot = function()
-        self.snapshotQueued = nil
-        if not self:IsEnabled() then return end
-        self:Snapshot()
-    end
+function QuestTracker.RunQueuedSnapshot()
+    QuestTracker.snapshotQueued = nil
+    if not QuestTracker:IsEnabled() then return end
+    QuestTracker:Snapshot()
 end
 
 function QuestTracker:OnEnable()

@@ -94,7 +94,7 @@ GUI:RegisterPage('auctionHouseFilter', {
     mode = 'clean',
     search = {},
     build = function(page)
-        local db = NRSKNUI.db.profile.Miscellaneous.AuctionHouseFilter
+        local db = NRSKNUI.AuctionHouseFilter.db
         if not db then return end
 
         BuildTab(page, db)

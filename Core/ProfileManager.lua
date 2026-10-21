@@ -552,7 +552,62 @@ end
 
 local namespaces = {} ---@type table<string, AceDBObject-3.0>
 
----An imported profile carries every module's settings inside it under the namespace name, so hand them over.
+---Where a namespace's settings sit inside a profile: the place they were saved before the namespace
+---existed, which every export string still uses. Remembered, so it's known while the module isn't loaded.
+---@param name string
+---@return string[]
+local function OldPath(name)
+    local stored = NRSKNUI.db.global.NamespacePaths[name]
+    if not stored then
+        return { name }
+    end
+
+    local path = {}
+    for key in stored:gmatch('[^.]+') do
+        path[#path + 1] = key
+    end
+    return path
+end
+
+---Remove and return the value at path, dropping the tables it leaves empty.
+---@param data table
+---@param path string[]
+---@param depth integer?
+---@return any
+local function Take(data, path, depth)
+    depth = depth or 1
+    local key = path[depth]
+    local value = data[key]
+    if depth == #path then
+        data[key] = nil
+        return value
+    end
+    if type(value) ~= 'table' then return end
+
+    local taken = Take(value, path, depth + 1)
+    if next(value) == nil then
+        data[key] = nil
+    end
+    return taken
+end
+
+---Set value at path in an export copy, copying the tables on the way so the saved profile stays untouched.
+---@param data table
+---@param path string[]
+---@param value any
+local function Put(data, path, value)
+    for depth = 1, #path - 1 do
+        local copy = {}
+        for k, v in pairs(data[path[depth]] or {}) do
+            copy[k] = v
+        end
+        data[path[depth]] = copy
+        data = copy
+    end
+    data[path[#path]] = value
+end
+
+---An imported profile carries every module's settings inside it at their old path, so hand them over.
 ---The import replaces the whole profile, so a namespace it carries nothing for starts over.
 ---@param profileName string
 local function ImportIntoNamespaces(profileName)
@@ -567,8 +622,7 @@ local function ImportIntoNamespaces(profileName)
     end
 
     for name, ns in pairs(namespaces) do
-        local saved = data[name]
-        data[name] = nil
+        local saved = Take(data, OldPath(name))
         if profileName == db:GetCurrentProfile() then
             -- AceDB keeps serving its own table for the active profile, so refill that one.
             wipe(ns.profile)
@@ -583,23 +637,26 @@ local function ImportIntoNamespaces(profileName)
 end
 
 ---A module's own AceDB namespace inside NorskenUIDB. Profile switches, copies, resets and deletes reach it through AceDB.
----@param name string the module's old profile key, which keeps its saved settings and every export string working
+---@param name string
 ---@param defaults table profile defaults
+---@param oldPath string? where the settings sat in the profile when that isn't `name`, e.g. 'Miscellaneous.XPBar'
 ---@return AceDBObject-3.0
-function ProfileManager:RegisterNamespace(name, defaults)
+function ProfileManager:RegisterNamespace(name, defaults, oldPath)
     local db = NRSKNUI.db
     local sv = db.sv
+    db.global.NamespacePaths[name] = oldPath
 
     -- Settings saved inside the profile move before AceDB builds the namespace, so it fills
     -- in defaults the same way it did there and the saved data comes out unchanged.
     sv.namespaces = sv.namespaces or {}
     local saved = sv.namespaces[name] or {}
     sv.namespaces[name] = saved
+    local path = OldPath(name)
     for profileName, data in pairs(db.profiles) do
-        if data[name] then
+        local value = Take(data, path)
+        if value then
             saved.profiles = saved.profiles or {}
-            saved.profiles[profileName] = data[name]
-            data[name] = nil
+            saved.profiles[profileName] = value
         end
     end
 
@@ -608,7 +665,7 @@ function ProfileManager:RegisterNamespace(name, defaults)
     return ns
 end
 
----A profile with every namespace folded back in under its name, the layout export strings have always used.
+---A profile with every namespace folded back in at its old path, the layout export strings have always used.
 ---@param profileName string
 ---@return table|nil
 local function ExportData(profileName)
@@ -623,7 +680,7 @@ local function ExportData(profileName)
     for name, saved in pairs(db.sv.namespaces or {}) do
         local nsData = saved.profiles and saved.profiles[profileName]
         if nsData then
-            out[name] = nsData
+            Put(out, OldPath(name), nsData)
         end
     end
 

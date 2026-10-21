@@ -95,7 +95,7 @@ local BONUSROLL_MARL_QUEST_ID = 98015
 local BONUSROLL_CREST_QUEST_ID = 98012
 
 function Automation:UpdateDB()
-    self.db = NRSKNUI.db.profile.Miscellaneous.Automation
+    self.db = self.namespace.profile
 end
 
 function Automation:GetBonusrollMode()

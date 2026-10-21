@@ -17,12 +17,7 @@ local GetItemInfo = C_Item and C_Item.GetItemInfo
 local GATEWAY_ITEM_ID = 188152
 
 function Gateway:UpdateDB()
-    self.db = NRSKNUI.db.profile.Miscellaneous.Gateway
-end
-
-function Gateway:OnInitialize()
-    self:UpdateDB()
-    self.wasUsable = nil
+    self.db = self.namespace.profile
 end
 
 -- Check if the player is a warlock or if there is a warlock in the group/raid.

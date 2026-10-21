@@ -43,16 +43,13 @@ local function FormatXP(value)
     return format('%d', value)
 end
 
-function XPBar:UpdateDB()
-    self.db = NRSKNUI.db.profile.Miscellaneous.XPBar
-    self.charDB = NRSKNUI.db.char.XPBar
-end
+XPBar.QuestXPComplete = 0
+XPBar.QuestXPIncomplete = 0
+XPBar.QuestXPTotal = 0
 
-function XPBar:OnInitialize()
-    self:UpdateDB()
-    self.QuestXPComplete = 0
-    self.QuestXPIncomplete = 0
-    self.QuestXPTotal = 0
+function XPBar:UpdateDB()
+    self.db = self.namespace.profile
+    self.charDB = NRSKNUI.db.char.XPBar
 end
 
 function XPBar:CreateBar()

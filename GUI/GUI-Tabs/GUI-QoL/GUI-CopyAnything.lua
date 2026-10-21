@@ -72,7 +72,7 @@ GUI:RegisterPage('copyAnything', {
     mode = 'clean',
     search = {},
     build = function(page)
-        local db = NRSKNUI.db.profile.Miscellaneous.CopyAnything
+        local db = NRSKNUI.CopyAnything.db
         if not db then return end
 
         BuildTab(page, db)

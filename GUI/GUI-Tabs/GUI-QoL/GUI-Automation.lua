@@ -284,7 +284,7 @@ GUI:RegisterPage('automation', {
         { id = 'quests',      text = L['Quests'] },
     },
     build = function(page, tabId)
-        local db = NRSKNUI.db.profile.Miscellaneous.Automation
+        local db = NRSKNUI.Automation.db
         if not db then return end
         page:SetEnabled(function() return db.Enabled end)
         page:SetCondition('bonusRollQuest', function() return db.AutoBonusRollQuest end)

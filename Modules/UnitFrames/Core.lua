@@ -3,11 +3,6 @@ local NRSKNUI = select(2, ...)
 ---@class UnitFramesModule
 local UF = NRSKNUI:GetModule('UnitFrames')
 
-function UF:OnInitialize()
-    self.namespace = NRSKNUI.ProfileManager:RegisterNamespace('UnitFrames', self.Defaults)
-    self:UpdateDB()
-end
-
 function UF:UpdateDB()
     self.db = self.namespace.profile
 end

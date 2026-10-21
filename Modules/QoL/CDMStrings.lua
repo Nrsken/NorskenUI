@@ -784,7 +784,7 @@ end
 -- Module --
 
 function CooldownStrings:UpdateDB()
-    self.db = NRSKNUI.db.profile.Miscellaneous.CooldownStrings
+    self.db = self.namespace.profile
     self.cache = NRSKNUI.db.global.CDMLayoutCache
 end
 

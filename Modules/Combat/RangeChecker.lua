@@ -12,7 +12,7 @@ local unpack = unpack
 local tostring = tostring
 
 function RangeChecker:UpdateDB()
-    self.db = NRSKNUI.db.profile.RangeChecker
+    self.db = self.namespace.profile
 end
 
 function RangeChecker:BuildGradientPalette()

@@ -84,7 +84,7 @@ GUI:RegisterPage('potionReady', {
         { id = 'position',   text = L['Position Settings'] },
     },
     build = function(page, tabId)
-        local db = NRSKNUI.db.profile.PotionReady
+        local db = NRSKNUI.PotionReady.db
         if not db then return end
         page:SetEnabled(function() return db.Enabled end)
 

@@ -2,7 +2,7 @@
 local NRSKNUI = select(2, ...)
 ---@class CharacterPanelModule
 local CharacterPanel = NRSKNUI:GetModule('CharacterPanel')
-function CharacterPanel:UpdateDB() self.db = NRSKNUI.db.profile.CharacterPanel end
+function CharacterPanel:UpdateDB() self.db = self.namespace.profile end
 
 local Theme = NRSKNUI.Theme
 local Pixel = NRSKNUI.Libs.KAJI.Pixel

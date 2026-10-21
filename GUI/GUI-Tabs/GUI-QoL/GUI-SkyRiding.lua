@@ -374,7 +374,7 @@ GUI:RegisterPage('skyRiding', {
         { id = 'position', text = L['Position Settings'] },
     },
     build = function(page, tabId)
-        local db = NRSKNUI.db.profile.Miscellaneous.SkyRiding
+        local db = NRSKNUI.SkyRiding.db
         if not db then return end
 
         page:SetEnabled(function() return db.Enabled end)

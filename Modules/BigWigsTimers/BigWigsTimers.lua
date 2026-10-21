@@ -3,7 +3,7 @@ local NRSKNUI = select(2, ...)
 ---@class BigWigsTimersModule
 local BigWigsTimers = NRSKNUI:GetModule('BigWigsTimers')
 function BigWigsTimers:UpdateDB()
-    self.db = NRSKNUI.db.profile.BigWigsTimers
+    self.db = self.namespace.profile
     self:RepairTriggers()
 end
 

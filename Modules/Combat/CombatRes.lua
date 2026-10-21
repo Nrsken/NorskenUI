@@ -19,7 +19,7 @@ local UPDATE_INTERVAL = 0.25
 local PREVIEW_CHARGES, PREVIEW_REMAINING = 2, 90
 
 function CombatRes:UpdateDB()
-    self.db = NRSKNUI.db.profile.BattleRes
+    self.db = self.namespace.profile
 end
 
 -- Cache/refresh a ColorMixin from a {r,g,b,a} db table so segments can use WrapTextInColorCode.

@@ -309,7 +309,7 @@ GUI:RegisterPage('dungeonCasts', {
         { id = 'position', text = L['Position Settings'] },
     },
     build = function(page, tabId)
-        local db = NRSKNUI.db.profile.DungeonCasts
+        local db = NRSKNUI.DungeonCasts.db
         if not db then return end
         page:SetEnabled(function() return db.Enabled end)
 

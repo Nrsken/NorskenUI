@@ -38,7 +38,13 @@ _G.NorskenUIAPI = _G.NorskenUIAPI or {} -- Global API table for things we want t
 NRSKNUI:SetDefaultModuleState(false)
 local ModulePrototype = {}
 function ModulePrototype:OnInitialize()
-    if self.UpdateDB then self:UpdateDB() end
+    -- a module with Defaults gets its own namespace; dbKey says where its settings sat in the profile before
+    if self.Defaults then
+        self.namespace = NRSKNUI.ProfileManager:RegisterNamespace(self.moduleName, self.Defaults, self.dbKey)
+    end
+    if self.UpdateDB then
+        self:UpdateDB()
+    end
 end
 
 NRSKNUI:SetDefaultModulePrototype(ModulePrototype)

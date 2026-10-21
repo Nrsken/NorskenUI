@@ -286,7 +286,7 @@ GUI:RegisterPage('combatMessage', {
         { id = 'layout',  text = L['Layout & Position'] },
     },
     build = function(page, tabId)
-        local db = NRSKNUI.db.profile.CombatMessage
+        local db = NRSKNUI.CombatMessage.db
         if not db then return end
         page:SetEnabled(function() return db.Enabled end)
 

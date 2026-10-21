@@ -2,7 +2,7 @@
 local NRSKNUI = select(2, ...)
 ---@class MissingBuffsModule
 local MissingBuffs = NRSKNUI:GetModule('MissingBuffs')
-function MissingBuffs:UpdateDB() self.db = NRSKNUI.db.profile.MissingBuffs end
+function MissingBuffs:UpdateDB() self.db = self.namespace.profile end
 
 local Anchors = NRSKNUI.Anchors
 local LS = NRSKNUI.Libs.LS

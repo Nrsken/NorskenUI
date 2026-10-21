@@ -241,7 +241,7 @@ GUI:RegisterPage('XPBar', {
         { id = 'layout',  text = L['Position Settings'] },
     },
     build = function(page, tabId)
-        local db = NRSKNUI.db.profile.Miscellaneous.XPBar
+        local db = NRSKNUI.XPBar.db
         if not db then return end
         page:SetEnabled(function() return db.Enabled end)
         page:SetCondition('GlobalOn', function() return not db.UseGlobalBar end)

@@ -2,7 +2,7 @@
 local NRSKNUI = select(2, ...)
 ---@class DungeonCastsModule
 local DungeonCasts = NRSKNUI:GetModule('DungeonCasts')
-function DungeonCasts:UpdateDB() self.db = NRSKNUI.db.profile.DungeonCasts end
+function DungeonCasts:UpdateDB() self.db = self.namespace.profile end
 
 local Anchors = NRSKNUI.Anchors
 

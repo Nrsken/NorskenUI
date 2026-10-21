@@ -54,7 +54,7 @@ local CAST_EVENTS = {
 }
 
 function FocusCastbar:UpdateDB()
-    self.db = NRSKNUI.db.profile.Miscellaneous.FocusCastbar
+    self.db = self.namespace.profile
 end
 
 function FocusCastbar:CreateFrame()

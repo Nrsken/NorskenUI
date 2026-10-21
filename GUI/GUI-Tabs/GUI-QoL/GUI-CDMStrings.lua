@@ -371,7 +371,7 @@ GUI:RegisterPage(PAGE, {
         end,
     },
     build = function(page, _, itemKey)
-        local db = NRSKNUI.db.profile.Miscellaneous.CooldownStrings
+        local db = NRSKNUI.CooldownStrings.db
 
         page:SetEnabled(function() return db.Enabled end)
         page:SetCondition('hasLiveLayout', function() return itemKey and CooldownStrings:GetLiveLayoutFor(itemKey) ~= nil end)

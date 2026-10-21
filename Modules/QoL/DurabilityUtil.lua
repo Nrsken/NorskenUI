@@ -12,7 +12,7 @@ local unpack = unpack
 local wipe = wipe
 
 function Durability:UpdateDB()
-    self.db = NRSKNUI.db.profile.Miscellaneous.Durability
+    self.db = self.namespace.profile
 end
 
 -- Returns the lowest durability percentage of the player's equipped gear.

@@ -2,7 +2,7 @@
 local NRSKNUI = select(2, ...)
 ---@class SpellAlertModule
 local SpellAlert = NRSKNUI:GetModule('SpellAlert')
-function SpellAlert:UpdateDB() self.db = NRSKNUI.db.profile.Miscellaneous.SpellAlert end
+function SpellAlert:UpdateDB() self.db = self.namespace.profile end
 
 local LS = NRSKNUI.Libs.LS
 

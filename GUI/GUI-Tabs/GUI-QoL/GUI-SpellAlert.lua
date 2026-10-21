@@ -142,7 +142,7 @@ GUI:RegisterPage('spellAlert', {
     mode = 'clean',
     search = {},
     build = function(page)
-        local db = NRSKNUI.db.profile.Miscellaneous.SpellAlert
+        local db = NRSKNUI.SpellAlert.db
         if not db then return end
 
         BuildTab(page, db)

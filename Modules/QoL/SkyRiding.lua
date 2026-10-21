@@ -2,7 +2,7 @@
 local NRSKNUI = select(2, ...)
 ---@class SkyRidingModule
 local SkyRiding = NRSKNUI:GetModule('SkyRiding')
-function SkyRiding:UpdateDB() self.db = NRSKNUI.db.profile.Miscellaneous.SkyRiding end
+function SkyRiding:UpdateDB() self.db = self.namespace.profile end
 
 local Anchors = NRSKNUI.Anchors
 local kajiGUI = NRSKNUI.GUI

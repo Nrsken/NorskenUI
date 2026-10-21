@@ -34,7 +34,7 @@ local messageTypes = {
 }
 
 function CombatMessage:UpdateDB()
-    self.db = NRSKNUI.db.profile.CombatMessage
+    self.db = self.namespace.profile
 end
 
 -- Replace {rtN} raidmarkers with their texture escape.

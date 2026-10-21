@@ -20,7 +20,7 @@ local DIAMON_ATLAS = 'progress-bar-diamond-pip-mask'
 CombatCross.previewPages = 'combatCross'
 
 function CombatCross:UpdateDB()
-    self.db = NRSKNUI.db.profile.CombatCross
+    self.db = self.namespace.profile
 end
 
 -- Line creation helper.

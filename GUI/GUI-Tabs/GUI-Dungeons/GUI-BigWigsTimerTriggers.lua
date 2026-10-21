@@ -98,7 +98,7 @@ end
 ---@return fun(): table[]
 local function SidebarItems(kind)
     return function()
-        local instances = NRSKNUI.db.profile.BigWigsTimers.Instances
+        local instances = NRSKNUI.BigWigsTimers.db.Instances
         local items = {}
 
         for _, info in ipairs(SortedInstances(kind)) do
@@ -831,7 +831,7 @@ local function RegisterTriggerPage(pageId, kind, title)
             { id = 'actions', text = L['Actions'] },
         },
         build = function(page, tabId, itemKey)
-            local db = NRSKNUI.db.profile.BigWigsTimers
+            local db = NRSKNUI.BigWigsTimers.db
 
             page:SetEnabled(function() return db.Enabled end)
 

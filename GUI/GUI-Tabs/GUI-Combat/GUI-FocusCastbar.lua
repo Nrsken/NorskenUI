@@ -342,7 +342,7 @@ GUI:RegisterPage('focusCastbar', {
         { id = 'position', text = L['Position Settings'] },
     },
     build = function(page, tabId)
-        local db = NRSKNUI.db.profile.Miscellaneous.FocusCastbar
+        local db = NRSKNUI.FocusCastbar.db
         if not db then return end
         page:SetEnabled(function() return db.Enabled end)
 

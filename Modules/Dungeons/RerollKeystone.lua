@@ -2,7 +2,7 @@
 local NRSKNUI = select(2, ...)
 ---@class RerollKeystoneModule
 local RerollKeystone = NRSKNUI:GetModule('RerollKeystone')
-function RerollKeystone:UpdateDB() self.db = NRSKNUI.db.profile.RerollKeystone end
+function RerollKeystone:UpdateDB() self.db = self.namespace.profile end
 
 -- TODO: Add glow
 

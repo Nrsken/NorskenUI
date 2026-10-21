@@ -16,7 +16,7 @@ GUI:RegisterPage('bwTimers', {
     mode = 'clean',
     search = { L['BigWigs Timers'], L['Boss Mod Timer'] },
     build = function(page)
-        local db = NRSKNUI.db.profile.BigWigsTimers
+        local db = NRSKNUI.BigWigsTimers.db
 
         local enableCard = page:Card(L['BigWigs Timers'])
         enableCard:Row(rowH):Checkbox(L['Enable BigWigs Timers'], {
@@ -128,9 +128,9 @@ local function RegisterGroupPage(pageId, dbKey, title, BuildAppearance, fontSize
         search = { title },
         tabs = tabs,
         build = function(page, tabId)
-            local db = NRSKNUI.db.profile.BigWigsTimers[dbKey]
+            local db = NRSKNUI.BigWigsTimers.db[dbKey]
 
-            page:SetEnabled(function() return NRSKNUI.db.profile.BigWigsTimers.Enabled end)
+            page:SetEnabled(function() return NRSKNUI.BigWigsTimers.db.Enabled end)
             page:SetCondition('customBar', function() return not db.UseGlobalBar end)
 
             if tabId == 'appearance' and BuildAppearance then

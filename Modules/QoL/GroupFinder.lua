@@ -2,7 +2,7 @@
 local NRSKNUI = select(2, ...)
 ---@class GroupFinderModule
 local GroupFinder = NRSKNUI:GetModule('GroupFinder')
-function GroupFinder:UpdateDB() self.db = NRSKNUI.db.profile.Miscellaneous.GroupFinder end
+function GroupFinder:UpdateDB() self.db = self.namespace.profile end
 
 local gmatch, strmatch, strsub, strupper = string.gmatch, string.match, string.sub, string.upper
 local hooksecurefunc = hooksecurefunc

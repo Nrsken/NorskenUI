@@ -162,7 +162,7 @@ GUI:RegisterPage('combatTimer', {
         { id = 'position', text = L['Position Settings'] },
     },
     build = function(page, tabId)
-        local db = NRSKNUI.db.profile.CombatTimer
+        local db = NRSKNUI.CombatTimer.db
         if not db then return end
         page:SetEnabled(function() return db.Enabled end)
 

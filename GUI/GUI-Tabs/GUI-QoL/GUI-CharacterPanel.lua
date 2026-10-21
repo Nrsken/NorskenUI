@@ -224,7 +224,7 @@ GUI:RegisterPage('characterPanel', {
     },
     sidebar = { items = items },
     build = function(page, _, itemKey)
-        local db = NRSKNUI.db.profile.CharacterPanel
+        local db = NRSKNUI.CharacterPanel.db
         if not db then return end
 
         page:SetEnabled(function() return db.Enabled end)

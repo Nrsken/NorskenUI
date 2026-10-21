@@ -138,7 +138,7 @@ GUI:RegisterPage('tweaks', {
         { id = 'whisper', text = L['Whisper Sounds'] },
     },
     build = function(page, tabId)
-        local db = NRSKNUI.db.profile.Miscellaneous.Tweaks
+        local db = NRSKNUI.Tweaks.db
         if not db then return end
         page:SetEnabled(function() return db.Enabled end)
 

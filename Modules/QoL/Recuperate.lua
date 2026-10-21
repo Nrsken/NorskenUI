@@ -15,7 +15,7 @@ local GetSpellInfo = C_Spell and C_Spell.GetSpellInfo
 local RECUPERATE_SPELL_ID = 1231411
 
 function Recuperate:UpdateDB()
-    self.db = NRSKNUI.db.profile.Miscellaneous.Recuperate
+    self.db = self.namespace.profile
 end
 
 function Recuperate:CreateButton()

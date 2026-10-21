@@ -12,7 +12,7 @@ GUI:RegisterPage('combatCross', {
     mode = 'clean',
     search = { L['Thickness'], L['Length'], L['Center Gap'], L['Center Dot'], L['Dot Size'], L['Diamond Size'], },
     build = function(page)
-        local db = NRSKNUI.db.profile.CombatCross
+        local db = NRSKNUI.CombatCross.db
         if not db then return end
 
         page:SetEnabled(function() return db.Enabled end)

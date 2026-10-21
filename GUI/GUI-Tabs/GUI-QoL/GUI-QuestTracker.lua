@@ -215,7 +215,7 @@ GUI:RegisterPage('questTracker', {
     mode = 'clean',
     search = { L['Quest Tracker'], L['Tracked Quests'], L['Characters'] },
     build = function(page)
-        local db = NRSKNUI.db.profile.Miscellaneous.QuestTracker
+        local db = NRSKNUI.QuestTracker.db
         if not db then return end
 
         BuildPage(page, db)

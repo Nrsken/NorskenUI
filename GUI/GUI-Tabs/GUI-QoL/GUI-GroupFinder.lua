@@ -137,7 +137,7 @@ GUI:RegisterPage('groupFinder', {
         { id = 'results', text = L['Search Results'] },
     },
     build = function(page, tabId)
-        local db = NRSKNUI.db.profile.Miscellaneous.GroupFinder
+        local db = NRSKNUI.GroupFinder.db
         if not db then return end
         page:SetEnabled(function() return db.Enabled end)
 

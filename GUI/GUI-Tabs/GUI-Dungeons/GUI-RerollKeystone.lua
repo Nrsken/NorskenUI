@@ -87,7 +87,7 @@ GUI:RegisterPage('rerollKeystone', {
         { id = 'position', text = L['Position Settings'] },
     },
     build = function(page, tabId)
-        local db = NRSKNUI.db.profile.RerollKeystone
+        local db = NRSKNUI.RerollKeystone.db
         if not db then return end
         page:SetEnabled(function() return db.Enabled end)
 

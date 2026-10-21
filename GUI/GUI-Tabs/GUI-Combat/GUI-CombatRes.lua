@@ -198,7 +198,7 @@ GUI:RegisterPage('combatRes', {
         { id = 'position', text = L['Position Settings'] },
     },
     build = function(page, tabId)
-        local db = NRSKNUI.db.profile.BattleRes
+        local db = NRSKNUI.CombatRes.db
         if not db then return end
         page:SetEnabled(function() return db.Enabled end)
 

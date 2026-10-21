@@ -32,13 +32,10 @@ local KINDS = {
     },
 }
 
-function PlayerAuras:UpdateDB()
-    self.db = NRSKNUI.db.profile.Auras
-end
+PlayerAuras.hosts = {}
 
-function PlayerAuras:OnInitialize()
-    self:UpdateDB()
-    self.hosts = {}
+function PlayerAuras:UpdateDB()
+    self.db = self.namespace.profile
 end
 
 ---Layout anchor corner derived from growth direction.
