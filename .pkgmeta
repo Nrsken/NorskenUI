@@ -4,6 +4,14 @@ enable-nolib-creation: no
 curse-id: 1460316
 wago-id: 96ELgPNg
 
+# one project, several addon folders: each module folder ships as its own top-level folder in the zip
+move-folders:
+    NorskenUI/NorskenUI_Auras: NorskenUI_Auras
+    NorskenUI/NorskenUI_UnitFrames: NorskenUI_UnitFrames
+    NorskenUI/NorskenUI_Skinning: NorskenUI_Skinning
+    NorskenUI/NorskenUI_QoL: NorskenUI_QoL
+    NorskenUI/NorskenUI_Options: NorskenUI_Options
+
 externals:
     Libs/Ace3/AceAddon-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceAddon-3.0
     Libs/Ace3/AceDB-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceDB-3.0
@@ -54,4 +62,4 @@ ignore:
     - .gitattributes
     - .Types/
     - .wowluarc.json
-    - Docs/
+    - Docs

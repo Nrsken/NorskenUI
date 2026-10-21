@@ -1,6 +1,7 @@
 {
     "library": [
-        "Libs/"
+        "Libs/",
+        "NorskenUI_UnitFrames/Libs/"
     ],
     "flavors": [
         "retail"
