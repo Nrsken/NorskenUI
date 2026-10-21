@@ -1,5 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = _G.NorskenUI
+if not C_AddOns.IsAddOnLoaded('NorskenUI_Skinning') then return end
 ---@class Skinning
 local Skinning = NRSKNUI:GetModule('Skinning', true)
 local L = NRSKNUI.Libs.AL

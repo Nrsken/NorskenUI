@@ -1,5 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = _G.NorskenUI
+if not C_AddOns.IsAddOnLoaded('NorskenUI_Skinning') then return end
 ---@class Chatv2Module
 local CHAT = NRSKNUI:GetModule('Chatv2')
 local L = NRSKNUI.Libs.AL

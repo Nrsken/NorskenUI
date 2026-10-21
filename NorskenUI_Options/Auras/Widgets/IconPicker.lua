@@ -1,5 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = _G.NorskenUI
+if not C_AddOns.IsAddOnLoaded('NorskenUI_Auras') then return end
 local L = NRSKNUI.Libs.AL
 local Theme = NRSKNUI.Theme
 local CDM = NRSKNUI:GetModule('CDM')

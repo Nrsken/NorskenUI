@@ -1,5 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = _G.NorskenUI
+if not C_AddOns.IsAddOnLoaded('NorskenUI_Skinning') then return end
 ---@class MicroMenuModule
 local MM = NRSKNUI:GetModule('MicroMenu', true)
 local L = NRSKNUI.Libs.AL

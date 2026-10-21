@@ -1,5 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = _G.NorskenUI
+if not C_AddOns.IsAddOnLoaded('NorskenUI_Skinning') then return end
 ---@class PlayerAurasModule
 local PlayerAuras = NRSKNUI:GetModule('PlayerAuras')
 local L = NRSKNUI.Libs.AL

@@ -1,5 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = _G.NorskenUI
+if not C_AddOns.IsAddOnLoaded('NorskenUI_UnitFrames') then return end
 ---@class UnitFramesModule
 local UF = NRSKNUI:GetModule('UnitFrames')
 local L = NRSKNUI.Libs.AL
