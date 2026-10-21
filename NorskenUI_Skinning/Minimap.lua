@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 ---@class MinimapModule
 local Map = NRSKNUI:GetModule('Minimap')
 function Map:UpdateDB() self.db = NRSKNUI.Skinning.namespace.profile.Minimap end

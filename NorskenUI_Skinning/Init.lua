@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 
 NRSKNUI.Skinning = NRSKNUI:NewModule('Skinning', 'AceEvent-3.0')
 NRSKNUI.BlizzardMessages = NRSKNUI:NewModule('BlizzardMessages', 'AceEvent-3.0')

@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 ---@class MicroMenuModule
 local MM = NRSKNUI:GetModule('MicroMenu', true)
 local L = NRSKNUI.Libs.AL

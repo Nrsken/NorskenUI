@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 
 local PlayerAuras = NRSKNUI:GetModule('PlayerAuras')
 PlayerAuras.dbKey = 'Auras' -- its old profile key, which keeps saved profiles and export strings working

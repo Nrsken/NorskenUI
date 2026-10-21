@@ -309,7 +309,10 @@ NRSKNUI.Libs.KAJI:RegisterWidgetType(GRID_TYPE, function()
     local scrollBar = CreateFrame('EventFrame', nil, frame, 'MinimalScrollBar')
     scrollBar:SetPoint('TOPLEFT', scrollBox, 'TOPRIGHT', 4, 0)
     scrollBar:SetPoint('BOTTOMLEFT', scrollBox, 'BOTTOMRIGHT', 4, 0)
-    NRSKNUI:GetModule('Skinning'):HandleTrimScrollBar(scrollBar)
+    local Skinning = NRSKNUI:GetModule('Skinning', true)
+    if Skinning then
+        Skinning:HandleTrimScrollBar(scrollBar)
+    end
 
     local view = CreateScrollBoxListGridView(1, 0, 0, 0, 0, SPACING, SPACING)
     view:SetStrideExtent(BUTTON_SIZE) -- columns follow the width; the view adds the spacing itself

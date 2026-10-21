@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 ---@class Chatv2Module
 local CHAT = NRSKNUI:GetModule('Chatv2')
 local L = NRSKNUI.Libs.AL

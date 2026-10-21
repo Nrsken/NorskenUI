@@ -19,10 +19,8 @@ Locales/Locales.xml
 Core/Core.xml
 
 # Load Modules
-Modules/Auras/Auras.xml
 Modules/Combat/Combat.xml
 Modules/QoL/QoL.xml
-Modules/Skinning/Skinning.xml
 Modules/ClassUtility/ClassUtility.xml
 Modules/Dungeons/Dungeons.xml
 Modules/BigWigsTimers/BigWigsTimers.xml
@@ -40,7 +38,6 @@ GUI/GUI-Tabs/GUI-Global/GUI-Global.xml
 GUI/GUI-Tabs/GUI-Combat/GUI-Combat.xml
 GUI/GUI-Tabs/GUI-ClassUtility/GUI-ClassUtility.xml
 GUI/GUI-Tabs/GUI-QoL/GUI-QoL.xml
-GUI/GUI-Tabs/GUI-Skinning/GUI-Skinning.xml
 GUI/GUI-Tabs/GUI-Dungeons/GUI-Dungeons.xml
 GUI/GUI-Tabs/GUI-Miscellaneous/GUI-Miscellaneous.xml
 GUI/GUI-Tabs/GUI-MissingBuffs/GUI-MissingBuffs.xml

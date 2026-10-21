@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 ---@class ActionBarsModule
 local ACB = NRSKNUI:GetModule('ActionBars')
 function ACB:UpdateDB() self.db = NRSKNUI.Skinning.namespace.profile.ActionBars end

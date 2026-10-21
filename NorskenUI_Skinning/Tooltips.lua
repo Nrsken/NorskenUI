@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 ---@class TooltipsModule
 local Tooltips = NRSKNUI:GetModule('Tooltips')
 function Tooltips:UpdateDB() self.db = NRSKNUI.Skinning.namespace.profile.Tooltips end

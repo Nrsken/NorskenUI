@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 ---@class MicroMenuModule
 local MM = NRSKNUI:GetModule('MicroMenu')
 function MM:UpdateDB() self.db = NRSKNUI.Skinning.namespace.profile.MicroMenu end

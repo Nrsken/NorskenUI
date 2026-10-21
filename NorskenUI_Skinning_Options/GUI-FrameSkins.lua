@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 ---@class Skinning
 local Skinning = NRSKNUI:GetModule('Skinning', true)
 local L = NRSKNUI.Libs.AL

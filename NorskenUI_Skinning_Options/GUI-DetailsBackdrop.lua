@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 ---@class DetailsBackdropModule
 local DBG = NRSKNUI:GetModule('DetailsBackdrop', true)
 local L = NRSKNUI.Libs.AL

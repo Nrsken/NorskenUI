@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 ---@class MinimapModule
 local MAP = NRSKNUI:GetModule('Minimap', true)
 local L = NRSKNUI.Libs.AL
