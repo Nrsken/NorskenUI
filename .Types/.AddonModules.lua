@@ -91,6 +91,8 @@
 ---@class SpeedModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class CharacterPanelModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class CDMModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@field namespace AceDBObject-3.0 the CDM's own namespace inside NorskenUIDB
+---@field Defaults NRSKNUI.DBProfile.CDM
 ---@field icons table<string, CDMIcon>
 ---@field containers table<string, Frame|NRSKNUI.DynamicGroup> static group frames and dynamic groups
 ---@field spareStatic Frame[]

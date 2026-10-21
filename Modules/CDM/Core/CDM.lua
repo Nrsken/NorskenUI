@@ -41,14 +41,15 @@ local hookedViewers = {} ---@type table<table, true>
 -- Lifecycle --
 
 function CDM:UpdateDB()
-    local db = NRSKNUI.db.profile.CDM
     -- Frames are keyed by display id and another profile reuses the same ids for other displays.
-    if self.icons and self.db ~= db then
+    -- A namespace reset or copy refills the same table, so comparing tables can't tell a change apart.
+    if self.icons then
         self:ReleaseAll()
         wipe(self.preview)
         wipe(self.selectionPreview)
     end
 
+    local db = self.namespace.profile
     self.db = db
     if db.Version == 0 then -- a profile the CDM hasn't set up yet
         if not self:ImportOldTrackers(db) then
@@ -62,6 +63,7 @@ function CDM:UpdateDB()
 end
 
 function CDM:OnInitialize()
+    self.namespace = NRSKNUI.ProfileManager:RegisterNamespace('CDM', self.Defaults)
     self:UpdateDB()
     self.icons = {} ---@type table<string, CDMIcon>
     self.containers = {} ---@type table<string, Frame|NRSKNUI.DynamicGroup>

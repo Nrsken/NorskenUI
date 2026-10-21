@@ -2669,16 +2669,6 @@ local Defaults = {
                 WeaponOilOffHand = { Expiring = 10 },
             },
         },
-        CDM = {
-            Enabled = false,
-            HideBlizzard = false,
-            HidePlayerCastBar = false,
-            AnchorMinWidth = 0,
-            TrinketBlacklist = {}, -- [itemID] = true, trinkets whose on-use isn't worth tracking
-            Version = 0,
-            Displays = {}, -- 'cdm:N' keys, user data only
-        },
-
         UnitFrames = {
             Enabled = false,
             HideBlizzardRaidFrames = true, -- oUF only ever disables the party ones

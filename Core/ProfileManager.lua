@@ -548,6 +548,87 @@ function ProfileManager:GetGlobalProfile()
     return DEFAULT_PROFILE
 end
 
+-- Namespaces --
+
+local namespaces = {} ---@type table<string, AceDBObject-3.0>
+
+---Hand a profile's module settings over to their namespaces. Saved data from before a module had one,
+---and every export string, carry them inside the profile under the namespace name.
+---@param profileName string
+---@param replace boolean? an import replaces the whole profile, so a namespace it carries nothing for starts over
+local function MoveIntoNamespaces(profileName, replace)
+    local db = NRSKNUI.db
+    local data = db.profiles[profileName]
+    local active = profileName == db:GetCurrentProfile()
+
+    -- modules that aren't loaded pick their part up from the profile once they register
+    if replace then
+        for name, saved in pairs(db.sv.namespaces or {}) do
+            if not namespaces[name] and saved.profiles then
+                saved.profiles[profileName] = nil
+            end
+        end
+    end
+
+    for name, ns in pairs(namespaces) do
+        local saved = data and data[name]
+        if saved or replace then
+            if data then
+                data[name] = nil
+            end
+
+            if active then
+                -- AceDB keeps serving its own table for the active profile, so refill that one.
+                wipe(ns.profile)
+                for k, v in pairs(saved or {}) do
+                    ns.profile[k] = v
+                end
+                ns:RegisterDefaults(ns.defaults)
+            else
+                ns.profiles[profileName] = saved
+            end
+        end
+    end
+end
+
+---A module's own AceDB namespace inside NorskenUIDB. Profile switches, copies, resets and deletes reach it through AceDB.
+---@param name string the module's old profile key, which keeps its saved settings and every export string working
+---@param defaults table profile defaults
+---@return AceDBObject-3.0
+function ProfileManager:RegisterNamespace(name, defaults)
+    local db = NRSKNUI.db
+    local ns = db:RegisterNamespace(name, { profile = defaults })
+    namespaces[name] = ns
+
+    for profileName in pairs(db.profiles) do
+        MoveIntoNamespaces(profileName)
+    end
+
+    return ns
+end
+
+---A profile with every namespace folded back in under its name, the layout export strings have always used.
+---@param profileName string
+---@return table|nil
+local function ExportData(profileName)
+    local db = NRSKNUI.db
+    local data = db.profiles[profileName]
+    if not data then return end
+
+    local out = {}
+    for k, v in pairs(data) do
+        out[k] = v
+    end
+    for name, saved in pairs(db.sv.namespaces or {}) do
+        local nsData = saved.profiles and saved.profiles[profileName]
+        if nsData then
+            out[name] = nsData
+        end
+    end
+
+    return out
+end
+
 ---Export a profile to a string
 ---@param profileName string|nil Profile to export (current if nil)
 ---@return string|nil exportString
@@ -557,8 +638,10 @@ function ProfileManager:ExportProfile(profileName)
 
     if not NRSKNUI.db then return nil, 'Database not initialized' end
 
-    local profileData = NRSKNUI.db.profiles[profileName]
-    if not profileData then return nil, 'Profile: ' .. profileName .. ', not found' end
+    local profileData = ExportData(profileName)
+    if not profileData then
+        return nil, 'Profile: ' .. profileName .. ', not found'
+    end
 
     -- Create export package with metadata
     local exportData = {
@@ -667,7 +750,10 @@ function ProfileManager:ImportProfile(importString, targetName, activate)
     end
 
     NRSKNUI.db.profiles[finalName] = exportData.d -- new name, so no profile hop or refresh to write it
-    if activate then self:UseProfile(finalName) end
+    MoveIntoNamespaces(finalName, true)
+    if activate then
+        self:UseProfile(finalName)
+    end
 
     return true, finalName
 end
@@ -738,8 +824,10 @@ end
 function NorskenUIAPI:ExportProfile(profileKey)
     if not NRSKNUI.db then return '' end
 
-    local profileData = NRSKNUI.db.profiles[profileKey]
-    if not profileData then return '' end
+    local profileData = ExportData(profileKey)
+    if not profileData then
+        return ''
+    end
 
     local serialized = SerializeCBOR(profileData)
     local compressed = CompressString(serialized, Enum.CompressionMethod.Deflate,
@@ -778,11 +866,15 @@ function NorskenUIAPI.ImportProfile(profileString, profileKey, methodKey)
         if db:GetCurrentProfile() == profileKey then
             -- AceDB keeps serving its own table for the active profile, so refill that one.
             wipe(db.profile)
-            for k, v in pairs(profileData) do db.profile[k] = v end
+            for k, v in pairs(profileData) do
+                db.profile[k] = v
+            end
             db:RegisterDefaults(db.defaults)
+            MoveIntoNamespaces(profileKey, true)
             ProfileManager:RefreshAllModules()
         else
             db.profiles[profileKey] = profileData
+            MoveIntoNamespaces(profileKey, true)
         end
         ProfileManager:UseProfile(profileKey)
     end)

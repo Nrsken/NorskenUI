@@ -60,7 +60,7 @@ local PART_KEYS = {
 -- Ids --
 
 local function Store()
-    return NRSKNUI.db.profile.CDM.Displays
+    return CDM.db.Displays
 end
 
 ---@return string id
