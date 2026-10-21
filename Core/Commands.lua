@@ -2,6 +2,8 @@
 local NRSKNUI = select(2, ...)
 
 local string_gsub = string.gsub
+local format = string.format
+local tostring = tostring
 local ReloadUI = ReloadUI
 local canaccessvalue = canaccessvalue
 local GetMouseFocus = GetMouseFocus
@@ -27,6 +29,71 @@ function NRSKNUI:ResetGUIState()
     self:Print('GUI position and size reset to defaults.')
 end
 
+-- Options --
+
+local OPTIONS = 'NorskenUI_Options'
+
+---The settings window lives in a LoadOnDemand addon, loaded the first time it's opened.
+---@return boolean loaded
+local function LoadOptions()
+    if C_AddOns.IsAddOnLoaded(OPTIONS) then return true end
+
+    local _, _, _, _, reason = C_AddOns.GetAddOnInfo(OPTIONS)
+    if reason == 'MISSING' then
+        NRSKNUI:Print(OPTIONS .. ' is missing, reinstall NorskenUI.')
+        return false
+    end
+
+    -- a disabled options folder would leave /nui doing nothing, so turn it back on for this character
+    C_AddOns.EnableAddOn(OPTIONS, NRSKNUI.MyGUID)
+    local loaded, failure = C_AddOns.LoadAddOn(OPTIONS)
+    if not loaded then
+        NRSKNUI:Print(OPTIONS .. ': ' .. (_G['ADDON_' .. tostring(failure)] or tostring(failure)))
+        return false
+    end
+
+    -- folders from different releases mixed together break in odd ways, so say so up front
+    -- raw TOC values on both sides: NRSKNUI.Version shows a dev checkout as 'Development Version'
+    local version = C_AddOns.GetAddOnMetadata(OPTIONS, 'Version')
+    local coreVersion = C_AddOns.GetAddOnMetadata('NorskenUI', 'Version')
+    if version ~= coreVersion then
+        NRSKNUI:Print(format('%s is version %s but NorskenUI is %s, update both.', OPTIONS, tostring(version), tostring(coreVersion)))
+    end
+    return true
+end
+
+---Open the settings window, on a page when given one.
+---@param pageId string?
+---@param context table? { tabId, itemKey } inside that page
+function NRSKNUI:OpenOptions(pageId, context)
+    -- loading builds the whole window, which waits until combat is over
+    if InCombatLockdown() then
+        self:Print('Options will open after combat ends.')
+        self:RunWhenSafe(function()
+            self:OpenOptions(pageId, context)
+        end)
+        return
+    end
+    if not LoadOptions() then return end
+
+    local window = self.GUIFrame
+    if not window:IsShown() then
+        window:Show()
+    end
+    if pageId then
+        window:ShowPage(pageId, context)
+    end
+end
+
+function NRSKNUI:ToggleOptions()
+    local window = C_AddOns.IsAddOnLoaded(OPTIONS) and self.GUIFrame
+    if window and window:IsShown() then
+        window:Hide()
+    else
+        self:OpenOptions()
+    end
+end
+
 -- Game menu entry, kept out of Blizzard's button pool so its pooled buttons never carry our taint.
 function NRSKNUI:SetupGameMenuButton()
     EventUtil.ContinueOnAddOnLoaded('Blizzard_GameMenu', function()
@@ -35,7 +102,7 @@ function NRSKNUI:SetupGameMenuButton()
         button:SetScript('OnClick', function()
             PlaySound(SOUNDKIT.IG_MAINMENU_OPTION)
             menu:CloseMenu()
-            NRSKNUI.GUIFrame:Show()
+            NRSKNUI:OpenOptions()
         end)
 
         -- Layout re-anchors every pooled button from scratch, so this slots in below Macros each time.
@@ -77,9 +144,7 @@ function NRSKNUI:SetupSlashCommands()
         msg = string_gsub(msg, '^%s+', '')
         msg = string_gsub(msg, '%s+$', '')
         if msg == '' or msg == 'gui' then
-            if NRSKNUI.GUIFrame then
-                NRSKNUI.GUIFrame:Toggle()
-            end
+            NRSKNUI:ToggleOptions()
         elseif msg == 'anchors' then
             if NRSKNUI.Anchors then
                 NRSKNUI.Anchors:Toggle()

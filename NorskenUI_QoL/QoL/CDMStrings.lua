@@ -690,9 +690,7 @@ function CooldownStrings:CreatePanel()
         GameTooltip:Hide()
     end)
     open:SetScript('OnClick', function()
-        local window = NRSKNUI.GUIFrame
-        if not window:IsShown() then window:Show() end
-        window:ShowPage('cdmStrings')
+        NRSKNUI:OpenOptions('cdmStrings')
     end)
 
     local content = CreateFrame('Frame', nil, panel)

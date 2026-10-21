@@ -116,9 +116,7 @@ local function SetupMinimapIcon()
         iconB = Theme.accent[3],
         OnClick = function(_, button)
             if button == 'LeftButton' then
-                if NRSKNUI.GUIFrame then
-                    NRSKNUI.GUIFrame:Toggle()
-                end
+                NRSKNUI:ToggleOptions()
             elseif button == 'RightButton' then
                 if NRSKNUI.Anchors then
                     NRSKNUI.Anchors:Toggle()

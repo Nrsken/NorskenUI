@@ -1003,9 +1003,7 @@ end
 
 ---Open config panel
 function NorskenUIAPI:OpenConfig()
-    if NRSKNUI.GUIFrame and NRSKNUI.GUIFrame.Show then
-        NRSKNUI.GUIFrame:Show()
-    end
+    NRSKNUI:OpenOptions()
 end
 
 ---Close config panel

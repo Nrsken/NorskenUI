@@ -17,14 +17,3 @@ Locales/Locales.xml
 
 # Load Core Files
 Core/Core.xml
-
-# Load GUI Core File
-GUI/GUI-Core.lua
-GUI/GUI-SidebarConfig.lua
-GUI/GUI-AuraCards.lua
-GUI/GUI-SpellList.lua
-GUI/GUI-TriggerEditor.lua
-
-# Load GUI Tab Files
-GUI/GUI-Tabs/GUI-Global/GUI-Global.xml
-GUI/GUI-Tabs/GUI-Miscellaneous/GUI-Miscellaneous.xml

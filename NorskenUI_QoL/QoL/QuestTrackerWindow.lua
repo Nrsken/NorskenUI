@@ -108,11 +108,7 @@ local function OpenCharactersMenu()
 end
 
 local function OpenSettings()
-    local window = NRSKNUI.GUIFrame
-    if not window:IsShown() then
-        window:Show()
-    end
-    window:ShowPage('questTracker')
+    NRSKNUI:OpenOptions('questTracker')
 end
 
 -- Bars --

@@ -6,8 +6,18 @@
 ## Version: @project-version@
 ## Author: Norsken
 ## IconTexture: Interface\AddOns\NorskenUI\Media\Logo\LogoRed.png
+## LoadOnDemand: 1
 ## Dependencies: NorskenUI
 ## OptionalDeps: NorskenUI_Auras, NorskenUI_UnitFrames, NorskenUI_Skinning, NorskenUI_QoL
+
+# the window and what every page builds with
+GUI-Core.lua
+GUI-SidebarConfig.lua
+GUI-AuraCards.lua
+GUI-SpellList.lua
+GUI-TriggerEditor.lua
+GUI-Global\GUI-Global.xml
+GUI-Miscellaneous\GUI-Miscellaneous.xml
 
 # each module's pages return early when that module is disabled
 Auras\GUI-CDM.xml

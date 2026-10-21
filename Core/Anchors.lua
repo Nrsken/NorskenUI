@@ -895,18 +895,16 @@ function Anchors:OpenSelectedSettings()
     end
 
     local entry = self.registry[self.selectedKey]
-    local GUIFrame = NRSKNUI.GUIFrame
-    if not entry or not GUIFrame then return end
-
-    if not GUIFrame:IsShown() then GUIFrame:Show() end
-    if not entry.guiPath then return end
+    if not entry then return end
 
     -- ShowPage expects a { tabId, itemKey } target, a bare context names the item.
     local context = entry.guiContext
-    if type(context) == 'string' then context = { itemKey = context } end
+    if type(context) == 'string' then
+        context = { itemKey = context }
+    end
 
     -- ShowPage resolves and expands the owning sidebar header itself.
-    GUIFrame:ShowPage(entry.guiPath, context)
+    NRSKNUI:OpenOptions(entry.guiPath, context)
 end
 
 ---Called by the GUI (via services.positionSync) when a PositionCard edits a position,
