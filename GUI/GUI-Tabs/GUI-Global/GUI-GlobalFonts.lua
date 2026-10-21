@@ -6,9 +6,12 @@ local Theme = NRSKNUI.Theme
 local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
 ---@class BlizzardMessagesModule
-local BlizzardMessages = NRSKNUI:GetModule('BlizzardMessages')
-local function ApplySettings() BlizzardMessages:ApplySettings() end
-
+local BlizzardMessages = NRSKNUI:GetModule('BlizzardMessages', true) -- a Skinning module, so it can be missing
+local function ApplySettings()
+    if BlizzardMessages then
+        BlizzardMessages:ApplySettings()
+    end
+end
 
 local ipairs = ipairs
 local format = string.format

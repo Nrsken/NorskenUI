@@ -10,6 +10,8 @@ local L = NRSKNUI.Libs.AL
 * id:               Must be unique across all entries in the sidebar and use moduleType_id format for module entries.
 * type:             Can be either 'header' or 'item'. Headers can contain child items, while items are leaf nodes.
 * text:             The display text for the sidebar entry.
+* order:            Top-level entries only, sorts them. Core's entries sit here, every other folder adds its own
+                    with GUIFrame:AddSidebarEntry from its Sidebar.lua.
 
 * 'header' entries can have the following optional properties:
 * defaultExpanded:  Optional boolean for headers to indicate if they should be expanded by default.
@@ -21,16 +23,13 @@ GUIFrame.SidebarConfig = {
     systems = {
         {
             id = 'profilePage',
+            order = 10,
             type = 'item',
             text = L['Profile Settings'],
         },
         {
-            id = 'cooldownManager',
-            type = 'item',
-            text = L['Cooldown & Aura Manager'],
-        },
-        {
             id = 'global_section',
+            order = 30,
             type = 'header',
             text = L['Global Settings'],
             defaultExpanded = false,
@@ -42,127 +41,6 @@ GUIFrame.SidebarConfig = {
                 { id = 'globalDurationText', text = L['Duration Text'] },
             }
         },
-        {
-            id = 'unitframes_section',
-            type = 'header',
-            text = L['Unit Frames'],
-            defaultExpanded = false,
-            items = {
-                { id = 'unitFramesGeneral',       text = L['General'] },
-                { id = 'unitFramesIndicators',    text = L['Aura Indicators'] },
-                { id = 'unitFrames_player',       text = L['Player'] },
-                { id = 'unitFrames_target',       text = L['Target'] },
-                { id = 'unitFrames_targettarget', text = L['Target of Target'] },
-                { id = 'unitFrames_focus',        text = L['Focus'] },
-                { id = 'unitFrames_focustarget',  text = L['Focus Target'] },
-                { id = 'unitFrames_pet',          text = L['Pet'] },
-                { id = 'unitFrames_pettarget',    text = L['Pet Target'] },
-                { id = 'unitFrames_boss',         text = L['Boss'] },
-                { id = 'unitFrames_party',        text = L['Party'] },
-                { id = 'unitFrames_raid1',        text = L['Raid 1'] },
-                { id = 'unitFrames_raid2',        text = L['Raid 2'] },
-                { id = 'unitFrames_raid3',        text = L['Raid 3'] },
-            }
-        },
-        {
-            id = 'combat_section',
-            type = 'header',
-            text = L['Combat Util'],
-            defaultExpanded = false,
-            items = {
-                { id = 'combatTimer',   text = L['Combat Timer'] },
-                { id = 'combatCross',   text = L['Combat Cross'] },
-                { id = 'combatRes',     text = L['Combat Res Tracker'] },
-                { id = 'combatMessage', text = L['Combat Message'] },
-                { id = 'cursorCircle',  text = L['Cursor Circle'] },
-                { id = 'focusCastbar',  text = L['Focus Castbar'] },
-                { id = 'rangeChecker',  text = L['Range Checker'] },
-                { id = 'potionReady',   text = L['Potion Ready'] },
-            }
-        },
-        {
-            id = 'qol_section',
-            type = 'header',
-            text = L['Quality of Life'],
-            defaultExpanded = false,
-            items = {
-                { id = 'XPBar',              text = L['XP Bar'] },
-                { id = 'miscVars',           text = L['CVars'] },
-                { id = 'auctionHouseFilter', text = L['Auction House Filter'] },
-                { id = 'copyAnything',       text = L['Copy Anything'] },
-                { id = 'automation',         text = L['Automation'] },
-                { id = 'recuperate',         text = L['Recuperate Button'] },
-                { id = 'tweaks',             text = L['Tweaks'] },
-                { id = 'durabilityUtil',     text = L['Durability Util'] },
-                { id = 'characterPanel',     text = L['Character Panel'] },
-                { id = 'skyRiding',          text = L['Skyriding UI'] },
-                { id = 'spellAlert',         text = L['Spell Alerts'] },
-                { id = 'cdmStrings',         text = L['CDM Profile Backup'] },
-                { id = 'groupFinder',        text = L['Group Finder'] },
-                { id = 'questTracker',       text = L['Quest Tracker'] },
-            }
-        },
-        {
-            id = 'skinning_section',
-            type = 'header',
-            text = L['Skinning'],
-            defaultExpanded = false,
-            items = {
-                { id = 'actionBars',        text = L['Action Bars'] },
-                { id = 'blizzardMouseover', text = L['Blizzard Mouseover'], elvUIDisabled = true },
-                { id = 'buffsDebuffs',      text = L['Buffs & Debuffs'] },
-                { id = 'chat',              text = L['Chat'] },
-                { id = 'detailsBackdrop',   text = L['Details Backdrop'] },
-                { id = 'frameSkins',        text = L['Frames'],             elvUIDisabled = true },
-                { id = 'microMenu',         text = L['Micro Menu'] },
-                { id = 'minimap',           text = L['Minimap'] },
-                { id = 'objectiveTracker',  text = L['Objective Tracker'],  elvUIDisabled = true },
-                { id = 'tooltip',           text = L['Tooltips'] },
-            }
-        },
-        {
-            id = 'dungeons_section',
-            type = 'header',
-            text = L['Dungeons'],
-            defaultExpanded = false,
-            items = {
-                { id = 'dungeonCasts',   text = L['Dungeon Casts'] },
-                { id = 'rerollKeystone', text = L['Reroll Keystone'] },
-            }
-        },
-        {
-            id = 'bwtimers_section',
-            type = 'header',
-            text = L['BigWigs Timers'],
-            defaultExpanded = false,
-            items = {
-                { id = 'bwTimers',         text = L['General'] },
-                { id = 'bwTimersBars',     text = L['Bar Settings'] },
-                { id = 'bwTimersTexts',    text = L['Text Settings'] },
-                { id = 'bwTimersDungeons', text = L['Dungeons'] },
-                { id = 'bwTimersRaids',    text = L['Raids'] },
-            }
-        },
-        {
-            id = 'class_section',
-            type = 'header',
-            text = L['Class Utility'],
-            defaultExpanded = false,
-            items = {
-                { id = 'petTexts', text = L['Pet Status Texts'] },
-                { id = 'gateway',  text = L['Gateway Alert'] },
-            }
-        },
-        {
-            id = 'missingBuffs_section',
-            type = 'header',
-            text = L['Missing Buffs'],
-            defaultExpanded = false,
-            items = {
-                { id = 'missingBuffsRaid', text = L['Buffs'] },
-                { id = 'missingBuffsTargeted', text = L['Targeted Buffs'] },
-            }
-        },
     },
 }
 
@@ -172,3 +50,19 @@ GUIFrame:SetSidebar(GUIFrame.SidebarConfig.systems, {
         return entry.elvUIDisabled and NRSKNUI.ShouldNotLoadModule and NRSKNUI:ShouldNotLoadModule() or false
     end,
 })
+
+---Add a top-level entry, a section with its items or a single item, placed by its order.
+---The sidebar keeps this table by reference, so a refresh shows entries added after it was built.
+---@param entry table
+function GUIFrame:AddSidebarEntry(entry)
+    local systems = self.SidebarConfig.systems
+    local index = #systems + 1
+    for i, existing in ipairs(systems) do
+        if entry.order < existing.order then
+            index = i
+            break
+        end
+    end
+    tinsert(systems, index, entry)
+    self.sidebar:Refresh()
+end

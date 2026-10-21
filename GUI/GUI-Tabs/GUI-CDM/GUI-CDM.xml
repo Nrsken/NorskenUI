@@ -5,6 +5,7 @@
         <Size x="36" y="36" />
     </Button>
 
+    <Script file="Sidebar.lua" />
     <Script file="Widgets\IconPicker.lua" />
     <Script file="Widgets\Thumbnail.lua" />
     <Script file="Widgets\Tree.lua" />
