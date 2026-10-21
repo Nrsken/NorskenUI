@@ -636,7 +636,9 @@ end
 ---Update the group's position based on its configuration and optional grow direction.
 ---@param source table placement config (Position/Strata/anchorFrameType/ParentFrame), same shape Frame:ApplyPosition takes
 ---@param grow? string
-function GroupMixin:UpdateGroupPosition(source, grow)
+---@param extraX? number added to the saved offset, not stored
+---@param extraY? number
+function GroupMixin:UpdateGroupPosition(source, grow, extraX, extraY)
     local posConfig = source.Position
     if not posConfig then return end
 
@@ -652,7 +654,7 @@ function GroupMixin:UpdateGroupPosition(source, grow)
     local growAnchor = self:GetResolvedAnchor(grow or source.Grow)
 
     self:ClearAllPoints()
-    self:NUISetPixelPoint(growAnchor, parent, posConfig.AnchorTo or 'CENTER', posConfig.XOffset or 0, posConfig.YOffset or 0)
+    self:NUISetPixelPoint(growAnchor, parent, posConfig.AnchorTo or 'CENTER', (posConfig.XOffset or 0) + (extraX or 0), (posConfig.YOffset or 0) + (extraY or 0))
     self:SetFrameStrata(source.Strata or 'MEDIUM')
 end
 

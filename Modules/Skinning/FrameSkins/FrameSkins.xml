@@ -23,10 +23,13 @@
 
     <Script file='Blizzard/CharacterFrame.lua' />
     <Script file='Blizzard/GameMenu.lua' />
+    <Script file='Blizzard/Gossip.lua' />
     <Script file='Blizzard/GroupFinder.lua' />
     <Script file='Blizzard/InspectFrame.lua' />
+    <Script file='Blizzard/Merchant.lua' />
     <Script file='Blizzard/PlayerSpells.lua' />
     <Script file='Blizzard/Professions.lua' />
+    <Script file='Blizzard/Quest.lua' />
     <Script file='Blizzard/ReadyCheck.lua' />
     <Script file='Blizzard/Runeforge.lua' />
     <Script file='Blizzard/StaticPopup.lua' />

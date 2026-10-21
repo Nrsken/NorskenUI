@@ -14,10 +14,8 @@ local DisplayTab = NRSKNUI.CDMDisplayTab
 local Assign, BarColorSettings, BarIconSettings, BarSettings = DisplayTab.Assign, DisplayTab.BarColorSettings, DisplayTab.BarIconSettings, DisplayTab.BarSettings
 local GeneralSettings, IconSettings, PipSettings, PositionAndSize = DisplayTab.GeneralSettings, DisplayTab.IconSettings, DisplayTab.PipSettings, DisplayTab.PositionAndSize
 local Section, SparkSettings, SplitPower, SubElements = DisplayTab.Section, DisplayTab.SparkSettings, DisplayTab.SplitPower, DisplayTab.SubElements
-local SwipeSettings, TextRows = DisplayTab.SwipeSettings, DisplayTab.TextRows
+local SwipeSettings, TextRows, TimerTextSettings = DisplayTab.SwipeSettings, DisplayTab.TextRows, DisplayTab.TimerTextSettings
 
----The Display tab for one icon, or every icon in a group at once (WeakAuras' group editing).
----Controls show the first icon's values; every change goes to all of them.
 ---@param page table
 ---@param iconIds string[]
 ---@param apply fun()
@@ -77,6 +75,7 @@ function DisplayTab:Build(page, iconIds, apply, refreshTree, triggerChip)
             DisplayTab.Heading(card, L['Icon'])
             if Section(card, 'icon', L['Icon Settings']) then IconSettings(card, page, style, set, refreshTree) end
             if Section(card, 'swipe', L['Swipe Settings']) then SwipeSettings(card, page, style, set) end
+            if Section(card, 'timerText', L['Timer Text Settings']) then TimerTextSettings(card, page, style, set, icons[1].Triggers) end
         end
         DisplayTab.Heading(card, L['Layout'])
         if Section(card, 'size', L['Position and Size Settings']) then

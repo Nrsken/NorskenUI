@@ -287,7 +287,9 @@ function Frame:NUIBanish(...) end
 ---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#applyposition)
 ---@param Config table
 ---@param setParent? boolean also reparent
-function Frame:NUIApplyPosition(Config, setParent) end
+---@param extraX? number added to the saved offset, not stored
+---@param extraY? number
+function Frame:NUIApplyPosition(Config, setParent, extraX, extraY) end
 
 ---Walk child FontStrings and apply a font style.
 ---
@@ -358,7 +360,9 @@ function Button:NUIBanish(...) end
 ---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#applyposition)
 ---@param Config table
 ---@param setParent? boolean also reparent
-function Button:NUIApplyPosition(Config, setParent) end
+---@param extraX? number added to the saved offset, not stored
+---@param extraY? number
+function Button:NUIApplyPosition(Config, setParent, extraX, extraY) end
 
 ---@class StatusBar ---@diagnostic disable-line: class-shadows-builtin
 ---@field SetBackgroundColor fun(self: StatusBar, r: number, g: number, b: number, a: number?)
@@ -415,7 +419,9 @@ function StatusBar:NUIBanish(...) end
 ---[Documentation](https://github.com/Nrsken/NorskenUI/blob/PTR/Docs/API.md#applyposition)
 ---@param Config table
 ---@param setParent? boolean also reparent
-function StatusBar:NUIApplyPosition(Config, setParent) end
+---@param extraX? number added to the saved offset, not stored
+---@param extraY? number
+function StatusBar:NUIApplyPosition(Config, setParent, extraX, extraY) end
 
 ---@class Texture ---@diagnostic disable-line: class-shadows-builtin
 ---@field NUISetPixelSize fun(self: Texture, width: number, height?: number, ...) Pixel-snapped SetSize (falls back to width for height)

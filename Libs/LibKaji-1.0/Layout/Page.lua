@@ -261,6 +261,7 @@ end
 ---@param title string
 ---@param config? { key?: any, collapsed?: boolean, onToggle?: fun(), onMoveUp?: fun(), onMoveDown?: fun(), onDuplicate?: fun(), onDelete?: fun() }
 ---@return boolean expanded
+---@return KajiGUISectionHeader header for SetTitle/SetSummary while its settings change
 function FluentCard:Section(title, config)
     config = config or {}
     local real = self.real
@@ -298,7 +299,7 @@ function FluentCard:Section(title, config)
     end
 
     if not config.collapsed then real:BeginBody(key) end
-    return not config.collapsed
+    return not config.collapsed, header
 end
 
 ---Ends the current section's body, for rows after it that belong to the card itself.

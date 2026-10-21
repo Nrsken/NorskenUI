@@ -3,24 +3,36 @@ local NRSKNUI = select(2, ...)
 ---@class CDMModule
 local CDM = NRSKNUI:GetModule('CDM')
 
-local tremove = table.remove
 local pairs, ipairs = pairs, ipairs
 local CreateFrame = CreateFrame
+local tremove = table.remove
+
+local UIParent = UIParent
 
 local STATIC_GROUP_SIZE = 32 -- a static group draws nothing; this is what its mover grabs
 
--- Containers --
+--[[
+The frames groups live in.
+A plain frame for a group, a dynamic group or a chain group when the engine has to lay it out.
+]]
 
----Groups holding an aura icon or a text are laid out by the engine, as their sizes can be secret.
+---A dynamic group (not Grid) holding an aura or a text is laid out by the engine, as their sizes can be secret.
 ---@param id string
 ---@return boolean
 function CDM:WantsChain(id)
     local display = self:Get(id)
-    if not (display and display.type == 'dynamicgroup' and display.Layout.Grow ~= 'GRID') then return false end
+    if not (display and display.type == 'dynamicgroup' and display.Layout.Grow ~= 'GRID') then
+        return false
+    end
     for _, iconId in ipairs(self:GetIcons(id)) do
-        if self:Get(iconId).type == 'text' then return true end
-        for _, trigger in ipairs(self:Get(iconId).Triggers) do
-            if trigger.Type == 'aura' or trigger.Type == 'auraoverlay' then return true end
+        local child = self:Get(iconId)
+        if child.type == 'text' then
+            return true
+        end
+        for _, trigger in ipairs(child.Triggers) do
+            if trigger.Type == 'aura' or trigger.Type == 'auraoverlay' then
+                return true
+            end
         end
     end
     return false
@@ -31,7 +43,9 @@ function CDM:BuildContainer(id)
     local display = self:Get(id)
     if not display then return self:Release(id) end
 
-    if display.parent and not self.containers[display.parent] then self:BuildContainer(display.parent) end
+    if display.parent and not self.containers[display.parent] then
+        self:BuildContainer(display.parent)
+    end
 
     local dynamic = display.type == 'dynamicgroup'
     local chained = dynamic and self:WantsChain(id)
@@ -47,6 +61,7 @@ function CDM:BuildContainer(id)
         self:Release(id)
         frame = nil
     end
+
     if not frame then
         if chained then
             frame = tremove(self.spareChain) or self:CreateChainGroup()
@@ -59,15 +74,24 @@ function CDM:BuildContainer(id)
         self.containers[id] = frame
     end
 
+    ---@cast frame -nil
+    self:EvaluateGroupConditions(display, frame)
+
     if dynamic then
         ---@cast frame NRSKNUI.DynamicGroup
-        if not chained then frame.onLayout = function() self:PlaceMatchedBars(id) end end
+        if not chained then
+            frame.onLayout = function()
+                self:PlaceMatchedBars(id)
+            end
+        end
+
         frame:SetConfig(display.Layout)
         self:Place(frame, id, display, frame:GetResolvedAnchor(display.Layout.Grow))
     else
         ---@cast frame Frame
         self:Place(frame, id, display)
     end
+
     self:PlaceMatchedBars(id)
 end
 

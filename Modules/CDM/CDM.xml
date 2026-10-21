@@ -5,6 +5,7 @@
     <Script file="Core\Placement.lua" />
     <Script file="Core\Debug.lua" />
     <Script file="Groups\Containers.lua" />
+    <Script file="Data\Templates.lua" />
     <Script file="Data\Store.lua" />
     <Script file="Data\Migrations.lua" />
     <Script file="Data\Transfer.lua" />
@@ -24,6 +25,7 @@
     <Script file="Displays\Bar.lua" />
     <Script file="Triggers\Cast.lua" />
     <Script file="Triggers\Stat.lua" />
+    <Script file="Triggers\LootSpec.lua" />
     <Script file="Triggers\ViewerBar.lua" />
     <Script file="Displays\Glow.lua" />
     <Script file="Groups\ChainGroup.lua" />

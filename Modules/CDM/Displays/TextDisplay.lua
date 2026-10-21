@@ -6,6 +6,10 @@ local CDM = NRSKNUI:GetModule('CDM')
 local CreateFrame = CreateFrame
 local ipairs = ipairs
 
+--[[
+A text display's frame follows its text's size, so a group can lay it out like an icon.
+]]
+
 ---A text display's frame sized to the shown text by the engine; Lua never reads the size, which turns secret with the text.
 ---@param frame CDMIcon
 local function FitText(frame)
@@ -37,7 +41,9 @@ function CDM:SetupTextFit(frame, display)
             frame.fitProbes[i] = probe
         end
     end
-    for _, probe in ipairs(frame.fitProbes or {}) do probe:SetShown(fits) end
+    for _, probe in ipairs(frame.fitProbes or {}) do
+        probe:SetShown(fits)
+    end
     frame.fitsText, frame.fitText = fits, nil
     frame:SetScript('OnUpdate', fits and FitText or nil)
 end

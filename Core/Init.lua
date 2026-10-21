@@ -148,6 +148,7 @@ NRSKNUI.SkyRiding = NRSKNUI:NewModule('SkyRiding', 'AceEvent-3.0')
 NRSKNUI.SpellAlert = NRSKNUI:NewModule('SpellAlert', 'AceEvent-3.0')
 NRSKNUI.CooldownStrings = NRSKNUI:NewModule('CooldownStrings', 'AceEvent-3.0')
 NRSKNUI.GroupFinder = NRSKNUI:NewModule('GroupFinder', 'AceEvent-3.0')
+NRSKNUI.QuestTracker = NRSKNUI:NewModule('QuestTracker', 'AceEvent-3.0')
 
 -- Skinning Modules
 NRSKNUI.Skinning = NRSKNUI:NewModule('Skinning', 'AceEvent-3.0')
@@ -167,7 +168,6 @@ NRSKNUI.PetTexts = NRSKNUI:NewModule('PetTexts', 'AceEvent-3.0')
 
 -- Player Auras
 NRSKNUI.PlayerAuras = NRSKNUI:NewModule('PlayerAuras', 'AceEvent-3.0')
-NRSKNUI.AuraDisplay = NRSKNUI:NewModule('AuraDisplay', 'AceEvent-3.0')
 
 -- Cooldown Manager
 NRSKNUI.CDM = NRSKNUI:NewModule('CDM', 'AceEvent-3.0')

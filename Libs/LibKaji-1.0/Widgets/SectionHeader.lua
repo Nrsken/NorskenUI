@@ -94,6 +94,12 @@ function SectionHeaderMixin:UpdateColors()
     self:SetSummary(self._summary)
 end
 
+---@param title string
+function SectionHeaderMixin:SetTitle(title)
+    self._title = title or ""
+    self:SetSummary(self._summary)
+end
+
 ---The text after the title, in the primary text colour; nil shows the title alone.
 ---@param summary string?
 function SectionHeaderMixin:SetSummary(summary)

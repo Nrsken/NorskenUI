@@ -22,6 +22,10 @@ local Defaults = {
         SpellAlertCVars = {},
         CDMLayoutCache = {},
         SidebarCollapsed = { ['*'] = {} }, -- [page][section key] = true, closed mini sidebar sections
+        QuestTracker = {
+            quests = {},     -- ordered { questID, title?, name?, account? }
+            characters = {}, -- [GUID] = { guid, name, realm, classFile, level, enabled, lastUpdate, quests = { [questID] = state } }
+        },
     },
     profile = {
         Theme = {
@@ -1149,6 +1153,10 @@ local Defaults = {
                 Enabled = true,
                 Profiles = {},
             },
+            QuestTracker = {
+                Enabled = false,
+                CharacterTabOnly = false,
+            },
             FocusCastbar = {
                 Enabled = true,
                 TargetMarker = {
@@ -1298,12 +1306,15 @@ local Defaults = {
                     BugSack = true,
                     CharacterFrame = true,
                     GameMenu = true,
+                    GossipFrame = true,
                     GroupFinder = true,
                     InspectFrame = true,
                     KeystoneLoot = true,
                     Menus = true,
+                    MerchantFrame = true,
                     PlayerSpells = true,
                     Professions = true,
+                    QuestFrame = true,
                     RaiderIO = true,
                     ReadyCheck = true,
                     Runeforge = true,
@@ -2666,241 +2677,6 @@ local Defaults = {
             TrinketBlacklist = {}, -- [itemID] = true, trinkets whose on-use isn't worth tracking
             Version = 0,
             Displays = {}, -- 'cdm:N' keys, user data only
-        },
-
-        -- Optional headers the display list groups user displays under. Created on demand from the
-        -- display's right-click menu and dropped again once nothing points at them.
-        AuraDisplayGroups = {
-            ['group:general'] = { name = "General Trackers", Icon = 4548871, Strata = "HIGH" },
-        },
-
-        -- Standalone aura displays, all run by the one AuraDisplay module. Built-ins are seeded
-        -- here; a user's own land beside them under a 'user:' key and are otherwise identical.
-        AuraDisplays = {
-            ['builtin:advancedDebuffs'] = {
-                name = "Advanced Debuffs",
-                Enabled = true,
-                group = 'group:general',
-                Icon = 1396978,
-                size = 50,
-                perRow = 6,
-                maxFrameCount = 6,
-                previewLimit = 6,
-                elementSpacing = 1,
-                lineSpacing = 1,
-                horizontalGrowthDirection = "LEFT",
-                verticalGrowthDirection = "UP",
-                sortMethod = "ExpirationOnly",
-                sortDirection = "Normal",
-                showApplicationCount = true,
-                showDurationText = true,
-                drawSwipe = false,
-                drawEdge = false,
-                reverseSwipe = true,
-                showBorder = true,
-                showBorderWithoutDispelType = true,
-                showDebuffDispelIcon = true,
-                dispelIconSize = 12,
-                tooltipHideInCombat = false,
-                UseGlobalFont = true,
-                FontFace = "Expressway",
-                FontOutline = "OUTLINE",
-                StackFont = {
-                    FontSize = 14,
-                    Position = {
-                        AnchorFrom = "BOTTOMRIGHT",
-                        XOffset = 0,
-                        YOffset = 2
-                    },
-                },
-                DurationFont = {
-                    FontSize = 18,
-                    Position = {
-                        AnchorFrom = "CENTER",
-                        XOffset = 0,
-                        YOffset = 0
-                    },
-                },
-                FontShadow = {
-                    Enabled = false,
-                    Color = { 0, 0, 0, 1 },
-                    OffsetX = 1,
-                    OffsetY = -1,
-                },
-                anchorFrameType = "SELECTFRAME",
-                ParentFrame = "NUF_Player",
-                Position = {
-                    AnchorFrom = "BOTTOMRIGHT",
-                    AnchorTo = "TOPRIGHT",
-                    XOffset = 0,
-                    YOffset = 120
-                },
-            },
-            ['builtin:defensives'] = {
-                name = "Defensives",
-                Enabled = true,
-                group = 'group:general',
-                Icon = 132360,
-                size = 50,
-                perRow = 6,
-                maxFrameCount = 6,
-                previewLimit = 6,
-                elementSpacing = 1,
-                lineSpacing = 1,
-                horizontalGrowthDirection = "LEFT",
-                verticalGrowthDirection = "UP",
-                sortMethod = "ExpirationOnly",
-                sortDirection = "Normal",
-                showApplicationCount = true,
-                showDurationText = true,
-                drawSwipe = false,
-                drawEdge = false,
-                reverseSwipe = true,
-                tooltipHideInCombat = false,
-                UseGlobalFont = true,
-                FontFace = "Expressway",
-                FontOutline = "OUTLINE",
-                StackFont = {
-                    FontSize = 14,
-                    Position = {
-                        AnchorFrom = "BOTTOMRIGHT",
-                        XOffset = 0,
-                        YOffset = 2
-                    },
-                },
-                DurationFont = {
-                    FontSize = 18,
-                    Position = {
-                        AnchorFrom = "CENTER",
-                        XOffset = 0,
-                        YOffset = 0
-                    },
-                },
-                FontShadow = {
-                    Enabled = false,
-                    Color = { 0, 0, 0, 1 },
-                    OffsetX = 1,
-                    OffsetY = -1,
-                },
-                anchorFrameType = "SELECTFRAME",
-                ParentFrame = "NUF_Player",
-                Position = {
-                    AnchorFrom = "BOTTOMRIGHT",
-                    AnchorTo = "TOPRIGHT",
-                    XOffset = 0,
-                    YOffset = 40
-                },
-            },
-            ['builtin:generalBuffs'] = {
-                name = "General Buffs",
-                Enabled = true,
-                group = 'group:general',
-                Icon = 4374707,
-                size = 36,
-                perRow = 1,
-                maxFrameCount = 10,
-                previewLimit = 5,
-                elementSpacing = 1,
-                lineSpacing = 1,
-                horizontalGrowthDirection = "LEFT",
-                verticalGrowthDirection = "UP",
-                sortMethod = "AuraInstanceIDOnly",
-                sortDirection = "Normal",
-                showApplicationCount = true,
-                showDurationText = true,
-                drawSwipe = false,
-                drawEdge = false,
-                reverseSwipe = true,
-                tooltipHideInCombat = false,
-                UseGlobalFont = true,
-                FontFace = "Expressway",
-                FontOutline = "OUTLINE",
-                StackFont = {
-                    FontSize = 12,
-                    Position = {
-                        AnchorFrom = "BOTTOMRIGHT",
-                        XOffset = 0,
-                        YOffset = 2
-                    },
-                },
-                DurationFont = {
-                    FontSize = 14,
-                    Position = {
-                        AnchorFrom = "CENTER",
-                        XOffset = 0,
-                        YOffset = 0
-                    },
-                },
-                FontShadow = {
-                    Enabled = false,
-                    Color = { 0, 0, 0, 1 },
-                    OffsetX = 1,
-                    OffsetY = -1,
-                },
-                anchorFrameType = "SELECTFRAME",
-                ParentFrame = "NUF_Target",
-                Position = {
-                    AnchorFrom = "BOTTOMRIGHT",
-                    AnchorTo = "TOPLEFT",
-                    XOffset = -30,
-                    YOffset = 120
-                },
-            },
-            ['builtin:speed'] = {
-                name = "Speed",
-                Enabled = true,
-                group = 'group:general',
-                Icon = 648208,
-                size = 42,
-                perRow = 6,
-                maxFrameCount = 6,
-                previewLimit = 6,
-                elementSpacing = 1,
-                lineSpacing = 1,
-                horizontalGrowthDirection = "LEFT",
-                verticalGrowthDirection = "UP",
-                sortMethod = "ExpirationOnly",
-                sortDirection = "Normal",
-                showApplicationCount = true,
-                showDurationText = true,
-                drawSwipe = false,
-                drawEdge = false,
-                reverseSwipe = true,
-                tooltipHideInCombat = false,
-                UseGlobalFont = true,
-                FontFace = "Expressway",
-                FontOutline = "OUTLINE",
-                StackFont = {
-                    FontSize = 14,
-                    Position = {
-                        AnchorFrom = "BOTTOMRIGHT",
-                        XOffset = 0,
-                        YOffset = 2
-                    },
-                },
-                DurationFont = {
-                    FontSize = 18,
-                    Position = {
-                        AnchorFrom = "CENTER",
-                        XOffset = 0,
-                        YOffset = 0
-                    },
-                },
-                FontShadow = {
-                    Enabled = false,
-                    Color = { 0, 0, 0, 1 },
-                    OffsetX = 1,
-                    OffsetY = -1,
-                },
-                anchorFrameType = "SELECTFRAME",
-                ParentFrame = "NUF_Player",
-                Position = {
-                    AnchorFrom = "RIGHT",
-                    AnchorTo = "LEFT",
-                    XOffset = -1,
-                    YOffset = 0
-                },
-            },
         },
 
         UnitFrames = {

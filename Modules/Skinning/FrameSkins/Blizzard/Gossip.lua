@@ -1,0 +1,36 @@
+---@class NRSKNUI
+local NRSKNUI = select(2, ...)
+---@class SkinningModule
+local Skinning = NRSKNUI:GetModule('Skinning')
+
+local hooksecurefunc = hooksecurefunc
+local pairs = pairs
+
+-- light text the way Blizzard's own dark contrast mode does it: a fixed colour ignores the titles' parchment colour codes
+---@param frame table GossipFrame, the theme container's fontStrings set isn't in the stubs
+local function PaintFontStrings(frame)
+    for fontString in pairs(frame.fontStrings) do
+        fontString:SetFixedColor(true)
+        fontString:SetTextColor(1, 1, 1)
+    end
+end
+
+Skinning:RegisterSkin('Blizzard_UIPanels_Game', 'GossipFrame', function(S)
+    local frame = _G.GossipFrame
+    if not frame then return end
+
+    S:HandlePortraitFrame(frame)
+    S:HandleAccentFont(frame.TitleContainer and frame.TitleContainer.TitleText)
+
+    -- the theme container re-atlases this on every show, alpha holds through that
+    frame.Background:SetAlpha(0)
+
+    local panel = frame.GreetingPanel
+    panel:NUIStripTextures('ClearHide')
+    S:HandleTrimScrollBar(panel.ScrollBar)
+    S:HandleButton(panel.GoodbyeButton)
+
+    -- Update fills the list, registering each option's text, then runs UpdateTheme over all of them
+    hooksecurefunc(frame, 'UpdateFontStrings', PaintFontStrings)
+    PaintFontStrings(frame)
+end)

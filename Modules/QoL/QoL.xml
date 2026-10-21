@@ -15,4 +15,6 @@
     <Script file="CDMStrings.lua"/>
     <Script file="GroupFinder.lua"/>
     <Script file="GroupFinderPanel.lua"/>
+    <Script file="QuestTracker.lua"/>
+    <Script file="QuestTrackerWindow.lua"/>
 </Ui>

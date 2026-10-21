@@ -21,6 +21,7 @@
     <Script file="Triggers\Spell.lua" />
     <Script file="Triggers\Aura.lua" />
     <Script file="Triggers\Stat.lua" />
+    <Script file="Triggers\LootSpec.lua" />
     <Script file="Triggers\Item.lua" />
     <Script file="Triggers\Timer.lua" />
     <Script file="Triggers\Power.lua" />

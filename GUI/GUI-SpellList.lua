@@ -12,6 +12,7 @@ local ipairs, pairs, tonumber, tostring, next = ipairs, pairs, tonumber, tostrin
 local format = string.format
 local tinsert, tsort = table.insert, table.sort
 local setmetatable = setmetatable
+local CopyTable = CopyTable
 local strtrim = strtrim
 local rad = math.rad
 local GetSpellInfo = C_Spell.GetSpellInfo
@@ -165,6 +166,43 @@ function SpellList:BuildAdd(card, source)
     Refresh()
 end
 
+---A listed spell's ID typed over in place; Enter or leaving the box takes it.
+---@param card KajiGUIFluentCard
+---@param source table
+---@param entry table
+---@param striped boolean
+---@param listed table<number, true>
+local function EditRow(card, source, entry, striped, listed)
+    local state = State(source)
+    local row = card:Row(ROW_HEIGHT, 0):Stripe(striped)
+    row:Icon({ width = 0.08, size = ICON_SIZE, yOffset = -(ROW_HEIGHT - ICON_SIZE) / 2, texture = entry.icon })
+    row:EditBox(nil, {
+        width = 1 - 0.08 - CROSS_WIDTH,
+        inlineLabel = true,
+        labelWidth = 0,
+        yOffset = -(ROW_HEIGHT - 24) / 2,
+        tooltip = L['A spell ID, or the name of a spell you know.'],
+        value = tostring(entry.id),
+        autoFocus = true,
+        callback = function(text)
+            -- Enter also loses focus, so the box answers twice; only the first one counts
+            if state.editing ~= entry.id then return end
+            state.editing = nil
+
+            local found = Lookup(text)
+            if found and not listed[found.spellID] then
+                if source.replace then
+                    source.replace(entry.id, found.spellID)
+                else
+                    source.remove(entry.id)
+                    source.add(found.spellID, entry.group)
+                end
+            end
+            source.onChange()
+        end,
+    })
+end
+
 ---@param card KajiGUIFluentCard
 ---@param source table
 ---@param entry table
@@ -185,11 +223,19 @@ local function SpellRow(card, source, entry, striped, linkTo)
         tooltip = function(gameTooltip)
             gameTooltip:SetSpellByID(entry.id)
             local muted = Theme.textMuted
-            gameTooltip:AddLine(entry.on and L['Right-click to switch it off'] or L['Right-click to switch it on'], muted[1], muted[2], muted[3])
+            gameTooltip:AddLine(L['Left-click to change its spell ID'], muted[1], muted[2], muted[3])
+            if source.toggle then
+                gameTooltip:AddLine(entry.on and L['Right-click to switch it off'] or L['Right-click to switch it on'], muted[1], muted[2], muted[3])
+            end
         end,
         onClick = function(button)
-            if button ~= 'RightButton' then return end
-            source.toggle(entry.id, not entry.on)
+            if button == 'LeftButton' then
+                State(source).editing = entry.id
+            elseif button == 'RightButton' and source.toggle then
+                source.toggle(entry.id, not entry.on)
+            else
+                return
+            end
             source.onChange()
         end,
     })
@@ -245,11 +291,14 @@ function SpellList:BuildList(card, source)
     end
 
     if source.grouped then EnsureGroup(state, GroupCounts(entries)) end
-    local shown = {}
+    local shown, listed = {}, {}
     for _, entry in ipairs(entries) do
+        listed[entry.id] = true
         if not source.grouped or entry.group == state.group then tinsert(shown, entry) end
     end
-    tsort(shown, function(a, b) return a.name < b.name end)
+    if not source.ordered then
+        tsort(shown, function(a, b) return a.name < b.name end)
+    end
 
     if not shown[1] then
         card:Row(24):Text(nil, {
@@ -262,7 +311,14 @@ function SpellList:BuildList(card, source)
     end
 
     local previous
-    for index, entry in ipairs(shown) do previous = SpellRow(card, source, entry, index % 2 == 0, previous) end
+    for index, entry in ipairs(shown) do
+        if state.editing == entry.id then
+            EditRow(card, source, entry, index % 2 == 0, listed)
+            previous = nil
+        else
+            previous = SpellRow(card, source, entry, index % 2 == 0, previous)
+        end
+    end
 end
 
 ---holder.Removed[id]: true switches a spell off, 'hidden' also drops a shipped spell from the list.
@@ -329,7 +385,50 @@ function SpellList:MapSource(map, onChange)
         end,
         add = function(id) map[id] = true end,
         remove = function(id) map[id] = nil end,
+        replace = function(old, new)
+            map[new] = map[old]
+            map[old] = nil
+        end,
         toggle = function(id, on) map[id] = on end,
+        onChange = onChange,
+    }
+end
+
+---A plain list of spell IDs, kept in its order since the first can matter (the icon a trigger shows).
+---@param key table what the list's edit state hangs off across rebuilds
+---@param get fun(): number[]
+---@param set fun(ids: number[]) gets a fresh list, empty when the last spell is removed
+---@param onChange fun()
+---@return table source
+function SpellList:ArraySource(key, get, set, onChange)
+    return {
+        key = key,
+        grouped = false,
+        ordered = true,
+        entries = function()
+            local list = {}
+            for _, id in ipairs(get()) do tinsert(list, { id = id, on = true }) end
+            return list
+        end,
+        add = function(id)
+            local ids = CopyTable(get())
+            ids[#ids + 1] = id
+            set(ids)
+        end,
+        remove = function(id)
+            local ids = {}
+            for _, other in ipairs(get()) do
+                if other ~= id then ids[#ids + 1] = other end
+            end
+            set(ids)
+        end,
+        replace = function(old, new)
+            local ids = CopyTable(get())
+            for i, other in ipairs(ids) do
+                if other == old then ids[i] = new end
+            end
+            set(ids)
+        end,
         onChange = onChange,
     }
 end

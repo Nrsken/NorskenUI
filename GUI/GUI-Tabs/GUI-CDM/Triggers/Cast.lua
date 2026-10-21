@@ -4,29 +4,22 @@ local L = NRSKNUI.Libs.AL
 local Theme = NRSKNUI.Theme
 local rowH = Theme.rowHeight
 
-local tconcat = table.concat
-local ipairs = ipairs
-local tostring = tostring
-local tonumber = tonumber
-
 local Shared = NRSKNUI.CDMOptions
+local SpellList = NRSKNUI.GUISpellList
 local TriggerRows = Shared.TriggerRows
 
 function TriggerRows.cast(card, typeRow, display, trigger, id, apply)
-    local ids = {}
-    for _, spellID in ipairs(trigger.SpellIDs or {}) do ids[#ids + 1] = tostring(spellID) end
-    typeRow:EditBox(L['Spell IDs'], {
-        width = 0.5,
-        tooltip = L['Only these spells, comma separated. Empty shows every cast.'],
-        value = tconcat(ids, ', '),
-        callback = function(text)
-            local list = {}
-            for number in text:gmatch('%d+') do list[#list + 1] = tonumber(number) end
-            trigger.SpellIDs = list[1] and list or nil
-            apply()
-            card:Rebuild()
-        end,
-    })
+    -- empty shows every cast
+    local source = SpellList:ArraySource(trigger, function() return trigger.SpellIDs or {} end, function(ids)
+        trigger.SpellIDs = ids[1] and ids or nil
+    end, function()
+        apply()
+        card:Rebuild()
+    end)
+    SpellList:BuildAdd(card, source)
+    SpellList:BuildList(card, source)
+    -- the list ends flush, so the rule brings its own gap; inSection keeps it in the trigger's section
+    card:Separator(nil, { inSection = true, height = 16 })
 
     local row = card:Row(rowH)
     row:Slider(L['Hold Time'], {

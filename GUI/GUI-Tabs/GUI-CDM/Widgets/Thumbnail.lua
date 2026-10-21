@@ -13,7 +13,7 @@ local WHITE = 'Interface\\Buttons\\WHITE8X8'
 local QUESTION_MARK = 134400
 local FILL = 0.7 -- how full the mini bar is drawn
 
--- WeakAuras' default group pictures, at 32px: width, height, colour, and the offset below the piece above.
+-- The WA-style group pictures, at 32px: width, height, colour, and the offset below the piece above.
 local GROUP_BLOCKS = {
     { 24, 8,  { 0.8, 0, 0, 0.5 } },
     { 20, 20, { 0.2, 0.8, 0.2, 0.5 }, 5 },
@@ -28,16 +28,6 @@ local DYNAMIC_BLOCKS = {
 ---@class NRSKNUI.CDMThumbnail
 local Thumbnail = {}
 NRSKNUI.CDMThumbnail = Thumbnail
-
----@class CDMThumbnailParts
----@field bar Frame
----@field barBg Texture
----@field fill Texture
----@field icon Texture
----@field blocks Texture[]
----@field line Texture
----@field anim Frame
----@field text FontString
 
 ---@param host Frame
 ---@return CDMThumbnailParts
@@ -170,7 +160,7 @@ local function StackBlocks(parts, host, blocks, scale)
     end
 end
 
--- WeakAuras' dynamic group picture: the middle block slides into the top one and back, every 3s.
+-- The dynamic group picture: the middle block slides into the top one and back, every 3s.
 ---@param anim Frame
 ---@param elapsed number
 local function Animate(anim, elapsed)

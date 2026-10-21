@@ -27,10 +27,10 @@ local function DisplayIcon(id)
         if style.IconSource == 'manual' and style.ManualIcon then return style.ManualIcon end -- as CDM:SetIconTexture draws it
         for _, trigger in ipairs(display.Triggers) do
             if trigger.Type ~= 'auraoverlay' then                                             -- an overlay sits on the icon below it
-                return CDM:GetTriggerTexture(trigger) or (trigger.Type == 'cast' and CAST_ICON) or QUESTION_MARK
+                return CDM:GetTriggerTexture(trigger) or (trigger.Type == 'cast' and CAST_ICON) or style.ManualIcon or QUESTION_MARK
             end
         end
-        return QUESTION_MARK
+        return style.ManualIcon or QUESTION_MARK
     end
     if display.Icon then return display.Icon end
     if display.type == 'auragroup' then
@@ -42,39 +42,64 @@ local function DisplayIcon(id)
             end
             if lowest then return GetSpellTexture(lowest) or QUESTION_MARK end
         end
-        return QUESTION_MARK
     end
-
-    local first = CDM:GetLeaves(id)[1]
-    return first and DisplayIcon(first) or QUESTION_MARK
+    return QUESTION_MARK
 end
 
+---A group's load state, preview and icon come from its children's rows, as CDM:GetLoadState/GetPreview read its leaves.
 ---@param id string
+---@param depth number
+---@param childIndex table<string, table[]> from CDM:GetChildrenIndex
 ---@param index number? position among its group's children
 ---@param count number? children in its group
 ---@return table
-local function RowData(id, index, count)
+local function RowData(id, depth, childIndex, index, count)
     local display = CDM:Get(id)
     local isGroup = CDM:IsGroup(id)
-    local children = isGroup and CDM:GetChildren(id) or nil
-    local icon = DisplayIcon(id)
+    local children = isGroup and (childIndex[id] or {}) or nil
 
     local data = {
         key = id,
         text = display.name,
-        icon = icon,
-        draw = function(canvas, size) return Thumbnail:Draw(canvas, display, size, icon) end,
         isGroup = isGroup,
-        depth = CDM:GetDepth(id),
+        depth = depth,
         enabled = display.Enabled,
-        loadState = CDM:GetLoadState(id),
-        preview = CDM:GetPreview(id),
         draggable = true,
         expanded = isGroup and expandedGroups[id] == true,
         childCount = children and #children or 0,
         canMoveUp = index ~= nil and index > 1,
         canMoveDown = index ~= nil and index < count,
     }
+
+    if isGroup then
+        local rank = CDM.STATE_RANK
+        local best, leafIcon
+        local leaves, pinned, hidden = 0, 0, 0
+        data.children = {}
+        for i, child in ipairs(children) do
+            local row = RowData(child.key, depth + 1, childIndex, i, #children)
+            data.children[i] = row
+            if row.leaves > 0 then -- an empty group inside adds nothing, as it has no leaves
+                if not best or rank[row.loadState] > rank[best] then best = row.loadState end
+                leafIcon = leafIcon or row.leafIcon
+                leaves, pinned, hidden = leaves + row.leaves, pinned + row.pinned, hidden + row.hidden
+            end
+        end
+        data.loadState = display.Enabled and (best or 'loaded') or 'unloaded'
+        data.icon = display.Icon or leafIcon or QUESTION_MARK
+        data.preview = (leaves == 0 or hidden == leaves) and 0 or (pinned == leaves and 2 or 1)
+        data.leafIcon, data.leaves, data.pinned, data.hidden = leafIcon, leaves, pinned, hidden
+    else
+        local level = CDM.preview[id] or 0
+        data.loadState = CDM:GetLoadState(id)
+        data.icon = DisplayIcon(id)
+        data.preview = level
+        data.leafIcon, data.leaves = data.icon, 1
+        data.pinned, data.hidden = level == 2 and 1 or 0, level == 0 and 1 or 0
+    end
+
+    local icon = data.icon
+    data.draw = function(canvas, size) return Thumbnail:Draw(canvas, display, size, icon) end
 
     data.tooltip = function(tooltip)
         local accent, secondary, muted = Theme.accent, Theme.textSecondary, Theme.textMuted
@@ -90,10 +115,6 @@ local function RowData(id, index, count)
         tooltip:AddLine(L['Drag to move'], muted[1], muted[2], muted[3])
     end
 
-    if isGroup then
-        data.children = {}
-        for i, child in ipairs(children) do data.children[i] = RowData(child.key, i, #children) end
-    end
     return data
 end
 
@@ -127,7 +148,7 @@ local function PreviewLevel(ids)
     return pinned == #ids and 2 or 1
 end
 
----Top-level rows go under Loaded/Standby unless every icon they hold is not loaded, as in WeakAuras.
+---Top-level rows go under Loaded/Standby unless every icon they hold is not loaded.
 ---@return table
 local function TreeContent()
     local loaded = {
@@ -145,9 +166,11 @@ local function TreeContent()
         rows = {},
     }
 
+    local childIndex = CDM:GetChildrenIndex()
     for _, root in ipairs(CDM:GetRoots()) do
-        local section = CDM:GetLoadState(root.key) == 'unloaded' and unloaded or loaded
-        section.rows[#section.rows + 1] = RowData(root.key)
+        local data = RowData(root.key, 0, childIndex)
+        local section = data.loadState == 'unloaded' and unloaded or loaded
+        section.rows[#section.rows + 1] = data
     end
 
     for _, section in ipairs({ loaded, unloaded }) do

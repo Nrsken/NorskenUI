@@ -3,22 +3,20 @@ local NRSKNUI = select(2, ...)
 ---@class CDMModule
 local CDM = NRSKNUI:GetModule('CDM')
 
-local ipairs, pairs = ipairs, pairs
+--[[
+A read-only view of Blizzard's Cooldown Manager catalogue for the current spec; nothing here writes back to it.
+Rebuilt when the spellbook, talents or gear change, so displays can pick a cooldown or aura by its entry.
+]]
+
 local CreateFrame = CreateFrame
-local format = string.format
-local tostring = tostring
+local ipairs = ipairs
 local wipe = wipe
 
 local GetCategorySet = C_CooldownViewer and C_CooldownViewer.GetCooldownViewerCategorySet
 local GetCooldownInfo = C_CooldownViewer and C_CooldownViewer.GetCooldownViewerCooldownInfo
-local IsCooldownViewerAvailable = C_CooldownViewer and C_CooldownViewer.IsCooldownViewerAvailable
-local GetSpellName = C_Spell and C_Spell.GetSpellName
-local GetSpellCooldownSecrecy = C_Secrets and C_Secrets.GetSpellCooldownSecrecy
-local GetSpellAuraSecrecy = C_Secrets and C_Secrets.GetSpellAuraSecrecy
 
 local Category = Enum and Enum.CooldownViewerCategory
 
--- Read-only view of Blizzard's cooldown catalogue for the current spec. We never write to the CDM.
 ---@class CDMCatalogue
 local Catalogue = {
     entries = {}, ---@type table<number, CooldownViewerCooldown>
@@ -27,6 +25,8 @@ local Catalogue = {
     dirty = true,
 }
 CDM.Catalogue = Catalogue
+
+-- Building --
 
 Catalogue.CATEGORIES = {
     Category.Essential,
@@ -56,8 +56,12 @@ function Catalogue:Rebuild()
             if info then
                 list[#list + 1] = cooldownID
                 self.entries[cooldownID] = info
-                if info.spellID then bySpell[info.spellID] = cooldownID end
-                if info.overrideSpellID then bySpell[info.overrideSpellID] = cooldownID end
+                if info.spellID then
+                    bySpell[info.spellID] = cooldownID
+                end
+                if info.overrideSpellID then
+                    bySpell[info.overrideSpellID] = cooldownID
+                end
             end
         end
         self.lists[category] = list
@@ -66,15 +70,14 @@ function Catalogue:Rebuild()
     self.dirty = false
 end
 
----@param category number Enum.CooldownViewerCategory
----@return 'cooldown'|'aura'
-function Catalogue:GetKind(category)
-    return KIND[category]
+---Rebuilt on the first lookup after a change, since one spell change fires several of the rebuild events in the same frame.
+function Catalogue:EnsureBuilt()
+    if self.dirty then
+        self:Rebuild()
+    end
 end
 
-function Catalogue:EnsureBuilt()
-    if self.dirty then self:Rebuild() end
-end
+-- Lookups --
 
 ---@param cooldownID number
 ---@return CooldownViewerCooldown?
@@ -105,6 +108,8 @@ function Catalogue:ResolveSpell(info)
     return info.overrideSpellID or info.spellID
 end
 
+-- Events --
+
 -- Same triggers Blizzard's own data provider rebuilds on (CooldownViewerSettingsDataProvider.lua, live).
 local REBUILD_EVENTS = {
     'COOLDOWN_VIEWER_DATA_LOADED',
@@ -118,53 +123,26 @@ local REBUILD_EVENTS = {
     'PLAYER_EQUIPMENT_CHANGED',
 }
 
-local eventFrame = CreateFrame('Frame')
-for _, event in ipairs(REBUILD_EVENTS) do eventFrame:RegisterEvent(event) end
-eventFrame:SetScript('OnEvent', function()
+local eventFrame ---@type Frame?
+
+local function OnRebuildEvent()
     Catalogue.dirty = true
-    if CDM:IsEnabled() then CDM:OnCatalogueChanged() end
-end)
-
--- Debug dump --
-
-local CATEGORY_NAMES = {}
-for name, value in pairs(Category) do CATEGORY_NAMES[value] = name end
-
-local SECRECY_NAMES = {}
-for name, value in pairs(Enum.SecrecyLevel) do SECRECY_NAMES[value] = name end
-
----@param spellID number?
----@return string
-local function SpellLabel(spellID)
-    if not spellID then return '-' end
-    return format('%s (%d)', GetSpellName(spellID) or '?', spellID)
+    CDM:OnCatalogueChanged()
 end
 
-function Catalogue:Dump()
-    local available, reason = IsCooldownViewerAvailable()
-    NRSKNUI:Print(format('CDM catalogue, viewer available: %s %s', tostring(available), reason or ''))
+function Catalogue:RegisterEvents()
+    self.dirty = true -- nothing watched the spellbook while the CDM was off
 
-    self:Rebuild()
-    for _, category in ipairs(self.CATEGORIES) do
-        local list = self.lists[category]
-        print(format('|cffffd100%s|r: %d', CATEGORY_NAMES[category], #list))
-
-        for _, cooldownID in ipairs(list) do
-            local info = self.entries[cooldownID]
-            local spellID = self:ResolveSpell(info)
-            local isAura = self:GetKind(category) == 'aura'
-            local secrecy = spellID and (isAura and GetSpellAuraSecrecy or GetSpellCooldownSecrecy)(spellID)
-            local overridden = info.overrideSpellID and info.overrideSpellID ~= info.spellID
-
-            print(format('  %d %s%s known=%s charges=%s linked=%d %s=%s',
-                cooldownID,
-                SpellLabel(info.spellID),
-                overridden and (' -> ' .. SpellLabel(info.overrideSpellID)) or '',
-                tostring(info.isKnown),
-                tostring(info.charges),
-                #info.linkedSpellIDs,
-                isAura and 'aura' or 'cd',
-                secrecy and SECRECY_NAMES[secrecy] or '-'))
-        end
+    if not eventFrame then
+        eventFrame = CreateFrame('Frame')
+        eventFrame:SetScript('OnEvent', OnRebuildEvent)
     end
+
+    for _, event in ipairs(REBUILD_EVENTS) do
+        eventFrame:RegisterEvent(event)
+    end
+end
+
+function Catalogue:UnregisterEvents()
+    eventFrame:UnregisterAllEvents()
 end

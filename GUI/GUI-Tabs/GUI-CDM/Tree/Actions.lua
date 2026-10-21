@@ -96,7 +96,7 @@ local GROUP_PARTS = {
 }
 local AURA_GROUP_PARTS = { COPY_PARTS[1], COPY_PARTS[2], COPY_PARTS[3], COPY_PARTS[5] } -- an aura group has no conditions
 
-local clipboard ---@type { source: table, part: table }? -- session only, as in WeakAuras
+local clipboard ---@type { source: table, part: table }? -- kept for the session only
 
 ---@param id string
 local function PasteSettings(id)
@@ -125,7 +125,7 @@ local function DeletePrompt(id, keepChildren)
     })
 end
 
----Right click on a multi selection: WeakAuras' Delete All.
+---Right click on a multi selection.
 ---@param ids string[]
 local function MultiContextMenu(ids)
     GUI:ShowContextMenu({

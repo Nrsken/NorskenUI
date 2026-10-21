@@ -14,4 +14,5 @@
     <Script file='GUI-SpellAlert.lua'/>
     <Script file='GUI-CDMStrings.lua'/>
     <Script file='GUI-GroupFinder.lua'/>
+    <Script file='GUI-QuestTracker.lua'/>
 </Ui>

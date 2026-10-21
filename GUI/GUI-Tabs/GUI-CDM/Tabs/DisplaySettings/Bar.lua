@@ -21,7 +21,6 @@ local BAR_COLOR_MODES = {
     { value = 'power',  text = L['Power Color'] },
 }
 
--- WeakAuras' bar directions, named for the way a draining timer moves; its vertical fill hangs from the top.
 local DIRECTIONS = {
     { value = 'HORIZONTAL',         text = L['Right to Left'], orientation = 'HORIZONTAL', reverse = false },
     { value = 'HORIZONTAL_INVERSE', text = L['Left to Right'], orientation = 'HORIZONTAL', reverse = true },
@@ -255,7 +254,6 @@ end
 ---@param refreshTree fun()
 local function BarIconSettings(card, page, style, set, refreshTree)
     page:SetCondition('cdm:barIcon', function() return style.IconShow == true end)
-    page:SetCondition('cdm:manualIcon', function() return style.IconShow == true and style.IconSource == 'manual' end)
     local vertical = style.Orientation == 'VERTICAL'
     local side = style.IconSide
     if vertical and (side == 'LEFT' or side == 'RIGHT') then side = side == 'LEFT' and 'TOP' or 'BOTTOM' end
@@ -287,8 +285,8 @@ local function BarIconSettings(card, page, style, set, refreshTree)
     })
     sourceRow:EditBox(L['Manual Icon'], {
         width = 0.4,
-        conditions = { 'cdm:manualIcon' },
-        tooltip = L['An icon file ID.'],
+        conditions = { 'cdm:barIcon' },
+        tooltip = L['An icon file ID. Automatic uses it for triggers without an icon of their own, such as Player Stat.'],
         value = style.ManualIcon and tostring(style.ManualIcon) or '',
         callback = function(text)
             set({ 'ManualIcon' }, tonumber(text))
@@ -300,7 +298,7 @@ local function BarIconSettings(card, page, style, set, refreshTree)
             set({ 'ManualIcon' }, texture)
             refreshTree()
         end)
-    end, { 'cdm:manualIcon' })
+    end, { 'cdm:barIcon' })
     local sideRow = card:Row(rowH)
     sideRow:Dropdown(L['Icon Side'], {
         width = 0.5,

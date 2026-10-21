@@ -200,7 +200,6 @@ local function RebuildTalents()
         for _, nodeID in ipairs(GetTreeNodes(treeID)) do
             local node = GetNodeInfo(configID, nodeID)
             if node and node.ID ~= 0 then
-                -- WeakAuras' rank rule: a choice node counts only its picked entry, a hero node only in its active tree.
                 local heroInactive = node.subTreeID and not (GetSubTreeInfo(configID, node.subTreeID) or {}).isActive
                 for _, entryID in ipairs(node.entryIDs) do
                     local rank = node.activeRank
@@ -249,7 +248,7 @@ local checkers = {
     Talent = CheckTalent,
 }
 
--- Conditions that change during a session; failing only these is WeakAuras' "standby".
+-- Conditions that change during a session
 local SITUATIONAL = {
     Instance = true,
     Group = true,
@@ -257,10 +256,11 @@ local SITUATIONAL = {
     Zone = true,
 }
 
-local function FireCallbacks()
+---@param playerChanged boolean spec or talents may have changed
+local function FireCallbacks(playerChanged)
     for aceModule, callback in pairs(callbacks) do
         if aceModule:IsEnabled() then
-            callback(aceModule)
+            callback(aceModule, playerChanged)
         end
     end
 end
@@ -278,11 +278,13 @@ local TALENT_EVENTS = {
 }
 
 local function OnEvent(_, event)
-    if TALENT_EVENTS[event] or event == "PLAYER_SPECIALIZATION_CHANGED" then talentsDirty = true end
+    -- the talent config can still be missing on login, so a loading screen rescans too
+    local playerChanged = TALENT_EVENTS[event] or event == "PLAYER_SPECIALIZATION_CHANGED" or event == "PLAYER_ENTERING_WORLD"
+    if playerChanged then talentsDirty = true end
     local mapID = GetBestMapForUnit("player")
     if ZONE_EVENTS[event] and mapID == lastMapID then return end
     lastMapID = mapID
-    FireCallbacks()
+    FireCallbacks(playerChanged == true)
 end
 
 local function SetupEventFrame()
@@ -316,6 +318,19 @@ function LoadConditions:Check(conditions, skipSituational)
     return true
 end
 
+---@return number? specID
+function LoadConditions:GetSpecID()
+    return PlayerSpecID()
+end
+
+---Whether the player has this talent taken, by C_Traits entryID.
+---@param entryID number
+---@return boolean
+function LoadConditions:HasTalent(entryID)
+    if talentsDirty then RebuildTalents() end
+    return takenTalents[entryID] == true
+end
+
 ---@return table Default LoadConditions structure
 function LoadConditions:GetDefaults()
     return {
@@ -334,7 +349,7 @@ end
 
 ---Register a module to receive callbacks when load conditions may have changed
 ---@param aceModule table AceModule with IsEnabled method
----@param callback function Called with module as argument when state changes
+---@param callback fun(aceModule: table, playerChanged: boolean) runs when state may have changed; playerChanged on spec and talent changes
 function LoadConditions:RegisterCallback(aceModule, callback)
     SetupEventFrame()
     callbacks[aceModule] = callback

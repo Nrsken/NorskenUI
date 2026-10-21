@@ -23,7 +23,6 @@ GUI:RegisterPage(PAGE, {
     search = { L['Cooldown & Aura Manager'], L['Sub Elements'], L['Swipe Settings'] },
     onEnter = function()
         CDM.onStateChanged = RefreshTree
-        IconPicker:Preload()
     end,
     onLeave = function()
         CDM.onStateChanged = nil

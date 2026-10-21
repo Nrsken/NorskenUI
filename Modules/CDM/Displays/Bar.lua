@@ -2,53 +2,32 @@
 local NRSKNUI = select(2, ...)
 ---@class CDMModule
 local CDM = NRSKNUI:GetModule('CDM')
+local PlaceText = CDM.Text.Place
+local ConfigureText = CDM.Text.Configure
+local StyleBorder = CDM.Layer.StyleBorder
 
-local max = math.max
-local unpack = unpack
-local CreateFrame = CreateFrame
-local ipairs, pairs = ipairs, pairs
+--[[
+Bar layers: the fill, its icon and spark, timers and values, split resource bars and their pips,
+ticks, aura overlays painted over a bar and the cast's latency shade.
+]]
+
 local tonumber, tostring = tonumber, tostring
+local ipairs, pairs = ipairs, pairs
+local CreateFrame = CreateFrame
+local unpack = unpack
+local max = math.max
 
 local CreateDuration = C_DurationUtil and C_DurationUtil.CreateDuration
 
-local Text, Layer = CDM.Text, CDM.Layer
-local PlaceText, ConfigureText, StyleBorder = Text.Place, Text.Configure, Layer.StyleBorder
-
-local IMMEDIATE = Enum and Enum.StatusBarInterpolation.Immediate
 local SMOOTH = Enum and Enum.StatusBarInterpolation.ExponentialEaseOut
-local ELAPSED = Enum and Enum.StatusBarTimerDirection.ElapsedTime
 local REMAINING = Enum and Enum.StatusBarTimerDirection.RemainingTime
-CDM.BAR_ELAPSED, CDM.BAR_REMAINING = ELAPSED, REMAINING
+local ELAPSED = Enum and Enum.StatusBarTimerDirection.ElapsedTime
+local IMMEDIATE = Enum and Enum.StatusBarInterpolation.Immediate
 
----@class CDMBar : StatusBar
----@field bg Texture
----@field spark Texture
----@field latency StatusBar a second fill over the bar's end, the engine sizes it
----@field progressFill Texture? the progress source's fill, while this bar holds it
+CDM.BAR_REMAINING = REMAINING
+CDM.BAR_ELAPSED = ELAPSED
 
----One rune, Holy Power or combo point of a split resource bar.
----@class CDMPip : StatusBar
----@field bg Texture
----@field timer LuaDurationObject what its Each Rune texts count, zero unless it fills over time
----@field recharging boolean? what a Recharging condition reads for this pip
----@field waiting boolean? a rune queued behind the three regenerating ones, what a Waiting condition reads
----@field timerStart number? the running timer's start, nil while it holds a value
----@field timerLength number?
----@field slot number? the place it fills on the bar; runes move between places as they sort
----@field color number[]? a condition's Bar Color for this pip
----@field progressFill Texture?
----@field texts table<number, CDMIconText> Each Rune text copies, by text ordinal
----@field borders table<number, CDMBorder> Each Rune border copies, by border ordinal
-
----@class CDMTickHost : StatusBar
----@field mark Texture
-
----@class CDMTickSet
----@field element table? the tick sub element, nil while unused
----@field hosts CDMTickHost[] one invisible fill per tick, whose edge the mark rides, so a matched bar's unknown width still places it
----@field hidden boolean? hidden by its Enabled or a condition
----@field color number[]? a condition's colour over the element's
----@field level number? its frame level, from its place in the sub element list
+-- Bar --
 
 -- The moving edge of the fill, normal and reversed.
 local FILL_EDGE = {
@@ -56,7 +35,7 @@ local FILL_EDGE = {
     VERTICAL = { 'TOP', 'BOTTOM' },
 }
 
--- Per icon side: the bar corner that meets the icon, the icon corner, and the bar's far corner on the layer.
+-- Per icon side: the bar corner that meets the icon, the icon corner and the bar's far corner on the layer.
 local ICON_SIDES = {
     LEFT = { 'TOPLEFT', 'TOPRIGHT', 'BOTTOMRIGHT' },
     RIGHT = { 'TOPRIGHT', 'TOPLEFT', 'BOTTOMLEFT' },
@@ -64,26 +43,77 @@ local ICON_SIDES = {
     BOTTOM = { 'BOTTOMLEFT', 'TOPLEFT', 'TOPRIGHT' },
 }
 
--- Moving parts glide between pixels; snapping (and 12.1.5's layout rounding in NUISetPixelSnap) steps them, so the spark jitters.
----@param texture Texture
-local function Unsnap(texture)
-    texture:SetSnapToPixelGrid(false)
-    texture:SetTexelSnappingBias(0)
+---A status bar with its background and spark, for a bar layer or an aura button's bar.
+---@param parent Frame
+---@return CDMBar
+local function NewBar(parent)
+    local bar = CreateFrame('StatusBar', nil, parent) --[[@as CDMBar]]
+    bar.bg = bar:CreateTexture(nil, 'BACKGROUND')
+    bar.bg:SetAllPoints()
+    bar.spark = bar:CreateTexture(nil, 'OVERLAY')
+    bar.spark:SetBlendMode('ADD')
+    bar.spark:NUISetPixelSnap() -- the spark glides between pixels, the fill stays snapped or its edge smears
+    return bar
+end
+
+---Lay `bar` out over `area` beside its icon, with the style's texture, direction, background and spark.
+---@param bar CDMBar
+---@param icon Texture
+---@param area Frame the space the icon and bar share
+---@param style table
+---@return number thickness the bar's short side, which the icon is square to
+local function ShapeBar(bar, icon, area, style)
+    local vertical = style.Orientation == 'VERTICAL'
+    local thickness = vertical and style.Width or style.Height
+
+    bar:ClearAllPoints()
+    icon:ClearAllPoints()
+    if style.IconShow then
+        -- on a vertical bar Left and Right mean its top and bottom, and the other way round
+        local side = style.IconSide
+        if vertical and (side == 'LEFT' or side == 'RIGHT') then
+            side = side == 'LEFT' and 'TOP' or 'BOTTOM'
+        end
+        if not vertical and (side == 'TOP' or side == 'BOTTOM') then
+            side = side == 'TOP' and 'LEFT' or 'RIGHT'
+        end
+        icon:NUISetPixelSize(thickness, thickness)
+        icon:NUISetPixelPoint(side, area, side, 0, 0)
+        local corners = ICON_SIDES[side]
+        bar:NUISetPixelPoint(corners[1], icon, corners[2], 0, 0)
+        bar:NUISetPixelPoint(corners[3], area, corners[3], 0, 0)
+    else
+        bar:SetAllPoints(area)
+    end
+
+    bar:SetStatusBarTexture(NRSKNUI:GetStatusbar(style))
+    bar:SetOrientation(vertical and 'VERTICAL' or 'HORIZONTAL')
+    bar:SetReverseFill(style.ReverseFill == true)
+    bar.bg:SetTexture(NRSKNUI:GetBarBackground(style) or NRSKNUI.WhiteTexture)
+    bar.bg:SetVertexColor(unpack(style.BackgroundColor))
+
+    local spark = bar.spark
+    spark:ClearAllPoints()
+    if style.Spark then
+        NRSKNUI:SetSpark(spark, style, thickness)
+        if vertical then
+            local width, height = spark:GetSize()
+            spark:NUISetPixelSize(height, width)
+        end
+        spark:SetRotation(vertical and math.pi / 2 or 0)
+        spark:SetPoint('CENTER', bar:GetStatusBarTexture(), FILL_EDGE[vertical and 'VERTICAL' or 'HORIZONTAL'][style.ReverseFill and 2 or 1], 0, 0)
+    end
+    spark:SetShown(style.Spark == true)
+    return thickness
 end
 
 ---@param layer CDMLayer
 ---@return CDMBar
 local function CreateBar(layer)
-    local bar = CreateFrame('StatusBar', nil, layer) --[[@as CDMBar]]
-    bar.bg = bar:CreateTexture(nil, 'BACKGROUND')
-    bar.bg:SetAllPoints()
-    bar.spark = bar:CreateTexture(nil, 'OVERLAY')
-    bar.spark:SetBlendMode('ADD')
-    Unsnap(bar.spark)
+    local bar = NewBar(layer)
     bar.latency = CreateFrame('StatusBar', nil, bar)
     bar.latency:SetAllPoints()
     bar.latency:SetStatusBarTexture(NRSKNUI.WhiteTexture)
-    Unsnap(bar.latency:GetStatusBarTexture())
     bar.latency:SetMinMaxValues(0, 1)
     bar.latency:Hide()
     layer.Bar = bar
@@ -95,8 +125,11 @@ end
 local function PaintPip(layer, pip)
     local paint = pip.color or layer.barColor
     if not paint then return end
+
     pip:SetStatusBarColor(paint[1], paint[2], paint[3], paint[4] or 1)
-    if pip.progressFill then pip.progressFill:SetVertexColor(paint[1], paint[2], paint[3], paint[4] or 1) end
+    if pip.progressFill then
+        pip.progressFill:SetVertexColor(paint[1], paint[2], paint[3], paint[4] or 1)
+    end
 end
 
 ---Paint the bar the trigger's color, unless a condition holds its own color over it.
@@ -106,10 +139,12 @@ function CDM:PaintBar(layer, color)
     layer.barColor = color
     local paint = layer.barColorOverride or color
     if paint and layer.Bar then
-        local split = (layer.pipCount or 0) > 0 -- texture SetAlpha(0) didn't hold against the colour, the gaps showed the fill
+        local split = (layer.pipCount or 0) > 0 -- a split bar hides its own fill through the colour: a texture SetAlpha(0) didn't stick and it showed in the gaps
         layer.Bar:SetStatusBarColor(paint[1], paint[2], paint[3], split and 0 or paint[4] or 1)
     end
-    for i = 1, layer.pipCount or 0 do PaintPip(layer, layer.pips[i]) end
+    for i = 1, layer.pipCount or 0 do
+        PaintPip(layer, layer.pips[i])
+    end
 end
 
 ---The bar's color from its style; a power trigger paints over it in Power Color mode.
@@ -133,12 +168,16 @@ end
 function CDM:StyleBarLayer(layer, style, kind, level)
     local icon = layer.Icon
     -- One bar again until a power trigger's Resolve splits it, which also restyles its pips.
-    if (layer.pipCount or 0) > 0 then self:SetLayerPips(layer, 0) end
+    if (layer.pipCount or 0) > 0 then
+        self:SetLayerPips(layer, 0)
+    end
     layer.pipsStyled = nil
     layer.isBar = kind == 'bar'
     layer.isText = kind == 'text'
     if kind ~= 'bar' then
-        if layer.Bar then layer.Bar:Hide() end
+        if layer.Bar then
+            layer.Bar:Hide()
+        end
         icon:ClearAllPoints()
         icon:SetAllPoints()
         icon:SetShown(kind == 'icon') -- a text's swipe stays off through its style template
@@ -146,51 +185,12 @@ function CDM:StyleBarLayer(layer, style, kind, level)
     end
 
     local bar = layer.Bar or CreateBar(layer)
-    local vertical = style.Orientation == 'VERTICAL'
-    local thickness = vertical and style.Width or style.Height
-
-    bar:ClearAllPoints()
-    icon:ClearAllPoints()
-    if style.IconShow then
-        local side = style.IconSide
-        if vertical and (side == 'LEFT' or side == 'RIGHT') then side = side == 'LEFT' and 'TOP' or 'BOTTOM' end
-        if not vertical and (side == 'TOP' or side == 'BOTTOM') then side = side == 'TOP' and 'LEFT' or 'RIGHT' end
-        icon:NUISetPixelSize(thickness, thickness)
-        icon:NUISetPixelPoint(side, layer, side, 0, 0)
-        local corners = ICON_SIDES[side]
-        bar:NUISetPixelPoint(corners[1], icon, corners[2], 0, 0)
-        bar:NUISetPixelPoint(corners[3], layer, corners[3], 0, 0)
-        icon:Show()
-    else
-        bar:SetAllPoints()
-        icon:Hide()
-    end
-    layer.barThickness = thickness
-
+    layer.barThickness = ShapeBar(bar, icon, layer, style)
+    icon:SetShown(style.IconShow == true)
+    bar.spark:SetAlpha(0) -- shown by a running timer or a value between empty and full
     bar:SetFrameLevel(level + 1)
-    bar:SetStatusBarTexture(NRSKNUI:GetStatusbar(style))
-    Unsnap(bar:GetStatusBarTexture())
-    bar:SetOrientation(vertical and 'VERTICAL' or 'HORIZONTAL')
-    bar:SetReverseFill(style.ReverseFill == true)
-    bar.bg:SetTexture(NRSKNUI:GetBarBackground(style) or NRSKNUI.WhiteTexture)
-    bar.bg:SetVertexColor(unpack(style.BackgroundColor))
     layer.barColorOverride = nil
     self:ResetBarColor(layer, style)
-
-    local spark = bar.spark
-    spark:ClearAllPoints()
-    spark:SetAlpha(0) -- shown by a running timer or a value between empty and full
-    if style.Spark then
-        local edge = FILL_EDGE[vertical and 'VERTICAL' or 'HORIZONTAL'][style.ReverseFill and 2 or 1]
-        NRSKNUI:SetSpark(spark, style, thickness)
-        if vertical then
-            local width, height = spark:GetSize()
-            spark:NUISetPixelSize(height, width)
-        end
-        spark:SetRotation(vertical and math.pi / 2 or 0)
-        spark:SetPoint('CENTER', bar:GetStatusBarTexture(), edge, 0, 0)
-    end
-    spark:SetShown(style.Spark == true)
 
     -- The cooldown stays on the bar's icon so expiring timers still wake the display, but draws nothing.
     layer.Cooldown:SetDrawSwipe(false)
@@ -198,6 +198,8 @@ function CDM:StyleBarLayer(layer, style, kind, level)
     layer.Cooldown:SetHideCountdownNumbers(true)
     bar:Show()
 end
+
+-- Aura bar --
 
 ---A lone aura's bar inside its aura button, which fills it from the aura's duration or stacks (Blizzard_CustomAuraButton.lua, live).
 ---@param button table the real aura button
@@ -208,55 +210,14 @@ end
 function CDM:StyleAuraBar(button, refs, style, trigger)
     local bar = refs.bar
     if not bar then
-        bar = CreateFrame('StatusBar', nil, button)
-        bar.bg = bar:CreateTexture(nil, 'BACKGROUND')
-        bar.bg:SetAllPoints()
-        bar.spark = bar:CreateTexture(nil, 'OVERLAY')
-        bar.spark:SetBlendMode('ADD')
-        Unsnap(bar.spark)
+        bar = NewBar(button)
         refs.bar = bar
     end
-    local inner, icon = refs.inner, refs.icon
-    local vertical = style.Orientation == 'VERTICAL'
-    local thickness = vertical and style.Width or style.Height
 
-    bar:ClearAllPoints()
-    icon:ClearAllPoints()
-    if style.IconShow then
-        local side = style.IconSide
-        if vertical and (side == 'LEFT' or side == 'RIGHT') then side = side == 'LEFT' and 'TOP' or 'BOTTOM' end
-        if not vertical and (side == 'TOP' or side == 'BOTTOM') then side = side == 'TOP' and 'LEFT' or 'RIGHT' end
-        icon:NUISetPixelSize(thickness, thickness)
-        icon:NUISetPixelPoint(side, inner, side, 0, 0)
-        local corners = ICON_SIDES[side]
-        bar:NUISetPixelPoint(corners[1], icon, corners[2], 0, 0)
-        bar:NUISetPixelPoint(corners[3], inner, corners[3], 0, 0)
-    else
-        bar:SetAllPoints(inner)
-    end
-
+    ShapeBar(bar, refs.icon, refs.inner, style)
     bar:SetFrameLevel(refs.cooldown:GetFrameLevel())
-    bar:SetStatusBarTexture(NRSKNUI:GetStatusbar(style))
-    Unsnap(bar:GetStatusBarTexture())
-    bar:SetOrientation(vertical and 'VERTICAL' or 'HORIZONTAL')
-    bar:SetReverseFill(style.ReverseFill == true)
-    bar.bg:SetTexture(NRSKNUI:GetBarBackground(style) or NRSKNUI.WhiteTexture)
-    bar.bg:SetVertexColor(unpack(style.BackgroundColor))
     local color = style.BarColorMode == 'class' and NRSKNUI:GetPlayerClassColor() or style.BarColor
     bar:SetStatusBarColor(color[1], color[2], color[3], style.BarColor[4] or 1)
-
-    local spark = bar.spark
-    spark:ClearAllPoints()
-    if style.Spark then
-        NRSKNUI:SetSpark(spark, style, thickness)
-        if vertical then
-            local width, height = spark:GetSize()
-            spark:NUISetPixelSize(height, width)
-        end
-        spark:SetRotation(vertical and math.pi / 2 or 0)
-        spark:SetPoint('CENTER', bar:GetStatusBarTexture(), FILL_EDGE[vertical and 'VERTICAL' or 'HORIZONTAL'][style.ReverseFill and 2 or 1], 0, 0)
-    end
-    spark:SetShown(style.Spark == true)
 
     local interpolation = style.Smooth and SMOOTH or IMMEDIATE
     if trigger.BarMode == 'stacks' then
@@ -282,6 +243,8 @@ function CDM:ClearAuraBar(button, refs)
     refs.icon:SetAllPoints(refs.inner)
 end
 
+-- Timer and value --
+
 ---The layer's timer: the icon's swipe and a bar's fill; cooldowns drain by default, a cast fills.
 ---@param layer CDMLayer
 ---@param duration LuaDurationObject?
@@ -299,7 +262,9 @@ function CDM:SetLayerTimer(layer, duration, direction)
     local inverse = style.Inverse == true
     if duration then
         direction = direction or REMAINING
-        if inverse then direction = direction == ELAPSED and REMAINING or ELAPSED end
+        if inverse then
+            direction = direction == ELAPSED and REMAINING or ELAPSED
+        end
         bar:SetTimerDuration(duration, style.Smooth and SMOOTH or IMMEDIATE, direction)
     else
         bar:SetMinMaxValues(0, 1)
@@ -311,20 +276,21 @@ end
 ---Show a value on a bar; secret values go straight to the widget.
 ---@param layer CDMLayer
 ---@param value number
----@param max number
+---@param maxValue number
 ---@param sparkAlpha number? from NRSKNUI.curves.BarSparkAlpha, possibly secret; hidden when omitted
-function CDM:SetLayerValue(layer, value, max, sparkAlpha)
+function CDM:SetLayerValue(layer, value, maxValue, sparkAlpha)
     layer.Cooldown:Clear()
     if not layer.isBar then return end
+
     local interpolation = layer.owner.style.Smooth and SMOOTH or IMMEDIATE
-    layer.Bar:SetMinMaxValues(0, max, interpolation)
+    layer.Bar:SetMinMaxValues(0, maxValue, interpolation)
     layer.Bar:SetValue(value, interpolation)
     layer.Bar.spark:SetAlpha(sparkAlpha or 0)
 end
 
 -- Progress source --
 
----A tracked bar's remaining time on a hidden bar filled from the far end; the shown fill runs up to its edge, so no secret math (CSAA Tracker).
+---A hidden bar that mirrors a tracked bar's remaining time from the far end; the shown fill runs up to its edge, so no secret is ever compared (the CSAA Tracker trick).
 ---@param layer CDMLayer
 ---@return StatusBar source what a tracked bar is mirrored onto
 function CDM:GetLayerProgress(layer)
@@ -343,13 +309,16 @@ end
 
 ---@param layer CDMLayer
 ---@param shown boolean
----@param bar CDMBar|CDMPip|nil where it fills: the layer's bar, or a split bar's filling pip
+---@param bar CDMBar|CDMPip|nil where it fills: the layer's bar or a split bar's filling pip
 function CDM:ShowLayerProgress(layer, shown, bar)
     local progress = layer.progress
     if not (progress and layer.isBar) then return end
+
     bar = bar or layer.Bar
     if progress.bar ~= bar then
-        if progress.fill then progress.fill:Hide() end
+        if progress.fill then
+            progress.fill:Hide()
+        end
         bar.progressFill = bar.progressFill or bar:CreateTexture(nil, 'ARTWORK', nil, 1)
         progress.fill, progress.bar = bar.progressFill, bar
         progress.source:ClearAllPoints()
@@ -480,7 +449,9 @@ function CDM:SetLayerPips(layer, count)
         }
         local texture = NRSKNUI:GetStatusbar(style)
         local background = NRSKNUI:GetBarBackground(style) or NRSKNUI.WhiteTexture
-        for i = 1, count - 1 do PipBoundary(layer, i, i / count, vertical, reverse) end
+        for i = 1, count - 1 do
+            PipBoundary(layer, i, i / count, vertical, reverse)
+        end
         for i = 1, count do
             local pip = pips[i] or CreatePip(bar)
             pips[i] = pip
@@ -495,8 +466,12 @@ function CDM:SetLayerPips(layer, count)
             pip:Show()
         end
     end
-    for i = count + 1, #pips do pips[i]:Hide() end
-    for i = max(count, 1), #edges do edges[i]:Hide() end
+    for i = count + 1, #pips do
+        pips[i]:Hide()
+    end
+    for i = max(count, 1), #edges do
+        edges[i]:Hide()
+    end
     self:StylePips(layer)
     self:PaintBar(layer, layer.barColor)
     self:AnchorBarOverlays(layer.owner)
@@ -575,27 +550,106 @@ function CDM:SetLayerPipColor(layer, index, color)
     PaintPip(layer, pip)
 end
 
+-- Pip texts and borders --
+
+---Copy the texts and borders marked Each Rune onto every pip of a split bar; the layer's own copies hide.
+---@param layer CDMLayer
+function CDM:StylePips(layer)
+    local count = layer.pipCount or 0
+    for _, pip in ipairs(layer.pips or {}) do
+        for _, text in pairs(pip.texts) do
+            if text.binding then
+                text.binding:SetToDefaults()
+            end
+            text.kind = 'static'
+            text.fs:Hide()
+        end
+        for _, border in pairs(pip.borders) do
+            border:Hide()
+        end
+    end
+    -- Un-splitting runs from StyleBarLayer, before StyleLayer grows layer.texts for a newly added element.
+    if count == 0 then
+        for _, own in ipairs(layer.texts) do
+            own.eachPip = nil
+        end
+        for _, own in ipairs(layer.borders) do
+            own.eachPip = nil
+        end
+        return
+    end
+
+    local display = layer.owner.id and self:Get(layer.owner.id)
+    local triggers = display and display.Triggers or {}
+    local spellName = triggers[layer.index] and self:GetTriggerName(triggers[layer.index]) or ''
+    local textOrdinal, borderOrdinal = 0, 0
+    for _, element in ipairs(layer.subRegions or {}) do
+        local each = element.EachPip == true
+        if element.type == 'text' then
+            textOrdinal = textOrdinal + 1
+            local own = layer.texts[textOrdinal]
+            own.eachPip = each
+            if each then
+                own.fs:Hide()
+                for i = 1, count do
+                    local pip = layer.pips[i]
+                    local text = pip.texts[textOrdinal]
+                    if not text then
+                        text = { fs = own.host:CreateFontString(nil, 'OVERLAY'), host = own.host, kind = 'static', format = '', tokens = 0, ordinal = textOrdinal } --[[@as CDMIconText]]
+                        pip.texts[textOrdinal] = text
+                    end
+                    text.fs:SetFontStyle(element, element.FontSize, nil, nil, true)
+                    PlaceText(text.fs, element, pip)
+                    text.fs:SetTextColor(unpack(element.Color))
+                    ConfigureText(text, element, spellName, layer, triggers)
+                    text.fs:SetShown(element.Enabled)
+                end
+            end
+        elseif element.type == 'border' then
+            borderOrdinal = borderOrdinal + 1
+            local own = layer.borders[borderOrdinal]
+            own.eachPip = each
+            if each then
+                own:Hide()
+                for i = 1, count do
+                    local pip = layer.pips[i]
+                    pip.borders[borderOrdinal] = StyleBorder(pip.borders[borderOrdinal], layer.borderHost, pip, element, true)
+                    pip.borders[borderOrdinal]:SetFrameLevel(own:GetFrameLevel())
+                end
+            end
+        end
+    end
+end
+
 -- Ticks --
 
 local NO_TICKS = {}
 
----A tick element's places as fractions of the bar; At Value reads the trigger's maximum (power, or a cast's seconds).
+---A tick element's places as fractions of the bar; At Value reads the trigger's maximum (power or a cast's seconds).
 ---@param layer CDMLayer
 ---@param element table
 ---@return number[]
 local function TickFractions(layer, element)
-    if element.Placement == 'auto' then return layer.autoTicks or NO_TICKS end
+    if element.Placement == 'auto' then
+        return layer.autoTicks or NO_TICKS
+    end
     local list = {}
     for text in tostring(element.Placements or ''):gmatch('[%d%.]+') do
         local number = tonumber(text)
-        if number then list[#list + 1] = number end
+        if number then
+            list[#list + 1] = number
+        end
     end
     local scale = 100
     if element.Placement == 'value' then
         scale = layer.max
-        if scale == nil or NRSKNUI:IsSecretValue(scale) or scale <= 0 then return NO_TICKS end
+        if scale == nil or NRSKNUI:IsSecretValue(scale) or scale <= 0 then
+            return NO_TICKS
+        end
     end
-    for i, value in ipairs(list) do list[i] = value / scale end
+    for i, value in ipairs(list) do
+        list[i] = value / scale
+    end
     return list
 end
 
@@ -616,6 +670,7 @@ local function PlaceTick(layer, set, index, fraction)
         host.mark:NUISetPixelSnap()
         set.hosts[index] = host
     end
+
     local element = set.element
     local style = layer.owner.style
     local vertical = style.Orientation == 'VERTICAL'
@@ -652,7 +707,9 @@ function CDM:DrawTicks(layer)
                 end
             end
         end
-        for i = used + 1, #set.hosts do set.hosts[i]:Hide() end
+        for i = used + 1, #set.hosts do
+            set.hosts[i]:Hide()
+        end
     end
 end
 
@@ -670,7 +727,9 @@ function CDM:StyleTicks(layer, subRegions)
             set.element, set.hidden, set.color = element, not element.Enabled, nil
         end
     end
-    for i = count + 1, #sets do sets[i].element = nil end
+    for i = count + 1, #sets do
+        sets[i].element = nil
+    end
     self:DrawTicks(layer)
 end
 
@@ -684,13 +743,14 @@ function CDM:SetLayerTicks(layer, fractions)
 end
 
 -- Aura overlay parts --
+
 -- An aura overlay on a bar paints over the bar below it, as the unit frames' aura tints do: proxies of ours ride
 -- the bar's fills and textures inside the aura button cover them, so the engine both sizes and shows them.
 
 local OVERLAY_PARTS = { 'barOverlay', 'missingOverlay', 'fillOverlay' } -- bottom to top
 local OVERLAY_PROXIES = 10                                              -- more than any split resource has pips; the button can't grow more once auras are secret
 
--- Per orientation and fill direction: the missing part's corner on the fill's moving edge, that edge's corner, and its far corner.
+-- Per orientation and fill direction: the missing part's corner on the fill's moving edge, that edge's corner and its far corner.
 local MISSING_CORNERS = {
     HORIZONTAL = { { 'TOPLEFT', 'TOPRIGHT', 'BOTTOMRIGHT' }, { 'TOPRIGHT', 'TOPLEFT', 'BOTTOMLEFT' } },
     VERTICAL = { { 'BOTTOMLEFT', 'TOPLEFT', 'TOPRIGHT' }, { 'TOPLEFT', 'BOTTOMLEFT', 'BOTTOMRIGHT' } },
@@ -722,6 +782,7 @@ end
 function CDM:AnchorBarOverlays(frame)
     local display = frame.id and self:Get(frame.id)
     if not display then return end
+
     local base
     for i, trigger in ipairs(display.Triggers) do
         if trigger.Type ~= 'auraoverlay' then
@@ -737,14 +798,20 @@ function CDM:AnchorBarOverlays(frame)
                 layer.overlayProxies = {}
                 for _, part in ipairs(OVERLAY_PARTS) do
                     layer.overlayProxies[part] = {}
-                    for n = 1, OVERLAY_PROXIES do layer.overlayProxies[part][n] = CreateFrame('Frame', nil, layer) end
+                    for n = 1, OVERLAY_PROXIES do
+                        layer.overlayProxies[part][n] = CreateFrame('Frame', nil, layer)
+                    end
                 end
             end
             for _, part in ipairs(OVERLAY_PARTS) do
                 for n = 1, OVERLAY_PROXIES do
                     local target
                     if display.type == 'bar' and base and base.isBar then
-                        if pipCount > 0 then target = n <= pipCount and base.pips[n] or nil else target = n == 1 and base.Bar or nil end
+                        if pipCount > 0 then
+                            target = n <= pipCount and base.pips[n] or nil
+                        else
+                            target = n == 1 and base.Bar or nil
+                        end
                     end
                     AnchorProxy(layer, part, n, target)
                 end
@@ -792,78 +859,17 @@ end
 function CDM:SetBarLatency(layer, fraction, atStart, color)
     local bar = layer.Bar
     if not bar then return end
+
     local latency = bar.latency
     if not (fraction and fraction > 0 and color) then
         latency:Hide()
         return
     end
+
     local style = layer.owner.style
     latency:SetOrientation(style.Orientation == 'VERTICAL' and 'VERTICAL' or 'HORIZONTAL')
-    latency:SetReverseFill((style.ReverseFill == true) == atStart) -- from the fill's start, or back from its end
+    latency:SetReverseFill((style.ReverseFill == true) == atStart) -- from the fill's start or back from its end
     latency:SetValue(fraction > 1 and 1 or fraction)
     latency:SetStatusBarColor(unpack(color))
     latency:Show()
-end
-
--- Pip texts and borders --
-
----Copy the texts and borders marked Each Rune onto every pip of a split bar; the layer's own copies hide.
----@param layer CDMLayer
-function CDM:StylePips(layer)
-    local count = layer.pipCount or 0
-    for _, pip in ipairs(layer.pips or {}) do
-        for _, text in pairs(pip.texts) do
-            if text.binding then text.binding:SetToDefaults() end
-            text.kind = 'static'
-            text.fs:Hide()
-        end
-        for _, border in pairs(pip.borders) do border:Hide() end
-    end
-    -- Un-splitting runs from StyleBarLayer, before StyleLayer grows layer.texts for a newly added element.
-    if count == 0 then
-        for _, own in ipairs(layer.texts) do own.eachPip = nil end
-        for _, own in ipairs(layer.borders) do own.eachPip = nil end
-        return
-    end
-
-    local display = layer.owner.id and self:Get(layer.owner.id)
-    local triggers = display and display.Triggers or {}
-    local spellName = triggers[layer.index] and self:GetTriggerName(triggers[layer.index]) or ''
-    local textOrdinal, borderOrdinal = 0, 0
-    for _, element in ipairs(layer.subRegions or {}) do
-        local each = count > 0 and element.EachPip == true
-        if element.type == 'text' then
-            textOrdinal = textOrdinal + 1
-            local own = layer.texts[textOrdinal]
-            own.eachPip = each
-            if each then
-                own.fs:Hide()
-                for i = 1, count do
-                    local pip = layer.pips[i]
-                    local text = pip.texts[textOrdinal]
-                    if not text then
-                        text = { fs = own.host:CreateFontString(nil, 'OVERLAY'), host = own.host, kind = 'static', format = '', tokens = 0 } --[[@as CDMIconText]]
-                        pip.texts[textOrdinal] = text
-                    end
-                    text.fs:SetFontStyle(element, element.FontSize, nil, nil, true)
-                    PlaceText(text.fs, element, pip)
-                    text.fs:SetTextColor(unpack(element.Color))
-                    ConfigureText(text, element, spellName, layer, triggers)
-                    text.fs:SetShown(element.Enabled)
-                end
-            end
-        elseif element.type == 'border' then
-            borderOrdinal = borderOrdinal + 1
-            local own = layer.borders[borderOrdinal]
-            own.eachPip = each
-            if each then
-                own:Hide()
-                for i = 1, count do
-                    local pip = layer.pips[i]
-                    pip.borders[borderOrdinal] = StyleBorder(pip.borders[borderOrdinal], layer.borderHost, pip, element, true)
-                    pip.borders[borderOrdinal]:SetFrameLevel(own:GetFrameLevel())
-                end
-            end
-        end
-    end
 end

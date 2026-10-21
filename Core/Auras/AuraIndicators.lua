@@ -10,7 +10,6 @@ local ipairs, pairs = ipairs, pairs
 local format, gsub = string.format, string.gsub
 local CopyTable = CopyTable
 local wipe = wipe
-local tonumber = tonumber
 local type = type
 
 AuraIndicators.Styles = {
@@ -46,7 +45,6 @@ AuraIndicators.Attach = {
 }
 
 -- Tokens are read from the live client rather than written out, since they can change between patches.
-local AF = AuraUtil.AuraFilters
 
 local GROUP_PREFIX = 'group:'
 -- Indicators that ship with the addon, seeded into the defaults. Keyed the same way as a user's, so
@@ -385,21 +383,6 @@ function AuraIndicators:TopOrder(placements)
         if (placement.Order or 0) > top then top = placement.Order end
     end
     return top + 1
-end
-
----@param placement table
----@return table[] specs
-function AuraIndicators:GetPlacementSpecs(placement)
-    local specs = {}
-
-    for _, key in ipairs(placement.Keys) do
-        local spec = self:GetSpec(key)
-        if spec then
-            tinsert(specs, spec)
-        end
-    end
-
-    return specs
 end
 
 ---@param placement table

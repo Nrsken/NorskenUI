@@ -5,12 +5,10 @@ local CDM = NRSKNUI:GetModule('CDM')
 local L = NRSKNUI.Libs.AL
 local Theme = NRSKNUI.Theme
 local rowHL = Theme.rowHeightLast
+local Shared = NRSKNUI.CDMOptions
 
 local CopyTable = CopyTable
 
-local Shared = NRSKNUI.CDMOptions
-
----A group's load settings are its icons' and aura groups', edited together as in WeakAuras.
 ---@param page table
 ---@param id string
 local function BuildLoadTab(page, id)

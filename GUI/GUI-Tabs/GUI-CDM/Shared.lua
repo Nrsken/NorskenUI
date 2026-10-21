@@ -28,7 +28,6 @@ local POWER_MODES = {
     { value = 'progress', text = L['Recharging Segments'], description = L['Like Static Segments but each one fills up as it recharges.'] },
 }
 
--- WeakAuras' tab order; the ones without settings yet stay empty.
 local TABS = {
     { id = 'group',       text = L['Group'] },
     { id = 'display',     text = L['Display'] },
@@ -46,6 +45,7 @@ local AURA_GROUP_TABS = {
     { id = 'display',     text = L['Display'] },
     { id = 'layout',      text = L['Layout'] },
     { id = 'trigger',     text = L['Trigger'] },
+    { id = 'conditions',  text = L['Conditions'] },
     { id = 'load',        text = L['Load'] },
     { id = 'information', text = L['Information'] },
 }

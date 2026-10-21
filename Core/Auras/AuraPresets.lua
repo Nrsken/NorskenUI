@@ -661,19 +661,6 @@ function Premade:Get(key)
     return key and ByKey[key] or nil
 end
 
----@param key string?
----@return boolean
-function Premade:Exists(key)
-    return self:Get(key) ~= nil
-end
-
----@param key string?
----@return boolean
-function Premade:IsEditable(key)
-    local preset = self:Get(key)
-    return preset ~= nil and preset.spells ~= nil
-end
-
 ---An editable preset's shipped spells, { [spellID] = group }. Read only.
 ---@param key string?
 ---@return table? map

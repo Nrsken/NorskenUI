@@ -40,12 +40,14 @@ local TRIGGER_TYPES = {
     { value = 'item',        text = L['Item'] },
     { value = 'timer',       text = L['Cast Timer'] },
     { value = 'totem',       text = L['Totem'] },
+    { value = 'stat',        text = L['Player Stat'],         group = 'unit' },
+    { value = 'lootSpec',    text = L['Loot Specialization'], group = 'unit' },
 }
 local BAR_TRIGGER_TYPES = {
     { value = 'cast',        text = L['Cast'] },
     { value = 'power',       text = L['Power'] },
     { value = 'aura',        text = L['Aura'] },
-    { value = 'stat',        text = L['Player Stat'] },
+    { value = 'stat',        text = L['Player Stat'], group = 'unit' },
     { value = 'viewerbar',   text = L['Cooldown Bar'] },
     { value = 'spell',       text = L['Cooldown'] },
     { value = 'item',        text = L['Item'] },
@@ -56,12 +58,17 @@ local BAR_TRIGGER_TYPES = {
 local TEXT_TRIGGER_TYPES = {
     { value = 'spell', text = L['Cooldown'] },
     { value = 'power', text = L['Power'] },
-    { value = 'stat',  text = L['Player Stat'] },
+    { value = 'stat',  text = L['Player Stat'], group = 'unit' },
     { value = 'cast',  text = L['Cast'] },
     { value = 'item',  text = L['Item'] },
     { value = 'timer', text = L['Cast Timer'] },
+    { value = 'lootSpec', text = L['Loot Specialization'], group = 'unit' },
 }
 local TRIGGER_LISTS = { bar = BAR_TRIGGER_TYPES, text = TEXT_TRIGGER_TYPES }
+-- The Type dropdown shows a group once, a second dropdown picks the type inside it.
+local TRIGGER_GROUPS = {
+    unit = L['Player/Unit Info'],
+}
 local TRIGGER_NAMES = {}
 for _, entry in ipairs(TRIGGER_TYPES) do TRIGGER_NAMES[entry.value] = entry.text end
 for _, entry in ipairs(BAR_TRIGGER_TYPES) do TRIGGER_NAMES[entry.value] = entry.text end
@@ -79,6 +86,7 @@ local TRIGGER_DEFAULTS = {
     viewerbar   = {},
     cast        = { HoldTime = 0.5, ShowLatency = true },
     stat        = { Stat = 'haste' },
+    lootSpec    = {},
 }
 local AURA_SOURCES = {
     { value = 'cdm',    text = L['Cooldown Manager'] },
@@ -98,6 +106,11 @@ local ITEMS = {
     { value = 'healthstone',  text = L['Healthstone'] },
     { value = 'combatPotion', text = L['Combat Potion'] },
     { value = 'custom',       text = L['Custom Item'] },
+}
+local SHOW_ON = {
+    { value = 'always',   text = L['Always'] },
+    { value = 'cooldown', text = L['On Cooldown'] },
+    { value = 'ready',    text = L['When Ready'] },
 }
 local triggerOpen = {} -- [index] = open, for the session; a lone trigger starts open
 
@@ -223,7 +236,9 @@ Shared.ITEMS = ITEMS
 Shared.LinkedAuraTrigger = LinkedAuraTrigger
 Shared.NormalizeAuraTypes = NormalizeAuraTypes
 Shared.PositionCard = PositionCard
+Shared.SHOW_ON = SHOW_ON
 Shared.TRIGGER_DEFAULTS = TRIGGER_DEFAULTS
+Shared.TRIGGER_GROUPS = TRIGGER_GROUPS
 Shared.TRIGGER_LISTS = TRIGGER_LISTS
 Shared.TRIGGER_TYPES = TRIGGER_TYPES
 Shared.TriggerChip = TriggerChip

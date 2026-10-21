@@ -19,7 +19,7 @@ local KINDS = {
         filter = 'HELPFUL',
         moverKey = 'PlayerBuffs',
         displayName = 'Standard Buffs',
-        guiPath = 'standardBuffs',
+        guiItem = 'buffs',
         blizzardFrame = 'BuffFrame',
         cvarCallbacks = { 'consolidateBuffs', 'collapseExpandBuffs' }, -- banishing leaves these live
     },
@@ -27,7 +27,7 @@ local KINDS = {
         filter = 'HARMFUL',
         moverKey = 'PlayerDebuffs',
         displayName = 'Standard Debuffs',
-        guiPath = 'standardDebuffs',
+        guiItem = 'debuffs',
         blizzardFrame = 'DebuffFrame',
     },
 }
@@ -185,8 +185,9 @@ function PlayerAuras:ApplySettings()
             host:NUIApplyPosition(cfg)
             -- db is resolved live rather than captured: self.db is reassigned by
             -- UpdateDB() on a profile switch and cfg would still point at the old one.
-            Anchors:Register(self, info.moverKey, host, info.guiPath, {
+            Anchors:Register(self, info.moverKey, host, 'buffsDebuffs', {
                 displayName = info.displayName,
+                guiContext = info.guiItem,
                 db = function(module) return module.db[kind] end,
             })
 
@@ -260,23 +261,19 @@ end
 -- settings change without a reload.
 
 ---@param previewing boolean
----@param onlyKind string? limits it to one kind, since buffs and debuffs are configured on their own pages
-function PlayerAuras:SetPreviewing(previewing, onlyKind)
-    for kind, info in pairs(KINDS) do
+function PlayerAuras:SetPreviewing(previewing)
+    for kind in pairs(KINDS) do
         local host = self.hosts[kind]
         local container = host and host.container
         if container then
-            local wanted = previewing and (onlyKind == nil or onlyKind == info.guiPath)
-            AuraPreview:SetShown(container, wanted)
-            container:SetShown(not wanted)
+            AuraPreview:SetShown(container, previewing)
+            container:SetShown(not previewing)
         end
     end
 end
 
----@param pageId string? the page asking, so only the display it configures previews
----@param showAll boolean? whether everything is being previewed, which means both displays
-function PlayerAuras:ShowPreview(pageId, showAll)
-    self:SetPreviewing(true, not showAll and pageId or nil)
+function PlayerAuras:ShowPreview()
+    self:SetPreviewing(true)
 end
 
 function PlayerAuras:HidePreview()

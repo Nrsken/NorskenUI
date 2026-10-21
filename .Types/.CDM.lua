@@ -1,0 +1,296 @@
+---@meta
+
+-- Cooldown & Aura Manager types. Classes attached to a local (a mixin or a module table) keep their
+-- ---@class line in the code; their fields live here.
+
+-- Icons and layers --
+
+---What a condition's X/Y Offset moves: an icon or a group's frame.
+---@class CDMPlaced : Frame
+---@field conditionX number? added to Position.XOffset
+---@field conditionY number? added to Position.YOffset
+
+---@class CDMIcon : CDMPlaced
+---@field id string?
+---@field placeOffset fun()? re-places the icon after an offset condition, one per frame for the combat queue
+---@field layers CDMLayer[]
+---@field layerCount number layers in use
+---@field activeLayer CDMLayer? the logic layer on show, for the tooltip
+---@field hasActive boolean? a trigger is active, or an aura layer may be
+---@field standbyLayer CDMLayer? a layer that is hidden but ready, which a condition's Show Display brings up
+---@field forceHidden boolean? a condition's Show Display is off
+---@field chainGroup CDMChainGroup? the chain group the icon sits in
+---@field chainPad number[]? that group's spacing, padding the icon's measured size
+---@field style table the icon's style, see CDM:GetStyle
+---@field shown boolean loaded or previewed
+---@field groupId string?
+---@field placeholder boolean? a lone aura showing its placeholder, which holds its place while the aura is missing
+---@field fitsText boolean? a text display sizing itself to its text each frame
+---@field fitProbes Frame[]? the two corners of the measured text
+---@field fitText FontString? the text those corners ride
+
+---One trigger's visuals; the icon stacks one per trigger, trigger 1 on top.
+---@class CDMLayer : Frame
+---@field owner CDMIcon
+---@field Icon Texture
+---@field Cooldown Cooldown
+---@field textHost Frame
+---@field borderHost Frame the border sub elements; hidden with the icon on an aura layer, which draws its own
+---@field texts CDMIconText[]
+---@field borders CDMBorder[] one per border sub element
+---@field glows CDMGlow[] one per glow sub element, shown by its Enabled or a condition
+---@field textCount number? texts in use, the rest of the pool is hidden
+---@field sourced boolean? a text reads another trigger, so it updates after every trigger has
+---@field auraSourced boolean? the same, for texts inside the aura button
+---@field state table trigger state the conditions read
+---@field duration LuaDurationObject? what time texts count, without the global cooldown
+---@field spellID number?
+---@field baseSpellID number?
+---@field itemID number? item triggers: the item shown
+---@field itemSlot number? item triggers: the equipment slot read
+---@field itemFamily number[]? item triggers: the items counted together
+---@field itemDuration LuaDurationObject? item triggers: built from plain cooldown numbers
+---@field readyDuration LuaDurationObject? zero, handed to texts for ready (a cast lockout)
+---@field realCooldown LuaDurationObject? spell triggers: a copy of the running cooldown, shown on while a GCD outlasts it
+---@field heldGCD number? spell triggers: the GCD that overtook realCooldown, which shows until it ends
+---@field timerDone boolean? set while OnCooldownDone re-reads the trigger
+---@field count number? a count to show for %s instead of spell charges
+---@field timerLength number? cast timers: the configured duration
+---@field timerEnd number? cast timers: when the running timer ends
+---@field castIDs number[]? cast timers: every spell that starts it
+---@field timerDuration LuaDurationObject? cast timers: built from the cast time
+---@field timerTicker table? cast timers and Show On items: wakes the icon when the timer or cooldown ends
+---@field previewEnd number? options preview: when the looping fake timer ends
+---@field previewDuration LuaDurationObject? options preview: the fake timer
+---@field previewPandemic Texture? options preview: an aura layer's stand-in pandemic border
+---@field previewPandemicTimer table? options preview: shows that border when the fake timer reaches it
+---@field endTime number? item and cast timers: when the running cooldown or timer ends, for remaining checks
+---@field index number? this layer's trigger index
+---@field levelOf fun(n: number): number? the frame level of sub element n on this layer, from its place in the list
+---@field subRegions table[]? the sub elements the layer was last styled with
+---@field auraHost Frame? parent of the aura container, for aura triggers
+---@field auraContainer table? native AuraContainer with the NorskenUI mixin
+---@field auraSlots table<string, { refs: table, index: number }>? one slot per filter string
+---@field auraRefs table? the slot on show: its button and the regions we gave it
+---@field auraTrigger table? the trigger that slot shows
+---@field auraKey string? what the slot was last configured for
+---@field disableAura fun()? turns the container off once safe; one per layer so the combat queue holds it once
+---@field applyAura fun()? the aura trigger's latest pending setup
+---@field runAura fun()? runs applyAura once safe; one per layer so the combat queue holds it once
+---@field restyleAura fun()? the latest restyle waiting for auras to stop being secret
+---@field restyleQueued boolean? that restyle is already in the restriction queue
+---@field isBar boolean? the layer belongs to a bar display
+---@field isText boolean? the layer belongs to a text display: no icon, its text pinned at its alignment
+---@field statGates CDMStatGate[]? Highest/Lowest Secondary: one gate per candidate stat, which the engine opens for the winner
+---@field gatedTexts table<number, true>? the texts its gates copy, by ordinal
+---@field gateSource CDMLayer? the Highest/Lowest layer its gates follow
+---@field gateReaders CDMLayer[]? a Highest/Lowest layer: every layer drawing gates for it, itself included
+---@field overlayProxies table<string, Frame[]>? bar aura overlays: per part, frames riding the fills of the bar below
+---@field previewOverlay table<string, Texture[]>? bar aura overlays: the options preview's parts
+---@field previewOverlayShown boolean? those parts are up
+---@field shownName string? cast layers: the spell name its %n texts were last given
+---@field barColor number[]? bar displays: the colour the trigger or style last painted
+---@field barColorOverride number[]? bar displays: a condition's colour, held over the trigger's
+---@field powerType number|string? power layers: the power type read, or 'maelstromWeapon'
+---@field progress { source: StatusBar, fill: Texture?, bar: StatusBar? }? split power bars: a tracked bar's progress in the filling pip
+---@field pips CDMPip[]? split power bars: one bar per rune or point, the rest of the pool hidden
+---@field pipEdges StatusBar[]? split power bars: invisible fills whose edges part the pips
+---@field pipCount number? split power bars: pips in use, 0 for one bar
+---@field pipsStyled boolean? the pips match the layer's current style
+---@field pipLayout { corners: string[], dx: number, dy: number, share: number }? split power bars: how a pip sits between its boundaries
+---@field barLength number? bar displays: the bar's long side, without the icon
+---@field viewerCooldownID number? the Cooldown Manager tracked bar followed
+---@field viewerChild table? its live Blizzard frame
+---@field viewerActive boolean? whether it is running
+---@field viewerSpellID number?
+---@field viewerTarget StatusBar? where it is mirrored, when not the layer's own bar
+---@field viewerHold boolean? mirroring paused while no pip is filling
+---@field progressPip number? split power bars: the pip the tracked bar was last filling
+---@field progressHoldEnd number? when a finished tracked bar's held fill gives up on the power arriving
+---@field progressHoldTimer table? re-evaluates once the hold ends
+---@field castHoldTimer table? cast layers: ends the hold after a finished cast
+---@field barThickness number? bar displays: the bar's cross size, a tick's automatic length
+---@field tickSets CDMTickSet[]? bar displays: one per tick sub element
+---@field autoTicks number[]? bar displays: where the trigger puts Automatic ticks
+---@field Bar CDMBar? bar displays: the status bar beside the icon
+---@field value number? value triggers: what %p shows
+---@field max number? value triggers: what %t shows
+
+---@class CDMBorder : Frame
+---@field edges Texture[] top, bottom, left, right
+---@field eachPip boolean? hidden for its copies on every pip of a split bar
+
+---@class CDMIconText
+---@field fs FontString
+---@field binding table? C_DurationUtil duration text binding, for duration texts
+---@field kind 'duration'|'charges'|'value'|'static'
+---@field format string
+---@field tokens number how many %s a charges text holds
+---@field order string[]? value texts: the token behind each %s, in order
+---@field element table? the sub element it was configured from
+---@field usesName boolean? holds %n, so a cast's spell name reconfigures it
+---@field source number? the trigger a %N.p / %N.s text reads, when it isn't the layer's own
+---@field eachPip boolean? hidden for its copies on every pip of a split bar
+---@field host Frame? its own frame, so it draws at its place in the sub element list (a layer's texts)
+---@field abbreviate (fun(value: number): string)? value texts: the number format, AbbreviateNumbers and the like
+---@field valueCurve LuaColorCurveObject? value texts on a power trigger: its Percent and Value conditions' colours
+---@field colorsByValue boolean? a Value condition colours it, so its curve follows the max
+---@field curveMax number? the plain max its curve was last built with
+---@field ordinal number? its place among the display's texts, which a condition's Text N Color names
+---@field percent boolean? value texts on a power trigger: %p reads as a share of the max
+
+---@class CDMGlow
+---@field host Frame
+---@field parts table<string, Texture>
+---@field groups table<string, AnimationGroup>
+---@field onTexture fun(texture: Texture)?
+---@field active table<string, true>
+---@field masks MaskTexture[]
+---@field frames table<string, Frame>
+---@field pixelShape string? what the pixel glow's running lines were laid out for
+
+-- Bars --
+
+---@class CDMBar : StatusBar
+---@field bg Texture
+---@field spark Texture
+---@field latency StatusBar a second fill over the bar's end, the engine sizes it
+---@field progressFill Texture? the progress source's fill, while this bar holds it
+
+---One rune, Holy Power or combo point of a split resource bar.
+---@class CDMPip : StatusBar
+---@field bg Texture
+---@field timer LuaDurationObject what its Each Rune texts count, zero unless it fills over time
+---@field recharging boolean? what a Recharging condition reads for this pip
+---@field waiting boolean? a rune queued behind the three regenerating ones, what a Waiting condition reads
+---@field timerStart number? the running timer's start, nil while it holds a value
+---@field timerLength number?
+---@field slot number? the place it fills on the bar; runes move between places as they sort
+---@field color number[]? a condition's Bar Color for this pip
+---@field progressFill Texture?
+---@field texts table<number, CDMIconText> Each Rune text copies, by text ordinal
+---@field borders table<number, CDMBorder> Each Rune border copies, by border ordinal
+
+---@class CDMTickHost : StatusBar
+---@field mark Texture
+
+---@class CDMTickSet
+---@field element table? the tick sub element, nil while unused
+---@field hosts CDMTickHost[] one invisible fill per tick, whose edge the mark rides, so a matched bar's unknown width still places it
+---@field hidden boolean? hidden by its Enabled or a condition
+---@field color number[]? a condition's colour over the element's
+---@field level number? its frame level, from its place in the sub element list
+
+-- Groups --
+
+---@class CDMChainGroup : Frame
+---@field isChain true
+---@field chain Frame what the engine resizes; its only children are the slots
+---@field holder Frame parent of the icons, outside the measured frames
+---@field records table<string, CDMChainRecord>
+---@field order CDMChainRecord[]
+---@field config table
+---@field spare Frame[]
+
+---@class CDMChainRecord
+---@field key string
+---@field child CDMIcon
+---@field order number
+---@field slot Frame
+---@field measure Frame
+---@field probe Frame
+---@field auraProbes table<table, Frame>
+---@field width number
+---@field height number
+---@field loaded boolean? the icon is loaded or previewed
+---@field logic boolean? a trigger Lua can see is on show
+
+-- Triggers --
+
+---@class CDMCastState
+---@field castBarID number?
+---@field kind 'cast'|'channel'|'empower'|nil
+---@field duration LuaDurationObject?
+---@field spellID number?
+---@field name string?
+---@field texture number?
+---@field total number? seconds, for placing marks; nil when the game kept it secret
+---@field latency number? seconds between the cast's request and its start
+---@field ticks number[]? channel: where each tick falls, as a fraction of the bar
+---@field stages number[]? empower: where each stage ends, as a fraction of the bar
+---@field stage number empower: stages reached so far
+---@field result 'success'|'failed'|'interrupted'|nil the last cast's outcome, while it's held
+---@field endedAt number?
+
+---@class CDMStatGate
+---@field root Frame the outermost clip, hidden while the layer isn't gated
+---@field inner Frame the innermost clip, which the copies live in
+---@field bars StatusBar[] one comparison per other stat
+---@field others number[] which secondary each bar compares against
+---@field source { value: any, max: any } what the copies read: this stat's percent and rating
+---@field texts table<number, CDMIconText> a copy of each gated text, by its ordinal
+---@field fill StatusBar? the stat's own bar: this stat's percent
+
+-- Options page --
+
+---@class CDMTreeRow : Button
+---@field data table
+---@field inUse boolean
+---@field bg Texture
+---@field hoverBg Texture
+---@field hoverTarget number
+---@field selectedBg Texture
+---@field dropFill Texture
+---@field accentBar Texture
+---@field barGlow Texture
+---@field up CDMTreeSmallButton
+---@field ungroup CDMTreeSmallButton
+---@field down CDMTreeSmallButton
+---@field iconBorder Texture
+---@field icon Texture
+---@field canvas Frame the drawn picture, shown instead of icon when the display has one
+---@field title FontString
+---@field expand CDMTreeSmallButton
+---@field state CDMTreeSmallButton
+---@field eye CDMTreeSmallButton
+
+---@class CDMTreeSection : Frame
+---@field data table
+---@field inUse boolean
+---@field bg Texture
+---@field label FontString
+---@field collapse CDMTreeSmallButton
+---@field eye CDMTreeSmallButton
+
+---@class CDMTreeSmallButton : Button
+---@field tex Texture
+---@field tipTitle string?
+---@field tipText string?
+
+---@class CDMIconPicker
+---@field PAGE string
+---@field navigate fun(key: string?)
+---@field currentKey string?
+
+---@class CDMIconEntry
+---@field texture number|string
+---@field name string?
+---@field search string? lowercase text a search matches
+
+---@class CDMThumbnailParts
+---@field bar Frame
+---@field barBg Texture
+---@field fill Texture
+---@field icon Texture
+---@field blocks Texture[]
+---@field line Texture
+---@field anim Frame
+---@field text FontString
+
+---@class CDMSampleDriver : Frame
+---@field parts table
+---@field icons (string|number)[]
+---@field size number
+---@field width number
+---@field height number
+---@field t number

@@ -3,18 +3,56 @@ local NRSKNUI = select(2, ...)
 ---@class CDMModule
 local CDM = NRSKNUI:GetModule('CDM')
 local L = NRSKNUI.Libs.AL
+local Kaji = NRSKNUI.Libs.KAJI
 local Theme = NRSKNUI.Theme
+local LoadConditions = NRSKNUI.LoadConditions
 local IconPicker = NRSKNUI.CDMIconPicker
 local rowH = Theme.rowHeight
-local rowHL = Theme.rowHeightLast
 
-local ipairs = ipairs
-local format = string.format
 local tinsert, tremove, tconcat = table.insert, table.remove, table.concat
 local tostring, tonumber, type = tostring, tonumber, type
+local format = string.format
+local GetSpecializationInfoForClassID = GetSpecializationInfoForClassID
+local GetNumClasses = GetNumClasses
+local setmetatable = setmetatable
 local CopyTable = CopyTable
+local ipairs, pairs = ipairs, pairs
 
-local CHECK_ORDER = { 'active', 'casting', 'channeling', 'empowering', 'empowerStage', 'succeeded', 'interrupted', 'failed', 'onCooldown', 'onGCD', 'recharging', 'waiting', 'noCharges', 'usable', 'noPower', 'inRange', 'proc', 'remaining', 'count', 'owned', 'pandemic', 'missing', 'combat', 'hasTarget', 'attackable', 'classInGroup' }
+local CHECK_ORDER = {
+    'active',
+    'casting',
+    'channeling',
+    'empowering',
+    'empowerStage',
+    'succeeded',
+    'interrupted',
+    'failed',
+    'onCooldown',
+    'onGCD',
+    'recharging',
+    'waiting',
+    'noCharges',
+    'usable',
+    'noPower',
+    'inRange',
+    'proc',
+    'remaining',
+    'percent',
+    'value',
+    'count',
+    'stacks',
+    'owned',
+    'isCurrentSpec',
+    'lootSpecID',
+    'pandemic',
+    'missing',
+    'combat',
+    'hasTarget',
+    'attackable',
+    'classInGroup',
+    'spec',
+    'talent',
+}
 local CHECK_NAMES = {
     active = L['Active'],
     casting = L['Casting'],
@@ -34,23 +72,56 @@ local CHECK_NAMES = {
     inRange = L['In Range'],
     proc = L['Proc Glow'],
     remaining = L['Remaining Time'],
+    percent = L['Percent'],
+    value = L['Value'],
     count = L['Count'],
+    stacks = L['Stacks'],
     owned = L['In Bags'],
+    isCurrentSpec = L['Is Current Spec'],
+    lootSpecID = L['Loot Specialization'],
     combat = L['In Combat'],
     hasTarget = L['Has Target'],
     attackable = L['Attackable Target'],
     classInGroup = L['Class in Group'],
+    spec = L['Specialization'],
+    talent = L['Talent'],
 }
 -- An aura's checks are states of the aura, worded as such in the If list and in a condition's title.
-local AURA_CHECK_NAMES = { active = L['Is Up'], pandemic = L['In Pandemic'], missing = L['Is Missing'] }
-local AURA_TITLES = { active = L['While %s is up'], pandemic = L['While %s is in pandemic'], missing = L['While %s is missing'] }
+local AURA_CHECK_NAMES = {
+    active = L['Is Up'],
+    pandemic = L['In Pandemic'],
+    missing = L['Is Missing']
+}
+local AURA_TITLES = {
+    active = L['While %s is up'],
+    pandemic = L['While %s is in pandemic'],
+    missing = L['While %s is missing']
+}
 -- Strings, since a dropdown option can't carry false as its value.
 local BOOLEAN = {
     { value = 'true',  text = L['True'] },
     { value = 'false', text = L['False'] },
 }
--- Values a select check picks from, by its def.options.
-local SELECT_OPTIONS = { class = {} }
+-- Values a select check picks from, by its def.options; specs build on first use, like the CDM Strings page's.
+local SELECT_OPTIONS = setmetatable({ class = {} }, {
+    __index = function(options, key)
+        if key ~= 'spec' then return end
+        local specs = {}
+        for classID = 1, GetNumClasses() do
+            local classInfo = C_CreatureInfo.GetClassInfo(classID)
+            local color = classInfo and C_ClassColor.GetClassColor(classInfo.classFile)
+            for index = 1, C_SpecializationInfo.GetNumSpecializationsForClassID(classID) do
+                local specID, name, _, icon = GetSpecializationInfoForClassID(classID, index)
+                if specID then
+                    local text = format('|T%s:0:0:0:0:64:64:5:59:5:59|t %s', icon, name)
+                    specs[#specs + 1] = { value = specID, text = color and color:WrapTextInColorCode(text) or text }
+                end
+            end
+        end
+        options.spec = specs
+        return specs
+    end,
+})
 for _, token in ipairs(CLASS_SORT_ORDER) do
     local color = C_ClassColor.GetClassColor(token)
     local name = LOCALIZED_CLASS_NAMES_MALE[token] or token
@@ -64,9 +135,17 @@ local OPERATORS = {
     { value = '>=', text = '>=' },
     { value = '>',  text = '>' },
 }
+-- A curve steps at its point, so a value is either below it or at it and up.
+local CURVE_OPERATORS = { OPERATORS[1], OPERATORS[4] }
+-- Number checks with a slider; the rest type their number.
+local CHECK_RANGES = {
+    remaining = { min = -50, max = 500, step = 0.1 },
+    percent   = { min = 0, max = 100, step = 1 },
+}
 local SUB_NAMES = { text = L['Text'], border = L['Border'], glow = L['Glow'], tick = L['Tick'] }
+local TALENT_SECTIONS = { main = L['Class & Spec Talents'], apex = L['Apex Talents'], hero = L['Hero Talents'] }
 local REMOVE = 'remove'
-local MAX_DEPTH = 3    -- combinations nest this deep, as in WeakAuras
+local MAX_DEPTH = 3
 local INDENT = 16
 local MIN_LIGHT = 0.35 -- a colour value in a condition's title is lifted to at least this brightness
 
@@ -74,27 +153,32 @@ local MIN_LIGHT = 0.35 -- a colour value in a condition's title is lifted to at 
 -- up / pandemic: an aura's While Up / In Pandemic check can put it on the aura's button; auraOnly: nothing else can.
 -- missing: a lone aura's While Missing check can put it on its placeholder (only what the aura's button covers).
 local PROPERTIES = {
-    { key = 'auraIcon',        text = L['Aura Icon'],            kind = 'bool',  up = true,       auraOnly = true, iconOnly = true },
-    { key = 'auraTexture',     text = L['Aura Icon Texture'],    kind = 'icon',  up = true,       auraOnly = true, iconOnly = true },
-    { key = 'auraColor',       text = L['Aura Icon Color'],      kind = 'color', up = true,       auraOnly = true, iconOnly = true },
-    { key = 'auraDesaturate',  text = L['Aura Icon Desaturate'], kind = 'bool',  up = true,       auraOnly = true, iconOnly = true },
-    { key = 'auraSwipe',       text = L['Aura Icon Swipe'],      kind = 'bool',  up = true,       auraOnly = true, iconOnly = true },
-    { key = 'auraInverse',     text = L['Aura Icon Inverse Swipe'], kind = 'bool', up = true,     auraOnly = true, iconOnly = true },
-    { key = 'fillOverlay',     text = L['Fill Overlay'],         kind = 'color', up = true,       auraOnly = true, barOnly = true },
-    { key = 'missingOverlay',  text = L['Missing Overlay'],      kind = 'color', up = true,       auraOnly = true, barOnly = true },
-    { key = 'barOverlay',      text = L['Bar Overlay'],          kind = 'color', up = true,       auraOnly = true, barOnly = true },
-    { key = 'pandemicColor',   text = L['Pandemic Border'],      kind = 'color', pandemic = true, auraOnly = true },
-    { key = 'desaturate',      text = L['Desaturate'],           kind = 'bool',  noText = true, missing = true },
-    { key = 'color',           text = L['Icon Color'],           kind = 'color', noText = true, missing = true },
-    { key = 'show',            text = L['Show Display'],         kind = 'bool' },
-    { key = 'alpha',           text = L['Alpha'],                kind = 'alpha', missing = true },
-    { key = 'swipe',           text = L['Show Swipe'],           kind = 'bool',  iconOnly = true },
-    { key = 'inverse',         text = L['Inverse Swipe'],        kind = 'bool',  iconOnly = true },
-    { key = 'edge',            text = L['Show Edge'],            kind = 'bool',  iconOnly = true },
-    { key = 'swipeColor',      text = L['Swipe Color'],          kind = 'color', iconOnly = true },
-    { key = 'barColor',        text = L['Bar Color'],            kind = 'color', barOnly = true },
-    { key = 'backgroundColor', text = L['Background Color'],     kind = 'color', barOnly = true, missing = true },
-    { key = 'sound',           text = L['Play Sound'],           kind = 'sound' },
+    { key = 'auraIcon',        text = L['Aura Icon'],               kind = 'bool',  up = true,       auraOnly = true, iconOnly = true },
+    { key = 'auraTexture',     text = L['Aura Icon Texture'],       kind = 'icon',  up = true,       auraOnly = true, iconOnly = true },
+    { key = 'auraColor',       text = L['Aura Icon Color'],         kind = 'color', up = true,       auraOnly = true, iconOnly = true },
+    { key = 'auraDesaturate',  text = L['Aura Icon Desaturate'],    kind = 'bool',  up = true,       auraOnly = true, iconOnly = true },
+    { key = 'auraSwipe',       text = L['Aura Icon Swipe'],         kind = 'bool',  up = true,       auraOnly = true, iconOnly = true },
+    { key = 'auraInverse',     text = L['Aura Icon Inverse Swipe'], kind = 'bool',  up = true,       auraOnly = true, iconOnly = true },
+    { key = 'fillOverlay',     text = L['Fill Overlay'],            kind = 'color', up = true,       auraOnly = true, barOnly = true },
+    { key = 'missingOverlay',  text = L['Missing Overlay'],         kind = 'color', up = true,       auraOnly = true, barOnly = true },
+    { key = 'barOverlay',      text = L['Bar Overlay'],             kind = 'color', up = true,       auraOnly = true, barOnly = true },
+    { key = 'pandemicColor',   text = L['Pandemic Border'],         kind = 'color', pandemic = true, auraOnly = true },
+    { key = 'desaturate',      text = L['Desaturate'],              kind = 'bool',  noText = true,   missing = true },
+    { key = 'color',           text = L['Icon Color'],              kind = 'color', noText = true,   missing = true },
+    { key = 'show',            text = L['Show Display'],            kind = 'bool' },
+    { key = 'alpha',           text = L['Alpha'],                   kind = 'alpha', missing = true },
+    { key = 'swipe',           text = L['Show Swipe'],              kind = 'bool',  iconOnly = true },
+    { key = 'inverse',         text = L['Inverse Swipe'],           kind = 'bool',  iconOnly = true },
+    { key = 'edge',            text = L['Show Edge'],               kind = 'bool',  iconOnly = true },
+    { key = 'swipeColor',      text = L['Swipe Color'],             kind = 'color', iconOnly = true },
+    { key = 'barColor',        text = L['Bar Color'],               kind = 'color', barOnly = true },
+    { key = 'backgroundColor', text = L['Background Color'],        kind = 'color', barOnly = true,  missing = true },
+    { key = 'sound',           text = L['Play Sound'],              kind = 'sound' },
+}
+-- Added to the saved position, so a mover drag keeps working underneath.
+local OFFSETS = {
+    { key = 'xOffset', text = L['X Offset'], kind = 'offset' },
+    { key = 'yOffset', text = L['Y Offset'], kind = 'offset' },
 }
 
 local condOpen = {} -- [index] = open, for the session
@@ -102,6 +186,7 @@ local condOpen = {} -- [index] = open, for the session
 ---@class NRSKNUI.CDMConditionsTab
 local ConditionsTab = {}
 NRSKNUI.CDMConditionsTab = ConditionsTab
+ConditionsTab.SELECT_OPTIONS = SELECT_OPTIONS -- the Loot Specialization trigger picks from the same spec list
 
 ---Every property a change can set on this icon, its sub elements included.
 ---@param display table
@@ -113,15 +198,23 @@ local function PropertyList(display)
         byKey[entry.key] = entry
     end
     local kind = display.type
+    if not CDM.LAYERED_TYPES[kind] then
+        for _, entry in ipairs(OFFSETS) do add(entry) end
+        return list, byKey
+    end
+
     for _, entry in ipairs(PROPERTIES) do
         local onType = entry.iconOnly and kind == 'icon' or entry.barOnly and kind == 'bar' or not (entry.iconOnly or entry.barOnly)
         if onType and not (entry.noText and kind == 'text') then add(entry) end
+    end
+    -- a dynamic group owns its icons' slots
+    if not CDM:IsDynamic(display.parent) then
+        for _, entry in ipairs(OFFSETS) do add(entry) end
     end
 
     local counts = {}
     for n, element in ipairs(display.SubRegions or {}) do
         counts[element.type] = (counts[element.type] or 0) + 1
-        -- A text display's one text is just "Text", as in WeakAuras.
         local name = kind == 'text' and L['Text'] or format('%s %d', SUB_NAMES[element.type] or element.type, counts[element.type])
         -- An overlay holds glows and texts, never a border: borders belong to the icon's frame.
         local onAura = element.type == 'glow' or element.type == 'text'
@@ -129,7 +222,7 @@ local function PropertyList(display)
         -- Under an aura's check the change puts the element on its overlay, and says so.
         add({ key = 'sub.' .. n .. '.visible', text = format(L['%s Visible'], name), overlayText = format(L['%s on Overlay'], name), kind = 'bool', up = onAura, pandemic = element.type == 'glow', missing = onPlaceholder })
         if element.type ~= 'glow' then
-            add({ key = 'sub.' .. n .. '.color', text = format(L['%s Color'], name), overlayText = format(L['%s Color on Overlay'], name), kind = 'color', up = onAura, missing = onPlaceholder })
+            add({ key = 'sub.' .. n .. '.color', text = format(L['%s Color'], name), overlayText = format(L['%s Color on Overlay'], name), kind = 'color', up = onAura, missing = onPlaceholder, curve = element.type == 'text' })
         end
         if element.type == 'text' then
             add({ key = 'sub.' .. n .. '.fontSize', text = format(L['%s Font Size'], name), kind = 'fontSize' })
@@ -141,12 +234,21 @@ end
 
 ---@param entry table
 ---@param variable string?
----@param secret boolean
+---@param def table? the check's definition
 ---@return boolean
-local function Allowed(entry, variable, secret)
-    if not secret then return not entry.auraOnly end
-    if variable == 'pandemic' then return entry.pandemic == true end
-    if variable == 'missing' then return entry.missing == true end
+local function Allowed(entry, variable, def)
+    if def and def.curve then
+        return entry.curve == true
+    end
+    if not (def and def.secret) then
+        return not entry.auraOnly
+    end
+    if variable == 'pandemic' then
+        return entry.pandemic == true
+    end
+    if variable == 'missing' then
+        return entry.missing == true
+    end
     return entry.up == true
 end
 
@@ -156,6 +258,7 @@ local function DefaultValue(entry)
     if entry.kind == 'bool' then return true end
     if entry.kind == 'alpha' then return 0.5 end
     if entry.kind == 'fontSize' then return 20 end
+    if entry.kind == 'offset' then return 0 end
     if entry.kind == 'text' then return '%p' end
     if entry.kind == 'color' then return entry.pandemic and entry.auraOnly and { 1, 0.25, 0.25, 1 } or { 1, 1, 1, 1 } end
     return nil
@@ -172,13 +275,15 @@ end
 
 ---@param trigger table?
 ---@param skipSecret boolean? inside a combination, where an aura's checks can't be combined
+---@param only table<string, boolean>? the checks allowed, on a group
 ---@return table[] options, string? first
-local function CheckOptions(trigger, skipSecret)
+local function CheckOptions(trigger, skipSecret, only)
     local checks = trigger and CDM.ConditionChecks[trigger.Type]
     local options, first = {}, nil
     for _, key in ipairs(CHECK_ORDER) do
         local def = checks and checks[key]
-        if def and not (skipSecret and def.secret) and not (key == 'missing' and not trigger.Placeholder) then
+        if def and not (skipSecret and (def.secret or def.curve)) and not (only and not only[key]) and not (key == 'missing' and not trigger.Placeholder)
+            and not (key == 'stacks' and trigger.PowerType ~= CDM.MAELSTROM_WEAPON) then
             options[#options + 1] = { value = key, text = def.secret and AURA_CHECK_NAMES[key] or CHECK_NAMES[key] }
             first = first or key
         end
@@ -207,6 +312,18 @@ local function Title(index, condition, byKey, display, triggerChip)
             name = format('%s %s %s', name, check.op or '<', tostring(check.value or 0))
         elseif def.type == 'bool' and check.value == false then
             name = format(L['Not %s'], name)
+        elseif def.type == 'select' then
+            for _, option in ipairs(SELECT_OPTIONS[def.options]) do
+                if option.value == check.value then
+                    name = format('%s: %s', name, option.text)
+                    break
+                end
+            end
+            if def.talents then
+                local picks = 0
+                for _ in pairs(check.entries or {}) do picks = picks + 1 end
+                name = format(L['%s (%d picked)'], name, picks)
+            end
         end
         ifText = check.trigger > 0 and trigger and format('%s %s', triggerChip(check.trigger, trigger), name) or name
     end
@@ -241,7 +358,7 @@ local function Title(index, condition, byKey, display, triggerChip)
     return title, names[1] and tconcat(names, ', ') or nil
 end
 
----Every check a condition line can use, grouped under the trigger it reads; WeakAuras' If list.
+---Every check a condition line can use, grouped under the trigger it reads.
 ---@param display table
 ---@param triggerTitle fun(index: number, trigger: table): string
 ---@param depth number how deep inside combinations the line sits
@@ -254,17 +371,20 @@ local function IfOptions(display, triggerTitle, depth, removable)
         options[2] = { value = 'AND', text = L['All of'] }
         options[3] = { value = 'OR', text = L['Any of'] }
     end
+    local group = not CDM.LAYERED_TYPES[display.type]
     local function addGroup(index, trigger, title)
-        local checks = CheckOptions(trigger, depth > 0)
+        local checks = CheckOptions(trigger, depth > 0, group and CDM.GROUP_CHECKS or nil)
         if not checks[1] then return end
         options[#options + 1] = { value = 'header:' .. index, text = title, header = true }
         for _, option in ipairs(checks) do
             options[#options + 1] = { value = index .. ':' .. option.value, text = option.text }
         end
     end
-    for index, trigger in ipairs(display.Triggers) do addGroup(index, trigger, triggerTitle(index, trigger)) end
-    addGroup(0, CDM.GLOBAL_TRIGGER, L['Global Conditions'])
-    addGroup(-1, CDM.GROUP_TRIGGER, L['Group Conditions'])
+    if not group then
+        for index, trigger in ipairs(display.Triggers) do addGroup(index, trigger, triggerTitle(index, trigger)) end
+        addGroup(0, CDM.GLOBAL_TRIGGER, L['Global Conditions'])
+    end
+    addGroup(-1, CDM.GROUP_TRIGGER, L['Player/Unit Conditions'])
     if removable then options[#options + 1] = { value = REMOVE, text = L['Remove'], color = Theme.error, action = true } end
     return options
 end
@@ -278,10 +398,10 @@ local function SetCheck(display, check, value)
         if not CDM.COMBINATIONS[check.variable] then
             local _, def = CheckDef(display, check)
             check.checks = {}
-            if def and not def.secret then
-                check.checks[1] = { trigger = check.trigger, variable = check.variable, op = check.op, value = check.value }
+            if def and not def.secret and not def.curve then
+                check.checks[1] = { trigger = check.trigger, variable = check.variable, op = check.op, value = check.value, entries = check.entries }
             end
-            check.trigger, check.op, check.value = nil, nil, nil
+            check.trigger, check.op, check.value, check.entries = nil, nil, nil, nil
         end
         check.variable = value
         return
@@ -290,10 +410,12 @@ local function SetCheck(display, check, value)
     local triggerIndex, variable = value:match('^(%-?%d+):(.+)$')
     check.trigger, check.variable, check.checks = tonumber(triggerIndex), variable, nil
     local _, def = CheckDef(display, check)
+    check.entries = def and def.talents and {} or nil
     if def and def.type == 'number' then
         check.op, check.value = '<', 3
     elseif def and def.type == 'select' then
-        check.op, check.value = nil, SELECT_OPTIONS[def.options][1].value
+        local spec = def.options == 'spec' and LoadConditions:GetSpecID()
+        check.op, check.value = nil, spec or SELECT_OPTIONS[def.options][1].value
     else
         check.op, check.value = nil, true
     end
@@ -318,21 +440,36 @@ local function ValueControls(row, check, def, apply)
     elseif def.type == 'number' then
         row:Dropdown(nil, {
             width = 0.15,
-            options = OPERATORS,
+            options = def.curve and CURVE_OPERATORS or OPERATORS,
             value = check.op or '<',
             callback = function(value)
                 check.op = value
                 apply()
             end,
         })
-        row:EditBox(nil, {
-            width = 0.35,
-            value = tostring(check.value or 0),
-            callback = function(text)
-                check.value = tonumber(text) or 0
-                apply()
-            end,
-        })
+        local range = CHECK_RANGES[check.variable]
+        if range then
+            row:Slider(nil, {
+                width = 0.35,
+                min = range.min,
+                max = range.max,
+                step = range.step,
+                value = tonumber(check.value) or 0,
+                callback = function(value)
+                    check.value = value
+                    apply()
+                end,
+            })
+        else
+            row:EditBox(nil, {
+                width = 0.35,
+                value = tostring(check.value or 0),
+                callback = function(text)
+                    check.value = tonumber(text) or 0
+                    apply()
+                end,
+            })
+        end
     else
         row:Dropdown(nil, {
             width = 0.5,
@@ -384,6 +521,15 @@ local function ValueWidget(row, entry, change, set, edit)
             value = change.value,
             callback = set,
         })
+    elseif entry.kind == 'offset' then
+        row:Slider(L['Offset'], {
+            width = 0.5,
+            min = -500,
+            max = 500,
+            step = 1,
+            value = change.value,
+            callback = set,
+        })
     elseif entry.kind == 'fontSize' then
         row:Slider(L['Size'], {
             width = 0.5,
@@ -410,7 +556,7 @@ local function ValueWidget(row, entry, change, set, edit)
     end
 end
 
----The Conditions tab for one icon: WeakAuras' "If Trigger N: check, then these changes" list.
+---The Conditions tab for one icon.
 ---@param page table
 ---@param id string
 ---@param apply fun()
@@ -418,17 +564,16 @@ end
 ---@param triggerChip fun(index: number, trigger: table): string the trigger's icon and name, which names the layer it draws
 function ConditionsTab:Build(page, id, apply, triggerTitle, triggerChip)
     local display = CDM:Get(id)
-    if not CDM.LAYERED_TYPES[display.type] then
-        page:Card(L['Conditions'], 'all'):Row(rowHL, 0):Text(nil, { width = 1, text = L['Conditions are set per icon.'], bgMode = 'hide' })
-        return
-    end
+    display.Conditions = display.Conditions or {} -- a group gets its list on first visit
     local conditions = display.Conditions
-    local triggers = display.Triggers
 
     local firstCheck
-    for index, trigger in ipairs(triggers) do
+    for index, trigger in ipairs(display.Triggers or {}) do
         local _, variable = CheckOptions(trigger)
         if variable and not firstCheck then firstCheck = { trigger = index, variable = variable, value = true } end
+    end
+    if not CDM.LAYERED_TYPES[display.type] then
+        firstCheck = { trigger = -1, variable = 'spec', value = LoadConditions:GetSpecID() }
     end
 
     page:Card(L['Conditions'], 'all'):Rebuild(function(card)
@@ -442,11 +587,12 @@ function ConditionsTab:Build(page, id, apply, triggerTitle, triggerChip)
 
         ---One check's line, then its parts when it's a combination, one empty line after them to add another.
         ---@param check table
+        ---@param onChange fun() applies a value edit and retitles its condition
         ---@param depth number
         ---@param label string?
         ---@param parentChecks table[]? the combination it's part of, which Remove takes it out of
         ---@param subIndex number?
-        local function IfLine(check, depth, label, parentChecks, subIndex)
+        local function IfLine(check, onChange, depth, label, parentChecks, subIndex)
             local _, def = CheckDef(display, check)
             local combination = CDM.COMBINATIONS[check.variable]
 
@@ -454,7 +600,8 @@ function ConditionsTab:Build(page, id, apply, triggerTitle, triggerChip)
             row:Dropdown(label, {
                 width = 0.5,
                 tooltip = def and def.secret and (check.variable == 'missing' and L["The game hides whether an aura is up, so this check can't be combined with others and only changes the placeholder."]
-                    or L["The game hides whether an aura is up, so this check can't be combined with others and only changes the aura's own button."]) or nil,
+                        or L["The game hides whether an aura is up, so this check can't be combined with others and only changes the aura's own button."])
+                    or def and def.curve and L["The game reads this in combat, so it only colours a text showing this trigger's %p and can't be combined with others."] or nil,
                 options = IfOptions(display, triggerTitle, depth, parentChecks ~= nil),
                 value = combination and check.variable or (check.trigger and check.variable and check.trigger .. ':' .. check.variable) or nil,
                 callback = function(value)
@@ -463,7 +610,26 @@ function ConditionsTab:Build(page, id, apply, triggerTitle, triggerChip)
                     end)
                 end,
             })
-            if def and not def.secret then ValueControls(row, check, def, apply) end
+            if def and not def.secret then
+                -- a talent tree is per spec, so a new spec starts a new pick
+                ValueControls(row, check, def, def.talents and function() Edit(function() check.entries = {} end) end or onChange)
+            end
+            if def and def.talents then
+                check.entries = check.entries or {}
+                local width = card.real and card.real.content and card.real.content:GetWidth() or 0
+                if width <= 0 then width = 400 end -- the card hasn't been laid out yet
+                width = width - depth * INDENT
+                for _, section in ipairs(Kaji.TalentTreeSections(check.value)) do
+                    card:Separator(TALENT_SECTIONS[section], { useLabel = true, centered = true, height = 20, spacing = 10 })
+                    card:Row(Kaji.TalentTreeHeight(check.value, width, section), nil, depth * INDENT):Widget('TalentTree', nil, {
+                        width = 1,
+                        specID = check.value,
+                        section = section,
+                        entries = check.entries,
+                        onChange = onChange,
+                    })
+                end
+            end
             if not combination then return end
 
             check.checks = check.checks or {}
@@ -474,7 +640,7 @@ function ConditionsTab:Build(page, id, apply, triggerTitle, triggerChip)
                 local title = subTrigger and triggerTitle(sub.trigger, subTrigger)
                 local subLabel = title
                 if i > 1 then subLabel = title and format(join, title) or joinWord end
-                IfLine(sub, depth + 1, subLabel, check.checks, i)
+                IfLine(sub, onChange, depth + 1, subLabel, check.checks, i)
             end
 
             card:Row(rowH, nil, (depth + 1) * INDENT):Dropdown(check.checks[1] and joinWord or nil, {
@@ -500,7 +666,7 @@ function ConditionsTab:Build(page, id, apply, triggerTitle, triggerChip)
             if open == nil then open = #conditions <= 2 end
 
             local title, summary = Title(index, condition, byKey, display, triggerChip)
-            local expanded = card:Section(title, {
+            local expanded, header = card:Section(title, {
                 key = 'cdm:condition:' .. index,
                 summary = summary,
                 collapsed = not open,
@@ -523,12 +689,19 @@ function ConditionsTab:Build(page, id, apply, triggerTitle, triggerChip)
             })
 
             if expanded then
+                -- a value edit keeps the card, so only the header is retitled
+                local function ApplyValue()
+                    apply()
+                    local newTitle, newSummary = Title(index, condition, byKey, display, triggerChip)
+                    header:SetSummary(newSummary)
+                    header:SetTitle(newTitle)
+                end
+
                 local ifLabel = linked and L['Else If'] or L['If']
                 if check.trigger and check.trigger > 0 and trigger then
                     ifLabel = format(linked and L['Else If %s'] or L['If %s'], triggerTitle(check.trigger, trigger))
                 end
-                IfLine(check, 0, ifLabel)
-
+                IfLine(check, ApplyValue, 0, ifLabel)
 
                 condition.changes = condition.changes or {}
                 for changeIndex, change in ipairs(condition.changes) do
@@ -538,7 +711,7 @@ function ConditionsTab:Build(page, id, apply, triggerTitle, triggerChip)
                     end
                     local options = {}
                     for _, entry in ipairs(properties) do
-                        if not used[entry.key] and Allowed(entry, check.variable, secret) then
+                        if not used[entry.key] and Allowed(entry, check.variable, def) then
                             options[#options + 1] = { value = entry.key, text = secret and check.variable ~= 'missing' and entry.overlayText or entry.text }
                         end
                     end
@@ -564,7 +737,7 @@ function ConditionsTab:Build(page, id, apply, triggerTitle, triggerChip)
                     if entry then
                         ValueWidget(changeRow, entry, change, function(value)
                             change.value = value
-                            apply()
+                            ApplyValue()
                         end, Edit)
                     end
                 end

@@ -4,9 +4,6 @@ local NRSKNUI = select(2, ...)
 local CDM = NRSKNUI:GetModule('CDM')
 local L = NRSKNUI.Libs.AL
 
--- Blizzard for some reason doesn't provide a direct API to access its tracked aura/cooldown bars,
--- so we have to find them in the item frame pool ourselves and mirror their state onto our own bars.
-
 local next = next
 local wipe = wipe
 local pairs = pairs
@@ -19,6 +16,13 @@ local SCAN_INTERVAL = 0.25
 
 local viewerLayers = {} ---@type table<CDMLayer, table|true> layers following a Cooldown Manager bar -> their trigger
 local scanElapsed = 0
+
+--[[
+Cooldown Bar triggers: a Tracked Bar of Blizzard's Cooldown Manager mirrored onto our own bar.
+No API reads those bars, so the live frame is found in the viewer's pool and copied every frame.
+]]
+
+-- Mirror --
 
 ---@param child table
 ---@return boolean
@@ -52,7 +56,10 @@ end
 local function GetChild(layer)
     local child = layer.viewerChild
     local id = child and child.cooldownID
-    if child and id ~= nil and not NRSKNUI:IsSecretValue(id) and id == layer.viewerCooldownID then return child end
+    -- a pooled frame can be handed to another entry, so the cached one is checked first
+    if child and id ~= nil and not NRSKNUI:IsSecretValue(id) and id == layer.viewerCooldownID then
+        return child
+    end
     layer.viewerChild = FindChild(layer.viewerCooldownID)
     return layer.viewerChild
 end
@@ -69,25 +76,39 @@ local function Mirror(layer)
     if active and target and not layer.viewerHold then
         target:SetMinMaxValues(source:GetMinMaxValues())
         target:SetValue(source:GetValue())
-        if target == layer.Bar then layer.Bar.spark:SetAlpha(1) end
+        if target == layer.Bar then
+            layer.Bar.spark:SetAlpha(1)
+        end
     end
     return active
 end
 
-local driver = CreateFrame('Frame')
-driver:Hide()
-driver:SetScript('OnUpdate', function(_, elapsed)
+local driver ---@type Frame?
+
+local function Drive(_, elapsed)
     scanElapsed = scanElapsed + elapsed
     for layer in pairs(viewerLayers) do
         local owner = layer.owner
         if owner.shown and owner.id and (layer.viewerChild or scanElapsed >= SCAN_INTERVAL) then
             if Mirror(layer) ~= (layer.viewerActive == true) then
-                CDM:UpdateIcon(owner.id)
+                CDM:UpdateLayer(layer)
             end
         end
     end
-    if scanElapsed >= SCAN_INTERVAL then scanElapsed = 0 end
-end)
+
+    if scanElapsed >= SCAN_INTERVAL then
+        scanElapsed = 0
+    end
+end
+
+---Runs only while some display reads a Cooldown Manager bar.
+local function StartDriver()
+    if not driver then
+        driver = CreateFrame('Frame')
+        driver:SetScript('OnUpdate', Drive)
+    end
+    driver:Show()
+end
 
 ---Follow a tracked bar onto `target` every frame, for a split power bar's progress source.
 ---@param layer CDMLayer
@@ -98,7 +119,7 @@ function CDM:WatchViewerBar(layer, cooldownID, target)
     layer.viewerChild = nil
     layer.viewerTarget = target
     viewerLayers[layer] = true
-    driver:Show()
+    StartDriver()
 end
 
 ---Mirror once and say whether the tracked bar is running.
@@ -110,7 +131,9 @@ function CDM:MirrorViewerBar(layer)
     return active
 end
 
--- A Tracked Bar of Blizzard's Cooldown Manager, drawn on our own bar, for entries that aren't real auras.
+-- Trigger --
+
+-- For Cooldown Manager entries that aren't real auras.
 CDM.TriggerTypes.viewerbar = {
     ---@param trigger table
     ---@return boolean
@@ -123,7 +146,7 @@ CDM.TriggerTypes.viewerbar = {
         layer.viewerCooldownID = trigger.CooldownID
         layer.viewerChild = nil
         viewerLayers[layer] = trigger
-        driver:Show()
+        StartDriver()
 
         local info = trigger.CooldownID and CDM.Catalogue:GetEntry(trigger.CooldownID)
         local spellID = info and CDM.Catalogue:ResolveSpell(info) or trigger.SpellID
@@ -141,7 +164,7 @@ CDM.TriggerTypes.viewerbar = {
         if active then
             CDM:SetLayerName(layer, spellID and GetSpellName(spellID) or '')
         elseif CDM.IsPreviewingLayer(layer) then
-            layer.duration = CDM.PreviewDuration(layer, 7)
+            layer.duration = CDM.PreviewDuration(layer, CDM.PREVIEW_LENGTH)
             CDM:SetLayerTimer(layer, layer.duration)
             CDM:SetLayerName(layer, spellID and GetSpellName(spellID) or L['Cooldown Bar'])
         else
@@ -167,14 +190,16 @@ CDM.TriggerTypes.viewerbar = {
                 layer.viewerChild, layer.viewerActive, layer.viewerTarget, layer.viewerHold = nil, nil, nil, nil
             end
         end
-        if not next(viewerLayers) then
+        if driver and not next(viewerLayers) then
             driver:Hide()
         end
     end,
 
     UnregisterEvents = function()
         wipe(viewerLayers)
-        driver:Hide()
+        if driver then
+            driver:Hide()
+        end
     end,
 }
 

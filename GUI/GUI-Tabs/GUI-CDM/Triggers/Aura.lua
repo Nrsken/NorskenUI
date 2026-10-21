@@ -6,15 +6,15 @@ local L = NRSKNUI.Libs.AL
 local Theme = NRSKNUI.Theme
 local rowH = Theme.rowHeight
 
-local tinsert, tconcat = table.insert, table.concat
+local tinsert = table.insert
 local ipairs = ipairs
-local tonumber = tonumber
 
 local GetMaxStacks = C_Spell and C_Spell.GetSpellMaxCumulativeAuraApplications
 
 local Shared = NRSKNUI.CDMOptions
 local AURA_BAR_MODES, AURA_SOURCES, AURA_UNITS, CatalogueOptions = Shared.AURA_BAR_MODES, Shared.AURA_SOURCES, Shared.AURA_UNITS, Shared.CatalogueOptions
 local CataloguePicker = Shared.CataloguePicker
+local SpellList = NRSKNUI.GUISpellList
 local TriggerRows = Shared.TriggerRows
 
 function TriggerRows.aura(card, typeRow, display, trigger, id, apply)
@@ -34,19 +34,24 @@ function TriggerRows.aura(card, typeRow, display, trigger, id, apply)
         end,
     })
 
-    local auraRow = card:Row(rowH)
-    if trigger.Source == 'custom' then
-        auraRow:EditBox(L['Spell IDs'], {
-            width = 0.5,
-            tooltip = L['Aura spell IDs, separated by commas.'],
-            value = trigger.SpellIDs and tconcat(trigger.SpellIDs, ', ') or '',
-            callback = function(text)
-                local ids = {}
-                for number in text:gmatch('%d+') do ids[#ids + 1] = tonumber(number) end
-                set('SpellIDs', ids)
-            end,
-        })
+    -- custom: the spell list, then Unit and Cast by Me side by side; the catalogue keeps Aura beside Unit
+    local custom = trigger.Source == 'custom'
+    local auraRow, mineRow
+    if custom then
+        local source = SpellList:ArraySource(trigger, function() return trigger.SpellIDs or {} end, function(ids)
+            trigger.SpellIDs = ids[1] and ids or nil
+        end, function()
+            apply()
+            card:Rebuild()
+        end)
+        SpellList:BuildAdd(card, source)
+        SpellList:BuildList(card, source)
+        -- the list ends flush, so the rule brings its own gap; inSection keeps it in the trigger's section
+        card:Separator(nil, { inSection = true, height = 16 })
+        auraRow = card:Row(rowH)
+        mineRow = auraRow
     else
+        auraRow = card:Row(rowH)
         auraRow:Dropdown(L['Aura'], {
             width = 0.5,
             tooltip = L["Auras Blizzard's Cooldown Manager tracks for your current spec."],
@@ -62,13 +67,16 @@ function TriggerRows.aura(card, typeRow, display, trigger, id, apply)
         callback = function(value) set('Unit', value) end,
     })
 
-    local mineRow = card:Row(rowH)
+    mineRow = mineRow or card:Row(rowH)
     mineRow:Checkbox(L['Cast by Me'], {
         width = 0.5,
         value = trigger.OwnOnly,
         callback = function(checked) set('OwnOnly', checked) end,
     })
     if trigger.Type ~= 'aura' then return end
+    if custom then
+        mineRow = card:Row(rowH) -- Cast by Me already shares its row with Unit
+    end
     local placeholder = {
         width = 0.5,
         tooltip = display.type == 'bar' and L['Keep the empty bar and its border up while the aura is missing. Its look is the While Missing condition.']

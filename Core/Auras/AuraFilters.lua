@@ -307,19 +307,3 @@ function AuraFilters:Describe(compiled)
     return lines, NRSKNUI:ColorTextByTheme(heading)
 end
 
----Every spellID a compiled branch list matches on.
----@param compiled table[]? from :Compile
----@return table spellIds { [spellId] = true }
-function AuraFilters:GetSpellIDs(compiled)
-    local spellIds = {}
-
-    for _, branch in ipairs(compiled or {}) do
-        for _, field in ipairs(SPELLID_CANDIDATE_FIELDS) do
-            for spellId in pairs(branch.candidateFilters and branch.candidateFilters[field] or {}) do
-                spellIds[spellId] = true
-            end
-        end
-    end
-
-    return spellIds
-end

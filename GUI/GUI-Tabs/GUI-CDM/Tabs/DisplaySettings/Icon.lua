@@ -7,10 +7,13 @@ local rowH = Theme.rowHeight
 
 local tostring = tostring
 local tonumber = tonumber
+local ipairs = ipairs
+local format = string.format
+local CopyTable = CopyTable
 
 ---@class NRSKNUI.CDMDisplayTab
 local DisplayTab = NRSKNUI.CDMDisplayTab
-local ICON_SOURCES = DisplayTab.ICON_SOURCES
+local ICON_SOURCES, ANCHOR_POINTS = DisplayTab.ICON_SOURCES, DisplayTab.ANCHOR_POINTS
 
 ---@param card table
 ---@param page table
@@ -18,8 +21,6 @@ local ICON_SOURCES = DisplayTab.ICON_SOURCES
 ---@param set fun(path: string[], value: any)
 ---@param refreshTree fun() the sidebar shows the icon too
 local function IconSettings(card, page, style, set, refreshTree)
-    page:SetCondition('cdm:manualIcon', function() return style.IconSource == 'manual' end)
-
     card:Row(rowH):ColorPicker(L['Color'], {
         width = 1,
         value = style.Color,
@@ -39,8 +40,7 @@ local function IconSettings(card, page, style, set, refreshTree)
     })
     sourceRow:EditBox(L['Manual Icon'], {
         width = 0.4,
-        conditions = { 'cdm:manualIcon' },
-        tooltip = L['An icon file ID.'],
+        tooltip = L['An icon file ID. Automatic uses it for triggers without an icon of their own, such as Player Stat.'],
         value = style.ManualIcon and tostring(style.ManualIcon) or '',
         callback = function(text)
             set({ 'ManualIcon' }, tonumber(text))
@@ -52,7 +52,7 @@ local function IconSettings(card, page, style, set, refreshTree)
             set({ 'ManualIcon' }, texture)
             refreshTree()
         end)
-    end, { 'cdm:manualIcon' })
+    end)
 
     local lookRow = card:Row(rowH)
     lookRow:Checkbox(L['Desaturate'], {
@@ -76,7 +76,6 @@ local function IconSettings(card, page, style, set, refreshTree)
     })
 end
 
----WeakAuras' swipe overlay grid.
 ---@param card table
 ---@param page table
 ---@param style table
@@ -114,14 +113,7 @@ local function SwipeSettings(card, page, style, set)
         callback = function(checked) set({ 'ShowGCD' }, checked) end,
     })
 
-    local row3 = card:Row(rowH)
-    row3:Checkbox(L['Hide Timer Text'], {
-        width = 0.5,
-        tooltip = L["Hides the game's own cooldown numbers; a text with %p shows the time instead."],
-        value = style.HideCountdown,
-        callback = function(checked) set({ 'HideCountdown' }, checked) end,
-    })
-    row3:ColorPicker(L['Swipe Color'], {
+    card:Row(rowH):ColorPicker(L['Swipe Color'], {
         width = 0.5,
         conditions = { 'cdm:swipe' },
         value = style.SwipeColor,
@@ -129,5 +121,115 @@ local function SwipeSettings(card, page, style, set)
     })
 end
 
+---The cooldown frame's own number, styled like a text.
+---@param card table
+---@param page table
+---@param style table
+---@param set fun(path: string[], value: any)
+---@param triggers table[] the first icon's, for the trigger picker
+local function TimerTextSettings(card, page, style, set, triggers)
+    page:SetCondition('cdm:timerText', function() return not style.HideCountdown end)
+    page:SetCondition('cdm:timerFont', function() return not style.HideCountdown and not style.TimerText.UseGlobalFont end)
+    -- The whole table is written, so an icon saved before Timer Text existed never holds half of one.
+    local function setTimer(key, value)
+        local timer = CopyTable(style.TimerText)
+        timer[key] = value
+        set({ 'TimerText' }, timer)
+    end
+    local timer = style.TimerText
+
+    local fontRow = card:Row(rowH)
+    fontRow:Checkbox(L['Show Timer Text'], {
+        width = 0.5,
+        tooltip = L["The cooldown's own countdown, as the action bar shows it; unlike %p it speeds up with recovery-rate buffs."],
+        value = not style.HideCountdown,
+        callback = function(checked)
+            set({ 'HideCountdown' }, not checked)
+            page:Refresh()
+        end,
+    })
+    fontRow:Checkbox(L['Use Global Font'], {
+        width = 0.5,
+        conditions = { 'cdm:timerText' },
+        value = timer.UseGlobalFont,
+        callback = function(checked)
+            setTimer('UseGlobalFont', checked)
+            page:Refresh()
+        end,
+    })
+
+    local sizeRow = card:Row(rowH)
+    sizeRow:Dropdown(L['Font'], {
+        width = 0.5,
+        media = 'font',
+        conditions = { 'cdm:timerFont' },
+        value = timer.FontFace,
+        callback = function(value) setTimer('FontFace', value) end,
+    })
+    sizeRow:Slider(L['Size'], {
+        width = 0.5,
+        conditions = { 'cdm:timerText' },
+        min = 6,
+        max = 40,
+        step = 1,
+        value = timer.FontSize,
+        callback = function(value) setTimer('FontSize', value) end,
+    })
+
+    local outlineRow = card:Row(rowH)
+    outlineRow:Dropdown(L['Outline'], {
+        width = 0.5,
+        conditions = { 'cdm:timerText' },
+        options = NRSKNUI:GetOutlineOptions(),
+        value = timer.FontOutline,
+        callback = function(value) setTimer('FontOutline', value) end,
+    })
+    outlineRow:ColorPicker(L['Color'], {
+        width = 0.5,
+        conditions = { 'cdm:timerText' },
+        value = timer.Color,
+        callback = function(r, g, b, a) setTimer('Color', { r, g, b, a }) end,
+    })
+
+    local sources = { { value = 0, text = L['Automatic'] } }
+    for i in ipairs(triggers) do sources[#sources + 1] = { value = i, text = format(L['Trigger %d'], i) } end
+    local sourceRow = card:Row(rowH)
+    sourceRow:Dropdown(L['Trigger'], {
+        width = 0.5,
+        conditions = { 'cdm:timerText' },
+        tooltip = L["Whose countdown shows: Automatic is the icon's own, never an aura overlay's; a picked trigger's shows only while its layer does."],
+        options = sources,
+        value = timer.Trigger or 0,
+        callback = function(value) setTimer('Trigger', value ~= 0 and value or nil) end,
+    })
+    sourceRow:Dropdown(L['Anchor'], {
+        width = 0.5,
+        conditions = { 'cdm:timerText' },
+        options = ANCHOR_POINTS,
+        value = timer.AnchorTo,
+        callback = function(point) setTimer('AnchorTo', point) end,
+    })
+    local offsetRow = card:Row(rowH)
+    offsetRow:Slider(L['X Offset'], {
+        width = 0.5,
+        conditions = { 'cdm:timerText' },
+        min = -40,
+        max = 40,
+        step = 1,
+        value = timer.XOffset,
+        callback = function(value) setTimer('XOffset', value) end,
+    })
+    offsetRow:Slider(L['Y Offset'], {
+        width = 0.5,
+        conditions = { 'cdm:timerText' },
+        min = -40,
+        max = 40,
+        step = 1,
+        value = timer.YOffset,
+        callback = function(value) setTimer('YOffset', value) end,
+    })
+end
+
 DisplayTab.IconSettings = IconSettings
 DisplayTab.SwipeSettings = SwipeSettings
+DisplayTab.TimerTextSettings = TimerTextSettings

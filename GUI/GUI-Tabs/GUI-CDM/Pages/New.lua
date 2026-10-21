@@ -16,7 +16,6 @@ local IMPORT, NEW_TILE_HEIGHT, NEW_TILE_ICON, NEW_TILE_PREVIEW = Shared.IMPORT, 
 local NewAuraGroup, NewGroup, NewIcon, NewProgressBar = Shared.NewAuraGroup, Shared.NewGroup, Shared.NewIcon, Shared.NewProgressBar
 local NewResourceBar, NewText, Reopen, SETTINGS = Shared.NewResourceBar, Shared.NewText, Shared.Reopen, Shared.SETTINGS
 
--- New display page: shown when nothing is selected, WeakAuras' New Aura view --
 
 -- New page pictures: small versions of each type, drawn from the player's own spec --
 
@@ -230,14 +229,6 @@ local function Ease(p)
     p = math.max(0, math.min(p, 1))
     return p * p * (3 - 2 * p)
 end
-
----@class CDMSampleDriver : Frame
----@field parts table
----@field icons (string|number)[]
----@field size number
----@field width number
----@field height number
----@field t number
 
 ---One frame of the Dynamic Group picture: the middle icon fades out and the other two close up, centred, then
 ---they part and it fades back in.

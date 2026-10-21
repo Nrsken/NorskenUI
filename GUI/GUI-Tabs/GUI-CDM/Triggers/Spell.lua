@@ -18,7 +18,17 @@ function TriggerRows.spell(card, typeRow, display, trigger, id, apply)
         value = trigger.CooldownID,
         callback = CataloguePicker(trigger, display, id, apply),
     })
-    card:Row(rowH):Checkbox(L['Ignore Override'], {
+    local row = card:Row(rowH)
+    row:Dropdown(L['Show'], {
+        width = 0.5,
+        options = Shared.SHOW_ON,
+        value = trigger.ShowOn or 'always',
+        callback = function(value)
+            trigger.ShowOn = value ~= 'always' and value or nil
+            apply()
+        end,
+    })
+    row:Checkbox(L['Ignore Override'], {
         width = 0.5,
         tooltip = L["Keep tracking this spell's own cooldown and charges while another spell replaces it."],
         value = trigger.IgnoreOverride,

@@ -8,6 +8,7 @@ local min, abs, ceil = math.min, math.abs, math.ceil
 local setmetatable = setmetatable
 local CreateFrame = CreateFrame
 local unpack = unpack
+local wipe = wipe
 
 local ICON_ALERT = 'Interface\\SpellActivationOverlay\\IconAlert'
 local ICON_ALERT_ANTS = 'Interface\\SpellActivationOverlay\\IconAlertAnts'
@@ -17,24 +18,27 @@ local WHITE = 'Interface\\BUTTONS\\WHITE8X8'
 local MASK_HOLE = 'Interface\\AdventureMap\\BrokenIsles\\AM_29' -- LibCustomGlow's mask: clear inside, white outside when clamped
 local GOLD = { 0.95, 0.95, 0.32, 1 }
 
-CDM.GLOW_DEFAULTS = {
-    Type = 'modern',
-    ColorMode = 'default',
-    Color = { 0.95, 0.95, 0.32, 1 },
-    Lines = 8,
-    Frequency = 0.25,
-    Length = 10,
-    Thickness = 2,
-    Border = true,
-    StartAnim = true
-}
+-- a glow saved before a setting existed draws that setting from the template
+---@type table
+CDM.GLOW_DEFAULTS = CDM.SUBREGION_TEMPLATES.glow
+
+--[[
+Glow sub elements: Blizzard's proc and assisted-combat art, the classic ants, a pixel border and autocast sparkles.
+All of it runs on animation groups, since a glow inside an aura button never gets an OnUpdate.
+]]
+
+-- Parts --
 
 ---@param settings table
 ---@param tintable boolean flipbooks keep their own art color unless a color is picked
 ---@return number[]? color nil for the art's own color
 local function ResolveColor(settings, tintable)
-    if settings.ColorMode == 'class' then return NRSKNUI:GetPlayerClassColor() end
-    if settings.ColorMode == 'custom' then return settings.Color end
+    if settings.ColorMode == 'class' then
+        return NRSKNUI:GetPlayerClassColor()
+    end
+    if settings.ColorMode == 'custom' then
+        return settings.Color
+    end
     return tintable and GOLD or nil
 end
 
@@ -50,14 +54,6 @@ local function Tint(texture, color)
 end
 
 ---@class CDMGlow
----@field host Frame
----@field parts table<string, Texture>
----@field groups table<string, AnimationGroup>
----@field onTexture fun(texture: Texture)?
----@field active table<string, true>
----@field masks MaskTexture[]
----@field frames table<string, Frame>
----@field pixelShape string? what the pixel glow's running lines were laid out for
 local Glow = {}
 Glow.__index = Glow
 
@@ -125,6 +121,7 @@ function Glow:Group(key, texture, build)
 end
 
 ---@param texture Texture
+---@param host Frame
 ---@param width number
 ---@param height number
 ---@param scale number
@@ -151,6 +148,8 @@ local function FlipBook(group, rows, columns, frames, duration, frameWidth, fram
     anim:SetDuration(duration)
     return anim
 end
+
+-- Types --
 
 local BUILDERS = {}
 
@@ -269,9 +268,13 @@ function BUILDERS.pixel(self, settings, width, height)
         strip:ClearAllPoints()
         strip:SetPoint(edge.from, self.host, edge.from)
         strip:SetPoint(edge.to, self.host, edge.to)
-        if horizontal then strip:SetHeight(th) else strip:SetWidth(th) end
+        if horizontal then
+            strip:SetHeight(th)
+        else
+            strip:SetWidth(th)
+        end
 
-        local scale = (size - th) / size -- LibCustomGlow runs a line's start over size - th, so its end lands on the corner
+        local scale = (size - th) / size -- a line's start only runs over size - th, so its end lands on the corner
         local gap = spacing * scale
         local dash = length * scale + th
         local phase = ((along + length / 2) * scale) % gap
@@ -283,7 +286,11 @@ function BUILDERS.pixel(self, settings, width, height)
             line:ClearAllPoints()
             local offset = j * gap - phase
             line:SetPoint(edge.anchor, strip, edge.anchor, edge.dx * offset, edge.dy * offset)
-            if horizontal then line:SetSize(dash, th) else line:SetSize(th, dash) end
+            if horizontal then
+                line:SetSize(dash, th)
+            else
+                line:SetSize(th, dash)
+            end
             Tint(line, color)
             line:SetAlpha(1)
 
@@ -303,7 +310,9 @@ function BUILDERS.pixel(self, settings, width, height)
             group.slide:SetOffset(group.dx, group.dy)
             group.slide:SetDuration(step)
         end
-        for _, group in ipairs(groups) do group:Play() end
+        for _, group in ipairs(groups) do
+            group:Play()
+        end
         self.pixelShape = shape
     end
 
@@ -313,7 +322,9 @@ function BUILDERS.pixel(self, settings, width, height)
         back:SetDrawLayer('ARTWORK', 6)
         back:SetAllPoints(self.host)
         local outer = self:Mask(2, th + 1)
-        if back:GetNumMaskTextures() < 1 then back:AddMaskTexture(outer) end
+        if back:GetNumMaskTextures() < 1 then
+            back:AddMaskTexture(outer)
+        end
         back:SetAlpha(1)
     end
 end
@@ -363,16 +374,14 @@ function BUILDERS.autocast(self, settings, width, height)
     end
 end
 
--- Expose the available glow types to the rest of the addon.
-
-CDM.GLOW_TYPES = { 'pixel', 'button', 'autocast', 'gcd', 'modern', 'classic' }
+-- Glow --
 
 ---@param settings table
 ---@param width number
 ---@param height number
 ---@param starting boolean? play a start animation, when the type has one
 function Glow:Start(settings, width, height, starting)
-    local saved = settings or {}
+    local saved = settings
     settings = setmetatable({}, {
         __index = function(_, key)
             local value = saved[key]
@@ -404,7 +413,7 @@ function Glow:Stop()
             self.groups[key]:Stop()
         end
     end
-    self.active = {}
+    wipe(self.active)
 end
 
 ---A glow drawing on `host`, which the caller sizes and places; `onTexture` sees every texture it makes.

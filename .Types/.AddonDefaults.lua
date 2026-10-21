@@ -8,6 +8,7 @@
 ---@field CDMLayoutCache NRSKNUI.DBGlobal.CDMLayoutCache
 ---@field GUIState NRSKNUI.DBGlobal.GUIState
 ---@field GlobalProfile string
+---@field QuestTracker NRSKNUI.DBGlobal.QuestTracker
 ---@field SidebarCollapsed NRSKNUI.DBGlobal.SidebarCollapsed
 ---@field SpellAlertCVars table<string, string?>
 ---@field UseGlobalProfile boolean
@@ -30,6 +31,17 @@
 ---@field xOffset nil
 ---@field yOffset nil
 
+---@class NRSKNUI.DBGlobal.QuestTracker
+---@field [string] any
+---@field characters NRSKNUI.DBGlobal.QuestTracker.characters
+---@field quests NRSKNUI.DBGlobal.QuestTracker.quests
+
+---@class NRSKNUI.DBGlobal.QuestTracker.characters
+---@field [string] any
+
+---@class NRSKNUI.DBGlobal.QuestTracker.quests
+---@field [string] any
+
 ---@class NRSKNUI.DBGlobal.SidebarCollapsed
 ---@field [string] any
 
@@ -38,8 +50,6 @@
 
 ---@class NRSKNUI.DBProfile
 ---@field [string] any
----@field AuraDisplayGroups NRSKNUI.DBProfile.AuraDisplayGroups
----@field AuraDisplays NRSKNUI.DBProfile.AuraDisplays
 ---@field AuraIndicatorGroups NRSKNUI.DBProfile.AuraIndicatorGroups
 ---@field AuraIndicators NRSKNUI.DBProfile.AuraIndicators
 ---@field Auras NRSKNUI.DBProfile.Auras
@@ -72,12 +82,6 @@
 ---@field UseElvUI NRSKNUI.DBProfile.UseElvUI
 ---@field UseOtherUF NRSKNUI.DBProfile.UseOtherUF
 ---@field globalMedia NRSKNUI.DBProfile.globalMedia
-
----@class NRSKNUI.DBProfile.AuraDisplayGroups
----@field [string] any
-
----@class NRSKNUI.DBProfile.AuraDisplays
----@field [string] any
 
 ---@class NRSKNUI.DBProfile.AuraIndicatorGroups
 ---@field [string] any
@@ -872,6 +876,7 @@
 ---@field Gateway NRSKNUI.DBProfile.Miscellaneous.Gateway
 ---@field GroupFinder NRSKNUI.DBProfile.Miscellaneous.GroupFinder
 ---@field MiscVars NRSKNUI.DBProfile.Miscellaneous.MiscVars
+---@field QuestTracker NRSKNUI.DBProfile.Miscellaneous.QuestTracker
 ---@field Recuperate NRSKNUI.DBProfile.Miscellaneous.Recuperate
 ---@field SkyRiding NRSKNUI.DBProfile.Miscellaneous.SkyRiding
 ---@field SpellAlert NRSKNUI.DBProfile.Miscellaneous.SpellAlert
@@ -1116,6 +1121,11 @@
 ---@field Enabled boolean
 ---@field SpellQueueWindowMelee nil
 ---@field SpellQueueWindowRanged nil
+
+---@class NRSKNUI.DBProfile.Miscellaneous.QuestTracker
+---@field [string] any
+---@field CharacterTabOnly boolean
+---@field Enabled boolean
 
 ---@class NRSKNUI.DBProfile.Miscellaneous.Recuperate
 ---@field [string] any
@@ -2543,12 +2553,15 @@
 ---@field BugSack boolean
 ---@field CharacterFrame boolean
 ---@field GameMenu boolean
+---@field GossipFrame boolean
 ---@field GroupFinder boolean
 ---@field InspectFrame boolean
 ---@field KeystoneLoot boolean
 ---@field Menus boolean
+---@field MerchantFrame boolean
 ---@field PlayerSpells boolean
 ---@field Professions boolean
+---@field QuestFrame boolean
 ---@field RaiderIO boolean
 ---@field ReadyCheck boolean
 ---@field Runeforge boolean

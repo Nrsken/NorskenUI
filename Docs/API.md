@@ -107,10 +107,11 @@ Disables mouse, unregisters events, sets `statehidden`, and respects user placem
 ## NUIApplyPosition
 
 ```lua
-frame:NUIApplyPosition(Config, setParent?)
+frame:NUIApplyPosition(Config, setParent?, extraX?, extraY?)
 ```
 
 Position `frame` from a config table. Pass `setParent = true` to also reparent.
+`extraX`/`extraY` are added to the saved offsets without being stored (CDM offset conditions).
 
 ---
 

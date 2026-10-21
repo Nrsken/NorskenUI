@@ -42,6 +42,34 @@
 ---@field resortPending boolean?
 ---@field ServerSearchThrottle number
 ---@field lastServerSearch number?
+---@alias QuestTrackerState 'done'|'ready'|'active'|'none'
+---@alias QuestTrackerReset 'daily'|'weekly'
+---@class QuestTrackerQuest
+---@field questID number
+---@field title? string cached from the server, in the client's language
+---@field name? string the user's own name for it, wins over title
+---@field account? boolean completed on any character of the account
+---@field reset? QuestTrackerReset a saved Done from before the last reset reads as not started
+---@class QuestTrackerCharacter
+---@field guid string
+---@field name string
+---@field realm string
+---@field classFile string
+---@field level number
+---@field enabled boolean shown in the window
+---@field lastUpdate? number server time of the last snapshot
+---@field quests table<number, QuestTrackerState> missing = not snapshotted since the quest was added
+---@class QuestTrackerData
+---@field quests QuestTrackerQuest[]
+---@field characters table<string, QuestTrackerCharacter>
+---@class QuestTrackerModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@field data QuestTrackerData
+---@field window? Frame
+---@field snapshotQueued? boolean
+---@field questLogMenu? { Unregister: fun() } handle from Menu.ModifyMenu
+---@field questButton? Button the track toggle on the quest dialog
+---@field dialogQuestID? number the quest the dialog shows, nil on the greeting list
+---@field RunQueuedSnapshot fun()
 ---@class TooltipsModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class MinimapModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class SkinningModule : NRSKNUI.ModuleBase, AceEvent-3.0
@@ -62,7 +90,6 @@
 ---@class FocusCastbarModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class SpeedModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class CharacterPanelModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class AuraDisplayModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@class CDMModule : NRSKNUI.ModuleBase, AceEvent-3.0
 ---@field icons table<string, CDMIcon>
 ---@field containers table<string, Frame|NRSKNUI.DynamicGroup> static group frames and dynamic groups
@@ -71,6 +98,7 @@
 ---@field spareChain CDMChainGroup[]
 ---@field STYLE_TEMPLATE table
 ---@field BAR_STYLE_TEMPLATE table
+---@field TEXT_STYLE_TEMPLATE table
 ---@field BAR_ELAPSED number Enum.StatusBarTimerDirection.ElapsedTime
 ---@field BAR_REMAINING number Enum.StatusBarTimerDirection.RemainingTime
 ---@field POWER_TYPES table[] power trigger choices, { value, text }
@@ -150,6 +178,7 @@
 ---@field MiscVars MiscVarsModule
 ---@field Durability DurabilityModule
 ---@field GroupFinder GroupFinderModule
+---@field QuestTracker QuestTrackerModule
 ---@field CharacterPanel CharacterPanelModule
 ---@field Tooltips TooltipsModule
 ---@field Minimap MinimapModule
@@ -157,7 +186,6 @@
 ---@field Gateway GatewayModule
 ---@field PetTexts PetTextsModule
 ---@field PlayerAuras PlayerAurasModule
----@field AuraDisplay AuraDisplayModule
 ---@field CDM CDMModule
 ---@field CombatTimer CombatTimerModule
 ---@field PotionReady PotionReadyModule
@@ -206,6 +234,7 @@ local NRSKNUI
 ---@overload fun(self: NRSKNUI, name: "MiscVars", silent?: boolean): MiscVarsModule
 ---@overload fun(self: NRSKNUI, name: "Durability", silent?: boolean): DurabilityModule
 ---@overload fun(self: NRSKNUI, name: "GroupFinder", silent?: boolean): GroupFinderModule
+---@overload fun(self: NRSKNUI, name: "QuestTracker", silent?: boolean): QuestTrackerModule
 ---@overload fun(self: NRSKNUI, name: "CombatCross", silent?: boolean): CombatCrossModule
 ---@overload fun(self: NRSKNUI, name: "CombatMessage", silent?: boolean): CombatMessageModule
 ---@overload fun(self: NRSKNUI, name: "CombatRes", silent?: boolean): CombatResModule
@@ -216,7 +245,6 @@ local NRSKNUI
 ---@overload fun(self: NRSKNUI, name: "PetTexts", silent?: boolean): PetTextsModule
 ---@overload fun(self: NRSKNUI, name: "FocusCastbar", silent?: boolean): FocusCastbarModule
 ---@overload fun(self: NRSKNUI, name: "CharacterPanel", silent?: boolean): CharacterPanelModule
----@overload fun(self: NRSKNUI, name: "AuraDisplay", silent?: boolean): AuraDisplayModule
 ---@overload fun(self: NRSKNUI, name: "CDM", silent?: boolean): CDMModule
 ---@overload fun(self: NRSKNUI, name: "BlizzardMessages", silent?: boolean): BlizzardMessagesModule
 ---@overload fun(self: NRSKNUI, name: "ActionBars", silent?: boolean): ActionBarsModule
@@ -256,6 +284,7 @@ function NRSKNUI:GetModule(name, silent) end
 ---@overload fun(self: NRSKNUI, name: "MiscVars", ...: string): MiscVarsModule
 ---@overload fun(self: NRSKNUI, name: "Durability", ...: string): DurabilityModule
 ---@overload fun(self: NRSKNUI, name: "GroupFinder", ...: string): GroupFinderModule
+---@overload fun(self: NRSKNUI, name: "QuestTracker", ...: string): QuestTrackerModule
 ---@overload fun(self: NRSKNUI, name: "CombatCross", ...: string): CombatCrossModule
 ---@overload fun(self: NRSKNUI, name: "CombatMessage", ...: string): CombatMessageModule
 ---@overload fun(self: NRSKNUI, name: "CombatRes", ...: string): CombatResModule
@@ -266,7 +295,6 @@ function NRSKNUI:GetModule(name, silent) end
 ---@overload fun(self: NRSKNUI, name: "PetTexts", ...: string): PetTextsModule
 ---@overload fun(self: NRSKNUI, name: "FocusCastbar", ...: string): FocusCastbarModule
 ---@overload fun(self: NRSKNUI, name: "CharacterPanel", ...: string): CharacterPanelModule
----@overload fun(self: NRSKNUI, name: "AuraDisplay", ...: string): AuraDisplayModule
 ---@overload fun(self: NRSKNUI, name: "CDM", ...: string): CDMModule
 ---@overload fun(self: NRSKNUI, name: "BlizzardMessages", ...: string): BlizzardMessagesModule
 ---@overload fun(self: NRSKNUI, name: "ActionBars", ...: string): ActionBarsModule

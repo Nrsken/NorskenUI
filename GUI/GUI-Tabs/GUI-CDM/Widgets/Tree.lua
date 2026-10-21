@@ -53,40 +53,6 @@ local STATE_TEXT = {
     unloaded = { L['Not Loaded'], L['This display is not currently loaded'] },
 }
 
----@class CDMTreeSmallButton : Button
----@field tex Texture
----@field tipTitle string?
----@field tipText string?
-
----@class CDMTreeRow : Button
----@field data table
----@field inUse boolean
----@field bg Texture
----@field hoverBg Texture
----@field hoverTarget number
----@field selectedBg Texture
----@field dropFill Texture
----@field accentBar Texture
----@field barGlow Texture
----@field up CDMTreeSmallButton
----@field ungroup CDMTreeSmallButton
----@field down CDMTreeSmallButton
----@field iconBorder Texture
----@field icon Texture
----@field canvas Frame the drawn picture, shown instead of icon when the display has one
----@field title FontString
----@field expand CDMTreeSmallButton
----@field state CDMTreeSmallButton
----@field eye CDMTreeSmallButton
-
----@class CDMTreeSection : Frame
----@field data table
----@field inUse boolean
----@field bg Texture
----@field label FontString
----@field collapse CDMTreeSmallButton
----@field eye CDMTreeSmallButton
-
 -- Kaji's tooltip look: accent title, secondary body, beside the cursor.
 ---@param owner Frame
 ---@param title string
@@ -184,7 +150,7 @@ local function CreateTree(gui, parent, opts)
     searchBox:SetScript('OnTextChanged', function(self)
         tree.search = strlower(strtrim(self:GetText() or ''))
         searchHint:SetShown(tree.search == '' and not self:HasFocus())
-        tree:Render()
+        tree:Render(true)
     end)
     searchBox:SetScript('OnEditFocusGained', function() searchHint:Hide() end)
     searchBox:SetScript('OnEditFocusLost', function() searchHint:SetShown(tree.search == '') end)
@@ -370,7 +336,7 @@ local function CreateTree(gui, parent, opts)
                 end
                 return
             end
-            -- WeakAuras' multi select, from a display that is already selected.
+            -- Shift/Ctrl multi select, from a display that is already selected.
             local anchor = tree.rowKeys[tree.selected] and tree.selected
             if anchor and IsShiftKeyDown() then
                 tree:PickRange(anchor, key)
@@ -603,7 +569,8 @@ local function CreateTree(gui, parent, opts)
         return tree.search == '' or (text ~= nil and strfind(strlower(text), tree.search, 1, true) ~= nil)
     end
 
-    function tree:Render()
+    ---@param reuse boolean? draw the last content again, when only expansion or the search changed
+    function tree:Render(reuse)
         if not self.sd then return end
         EndRename(false)
         for _, pool in ipairs({ rowPool, sectionPool, clipPool }) do
@@ -615,7 +582,8 @@ local function CreateTree(gui, parent, opts)
 
         -- The module is off: rows can still be browsed, nothing in them edits.
         self.locked = self.sd.locked ~= nil and self.sd.locked() == true
-        local content = self.sd.items()
+        local content = reuse and self.content or self.sd.items()
+        self.content = content
         self.generalKey = content.general and content.general.key
         local leaves = {}
         if content.general then leaves[1] = content.general end
@@ -703,7 +671,25 @@ local function CreateTree(gui, parent, opts)
             end
         end
         if not next(tree.anims) then driver:SetScript('OnUpdate', nil) end
-        if finished then tree:Render() else Relayout() end
+        if finished then tree:Render(true) else Relayout() end
+    end
+
+    ---@param key string
+    ---@param expanded boolean
+    local function PatchExpanded(key, expanded)
+        if not tree.content then return end
+        for _, section in ipairs(tree.content.sections) do
+            if section.key == key then
+                section.collapsed = not expanded
+                return
+            end
+        end
+        for _, data in ipairs(tree.leaves) do
+            if data.key == key then
+                data.expanded = expanded
+                return
+            end
+        end
     end
 
     ---Opens or closes a group or section with the animation; the host remembers the state.
@@ -718,7 +704,8 @@ local function CreateTree(gui, parent, opts)
             self.anims[key] = { p = from, from = from, to = expanded and 1 or 0, t = 0, duration = expanded and EXPAND_DURATION or COLLAPSE_DURATION }
             driver:SetScript('OnUpdate', StepAnimations)
         end
-        self:Render()
+        PatchExpanded(key, expanded)
+        self:Render(true)
     end
 
     -- Rename --
@@ -893,7 +880,7 @@ local function CreateTree(gui, parent, opts)
     ---@param row CDMTreeRow
     function BeginDrag(row)
         EndRename(false)
-        -- A row of a multi selection carries the whole selection, as in WeakAuras.
+        -- A row of a multi selection carries the whole selection.
         local keys = { row.data.key }
         if tree.picked[row.data.key] then
             local picked = tree:GetPicked()

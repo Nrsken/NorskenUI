@@ -66,8 +66,18 @@ function TriggerRows.item(card, typeRow, display, trigger, id, apply)
             end,
         })
     end
+    local showRow = card:Row(rowH)
+    showRow:Dropdown(L['Show'], {
+        width = 0.5,
+        options = Shared.SHOW_ON,
+        value = trigger.ShowOn or 'always',
+        callback = function(value)
+            trigger.ShowOn = value ~= 'always' and value or nil
+            apply()
+        end,
+    })
     if trigger.Item ~= 'trinket1' and trigger.Item ~= 'trinket2' then
-        card:Row(rowH):Checkbox(L['Show When Not in Bags'], {
+        showRow:Checkbox(L['Show When Not in Bags'], {
             width = 0.5,
             tooltip = L["Keep showing the item even when not in bags."],
             value = trigger.ShowNotOwned,

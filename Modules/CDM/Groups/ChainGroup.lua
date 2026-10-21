@@ -5,8 +5,9 @@ local CDM = NRSKNUI:GetModule('CDM')
 
 local ipairs, pairs = ipairs, pairs
 local CreateFrame = CreateFrame
-local tsort = table.sort
+local tsort, tremove = table.sort, table.remove
 local floor = math.floor
+local wipe = wipe
 local max = math.max
 local Mixin = Mixin
 local type = type
@@ -24,6 +25,13 @@ local GROWS = {
     VERTICAL   = { point = 'CENTER', first = 'TOP', link = 'TOP', to = 'BOTTOM', horizontal = false, shift = 0.5 },
 }
 CDM.CHAIN_GROWS = GROWS
+
+--[[
+A dynamic group the engine lays out: each icon sits in a slot chained to the one before, and probes
+measure what Lua can't read (an aura button's visibility, a text's size), so nothing secret is compared.
+]]
+
+-- Layout --
 
 ---A grow point lined up on the cross axis, as DynamicGroup's GROW_POINTS: TOP + LEFT is TOPLEFT, CENTER + LEFT is LEFT.
 ---@param point string
@@ -48,27 +56,7 @@ local function Measure(frame)
 end
 CDM.MeasureBounds = Measure
 
----@class CDMChainRecord
----@field key string
----@field child CDMIcon
----@field order number
----@field slot Frame
----@field measure Frame
----@field probe Frame
----@field auraProbes table<table, Frame>
----@field width number
----@field height number
----@field loaded boolean? the icon is loaded or previewed
----@field logic boolean? a trigger Lua can see is on show
-
 ---@class CDMChainGroup : Frame
----@field isChain true
----@field chain Frame what the engine resizes; its only children are the slots
----@field holder Frame parent of the icons, outside the measured frames
----@field records table<string, CDMChainRecord>
----@field order CDMChainRecord[]
----@field config table
----@field spare Frame[]
 local ChainMixin = {}
 
 ---@param self CDMChainGroup
@@ -83,10 +71,14 @@ end
 ---@param self CDMChainGroup
 local function Relink(self)
     local order = self.order
-    for i = #order, 1, -1 do order[i] = nil end
-    for _, record in pairs(self.records) do order[#order + 1] = record end
+    wipe(order)
+    for _, record in pairs(self.records) do
+        order[#order + 1] = record
+    end
     tsort(order, function(a, b)
-        if a.order ~= b.order then return a.order < b.order end
+        if a.order ~= b.order then
+            return a.order < b.order
+        end
         return a.key < b.key
     end)
 
@@ -116,7 +108,9 @@ local function PlaceChain(self)
     if grow.shift == 0.5 then
         local total = 0
         for _, record in ipairs(self.order) do
-            if record.logic then total = total + (grow.horizontal and record.width + padX or record.height + padY) end
+            if record.logic then
+                total = total + (grow.horizontal and record.width + padX or record.height + padY)
+            end
         end
         local half = total / 2
         if grow.horizontal then
@@ -142,7 +136,9 @@ local function Resize(self)
         end
     end
     local spacing = self.config.Spacing or 1
-    if count > 1 then total = total + (count - 1) * spacing end
+    if count > 1 then
+        total = total + (count - 1) * spacing
+    end
     -- The group's own size is every loaded icon's extent, for its mover and the unit frame anchor; the visible row lives in self.chain.
     if grow.horizontal then
         self:NUISetPixelSize(max(1, total), max(1, cross))
@@ -175,9 +171,17 @@ local function SizeRecord(record, padX, padY)
     elseif slot.textProbe then
         slot.textProbe:Hide()
     end
-    if not record.loaded then record.slot:SetSize(0.001, 0.001) end
-    record.child.chainPad = { padX, padY }
+    if not record.loaded then
+        slot:SetSize(0.001, 0.001)
+    end
+
+    -- reused, since this runs every time an icon shows or hides
+    local pad = record.child.chainPad or {}
+    pad[1], pad[2] = padX, padY
+    record.child.chainPad = pad
 end
+
+-- Group --
 
 function ChainMixin:SetConfig(config)
     self.config = config or {}
@@ -199,13 +203,17 @@ end
 ---Same placement as a DynamicGroup at the top level.
 ---@param source table
 ---@param grow string?
-function ChainMixin:UpdateGroupPosition(source, grow)
+---@param extraX number? added to the saved offset, not stored
+---@param extraY number?
+function ChainMixin:UpdateGroupPosition(source, grow, extraX, extraY)
     local position = source.Position
     if not position then return end
     local parent = UIParent
-    if source.anchorFrameType == 'SELECTFRAME' and source.ParentFrame then parent = _G[source.ParentFrame] or UIParent end
+    if source.anchorFrameType == 'SELECTFRAME' and source.ParentFrame then
+        parent = _G[source.ParentFrame] or UIParent
+    end
     self:ClearAllPoints()
-    self:NUISetPixelPoint(self:GetResolvedAnchor(grow), parent, position.AnchorTo or 'CENTER', position.XOffset or 0, position.YOffset or 0)
+    self:NUISetPixelPoint(self:GetResolvedAnchor(grow), parent, position.AnchorTo or 'CENTER', (position.XOffset or 0) + (extraX or 0), (position.YOffset or 0) + (extraY or 0))
     self:SetFrameStrata(source.Strata or 'MEDIUM')
 end
 
@@ -215,7 +223,7 @@ end
 function ChainMixin:AttachChild(child, key, order)
     local record = self.records[key]
     if not record then
-        local slot = table.remove(self.spare) or CreateFrame('Frame', nil, self.chain)
+        local slot = tremove(self.spare) or CreateFrame('Frame', nil, self.chain)
         slot:SetCollapsesLayout(true)
         slot:SetIgnoringChildrenForBounds(true)
         slot:Show()
@@ -244,9 +252,12 @@ function ChainMixin:AttachChild(child, key, order)
     child.chainGroup = self
     local padX, padY = Padding(self)
     SizeRecord(record, padX, padY)
+    -- an aura button made before the icon joined still has to open its slot
     for _, layer in ipairs(child.layers or {}) do
         for _, slot in pairs(layer.auraSlots or {}) do
-            if slot.refs.button then self:WatchAuraButton(key, slot.refs.button) end
+            if slot.refs.button then
+                self:WatchAuraButton(key, slot.refs.button)
+            end
         end
     end
     Relink(self)
@@ -256,9 +267,13 @@ end
 ---@param childOrKey Frame|string
 ---@return CDMChainRecord?
 function ChainMixin:GetRecord(childOrKey)
-    if type(childOrKey) == 'string' then return self.records[childOrKey] end
+    if type(childOrKey) == 'string' then
+        return self.records[childOrKey]
+    end
     for _, record in pairs(self.records) do
-        if record.child == childOrKey then return record end
+        if record.child == childOrKey then
+            return record
+        end
     end
 end
 
@@ -271,7 +286,7 @@ function ChainMixin:DetachChild(childOrKey)
         probe:ClearAllPoints()
         probe:Hide()
     end
-    for button in pairs(record.auraProbes) do record.auraProbes[button] = nil end
+    wipe(record.auraProbes)
     record.slot:Hide()
     record.slot:ClearAllPoints()
     record.measure:Hide()
@@ -341,24 +356,15 @@ function ChainMixin:WatchAuraButton(key, button)
     record.auraProbes[button] = probe
 end
 
-function ChainMixin:ActivateChild(key) self:SetChildVisible(key, true, true) end
+-- Measuring --
 
-function ChainMixin:DeactivateChild(key) self:SetChildVisible(key, false, false) end
-
----@return fun(): number?, Frame?
-function ChainMixin:IterateActive()
-    local i = 0
-    return function()
-        i = i + 1
-        local record = self.order[i]
-        if record then return i, record.child end
-    end
-end
-
+-- An aura button shows and hides without telling Lua, so every loaded slot is measured each frame.
 ---@param self CDMChainGroup
 local function OnUpdate(self)
     for _, record in ipairs(self.order) do
-        if record.loaded then Measure(record.slot) end
+        if record.loaded then
+            Measure(record.slot)
+        end
     end
     Measure(self.chain)
 end

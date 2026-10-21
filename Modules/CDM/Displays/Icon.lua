@@ -7,12 +7,20 @@ local unpack = unpack
 
 local QUESTION_MARK = 134400
 
----The trigger's texture, unless the style picks one by hand.
+--[[
+An icon layer's art, cropped to the icon's shape, and the cooldown frame's own countdown number.
+]]
+
+-- Icon --
+
+---The trigger's texture, unless the style picks one by hand; a trigger with none falls back to the manual icon.
 ---@param layer CDMLayer
 ---@param texture number?
 function CDM:SetIconTexture(layer, texture)
     local style = layer.owner.style
-    if style and style.IconSource == 'manual' and style.ManualIcon then texture = style.ManualIcon end
+    if style and style.ManualIcon and (style.IconSource == 'manual' or not texture) then
+        texture = style.ManualIcon
+    end
     layer.Icon:SetTexture(texture or QUESTION_MARK)
 end
 
@@ -50,5 +58,32 @@ function CDM:StyleIconParts(layer, style)
     cooldown:SetDrawEdge(style.DrawEdge)
     cooldown:SetReverse(style.Reverse)
     cooldown:SetSwipeColor(unpack(style.SwipeColor))
-    cooldown:SetHideCountdownNumbers(style.HideCountdown)
+    cooldown:SetHideCountdownNumbers(not self:ShowsTimerText(layer, style))
+    self:StyleTimerText(cooldown, style)
+end
+
+-- Timer Text --
+
+---Whether this layer draws the Timer Text: the picked trigger's, or with Automatic every layer but an aura overlay.
+---@param layer CDMLayer
+---@param style table
+---@return boolean
+function CDM:ShowsTimerText(layer, style)
+    if style.HideCountdown then return false end
+    local pick = style.TimerText.Trigger
+    if pick then return pick == layer.index end
+    local display = layer.owner.id and self:Get(layer.owner.id)
+    local trigger = display and display.Triggers[layer.index]
+    return not (trigger and trigger.Type == 'auraoverlay')
+end
+
+---The cooldown frame's own number, styled as a text.
+---@param cooldown Cooldown
+---@param style table
+function CDM:StyleTimerText(cooldown, style)
+    local timer = style.TimerText
+    local countdown = cooldown:GetCountdownFontString()
+    countdown:SetFontStyle(timer, timer.FontSize, nil, nil, true)
+    countdown:SetTextColor(unpack(timer.Color))
+    countdown:SetFontJustify(timer.AnchorTo, cooldown, timer.XOffset, timer.YOffset, true)
 end

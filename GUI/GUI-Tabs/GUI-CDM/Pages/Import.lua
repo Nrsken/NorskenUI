@@ -21,7 +21,7 @@ local function ReadImport(text)
     local payload, err = CDM:DecodeImport(text)
     importState.error = err
     importState.plan = payload and CDM:PlanImport(payload) or nil
-    importState.mode = importState.plan and importState.plan.target and CDM:Get(importState.plan.target).preferToUpdate and 'update' or 'copy' -- WeakAuras' default
+    importState.mode = importState.plan and importState.plan.target and CDM:Get(importState.plan.target).preferToUpdate and 'update' or 'copy'
     importState.picked = {}
     for _, category in ipairs(CDM.IMPORT_CATEGORIES) do importState.picked[category.key] = category.default end
 end
@@ -35,7 +35,7 @@ local function TextBlock(card, lines)
     card:Row(height):Text(nil, { width = 1, height = height, autoHeight = true, bgMode = 'hide', text = table.concat(lines, '\n') })
 end
 
----What an import would add or change, laid out like WeakAuras' import window.
+---What an import would add or change.
 ---@param card table
 local function BuildImportSummary(card)
     local plan = importState.plan

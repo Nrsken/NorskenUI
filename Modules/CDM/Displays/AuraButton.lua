@@ -6,6 +6,7 @@ local CDM = NRSKNUI:GetModule('CDM')
 local CreateFrame = CreateFrame
 local gsub = string.gsub
 local ipairs, pairs = ipairs, pairs
+local next = next
 local unpack = unpack
 local max = math.max
 local setmetatable = setmetatable
@@ -18,18 +19,48 @@ local AURA_FILTERS = { player = 'HELPFUL', target = 'HARMFUL' } -- spellID match
 local TEXT_KINDS = { 'time', 'count', 'static', 'sourcedText' } -- the fontstrings an aura button's text frame can hold
 
 local ExpandText, ConfigureText, DurationFormat, PlaceText = CDM.Text.Expand, CDM.Text.Configure, CDM.Text.DurationFormat, CDM.Text.Place
-local LITERAL_PERCENT = CDM.Text.LITERAL_PERCENT
+local LITERAL_PERCENT, TIME_SCALES = CDM.Text.LITERAL_PERCENT, CDM.Text.TIME_SCALES
 local StyleBorders, LevelElements, ElementEnabled = CDM.Layer.StyleBorders, CDM.Layer.LevelElements, CDM.Layer.ElementEnabled
 local ApplyTexCoords = CDM.ApplyTexCoords
 
--- Aura layers --
--- An aura trigger draws through a one-slot native AuraContainer: the client shows the slot while the
--- aura is up, so nothing secret ever reaches Lua and the layer simply covers the triggers below it.
+--[[
+An aura trigger draws through a one-slot native AuraContainer: the client shows the slot while the
+aura is up, so nothing secret ever reaches Lua and the layer simply covers the triggers below it.
+]]
+
+-- Target --
 
 local targetContainers = {} ---@type table<table, true> containers following the target
+local targetWatcher ---@type Frame?
 
--- AddSlot hands back a secret-wrapped button, so everything is reached through the refs filled in here,
--- the one place the real button is passed to us.
+-- The container doesn't follow target changes on its own (Blizzard_AuraContainer.lua, live).
+local function OnTargetChanged()
+    for container in pairs(targetContainers) do
+        container:UpdateUnitGate()
+        container:UpdateAllAuras()
+    end
+end
+
+---Listen for target changes only while some container follows the target.
+---@param container table
+---@param follows boolean
+local function FollowTarget(container, follows)
+    targetContainers[container] = follows or nil
+
+    if next(targetContainers) then
+        if not targetWatcher then
+            targetWatcher = CreateFrame('Frame')
+            targetWatcher:SetScript('OnEvent', OnTargetChanged)
+        end
+        targetWatcher:RegisterEvent('PLAYER_TARGET_CHANGED')
+    elseif targetWatcher then
+        targetWatcher:UnregisterEvent('PLAYER_TARGET_CHANGED')
+    end
+end
+
+-- Button --
+
+-- AddSlot only returns a secret-wrapped button; this is the one place we get the real one, so it all goes into refs.
 ---@param button table native AuraButton
 ---@param host Frame
 ---@param refs table
@@ -50,7 +81,7 @@ local function InitAuraButton(button, host, refs, style)
 
     local icon = button:CreateTexture(nil, 'ARTWORK')
     icon:SetAllPoints(inner)
-    icon:NUISetPixelSnap() -- rounds like its edge borders when the engine lays the chain on a half pixel
+    icon:NUISetPixelSnap() -- snaps like the borders around it, so they still line up when a chain lands on a half pixel
     refs.icon = icon
     button:SetIcon(icon)
 
@@ -81,7 +112,7 @@ local function InitAuraButton(button, host, refs, style)
     pandemicHost:SetFrameLevel(base + 1)
     local pandemic = pandemicHost:CreateTexture(nil, 'OVERLAY')
     pandemic:SetTexture(PANDEMIC_TEXTURE)
-    pandemic:NUISetPixelInside(inner) -- where SkinAuraButton puts the same texture on debuffs
+    pandemic:NUISetPixelInside(inner) -- the same inset SkinAuraButton gives this texture on debuffs
     pandemic:SetVertexColor(unpack(PANDEMIC_COLOR))
     refs.pandemic = pandemic
     button:AddPandemicRegion(pandemic)
@@ -95,6 +126,8 @@ local function StyleAuraText(fs, element, button)
     PlaceText(fs, element, button)
     fs:SetTextColor(unpack(element.Color))
 end
+
+-- Styling --
 
 ---Style the slot on show from the icon's style and its sub elements: the first %p/%t text becomes the
 ---native duration text, the first %s text its stack count, the rest stay plain.
@@ -112,7 +145,10 @@ function CDM:StyleAuraButton(layer, trigger)
     local overlay = trigger.Type == 'auraoverlay'
     local isBar = display.type == 'bar' and not overlay
     local showIcon = not overlay or active.auraIcon == true
-    if isBar then showIcon = style.IconShow == true end
+    if isBar then
+        showIcon = style.IconShow == true
+    end
+
     local subRegions = layer.subRegions or {}
     if overlay then
         local list = {}
@@ -125,12 +161,19 @@ function CDM:StyleAuraButton(layer, trigger)
         end
         subRegions = list
     end
+
     local color, desaturate, swipe, reverse = style.Color, style.Desaturate, style.DrawSwipe, style.Reverse
     if overlay then
         color = active.auraColor or color
-        if active.auraDesaturate ~= nil then desaturate = active.auraDesaturate end
-        if active.auraSwipe ~= nil then swipe = active.auraSwipe end
-        if active.auraInverse ~= nil then reverse = active.auraInverse end
+        if active.auraDesaturate ~= nil then
+            desaturate = active.auraDesaturate
+        end
+        if active.auraSwipe ~= nil then
+            swipe = active.auraSwipe
+        end
+        if active.auraInverse ~= nil then
+            reverse = active.auraInverse
+        end
     end
 
     local textParent = refs.inner
@@ -148,7 +191,7 @@ function CDM:StyleAuraButton(layer, trigger)
     local spellID = self:GetTriggerSpell(trigger)
     -- An overlay's icon is the aura's own unless its While Up picks one; the icon's Icon Source belongs to the icon below it.
     local iconTexture = overlay and active.auraTexture or (not overlay and style.IconSource == 'manual' and style.ManualIcon)
-    -- Without its icon the native button doesn't hold an alpha we set on it, so the icon is kept from it entirely.
+    -- The button overrides the alpha of an icon it holds, so a hidden icon is taken off the button entirely.
     icon:SetShown(showIcon)
     if not showIcon then
         button:ClearIcon()
@@ -164,19 +207,25 @@ function CDM:StyleAuraButton(layer, trigger)
     cooldown:SetDrawEdge(style.DrawEdge and showIcon and not isBar)
     cooldown:SetReverse(reverse == true)
     cooldown:SetSwipeColor(unpack(style.SwipeColor))
-    cooldown:SetHideCountdownNumbers(style.HideCountdown or not showIcon or isBar)
+    cooldown:SetHideCountdownNumbers(not self:ShowsTimerText(layer, style) or not showIcon or isBar)
+    self:StyleTimerText(cooldown, style)
 
     refs.pandemic:SetAlpha(pandemicColor and 1 or 0)
-    if pandemicColor then refs.pandemic:SetVertexColor(unpack(pandemicColor)) end
+    if pandemicColor then
+        refs.pandemic:SetVertexColor(unpack(pandemicColor))
+    end
 
     local spellName = spellID and GetSpellName(spellID) or ''
     local hasTime, hasCount, sourcedCount, ordinal = false, false, 0, 0
     -- Each text draws from its own frame, at its place in the list. The button denies reparenting its fontstrings
     -- (forbidden aspect ChangeParent), so every text frame makes its own and the button is pointed at the one in use.
     local function Text(entry, key)
-        if not entry[key] then entry[key] = entry.host:CreateFontString(nil, 'OVERLAY') end
+        if not entry[key] then
+            entry[key] = entry.host:CreateFontString(nil, 'OVERLAY')
+        end
         return entry[key]
     end
+
     for _, element in ipairs(subRegions) do
         if element.type == 'text' then
             ordinal = ordinal + 1
@@ -188,20 +237,26 @@ function CDM:StyleAuraButton(layer, trigger)
                 refs.textHosts[ordinal] = entry
             end
             for _, key in ipairs(TEXT_KINDS) do
-                if entry[key] then entry[key]:Hide() end
+                if entry[key] then
+                    entry[key]:Hide()
+                end
             end
-            if entry.sourced and entry.sourced.binding then entry.sourced.binding:SetToDefaults() end
+            if entry.sourced and entry.sourced.binding then
+                entry.sourced.binding:SetToDefaults()
+            end
 
             if element.Enabled then
-                local raw = ExpandText(element, spellName, self:GetTriggerTexture(trigger))
-                local isDuration, isCount, source = CDM:ClassifyText(raw)
-                if source == layer.index then source = nil end
+                local raw = ExpandText(element, spellName, self:GetTriggerTexture(trigger), display.Triggers)
+                local isDuration, isCount, source = self:ClassifyText(raw)
+                if source == layer.index then
+                    source = nil
+                end
                 local sourceType = source and display.Triggers[source] and self.TriggerTypes[display.Triggers[source].Type]
                 if source and (isDuration or isCount) then
                     -- Another trigger's time or charges, fed by UpdateTexts; only a non-aura trigger has any to give.
                     if sourceType and not sourceType.Secret then
                         local fs = Text(entry, 'sourcedText')
-                        entry.sourced = entry.sourced or { fs = fs, kind = 'static', format = '', tokens = 0 }
+                        entry.sourced = entry.sourced or { fs = fs, kind = 'static', format = '', tokens = 0, ordinal = ordinal }
                         sourcedCount = sourcedCount + 1
                         refs.sourced[sourcedCount] = entry.sourced
                         StyleAuraText(fs, element, textParent)
@@ -213,7 +268,11 @@ function CDM:StyleAuraButton(layer, trigger)
                     local fs = Text(entry, 'time')
                     StyleAuraText(fs, element, textParent)
                     local format, components = DurationFormat(raw, element)
-                    button:SetDurationText(fs, { textFormat = { formatString = format, components = components } })
+                    local curve = self:TextColorCurve(display, layer.index, TIME_SCALES, ordinal, element.Color)
+                    button:SetDurationText(fs, {
+                        textFormat = { formatString = format, components = components },
+                        textColor = curve and { curve = curve, property = Enum.DurationTextBindingProperty.RemainingDuration } or nil,
+                    })
                     fs:Show()
                 elseif isCount and not hasCount and not isDuration then
                     hasCount = true
@@ -230,24 +289,35 @@ function CDM:StyleAuraButton(layer, trigger)
             end
         end
     end
+    -- Text frames past the current list stay hidden.
     for i = ordinal + 1, #refs.textHosts do
         local entry = refs.textHosts[i]
         for _, key in ipairs(TEXT_KINDS) do
-            if entry[key] then entry[key]:Hide() end
+            if entry[key] then
+                entry[key]:Hide()
+            end
         end
     end
 
-    if not hasTime then button:ClearDurationText() end
-    if not hasCount then button:ClearApplicationCount() end
-    for i = sourcedCount + 1, #refs.sourced do refs.sourced[i] = nil end
+    if not hasTime then
+        button:ClearDurationText()
+    end
+    if not hasCount then
+        button:ClearApplicationCount()
+    end
+    for i = sourcedCount + 1, #refs.sourced do
+        refs.sourced[i] = nil
+    end
     refs.sourcedCount = sourcedCount
     layer.auraSourced = sourcedCount > 0
-    if sourcedCount > 0 then self:UpdateTexts(layer) end
+    if sourcedCount > 0 then
+        self:UpdateTexts(layer)
+    end
 
     StyleBorders(refs.borders, refs.borderHost, refs.inner, subRegions)
 
-    -- In a chain group sized from the style, never read: the icon's area, and the button padded by the chain's spacing.
-    -- Elsewhere it follows its frame, which a matched bar has from the engine.
+    -- In a chain group the size comes from the style, since reading it back would be secret: the icon's area,
+    -- plus the chain's spacing on the button. Anywhere else it fills its frame, which the engine sizes for a matched bar.
     local inner = refs.inner
     button:ClearAllPoints()
     inner:ClearAllPoints()
@@ -264,7 +334,7 @@ function CDM:StyleAuraButton(layer, trigger)
     end
 
     -- Glow sub elements inside the button: shown ones appear with the aura, pandemic ones only in its window.
-    local width, height = layer.owner.style.Width, layer.owner.style.Height
+    local width, height = style.Width, style.Height
     local function Host()
         local host = CreateFrame('Frame', nil, button)
         host:SetAllPoints(refs.inner)
@@ -281,7 +351,9 @@ function CDM:StyleAuraButton(layer, trigger)
     local base = refs.cooldown:GetFrameLevel() + 1
     local listLevel = overlay and layer.levelOf
     local function LevelOf(n)
-        if listLevel then return max(base + 1, listLevel(n)) end -- never under its own swipe and pandemic border
+        if listLevel then
+            return max(base + 1, listLevel(n)) -- never under its own swipe and pandemic border
+        end
         return base + n
     end
     LevelElements(subRegions, refs.borders, refs.glows, refs.textHosts, LevelOf)
@@ -292,6 +364,8 @@ function CDM:StyleAuraButton(layer, trigger)
         self:PaintBarOverlay(layer, refs.barOverlay, button, active)
     end
 end
+
+-- Slots --
 
 ---Point a layer's aura slot at its trigger; builds the container on first use. Out of combat only.
 ---@param layer CDMLayer
@@ -325,50 +399,53 @@ function CDM:ConfigureAuraLayer(layer, trigger, spellIDs)
                 InitAuraButton(created, host, refs, layer.owner.style)
                 if layer.auraRefs ~= refs then return end
                 local chain = layer.owner.chainGroup
-                if chain then chain:WatchAuraButton(layer.owner.id, created) end
+                if chain then
+                    chain:WatchAuraButton(layer.owner.id, created)
+                end
                 self:StyleAuraButton(layer, layer.auraTrigger)
             end,
         })
         slot = { refs = refs, index = index }
         layer.auraSlots[filter] = slot
     end
-    for key, other in pairs(layer.auraSlots) do container:SetSlotShown(other.index, key == filter) end
+
+    -- Only the slot for the current filter shows.
+    for key, other in pairs(layer.auraSlots) do
+        container:SetSlotShown(other.index, key == filter)
+    end
     layer.auraRefs = slot.refs
     -- A button that already exists denies tainted access while auras are secret (DenyTaintedAccessWhenAurasAreSecret).
     local accessible = not NRSKNUI:AreAurasSecret()
     local chain = layer.owner.chainGroup
-    if accessible and chain and slot.refs.button then chain:WatchAuraButton(layer.owner.id, slot.refs.button) end
+    if accessible and chain and slot.refs.button then
+        chain:WatchAuraButton(layer.owner.id, slot.refs.button)
+    end
 
     container:SetEnabled(true)
     container:SetUnit(unit)
     container:UpdateUnitGate()
     container:UpdateAllAuras()
-    targetContainers[container] = unit == 'target' or nil
+    FollowTarget(container, unit == 'target')
 
-    if accessible then self:StyleAuraButton(layer, trigger) end
+    if accessible then
+        self:StyleAuraButton(layer, trigger)
+    end
 end
 
----Stop a layer's aura container, when its trigger is no longer an aura or its icon goes back to the pool.
+---Stop a layer's aura container when its trigger is no longer an aura or its icon goes back to the pool.
 ---@param layer CDMLayer
 function CDM:ReleaseAuraLayer(layer)
     local container = layer.auraContainer
     if not container then return end
+
     layer.auraHost:Hide()
     layer.auraKey = nil
-    targetContainers[container] = nil
+    FollowTarget(container, false)
     -- One function per layer: RunWhenSafe drops a repeat, so re-resolving in combat never grows the queue.
     layer.disableAura = layer.disableAura or function()
-        if not layer.auraKey then container:SetEnabled(false) end
+        if not layer.auraKey then
+            container:SetEnabled(false)
+        end
     end
     NRSKNUI:RunWhenSafe(layer.disableAura)
 end
-
--- The container doesn't follow target changes on its own (Blizzard_AuraContainer.lua, live).
-local targetWatcher = CreateFrame('Frame')
-targetWatcher:RegisterEvent('PLAYER_TARGET_CHANGED')
-targetWatcher:SetScript('OnEvent', function()
-    for container in pairs(targetContainers) do
-        container:UpdateUnitGate()
-        container:UpdateAllAuras()
-    end
-end)

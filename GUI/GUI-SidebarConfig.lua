@@ -25,11 +25,6 @@ GUIFrame.SidebarConfig = {
             text = L['Profile Settings'],
         },
         {
-            id = 'auras',
-            type = 'item',
-            text = L['Auras'],
-        },
-        {
             id = 'cooldownManager',
             type = 'item',
             text = L['Cooldown & Aura Manager'],
@@ -104,6 +99,7 @@ GUIFrame.SidebarConfig = {
                 { id = 'spellAlert',         text = L['Spell Alerts'] },
                 { id = 'cdmStrings',         text = L['CDM Profile Backup'] },
                 { id = 'groupFinder',        text = L['Group Finder'] },
+                { id = 'questTracker',       text = L['Quest Tracker'] },
             }
         },
         {
@@ -114,6 +110,7 @@ GUIFrame.SidebarConfig = {
             items = {
                 { id = 'actionBars',        text = L['Action Bars'] },
                 { id = 'blizzardMouseover', text = L['Blizzard Mouseover'], elvUIDisabled = true },
+                { id = 'buffsDebuffs',      text = L['Buffs & Debuffs'] },
                 { id = 'chat',              text = L['Chat'] },
                 { id = 'detailsBackdrop',   text = L['Details Backdrop'] },
                 { id = 'frameSkins',        text = L['Frames'],             elvUIDisabled = true },

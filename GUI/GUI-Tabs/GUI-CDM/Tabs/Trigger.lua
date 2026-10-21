@@ -13,7 +13,7 @@ local CopyTable = CopyTable
 
 local Shared = NRSKNUI.CDMOptions
 local Applier, LinkedAuraTrigger, NormalizeAuraTypes, TRIGGER_DEFAULTS = Shared.Applier, Shared.LinkedAuraTrigger, Shared.NormalizeAuraTypes, Shared.TRIGGER_DEFAULTS
-local TRIGGER_LISTS, TRIGGER_TYPES, TriggerLabel, TriggerRows = Shared.TRIGGER_LISTS, Shared.TRIGGER_TYPES, Shared.TriggerLabel, Shared.TriggerRows
+local TRIGGER_GROUPS, TRIGGER_LISTS, TRIGGER_TYPES, TriggerLabel, TriggerRows = Shared.TRIGGER_GROUPS, Shared.TRIGGER_LISTS, Shared.TRIGGER_TYPES, Shared.TriggerLabel, Shared.TriggerRows
 local triggerOpen = Shared.triggerOpen
 
 local ACTIVATION_MODES = {
@@ -21,7 +21,6 @@ local ACTIVATION_MODES = {
     { value = 'all', text = L['All Triggers'] },
 }
 
----WeakAuras' trigger list: the first active trigger is the one shown, so the order is the priority.
 ---@param page table
 ---@param id string
 local function BuildTriggerTab(page, id)
@@ -29,17 +28,12 @@ local function BuildTriggerTab(page, id)
     local triggers = display.Triggers
     local apply = Applier(id)
 
-    page:Card(L['Triggers'], 'all'):Rebuild(function(card)
+    local combination = page:Card(nil, 'all')
+    combination:Rebuild(function(card)
         local function Edit(fn)
             fn()
-            NormalizeAuraTypes(display)
             apply()
             card:Rebuild()
-        end
-        -- Aura alone, Aura Overlay beside other triggers.
-        local types = {}
-        for _, entry in ipairs(TRIGGER_LISTS[display.type] or TRIGGER_TYPES) do
-            if not (entry.value == 'aura' and #triggers > 1 or entry.value == 'auraoverlay' and #triggers == 1) then types[#types + 1] = entry end
         end
 
         if card:Section(L['Trigger Combination'], {
@@ -70,6 +64,31 @@ local function BuildTriggerTab(page, id)
             })
         end
         card:EndSection()
+    end)
+
+    page:Card(L['Triggers'], 'all'):Rebuild(function(card)
+        local function Edit(fn)
+            fn()
+            NormalizeAuraTypes(display)
+            apply()
+            card:Rebuild()
+            combination:Rebuild() -- its Dynamic Information lists one entry per trigger
+        end
+        -- Aura alone, Aura Overlay beside other triggers; a group takes its first member's place.
+        local types, members, groupOf = {}, {}, {}
+        for _, entry in ipairs(TRIGGER_LISTS[display.type] or TRIGGER_TYPES) do
+            local group = entry.group
+            if group then
+                if not members[group] then
+                    members[group] = {}
+                    types[#types + 1] = { value = group, text = TRIGGER_GROUPS[group] }
+                end
+                tinsert(members[group], entry)
+                groupOf[entry.value] = group
+            elseif not (entry.value == 'aura' and #triggers > 1 or entry.value == 'auraoverlay' and #triggers == 1) then
+                types[#types + 1] = entry
+            end
+        end
 
         for index, trigger in ipairs(triggers) do
             local title = TriggerLabel(index, trigger)
@@ -114,20 +133,37 @@ local function BuildTriggerTab(page, id)
             })
 
             if expanded then
+                local function SetType(value)
+                    if value == trigger.Type then return end
+                    Edit(function()
+                        local new = (value == 'aura' or value == 'auraoverlay') and LinkedAuraTrigger(display) or CopyTable(TRIGGER_DEFAULTS[value])
+                        new.Type = value
+                        triggers[index] = new
+                    end)
+                end
+
+                local group = groupOf[trigger.Type]
                 local typeRow = card:Row(rowH)
                 typeRow:Dropdown(L['Type'], {
                     width = 0.5,
                     options = types,
-                    value = trigger.Type,
+                    value = group or trigger.Type,
                     callback = function(value)
-                        if value == trigger.Type then return end
-                        Edit(function()
-                            local new = (value == 'aura' or value == 'auraoverlay') and LinkedAuraTrigger(display) or CopyTable(TRIGGER_DEFAULTS[value])
-                            new.Type = value
-                            triggers[index] = new
-                        end)
+                        if value == group then return end
+                        SetType(members[value] and members[value][1].value or value)
                     end,
                 })
+                -- the group's own dropdown takes the type row, so the type's rows start below it
+                if group then
+                    typeRow:Dropdown(nil, {
+                        width = 0.5,
+                        options = members[group],
+                        value = trigger.Type,
+                        callback = SetType,
+                    })
+                    typeRow = card:Row(rowH)
+                end
+
                 local rows = TriggerRows[trigger.Type]
                 if rows then rows(card, typeRow, display, trigger, id, apply) end
             end
@@ -145,7 +181,6 @@ local function BuildTriggerTab(page, id)
                     for _, trigger in ipairs(triggers) do
                         if trigger.Type == 'aura' or trigger.Type == 'auraoverlay' then hasAura = true end
                     end
-                    -- A cooldown with a matching aura gets it on top, WeakAuras' aura-over-cooldown pair.
                     local aura = display.type == 'icon' and not hasAura and LinkedAuraTrigger(display)
                     if aura then
                         tinsert(triggers, 1, aura)

@@ -23,6 +23,7 @@ function TriggerRows.power(card, typeRow, display, trigger, id, apply)
         callback = function(value)
             trigger.PowerType = value ~= 'primary' and value or nil
             if not CDM.SEGMENTED_POWER[trigger.PowerType] then trigger.Mode = nil end
+            if trigger.PowerType == CDM.MAELSTROM_WEAPON and trigger.Mode == 'progress' then trigger.Mode = 'static' end
             apply()
             card:Rebuild()
         end,
@@ -33,8 +34,11 @@ function TriggerRows.power(card, typeRow, display, trigger, id, apply)
     local pType = trigger.Mode == 'progress' and trigger.PowerType ~= Power.Runes and trigger.PowerType ~= Power.Essence
 
     local modes = {}
-    for i, mode in ipairs(POWER_MODES) do
-        modes[i] = { value = mode.value, text = mode.text, tooltip = format(mode.description, CDM.POWER_NAMES[trigger.PowerType]) }
+    for _, mode in ipairs(POWER_MODES) do
+        -- A stack has no partial fill to show.
+        if not (mode.value == 'progress' and trigger.PowerType == CDM.MAELSTROM_WEAPON) then
+            modes[#modes + 1] = { value = mode.value, text = mode.text, tooltip = format(mode.description, CDM.POWER_NAMES[trigger.PowerType]) }
+        end
     end
     local row = card:Row(rowH)
     row:Dropdown(L['Mode'], {

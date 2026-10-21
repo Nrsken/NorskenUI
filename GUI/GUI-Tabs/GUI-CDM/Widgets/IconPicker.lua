@@ -4,7 +4,9 @@ local L = NRSKNUI.Libs.AL
 local Theme = NRSKNUI.Theme
 local CDM = NRSKNUI:GetModule('CDM')
 
-local ipairs, tonumber, tostring = ipairs, tonumber, tostring
+local ipairs, pairs, tonumber, tostring = ipairs, pairs, tonumber, tostring
+local tconcat = table.concat
+local tContains = tContains
 local format = string.format
 local strtrim = strtrim
 local CreateFrame = CreateFrame
@@ -17,23 +19,15 @@ local BUTTON_SIZE = 36
 local SPACING = 4
 local GRID_HEIGHT = 420
 local SEARCH_DELAY = 0.15
-local MAX_RESULTS = 500 -- WeakAuras caps its picker the same
+local MAX_RESULTS = 500 -- keeps a broad search responsive
 local ICON_PATH = 'Interface\\Icons\\'
 local QUESTION_MARK = 134400
 
 ---@class CDMIconPicker
----@field PAGE string
----@field navigate fun(key: string?)
----@field currentKey string?
 local IconPicker = {}
 NRSKNUI.CDMIconPicker = IconPicker
 
----@class CDMIconEntry
----@field texture number|string
----@field name string?
----@field search string? lowercase text a search matches
-
--- Icon names in compact form, built a few milliseconds per frame while the options are open and kept for the session, as WeakAuras keeps its cache.
+-- Icon names in compact form, built a few milliseconds per frame while the options are open and kept for the session.
 local cache ---@type { spells: CDMIconEntry[], names: string[], spellIcons: number[], spellTexts: string[], spellFirst: string[], ready: boolean, complete: boolean }?
 local loader ---@type thread?
 local onLoaded ---@type fun()?
@@ -79,7 +73,7 @@ local SPELL_BUDGET = 2  -- ms per frame for the spell walk, which runs for a few
 local SPELL_CHUNK = 250
 local SPELL_MISS_LIMIT = 500000 -- empty IDs in a row before the walk ends; the widest gap today is ~380k
 local MAX_NAMES_PER_ICON = 32
-local GEAR_ICON = 136243 -- the placeholder icon on internal spells, WeakAuras skips it too
+local GEAR_ICON = 136243 -- the placeholder icon on internal spells, never worth showing
 local budget = MACRO_BUDGET
 
 ---What a field stores: a file ID, so an Icon ID box shows the number back.
@@ -91,11 +85,11 @@ local function ToFileID(texture)
     return (fileID and fileID > 0) and fileID or texture
 end
 
----Every spell in the game, one entry per icon with up to 32 of its spell names (WeakAuras' spell cache,
----walked without its per-patch skip table so there is nothing to keep up to date).
+---Every spell in the game, one entry per icon with up to 32 of its spell names; no per-patch skip table to keep up to date.
 ---@param result table
 local function WalkSpells(result)
-    local icons, texts, firstNames, counts, byIcon = result.spellIcons, result.spellTexts, result.spellFirst, {}, {}
+    local icons, texts, firstNames, byIcon = result.spellIcons, result.spellTexts, result.spellFirst, {}
+    local extra = {} -- [index] = the names after the first, joined once the walk ends
     local id, misses = 0, 0
     budget = SPELL_BUDGET
     while misses < SPELL_MISS_LIMIT do
@@ -110,16 +104,26 @@ local function WalkSpells(result)
                 if not index then
                     index = #icons + 1
                     byIcon[icon] = index
-                    icons[index], texts[index], firstNames[index], counts[index] = icon, lower, name, 1
-                elseif counts[index] < MAX_NAMES_PER_ICON and not texts[index]:find(lower, 1, true) then
-                    texts[index] = texts[index] .. '\n' .. lower
-                    counts[index] = counts[index] + 1
+                    icons[index], texts[index], firstNames[index] = icon, lower, name
+                elseif lower ~= texts[index] then
+                    local names = extra[index]
+                    if not names then
+                        names = {}
+                        extra[index] = names
+                    end
+                    if #names < MAX_NAMES_PER_ICON - 1 and not tContains(names, lower) then names[#names + 1] = lower end
                 end
             end
         else
             misses = misses + 1
         end
         if id % SPELL_CHUNK == 0 then coroutine.yield() end
+    end
+    local joined = 0
+    for index, names in pairs(extra) do
+        texts[index] = texts[index] .. '\n' .. tconcat(names, '\n')
+        joined = joined + 1
+        if joined % CHUNK == 0 then coroutine.yield() end
     end
 end
 
@@ -189,7 +193,7 @@ end
 ---@return CDMIconEntry[]
 local function Search(text)
     text = strtrim(text or ''):lower()
-    if text == '' or not (cache and cache.ready) then return {} end -- WeakAuras: nothing until you type
+    if text == '' or not (cache and cache.ready) then return {} end -- nothing shows until you type
 
     local results, seen = {}, {}
     ---@param entry CDMIconEntry
@@ -337,11 +341,6 @@ end
 ---The picker page is gone: a load still running finishes without refreshing it.
 function IconPicker:Release()
     onLoaded = nil
-end
-
----Load the lists in the background before the picker is ever opened, so it shows results right away.
-function IconPicker:Preload()
-    EnsureLoaded()
 end
 
 ---@param page table

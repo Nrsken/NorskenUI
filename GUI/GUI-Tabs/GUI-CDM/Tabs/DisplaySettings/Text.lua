@@ -7,6 +7,7 @@ local Theme = NRSKNUI.Theme
 local rowH = Theme.rowHeight
 
 local ipairs = ipairs
+local strfind = string.find
 local format = string.format
 
 ---@class NRSKNUI.CDMDisplayTab
@@ -27,6 +28,15 @@ local NUMBER_FORMATS = {
     { value = 'abbreviate', text = L['Short'] },
     { value = 'large',      text = L['Short (Large)'] },
     { value = 'breakup',    text = L['Separated (12,345)'] },
+}
+-- A power's %p can also read as a percent of its max.
+local POWER_NUMBER_FORMATS = CopyTable(NUMBER_FORMATS)
+POWER_NUMBER_FORMATS[#POWER_NUMBER_FORMATS + 1] = { value = 'percent', text = L['Percent'] }
+
+local NAME_FORMATS = {
+    { value = 'full',    text = L['Full'] },
+    { value = 'initial', text = L['First Letter'] },
+    { value = 'upper',   text = L['Uppercase'] },
 }
 
 local PRECISIONS = {
@@ -52,7 +62,9 @@ local TEXT_TOKENS = {
     { '%t', L['Total time'] },
     { '%s', L['Charges'] },
     { '%n', L['Spell name'] },
+    { '%2.n', L["Trigger 2's name, e.g. the highest stat"] },
     { '%i', L['Spell icon'] },
+    { '%2.i', L["Trigger 2's icon"] },
     { '%%', L['A percent sign'] },
     { '\\n', L['New line'] },
     { '{rt1}', L['Raid marker 1 to 8'] },
@@ -75,7 +87,7 @@ end
 ---@param card table
 ---@param key string
 ---@param title string
----@param summary string? what the closed header says about its settings, as in WeakAuras
+---@param summary string? what the closed header says about its settings
 ---@return boolean open
 ---@return KajiGUISectionHeader header
 local function SubSection(card, key, title, summary)
@@ -215,19 +227,38 @@ local function TextRows(card, page, element, set, key, triggers, pipName, main)
             end
         end
     end
-    page:SetCondition(key .. ':timeColor', function() return element.TimeColor ~= nil and element.TimeColor.Enabled == true end)
     page:SetCondition(key .. ':numberDecimals', function() return element.NumberFormat == 'decimals' end)
-    page:SetCondition(key .. ':valueColor', function() return element.ValueColor ~= nil and element.ValueColor.Enabled == true end)
 
-    -- WeakAuras' "Format for %p": only a text with a time or a value has anything to format.
-    local formatOpen = (readsTime or readsValue) and SubSection(card, key .. ':format', L['Format Options'])
+    -- Only a text with a time, a value or a name has anything to format.
+    local readsName = strfind(element.Text or '', '%%%d*%.?n') ~= nil
+    local formatOpen = (readsTime or readsValue or readsName) and SubSection(card, key .. ':format', L['Format Options'])
+    if formatOpen and readsName then
+        local nameRow = card:Row(rowH, nil, SUB_INDENT)
+        nameRow:Dropdown(L['Name Format'], {
+            width = 0.5,
+            conditions = { shown },
+            tooltip = L['How %n reads. First Letter turns Mastery into M, Uppercase into MASTERY.'],
+            options = NAME_FORMATS,
+            value = element.NameFormat or 'full',
+            callback = function(value) set({ 'NameFormat' }, value) end,
+        })
+        nameRow:Dropdown(L['Name Color'], {
+            width = 0.5,
+            conditions = { shown },
+            tooltip = L["The colour of %n. Custom uses the text's Color."],
+            options = NRSKNUI.ColorModeOptions,
+            value = element.NameColor or 'custom',
+            callback = function(value) set({ 'NameColor' }, value) end,
+        })
+    end
     if formatOpen and readsValue then
         local numberRow = card:Row(rowH, nil, SUB_INDENT)
         numberRow:Dropdown(L['Number Format'], {
             width = 0.5,
             conditions = { shown },
-            tooltip = L['How a Power or Stat value reads. Automatic: whole numbers, as the character sheet shows them.'],
-            options = NUMBER_FORMATS,
+            tooltip = readsPower and L['How a Power value reads. Automatic: whole numbers. Percent: %p as a share of the max, like Stagger against your health.']
+                or L['How a Power or Stat value reads. Automatic: whole numbers, as the character sheet shows them.'],
+            options = readsPower and POWER_NUMBER_FORMATS or NUMBER_FORMATS,
             value = element.NumberFormat or 'auto',
             callback = function(value)
                 set({ 'NumberFormat' }, value)
@@ -243,32 +274,6 @@ local function TextRows(card, page, element, set, key, triggers, pipName, main)
             value = element.Decimals or 1,
             callback = function(value) set({ 'Decimals' }, value) end,
         })
-        if readsPower then
-            local colorRow = card:Row(rowH, nil, SUB_INDENT)
-            local valueColor = element.ValueColor or {}
-            colorRow:Checkbox(L['Color by Value'], {
-                width = 0.5,
-                conditions = { shown },
-                tooltip = L['Blend the text from one colour when empty to another when full.'],
-                value = valueColor.Enabled == true,
-                callback = function(checked)
-                    set({ 'ValueColor', 'Enabled' }, checked)
-                    page:Refresh()
-                end,
-            })
-            colorRow:ColorPicker(L['Empty'], {
-                width = 0.25,
-                conditions = { shown, key .. ':valueColor' },
-                value = valueColor.Low or { 1, 0.25, 0.25, 1 },
-                callback = function(r, g, b, a) set({ 'ValueColor', 'Low' }, { r, g, b, a }) end,
-            })
-            colorRow:ColorPicker(L['Full'], {
-                width = 0.25,
-                conditions = { shown, key .. ':valueColor' },
-                value = valueColor.High or { 0.25, 1, 0.25, 1 },
-                callback = function(r, g, b, a) set({ 'ValueColor', 'High' }, { r, g, b, a }) end,
-            })
-        end
     end
     if formatOpen and readsTime then
         card:Row(rowH, nil, SUB_INDENT):Dropdown(L['Time Format'], {
@@ -303,42 +308,6 @@ local function TextRows(card, page, element, set, key, triggers, pipName, main)
             options = PRECISIONS,
             value = element.Precision,
             callback = function(value) set({ 'Precision' }, value) end,
-        })
-
-        card:Row(rowH, nil, SUB_INDENT):EditBox(L['Ready Text'], {
-            width = 0.5,
-            conditions = { shown },
-            tooltip = L['Shown once the time has run out, e.g. READY. Empty shows nothing.'],
-            value = element.ReadyText or '',
-            callback = function(text) set({ 'ReadyText' }, text) end,
-        })
-
-        local timeColor = element.TimeColor or {}
-        local timeColorRow = card:Row(rowH, nil, SUB_INDENT)
-        timeColorRow:Checkbox(L['Color by Time Left'], {
-            width = 0.5,
-            conditions = { shown },
-            value = timeColor.Enabled == true,
-            callback = function(checked)
-                set({ 'TimeColor', 'Enabled' }, checked)
-                page:Refresh()
-            end,
-        })
-        timeColorRow:ColorPicker(L['Color'], {
-            width = 0.5,
-            conditions = { shown, key .. ':timeColor' },
-            value = timeColor.Color or { 1, 0.25, 0.25, 1 },
-            callback = function(r, g, b, a) set({ 'TimeColor', 'Color' }, { r, g, b, a }) end,
-        })
-        card:Row(rowH, nil, SUB_INDENT):Slider(L['Below Seconds'], {
-            width = 0.5,
-            conditions = { shown, key .. ':timeColor' },
-            tooltip = L["The text takes this colour once less time than this is left. The game's own curve does it, so it works in combat too."],
-            min = 1,
-            max = 60,
-            step = 0.5,
-            value = timeColor.Below or 3,
-            callback = function(value) set({ 'TimeColor', 'Below' }, value) end,
         })
     end
 

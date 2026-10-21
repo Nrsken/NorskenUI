@@ -271,7 +271,9 @@ end
 
 function GroupFinder:GetWidgetColors()
     if Skinning then
-        return Skinning.db.General.WidgetBackgroundColor
+        -- A copy: the widgets keep this table, and a profile swap empties the old profile's.
+        local color = Skinning.db.General.WidgetBackgroundColor
+        return { color[1], color[2], color[3], color[4] }
     end
     return Theme.bgDark
 end

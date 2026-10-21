@@ -508,7 +508,7 @@ end
 -- Positioning utility --
 
 -- ApplyPosition injected onto the frame widget types.
-local function ApplyPosition(self, Config, setParent)
+local function ApplyPosition(self, Config, setParent, extraX, extraY)
     if not self or not Config then return end
     local posConfig = Config.Position
     if not posConfig then return end
@@ -527,7 +527,7 @@ local function ApplyPosition(self, Config, setParent)
     end
 
     self:ClearAllPoints()
-    self:NUISetPixelPoint(posConfig.AnchorFrom or 'CENTER', parent, posConfig.AnchorTo or 'CENTER', posConfig.XOffset or 0, posConfig.YOffset or 0)
+    self:NUISetPixelPoint(posConfig.AnchorFrom or 'CENTER', parent, posConfig.AnchorTo or 'CENTER', (posConfig.XOffset or 0) + (extraX or 0), (posConfig.YOffset or 0) + (extraY or 0))
     self:SetFrameStrata(Config.Strata or 'MEDIUM')
 end
 
