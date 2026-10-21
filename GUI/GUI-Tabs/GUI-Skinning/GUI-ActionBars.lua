@@ -88,7 +88,7 @@ end
 
 -- Items are pooled, so both branches always set the alpha back.
 local function RenderItem(itemFrame, item)
-    local bars = NRSKNUI.db and NRSKNUI.db.profile.Skinning.ActionBars.Bars
+    local bars = NRSKNUI.Skinning.namespace.profile.ActionBars.Bars
     local barDB = bars and bars[item.key]
     local enabled = not barDB or barDB.Enabled
     itemFrame.label:SetAlpha(enabled and 1 or 0.5)
@@ -733,7 +733,7 @@ GUI:RegisterPage(PAGE, {
         }
     end,
     build = function(page, tabId, itemKey)
-        local db = NRSKNUI.db and NRSKNUI.db.profile.Skinning.ActionBars
+        local db = NRSKNUI.Skinning.namespace.profile.ActionBars
         if not db then return end
         page:SetEnabled(function() return db.Enabled end)
 

@@ -317,8 +317,14 @@ end
 
 -- Module lifecycle --
 
+-- One namespace for every skinning module, each reads its own part of it
+function Skinning:OnInitialize()
+    self.namespace = NRSKNUI.ProfileManager:RegisterNamespace('Skinning', self.Defaults)
+    self:UpdateDB()
+end
+
 function Skinning:UpdateDB()
-    self.db = NRSKNUI.db.profile.Skinning.BlizzardElements
+    self.db = self.namespace.profile.BlizzardElements
 
     -- Profiles from before the modes were lowercased still hold 'Theme'/'Class'/'Custom'.
     local general = self.db.General

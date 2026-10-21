@@ -190,7 +190,7 @@ GUI:RegisterPage('frameSkins', {
     },
     build = function(page, tabId)
         if NRSKNUI:ShouldNotLoadModule() then return end
-        local db = NRSKNUI.db and NRSKNUI.db.profile.Skinning.BlizzardElements
+        local db = NRSKNUI.Skinning.namespace.profile.BlizzardElements
         if not db then return end
         page:SetEnabled(function() return db.Enabled ~= false end)
 

@@ -21,7 +21,7 @@ end
 
 -- Items are pooled, so both branches always set the alpha back.
 local function RenderItem(itemFrame, item)
-    local db = NRSKNUI.db and NRSKNUI.db.profile.Skinning.BlizzardMouseover
+    local db = NRSKNUI.Skinning.namespace.profile.BlizzardMouseover
     local elementDB = db and db.mouseoverElements[item.key]
     itemFrame.label:SetAlpha((not elementDB or elementDB.Enabled) and 1 or 0.5)
 end
@@ -129,7 +129,7 @@ GUI:RegisterPage('blizzardMouseover', {
     tabs = function() return {} end,
     build = function(page, _, itemKey)
         if NRSKNUI:ShouldNotLoadModule() then return end
-        local db = NRSKNUI.db and NRSKNUI.db.profile.Skinning.BlizzardMouseover
+        local db = NRSKNUI.Skinning.namespace.profile.BlizzardMouseover
         if not db then return end
         page:SetEnabled(function() return db.Enabled end)
 

@@ -36,7 +36,7 @@ BMO.elementOrder = {}
 ---@type BlizzardMouseoverElement[]
 BMO.active = {}
 
-function BMO:UpdateDB() self.db = NRSKNUI.db.profile.Skinning.BlizzardMouseover end
+function BMO:UpdateDB() self.db = NRSKNUI.Skinning.namespace.profile.BlizzardMouseover end
 
 ---Register a Blizzard frame the module can fade or hide. Element files call this at load.
 ---@param key string DB key under db.mouseoverElements

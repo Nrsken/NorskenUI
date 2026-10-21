@@ -36,7 +36,7 @@ end
 
 -- Items are pooled, so both branches always set the alpha back.
 local function RenderItem(itemFrame, item)
-    local backdrops = NRSKNUI.db and NRSKNUI.db.profile.Skinning.DetailsBackdrop.backdrops
+    local backdrops = NRSKNUI.Skinning.namespace.profile.DetailsBackdrop.backdrops
     local bgDB = backdrops and backdrops[tonumber(item.key)]
     itemFrame.label:SetAlpha((not bgDB or bgDB.Enabled) and 1 or 0.5)
 end
@@ -200,7 +200,7 @@ GUI:RegisterPage('detailsBackdrop', {
         }
     end,
     build = function(page, tabId, itemKey)
-        local db = NRSKNUI.db and NRSKNUI.db.profile.Skinning.DetailsBackdrop
+        local db = NRSKNUI.Skinning.namespace.profile.DetailsBackdrop
         if not db then return end
         page:SetEnabled(function() return db.Enabled end)
 

@@ -2,7 +2,7 @@
 local NRSKNUI = select(2, ...)
 ---@class MicroMenuModule
 local MM = NRSKNUI:GetModule('MicroMenu')
-function MM:UpdateDB() self.db = NRSKNUI.db.profile.Skinning.MicroMenu end
+function MM:UpdateDB() self.db = NRSKNUI.Skinning.namespace.profile.MicroMenu end
 
 local UIFrameFadeOut = UIFrameFadeOut
 local UIFrameFadeIn = UIFrameFadeIn

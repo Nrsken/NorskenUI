@@ -2,7 +2,7 @@
 local NRSKNUI = select(2, ...)
 ---@class ActionBarsModule
 local ACB = NRSKNUI:GetModule('ActionBars')
-function ACB:UpdateDB() self.db = NRSKNUI.db.profile.Skinning.ActionBars end
+function ACB:UpdateDB() self.db = NRSKNUI.Skinning.namespace.profile.ActionBars end
 
 local CreateFrame = CreateFrame
 local ipairs = ipairs
@@ -1301,11 +1301,9 @@ end
 local function RunEdgeRelativeMigration(db)
     if db.EdgeRelativeMigrationV2 then return end
 
-    local defaults = NRSKNUI:GetDefaultDB()
-    local defaultBars = defaults and defaults.profile and defaults.profile.Skinning
-        and defaults.profile.Skinning.ActionBars and defaults.profile.Skinning.ActionBars.Bars
+    local defaultBars = NRSKNUI.Skinning.Defaults.ActionBars.Bars
 
-    if not defaultBars or not db.Bars then
+    if not db.Bars then
         db.EdgeRelativeMigrationV2 = true
         return
     end

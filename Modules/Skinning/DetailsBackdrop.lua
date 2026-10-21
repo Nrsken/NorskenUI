@@ -3,7 +3,7 @@ local NRSKNUI = select(2, ...)
 ---@class DetailsBackdropModule
 local DBG = NRSKNUI:GetModule('DetailsBackdrop')
 local L = NRSKNUI.Libs.AL
-function DBG:UpdateDB() self.db = NRSKNUI.db.profile.Skinning.DetailsBackdrop end
+function DBG:UpdateDB() self.db = NRSKNUI.Skinning.namespace.profile.DetailsBackdrop end
 
 -- Credit to unhalted for the idea of this module, not a copy of his code but liked his cook
 

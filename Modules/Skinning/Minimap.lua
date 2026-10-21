@@ -2,7 +2,7 @@
 local NRSKNUI = select(2, ...)
 ---@class MinimapModule
 local Map = NRSKNUI:GetModule('Minimap')
-function Map:UpdateDB() self.db = NRSKNUI.db.profile.Skinning.Minimap end
+function Map:UpdateDB() self.db = NRSKNUI.Skinning.namespace.profile.Minimap end
 
 local Theme = NRSKNUI.Theme
 local Anchors = NRSKNUI.Anchors

@@ -3,7 +3,7 @@ local NRSKNUI = select(2, ...)
 ---@class BlizzObjectiveTrackerModule
 local ObjectiveTracker = NRSKNUI:GetModule('BlizzObjectiveTracker')
 function ObjectiveTracker:UpdateDB()
-    self.skinDB = NRSKNUI.db.profile.Skinning.BlizzardElements
+    self.skinDB = NRSKNUI.Skinning.namespace.profile.BlizzardElements
     self.db = self.skinDB.ObjectiveTracker
 end
 

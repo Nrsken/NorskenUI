@@ -241,7 +241,7 @@ GUI:RegisterPage('tooltip', {
         { id = 'position',  text = L['Position Settings'] },
     },
     build = function(page, tabId)
-        local db = NRSKNUI.db and NRSKNUI.db.profile.Skinning.Tooltips
+        local db = NRSKNUI.Skinning.namespace.profile.Tooltips
         if not db then return end
         page:SetEnabled(function() return db.Enabled ~= false end)
 

@@ -347,7 +347,7 @@ GUI:RegisterPage('chat', {
         { id = 'position', text = L['Position Settings'] },
     },
     build = function(page, tabId)
-        local db = NRSKNUI.db and NRSKNUI.db.profile.Skinning.Chatv2
+        local db = NRSKNUI.Skinning.namespace.profile.Chatv2
         if not db then return end
         page:SetEnabled(function() return db.Enabled end)
 

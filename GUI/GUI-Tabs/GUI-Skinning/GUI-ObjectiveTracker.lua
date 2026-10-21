@@ -108,7 +108,7 @@ GUI:RegisterPage('objectiveTracker', {
     build = function(page)
         if NRSKNUI:ShouldNotLoadModule() then return end
         -- Still nested under the frame-skinning table, the font face and shadow are shared.
-        local db = NRSKNUI.db and NRSKNUI.db.profile.Skinning.BlizzardElements
+        local db = NRSKNUI.Skinning.namespace.profile.BlizzardElements
         if not db then return end
         page:SetEnabled(function() return db.ObjectiveTracker.Enabled end)
 

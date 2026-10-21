@@ -2,7 +2,7 @@
 local NRSKNUI = select(2, ...)
 ---@class TooltipsModule
 local Tooltips = NRSKNUI:GetModule('Tooltips')
-function Tooltips:UpdateDB() self.db = NRSKNUI.db.profile.Skinning.Tooltips end
+function Tooltips:UpdateDB() self.db = NRSKNUI.Skinning.namespace.profile.Tooltips end
 
 local Anchors = NRSKNUI.Anchors
 

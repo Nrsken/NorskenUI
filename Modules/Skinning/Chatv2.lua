@@ -139,7 +139,7 @@ CHAT.originalStates = {}
 
 
 function CHAT:UpdateDB()
-    self.db = NRSKNUI.db.profile.Skinning.Chatv2
+    self.db = NRSKNUI.Skinning.namespace.profile.Chatv2
     cachedFontPath = NRSKNUI:GetFont(self.db)
     local customColor = self.db.TabTextColor
     if customColor then
