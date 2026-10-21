@@ -66,7 +66,7 @@ local Defaults = {
             ['builtin:eternalflame'] = { name = "|cFFf48cbaEternal Flame|r", Trigger = { Base = 'HELPFUL', Type = 'SpellIDs', OnlyMine = true, SpellIDs = { [156322] = true } }, sortMethod = "ExpirationOnly", sortDirection = "Normal", Color = { 0.9, 0.7, 0, 1 }, },
         },
         AuraIndicatorGroups = {},
-        -- Shared color palette, pushed into oUF.colors + NRSKNUI.Colors by NRSKNUI:LoadCustomColors().
+        -- Shared color palette, built into NRSKNUI.Colors by NRSKNUI:LoadCustomColors().
         -- Mainly consumed by UnitFrames, but any module can read NRSKNUI.db.profile.Colors.
         Colors = {
             -- Original power colors from blizzard's PowerBarColor table.

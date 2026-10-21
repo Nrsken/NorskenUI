@@ -1,0 +1,11 @@
+## Interface: 120007, 120100
+## Title: |cffe51039Norsken|r|cffb3b3b3UI|r Unit Frames Options
+## Notes: Settings pages for the unit frames. Stores no data.
+## Category: |cffe51039Norsken|r |cffb3b3b3Addons|r
+## Group: NorskenUI
+## Version: @project-version@
+## Author: Norsken
+## IconTexture: Interface\AddOns\NorskenUI\Media\Logo\LogoRed.png
+## Dependencies: NorskenUI, NorskenUI_UnitFrames
+
+GUI-UnitFrames.xml

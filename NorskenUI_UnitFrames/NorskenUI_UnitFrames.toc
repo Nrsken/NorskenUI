@@ -1,0 +1,13 @@
+## Interface: 120007, 120100
+## Title: |cffe51039Norsken|r|cffb3b3b3UI|r Unit Frames
+## Notes: oUF based unit, party and raid frames
+## Category: |cffe51039Norsken|r |cffb3b3b3Addons|r
+## Group: NorskenUI
+## Version: @project-version@
+## Author: Norsken
+## IconTexture: Interface\AddOns\NorskenUI\Media\Logo\LogoRed.png
+## Dependencies: NorskenUI
+## X-oUF: NorskenUF
+
+Libs\oUF\oUF.xml
+UnitFrames.xml

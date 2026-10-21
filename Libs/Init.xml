@@ -21,5 +21,4 @@
     <Include file="TaintLess/TaintLess.xml" />
     <Script file="LibEditModeOverride/LibEditModeOverride.lua" />
     <Include file="LibEditMode/embed.xml" />
-    <Include file="oUF/oUF.xml" />
 </Ui>

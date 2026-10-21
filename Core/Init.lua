@@ -53,11 +53,6 @@ end
 
 NRSKNUI:SetDefaultModulePrototype(ModulePrototype)
 
--- Setup oUF library
-NRSKNUI.oUF = _G.NorskenUF
-NRSKNUI.oUFPrefix = GetAddOnMetadata(addonName, 'X-oUF')
-assert(NRSKNUI.oUF, 'oUF library not found!')
-
 -- Setup addon constants
 NRSKNUI.Locale = GetLocale()
 NRSKNUI.AddOnName = GetAddOnMetadata(addonName, 'Title')

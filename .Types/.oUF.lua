@@ -1,6 +1,6 @@
 ﻿---@meta
 
--- Annotations for the embedded oUF unit frame framework (Libs/oUF).
+-- Annotations for the embedded oUF unit frame framework (NorskenUI_UnitFrames/Libs/oUF).
 -- The addon sets `## X-oUF: NorskenUF`, so the framework is reachable both as the
 -- global `NorskenUF` and as `NRSKNUI.oUF` (see Core/Init.lua). `NorskenUF` is the
 -- global oUF object; `oUF.UnitFrame` is the object passed as `self` to style functions.

@@ -218,7 +218,7 @@ NRSKNUI.Colors = {
     enchantColor = { 0.6, 0, 1, 1 }
 }
 
--- oUF elements look power colors up by token as well as by type (the runes element reads RUNES).
+-- Elements look power colors up by token as well as by type (the runes element reads RUNES).
 local POWER_TOKENS = {
     [0] = 'MANA',
     [1] = 'RAGE',
@@ -239,58 +239,45 @@ local POWER_TOKENS = {
     [19] = 'ESSENCE',
 }
 
----Custom color palette (db.profile.Colors), pushed into oUF.colors and NRSKNUI.Colors.
+---Custom color palette (db.profile.Colors) into NRSKNUI.Colors. NRSKNUI_COLORS_UPDATED tells
+---whoever mirrors it (the unit frames push it into oUF.colors) to read it again.
 function NRSKNUI:LoadCustomColors()
     local db = self.db and self.db.profile.Colors
     if not db then return end
 
-    local oUF = self.oUF
     local palette = self.Colors
 
     for powerType, c in next, db.Power do
-        local col = oUF:CreateColor(c[1], c[2], c[3])
-        oUF.colors.power[powerType] = col
+        local col = CreateColor(c[1], c[2], c[3])
         palette.power[powerType] = col
         local token = POWER_TOKENS[powerType]
         if token then
-            oUF.colors.power[token] = col
             palette.power[token] = col
         end
     end
 
     for spec, c in next, db.Runes do
-        local col = oUF:CreateColor(c[1], c[2], c[3])
-        oUF.colors.runes[spec] = col
-        palette.runes[spec] = col
+        palette.runes[spec] = CreateColor(c[1], c[2], c[3])
     end
 
-    oUF.colors.power.STAGGER = oUF.colors.power.STAGGER or {}
     for level, c in next, db.Stagger do
-        local col = oUF:CreateColor(c[1], c[2], c[3])
-        oUF.colors.power.STAGGER[level] = col
-        palette.stagger[level] = col
+        palette.stagger[level] = CreateColor(c[1], c[2], c[3])
     end
 
     for index, c in next, db.Reaction do
-        local col = oUF:CreateColor(c[1], c[2], c[3])
-        oUF.colors.reaction[index] = col
-        palette.reaction[index] = col
+        palette.reaction[index] = CreateColor(c[1], c[2], c[3])
     end
 
     for token, c in next, db.Class do
-        local col = oUF:CreateColor(c[1], c[2], c[3])
-        oUF.colors.class[token] = col
-        palette.class[token] = col
+        palette.class[token] = CreateColor(c[1], c[2], c[3])
     end
 
     for index, c in next, db.Dispel do
-        local col = oUF:CreateColor(c[1], c[2], c[3])
-        oUF.colors.dispel[index] = col
-        palette.dispel[index] = col
+        palette.dispel[index] = CreateColor(c[1], c[2], c[3])
     end
 
-    -- Status colors are consumed directly (RGBA) by the health handler, mirror to oUF too.
+    -- Status colors are consumed directly (RGBA) by the health handler.
     palette.status = db.Status
-    oUF.colors.tapped = oUF:CreateColor(db.Status.Tapped[1], db.Status.Tapped[2], db.Status.Tapped[3])
-    oUF.colors.disconnected = oUF:CreateColor(db.Status.Disconnected[1], db.Status.Disconnected[2], db.Status.Disconnected[3])
+
+    self:SendMessage('NRSKNUI_COLORS_UPDATED')
 end

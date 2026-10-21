@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 ---@class UnitFramesModule
 local UF = NRSKNUI:GetModule('UnitFrames')
 
@@ -333,11 +333,37 @@ function UF:SpawnUnits()
     self:SpawnGroups()
 end
 
+---@param target table
+---@param source table<any, ColorMixin>
+local function CopyColors(target, source)
+    for key, color in next, source do
+        target[key] = oUF:CreateColor(color:GetRGB())
+    end
+end
+
+-- Core's palette into oUF.colors, rebuilt as oUF colors so the elements keep their curves
+local function PushColors()
+    local palette, colors = NRSKNUI.Colors, oUF.colors
+    CopyColors(colors.power, palette.power)
+    CopyColors(colors.runes, palette.runes)
+    colors.power.STAGGER = colors.power.STAGGER or {}
+    CopyColors(colors.power.STAGGER, palette.stagger)
+    CopyColors(colors.reaction, palette.reaction)
+    CopyColors(colors.class, palette.class)
+    CopyColors(colors.dispel, palette.dispel)
+
+    local status = palette.status
+    colors.tapped = oUF:CreateColor(status.Tapped[1], status.Tapped[2], status.Tapped[3])
+    colors.disconnected = oUF:CreateColor(status.Disconnected[1], status.Disconnected[2], status.Disconnected[3])
+end
+
 function UF:OnEnable()
     -- Main.lua already skips us on login, this catches the GUI toggle re-enabling us in session.
     if NRSKNUI.UFBlocked then return end
 
     self:UpdateDB()
+    PushColors()
+    self:RegisterMessage('NRSKNUI_COLORS_UPDATED', PushColors)
     self:CreateCDMAnchor()
 
     -- List of unit frames that we tell SCM that we created, so SCM can find them easily by typing 'NUF' in the anchor search box.
