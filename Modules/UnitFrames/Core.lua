@@ -2,7 +2,15 @@
 local NRSKNUI = select(2, ...)
 ---@class UnitFramesModule
 local UF = NRSKNUI:GetModule('UnitFrames')
-function UF:UpdateDB() self.db = NRSKNUI.db.profile.UnitFrames end
+
+function UF:OnInitialize()
+    self.namespace = NRSKNUI.ProfileManager:RegisterNamespace('UnitFrames', self.Defaults)
+    self:UpdateDB()
+end
+
+function UF:UpdateDB()
+    self.db = self.namespace.profile
+end
 
 ---@class NorskenUF
 local oUF = NRSKNUI.oUF

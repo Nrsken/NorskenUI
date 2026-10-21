@@ -7,6 +7,9 @@
 -- ---@field stops seeing inferred fields entirely, so the shared data is declared here instead.
 
 ---@class UnitFramesModule : NRSKNUI.ModuleBase, AceEvent-3.0, AceTimer-3.0, AceHook-3.0
+---@field namespace AceDBObject-3.0 the unit frames' own namespace inside NorskenUIDB
+---@field Defaults NRSKNUI.DBProfile.UnitFrames
+---@field db NRSKNUI.DBProfile.UnitFrames
 ---@field SoloUnits string[]
 ---@field BossUnits string[]
 ---@field GroupUnits string[]

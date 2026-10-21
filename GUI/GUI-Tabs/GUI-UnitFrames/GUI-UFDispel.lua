@@ -263,7 +263,7 @@ end
 
 ---The shared block, on Unit Frames -> General.
 ---@param page KajiGUIPage
----@param db table db.profile.UnitFrames
+---@param db table UF.db
 function UF.GUIDispelTab(page, db)
     -- The shared block really does reach every unit, so this pass stays unscoped.
     BuildDispelCards(page, db.General.Dispel, { group = 'all', Apply = function() UF:ApplySettings() end })

@@ -136,7 +136,7 @@ do
             build = function(page, tabId, sectionKey)
                 if not sectionKey then return end
 
-                local db = NRSKNUI.db.profile.UnitFrames
+                local db = UF.db
                 local uDB = db.Units[unit]
 
                 UF:PreviewAuraIndicator(unit, sectionKey == 'auraindicators' and tonumber(tabId) or nil)

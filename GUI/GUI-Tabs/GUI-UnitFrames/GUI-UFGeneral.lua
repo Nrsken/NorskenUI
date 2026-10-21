@@ -376,7 +376,7 @@ GUI:RegisterPage('unitFramesGeneral', {
         },
     },
     build = function(page, _, itemKey)
-        local db = NRSKNUI.db.profile.UnitFrames
+        local db = UF.db
         local build = db and Sections[itemKey]
         -- Caption rows reach here from the search harvester, they have no section.
         if not build then return end

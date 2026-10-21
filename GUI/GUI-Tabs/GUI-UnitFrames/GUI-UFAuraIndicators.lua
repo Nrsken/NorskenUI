@@ -427,7 +427,7 @@ GUI:RegisterPage(PAGE, {
 ---@param unit string
 ---@return table[] tabs
 function UF.GUIAuraIndicatorTabs(unit)
-    local placements = NRSKNUI.db.profile.UnitFrames.Units[unit].AuraIndicators
+    local placements = UF.db.Units[unit].AuraIndicators
     local tabs = {}
 
     for index, placement in ipairs(placements) do
@@ -635,7 +635,7 @@ end
 ---Right-click menu on a unit page's Aura Indicators section, for moving a whole setup between units.
 ---@param unit string
 function UF.GUIAuraIndicatorContext(unit)
-    local uDB = NRSKNUI.db.profile.UnitFrames.Units[unit]
+    local uDB = UF.db.Units[unit]
     local placements = uDB.AuraIndicators
 
     local entries = {

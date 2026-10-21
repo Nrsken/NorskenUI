@@ -118,7 +118,7 @@ function UF.GUIAuras.Build(page, def, tabId, unit)
     local builder = TAB_BUILDERS[tabId]
     if not builder then return end
 
-    local db = NRSKNUI.db.profile.UnitFrames
+    local db = UF.db
     local uDB = db.Units[unit]
     local cfg = uDB.Auras[def.kind]
 

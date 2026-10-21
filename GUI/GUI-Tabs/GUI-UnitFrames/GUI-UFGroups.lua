@@ -247,7 +247,7 @@ local function BuildGroupSection(page, uDB, unit)
         height = 24,
         width = 0.25,
         callback = function()
-            gDB.Visibility = NRSKNUI:GetDefaultDB().profile.UnitFrames.Units[unit].Group.Visibility
+            gDB.Visibility = UF.Defaults.Units[unit].Group.Visibility
             ApplySettings(unit)
             Reload()
         end,

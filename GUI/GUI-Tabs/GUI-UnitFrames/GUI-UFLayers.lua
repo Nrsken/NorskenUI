@@ -14,7 +14,7 @@ local C_Spell = C_Spell
 local format, tostring = string.format, tostring
 local sort, tinsert, tremove = table.sort, table.insert, table.remove
 
-local function DB() return NRSKNUI.db.profile.UnitFrames end
+local function DB() return UF.db end
 local function LayerMap() return DB().General.Layers end
 
 -- Aura indicator spots appear as their two groups; order inside a group lives on each spot's page.
@@ -260,7 +260,7 @@ local function BuildStackCard(page)
                 title = L['Reset to Default'],
                 text = L['Put every layer back where it shipped?'],
                 onAccept = function()
-                    Apply(CopyTable(NRSKNUI:GetDefaultDB().profile.UnitFrames.General.Layers))
+                    Apply(CopyTable(UF.Defaults.General.Layers))
                 end,
                 acceptText = L['Reset'],
                 cancelText = L['Cancel'],

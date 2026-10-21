@@ -218,7 +218,7 @@ end
 
 ---@param fn fun(placement: table)
 local function EachPlacement(fn)
-    for _, uDB in pairs(NRSKNUI.db.profile.UnitFrames.Units) do
+    for _, uDB in pairs(NRSKNUI.UnitFrames.db.Units) do
         for _, placement in ipairs(uDB.AuraIndicators or {}) do fn(placement) end
     end
 end

@@ -552,41 +552,32 @@ end
 
 local namespaces = {} ---@type table<string, AceDBObject-3.0>
 
----Hand a profile's module settings over to their namespaces. Saved data from before a module had one,
----and every export string, carry them inside the profile under the namespace name.
+---An imported profile carries every module's settings inside it under the namespace name, so hand them over.
+---The import replaces the whole profile, so a namespace it carries nothing for starts over.
 ---@param profileName string
----@param replace boolean? an import replaces the whole profile, so a namespace it carries nothing for starts over
-local function MoveIntoNamespaces(profileName, replace)
+local function ImportIntoNamespaces(profileName)
     local db = NRSKNUI.db
     local data = db.profiles[profileName]
-    local active = profileName == db:GetCurrentProfile()
 
     -- modules that aren't loaded pick their part up from the profile once they register
-    if replace then
-        for name, saved in pairs(db.sv.namespaces or {}) do
-            if not namespaces[name] and saved.profiles then
-                saved.profiles[profileName] = nil
-            end
+    for name, saved in pairs(db.sv.namespaces or {}) do
+        if not namespaces[name] and saved.profiles then
+            saved.profiles[profileName] = nil
         end
     end
 
     for name, ns in pairs(namespaces) do
-        local saved = data and data[name]
-        if saved or replace then
-            if data then
-                data[name] = nil
+        local saved = data[name]
+        data[name] = nil
+        if profileName == db:GetCurrentProfile() then
+            -- AceDB keeps serving its own table for the active profile, so refill that one.
+            wipe(ns.profile)
+            for k, v in pairs(saved or {}) do
+                ns.profile[k] = v
             end
-
-            if active then
-                -- AceDB keeps serving its own table for the active profile, so refill that one.
-                wipe(ns.profile)
-                for k, v in pairs(saved or {}) do
-                    ns.profile[k] = v
-                end
-                ns:RegisterDefaults(ns.defaults)
-            else
-                ns.profiles[profileName] = saved
-            end
+            ns:RegisterDefaults(ns.defaults)
+        else
+            ns.profiles[profileName] = saved
         end
     end
 end
@@ -597,13 +588,23 @@ end
 ---@return AceDBObject-3.0
 function ProfileManager:RegisterNamespace(name, defaults)
     local db = NRSKNUI.db
-    local ns = db:RegisterNamespace(name, { profile = defaults })
-    namespaces[name] = ns
+    local sv = db.sv
 
-    for profileName in pairs(db.profiles) do
-        MoveIntoNamespaces(profileName)
+    -- Settings saved inside the profile move before AceDB builds the namespace, so it fills
+    -- in defaults the same way it did there and the saved data comes out unchanged.
+    sv.namespaces = sv.namespaces or {}
+    local saved = sv.namespaces[name] or {}
+    sv.namespaces[name] = saved
+    for profileName, data in pairs(db.profiles) do
+        if data[name] then
+            saved.profiles = saved.profiles or {}
+            saved.profiles[profileName] = data[name]
+            data[name] = nil
+        end
     end
 
+    local ns = db:RegisterNamespace(name, { profile = defaults })
+    namespaces[name] = ns
     return ns
 end
 
@@ -750,7 +751,7 @@ function ProfileManager:ImportProfile(importString, targetName, activate)
     end
 
     NRSKNUI.db.profiles[finalName] = exportData.d -- new name, so no profile hop or refresh to write it
-    MoveIntoNamespaces(finalName, true)
+    ImportIntoNamespaces(finalName)
     if activate then
         self:UseProfile(finalName)
     end
@@ -870,11 +871,11 @@ function NorskenUIAPI.ImportProfile(profileString, profileKey, methodKey)
                 db.profile[k] = v
             end
             db:RegisterDefaults(db.defaults)
-            MoveIntoNamespaces(profileKey, true)
+            ImportIntoNamespaces(profileKey)
             ProfileManager:RefreshAllModules()
         else
             db.profiles[profileKey] = profileData
-            MoveIntoNamespaces(profileKey, true)
+            ImportIntoNamespaces(profileKey)
         end
         ProfileManager:UseProfile(profileKey)
     end)

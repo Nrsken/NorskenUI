@@ -121,7 +121,7 @@ local function AddTextureOverrideRow(page, row, elementDB, condName, conditions)
         conditions = conditions,
         value = elementDB.StatusBarTexture ~= nil,
         callback = function(checked)
-            elementDB.StatusBarTexture = checked and NRSKNUI.db.profile.UnitFrames.General.statusBar or nil
+            elementDB.StatusBarTexture = checked and UF.db.General.statusBar or nil
             ApplySettings()
             page:Refresh()
         end,
@@ -137,7 +137,7 @@ local function AddTextureOverrideRow(page, row, elementDB, condName, conditions)
         media = 'statusbar',
         searchable = true,
         conditions = dropConditions,
-        value = elementDB.StatusBarTexture or NRSKNUI.db.profile.UnitFrames.General.statusBar,
+        value = elementDB.StatusBarTexture or UF.db.General.statusBar,
         callback = function(key)
             elementDB.StatusBarTexture = key
             ApplySettings()
@@ -244,7 +244,7 @@ local function BuildHealthSection(page, uDB, unit)
         tooltip = L['Use the foreground texture for the missing-health background.'],
         value = hDB.BackgroundTexture == '',
         callback = function(checked)
-            hDB.BackgroundTexture = checked and '' or NRSKNUI.db.profile.UnitFrames.General.statusBar
+            hDB.BackgroundTexture = checked and '' or UF.db.General.statusBar
             ApplySettings()
             page:Refresh()
         end,
@@ -254,7 +254,7 @@ local function BuildHealthSection(page, uDB, unit)
         media = 'statusbar',
         searchable = true,
         conditions = { 'ownHealthBg' },
-        value = hDB.BackgroundTexture ~= '' and hDB.BackgroundTexture or NRSKNUI.db.profile.UnitFrames.General.statusBar,
+        value = hDB.BackgroundTexture ~= '' and hDB.BackgroundTexture or UF.db.General.statusBar,
         callback = function(key)
             hDB.BackgroundTexture = key
             ApplySettings()
@@ -1077,7 +1077,7 @@ UF.GUISections = {
 ---@param unit string config key
 ---@return { id: string, text: string }[] tabs
 function UF.GUITagTabs(unit)
-    local tags = NRSKNUI.db.profile.UnitFrames.Units[unit].Tags
+    local tags = UF.db.Units[unit].Tags
     local tabs = {}
     for i, slot in ipairs(TAG_SLOTS) do
         local name = tags[slot].Name
