@@ -20,8 +20,7 @@ local ANCHOR_ROLES = {
 }
 
 local function ScheduleAnchorUpdate()
-    local UF = NRSKNUI.UnitFrames
-    if UF:IsEnabled() then UF:ScheduleCDMAnchorUpdate() end
+    CDM:SendMessage('NRSKNUI_CDM_LAYOUT_CHANGED')
 end
 
 ---@param page table

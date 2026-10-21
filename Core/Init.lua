@@ -40,6 +40,10 @@ local ModulePrototype = {}
 function ModulePrototype:OnInitialize()
     -- a module with Defaults gets its own namespace; dbKey says where its settings sat in the profile before
     if self.Defaults then
+        -- old formats get fixed while the settings still sit in the profile, before the namespace takes them
+        if self.UpgradeSavedProfiles then
+            self:UpgradeSavedProfiles(NRSKNUI.db)
+        end
         self.namespace = NRSKNUI.ProfileManager:RegisterNamespace(self.moduleName, self.Defaults, self.dbKey)
     end
     if self.UpdateDB then
@@ -136,67 +140,3 @@ end
 
 -- RestrictedActions Module
 NRSKNUI.Restricted = NRSKNUI:NewModule('Restricted', 'AceEvent-3.0')
-
--- UnitFrames Module
-NRSKNUI.UnitFrames = NRSKNUI:NewModule('UnitFrames', 'AceTimer-3.0', 'AceEvent-3.0', 'AceHook-3.0')
-
--- Quality of Life Modules
-NRSKNUI.AuctionHouseFilter = NRSKNUI:NewModule('AuctionHouseFilter', 'AceEvent-3.0')
-NRSKNUI.Automation = NRSKNUI:NewModule('Automation', 'AceEvent-3.0')
-NRSKNUI.Tweaks = NRSKNUI:NewModule('Tweaks', 'AceEvent-3.0', 'AceHook-3.0')
-NRSKNUI.XPBar = NRSKNUI:NewModule('XPBar', 'AceEvent-3.0')
-NRSKNUI.CopyAnything = NRSKNUI:NewModule('CopyAnything', 'AceEvent-3.0')
-NRSKNUI.Recuperate = NRSKNUI:NewModule('Recuperate', 'AceEvent-3.0')
-NRSKNUI.MiscVars = NRSKNUI:NewModule('MiscVars', 'AceEvent-3.0')
-NRSKNUI.Durability = NRSKNUI:NewModule('Durability', 'AceEvent-3.0')
-NRSKNUI.CharacterPanel = NRSKNUI:NewModule('CharacterPanel', 'AceEvent-3.0')
-NRSKNUI.SkyRiding = NRSKNUI:NewModule('SkyRiding', 'AceEvent-3.0')
-NRSKNUI.SpellAlert = NRSKNUI:NewModule('SpellAlert', 'AceEvent-3.0')
-NRSKNUI.CooldownStrings = NRSKNUI:NewModule('CooldownStrings', 'AceEvent-3.0')
-NRSKNUI.GroupFinder = NRSKNUI:NewModule('GroupFinder', 'AceEvent-3.0')
-NRSKNUI.QuestTracker = NRSKNUI:NewModule('QuestTracker', 'AceEvent-3.0')
-
--- Skinning Modules
-NRSKNUI.Skinning = NRSKNUI:NewModule('Skinning', 'AceEvent-3.0')
-NRSKNUI.BlizzardMessages = NRSKNUI:NewModule('BlizzardMessages', 'AceEvent-3.0')
-NRSKNUI.Tooltips = NRSKNUI:NewModule('Tooltips', 'AceEvent-3.0')
-NRSKNUI.Minimap = NRSKNUI:NewModule('Minimap', 'AceEvent-3.0')
-NRSKNUI.ActionBars = NRSKNUI:NewModule('ActionBars', 'AceEvent-3.0')
-NRSKNUI.Chatv2 = NRSKNUI:NewModule('Chatv2', 'AceEvent-3.0', 'AceHook-3.0')
-NRSKNUI.MicroMenu = NRSKNUI:NewModule('MicroMenu', 'AceEvent-3.0')
-NRSKNUI.DetailsBackdrop = NRSKNUI:NewModule('DetailsBackdrop', 'AceEvent-3.0')
-NRSKNUI.BlizzObjectiveTracker = NRSKNUI:NewModule('BlizzObjectiveTracker', 'AceEvent-3.0')
-NRSKNUI.BlizzardMouseover = NRSKNUI:NewModule('BlizzardMouseover', 'AceEvent-3.0')
-
--- Class Utility Modules
-NRSKNUI.Gateway = NRSKNUI:NewModule('Gateway', 'AceEvent-3.0')
-NRSKNUI.PetTexts = NRSKNUI:NewModule('PetTexts', 'AceEvent-3.0')
-
--- Player Auras
-NRSKNUI.PlayerAuras = NRSKNUI:NewModule('PlayerAuras', 'AceEvent-3.0')
-
--- Cooldown Manager
-NRSKNUI.CDM = NRSKNUI:NewModule('CDM', 'AceEvent-3.0')
-
--- Dev tools
---NRSKNUI.AuraMatrix = NRSKNUI:NewModule('AuraMatrix', 'AceEvent-3.0')
-
--- Combat Modules
-NRSKNUI.CombatTimer = NRSKNUI:NewModule('CombatTimer', 'AceEvent-3.0')
-NRSKNUI.PotionReady = NRSKNUI:NewModule('PotionReady', 'AceEvent-3.0')
-NRSKNUI.RangeChecker = NRSKNUI:NewModule('RangeChecker', 'AceEvent-3.0')
-NRSKNUI.CombatCross = NRSKNUI:NewModule('CombatCross', 'AceEvent-3.0')
-NRSKNUI.CombatMessage = NRSKNUI:NewModule('CombatMessage', 'AceEvent-3.0', 'AceTimer-3.0')
-NRSKNUI.CombatRes = NRSKNUI:NewModule('CombatRes', 'AceEvent-3.0', 'AceTimer-3.0')
-NRSKNUI.CombatCursor = NRSKNUI:NewModule('CursorCircle', 'AceEvent-3.0')
-NRSKNUI.FocusCastbar = NRSKNUI:NewModule('FocusCastbar', 'AceEvent-3.0')
-
--- Dungeon Modules
-NRSKNUI.DungeonCasts = NRSKNUI:NewModule('DungeonCasts', 'AceEvent-3.0')
-NRSKNUI.RerollKeystone = NRSKNUI:NewModule('RerollKeystone', 'AceEvent-3.0', 'AceTimer-3.0')
-
--- BigWigs Timers Module
-NRSKNUI.BigWigsTimers = NRSKNUI:NewModule('BigWigsTimers', 'AceEvent-3.0', 'AceTimer-3.0', 'AceHook-3.0')
-
--- Missing Buffs Module
-NRSKNUI.MissingBuffs = NRSKNUI:NewModule('MissingBuffs', 'AceEvent-3.0')

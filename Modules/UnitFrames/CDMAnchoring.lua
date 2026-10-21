@@ -18,8 +18,8 @@ local function GetCDMFrames()
         return _G['CoolinatorPrimaryGroupAnchor'], nil
     end
 
-    local CDM = NRSKNUI.CDM
-    if CDM:IsEnabled() then
+    local CDM = NRSKNUI:GetModule('CDM', true)
+    if CDM and CDM:IsEnabled() then
         local primary, secondary = CDM:GetAnchorGroups()
         if primary then return primary, secondary, CDM.db.AnchorMinWidth end
     end
@@ -103,5 +103,6 @@ function UF:CreateCDMAnchor()
     UF:RegisterEvent('ACTIVE_PLAYER_SPECIALIZATION_CHANGED', 'CDMLayoutEvent')
     UF:RegisterEvent('TRAIT_CONFIG_UPDATED', 'CDMLayoutEvent')
     UF:RegisterEvent('EDIT_MODE_LAYOUTS_UPDATED', 'CDMLayoutEvent')
+    UF:RegisterMessage('NRSKNUI_CDM_LAYOUT_CHANGED', 'ScheduleCDMAnchorUpdate')
     UF:ScheduleCDMAnchorUpdate()
 end

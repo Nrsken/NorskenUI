@@ -817,13 +817,12 @@ function ProfileManager:ImportProfile(importString, targetName, activate)
 end
 
 ---Whether the new profile wants this module running.
----@param name string
 ---@param aceModule table
 ---@return boolean
-local function ShouldRun(name, aceModule)
+local function ShouldRun(aceModule)
     local flag = aceModule.db and aceModule.db.Enabled
     if flag == nil then return aceModule:IsEnabled() end
-    if NRSKNUI.UFBlocked and name == 'UnitFrames' then return false end
+    if aceModule.IsBlocked and aceModule:IsBlocked() then return false end
     return flag and true or false
 end
 
@@ -854,7 +853,7 @@ function ProfileManager:RefreshAllModules()
     -- disabled here keeps whatever it could not undo, that is accepted, a reload clears it.
     for name, aceModule in NRSKNUI:IterateModules() do
         local wasEnabled = aceModule:IsEnabled()
-        local shouldRun = ShouldRun(name, aceModule)
+        local shouldRun = ShouldRun(aceModule)
 
         if shouldRun and not wasEnabled then
             xpcall(NRSKNUI.EnableModule, ErrorHandler, NRSKNUI, name)

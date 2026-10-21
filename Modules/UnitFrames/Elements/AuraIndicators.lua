@@ -9,7 +9,17 @@ local AuraPreview = NRSKNUI.AuraPreview
 
 local CreateFrame = CreateFrame
 local ipairs = ipairs
+local pairs = pairs
 local wipe = wipe
+
+-- every unit's placements, so renaming an indicator updates the units listing it
+AuraIndicators:RegisterPlacements(function(fn)
+    for _, uDB in pairs(UF.db.Units) do
+        for _, placement in ipairs(uDB.AuraIndicators or {}) do
+            fn(placement)
+        end
+    end
+end)
 
 -- Which placements should be previewing, rebuilt from scratch on every Preview pass. Shared because
 -- nothing a pass calls reaches back into one.

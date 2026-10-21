@@ -1,0 +1,17 @@
+---@class NRSKNUI
+local NRSKNUI = select(2, ...)
+
+NRSKNUI.AuctionHouseFilter = NRSKNUI:NewModule('AuctionHouseFilter', 'AceEvent-3.0')
+NRSKNUI.Automation = NRSKNUI:NewModule('Automation', 'AceEvent-3.0')
+NRSKNUI.Tweaks = NRSKNUI:NewModule('Tweaks', 'AceEvent-3.0', 'AceHook-3.0')
+NRSKNUI.XPBar = NRSKNUI:NewModule('XPBar', 'AceEvent-3.0')
+NRSKNUI.CopyAnything = NRSKNUI:NewModule('CopyAnything', 'AceEvent-3.0')
+NRSKNUI.Recuperate = NRSKNUI:NewModule('Recuperate', 'AceEvent-3.0')
+NRSKNUI.MiscVars = NRSKNUI:NewModule('MiscVars', 'AceEvent-3.0')
+NRSKNUI.Durability = NRSKNUI:NewModule('Durability', 'AceEvent-3.0')
+NRSKNUI.CharacterPanel = NRSKNUI:NewModule('CharacterPanel', 'AceEvent-3.0')
+NRSKNUI.SkyRiding = NRSKNUI:NewModule('SkyRiding', 'AceEvent-3.0')
+NRSKNUI.SpellAlert = NRSKNUI:NewModule('SpellAlert', 'AceEvent-3.0')
+NRSKNUI.CooldownStrings = NRSKNUI:NewModule('CooldownStrings', 'AceEvent-3.0')
+NRSKNUI.GroupFinder = NRSKNUI:NewModule('GroupFinder', 'AceEvent-3.0')
+NRSKNUI.QuestTracker = NRSKNUI:NewModule('QuestTracker', 'AceEvent-3.0')

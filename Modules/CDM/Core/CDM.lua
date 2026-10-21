@@ -462,11 +462,8 @@ function CDM:RefreshLoad(changedOnly)
     end
     self:RefreshAuraGroups()
 
-    -- Tell what follows the CDM: unit frame anchors, the options page and Blizzard's viewers.
-    local UF = NRSKNUI.UnitFrames
-    if UF:IsEnabled() then
-        UF:ScheduleCDMAnchorUpdate()
-    end
+    -- Tell what follows the CDM: whoever anchors to it, the options page and Blizzard's viewers.
+    self:SendMessage('NRSKNUI_CDM_LAYOUT_CHANGED')
     if self.onStateChanged then
         self.onStateChanged()
     end

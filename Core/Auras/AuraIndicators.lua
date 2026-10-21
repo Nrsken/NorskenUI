@@ -216,10 +216,18 @@ function AuraIndicators:DeleteGroup(groupId)
     GetGroupStore()[groupId] = nil
 end
 
+local placementSources = {} ---@type fun(fn: fun(placement: table))[]
+
+---A display that places indicators hands over a walk of its placements, so a rename reaches them.
+---@param source fun(fn: fun(placement: table))
+function AuraIndicators:RegisterPlacements(source)
+    placementSources[#placementSources + 1] = source
+end
+
 ---@param fn fun(placement: table)
 local function EachPlacement(fn)
-    for _, uDB in pairs(NRSKNUI.UnitFrames.db.Units) do
-        for _, placement in ipairs(uDB.AuraIndicators or {}) do fn(placement) end
+    for _, source in ipairs(placementSources) do
+        source(fn)
     end
 end
 

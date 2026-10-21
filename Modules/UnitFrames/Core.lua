@@ -7,6 +7,11 @@ function UF:UpdateDB()
     self.db = self.namespace.profile
 end
 
+-- another UI addon owns the unit frames, so ours stay off whatever the profile says
+function UF:IsBlocked()
+    return NRSKNUI.UFBlocked
+end
+
 ---@class NorskenUF
 local oUF = NRSKNUI.oUF
 local Anchors = NRSKNUI.Anchors

@@ -5,7 +5,6 @@ local GroupFinder = NRSKNUI:GetModule('GroupFinder')
 local L = NRSKNUI.Libs.AL
 local GUI = NRSKNUI.GUI
 local Theme = NRSKNUI.Theme
-local Skinning = NRSKNUI:GetModule('Skinning')
 
 local _G = _G
 local GetTime = GetTime
@@ -263,6 +262,7 @@ end
 -- Panel construction --
 
 function GroupFinder:GetPanelColors()
+    local Skinning = NRSKNUI:GetModule('Skinning', true)
     if Skinning then
         return NRSKNUI:GetBackdropColor(Skinning.db.General, 'BackgroundColor'), NRSKNUI:GetBorderColor(Skinning.db.General)
     end
@@ -270,6 +270,7 @@ function GroupFinder:GetPanelColors()
 end
 
 function GroupFinder:GetWidgetColors()
+    local Skinning = NRSKNUI:GetModule('Skinning', true)
     if Skinning then
         -- A copy: the widgets keep this table, and a profile swap empties the old profile's.
         local color = Skinning.db.General.WidgetBackgroundColor
@@ -279,6 +280,7 @@ function GroupFinder:GetWidgetColors()
 end
 
 function GroupFinder:GetAccentColors()
+    local Skinning = NRSKNUI:GetModule('Skinning', true)
     if Skinning then
         local r, g, b, a = Skinning:GetAccentColor()
         return { r, g, b, a }
