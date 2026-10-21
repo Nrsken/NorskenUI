@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 ---@class GUIFrame
 local GUIFrame = NRSKNUI.GUIFrame
 local L = NRSKNUI.Libs.AL

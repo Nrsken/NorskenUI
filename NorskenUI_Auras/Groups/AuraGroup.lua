@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 ---@class CDMModule
 local CDM = NRSKNUI:GetModule('CDM')
 local AuraPreview = NRSKNUI.AuraPreview

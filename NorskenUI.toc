@@ -22,7 +22,6 @@ Core/Core.xml
 # Load Modules
 Modules/UnitFrames/UnitFrames.xml
 Modules/Auras/Auras.xml
-Modules/CDM/CDM.xml
 Modules/Combat/Combat.xml
 Modules/QoL/QoL.xml
 Modules/Skinning/Skinning.xml
@@ -42,7 +41,6 @@ GUI/GUI-TriggerEditor.lua
 GUI/GUI-Tabs/GUI-Global/GUI-Global.xml
 GUI/GUI-Tabs/GUI-UnitFrames/GUI-UnitFrames.xml
 GUI/GUI-Tabs/GUI-Combat/GUI-Combat.xml
-GUI/GUI-Tabs/GUI-CDM/GUI-CDM.xml
 GUI/GUI-Tabs/GUI-ClassUtility/GUI-ClassUtility.xml
 GUI/GUI-Tabs/GUI-QoL/GUI-QoL.xml
 GUI/GUI-Tabs/GUI-Skinning/GUI-Skinning.xml

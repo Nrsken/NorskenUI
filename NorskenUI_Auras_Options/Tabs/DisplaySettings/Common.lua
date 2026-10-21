@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 local L = NRSKNUI.Libs.AL
 
 local pairs = pairs
