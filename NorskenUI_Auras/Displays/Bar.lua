@@ -713,7 +713,7 @@ function CDM:DrawTicks(layer)
             for _, fraction in ipairs(TickFractions(layer, element)) do
                 if fraction > 0 and fraction < 1 then
                     used = used + 1
-                    PlaceTick(layer, set, used, fraction, layer.Bar)
+                    PlaceTick(layer, set, used, fraction, layer.Bar --[[@as CDMBar]])
                 end
             end
         end
