@@ -2,6 +2,7 @@
 local NRSKNUI = _G.NorskenUI
 ---@class CombatCursorModule
 local CursorCircle = NRSKNUI:GetModule('CursorCircle')
+local L = NRSKNUI.Libs.AL
 
 local CreateFrame = CreateFrame
 local GetCursorPosition = GetCursorPosition
@@ -29,19 +30,19 @@ local circleTypes = {
 ---@field key string
 ---@field text string
 local gcdModes = {
-    { key = 'disabled',   text = 'Disabled' },
-    { key = 'integrated', text = 'Integrated' },
-    { key = 'separate',   text = 'Separate Ring' },
+    { key = 'disabled',   text = L['Disabled'] },
+    { key = 'integrated', text = L['Integrated'] },
+    { key = 'separate',   text = L['Separate Ring'] },
 }
 
 ---@class VisibilityModeOption
 ---@field key string
 ---@field text string
 local visibilityModes = {
-    { key = 'always',          text = 'Always Visible' },
-    { key = 'mouseDown',       text = 'Mouse Button Held' },
-    { key = 'mouseDownCombat', text = 'Mouse Button Held In Combat' },
-    { key = 'combat',          text = 'In Combat Only' },
+    { key = 'always',          text = L['Always Visible'] },
+    { key = 'mouseDown',       text = L['Mouse Button Held'] },
+    { key = 'mouseDownCombat', text = L['Mouse Button Held In Combat'] },
+    { key = 'combat',          text = L['In Combat Only'] },
 }
 
 -- Expose for GUI

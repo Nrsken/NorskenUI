@@ -72,7 +72,7 @@ local function BuildGeneralSettingsTab(page, db)
         autoHeight = true,
         bgMode = 'hide',
         text = NRSKNUI:ColorTextByTheme('• ') ..
-            L['Automation features that has override support are marked with '] .. overrideTag,
+            L['Automation features that has override support are marked with'] .. ' ' .. overrideTag,
     })
 end
 
@@ -104,7 +104,7 @@ end
 local function BuildMerchantSettingsTab(page, db)
     local merchantCard = page:Card(L['Merchant Automation'], 'all')
     local autoSellRow = merchantCard:Row(rowH)
-    autoSellRow:Checkbox(L['Auto Sell Junk/Grey Items '] .. overrideTag, {
+    autoSellRow:Checkbox(L['Auto Sell Junk/Grey Items'] .. ' ' .. overrideTag, {
         width = 1,
         value = db.AutoSellJunk,
         callback = function(checked)
@@ -114,7 +114,7 @@ local function BuildMerchantSettingsTab(page, db)
     })
 
     local atuoRepairRow = merchantCard:Row(rowH)
-    atuoRepairRow:Checkbox(L['Auto Repair Gear '] .. overrideTag, {
+    atuoRepairRow:Checkbox(L['Auto Repair Gear'] .. ' ' .. overrideTag, {
         width = 1,
         value = db.AutoRepair,
         callback = function(checked)
@@ -191,7 +191,7 @@ local function BuildQuestsSettingsTab(page, db)
     local questsCard = page:Card(L['Quests'], 'all')
 
     local regularQuestRow = questsCard:Row(rowH)
-    regularQuestRow:Checkbox(L['Auto Accept Regular Quests ' .. overrideTag], {
+    regularQuestRow:Checkbox(L['Auto Accept Regular Quests'] .. ' ' .. overrideTag, {
         width = 1,
         value = db.AutoAcceptRegular,
         callback = function(checked)
@@ -201,7 +201,7 @@ local function BuildQuestsSettingsTab(page, db)
     })
 
     local eventQuestRow = questsCard:Row(rowH)
-    eventQuestRow:Checkbox(L['Auto Accept Event Quests ' .. overrideTag], {
+    eventQuestRow:Checkbox(L['Auto Accept Event Quests'] .. ' ' .. overrideTag, {
         width = 1,
         value = db.AutoAcceptEvent,
         callback = function(checked)
@@ -211,7 +211,7 @@ local function BuildQuestsSettingsTab(page, db)
     })
 
     local dailyQuestRow = questsCard:Row(rowH)
-    dailyQuestRow:Checkbox(L['Auto Accept Daily Quests ' .. overrideTag], {
+    dailyQuestRow:Checkbox(L['Auto Accept Daily Quests'] .. ' ' .. overrideTag, {
         width = 1,
         value = db.AutoAcceptDaily,
         callback = function(checked)
@@ -221,7 +221,7 @@ local function BuildQuestsSettingsTab(page, db)
     })
 
     local weeklyQuestRow = questsCard:Row(rowH)
-    weeklyQuestRow:Checkbox(L['Auto Accept Weekly Quests ' .. overrideTag], {
+    weeklyQuestRow:Checkbox(L['Auto Accept Weekly Quests'] .. ' ' .. overrideTag, {
         width = 1,
         value = db.AutoAcceptWeekly,
         callback = function(checked)
@@ -233,7 +233,7 @@ local function BuildQuestsSettingsTab(page, db)
     questsCard:Separator()
 
     local autoCompleteQuestRow = questsCard:Row(rowH)
-    autoCompleteQuestRow:Checkbox(L['Auto Complete Quests ' .. overrideTag], {
+    autoCompleteQuestRow:Checkbox(L['Auto Complete Quests'] .. ' ' .. overrideTag, {
         width = 1,
         value = db.AutoCompleteQuest,
         tooltip = L['Automatically complete and turn in quests when there is no reward choice.'],
@@ -246,7 +246,7 @@ local function BuildQuestsSettingsTab(page, db)
     questsCard:Separator()
 
     local autoBonusRollQuestRow = questsCard:Row(rowH)
-    autoBonusRollQuestRow:Checkbox(L['Auto Bonus Roll Quest ' .. overrideTag], {
+    autoBonusRollQuestRow:Checkbox(L['Auto Bonus Roll Quest'] .. ' ' .. overrideTag, {
         width = 0.5,
         value = db.AutoBonusRollQuest,
         tooltip = L['Automatically accept and complete the weekly |cffffffffBonus Roll|r quest from Decimus.'],

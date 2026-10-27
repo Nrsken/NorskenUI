@@ -2,6 +2,7 @@
 local NRSKNUI = _G.NorskenUI
 ---@class CopyAnythingModule
 local CopyAnything = NRSKNUI:GetModule('CopyAnything')
+local L = NRSKNUI.Libs.AL
 
 local IsControlKeyDown, IsShiftKeyDown, IsAltKeyDown = IsControlKeyDown, IsShiftKeyDown, IsAltKeyDown
 local GetMacroIndexByName, GetMacroSpell, GetMacroItem = GetMacroIndexByName, GetMacroSpell, GetMacroItem
@@ -101,7 +102,7 @@ function CopyAnything:TryCopy(key)
         if not copyId and unitData then
             if unitData.name then
                 copyId = unitData.name
-                copyName = 'Player Name'
+                copyName = L['Player Name']
             end
         end
     end
@@ -119,7 +120,7 @@ function CopyAnything:TryCopy(key)
                 end
             else
                 copyId = tooltipData.id
-                copyName = 'Other'
+                copyName = L['Other']
             end
         end
     end
@@ -186,7 +187,7 @@ function CopyAnything:TryCopy(key)
                 return s
             end
             copyId = fmtNum(r) .. ', ' .. fmtNum(g) .. ', ' .. fmtNum(b) .. ', ' .. fmtNum(a)
-            copyName = 'Color'
+            copyName = L['Color']
         end
     end
 

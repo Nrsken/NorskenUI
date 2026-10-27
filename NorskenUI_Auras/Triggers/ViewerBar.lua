@@ -206,5 +206,5 @@ CDM.TriggerTypes.viewerbar = {
 -- Conditions --
 
 CDM.ConditionChecks.viewerbar = {
-    active = { type = 'bool', get = function(layer, trigger) return CDM.TriggerTypes.viewerbar.IsActive(layer, trigger) end },
+    active = { type = 'bool', get = function(layer) return CDM.TriggerTypes.viewerbar.IsActive(layer) end },
 }

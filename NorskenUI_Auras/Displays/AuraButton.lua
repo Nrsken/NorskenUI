@@ -25,7 +25,7 @@ local ApplyTexCoords = CDM.ApplyTexCoords
 
 --[[
 An aura trigger draws through a one-slot native AuraContainer: the client shows the slot while the
-aura is up, so nothing secret ever reaches Lua and the layer simply covers the triggers below it.
+aura is up, so we never touch anything secret and the layer simply covers the triggers below it.
 ]]
 
 -- Target --
@@ -178,8 +178,10 @@ function CDM:StyleAuraButton(layer, trigger)
 
     local textParent = refs.inner
     if isBar then
-        textParent = self:StyleAuraBar(button, refs, style, trigger)
+        textParent = self:StyleAuraBar(layer, button, refs, style, trigger)
         swipe = false
+        self:SetStackTicks(layer, trigger)
+        self:StyleAuraTicks(layer, refs, subRegions)
     else
         self:ClearAuraBar(button, refs)
     end
@@ -317,7 +319,7 @@ function CDM:StyleAuraButton(layer, trigger)
     StyleBorders(refs.borders, refs.borderHost, refs.inner, subRegions)
 
     -- In a chain group the size comes from the style, since reading it back would be secret: the icon's area,
-    -- plus the chain's spacing on the button. Anywhere else it fills its frame, which the engine sizes for a matched bar.
+    -- plus the chain's spacing on the button. Anywhere else it fills its frame, which a matched bar stretches to fit.
     local inner = refs.inner
     button:ClearAllPoints()
     inner:ClearAllPoints()

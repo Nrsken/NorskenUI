@@ -67,9 +67,9 @@ local function BuildSQWCVarSettingsTab(page, db)
     for i, def in ipairs(MiscVars.SQW_DEFS) do
         local label = def.label
         if def.position == 'MELEE' then
-            label = label .. ' ' .. (position == 'MELEE' and '|cff00ff00(Active)|r' or '|cffaaaaaa(Inactive)|r')
+            label = label .. ' ' .. (position == 'MELEE' and '|cff00ff00' .. L['(Active)'] .. '|r' or '|cffaaaaaa' .. L['(Inactive)'] .. '|r')
         elseif def.position == 'RANGED' then
-            label = label .. ' ' .. (position == 'RANGED' and '|cff00ff00(Active)|r' or '|cffaaaaaa(Inactive)|r')
+            label = label .. ' ' .. (position == 'RANGED' and '|cff00ff00' .. L['(Active)'] .. '|r' or '|cffaaaaaa' .. L['(Inactive)'] .. '|r')
         end
 
         local key = def.key
@@ -96,7 +96,7 @@ local function BuildSQWCVarSettingsTab(page, db)
     infoRow:Text(NRSKNUI:ColorTextByTheme(L['Learn More']), {
         width = 0.65,
         text =
-        "The spell queue window determines how early you can\nqueue your next ability before your current cast finishes.\nVisit |cff8788EEXerwo|r's maxroll guide for more information.",
+        L["The spell queue window determines how early you can\nqueue your next ability before your current cast finishes.\nVisit |cff8788EEXerwo|r's maxroll guide for more information."],
         height = infoHeight,
         autoHeight = true,
         bgMode = 'hide',
@@ -106,9 +106,9 @@ local function BuildSQWCVarSettingsTab(page, db)
         height = 36,
         callback = function()
             NRSKNUI:CreateCopyDialog(
-                'Spell Queue Window Guide',
+                L['Spell Queue Window Guide'],
                 'https://maxroll.gg/wow/resources/spell-queue-window',
-                'Copy to clipboard by pressing CTRL + C'
+                L['Copy to clipboard by pressing CTRL + C']
             )
         end,
     })

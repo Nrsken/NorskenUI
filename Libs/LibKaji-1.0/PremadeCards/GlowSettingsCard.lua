@@ -19,20 +19,9 @@ if not lib then return end
 
 lib.premadeCards = lib.premadeCards or {}
 
+local L = lib.L
 local ipairs = ipairs
 local tinsert = table.insert
-
-local GLOW_TYPES = {
-    { key = "pixel",    text = "Pixel" },
-    { key = "autocast", text = "Autocast" },
-    { key = "button",   text = "Button" },
-    { key = "proc",     text = "Proc" },
-}
-
-local GLOW_MODES = {
-    { key = "always",     text = "Always Glow" },
-    { key = "expiration", text = "Expiration Glow" },
-}
 
 -- Types that show the shared "Speed" (frequency) control.
 local FREQUENCY_TYPES = { pixel = true, autocast = true, button = true }
@@ -52,10 +41,16 @@ lib.premadeCards.GlowSettingsCard = {
         local showGlowMode = config.showGlowMode
         local allowedTypes = config.glowTypes
 
-        local glowTypeOptions = GLOW_TYPES
+        local glowTypes = {
+            { key = "pixel",    text = L["Pixel"] },
+            { key = "autocast", text = L["Autocast"] },
+            { key = "button",   text = L["Button"] },
+            { key = "proc",     text = L["Proc"] },
+        }
+        local glowTypeOptions = glowTypes
         if allowedTypes then
             glowTypeOptions = {}
-            for _, glowType in ipairs(GLOW_TYPES) do
+            for _, glowType in ipairs(glowTypes) do
                 for _, allowed in ipairs(allowedTypes) do
                     if glowType.key == allowed then
                         tinsert(glowTypeOptions, glowType)
@@ -128,7 +123,7 @@ lib.premadeCards.GlowSettingsCard = {
 
         -- The type dropdown sits in row 1 or row 2 depending on the layout, but behaves the same.
         local function AddTypeDropdown(row)
-            Gate(row:Dropdown("Type", {
+            Gate(row:Dropdown(L["Type"], {
                 width = 0.5,
                 options = glowTypeOptions,
                 value = glowType,
@@ -142,7 +137,7 @@ lib.premadeCards.GlowSettingsCard = {
 
         -- Row 1: Enable Glow + (When to Glow | Type)
         local row1 = card:Row(theme.rowHeight)
-        row1:Checkbox("Enable Glow", {
+        row1:Checkbox(L["Enable Glow"], {
             width = 0.5,
             value = db[keys.enabled],
             callback = function(checked)
@@ -155,9 +150,12 @@ lib.premadeCards.GlowSettingsCard = {
             local storedGlowMode = db[keys.glowMode]
             local validGlowMode = (storedGlowMode == "always" or storedGlowMode == "expiration") and storedGlowMode or
                 "always"
-            Gate(row1:Dropdown("When to Glow", {
+            Gate(row1:Dropdown(L["When to Glow"], {
                 width = 0.5,
-                options = GLOW_MODES,
+                options = {
+                    { key = "always",     text = L["Always Glow"] },
+                    { key = "expiration", text = L["Expiration Glow"] },
+                },
                 value = validGlowMode,
                 callback = function(key) setValue(keys.glowMode, key) end,
             }))
@@ -172,7 +170,7 @@ lib.premadeCards.GlowSettingsCard = {
         if showGlowMode then
             AddTypeDropdown(row2)
         else
-            Gate(row2:Slider("Speed", {
+            Gate(row2:Slider(L["Speed"], {
                 width = 0.5,
                 min = 0.05,
                 max = 1,
@@ -182,7 +180,7 @@ lib.premadeCards.GlowSettingsCard = {
             }))
         end
 
-        Gate(row2:ColorPicker("Color", {
+        Gate(row2:ColorPicker(L["Color"], {
             width = 0.5,
             value = db[keys.color],
             callback = function(r, g, b, a)
@@ -193,7 +191,7 @@ lib.premadeCards.GlowSettingsCard = {
 
         -- Frequency (full width) - only in glow-mode layout, for types that support it.
         if showFrequencyRow then
-            Gate(Row("frequency"):Slider("Speed", {
+            Gate(Row("frequency"):Slider(L["Speed"], {
                 width = 1,
                 min = 0.05,
                 max = 1,
@@ -206,7 +204,7 @@ lib.premadeCards.GlowSettingsCard = {
         -- Pixel: Lines / Length, then Thickness / Border.
         if isPixel then
             local rowPixel1 = card:Row(theme.rowHeight)
-            Gate(rowPixel1:Slider("Lines", {
+            Gate(rowPixel1:Slider(L["Lines"], {
                 width = 0.5,
                 min = 1,
                 max = 16,
@@ -214,7 +212,7 @@ lib.premadeCards.GlowSettingsCard = {
                 value = db[keys.lines],
                 callback = function(val) setValue(keys.lines, val) end,
             }))
-            Gate(rowPixel1:Slider("Length", {
+            Gate(rowPixel1:Slider(L["Length"], {
                 width = 0.5,
                 min = 1,
                 max = 20,
@@ -224,7 +222,7 @@ lib.premadeCards.GlowSettingsCard = {
             }))
 
             local rowPixel2 = Row("pixel2")
-            Gate(rowPixel2:Slider("Thickness", {
+            Gate(rowPixel2:Slider(L["Thickness"], {
                 width = 0.5,
                 min = 1,
                 max = 8,
@@ -232,7 +230,7 @@ lib.premadeCards.GlowSettingsCard = {
                 value = db[keys.thickness],
                 callback = function(val) setValue(keys.thickness, val) end,
             }))
-            Gate(rowPixel2:Checkbox("Border", {
+            Gate(rowPixel2:Checkbox(L["Border"], {
                 width = 0.5,
                 value = db[keys.border],
                 callback = function(checked) setValue(keys.border, checked) end,
@@ -242,7 +240,7 @@ lib.premadeCards.GlowSettingsCard = {
         -- Autocast: Particles / Scale.
         if isAutocast then
             local rowAutocast = Row("autocast")
-            Gate(rowAutocast:Slider("Particles", {
+            Gate(rowAutocast:Slider(L["Particles"], {
                 width = 0.5,
                 min = 1,
                 max = 16,
@@ -250,7 +248,7 @@ lib.premadeCards.GlowSettingsCard = {
                 value = db[keys.lines],
                 callback = function(val) setValue(keys.lines, val) end,
             }))
-            Gate(rowAutocast:Slider("Scale", {
+            Gate(rowAutocast:Slider(L["Scale"], {
                 width = 0.5,
                 min = 0.5,
                 max = 3,
@@ -263,12 +261,12 @@ lib.premadeCards.GlowSettingsCard = {
         -- Proc: Start Animation / Duration.
         if isProc then
             local rowProc = Row("proc")
-            Gate(rowProc:Checkbox("Start Animation", {
+            Gate(rowProc:Checkbox(L["Start Animation"], {
                 width = 0.5,
                 value = db[keys.startAnim],
                 callback = function(checked) setValue(keys.startAnim, checked) end,
             }))
-            Gate(rowProc:Slider("Duration", {
+            Gate(rowProc:Slider(L["Duration"], {
                 width = 0.5,
                 min = 0.5,
                 max = 5,

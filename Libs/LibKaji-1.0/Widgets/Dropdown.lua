@@ -8,11 +8,12 @@
 * The dropdown can be populated with:
 * - a simple key -> text table
 * - an array of strings
-* - an array of {value/key, text, color?, valueColor?, tooltip?, indicator?, spellID?, header?}
+* - an array of {value/key, text, color?, valueColor?, tooltip?, indicator?, spellID?, header?, font?}
 *   (`header` makes the option an unselectable group title, and indents the options under it;
 *   `action` fires the callback without the option ever showing as the selected value;
 *   `valueColor` tints the chosen value on the closed button only, not its line in the list;
-*   `spellID` shows the game's spell tooltip beside the open list while the option is hovered)
+*   `spellID` shows the game's spell tooltip beside the open list while the option is hovered;
+*   `font` is a font path the option is drawn in, for text the theme font has no letters for)
 * `itemActions(value)` adds small icon buttons to the right of each option (rename, delete, ...).
 
 * The value-changed callback fires only after the close animation finishes,
@@ -45,6 +46,7 @@ local InstanceMixin = lib.InstanceMixin
 local Animations = lib.Animations
 local safecall = lib.safecall
 local pixel = lib.Pixel
+local L = lib.L
 local LSM = LibStub("LibSharedMedia-3.0", true)
 
 local tostring = tostring
@@ -92,12 +94,14 @@ local ACTION_GAP = 6
 local STANDARD_BACKDROP = { bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1 }
 local BORDER_ONLY_BACKDROP = { edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1 }
 
-local function ClearPreviewFont(gui, fontString)
+-- an option's own font keeps the theme's size and flags, so only the letters change
+local function ClearPreviewFont(gui, fontString, optionFont)
     if not fontString then return end
 
     gui:ApplyFont(fontString, "normal")
 
     local path, size, flags = gui:GetThemeFont("normal")
+    path = optionFont or path
     if path then pcall(fontString.SetFont, fontString, path, size, flags) end
 end
 
@@ -405,6 +409,7 @@ local function NormalizeOptions(row, options)
     row._optionIndicators = {}
     row._optionHeaders = {}
     row._optionActions = {}
+    row._optionFonts = {}
     row._orderedKeys = nil
     if type(options) ~= "table" then return end
 
@@ -421,6 +426,7 @@ local function NormalizeOptions(row, options)
             if opt.indicator then row._optionIndicators[optKey] = opt.indicator end
             if opt.header then row._optionHeaders[optKey] = true end
             if opt.action then row._optionActions[optKey] = true end
+            if opt.font then row._optionFonts[optKey] = opt.font end
             tinsert(row._orderedKeys, optKey)
         end
     elseif options[1] ~= nil and type(options[1]) == "string" then
@@ -647,11 +653,11 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
                 end
             end
 
-            local text = "Select..."
+            local text = L["Select..."]
             if count == 1 then
                 text = firstName
             elseif count > 1 then
-                text = "Multiple Selected"
+                text = L["Multiple Selected"]
             end
 
             selectedText:SetText(text)
@@ -664,7 +670,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         if row._normalizedOptions[value] then
             selectedText:SetText(row._normalizedOptions[value])
         else
-            selectedText:SetText(value ~= nil and tostring(value) or "Select...")
+            selectedText:SetText(value ~= nil and tostring(value) or L["Select..."])
         end
 
         local optionColor = (row._optionColors and row._optionColors[value]) or (row._valueColors and row._valueColors[value])
@@ -679,7 +685,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         if row._isFontPreview and value then
             ApplyPreviewFont(gui, selectedText, gui:ResolveMedia("font", value), PREVIEW_SIZE)
         else
-            ClearPreviewFont(gui, selectedText)
+            ClearPreviewFont(gui, selectedText, row._optionFonts[value])
         end
 
         FitSelectedSwatch(value)
@@ -945,7 +951,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
             if row._isFontPreview then
                 ApplyPreviewFont(gui, btn._text, gui:ResolveMedia("font", key), PREVIEW_SIZE)
             else
-                ClearPreviewFont(gui, btn._text)
+                ClearPreviewFont(gui, btn._text, row._optionFonts[key])
             end
 
             local swatched = row._isStatusbarPreview and IsMediaKey(row._mediaType, key)
@@ -1100,7 +1106,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         pixel.SetPixelHeight(emptyLabel, ITEM_HEIGHT)
         emptyLabel:SetJustifyH("LEFT")
         gui:ApplyFont(emptyLabel, "normal")
-        emptyLabel:SetText("No matches found")
+        emptyLabel:SetText(L["No matches found"])
         emptyLabel:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
         emptyLabel:Hide()
     end
@@ -1219,7 +1225,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     -- The placeholder is not a font name, and it is the one OnAcquire path that never
     -- reaches ApplySelected, so it restores the theme font itself.
     row._setSelectedPlaceholder = function()
-        selectedText:SetText("Select...")
+        selectedText:SetText(L["Select..."])
         gui:ApplyFont(selectedText, "normal")
         PaintValue()
         FitSelectedSwatch(nil)

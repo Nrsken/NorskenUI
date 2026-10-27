@@ -288,7 +288,7 @@ function UF:SpawnUnit(unit, opts)
             -- db is resolved live rather than captured: UF.db is reassigned by UpdateDB()
             -- on a profile switch, so a captured table would write to the old profile.
             Anchors:Register(self, 'UnitFrame_' .. unit, frame, 'unitFrames_' .. UF.NormalizeUnit(unit), {
-                displayName = opts.displayName or UnitLabel(unit),
+                displayName = opts.displayName or UF.UnitLabels[unit] or UnitLabel(unit),
                 db = function() return UF.GetUnitDB(unit) end,
                 guiContext = 'frame',
                 overlayFrame = opts.overlayFrame,
@@ -367,16 +367,17 @@ function UF:OnEnable()
     self:CreateCDMAnchor()
 
     -- List of unit frames that we tell SCM that we created, so SCM can find them easily by typing 'NUF' in the anchor search box.
+    -- SCM only shows the labels and saves the frame name, so they can follow the language.
     self.NRSKNUFAnchors = {
-        ["Player"] = "NUF_Player",
-        ["Target"] = "NUF_Target",
-        ["Pet"] = "NUF_Pet",
-        ["Focus"] = "NUF_Focus",
-        ["Focus Target"] = "NUF_FocusTarget",
-        ["Target of Target"] = "NUF_TargetTarget",
+        [L['Player']] = "NUF_Player",
+        [L['Target']] = "NUF_Target",
+        [L['Pet']] = "NUF_Pet",
+        [L['Focus']] = "NUF_Focus",
+        [L['Focus Target']] = "NUF_FocusTarget",
+        [L['Target of Target']] = "NUF_TargetTarget",
     }
     for index = 1, UF.MAX_BOSS_FRAMES do
-        self.NRSKNUFAnchors[format('Boss %d', index)] = 'NUF_Boss' .. index
+        self.NRSKNUFAnchors[format(L['Boss %d'], index)] = 'NUF_Boss' .. index
     end
     if SCMAPI and SCMAPI.RegisterAnchorParents then
         SCMAPI.RegisterAnchorParents("NorskenUI", self.NRSKNUFAnchors)

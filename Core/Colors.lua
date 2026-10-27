@@ -161,12 +161,14 @@ function NRSKNUI:CreateColor(r, g, b, a)
 end
 
 -- Color mode options for dropdowns in the GUI
----@type { key: "class"|"custom"|"theme", text: string }[]
-NRSKNUI.ColorModeOptions = {
-    { key = "class",  text = L['Class Color'] },
-    { key = "custom", text = L['Custom Color'] },
-    { key = "theme",  text = L['Theme Color'] },
-}
+NRSKNUI:OnLanguageSet(function()
+    ---@type { key: "class"|"custom"|"theme", text: string }[]
+    NRSKNUI.ColorModeOptions = {
+        { key = "class",  text = L['Class Color'] },
+        { key = "custom", text = L['Custom Color'] },
+        { key = "theme",  text = L['Theme Color'] },
+    }
+end)
 
 ---Blend between RGB triplets based on the Min/Max ratio.
 ---@param Min number

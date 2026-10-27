@@ -34,7 +34,7 @@ local function BuildGeneralSettingsTab(page, db)
             db.Enabled = checked
             NRSKNUI:ToggleModule('Tooltips', checked)
             if not checked then
-                NRSKNUI:CreateReloadPrompt('Enabling Blizzard UI elements requires a reload to take full effect.')
+                NRSKNUI:CreateReloadPrompt(L['Enabling Blizzard UI elements requires a reload to take full effect.'])
             end
             page:Refresh()
         end,
@@ -69,7 +69,7 @@ local function BuildGeneralSettingsTab(page, db)
         value = db.SkinAuraContainer,
         callback = function(checked)
             db.SkinAuraContainer = checked
-            NRSKNUI:CreateReloadPrompt('Changing the aura container skin requires a reload to take full effect.')
+            NRSKNUI:CreateReloadPrompt(L['Changing the aura container skin requires a reload to take full effect.'])
         end,
     })
 

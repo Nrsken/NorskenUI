@@ -111,7 +111,7 @@ local function BuildGlobalPage(page, db)
         callback = function(checked)
             db.Enabled = checked
             NRSKNUI:ToggleModule('ActionBars', checked)
-            NRSKNUI:CreateReloadPrompt('Enabling/Disabling Action Bars requires a reload to take full effect.')
+            NRSKNUI:CreateReloadPrompt(L['Enabling/Disabling Action Bars requires a reload to take full effect.'])
             page:Refresh()
         end,
     })
@@ -325,7 +325,7 @@ local function BuildGlobalPage(page, db)
                     db.Bars[bar.key].Enabled = checked
                     Update('enabled', bar.key)
                     if checked then
-                        NRSKNUI:CreateReloadPrompt('Enabling bars requires a reload to take full effect.')
+                        NRSKNUI:CreateReloadPrompt(L['Enabling bars requires a reload to take full effect.'])
                     end
                     RefreshSidebar()
                 end,
@@ -353,7 +353,7 @@ local function BuildBarLayoutTab(page, db, barKey, barDB)
             barDB.Enabled = checked
             Update('enabled', barKey)
             if checked then
-                NRSKNUI:CreateReloadPrompt('Enabling bars requires a reload to take full effect.')
+                NRSKNUI:CreateReloadPrompt(L['Enabling bars requires a reload to take full effect.'])
             end
             RefreshSidebar()
             page:Refresh()

@@ -216,7 +216,7 @@ local function TextRows(card, page, element, set, key, triggers, pipName, main)
     })
 
     -- What %p/%t stand for: a time on most triggers, a value on Power and Stat. A plain token reads every layer's own trigger.
-    local readsTime, readsValue, readsPower = false, false, false
+    local readsTime, readsValue, readsPower, readsCount = false, false, false, false
     for index, trigger in ipairs(triggers) do
         if not source or index == source then
             local triggerType = CDM.TriggerTypes[trigger.Type]
@@ -225,14 +225,15 @@ local function TextRows(card, page, element, set, key, triggers, pipName, main)
                 readsPower = readsPower or (readsValue and trigger.Type == 'power')
             else
                 readsTime = readsTime or hasDuration
+                readsCount = readsCount or hasCharges
             end
         end
     end
     page:SetCondition(key .. ':numberDecimals', function() return element.NumberFormat == 'decimals' end)
 
-    -- Only a text with a time, a value or a name has anything to format.
+    -- Only a text with a time, a value, a count or a name has anything to format.
     local readsName = strfind(element.Text or '', '%%%d*%.?n') ~= nil
-    local formatOpen = (readsTime or readsValue or readsName) and SubSection(card, key .. ':format', L['Format Options'])
+    local formatOpen = (readsTime or readsValue or readsCount or readsName) and SubSection(card, key .. ':format', L['Format Options'])
     if formatOpen and readsName then
         local nameRow = card:Row(rowH, nil, SUB_INDENT)
         nameRow:Dropdown(L['Name Format'], {
@@ -274,6 +275,15 @@ local function TextRows(card, page, element, set, key, triggers, pipName, main)
             step = 1,
             value = element.Decimals or 1,
             callback = function(value) set({ 'Decimals' }, value) end,
+        })
+    end
+    if formatOpen and readsCount then
+        card:Row(rowH, nil, SUB_INDENT):Checkbox(L['Hide Zero'], {
+            width = 0.5,
+            conditions = { shown },
+            tooltip = L['%s shows nothing instead of 0.'],
+            value = element.HideZero,
+            callback = function(checked) set({ 'HideZero' }, checked or nil) end,
         })
     end
     if formatOpen and readsTime then

@@ -2,6 +2,7 @@
 local NRSKNUI = _G.NorskenUI
 ---@class RerollKeystoneModule
 local RerollKeystone = NRSKNUI:GetModule('RerollKeystone')
+local L = NRSKNUI.Libs.AL
 function RerollKeystone:UpdateDB() self.db = self.namespace.profile end
 
 -- TODO: Add glow
@@ -68,7 +69,7 @@ function RerollKeystone:CreateFrame()
 
     frame:Hide()
     self.frame = frame
-    Anchors:Register(self, 'RerollKeystone', self.frame, 'rerollKeystone')
+    Anchors:Register(self, 'RerollKeystone', self.frame, 'rerollKeystone', { displayName = L['Reroll Keystone'] })
 end
 
 function RerollKeystone:ApplySettings()
@@ -90,7 +91,7 @@ end
 -- Display --
 
 function RerollKeystone:UpdateDisplay()
-    self.frame.text:SetText(self.hasRerolled and 'NEW KEY' or 'REROLL KEY?')
+    self.frame.text:SetText(self.hasRerolled and L['NEW KEY'] or L['REROLL KEY?'])
 
     local keyStoneLevel, mapID = GetKeyInfo()
     if keyStoneLevel and mapID then
@@ -197,7 +198,7 @@ function RerollKeystone:ShowPreview()
     self.isPreview = true
     self:ApplySettings()
 
-    self.frame.text:SetText('REROLL KEY?')
+    self.frame.text:SetText(L['REROLL KEY?'])
     self.frame.keyText:SetText("Algeth'ar Academy\n21")
     self.frame:Show()
 end

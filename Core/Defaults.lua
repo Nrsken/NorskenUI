@@ -7,6 +7,7 @@ local Defaults = {
     global = {
         UseGlobalProfile = false,
         GlobalProfile = "Default",
+        Language = "auto", -- 'auto' follows the client, otherwise a locale from NRSKNUI.LANGUAGES
         GUIState = {
             frame = {
                 point = nil,

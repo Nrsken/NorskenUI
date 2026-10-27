@@ -428,7 +428,7 @@ end
 
 -- Applicant list --
 
----@type table<string, string>?
+---@type table<string, string?>?
 local flatRoleAtlas
 
 ---Blizzard's plated atlas keyed back to our flat glyph. Built on first use, the table it reads from

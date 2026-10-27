@@ -38,7 +38,7 @@ function CDM:Place(frame, id, display, point)
     ---@cast frame CDMPlaced
     local extraX, extraY = frame.conditionX or 0, frame.conditionY or 0 -- offset conditions, never saved
 
-    -- Anchored to the group's end icons so the engine sizes the bar; a group holding auras has a secret width.
+    -- Anchored to the group's end icons so the bar stretches with them; a group holding auras can't tell us its width.
     local matched = display.MatchWidth and self.containers[display.MatchWidth]
     if matched then
         local above = display.MatchSide == 'ABOVE'
@@ -106,7 +106,7 @@ end
 ---@param point string
 ---@return number? x, number? y screen coordinates
 local function PointCoords(frame, point)
-    -- An icon in an engine-laid group (one holding an aura) has a secret rect.
+    -- An icon in a group holding an aura has a secret position and size.
     local left, bottom, width, height = NRSKNUI:ScrubSecrets(frame:GetRect())
     if not (left and bottom and width and height) then return end
 

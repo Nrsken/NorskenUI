@@ -714,7 +714,7 @@ function CooldownStrings:BuildPanel()
 
     local profiles = self:GetCurrentSpecProfiles()
     local _, specName = self.SpecIDToSpec(CurrentSpecID())
-    panel.title:SetText(specName and (specName .. ' ' .. L['Profiles']) or L['CDM Profiles'])
+    panel.title:SetText(specName and format(L['%s Profiles'], specName) or L['CDM Profiles'])
 
     if not profiles[1] then
         local empty = GUI:CreateText(panel.content, nil, {

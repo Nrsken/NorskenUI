@@ -22,6 +22,7 @@ local InstanceMixin = lib.InstanceMixin
 local Animations = lib.Animations
 local safecall = lib.safecall
 local pixel = lib.Pixel
+local L = lib.L
 
 local CreateFrame = CreateFrame
 local Mixin = Mixin
@@ -188,8 +189,8 @@ function CheckboxMixin:OnAcquire(parent, labelText, config)
     self._callback = config.callback
     self._msgPopup = config.msgPopup
     self._msgText = config.msgText
-    self._msgOn = config.msgOn or "Enabled"
-    self._msgOff = config.msgOff or "Disabled"
+    self._msgOn = config.msgOn or L["Enabled"]
+    self._msgOff = config.msgOff or L["Disabled"]
 
     -- The "Default: x" line is only meaningful for a cvar-backed checkbox.
     local spec = config.tooltip

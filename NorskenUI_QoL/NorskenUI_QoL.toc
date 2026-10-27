@@ -8,6 +8,7 @@
 ## IconTexture: Interface\AddOns\NorskenUI\Media\Logo\LogoRed.png
 ## Dependencies: NorskenUI
 
+Locales\Locales.xml
 Combat\Combat.xml
 QoL\QoL.xml
 ClassUtility\ClassUtility.xml

@@ -69,7 +69,7 @@ local function BuildGeneralSettingsTab(page, db)
                 ApplySettings()
             else
                 NRSKNUI:CreateReloadPrompt(
-                    'Restoring the default frames requires a reload to take full effect.')
+                    L['Restoring the default frames requires a reload to take full effect.'])
             end
             page:Refresh()
         end,
@@ -156,7 +156,7 @@ local function BuildToggleCard(card, db, specs)
                     if checked then
                         ApplySettings()
                     else
-                        NRSKNUI:CreateReloadPrompt('Restoring the default ' .. spec.label .. ' requires a reload to take full effect.')
+                        NRSKNUI:CreateReloadPrompt(format(L['Restoring the default %s requires a reload to take full effect.'], spec.label))
                     end
                 end,
             })

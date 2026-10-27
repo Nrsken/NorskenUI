@@ -22,6 +22,7 @@ if not lib then return end
 local InstanceMixin = lib.InstanceMixin
 local safecall = lib.safecall
 local pixel = lib.Pixel
+local L = lib.L
 
 local CreateFrame = CreateFrame
 local format = string.format
@@ -142,7 +143,7 @@ function SectionHeaderMixin:OnAcquire(parent, labelText, config)
 
         button:SetShown(callback ~= nil)
         button._callback = callback
-        lib.SetTooltip(button, self.gui, action.title, config[action.tooltipKey], { anchor = "ANCHOR_TOP", x = 0, y = 4 })
+        lib.SetTooltip(button, self.gui, L[action.title], config[action.tooltipKey], { anchor = "ANCHOR_TOP", x = 0, y = 4 })
 
         if callback then
             button:ClearAllPoints()

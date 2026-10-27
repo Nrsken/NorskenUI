@@ -24,6 +24,7 @@ if not lib then return end
 ---@field theme KajiTheme
 local InstanceMixin = lib.InstanceMixin
 local LSM = LibStub("LibSharedMedia-3.0", true)
+local L = lib.L
 
 local type = type
 local pairs = pairs
@@ -616,7 +617,16 @@ end
 ---Editor metadata for every color key (name/category/supportsClassColor).
 ---@return table[]
 function InstanceMixin:GetColorKeys()
-    return self.colorKeys
+    if self.colorKeys ~= lib.THEME_COLOR_KEYS then
+        return self.colorKeys
+    end
+
+    -- the bundled names are built before the host sets a locale, so they're translated here
+    local list = {}
+    for i, def in ipairs(self.colorKeys) do
+        list[i] = { key = def.key, name = L[def.name], category = def.category, supportsClassColor = def.supportsClassColor }
+    end
+    return list
 end
 
 ---@param key string

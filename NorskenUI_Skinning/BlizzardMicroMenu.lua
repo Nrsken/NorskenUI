@@ -2,6 +2,7 @@
 local NRSKNUI = _G.NorskenUI
 ---@class MicroMenuModule
 local MM = NRSKNUI:GetModule('MicroMenu')
+local L = NRSKNUI.Libs.AL
 function MM:UpdateDB() self.db = NRSKNUI.Skinning.namespace.profile.MicroMenu end
 
 local UIFrameFadeOut = UIFrameFadeOut
@@ -77,7 +78,7 @@ function MM:CreateMicroBar()
     backdrop:SetBorderParent(borderFrame)
     microBar.borderFrame = borderFrame
 
-    NRSKNUI.Anchors:Register(self, 'MicroMenu', self.microBar, 'microMenu')
+    NRSKNUI.Anchors:Register(self, 'MicroMenu', self.microBar, 'microMenu', { displayName = L['Micro Menu'] })
 
     self:ApplySettings()
 end

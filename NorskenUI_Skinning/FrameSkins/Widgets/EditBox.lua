@@ -168,7 +168,7 @@ local function FitBackdropToArt(editBox)
 end
 
 ---Skin an EditBox/SearchBox: backdrop fitted to the input art, accent border while focused.
----@param editBox EditBox
+---@param editBox EditBox?
 function Skinning:HandleEditBox(editBox)
     if not editBox or editBox.NUISkinned then return end
     editBox.NUISkinned = true

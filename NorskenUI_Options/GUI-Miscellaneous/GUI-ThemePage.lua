@@ -22,7 +22,12 @@ local MODE_DESCRIPTIONS = {
 }
 
 local CATEGORY_ORDER = {
-    'Backgrounds', 'Borders', 'Accent Colors', 'Text Colors', 'Selection Colors', 'Status Colors',
+    { key = 'Backgrounds',      text = L['Backgrounds'] },
+    { key = 'Borders',          text = L['Borders'] },
+    { key = 'Accent Colors',    text = L['Accent Colors'] },
+    { key = 'Text Colors',      text = L['Text Colors'] },
+    { key = 'Selection Colors', text = L['Selection Colors'] },
+    { key = 'Status Colors',    text = L['Status Colors'] },
 }
 
 local PREVIEW_KEYS = { 'bgDark', 'bgMedium', 'bgLight', 'accent', 'selectedBg' }
@@ -109,10 +114,10 @@ local function BuildCustomCards(page)
         list[#list + 1] = def
     end
 
-    for _, catName in ipairs(CATEGORY_ORDER) do
-        local defs = categories[catName]
+    for _, category in ipairs(CATEGORY_ORDER) do
+        local defs = categories[category.key]
         if defs then
-            local card = page:Card(L[catName])
+            local card = page:Card(category.text)
             for i = 1, #defs, 2 do
                 local isLast = i + 2 > #defs
                 local row = card:Row(isLast and rowHL or rowH, isLast and 0 or nil)

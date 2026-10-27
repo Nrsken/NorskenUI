@@ -20,7 +20,8 @@ GUI:RegisterPage('homePage', {
         local function reloadUI() ReloadUI() end
 
         local playerNameColored = NRSKNUI:ColorTextByClass(NRSKNUI.MyName, NRSKNUI.MyClass)
-        local versionLine = L['Version: '] .. NRSKNUI:ColorTextByTheme(NRSKNUI.Version)
+        local version = NRSKNUI.Version == 'Development Version' and L['Development Version'] or NRSKNUI.Version
+        local versionLine = L['Version: '] .. NRSKNUI:ColorTextByTheme(version)
         local profileLine = L['Active Profile: '] .. NRSKNUI:ColorTextByTheme(NRSKNUI.db:GetCurrentProfile())
 
         -- Card 1: Welcome

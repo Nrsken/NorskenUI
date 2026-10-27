@@ -15,6 +15,7 @@ local type, next, wipe, time = type, next, wipe, time
 local pcall, xpcall = pcall, xpcall
 local tostring = tostring
 local pairs = pairs
+local format = string.format
 
 local GetNumSpecializationsForClassID = C_SpecializationInfo and C_SpecializationInfo.GetNumSpecializationsForClassID
 local SerializeCBOR = C_EncodingUtil and C_EncodingUtil.SerializeCBOR
@@ -40,7 +41,47 @@ local function WithoutRefresh(fn)
     suppressDepth = suppressDepth + 1
     local ok, err = pcall(fn)
     suppressDepth = suppressDepth - 1
-    if not ok then error(err, 0) end
+    if not ok then
+        error(err, 0)
+    end
+end
+
+---Run fn on another profile, then come back to the active one quietly.
+---SetProfile strips the defaults out of the profile it leaves in place. Modules keep reading the
+---active one's tables without an UpdateDB, so that hop goes without defaults to leave it whole.
+---@param profileName string
+---@param fn fun()
+local function OnProfile(profileName, fn)
+    local db = NRSKNUI.db
+    local currentProfile = db:GetCurrentProfile()
+    local dbs = { db }
+    for _, child in pairs(db.children or {}) do
+        dbs[#dbs + 1] = child
+    end
+
+    WithoutRefresh(function()
+        local defaults = {}
+        for i, each in ipairs(dbs) do
+            defaults[i] = each.defaults
+            each.defaults = nil
+        end
+        -- a db left without defaults would write every default into the save at logout
+        local ok, err = pcall(db.SetProfile, db, profileName)
+        for i, each in ipairs(dbs) do
+            each.defaults = defaults[i]
+        end
+        if not ok then
+            error(err, 0)
+        end
+
+        fn()
+        db:SetProfile(currentProfile)
+
+        -- logout strips only a profile AceDB has built again, which reading a cached table never does
+        for _, each in ipairs(dbs) do
+            local _ = each.profile
+        end
+    end)
 end
 
 ---WagoUI reloads once itself after its setup.
@@ -142,8 +183,12 @@ end
 ---@return boolean success
 ---@return string|nil error
 function ProfileManager:SetProfile(profileName)
-    if not profileName or profileName == '' then return false, 'Invalid profile name' end
-    if not NRSKNUI.db then return false, 'Database not initialized' end
+    if not profileName or profileName == '' then
+        return false, L['Invalid profile name']
+    end
+    if not NRSKNUI.db then
+        return false, L['Database not initialized']
+    end
 
     -- SetProfile handles creation if profile doesn't exist and fires OnProfileChanged for the refresh.
     NRSKNUI.db:SetProfile(profileName)
@@ -157,25 +202,26 @@ end
 ---@return boolean success
 ---@return string|nil error
 function ProfileManager:CreateProfile(profileName, sourceProfile)
-    if not profileName or profileName == '' then return false, 'Profile name cannot be empty' end
-    if not NRSKNUI.db then return false, 'Database not initialized' end
+    if not profileName or profileName == '' then
+        return false, L['Profile name cannot be empty']
+    end
+    if not NRSKNUI.db then
+        return false, L['Database not initialized']
+    end
 
     -- Check if profile with the same name already exists
     local profiles = self:GetProfiles()
     for _, name in pairs(profiles) do
         if name == profileName then
-            return false, 'Profile: ' .. profileName .. ', already exists'
+            return false, format(L['Profile: %s, already exists'], profileName)
         end
     end
 
-    local currentProfile = self:GetCurrentProfile()
-    WithoutRefresh(function()
-        NRSKNUI.db:SetProfile(profileName)
-        NRSKNUI.db:ResetProfile()
-        NRSKNUI.db:SetProfile(currentProfile)
-    end)
+    OnProfile(profileName, function() NRSKNUI.db:ResetProfile() end)
 
-    if sourceProfile then return self:CopyProfile(sourceProfile, profileName) end
+    if sourceProfile then
+        return self:CopyProfile(sourceProfile, profileName)
+    end
     return true
 end
 
@@ -185,8 +231,12 @@ end
 ---@return boolean success
 ---@return string|nil error
 function ProfileManager:CopyProfile(sourceProfile, targetProfile)
-    if not sourceProfile or sourceProfile == '' then return false, 'Source profile name cannot be empty' end
-    if not NRSKNUI.db then return false, 'Database not initialized' end
+    if not sourceProfile or sourceProfile == '' then
+        return false, L['Source profile name cannot be empty']
+    end
+    if not NRSKNUI.db then
+        return false, L['Database not initialized']
+    end
 
     targetProfile = targetProfile or self:GetCurrentProfile()
 
@@ -201,21 +251,16 @@ function ProfileManager:CopyProfile(sourceProfile, targetProfile)
     end
 
     if not sourceExists then
-        return false, 'Source profile: ' .. sourceProfile .. ', does not exist'
+        return false, format(L['Source profile: %s, does not exist'], sourceProfile)
     end
 
     -- AceDB's CopyProfile copies TO the current profile FROM the source
-    local currentProfile = self:GetCurrentProfile()
-    if targetProfile == currentProfile then
+    if targetProfile == self:GetCurrentProfile() then
         -- Copying into the active profile, OnProfileCopied drives the refresh.
         NRSKNUI.db:CopyProfile(sourceProfile)
     else
         -- Copying into an inactive profile changes nothing we are looking at, so stay quiet.
-        WithoutRefresh(function()
-            NRSKNUI.db:SetProfile(targetProfile)
-            NRSKNUI.db:CopyProfile(sourceProfile)
-            NRSKNUI.db:SetProfile(currentProfile)
-        end)
+        OnProfile(targetProfile, function() NRSKNUI.db:CopyProfile(sourceProfile) end)
     end
 
     return true
@@ -226,9 +271,15 @@ end
 ---@return boolean success
 ---@return string|nil error
 function ProfileManager:DeleteProfile(profileName)
-    if not profileName or profileName == '' then return false, 'Profile name cannot be empty' end
-    if not NRSKNUI.db then return false, 'Database not initialized' end
-    if profileName == self:GetCurrentProfile() then return false, 'Cannot delete the active profile' end -- Cannot delete active profile
+    if not profileName or profileName == '' then
+        return false, L['Profile name cannot be empty']
+    end
+    if not NRSKNUI.db then
+        return false, L['Database not initialized']
+    end
+    if profileName == self:GetCurrentProfile() then
+        return false, L['Cannot delete the active profile']
+    end
 
     -- Check if profile exists
     local profiles = self:GetProfiles()
@@ -242,7 +293,7 @@ function ProfileManager:DeleteProfile(profileName)
 
     -- Check if profile we want to delete even exists
     if not exists then
-        return false, 'Profile: ' .. profileName .. ', does not exist'
+        return false, format(L['Profile: %s, does not exist'], profileName)
     end
 
     if NRSKNUI.db.global.GlobalProfile == profileName then NRSKNUI.db.global.GlobalProfile = DEFAULT_PROFILE end
@@ -286,20 +337,34 @@ end
 ---@return boolean success
 ---@return string|nil error
 function ProfileManager:RenameProfile(oldName, newName)
-    if not oldName or oldName == '' then return false, 'Current name cannot be empty' end
-    if not newName or newName == '' then return false, 'New name cannot be empty' end
-    if oldName == newName then return false, 'Names are identical' end
-    if not NRSKNUI.db then return false, 'Database not initialized' end
+    if not oldName or oldName == '' then
+        return false, L['Current name cannot be empty']
+    end
+    if not newName or newName == '' then
+        return false, L['New name cannot be empty']
+    end
+    if oldName == newName then
+        return false, L['Names are identical']
+    end
+    if not NRSKNUI.db then
+        return false, L['Database not initialized']
+    end
 
     -- Check if old profile exists
     local profiles = self:GetProfiles()
     local oldExists = false
     for _, name in pairs(profiles) do
-        if name == oldName then oldExists = true end
-        if name == newName then return false, 'Profile: ' .. newName .. ', already exists' end
+        if name == oldName then
+            oldExists = true
+        end
+        if name == newName then
+            return false, format(L['Profile: %s, already exists'], newName)
+        end
     end
 
-    if not oldExists then return false, 'Profile: ' .. oldName .. ', does not exist' end
+    if not oldExists then
+        return false, format(L['Profile: %s, does not exist'], oldName)
+    end
 
     local originalProfile = self:GetCurrentProfile()
     local isCurrentProfile = (oldName == originalProfile)
@@ -308,10 +373,13 @@ function ProfileManager:RenameProfile(oldName, newName)
     -- Renaming is copy-to-new then delete-old, which means hopping profiles. Capture the profile we
     -- started on first, reading it back mid-rename returns newName and the switch back is lost.
     WithoutRefresh(function()
-        NRSKNUI.db:SetProfile(newName)
-        NRSKNUI.db:CopyProfile(oldName)
         -- If old was current, stay on new, otherwise return to where we started
-        if not isCurrentProfile then NRSKNUI.db:SetProfile(originalProfile) end
+        if isCurrentProfile then
+            NRSKNUI.db:SetProfile(newName)
+            NRSKNUI.db:CopyProfile(oldName)
+        else
+            OnProfile(newName, function() NRSKNUI.db:CopyProfile(oldName) end)
+        end
 
         -- Repoint every character before DeleteProfile sends them to "Default"; SetDualSpecProfile would switch mid-rename.
         local sv = NRSKNUI.db.sv
@@ -353,11 +421,7 @@ function ProfileManager:ResetProfile(profileName)
         return true
     end
 
-    WithoutRefresh(function()
-        NRSKNUI.db:SetProfile(profileName)
-        NRSKNUI.db:ResetProfile()
-        NRSKNUI.db:SetProfile(currentProfile)
-    end)
+    OnProfile(profileName, function() NRSKNUI.db:ResetProfile() end)
     return true
 end
 
@@ -379,15 +443,21 @@ end
 ---@return boolean success
 ---@return string|nil error
 function ProfileManager:ResetModuleSettings(dbPath, moduleName)
-    if not NRSKNUI.db or not NRSKNUI.db.profile then return false, 'Database not initialized' end
+    if not NRSKNUI.db or not NRSKNUI.db.profile then
+        return false, L['Database not initialized']
+    end
 
     local defaults = NRSKNUI:GetDefaultDB()
-    if not defaults or not defaults.profile then return false, 'Defaults not found' end
+    if not defaults or not defaults.profile then
+        return false, L['Defaults not found']
+    end
 
     local pathParts = {}
     for part in dbPath:gmatch('[^.]+') do pathParts[#pathParts + 1] = part end
 
-    if #pathParts == 0 then return false, 'Invalid path' end
+    if #pathParts == 0 then
+        return false, L['Invalid path']
+    end
 
     local defaultSection = defaults.profile
     local profileSection = NRSKNUI.db.profile
@@ -396,11 +466,15 @@ function ProfileManager:ResetModuleSettings(dbPath, moduleName)
         local key = pathParts[i]
         defaultSection = defaultSection[key]
         profileSection = profileSection[key]
-        if not defaultSection or not profileSection then return false, 'Path not found: ' .. dbPath end
+        if not defaultSection or not profileSection then
+            return false, format(L['Path not found: %s'], dbPath)
+        end
     end
 
     local finalKey = pathParts[#pathParts]
-    if not defaultSection[finalKey] then return false, 'Default settings not found for: ' .. dbPath end
+    if not defaultSection[finalKey] then
+        return false, format(L['Default settings not found for: %s'], dbPath)
+    end
 
     profileSection[finalKey] = DeepCopy(defaultSection[finalKey])
 
@@ -529,8 +603,12 @@ end
 ---@return boolean success
 ---@return string|nil error
 function ProfileManager:SetGlobalProfile(profileName)
-    if not profileName or profileName == '' then return false, 'Profile name cannot be empty' end
-    if not NRSKNUI.db or not NRSKNUI.db.global then return false, 'Database not initialized' end
+    if not profileName or profileName == '' then
+        return false, L['Profile name cannot be empty']
+    end
+    if not NRSKNUI.db or not NRSKNUI.db.global then
+        return false, L['Database not initialized']
+    end
 
     NRSKNUI.db.global.GlobalProfile = profileName
 
@@ -582,7 +660,7 @@ local function Take(data, path, depth)
         data[key] = nil
         return value
     end
-    if type(value) ~= 'table' then return end
+    if type(value) ~= 'table' then return nil end
 
     local taken = Take(value, path, depth + 1)
     if next(value) == nil then
@@ -694,11 +772,13 @@ end
 function ProfileManager:ExportProfile(profileName)
     profileName = profileName or self:GetCurrentProfile()
 
-    if not NRSKNUI.db then return nil, 'Database not initialized' end
+    if not NRSKNUI.db then
+        return nil, L['Database not initialized']
+    end
 
     local profileData = ExportData(profileName)
     if not profileData then
-        return nil, 'Profile: ' .. profileName .. ', not found'
+        return nil, format(L['Profile: %s, not found'], profileName)
     end
 
     -- Create export package with metadata
@@ -715,7 +795,9 @@ function ProfileManager:ExportProfile(profileName)
         return EncodeBase64(compressed)
     end)
 
-    if not ok or not encoded then return nil, 'Export failed' end
+    if not ok or not encoded then
+        return nil, L['Export failed']
+    end
 
     return EXPORT_PREFIX .. encoded
 end
@@ -728,14 +810,22 @@ end
 ---@return string|nil error
 local function DecodeLegacy(encoded)
     local compressed = LibDeflate:DecodeForPrint(encoded)
-    if not compressed then return nil, 'Decoding failed' end
+    if not compressed then
+        return nil, L['Decoding failed']
+    end
 
     local serialized = LibDeflate:DecompressDeflate(compressed)
-    if not serialized then return nil, 'Decompression failed' end
+    if not serialized then
+        return nil, L['Decompression failed']
+    end
 
     local success, exportData = AceSerializer:Deserialize(serialized)
-    if not success then return nil, 'Deserialization failed: ' .. tostring(exportData) end
-    if type(exportData) ~= 'table' then return nil, 'Invalid data structure' end
+    if not success then
+        return nil, format(L['Deserialization failed: %s'], tostring(exportData))
+    end
+    if type(exportData) ~= 'table' then
+        return nil, L['Invalid data structure']
+    end
 
     return exportData
 end
@@ -757,7 +847,9 @@ local function DecodeCurrent(encoded)
     end)
 
     -- A crafted string can deserialize cleanly into a scalar, so reject anything that is not a table here rather than downstream.
-    if not ok or type(exportData) ~= 'table' then return nil, 'Decoding failed' end
+    if not ok or type(exportData) ~= 'table' then
+        return nil, L['Decoding failed']
+    end
     return exportData
 end
 
@@ -768,8 +860,12 @@ end
 ---@return boolean success
 ---@return string|nil nameOrError
 function ProfileManager:ImportProfile(importString, targetName, activate)
-    if not importString or importString == '' then return false, 'Import string is empty' end
-    if not NRSKNUI.db then return false, 'Database not initialized' end
+    if not importString or importString == '' then
+        return false, L['Import string is empty']
+    end
+    if not NRSKNUI.db then
+        return false, L['Database not initialized']
+    end
 
     -- Route on the prefix so strings from either format still import.
     local exportData, decodeError
@@ -778,13 +874,17 @@ function ProfileManager:ImportProfile(importString, targetName, activate)
     elseif importString:sub(1, #LEGACY_PREFIX) == LEGACY_PREFIX then
         exportData, decodeError = DecodeLegacy(importString:sub(#LEGACY_PREFIX + 1))
     else
-        return false, 'Invalid format (missing or wrong prefix)'
+        return false, L['Invalid format (missing or wrong prefix)']
     end
 
-    if not exportData then return false, decodeError or 'Decoding failed' end
+    if not exportData then
+        return false, decodeError or L['Decoding failed']
+    end
 
     -- Both decoders guarantee a table, so only the payload itself is left to check.
-    if not exportData.d then return false, 'Invalid data structure' end
+    if not exportData.d then
+        return false, L['Invalid data structure']
+    end
 
     -- Determine target profile name
     local finalName = targetName or exportData._n or 'Imported'

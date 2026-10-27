@@ -3,6 +3,7 @@ local NRSKNUI = _G.NorskenUI
 ---@class ActionBarsModule
 local ACB = NRSKNUI:GetModule('ActionBars')
 function ACB:UpdateDB() self.db = NRSKNUI.Skinning.namespace.profile.ActionBars end
+local L = NRSKNUI.Libs.AL
 
 local CreateFrame = CreateFrame
 local ipairs = ipairs
@@ -21,16 +22,16 @@ local _G = _G
 
 -- Frame map, maps DB key to frame name and button prefix so we can iterate through them later
 local BAR_FRAME_MAP = {
-    Bar1 = { frame = "MainActionBar", prefix = "ActionButton" },
-    Bar2 = { frame = "MultiBarBottomLeft", prefix = "MultiBarBottomLeftButton" },
-    Bar3 = { frame = "MultiBarBottomRight", prefix = "MultiBarBottomRightButton" },
-    Bar4 = { frame = "MultiBarRight", prefix = "MultiBarRightButton" },
-    Bar5 = { frame = "MultiBarLeft", prefix = "MultiBarLeftButton" },
-    Bar6 = { frame = "MultiBar5", prefix = "MultiBar5Button" },
-    Bar7 = { frame = "MultiBar6", prefix = "MultiBar6Button" },
-    Bar8 = { frame = "MultiBar7", prefix = "MultiBar7Button" },
-    PetBar = { frame = "PetActionBar", prefix = "PetActionButton" },
-    StanceBar = { frame = "StanceBar", prefix = "StanceButton" },
+    Bar1 = { frame = "MainActionBar", prefix = "ActionButton", name = L['Action Bar 1'] },
+    Bar2 = { frame = "MultiBarBottomLeft", prefix = "MultiBarBottomLeftButton", name = L['Action Bar 2'] },
+    Bar3 = { frame = "MultiBarBottomRight", prefix = "MultiBarBottomRightButton", name = L['Action Bar 3'] },
+    Bar4 = { frame = "MultiBarRight", prefix = "MultiBarRightButton", name = L['Action Bar 4'] },
+    Bar5 = { frame = "MultiBarLeft", prefix = "MultiBarLeftButton", name = L['Action Bar 5'] },
+    Bar6 = { frame = "MultiBar5", prefix = "MultiBar5Button", name = L['Action Bar 6'] },
+    Bar7 = { frame = "MultiBar6", prefix = "MultiBar6Button", name = L['Action Bar 7'] },
+    Bar8 = { frame = "MultiBar7", prefix = "MultiBar7Button", name = L['Action Bar 8'] },
+    PetBar = { frame = "PetActionBar", prefix = "PetActionButton", name = L['Pet Bar'] },
+    StanceBar = { frame = "StanceBar", prefix = "StanceButton", name = L['Stance Bar'] },
 }
 
 -- Cooldown desaturation --
@@ -1289,7 +1290,7 @@ end
 -- Everything resolves live, a profile switch guts the captured bar table and drags write into it.
 local function RegisterBarAnchor(barKey)
     NRSKNUI.Anchors:Register(ACB, "ActionBars_" .. barKey, nil, "actionBars", {
-        displayName = barKey,
+        displayName = BAR_FRAME_MAP[barKey].name,
         frameName = "NRSKNUI_" .. barKey .. "_Container",
         guiContext = barKey,
         db = function(aceModule) return aceModule.db.Bars[barKey] end,
@@ -1297,44 +1298,9 @@ local function RegisterBarAnchor(barKey)
     })
 end
 
--- Migration to edge-relative positioning (resolution-independent)
-local function RunEdgeRelativeMigration(db)
-    if db.EdgeRelativeMigrationV2 then return end
-
-    local defaultBars = NRSKNUI.Skinning.Defaults.ActionBars.Bars
-
-    if not db.Bars then
-        db.EdgeRelativeMigrationV2 = true
-        return
-    end
-
-    -- Reset all bar positions to new edge-relative defaults
-    for barKey, defaultBar in pairs(defaultBars) do
-        if db.Bars[barKey] and defaultBar.Position then
-            db.Bars[barKey].Position = {
-                AnchorPoint = defaultBar.Position.AnchorPoint,
-                XOffset = defaultBar.Position.XOffset,
-                YOffset = defaultBar.Position.YOffset,
-            }
-        end
-    end
-
-    db.EdgeRelativeMigrationV2 = true
-
-    NRSKNUI:CreatePrompt({
-        title = "Action Bar Update",
-        text = "Action bar positions have been reset for better positioning across different resolutions.",
-        onAccept = function() end,
-        onCancel = function() end,
-        acceptText = "Ok",
-        cancelText = "Oke",
-    })
-end
-
 -- Module OnEnable
 function ACB:OnEnable()
     if NRSKNUI:ShouldNotLoadModule() then return end
-    RunEdgeRelativeMigration(self.db)
 
     NRSKNUI:RunWhenSafe(function()
         self:BuildConfigTable()

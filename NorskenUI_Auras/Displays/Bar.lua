@@ -202,12 +202,21 @@ end
 -- Aura bar --
 
 ---A lone aura's bar inside its aura button, which fills it from the aura's duration or stacks (Blizzard_CustomAuraButton.lua, live).
+---The top of an aura stacks bar: the trigger's Max Stacks, unless a condition sets it (a talent that adds stacks).
+---@param layer CDMLayer
+---@param trigger table
+---@return number
+function CDM:GetMaxStacks(layer, trigger)
+    return layer.owner.conditionMaxStacks or trigger.MaxStacks or 10
+end
+
+---@param layer CDMLayer
 ---@param button table the real aura button
 ---@param refs table its regions, see InitAuraButton
 ---@param style table
 ---@param trigger table
 ---@return StatusBar bar what the button's texts sit on
-function CDM:StyleAuraBar(button, refs, style, trigger)
+function CDM:StyleAuraBar(layer, button, refs, style, trigger)
     local bar = refs.bar
     if not bar then
         bar = NewBar(button)
@@ -222,7 +231,7 @@ function CDM:StyleAuraBar(button, refs, style, trigger)
     local interpolation = style.Smooth and SMOOTH or IMMEDIATE
     if trigger.BarMode == 'stacks' then
         button:ClearDurationBar()
-        button:SetApplicationBar(bar, { maxApplications = trigger.MaxStacks or 10, interpolation = interpolation })
+        button:SetApplicationBar(bar, { maxApplications = self:GetMaxStacks(layer, trigger), interpolation = interpolation })
     else
         button:ClearApplicationBar()
         button:SetDurationBar(bar, { direction = style.Inverse and ELAPSED or REMAINING, interpolation = interpolation })
@@ -383,8 +392,8 @@ local function CreatePip(bar)
     return pip
 end
 
----An invisible fill to `fraction` of the bar whose edge a pip boundary rides; the engine places it, so it
----follows a Match Width bar's width, which Lua may never read (the same trick as the ticks).
+---An invisible fill to `fraction` of the bar whose edge a pip boundary rides; being anchored, it follows
+---a Match Width bar's width, which we may never read (the same trick as the ticks).
 ---@param layer CDMLayer
 ---@param index number
 ---@param fraction number
@@ -425,7 +434,7 @@ local function AnchorPip(layer, pip, slot)
 end
 
 ---Split a bar layer into `count` pips, each its own fill; 0 makes it one bar again. Every boundary gives up the
----spacing in equal shares, so the pips come out the same size and the gaps exact once the engine snaps them.
+---spacing in equal shares, so the pips come out the same size and the gaps exact once they snap to pixels.
 ---@param layer CDMLayer
 ---@param count number
 function CDM:SetLayerPips(layer, count)
@@ -657,10 +666,11 @@ end
 ---@param set CDMTickSet
 ---@param index number
 ---@param fraction number
-local function PlaceTick(layer, set, index, fraction)
+---@param bar StatusBar the layer's own bar or the real aura button's
+local function PlaceTick(layer, set, index, fraction, bar)
     local host = set.hosts[index]
     if not host then
-        host = CreateFrame('StatusBar', nil, layer.Bar) --[[@as CDMTickHost]]
+        host = CreateFrame('StatusBar', nil, bar) --[[@as CDMTickHost]]
         host:SetAllPoints()
         host:SetStatusBarTexture(NRSKNUI.WhiteTexture)
         host:GetStatusBarTexture():SetAlpha(0)
@@ -675,7 +685,7 @@ local function PlaceTick(layer, set, index, fraction)
     local style = layer.owner.style
     local vertical = style.Orientation == 'VERTICAL'
     local reverse = style.ReverseFill == true
-    host:SetFrameLevel(set.level or layer.Bar:GetFrameLevel() + 1)
+    host:SetFrameLevel(set.level or bar:GetFrameLevel() + 1)
     host:SetOrientation(vertical and 'VERTICAL' or 'HORIZONTAL')
     host:SetReverseFill(reverse)
     host:SetValue(fraction)
@@ -703,7 +713,7 @@ function CDM:DrawTicks(layer)
             for _, fraction in ipairs(TickFractions(layer, element)) do
                 if fraction > 0 and fraction < 1 then
                     used = used + 1
-                    PlaceTick(layer, set, used, fraction)
+                    PlaceTick(layer, set, used, fraction, layer.Bar)
                 end
             end
         end
@@ -742,10 +752,65 @@ function CDM:SetLayerTicks(layer, fractions)
     self:DrawTicks(layer)
 end
 
+local stackFractions = {} -- [max stacks] = the place of every stack but the last
+
+---An aura stacks bar counts up to its Max Stacks: Automatic ticks mark every stack and At Value counts in stacks.
+---@param layer CDMLayer
+---@param trigger table
+function CDM:SetStackTicks(layer, trigger)
+    local maxStacks = layer.isBar and trigger.BarMode == 'stacks' and self:GetMaxStacks(layer, trigger) or nil
+    layer.max = maxStacks
+    local fractions = maxStacks and stackFractions[maxStacks]
+    if maxStacks and not fractions then
+        fractions = {}
+        for i = 1, maxStacks - 1 do
+            fractions[i] = i / maxStacks
+        end
+        stackFractions[maxStacks] = fractions
+    end
+    self:SetLayerTicks(layer, fractions)
+end
+
+---Ticks on the real aura button's bar. They live inside the button so they hide with it when the aura
+---goes, which nothing outside can tell while auras are secret, so they are styled with the rest of it.
+---@param layer CDMLayer
+---@param refs table the button's regions, see InitAuraButton
+---@param subRegions table[]
+function CDM:StyleAuraTicks(layer, refs, subRegions)
+    local sets = refs.tickSets or {}
+    refs.tickSets = sets
+    local count = 0
+    for _, element in ipairs(subRegions) do
+        if element.type == 'tick' then
+            count = count + 1
+            local set = sets[count] or { hosts = {} }
+            sets[count] = set
+            local used = 0
+            if element.Enabled then
+                set.element, set.level = element, nil
+                for _, fraction in ipairs(TickFractions(layer, element)) do
+                    if fraction > 0 and fraction < 1 then
+                        used = used + 1
+                        PlaceTick(layer, set, used, fraction, refs.bar)
+                    end
+                end
+            end
+            for i = used + 1, #set.hosts do
+                set.hosts[i]:Hide()
+            end
+        end
+    end
+    for i = count + 1, #sets do
+        for _, host in ipairs(sets[i].hosts) do
+            host:Hide()
+        end
+    end
+end
+
 -- Aura overlay parts --
 
 -- An aura overlay on a bar paints over the bar below it, as the unit frames' aura tints do: proxies of ours ride
--- the bar's fills and textures inside the aura button cover them, so the engine both sizes and shows them.
+-- the bar's fills and textures inside the aura button cover them, so they size and show themselves with the aura.
 
 local OVERLAY_PARTS = { 'barOverlay', 'missingOverlay', 'fillOverlay' } -- bottom to top
 local OVERLAY_PROXIES = 10                                              -- more than any split resource has pips; the button can't grow more once auras are secret

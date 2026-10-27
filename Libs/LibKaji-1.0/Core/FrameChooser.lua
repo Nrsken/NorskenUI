@@ -39,8 +39,10 @@ if not lib then return end
 ---@class KajiGUIInstanceMixin
 local InstanceMixin = lib.InstanceMixin
 local pixel = lib.Pixel
+local L = lib.L
 
 local _G = _G
+local format = string.format
 local CreateFrame = CreateFrame
 local IsMouseButtonDown = IsMouseButtonDown
 local GetMouseFoci = GetMouseFoci
@@ -176,15 +178,15 @@ function Chooser:_ApplyTheme()
 
     gui:ApplyFont(banner.title, 'large')
     banner.title:SetTextColor(ar, ag, ab, 1)
-    banner.title:SetText('Frame Chooser')
+    banner.title:SetText(L['Frame Chooser'])
 
     gui:ApplyFont(banner.confirm, 'normal')
     banner.confirm:SetTextColor(gui:Color('textSecondary'))
-    banner.confirm:SetText(gui:ColorText('Left-click') .. ' to select the highlighted frame')
+    banner.confirm:SetText(format(L['%s to select the highlighted frame'], gui:ColorText(L['Left-click'])))
 
     gui:ApplyFont(banner.cancel, 'normal')
     banner.cancel:SetTextColor(gui:Color('textSecondary'))
-    banner.cancel:SetText(gui:ColorText('Right-click') .. ' or ' .. gui:ColorText('Esc') .. ' to cancel')
+    banner.cancel:SetText(format(L['%s or %s to cancel'], gui:ColorText(L['Right-click']), gui:ColorText(L['Esc'])))
 end
 
 ---Frames the chooser must never hand back: its own overlay and the window the pick came from.

@@ -146,7 +146,7 @@ local EDGES = {
 ---@param host Frame
 ---@param anchor table what it outlines
 ---@param element table
----@param engineSnap boolean? keep Blizzard's pixel snap, for an outline on edges the engine places
+---@param engineSnap boolean? keep Blizzard's pixel snap, for an outline on edges we don't place ourselves
 ---@return CDMBorder
 local function StyleBorder(border, host, anchor, element, engineSnap)
     if not border then

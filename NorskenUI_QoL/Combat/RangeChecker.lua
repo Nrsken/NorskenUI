@@ -4,6 +4,7 @@ local NRSKNUI = _G.NorskenUI
 local RangeChecker = NRSKNUI:GetModule('RangeChecker')
 local LRC = NRSKNUI.Libs.LRC
 local Anchors = NRSKNUI.Anchors
+local L = NRSKNUI.Libs.AL
 
 local CreateFrame = CreateFrame
 local UnitExists = UnitExists
@@ -52,7 +53,7 @@ function RangeChecker:CreateFrame()
 
     -- Finalize the frame and register it with Anchors.
     self.frame = frame
-    Anchors:Register(self, 'RangeCheckerAlert', self.frame, 'rangeChecker')
+    Anchors:Register(self, 'RangeCheckerAlert', self.frame, 'rangeChecker', { displayName = L['Range Checker Alert'] })
     frame:Hide()
 end
 

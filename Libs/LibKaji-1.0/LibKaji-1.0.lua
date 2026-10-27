@@ -46,7 +46,7 @@ For comment styling I am using Better Comments extension for VSCode, with a cust
 --]]
 
 local addonName = ...
-local MAJOR, MINOR = "LibKaji-1.0", 1
+local MAJOR, MINOR = "LibKaji-1.0", 2
 assert(LibStub, MAJOR .. " requires LibStub")
 
 ---@class LibKaji-1.0
@@ -58,6 +58,32 @@ if not lib then return end -- a newer or equal version is already loaded
 
 -- Base path for this lib's bundled textures.
 lib.mediaBase = "Interface\\AddOns\\" .. addonName .. "\\Libs\\" .. MAJOR .. "\\Media\\"
+
+--[[
+# Locale
+
+* The library's own strings are keyed by their English text and read through `lib.L`, which asks the
+  host's locale and falls back to the English key.
+* One locale for the whole library: it's a LibStub singleton, so the last host to call SetLocale wins.
+* Strings in tables built when a file loads are translated where they are shown, since the host can
+  only call SetLocale after the library has loaded.
+
+## Example
+
+    LibStub('LibKaji-1.0'):SetLocale(LibStub('AceLocale-3.0'):GetLocale('MyAddon'))
+--]]
+
+lib.L = lib.L or setmetatable({}, {
+    __index = function(_, text)
+        local locale = lib.locale
+        return locale and locale[text] or text
+    end,
+})
+
+---@param locale table translations keyed by the English text, such as an AceLocale app
+function lib:SetLocale(locale)
+    lib.locale = locale
+end
 
 local Mixin = Mixin
 

@@ -9,5 +9,6 @@
 ## Dependencies: NorskenUI
 ## X-oUF: NorskenUF
 
+Locales\Locales.xml
 Libs\oUF\oUF.xml
 UnitFrames.xml

@@ -2,6 +2,7 @@
 local NRSKNUI = _G.NorskenUI
 ---@class XPBarModule
 local XPBar = NRSKNUI:GetModule('XPBar')
+local L = NRSKNUI.Libs.AL
 local Anchors = NRSKNUI.Anchors
 local kajiGUI = NRSKNUI.GUI
 
@@ -36,9 +37,9 @@ local STALE_SESSION = 259200 -- 3 days, a session older than this is treated as 
 local function FormatXP(value)
     value = value or 0
     if value >= 1e6 then
-        return format('%.2fM', value / 1e6)
+        return format(L['%.2fM'], value / 1e6)
     elseif value >= 1e3 then
-        return format('%.1fK', value / 1e3)
+        return format(L['%.1fK'], value / 1e3)
     end
     return format('%d', value)
 end
@@ -290,10 +291,10 @@ end
 
 function XPBar:UpdateText(data)
     local coreFrame = self.coreFrame
-    coreFrame.leftText:SetText('Level ' .. data.level)
+    coreFrame.leftText:SetText(format(L['Level %d'], data.level))
 
     if data.isMaxLevel then
-        coreFrame.centerText:SetText('Max Level')
+        coreFrame.centerText:SetText(L['Max Level'])
         coreFrame.rightText:SetText('')
         return
     end
@@ -365,44 +366,44 @@ function XPBar:ShowTooltip()
     -- Tooltip header
     GameTooltip:SetOwner(coreFrame, 'ANCHOR_BOTTOM')
     GameTooltip:ClearLines()
-    GameTooltip:AddLine('Experience Breakdown', 1, 1, 1)
+    GameTooltip:AddLine(L['Experience Breakdown'], 1, 1, 1)
     GameTooltip:AddLine(' ')
 
     -- Show the XP and remaining XP, or indicate that the player is at max level.
     if data.isMaxLevel then
-        GameTooltip:AddLine('Max Level', 0.6, 0.8, 1)
+        GameTooltip:AddLine(L['Max Level'], 0.6, 0.8, 1)
     else
-        GameTooltip:AddDoubleLine('XP:', format('%s / %s (%.1f%%)', FormatXP(data.xpCurr), FormatXP(data.xpMax), data.percentXP), self.pC[1], self.pC[2], self.pC[3], self.pC[1], self.pC[2], self.pC[3])
-        GameTooltip:AddDoubleLine('Remaining:', format('%s (%.1f%%)', FormatXP(data.remaining), 100 - data.percentXP), 1, 1, 1, 1, 1, 1)
+        GameTooltip:AddDoubleLine(L['XP:'], format('%s / %s (%.1f%%)', FormatXP(data.xpCurr), FormatXP(data.xpMax), data.percentXP), self.pC[1], self.pC[2], self.pC[3], self.pC[1], self.pC[2], self.pC[3])
+        GameTooltip:AddDoubleLine(L['Remaining:'], format('%s (%.1f%%)', FormatXP(data.remaining), 100 - data.percentXP), 1, 1, 1, 1, 1, 1)
     end
 
     -- Show the rested XP if any is available.
     if data.rested > 0 then
-        GameTooltip:AddDoubleLine('Rested:', format('+%s (%.1f%%)', FormatXP(data.rested), data.percentRested), self.rC[1], self.rC[2], self.rC[3], self.rC[1], self.rC[2], self.rC[3])
+        GameTooltip:AddDoubleLine(L['Rested:'], format('+%s (%.1f%%)', FormatXP(data.rested), data.percentRested), self.rC[1], self.rC[2], self.rC[3], self.rC[1], self.rC[2], self.rC[3])
     end
 
     -- Show the quest XP if any is available.
     if data.questXP > 0 then
         local questPercent = data.xpMax > 0 and (data.questXP / data.xpMax * 100) or 0
-        GameTooltip:AddDoubleLine('Quest Log XP:', format('%s (%.1f%%)', FormatXP(data.questXP), questPercent), self.qC[1], self.qC[2], self.qC[3], self.qC[1], self.qC[2], self.qC[3])
-        GameTooltip:AddDoubleLine('  Ready to turn in:', FormatXP(data.completeXP), 1, 0.82, 0, 1, 0.82, 0)
-        GameTooltip:AddDoubleLine('  In progress:', FormatXP(data.incompleteXP), 0.7, 0.7, 0.7, 0.7, 0.7, 0.7)
+        GameTooltip:AddDoubleLine(L['Quest Log XP:'], format('%s (%.1f%%)', FormatXP(data.questXP), questPercent), self.qC[1], self.qC[2], self.qC[3], self.qC[1], self.qC[2], self.qC[3])
+        GameTooltip:AddDoubleLine('  ' .. L['Ready to turn in:'], FormatXP(data.completeXP), 1, 0.82, 0, 1, 0.82, 0)
+        GameTooltip:AddDoubleLine('  ' .. L['In progress:'], FormatXP(data.incompleteXP), 0.7, 0.7, 0.7, 0.7, 0.7, 0.7)
     end
 
     -- Show the XP/hour and time-to-level if the player is not at max level and has gained XP this session.
     if not data.isMaxLevel and sData.xpPerHour > 0 then
         GameTooltip:AddLine(' ')
-        GameTooltip:AddDoubleLine('XP per hour:', FormatXP(sData.xpPerHour), 1, 1, 1, 1, 1, 1)
+        GameTooltip:AddDoubleLine(L['XP per hour:'], FormatXP(sData.xpPerHour), 1, 1, 1, 1, 1, 1)
         if sData.timeToLevel then
-            GameTooltip:AddDoubleLine('Time to level:', SecondsToTime(sData.timeToLevel), 1, 1, 1, 1, 1, 1)
+            GameTooltip:AddDoubleLine(L['Time to level:'], SecondsToTime(sData.timeToLevel), 1, 1, 1, 1, 1, 1)
         end
     end
 
     -- Show the time played stats if any have been recorded.
     GameTooltip:AddLine(' ')
-    GameTooltip:AddDoubleLine('Time this level:', sData.levelPlayed > 0 and SecondsToTime(sData.levelPlayed) or '--', 1, 1, 1, 1, 1, 1)
-    GameTooltip:AddDoubleLine('Time this session:', sData.sessionTime > 0 and SecondsToTime(sData.sessionTime) or '--', 1, 1, 1, 1, 1, 1)
-    GameTooltip:AddDoubleLine('Total played:', sData.totalPlayed > 0 and SecondsToTime(sData.totalPlayed) or '--', 1, 1, 1, 1, 1, 1)
+    GameTooltip:AddDoubleLine(L['Time this level:'], sData.levelPlayed > 0 and SecondsToTime(sData.levelPlayed) or '--', 1, 1, 1, 1, 1, 1)
+    GameTooltip:AddDoubleLine(L['Time this session:'], sData.sessionTime > 0 and SecondsToTime(sData.sessionTime) or '--', 1, 1, 1, 1, 1, 1)
+    GameTooltip:AddDoubleLine(L['Total played:'], sData.totalPlayed > 0 and SecondsToTime(sData.totalPlayed) or '--', 1, 1, 1, 1, 1, 1)
 
     GameTooltip:SetMinimumWidth(260) -- Set a min width, otherwise tooltip will look 'jumpy' when Time this sesson text updates.
     GameTooltip:Show()
@@ -520,7 +521,7 @@ function XPBar:OnEnable()
     self:RegisterEvent('QUEST_LOG_UPDATE')
     self:RegisterEvent('TIME_PLAYED_MSG')
 
-    Anchors:Register(self, 'ExperienceBar', self.coreFrame, 'XPBar')
+    Anchors:Register(self, 'ExperienceBar', self.coreFrame, 'XPBar', { displayName = L['Experience Bar'] })
 end
 
 function XPBar:OnDisable()
@@ -541,7 +542,7 @@ function XPBar:ShowPreview()
     if not self.coreFrame then
         self:CreateBar()
         self:ApplySettings()
-        Anchors:Register(self, 'ExperienceBar', self.coreFrame, 'XPBar')
+        Anchors:Register(self, 'ExperienceBar', self.coreFrame, 'XPBar', { displayName = L['Experience Bar'] })
     end
 
     self:Render(self:GetPreviewData())

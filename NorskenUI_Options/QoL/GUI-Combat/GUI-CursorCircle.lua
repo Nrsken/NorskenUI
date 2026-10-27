@@ -10,16 +10,17 @@ local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
 
 local ipairs = ipairs
+local format = string.format
 
 local function ApplySettings()
     CursorCircle:ApplySettings()
 end
 
--- Texture options built from the module's exposed texture list (key doubles as label).
+-- Texture options built from the module's exposed texture list (saved keys are 'Circle <n>' in list order).
 local function GetTextureOptions()
     local options = {}
-    for _, tex in ipairs(CursorCircle.Textures) do
-        options[#options + 1] = { value = tex.key, text = tex.key }
+    for i, tex in ipairs(CursorCircle.Textures) do
+        options[#options + 1] = { value = tex.key, text = format(L['Circle %d'], i) }
     end
     return options
 end

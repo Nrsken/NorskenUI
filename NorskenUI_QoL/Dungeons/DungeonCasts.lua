@@ -5,6 +5,7 @@ local DungeonCasts = NRSKNUI:GetModule('DungeonCasts')
 function DungeonCasts:UpdateDB() self.db = self.namespace.profile end
 
 local Anchors = NRSKNUI.Anchors
+local L = NRSKNUI.Libs.AL
 
 local GetRaidTargetIndex, SetRaidTargetIconTexture = GetRaidTargetIndex, SetRaidTargetIconTexture
 local UnitSpellTargetName, UnitSpellTargetClass = UnitSpellTargetName, UnitSpellTargetClass
@@ -113,7 +114,7 @@ function DungeonCasts:CreateFrames()
     updater:NUIApplyOnUpdate(UPDATE_THROTTLE, function() self:OnUpdate() end)
     self.updater = updater
 
-    Anchors:Register(self, 'DungeonCasts', self.group, 'dungeonCasts')
+    Anchors:Register(self, 'DungeonCasts', self.group, 'dungeonCasts', { displayName = L['Dungeon Casts'] })
 end
 
 ---@param index number

@@ -2,6 +2,7 @@
 local NRSKNUI = _G.NorskenUI
 ---@class CDMModule
 local CDM = NRSKNUI:GetModule('CDM')
+local L = NRSKNUI.Libs.AL
 local AuraPreview = NRSKNUI.AuraPreview
 local Anchors = NRSKNUI.Anchors
 
@@ -69,7 +70,7 @@ function CDM:ResolveAuraUnit(db, name)
     if not unit then return 'player' end
 
     if not NRSKNUI:IsValidUnitToken(unit) then
-        NRSKNUI:Print(format('Aura group "%s" has an unusable unit (%s), falling back to player.', name, tostring(unit)))
+        NRSKNUI:Print(format(L['Aura group "%s" has an unusable unit (%s), falling back to player.'], name, tostring(unit)))
         return 'player'
     end
 

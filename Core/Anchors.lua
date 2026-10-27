@@ -1,6 +1,7 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 local Theme = NRSKNUI.Theme
+local L = NRSKNUI.Libs.AL
 local Animations = NRSKNUI.Libs.KAJI.Animations
 ---@class NRSKNUI.Anchors
 local Anchors = NRSKNUI.Anchors or {}
@@ -385,7 +386,7 @@ local function OnDragStart(overlay)
 
     -- Anchors drives frames positioned by ApplyPosition, which always sets exactly one point.
     if frame:GetNumPoints() ~= 1 then
-        NRSKNUI:Print(format("Anchor '%s' has %d anchor points and cannot be dragged.", entry.displayName, frame:GetNumPoints()))
+        NRSKNUI:Print(format(L["Anchor '%s' has %d anchor points and cannot be dragged."], entry.displayName, frame:GetNumPoints()))
         return
     end
 
@@ -583,7 +584,7 @@ end
 ---@param deltaY number
 function Anchors:Nudge(deltaX, deltaY)
     if not self.selectedKey then
-        NRSKNUI:Print('No anchor selected. Click an overlay to select it.')
+        NRSKNUI:Print(L['No anchor selected. Click an overlay to select it.'])
         return
     end
 
@@ -651,7 +652,7 @@ local eventHandler = CreateFrame('Frame')
 eventHandler:SetScript('OnEvent', function(_, event, key)
     if event == 'PLAYER_REGEN_DISABLED' then
         if Anchors.isActive then
-            NRSKNUI:Print('Anchors closed due to entering combat.')
+            NRSKNUI:Print(L['Anchors closed due to entering combat.'])
             Anchors:Exit()
         end
     elseif event == 'MODIFIER_STATE_CHANGED' then
@@ -666,7 +667,7 @@ end)
 function Anchors:Enter()
     if self.isActive then return end
     if NRSKNUI:InCombat() then
-        NRSKNUI:Print('Cannot open Anchors during combat.')
+        NRSKNUI:Print(L['Cannot open Anchors during combat.'])
         return
     end
 
@@ -761,7 +762,7 @@ function Anchors:CreatePanel()
     title:SetFont(NRSKNUI.Media.Fonts.Expressway, 16, 'OUTLINE')
     title:SetShadowOffset(0, 0)
     title:SetShadowColor(0, 0, 0, 0)
-    title:SetText('Nudge Tool')
+    title:SetText(L['Nudge Tool'])
     title:SetTextColor(Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3], 1)
 
     local selected = panel:CreateFontString(nil, 'OVERLAY')
@@ -785,12 +786,12 @@ function Anchors:CreatePanel()
         Anchors:SetOffsets(Anchors.selectedKey, x, y)
     end
 
-    local xBox = GUI:CreateEditBox(panel, 'X Offset:', { inlineLabel = true, labelWidth = 60, callback = CommitOffsets })
+    local xBox = GUI:CreateEditBox(panel, L['X Offset:'], { inlineLabel = true, labelWidth = 60, callback = CommitOffsets })
     xBox:SetPoint('TOPLEFT', panel, 'TOPLEFT', 10, -46)
     xBox:SetPoint('TOPRIGHT', panel, 'TOPRIGHT', -10, -46)
     panel.xBox = xBox
 
-    local yBox = GUI:CreateEditBox(panel, 'Y Offset:', { inlineLabel = true, labelWidth = 60, callback = CommitOffsets })
+    local yBox = GUI:CreateEditBox(panel, L['Y Offset:'], { inlineLabel = true, labelWidth = 60, callback = CommitOffsets })
     yBox:SetPoint('TOPLEFT', xBox, 'BOTTOMLEFT', 0, -4)
     yBox:SetPoint('TOPRIGHT', xBox, 'BOTTOMRIGHT', 0, -4)
     panel.yBox = yBox
@@ -825,7 +826,7 @@ function Anchors:CreatePanel()
         panel.arrows[index] = button
     end
 
-    local settings = GUI:CreateButton(panel, 'Open Settings', {
+    local settings = GUI:CreateButton(panel, L['Open Settings'], {
         width = 160,
         height = 24,
         bgColor = Theme.bgDark,
@@ -845,7 +846,7 @@ function Anchors:UpdatePanel()
     local entry = self.selectedKey and self.registry[self.selectedKey]
 
     if not entry then
-        panel.selected:SetText('Click to select')
+        panel.selected:SetText(L['Click to select'])
         panel.selected:SetTextColor(Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3], 1)
         panel.xBox:SetValue('--')
         panel.yBox:SetValue('--')
@@ -890,7 +891,7 @@ end
 
 function Anchors:OpenSelectedSettings()
     if not self.selectedKey then
-        NRSKNUI:Print('No anchor selected.')
+        NRSKNUI:Print(L['No anchor selected.'])
         return
     end
 

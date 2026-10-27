@@ -34,7 +34,7 @@ local function BuildPage(page, db)
                 ApplySettings()
             else
                 NRSKNUI:CreateReloadPrompt(
-                    'Restoring the default Objective Tracker requires a reload to take full effect.')
+                    L['Restoring the default Objective Tracker requires a reload to take full effect.'])
             end
             page:Refresh()
         end,

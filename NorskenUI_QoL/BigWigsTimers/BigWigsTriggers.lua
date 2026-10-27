@@ -2,6 +2,7 @@
 local NRSKNUI = _G.NorskenUI
 ---@class BigWigsTimersModule
 local BigWigsTimers = NRSKNUI:GetModule('BigWigsTimers')
+local L = NRSKNUI.Libs.AL
 
 local insert, remove = table.insert, table.remove
 local format = string.format
@@ -99,9 +100,9 @@ local REMAINING_TESTS = {
 }
 
 NRSKNUI.BigWigsMessageOperators = {
-    { key = '==',    text = 'Is Exactly' },
-    { key = 'find',  text = 'Contains' },
-    { key = 'match', text = 'Matches (Pattern)' },
+    { key = '==',    text = L['Is Exactly'] },
+    { key = 'find',  text = L['Contains'] },
+    { key = 'match', text = L['Matches (Pattern)'] },
 }
 
 NRSKNUI.BigWigsRemainingOperators = {
@@ -114,14 +115,14 @@ NRSKNUI.BigWigsRemainingOperators = {
 }
 
 NRSKNUI.BigWigsCast = {
-    { key = 'show', text = 'Show' },
-    { key = 'hide', text = 'Hide' },
-    { key = 'only', text = 'Only Show Cast' },
+    { key = 'show', text = L['Show'] },
+    { key = 'hide', text = L['Hide'] },
+    { key = 'only', text = L['Only Show Cast'] },
 }
 
 NRSKNUI.BigWigsTriggerTypes = {
-    { key = 'timer',    text = 'BigWigs Timer' },
-    { key = 'announce', text = 'BigWigs Announce' },
+    { key = 'timer',    text = L['BigWigs Timer'] },
+    { key = 'announce', text = L['BigWigs Announce'] },
 }
 
 -- Matching --

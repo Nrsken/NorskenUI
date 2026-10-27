@@ -29,7 +29,7 @@ local function BuildGeneralSettingsTab(page, db)
         callback = function(checked)
             db.Enabled = checked
             NRSKNUI:ToggleModule('Minimap', checked)
-            NRSKNUI:CreateReloadPrompt('Enabling/Disabling this UI element requires a reload to take full effect.')
+            NRSKNUI:CreateReloadPrompt(L['Enabling/Disabling this UI element requires a reload to take full effect.'])
             page:Refresh()
         end,
     })

@@ -3,6 +3,7 @@ local NRSKNUI = _G.NorskenUI
 ---@class PotionReadyModule
 local PotionReady = NRSKNUI:GetModule("PotionReady")
 local Anchors = NRSKNUI.Anchors
+local L = NRSKNUI.Libs.AL
 local LC = NRSKNUI.LoadConditions
 
 local unpack = unpack
@@ -35,7 +36,7 @@ function PotionReady:CreateAlertFrame()
 
     -- Finalize the frame and register it with Anchors.
     self.alertFrame = frame
-    Anchors:Register(self, 'PotionReadyAlert', self.alertFrame, 'potionReady')
+    Anchors:Register(self, 'PotionReadyAlert', self.alertFrame, 'potionReady', { displayName = L['Potion Ready Alert'] })
     frame:Hide()
 end
 

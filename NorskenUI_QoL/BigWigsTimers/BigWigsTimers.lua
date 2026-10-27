@@ -8,6 +8,7 @@ function BigWigsTimers:UpdateDB()
 end
 
 local Anchors = NRSKNUI.Anchors
+local L = NRSKNUI.Libs.AL
 
 local format, gsub, tostring = string.format, string.gsub, tostring
 local floor, max, min = math.floor, math.max, math.min
@@ -105,8 +106,8 @@ function BigWigsTimers:CreateFrames()
     updater:NUIApplyOnUpdate(UPDATE_THROTTLE, function() self:OnUpdate() end)
     self.updater = updater
 
-    Anchors:Register(self, 'BigWigsTimerBars', self.groups[BARS], 'bwTimersBars', { db = self.db[BARS], displayName = 'BigWigs Timer Bars' })
-    Anchors:Register(self, 'BigWigsTimerTexts', self.groups[TEXTS], 'bwTimersTexts', { db = self.db[TEXTS], displayName = 'BigWigs Timer Texts' })
+    Anchors:Register(self, 'BigWigsTimerBars', self.groups[BARS], 'bwTimersBars', { db = self.db[BARS], displayName = L['BigWigs Timer Bars'] })
+    Anchors:Register(self, 'BigWigsTimerTexts', self.groups[TEXTS], 'bwTimersTexts', { db = self.db[TEXTS], displayName = L['BigWigs Timer Texts'] })
 end
 
 ---@param index number
@@ -559,13 +560,13 @@ end
 
 local PREVIEW_SAMPLES = {
     bar = {
-        { text = 'Tank Hit',     icon = 135771, count = 1, color = { 0.772, 0.168, 0.168, 1 } },
-        { text = 'Tank Frontal', icon = 136106, count = 2, color = { 0.902, 0.549, 0.169, 1 } },
+        { text = L['Tank Hit'],     icon = 135771, count = 1, color = { 0.772, 0.168, 0.168, 1 } },
+        { text = L['Tank Frontal'], icon = 136106, count = 2, color = { 0.902, 0.549, 0.169, 1 } },
     },
     text = {
-        { text = 'AOE',     icon = 132219, count = 1, color = { 1, 0, 0, 1 } },
-        { text = 'DEBUFFS', icon = 136010, count = 2, color = { 0.12, 1, 0, 1 } },
-        { text = 'SOAKS',   icon = 136010, count = 2, color = { 1, 0.67, 0.31, 1 } },
+        { text = L['AOE'],     icon = 132219, count = 1, color = { 1, 0, 0, 1 } },
+        { text = L['DEBUFFS'], icon = 136010, count = 2, color = { 0.12, 1, 0, 1 } },
+        { text = L['SOAKS'],   icon = 136010, count = 2, color = { 1, 0.67, 0.31, 1 } },
     },
 }
 local PREVIEW_KINDS = {

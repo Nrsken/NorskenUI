@@ -36,6 +36,7 @@ local InstanceMixin = lib.InstanceMixin
 local Animations = lib.Animations
 local safecall = lib.safecall
 local pixel = lib.Pixel
+local L = lib.L
 
 local CreateFrame = CreateFrame
 local Mixin = Mixin
@@ -281,7 +282,7 @@ end
 ---@param config table
 function ButtonMixin:OnAcquire(parent, buttonText, config)
     local theme = self.gui.theme
-    local text = buttonText or "Button"
+    local text = buttonText or L["Button"]
     local image = config.image
     local atlas = config.imageAtlas
     local imageSize = config.imageSize or 16

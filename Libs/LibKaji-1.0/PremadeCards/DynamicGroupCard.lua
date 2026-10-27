@@ -20,49 +20,31 @@ if not lib then return end
 
 lib.premadeCards = lib.premadeCards or {}
 
+local L = lib.L
 local ipairs = ipairs
 
 -- Grow directions whose cross-axis is horizontal (align uses LEFT/CENTER/RIGHT).
 local VERTICAL_GROW = { DOWN = true, UP = true, VERTICAL = true }
 
-local DEFAULT_GROW_OPTIONS = {
-    { key = "DOWN",       text = "Down" },
-    { key = "UP",         text = "Up" },
-    { key = "RIGHT",      text = "Right" },
-    { key = "LEFT",       text = "Left" },
-    { key = "HORIZONTAL", text = "Horizontal (centered)" },
-    { key = "VERTICAL",   text = "Vertical (centered)" },
-    { key = "GRID",       text = "Grid" },
-}
-
-local ALIGN_OPTIONS_VERTICAL = {
-    { key = "LEFT",   text = "Left" },
-    { key = "CENTER", text = "Center" },
-    { key = "RIGHT",  text = "Right" },
-}
-
-local ALIGN_OPTIONS_HORIZONTAL = {
-    { key = "TOP",    text = "Top" },
-    { key = "CENTER", text = "Center" },
-    { key = "BOTTOM", text = "Bottom" },
-}
-
-local GRID_TYPES = {
-    { key = "RD", text = "Right then Down" },
-    { key = "RU", text = "Right then Up" },
-    { key = "LD", text = "Left then Down" },
-    { key = "LU", text = "Left then Up" },
-    { key = "DR", text = "Down then Right" },
-    { key = "DL", text = "Down then Left" },
-    { key = "UR", text = "Up then Right" },
-    { key = "UL", text = "Up then Left" },
-}
-
 ---Resolve the align option list and a validity lookup for a grow direction.
 ---@param grow string
 ---@return { key: string, text: string }[] options, table<string, boolean> valid
 local function AlignOptionsFor(grow)
-    local options = VERTICAL_GROW[grow] and ALIGN_OPTIONS_VERTICAL or ALIGN_OPTIONS_HORIZONTAL
+    local options
+    if VERTICAL_GROW[grow] then
+        options = {
+            { key = "LEFT",   text = L["Left"] },
+            { key = "CENTER", text = L["Center"] },
+            { key = "RIGHT",  text = L["Right"] },
+        }
+    else
+        options = {
+            { key = "TOP",    text = L["Top"] },
+            { key = "CENTER", text = L["Center"] },
+            { key = "BOTTOM", text = L["Bottom"] },
+        }
+    end
+
     local valid = {}
     for _, opt in ipairs(options) do valid[opt.key] = true end
     return options, valid
@@ -81,7 +63,15 @@ lib.premadeCards.DynamicGroupCard = {
         local dbKeys = config.dbKeys or {}
         local onChange = config.onChangeCallback
         local showLimit = config.showLimit ~= false
-        local growOptions = config.growOptions or DEFAULT_GROW_OPTIONS
+        local growOptions = config.growOptions or {
+            { key = "DOWN",       text = L["Down"] },
+            { key = "UP",         text = L["Up"] },
+            { key = "RIGHT",      text = L["Right"] },
+            { key = "LEFT",       text = L["Left"] },
+            { key = "HORIZONTAL", text = L["Horizontal (centered)"] },
+            { key = "VERTICAL",   text = L["Vertical (centered)"] },
+            { key = "GRID",       text = L["Grid"] },
+        }
         local spacingRange = config.spacingRange or { 0, 20 }
         local gridWidthRange = config.gridWidthRange or { 1, 20 }
         local limitRange = config.limitRange or { 1, 40 }
@@ -121,7 +111,7 @@ lib.premadeCards.DynamicGroupCard = {
 
         -- Row 1: grow direction + (align selector | grid fill).
         local row1 = card:Row(theme.rowHeight)
-        row1:Dropdown("Grow Direction", {
+        row1:Dropdown(L["Grow Direction"], {
             width = 0.5,
             options = growOptions,
             value = grow,
@@ -133,9 +123,18 @@ lib.premadeCards.DynamicGroupCard = {
         })
 
         if isGrid then
-            row1:Dropdown("Grid Fill", {
+            row1:Dropdown(L["Grid Fill"], {
                 width = 0.5,
-                options = GRID_TYPES,
+                options = {
+                    { key = "RD", text = L["Right then Down"] },
+                    { key = "RU", text = L["Right then Up"] },
+                    { key = "LD", text = L["Left then Down"] },
+                    { key = "LU", text = L["Left then Up"] },
+                    { key = "DR", text = L["Down then Right"] },
+                    { key = "DL", text = L["Down then Left"] },
+                    { key = "UR", text = L["Up then Right"] },
+                    { key = "UL", text = L["Up then Left"] },
+                },
                 value = getValue(keys.GridType, "RD"),
                 callback = function(val) setValue(keys.GridType, val) end,
             })
@@ -143,7 +142,7 @@ lib.premadeCards.DynamicGroupCard = {
             local alignOptions, validAlign = AlignOptionsFor(grow)
             local alignValue = getValue(keys.Align, "CENTER")
             if not validAlign[alignValue] then alignValue = "CENTER" end
-            row1:Dropdown("Alignment", {
+            row1:Dropdown(L["Alignment"], {
                 width = 0.5,
                 options = alignOptions,
                 value = alignValue,
@@ -155,7 +154,7 @@ lib.premadeCards.DynamicGroupCard = {
         local spacingLast = not isGrid and not showLimit
         local spacingHeight = spacingLast and theme.rowHeightLast or theme.rowHeight
         local row2 = card:Row(spacingHeight, spacingLast and 0 or nil)
-        row2:Slider("Spacing", {
+        row2:Slider(L["Spacing"], {
             width = isGrid and 0.5 or 1,
             min = spacingRange[1],
             max = spacingRange[2],
@@ -165,7 +164,7 @@ lib.premadeCards.DynamicGroupCard = {
         })
 
         if isGrid then
-            row2:Slider("Row Spacing", {
+            row2:Slider(L["Row Spacing"], {
                 width = 0.5,
                 min = spacingRange[1],
                 max = spacingRange[2],
@@ -179,7 +178,7 @@ lib.premadeCards.DynamicGroupCard = {
         if isGrid then
             local gridLast = not showLimit
             local gridHeight = gridLast and theme.rowHeightLast or theme.rowHeight
-            card:Row(gridHeight, gridLast and 0 or nil):Slider("Grid Width", {
+            card:Row(gridHeight, gridLast and 0 or nil):Slider(L["Grid Width"], {
                 width = 1,
                 min = gridWidthRange[1],
                 max = gridWidthRange[2],
@@ -194,7 +193,7 @@ lib.premadeCards.DynamicGroupCard = {
             card:Separator()
 
             local rowLimit = card:Row(theme.rowHeightLast, 0)
-            rowLimit:Checkbox("Use Limit", {
+            rowLimit:Checkbox(L["Use Limit"], {
                 width = 0.5,
                 value = getValue(keys.UseLimit, false),
                 callback = function(checked)
@@ -203,7 +202,7 @@ lib.premadeCards.DynamicGroupCard = {
                 end,
             })
 
-            limitSlider = rowLimit:Slider("Limit", {
+            limitSlider = rowLimit:Slider(L["Limit"], {
                 width = 0.5,
                 min = limitRange[1],
                 max = limitRange[2],

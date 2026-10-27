@@ -2,6 +2,7 @@
 local NRSKNUI = _G.NorskenUI
 ---@class TooltipsModule
 local Tooltips = NRSKNUI:GetModule('Tooltips')
+local L = NRSKNUI.Libs.AL
 function Tooltips:UpdateDB() self.db = NRSKNUI.Skinning.namespace.profile.Tooltips end
 
 local Anchors = NRSKNUI.Anchors
@@ -138,7 +139,7 @@ local function CustomAnchorHandler()
         customAnchor:SetSize(170, 60)
         customAnchor:SetClampedToScreen(true)
         Tooltips.TTAnchor = customAnchor
-        Anchors:Register(Tooltips, 'TooltipAnchor', Tooltips.TTAnchor, 'tooltip')
+        Anchors:Register(Tooltips, 'TooltipAnchor', Tooltips.TTAnchor, 'tooltip', { displayName = L['Tooltip Anchor'] })
     end
 
     local pos = Tooltips.db.Position

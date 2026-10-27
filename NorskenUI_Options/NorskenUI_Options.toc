@@ -10,6 +10,8 @@
 ## Dependencies: NorskenUI
 ## OptionalDeps: NorskenUI_Auras, NorskenUI_UnitFrames, NorskenUI_Skinning, NorskenUI_QoL
 
+Locales\Locales.xml
+
 # the window and what every page builds with
 GUI-Core.lua
 GUI-SidebarConfig.lua

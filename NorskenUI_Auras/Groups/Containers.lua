@@ -13,10 +13,10 @@ local STATIC_GROUP_SIZE = 32 -- a static group draws nothing; this is what its m
 
 --[[
 The frames groups live in.
-A plain frame for a group, a dynamic group or a chain group when the engine has to lay it out.
+A plain frame for a group, a dynamic group or a chain group when its icons can't be measured.
 ]]
 
----A dynamic group (not Grid) holding an aura or a text is laid out by the engine, as their sizes can be secret.
+---A dynamic group (not Grid) holding an aura or a text is chained instead, as their sizes can be secret.
 ---@param id string
 ---@return boolean
 function CDM:WantsChain(id)

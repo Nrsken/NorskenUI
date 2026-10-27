@@ -2,6 +2,7 @@
 local NRSKNUI = _G.NorskenUI
 ---@class BlizzardMessagesModule
 local BlizzardMessages = NRSKNUI:GetModule('BlizzardMessages')
+local L = NRSKNUI.Libs.AL
 function BlizzardMessages:UpdateDB()
     self.db = self.namespace.profile
     self:ApplyGlobalFontVars()
@@ -168,14 +169,14 @@ function BlizzardMessages:PreviewUIErrors()
     local frame = _G.UIErrorsFrame
     if frame then
         frame:Clear()
-        frame:AddMessage('Error Message Text', 1, 0.1, 0.1, 1.0, 5)
+        frame:AddMessage(L['Error Message Text'], 1, 0.1, 0.1, 1.0, 5)
     end
 end
 
 function BlizzardMessages:PreviewActionStatus()
     local frame = _G.ActionStatus
     if frame and frame.Text then
-        frame.Text:SetText('Action Status Text')
+        frame.Text:SetText(L['Action Status Text'])
         frame:Show()
         frame.startTime = GetTime()
         frame.holdTime = 5
@@ -189,28 +190,28 @@ function BlizzardMessages:PreviewZone()
     local pvpArena, pvpInfo = _G.PVPArenaTextString, _G.PVPInfoTextString
 
     if zoneFrame and zoneText then
-        zoneText:SetText('Main Zone Text')
+        zoneText:SetText(L['Main Zone Text'])
         zoneFrame:Show()
         zoneFrame.fadingOut = false
         zoneFrame.startTime = GetTime()
     end
 
     if subFrame and subText then
-        subText:SetText('Sub Zone Text')
+        subText:SetText(L['Sub Zone Text'])
         subFrame:Show()
         subFrame.fadingOut = false
         subFrame.startTime = GetTime()
     end
 
     if pvpArena then
-        pvpArena:SetText('(PVP Arena Text)')
+        pvpArena:SetText(L['(PVP Arena Text)'])
         pvpArena:Show()
         pvpArena.fadingOut = false
         pvpArena.startTime = GetTime()
     end
 
     if pvpInfo then
-        pvpInfo:SetText('(PVP Info Text)')
+        pvpInfo:SetText(L['(PVP Info Text)'])
         pvpInfo:Show()
         pvpInfo.fadingOut = false
         pvpInfo.startTime = GetTime()

@@ -63,16 +63,18 @@ NRSKNUI.MyName, NRSKNUI.MyRealm = UnitFullName('player')
 NRSKNUI.ClearTexture = 0
 NRSKNUI.WhiteTexture = 'Interface\\Buttons\\WHITE8X8'
 NRSKNUI.GlobalZoom = 0.3
-NRSKNUI.Separators = {
-    ['||'] = '|',
-    ['-'] = '-',
-    ['/'] = '/',
-    [' '] = 'Space',
-    ['•'] = '•',
-    ['>'] = '>',
-    ['>>'] = '>>',
-    ['»'] = '»',
-}
+NRSKNUI:OnLanguageSet(function()
+    NRSKNUI.Separators = {
+        ['||'] = '|',
+        ['-'] = '-',
+        ['/'] = '/',
+        [' '] = NRSKNUI.L['Space'],
+        ['•'] = '•',
+        ['>'] = '>',
+        ['>>'] = '>>',
+        ['»'] = '»',
+    }
+end)
 NRSKNUI.TimeFormats = {
     ['MM:SS']  = '01:30',
     ['M:SS']   = '1:30',
@@ -91,13 +93,14 @@ NRSKNUI.Libs = {
     LS = _G.LibStub('LibSpecialization'),
     LRC = _G.LibStub('LibRangeCheck-3.0'),
     AS = _G.LibStub('AceSerializer-3.0'),
-    AL = _G.LibStub('AceLocale-3.0'):GetLocale('NorskenUI'),
+    AL = NRSKNUI.L, -- our own registry (Core/Localization.lua), the language picker needs every locale
     LD = _G.LibStub('LibDeflate'),
     LDB = _G.LibStub('LibDataBroker-1.1'),
     LDBIcon = _G.LibStub('LibDBIcon-1.0'),
     LDS = _G.LibStub('LibDualSpec-1.0'),
     KAJI = _G.LibStub('LibKaji-1.0'),
 }
+NRSKNUI.Libs.KAJI:SetLocale(NRSKNUI.Libs.AL)
 
 do
     -- Convert GitHub version string to a more user-friendly format for display in the GUI.

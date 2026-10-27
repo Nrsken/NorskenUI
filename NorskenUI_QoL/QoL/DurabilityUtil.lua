@@ -3,6 +3,7 @@ local NRSKNUI = _G.NorskenUI
 ---@class DurabilityModule
 local Durability = NRSKNUI:GetModule('Durability')
 local Anchors = NRSKNUI.Anchors
+local L = NRSKNUI.Libs.AL
 
 local GetInventoryItemDurability = GetInventoryItemDurability
 local CreateFrame = CreateFrame
@@ -97,7 +98,7 @@ function Durability:OnEnable()
     self:RegisterEvent('MERCHANT_SHOW', 'OnEvent')
     self:RegisterEvent('PLAYER_ENTERING_WORLD', 'OnEvent')
 
-    Anchors:Register(self, 'DurabilityLow', self.coreFrame, 'durabilityUtil')
+    Anchors:Register(self, 'DurabilityLow', self.coreFrame, 'durabilityUtil', { displayName = L['Durability Low'] })
 
     -- If the module is enabled and the preview is active, show the frame.
     -- Without this a showpreview re trigger is needed, e.g reopen GUI.

@@ -49,8 +49,8 @@ local GROUP_OF = {
     Utility = 'Raid',
 }
 local GROUP_INFO = {
-    Raid = { anchor = 'MissingBuffsRaid', guiPath = 'missingBuffsRaid', displayName = 'Missing Buffs' },
-    Targeted = { anchor = 'MissingBuffsTargeted', guiPath = 'missingBuffsTargeted', displayName = 'Missing Targeted Buffs' },
+    Raid = { anchor = 'MissingBuffsRaid', guiPath = 'missingBuffsRaid', displayName = L['Missing Buffs'] },
+    Targeted = { anchor = 'MissingBuffsTargeted', guiPath = 'missingBuffsTargeted', displayName = L['Missing Targeted Buffs'] },
 }
 local CATEGORY_DISPLAY_ORDER = { 'Raid', 'Presence', 'Targeted', 'Self', 'Consumable', 'Utility' }
 
@@ -126,8 +126,10 @@ end
 ---@param seconds number
 ---@return string
 local function FormatMinutes(seconds)
-    if seconds < 60 then return '<1m' end
-    return format('%dm', ceil(seconds / 60))
+    if seconds < 60 then
+        return L['<1m']
+    end
+    return format(L['%dm'], ceil(seconds / 60))
 end
 
 ---@param icon Frame
@@ -233,7 +235,9 @@ end
 ---@param result MissingBuffs.Result
 ---@return string
 local function GetCountText(result)
-    if result.eating then return 'Eating' end
+    if result.eating then
+        return L['Eating']
+    end
     if result.total then return format('%d/%d', result.total - result.missing, result.total) end
     return GetSlotText(result.entry) or ''
 end

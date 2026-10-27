@@ -221,7 +221,7 @@ local function BuildEnableCard(page, db)
             if frame then
                 frame:Show(); frame:Raise()
             else
-                NRSKNUI:Print('CooldownViewerSettings not found. Make sure Cooldown Manager is enabled in Edit Mode.')
+                NRSKNUI:Print(L['CooldownViewerSettings not found. Make sure Cooldown Manager is enabled in Edit Mode.'])
             end
         end
     })

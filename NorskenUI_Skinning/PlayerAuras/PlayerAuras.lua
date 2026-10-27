@@ -2,6 +2,7 @@
 local NRSKNUI = _G.NorskenUI
 ---@class PlayerAurasModule
 local PlayerAuras = NRSKNUI:GetModule('PlayerAuras')
+local L = NRSKNUI.Libs.AL
 local Anchors = NRSKNUI.Anchors
 local AuraPreview = NRSKNUI.AuraPreview
 
@@ -18,7 +19,7 @@ local KINDS = {
     Buffs = {
         filter = 'HELPFUL',
         moverKey = 'PlayerBuffs',
-        displayName = 'Standard Buffs',
+        displayName = L['Standard Buffs'],
         guiItem = 'buffs',
         blizzardFrame = 'BuffFrame',
         cvarCallbacks = { 'consolidateBuffs', 'collapseExpandBuffs' }, -- banishing leaves these live
@@ -26,7 +27,7 @@ local KINDS = {
     Debuffs = {
         filter = 'HARMFUL',
         moverKey = 'PlayerDebuffs',
-        displayName = 'Standard Debuffs',
+        displayName = L['Standard Debuffs'],
         guiItem = 'debuffs',
         blizzardFrame = 'DebuffFrame',
     },

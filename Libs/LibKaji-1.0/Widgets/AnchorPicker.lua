@@ -22,6 +22,7 @@ if not lib then return end
 local InstanceMixin = lib.InstanceMixin
 local pixel = lib.Pixel
 local safecall = lib.safecall
+local L = lib.L
 
 local CreateFrame = CreateFrame
 local Mixin = Mixin
@@ -31,18 +32,6 @@ local ANCHOR_DIRECTIONS = {
     "TOPLEFT", "TOP", "TOPRIGHT",
     "LEFT", "CENTER", "RIGHT",
     "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT",
-}
-
-local DIRECTION_NAMES = {
-    TOPLEFT = "Top Left",
-    TOP = "Top",
-    TOPRIGHT = "Top Right",
-    LEFT = "Left",
-    CENTER = "Center",
-    RIGHT = "Right",
-    BOTTOMLEFT = "Bottom Left",
-    BOTTOM = "Bottom",
-    BOTTOMRIGHT = "Bottom Right",
 }
 
 local WIDGET_TYPE = "AnchorPicker"
@@ -177,6 +166,17 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
 
     Mixin(container, AnchorPickerMixin)
 
+    local directionNames = {
+        TOPLEFT = L["Top Left"],
+        TOP = L["Top"],
+        TOPRIGHT = L["Top Right"],
+        LEFT = L["Left"],
+        CENTER = L["Center"],
+        RIGHT = L["Right"],
+        BOTTOMLEFT = L["Bottom Left"],
+        BOTTOM = L["Bottom"],
+        BOTTOMRIGHT = L["Bottom Right"],
+    }
     local buttons = {}
     for _, direction in ipairs(ANCHOR_DIRECTIONS) do
         local button = CreateFrame("Button", nil, container)
@@ -196,7 +196,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         end)
         -- Each dot names its own anchor point, so the tooltip is set once here rather
         -- than rebuilt on every hover.
-        lib.SetTooltip(button, gui, DIRECTION_NAMES[direction] or direction, nil,
+        lib.SetTooltip(button, gui, directionNames[direction] or direction, nil,
             { anchor = "ANCHOR_RIGHT", x = 0, y = 4 })
 
         button:SetScript("OnEnter", function(self)

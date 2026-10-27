@@ -104,8 +104,13 @@ local GROUPS = {
         title = L['Dispel Types'],
         desc = L['Yes shows only these types, No hides them.'],
         fields = {
-            { key = 'Magic' }, { key = 'Curse' }, { key = 'Disease' }, { key = 'Poison' },
-            { key = 'Enrage' }, { key = 'Stealth' }, { key = 'Special' },
+            { key = 'Magic',   label = L['Magic'] },
+            { key = 'Curse',   label = L['Curse'] },
+            { key = 'Disease', label = L['Disease'] },
+            { key = 'Poison',  label = L['Poison'] },
+            { key = 'Enrage',  label = L['Enrage'] },
+            { key = 'Stealth', label = L['Stealth'] },
+            { key = 'Special', label = L['Special'] },
         },
         get = function(branch, key)
             local c = branch.candidates
@@ -405,7 +410,7 @@ local function BuildGroupRows(card, branch, group, changed)
         for i = index, index + 1 do
             local field = fields[i]
             if field then
-                row:Dropdown(field.label or L[field.key], {
+                row:Dropdown(field.label, {
                     width = 0.5,
                     options = StateOptions(field.yesOnly),
                     value = StateValue(group.get(branch, field.key)),

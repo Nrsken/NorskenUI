@@ -2,6 +2,7 @@
 local NRSKNUI = _G.NorskenUI
 ---@class CombatResModule
 local CombatRes = NRSKNUI:GetModule("CombatRes")
+local L = NRSKNUI.Libs.AL
 local Anchors = NRSKNUI.Anchors
 
 local CreateFrame = CreateFrame
@@ -59,7 +60,7 @@ function CombatRes:CreateFrame()
     -- Finalize the frame and register it with Anchors.
     ---@type Frame
     self.coreFrame = coreFrame
-    Anchors:Register(self, 'CombatRes', self.coreFrame, 'combatRes')
+    Anchors:Register(self, 'CombatRes', self.coreFrame, 'combatRes', { displayName = L['Combat Res'] })
     self.coreFrame:Hide()
 end
 
@@ -123,7 +124,7 @@ function CombatRes:Render()
 
     local timeText = NRSKNUI:FormatTime(remaining, self.db.TimeFormat)
     if zeroValues[timeText] then
-        timeText = 'Max'
+        timeText = L['Max']
     end
 
     local text = self:ResolveText(chargeCount, timeText, hasCharges)

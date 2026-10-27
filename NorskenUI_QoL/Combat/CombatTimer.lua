@@ -2,11 +2,13 @@
 local NRSKNUI = _G.NorskenUI
 ---@class CombatTimerModule
 local CombatTimer = NRSKNUI:GetModule('CombatTimer')
+local L = NRSKNUI.Libs.AL
 local Anchors = NRSKNUI.Anchors
 
 local CreateFrame = CreateFrame
 local GetTime = GetTime
 local unpack = unpack
+local format = string.format
 
 local IsEncounterInProgress = C_InstanceEncounter and C_InstanceEncounter.IsEncounterInProgress
 
@@ -39,7 +41,7 @@ function CombatTimer:CreateFrame()
 
     -- Finalize the frame and register it with Anchors.
     self.frame = frame
-    Anchors:Register(self, 'CombatTimer', self.frame, 'combatTimer')
+    Anchors:Register(self, 'CombatTimer', self.frame, 'combatTimer', { displayName = L['Combat Timer'] })
     frame:Hide()
 end
 
@@ -158,7 +160,7 @@ function CombatTimer:StopTimer(isEncounterEvent)
     end
 
     if self.db.PrintEnd then
-        NRSKNUI:Print('Combat lasted ' .. NRSKNUI:FormatTime(self.lastCombatDuration, self.db.Format))
+        NRSKNUI:Print(format(L['Combat lasted %s'], NRSKNUI:FormatTime(self.lastCombatDuration, self.db.Format)))
     end
 
     self:UpdateState()

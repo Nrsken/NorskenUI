@@ -474,7 +474,7 @@ end
 -- The value can be secret, so nothing compares it but the game's curve on a %p text; a split bar's Recharging is plain and per rune for Bar Color.
 -- Maelstrom Weapon's stacks are the one plain value, so only its trigger offers Stacks.
 CDM.ConditionChecks.power = {
-    active     = { type = 'bool', get = function(layer, trigger) return CDM.TriggerTypes.power.IsActive(layer, trigger) end },
+    active     = { type = 'bool', get = function() return CDM.TriggerTypes.power.IsActive() end },
     stacks     = { type = 'number', get = function(layer) return layer.powerType == MAELSTROM_WEAPON and layer.value or 0 end },
     percent    = { type = 'number', curve = true },
     value      = { type = 'number', curve = true }, -- turned into a percent of the max, so it waits for a max that reads plain

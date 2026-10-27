@@ -176,6 +176,8 @@
 ---@class NRSKNUI
 ---@field Restricted RestrictedModule
 ---@field UnitFrames UnitFramesModule
+---@field oUF NorskenUF set by NorskenUI_UnitFrames/Init.lua
+---@field oUFPrefix string the X-oUF style prefix from NorskenUI_UnitFrames.toc
 ---@field AuctionHouseFilter AuctionHouseFilterModule
 ---@field Automation AutomationModule
 ---@field Tweaks TweaksModule

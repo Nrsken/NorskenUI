@@ -123,7 +123,7 @@ local function BuildMiscTweaksTab(page, db)
             db.EnterAccept = checked
             ApplySettings()
             if not checked then
-                NRSKNUI:CreateReloadPrompt("Disabling this setting requires a UI reload to take effect. Reload now?")
+                NRSKNUI:CreateReloadPrompt(L['Disabling this setting requires a UI reload to take effect. Reload now?'])
             end
         end
     })

@@ -3,6 +3,7 @@ local NRSKNUI = _G.NorskenUI
 ---@class PetTextsModule
 local PetTexts = NRSKNUI:GetModule('PetTexts')
 local Anchors = NRSKNUI.Anchors
+local L = NRSKNUI.Libs.AL
 
 local ipairs = ipairs
 local unpack = unpack
@@ -96,7 +97,7 @@ function PetTexts:CreateGroup()
         parentGroup[petType.key] = text
     end
 
-    Anchors:Register(self, 'PetTexts', parentGroup, 'petTexts')
+    Anchors:Register(self, 'PetTexts', parentGroup, 'petTexts', { displayName = L['Pet Texts'] })
 end
 
 function PetTexts:ApplySettings()

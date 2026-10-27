@@ -18,11 +18,7 @@ if not lib then return end
 
 lib.premadeCards = lib.premadeCards or {}
 
-local TEXT_JUSTIFY_OPTIONS = {
-    { key = "LEFT",   text = "Left" },
-    { key = "CENTER", text = "Center" },
-    { key = "RIGHT",  text = "Right" },
-}
+local L = lib.L
 
 --- Format editbox, justify dropdown and X/Y offset sliders bound to a db table.
 lib.premadeCards.TextFormatCard = {
@@ -61,20 +57,24 @@ lib.premadeCards.TextFormatCard = {
         end
 
         local row1 = card:Row(theme.rowHeight)
-        row1:EditBox("Format", {
+        row1:EditBox(L["Format"], {
             width = 0.5,
             value = db[keys.format] or defaultValues.format,
             callback = function(text) Set(keys.format, text) end,
         })
-        row1:Dropdown("Align", {
+        row1:Dropdown(L["Align"], {
             width = 0.5,
-            options = TEXT_JUSTIFY_OPTIONS,
+            options = {
+                { key = "LEFT",   text = L["Left"] },
+                { key = "CENTER", text = L["Center"] },
+                { key = "RIGHT",  text = L["Right"] },
+            },
             value = db[keys.justify] or defaultValues.justify,
             callback = function(key) Set(keys.justify, key) end,
         })
 
         local row2 = card:Row(theme.rowHeightLast, 0)
-        row2:Slider("X Offset", {
+        row2:Slider(L["X Offset"], {
             width = 0.5,
             min = xRange[1],
             max = xRange[2],
@@ -83,7 +83,7 @@ lib.premadeCards.TextFormatCard = {
             labelWidth = 50,
             callback = function(val) Set(keys.xOffset, val) end,
         })
-        row2:Slider("Y Offset", {
+        row2:Slider(L["Y Offset"], {
             width = 0.5,
             min = yRange[1],
             max = yRange[2],

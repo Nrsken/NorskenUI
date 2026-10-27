@@ -14,7 +14,9 @@ if not lib then return end
 ---@class KajiGUIInstanceMixin
 local InstanceMixin = lib.InstanceMixin
 local LSM = LibStub("LibSharedMedia-3.0", true)
+local L = lib.L
 
+local format = string.format
 local geterrorhandler = geterrorhandler
 local xpcall = xpcall
 local type = type
@@ -139,7 +141,7 @@ function lib.SetTooltip(frame, gui, title, tooltip, opts)
     frame._tooltipTitle = title
     frame._tooltipText = text
     frame._tooltipContent = content
-    frame._tooltipDefault = default ~= nil and (type(default) == "boolean" and (default and "On" or "Off") or tostring(default)) or nil
+    frame._tooltipDefault = default ~= nil and (type(default) == "boolean" and (default and L["On"] or L["Off"]) or tostring(default)) or nil
     frame._tooltipOwner = opts.owner
     frame._tooltipAnchor = opts.anchor
     frame._tooltipBeside = opts.beside
@@ -188,7 +190,7 @@ function lib.ShowTooltip(frame)
         end
     end
     if frame._tooltipDefault then
-        GameTooltip:AddLine("Default: " .. frame._tooltipDefault, theme.success[1], theme.success[2], theme.success[3])
+        GameTooltip:AddLine(format(L["Default: %s"], frame._tooltipDefault), theme.success[1], theme.success[2], theme.success[3])
     end
     GameTooltip:Show()
 end

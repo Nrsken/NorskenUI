@@ -8,5 +8,6 @@
 ## IconTexture: Interface\AddOns\NorskenUI\Media\Logo\LogoRed.png
 ## Dependencies: NorskenUI
 
+Locales\Locales.xml
 PlayerAuras\Auras.xml
 Skinning.xml

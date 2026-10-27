@@ -2,6 +2,7 @@
 local NRSKNUI = _G.NorskenUI
 ---@class Chatv2Module
 local CHAT = NRSKNUI:GetModule('Chatv2')
+local L = NRSKNUI.Libs.AL
 local Theme = NRSKNUI.Theme
 
 local CreateFrame = CreateFrame
@@ -323,7 +324,7 @@ function CHAT:BuildCopyChatFrame()
     local title = header:CreateFontString(nil, "OVERLAY")
     title:SetFont(cachedFontPath, 14, "OUTLINE")
     title:SetPoint("LEFT", header, "LEFT", 6, 0)
-    title:SetText("Chat Copy")
+    title:SetText(L["Chat Copy"])
     title:SetTextColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
     frame.title = title
 
@@ -371,7 +372,7 @@ function CHAT:BuildCopyChatFrame()
     local hint = header:CreateFontString(nil, "OVERLAY")
     hint:SetFont(cachedFontPath, 11, "OUTLINE")
     hint:SetPoint("RIGHT", closeBtn, "LEFT", -12, 0)
-    hint:SetText("CTRL+A to select all, CTRL+C to copy")
+    hint:SetText(L["CTRL+A to select all, CTRL+C to copy"])
     hint:SetTextColor(Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3], 0.8)
     frame.hint = hint
 
@@ -584,18 +585,18 @@ function CHAT:AddWhisperModeWarning()
     text:SetJustifyH("LEFT")
     text:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
     text:SetShadowColor(0, 0, 0, 0)
-    text:SetText("|cffff6600NorskenUI\nNew Tab disabled|r")
+    text:SetText("|cffff6600NorskenUI\n" .. L["New Tab disabled"] .. "|r")
 
     warningFrame:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:AddLine("NorskenUI: New Tab Disabled", Theme.accent[1], Theme.accent[2], Theme.accent[3])
+        GameTooltip:AddLine("NorskenUI: " .. L["New Tab Disabled"], Theme.accent[1], Theme.accent[2], Theme.accent[3])
         GameTooltip:AddLine(" ")
         GameTooltip:AddLine(
-            "The 'New Tab' whisper mode causes taint errors when clicking on whisper tabs with secret player names.", 1,
+            L["The 'New Tab' whisper mode causes taint errors when clicking on whisper tabs with secret player names."], 1,
             1, 1,
             true)
         GameTooltip:AddLine(" ")
-        GameTooltip:AddLine("NorskenUI forces 'In-line' mode to prevent these errors.", 0.7, 0.7, 0.7, true)
+        GameTooltip:AddLine(L["NorskenUI forces 'In-line' mode to prevent these errors."], 0.7, 0.7, 0.7, true)
         GameTooltip:Show()
     end)
 
@@ -618,7 +619,8 @@ function CHAT:AddWhisperModeWarning()
         for _, child in pairs({ scrollBox.ScrollTarget:GetChildren() }) do
             ---@cast child Frame & { Text: FontString? }
             local labelText = child.Text and child.Text:GetText()
-            if labelText == "New Whispers" and child:IsShown() then
+            -- the row's label is Blizzard's WHISPER_MODE, so this matches on every client language
+            if labelText == WHISPER_MODE and child:IsShown() then
                 warningFrame:SetParent(child)
                 warningFrame:ClearAllPoints()
                 warningFrame:SetPoint("LEFT", child.Text, "RIGHT", 300, 2)
@@ -670,7 +672,7 @@ end
 
 function CHAT:RegisterAnchor()
     NRSKNUI.Anchors:Register(self, "Chatv2", self.panel, "chat", {
-        displayName = "Chat Panel",
+        displayName = L["Chat Panel"],
         apply = "UpdatePanel",
     })
 end
@@ -2483,7 +2485,7 @@ function CHAT:SetBlizzEditModeLockText(frame, shown)
     local maxWidth = selection:GetWidth() - 12
     if maxWidth > 0 then text:SetWidth(maxWidth) end
 
-    text:SetText("Edit Mode locked for the chat\nUse |cff00ff00/nui edit|r or |cff00ff00/nui|r -> Chat")
+    text:SetText(L["Edit Mode locked for the chat"] .. "\n" .. format(L["Use %s or %s -> Chat"], "|cff00ff00/nui edit|r", "|cff00ff00/nui|r"))
     text:Show()
 end
 
@@ -2550,7 +2552,7 @@ function CHAT:SetupBlizzardEditModeLock()
                 dialog:Hide()
                 self:SetupBlizzEditModeLockHandlers(systemFrame)
                 if not self.blizzEditModeChatNoticeShown then
-                    NRSKNUI:Print("Chat position is managed by |cff00ff00/nui edit|r or |cff00ff00/nui|r settings.")
+                    NRSKNUI:Print(format(L["Chat position is managed by %s or %s settings."], "|cff00ff00/nui edit|r", "|cff00ff00/nui|r"))
                     self.blizzEditModeChatNoticeShown = true
                 end
             end
@@ -2565,8 +2567,7 @@ function CHAT:SetupBlizzardEditModeLock()
                         self:SetupBlizzEditModeLockHandlers(cf)
                         if cf.Selection then cf.Selection:EnableMouse(false) end
                         if not self.blizzEditModeChatNoticeShown then
-                            NRSKNUI:Print(
-                                "Chat position is managed by |cff00ff00/nui edit|r or |cff00ff00/nui|r settings.")
+                            NRSKNUI:Print(format(L["Chat position is managed by %s or %s settings."], "|cff00ff00/nui edit|r", "|cff00ff00/nui|r"))
                             self.blizzEditModeChatNoticeShown = true
                         end
                     end)

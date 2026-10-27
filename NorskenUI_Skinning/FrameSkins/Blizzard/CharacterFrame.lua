@@ -2,6 +2,7 @@
 local NRSKNUI = _G.NorskenUI
 ---@class SkinningModule
 local Skinning = NRSKNUI:GetModule('Skinning')
+local L = NRSKNUI.Libs.AL
 
 local PaperDollFrame_UpdateSidebarTabs = PaperDollFrame_UpdateSidebarTabs
 local PaperDollItemSlotButton_Update = PaperDollItemSlotButton_Update
@@ -303,7 +304,7 @@ local function TitleSearch(S)
     hint:SetFontStyle(db, db.FontEditBoxSize)
     hint:SetTextColor(0.6, 0.6, 0.6, 0.7)
     hint:SetPoint('LEFT', editBox, 'LEFT', 0, 0)
-    hint:SetText('Search Titles...')
+    hint:SetText(L['Search Titles...'])
 
     -- Small helper to reset the search.
     local function ClearSearch()

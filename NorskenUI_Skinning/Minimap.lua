@@ -2,6 +2,7 @@
 local NRSKNUI = _G.NorskenUI
 ---@class MinimapModule
 local Map = NRSKNUI:GetModule('Minimap')
+local L = NRSKNUI.Libs.AL
 function Map:UpdateDB() self.db = NRSKNUI.Skinning.namespace.profile.Minimap end
 
 local Theme = NRSKNUI.Theme
@@ -53,7 +54,7 @@ function Map:OnEnable()
     _G.MinimapCluster:NUIBanish()
 
     self:RegisterEvent('PLAYER_ENTERING_WORLD')
-    Anchors:Register(self, 'Minimap', _G.Minimap, 'minimap', { xKey = 'X', yKey = 'Y' })
+    Anchors:Register(self, 'Minimap', _G.Minimap, 'minimap', { xKey = 'X', yKey = 'Y', displayName = L['Minimap'] })
 end
 
 function Map:PLAYER_ENTERING_WORLD()
@@ -136,7 +137,7 @@ function Map:ApplyButtonReg()
     clickOverlay:SetScript('OnMouseUp', function(_, button)
         if button == 'MiddleButton' then -- Middle-click: open calendar
             if NRSKNUI:InCombat() then
-                NRSKNUI:Print('Cannot open calendar in combat.')
+                NRSKNUI:Print(L['Cannot open calendar in combat.'])
             else
                 if not IsAddOnLoaded('Blizzard_Calendar') then LoadAddOn('Blizzard_Calendar') end
                 if CalendarFrame:IsShown() then

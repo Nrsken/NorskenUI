@@ -3,4 +3,5 @@
 
     <Script file='GUI-GlobalFonts.lua'/>
     <Script file='GUI-GlobalPage.lua'/>
+    <Script file='GUI-GlobalLanguage.lua'/>
 </Ui>

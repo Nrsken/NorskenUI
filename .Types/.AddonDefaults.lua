@@ -8,6 +8,8 @@
 ---@field CDMLayoutCache NRSKNUI.DBGlobal.CDMLayoutCache
 ---@field GUIState NRSKNUI.DBGlobal.GUIState
 ---@field GlobalProfile string
+---@field Language string 'auto' or a locale from NRSKNUI.LANGUAGES
+---@field NamespacePaths table<string, string>
 ---@field QuestTracker NRSKNUI.DBGlobal.QuestTracker
 ---@field SidebarCollapsed NRSKNUI.DBGlobal.SidebarCollapsed
 ---@field SpellAlertCVars table<string, string?>

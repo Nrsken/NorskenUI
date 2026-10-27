@@ -10,7 +10,7 @@ local ipairs = ipairs
 A text display's frame follows its text's size, so a group can lay it out like an icon.
 ]]
 
----A text display's frame sized to the shown text by the engine; Lua never reads the size, which turns secret with the text.
+---Size a text display's frame to the shown text through anchors; the size turns secret with the text, so it's never read back.
 ---@param frame CDMIcon
 local function FitText(frame)
     local layer = frame.activeLayer or frame.layers[1]

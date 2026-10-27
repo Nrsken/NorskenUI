@@ -19,6 +19,7 @@ if not lib then return end
 local InstanceMixin = lib.InstanceMixin
 local safecall = lib.safecall
 local pixel = lib.Pixel
+local L = lib.L
 
 local CreateFrame = CreateFrame
 local ipairs = ipairs
@@ -67,7 +68,7 @@ local function RecordPremade(gui, labels, ctx, name, config)
     if not def then return card end
 
     config = config or {}
-    local title = config.title or def.title
+    local title = config.title or L[def.title]
     if type(title) == "string" and title ~= "" then
         labels[#labels + 1] = { text = title, tabId = ctx.tabId, itemKey = ctx.itemKey }
     end
@@ -256,8 +257,6 @@ function InstanceMixin:Search(text, config)
     return results
 end
 
-local PLACEHOLDER = "Search..."
-
 ---Creates a themed search box. Fires opts.onChanged(text) as the user types.
 ---@param parent Frame
 ---@param opts table { onChanged: fun(text: string), height?: number, fieldTop?: number }
@@ -267,6 +266,7 @@ function InstanceMixin:CreateSearchBox(parent, opts)
     local gui = self
     local theme = self.theme
     local onChanged = opts.onChanged
+    local placeholder = L["Search..."]
 
     local box = CreateFrame("Frame", nil, parent, "BackdropTemplate")
     pixel.SetPixelHeight(box, opts.height or 30)
@@ -302,7 +302,7 @@ function InstanceMixin:CreateSearchBox(parent, opts)
     pixel.SetPixelPoint(edit, "BOTTOMRIGHT", inner, "BOTTOMRIGHT", -(2 + 14 + 4), 0)
     edit:SetAutoFocus(false)
     gui:ApplyFont(edit, "normal")
-    edit:SetText(PLACEHOLDER)
+    edit:SetText(placeholder)
 
     box.text = ""
 
@@ -331,7 +331,7 @@ function InstanceMixin:CreateSearchBox(parent, opts)
 
     local function Clear()
         box.text = ""
-        edit:SetText(PLACEHOLDER)
+        edit:SetText(placeholder)
         edit:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 0.6)
         clear:Hide()
         if onChanged then safecall(onChanged, "") end
@@ -341,7 +341,7 @@ function InstanceMixin:CreateSearchBox(parent, opts)
     edit:SetScript("OnTextChanged", function(self, userInput)
         if not userInput then return end
         local t = self:GetText()
-        box.text = (t == PLACEHOLDER) and "" or t
+        box.text = (t == placeholder) and "" or t
         if box.text ~= "" then clear:Show() else clear:Hide() end
         ClearIconColor()
         if onChanged then safecall(onChanged, box.text) end
@@ -363,13 +363,17 @@ function InstanceMixin:CreateSearchBox(parent, opts)
         PaintGlow()
         inner:SetBackdropBorderColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
         self:SetTextColor(theme.textPrimary[1], theme.textPrimary[2], theme.textPrimary[3], 1)
-        if self:GetText() == PLACEHOLDER then self:SetText("") end
+        if self:GetText() == placeholder then
+            self:SetText("")
+        end
     end)
     edit:SetScript("OnEditFocusLost", function(self)
         PaintGlow()
         lib.RefreshBackdrop(inner)
         self:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 0.6)
-        if self:GetText() == "" then self:SetText(PLACEHOLDER) end
+        if self:GetText() == "" then
+            self:SetText(placeholder)
+        end
     end)
 
     clear:SetScript("OnEnter", function() clearIcon:SetVertexColor(theme.textPrimary[1], theme.textPrimary[2], theme.textPrimary[3], 1) end)

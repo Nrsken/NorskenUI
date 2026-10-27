@@ -32,6 +32,7 @@ local lib = LibStub and LibStub("LibKaji-1.0", true)
 if not lib then return end
 ---@class KajiGUIInstanceMixin
 local InstanceMixin = lib.InstanceMixin
+local L = lib.L
 
 local ipairs = ipairs
 local pairs = pairs
@@ -496,7 +497,7 @@ function Page:PremadeCard(name, config, group)
 
     config = config or {}
     local gui = self.gui
-    local card = self:Card(config.title or def.title, group or "all")
+    local card = self:Card(config.title or L[def.title], group or "all")
     return card:Rebuild(function(fluent) def.build(fluent, config, gui) end)
 end
 

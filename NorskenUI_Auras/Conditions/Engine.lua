@@ -177,6 +177,16 @@ function CDM:EvaluateConditions(id, frame, display)
         end
     end
 
+    -- Max Stacks is the display's, not a layer's: an aura bar is never the active layer, nothing can read its aura
+    local maxStacks = overrides.maxStacks
+    overrides.maxStacks = nil
+    if frame.conditionMaxStacks ~= maxStacks then
+        frame.conditionMaxStacks = maxStacks
+        for _, each in ipairs(frame.layers or {}) do
+            PROPERTIES.maxStacks.apply(frame, each, maxStacks, display)
+        end
+    end
+
     local layer = frame.activeLayer
     local show = overrides.show
     overrides.show = nil
@@ -306,6 +316,7 @@ function CDM:ResetConditions(frame)
     frame.conditionTimer, frame.conditionApplied, frame.conditionActive, frame.conditionLayer = nil, nil, nil, nil
     frame.forceHidden, frame.standbyLayer = nil, nil
     frame.conditionX, frame.conditionY = nil, nil
+    frame.conditionMaxStacks = nil
 end
 
 -- Groups --
@@ -392,7 +403,7 @@ function CDM:TextColorCurve(display, triggerIndex, scales, ordinal, base)
     end
     if not steps then return nil end
 
-    -- later conditions win, as they do in Lua
+    -- later conditions win, same as when the conditions are checked directly
     local function ColorAt(value)
         local color = base
         for _, step in ipairs(steps) do

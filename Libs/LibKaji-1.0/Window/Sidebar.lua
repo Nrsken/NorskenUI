@@ -17,6 +17,7 @@ if not lib then return end
 local InstanceMixin = lib.InstanceMixin
 local safecall = lib.safecall
 local pixel = lib.Pixel
+local L = lib.L
 
 local CreateFrame = CreateFrame
 local ipairs = ipairs
@@ -536,7 +537,7 @@ function InstanceMixin:CreateSidebar(parent, opts)
                 gui:ApplyFont(sidebar.emptyText, "normal")
             end
             sidebar.emptyText:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 0.6)
-            sidebar.emptyText:SetText("No results found")
+            sidebar.emptyText:SetText(L["No results found"])
             sidebar.emptyText:ClearAllPoints()
             pixel.SetPixelPoint(sidebar.emptyText, "TOP", scrollChild, "TOP", 0, -y - 10)
             sidebar.emptyText:Show()

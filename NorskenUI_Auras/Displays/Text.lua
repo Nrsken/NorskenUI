@@ -16,6 +16,7 @@ local setmetatable = setmetatable
 
 local CreateDurationTextBinding = C_DurationUtil and C_DurationUtil.CreateDurationTextBinding
 local GetSpellDisplayCount = C_Spell and C_Spell.GetSpellDisplayCount
+local GetSpellCharges = C_Spell and C_Spell.GetSpellCharges
 local GetSpellCastCount = C_Spell and C_Spell.GetSpellCastCount
 local TruncateWhenZero = C_StringUtil and C_StringUtil.TruncateWhenZero
 local UnitPowerPercent = UnitPowerPercent
@@ -250,6 +251,7 @@ local function ConfigureText(text, element, spellName, layer, triggers)
         text.binding:SetToDefaults()
     end
 
+    text.hideZero = element.HideZero
     if hasCharges then
         -- every other % is escaped, so only the %s tokens take the count
         local format, tokens = gsub(gsub(raw, '%%', '%%%%'), '%%%%%d*%.?s', '%%s')
@@ -295,7 +297,7 @@ local function ValueOf(from, token, abbreviate, percent)
     local value
     if token == 'p' and percent then
         local powerType = from.powerType
-        -- these read plain; a real power's percent can be secret, so the engine scales it
+        -- these read plain; a real power's percent can be secret, so the game scales that one for us
         if powerType == CDM.MAELSTROM_WEAPON or powerType == CDM.STAGGER or powerType == PowerType.Runes then
             local max = from.max or 0
             return max > 0 and (from.value or 0) / max * 100 or 0
@@ -324,10 +326,17 @@ local function UpdateText(text, from)
             text.binding:SetDuration(from.duration)
         end
     elseif text.kind == 'charges' then
+        local hideZero = text.hideZero
         local charges = from.count
         local spellID = from.spellID
+        if charges and hideZero then
+            charges = TruncateWhenZero(charges)
+        end
         if not charges and spellID then
-            if from.state.hasCharges then
+            if from.state.hasCharges and hideZero then
+                -- the display count is a string, so a zero can only be blanked from the secret number behind it
+                charges = TruncateWhenZero(GetSpellCharges(spellID).currentCharges)
+            elseif from.state.hasCharges then
                 charges = GetSpellDisplayCount(spellID)
             else
                 -- stack spells without charges, like Soul Fragments, count as casts; both calls take a secret and zero reads blank
@@ -351,7 +360,7 @@ local function UpdateText(text, from)
             PowerColorCurve(text, CDM:Get(from.owner.id), from.index, max)
         end
 
-        -- the engine evaluates the curve on the (maybe secret) percent and hands back a plain colour
+        -- the curve takes the percent even when it's secret and gives back a colour we can use
         if text.valueCurve and (from.powerType == CDM.MAELSTROM_WEAPON or from.powerType == CDM.STAGGER) then
             text.fs:SetTextColor(text.valueCurve:Evaluate((from.value or 0) / (from.max or 1)):GetRGBA())
         elseif text.valueCurve and from.powerType then

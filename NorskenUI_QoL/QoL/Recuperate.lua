@@ -3,6 +3,7 @@ local NRSKNUI = _G.NorskenUI
 ---@class RecuperateModule
 local Recuperate = NRSKNUI:GetModule('Recuperate')
 local Anchors = NRSKNUI.Anchors
+local L = NRSKNUI.Libs.AL
 
 local UnitHealthPercent = UnitHealthPercent
 local UnitIsDeadOrGhost = UnitIsDeadOrGhost
@@ -40,7 +41,7 @@ function Recuperate:CreateButton()
     button.icon:SetTexture(iconID)
 
     self.button = button
-    Anchors:Register(self, 'RecuperateButton', self.button, 'recuperate')
+    Anchors:Register(self, 'RecuperateButton', self.button, 'recuperate', { displayName = L['Recuperate Button'] })
     button:Hide()
 end
 

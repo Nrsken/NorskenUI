@@ -19,7 +19,7 @@
 local lib = LibStub and LibStub("LibKaji-1.0", true)
 if not lib then return end
 
-local TALENT_SECTIONS = { main = "Class & Spec Talents", apex = "Apex Talents", hero = "Hero Talents" }
+local L = lib.L
 local SPEC_ROW_HEIGHT = 30
 local SPEC_ICON_SIZE = 24
 local SPEC_CLASS_WIDTH = 0.26
@@ -33,45 +33,6 @@ local next = next
 local tostring = tostring
 local sformat = string.format
 local C_Timer = C_Timer
-
-local INSTANCE_TYPES = {
-    { key = "none",     label = "Open World" },
-    { key = "party",    label = "Dungeon" },
-    { key = "raid",     label = "Raid" },
-    { key = "pvp",      label = "Battleground" },
-    { key = "arena",    label = "Arena" },
-    { key = "scenario", label = "Scenario" },
-}
-
-local GROUP_TYPES = {
-    { key = "solo",  label = "Solo" },
-    { key = "party", label = "Party" },
-    { key = "raid",  label = "Raid" },
-}
-
-local COMBAT_OPTIONS = {
-    { key = "InCombat",    label = "In Combat" },
-    { key = "OutOfCombat", label = "Out of Combat" },
-}
-
-local ROLE_TYPES = {
-    { key = "TANK",    label = "Tank" },
-    { key = "HEALER",  label = "Healer" },
-    { key = "DAMAGER", label = "DPS" },
-}
-
-local POSITION_TYPES = {
-    { key = "MELEE",  label = "Melee" },
-    { key = "RANGED", label = "Ranged" },
-}
-
--- Category -> the simple checkbox list rendered under it.
-local SIMPLE_CATEGORIES = {
-    Group = { db = "Group", nested = "Types", list = GROUP_TYPES },
-    Role = { db = "Role", nested = "Types", list = ROLE_TYPES },
-    Position = { db = "Position", nested = "Types", list = POSITION_TYPES },
-    Combat = { db = "Combat", list = COMBAT_OPTIONS },
-}
 
 local GREEN = { 0, 1, 0 }
 
@@ -145,14 +106,6 @@ end
 
 -- Zone tooltip --
 
-local ZONE_SYNTAX = {
-    { "2393", "A map" },
-    { "g486", "Every floor of a map group" },
-    { "c2395", "A map and every map inside it" },
-    { "i2912", "An instance" },
-    { "-2393", "Leave a map out, works with any prefix" },
-}
-
 local seasonZones ---@type { title: string, zones: { name: string, id: string }[] }[]?
 
 ---A map group covers every floor of a dungeon, so it is the entry worth suggesting.
@@ -173,7 +126,7 @@ local function GetSeasonZones()
     local previousTier = EJ_GetCurrentTier()
     EJ_SelectTier(EJ_GetNumTiers())
     for _, isRaid in ipairs({ false, true }) do
-        local section = { title = isRaid and "Current Season Raids" or "Current Season Dungeons", zones = {} }
+        local section = { title = isRaid and L["Current Season Raids"] or L["Current Season Dungeons"], zones = {} }
         local index = 1
         local instanceID = EJ_GetInstanceByIndex(index, isRaid)
         while instanceID do
@@ -211,7 +164,7 @@ local function FillZoneTooltip(tooltip, theme)
         tooltip:AddDoubleLine(name, id, text[1], text[2], text[3], muted[1], muted[2], muted[3])
     end
 
-    tooltip:SetText("Map IDs", accent[1], accent[2], accent[3])
+    tooltip:SetText(L["Map IDs"], accent[1], accent[2], accent[3])
 
     for _, section in ipairs(GetSeasonZones()) do
         Header(section.title)
@@ -221,27 +174,36 @@ local function FillZoneTooltip(tooltip, theme)
     local mapID = C_Map.GetBestMapForUnit("player")
     local mapInfo = mapID and C_Map.GetMapInfo(mapID)
     if mapID and mapInfo then
-        Header("Current Zone")
+        Header(L["Current Zone"])
         Entry(mapInfo.name, tostring(mapID))
         local groupID = C_Map.GetMapGroupID(mapID)
-        if groupID then Entry("All floors", "g" .. groupID) end
+        if groupID then
+            Entry(L["All floors"], "g" .. groupID)
+        end
 
         local parentInfo = mapInfo.parentMapID and mapInfo.parentMapID > 0 and C_Map.GetMapInfo(mapInfo.parentMapID)
         if parentInfo then
-            Header("Parent Zone")
+            Header(L["Parent Zone"])
             Entry(parentInfo.name, "c" .. mapInfo.parentMapID)
         end
     end
 
     local instanceName, _, _, _, _, _, _, instanceID = GetInstanceInfo()
     if instanceID and instanceID > 0 then
-        Header("Current Instance")
+        Header(L["Current Instance"])
         Entry(instanceName, "i" .. instanceID)
     end
 
-    Header("How To Write Them")
-    tooltip:AddLine("Separate entries with commas.", muted[1], muted[2], muted[3], true)
-    for _, syntax in ipairs(ZONE_SYNTAX) do
+    Header(L["How To Write Them"])
+    tooltip:AddLine(L["Separate entries with commas."], muted[1], muted[2], muted[3], true)
+    local zoneSyntax = {
+        { "2393", L["A map"] },
+        { "g486", L["Every floor of a map group"] },
+        { "c2395", L["A map and every map inside it"] },
+        { "i2912", L["An instance"] },
+        { "-2393", L["Leave a map out, works with any prefix"] },
+    }
+    for _, syntax in ipairs(zoneSyntax) do
         tooltip:AddDoubleLine(syntax[1], syntax[2], text[1], text[2], text[3], muted[1], muted[2], muted[3])
     end
 end
@@ -249,16 +211,16 @@ end
 ---A category only marks itself when it carries conditions.
 local function BuildCategoryOptions(db, specs)
     local options = {
-        { key = "Instance", text = "Instance", indicator = IsCategoryActive(db, "Instance") and GREEN or nil },
-        { key = "Group",    text = "Group",    indicator = IsCategoryActive(db, "Group") and GREEN or nil },
-        { key = "Combat",   text = "Combat",   indicator = IsCategoryActive(db, "Combat") and GREEN or nil },
-        { key = "Role",     text = "Role",     indicator = IsCategoryActive(db, "Role") and GREEN or nil },
-        { key = "Position", text = "Position", indicator = IsCategoryActive(db, "Position") and GREEN or nil },
-        { key = "Zone",     text = "Zone",     indicator = IsCategoryActive(db, "Zone") and GREEN or nil },
+        { key = "Instance", text = L["Instance"], indicator = IsCategoryActive(db, "Instance") and GREEN or nil },
+        { key = "Group",    text = L["Group"],    indicator = IsCategoryActive(db, "Group") and GREEN or nil },
+        { key = "Combat",   text = L["Combat"],   indicator = IsCategoryActive(db, "Combat") and GREEN or nil },
+        { key = "Role",     text = L["Role"],     indicator = IsCategoryActive(db, "Role") and GREEN or nil },
+        { key = "Position", text = L["Position"], indicator = IsCategoryActive(db, "Position") and GREEN or nil },
+        { key = "Zone",     text = L["Zone"],     indicator = IsCategoryActive(db, "Zone") and GREEN or nil },
     }
     if specs then
-        options[#options + 1] = { key = "Spec", text = "Spec", indicator = IsCategoryActive(db, "Spec") and GREEN or nil }
-        options[#options + 1] = { key = "Talent", text = "Talent", indicator = IsCategoryActive(db, "Talent") and GREEN or nil }
+        options[#options + 1] = { key = "Spec", text = L["Spec"], indicator = IsCategoryActive(db, "Spec") and GREEN or nil }
+        options[#options + 1] = { key = "Talent", text = L["Talent"], indicator = IsCategoryActive(db, "Talent") and GREEN or nil }
     end
     return options
 end
@@ -362,8 +324,8 @@ lib.premadeCards.LoadConditionsCard = {
 
         local activeCount = GetActiveCount(db)
         local accentHex = sformat("%02x%02x%02x", theme.accent[1] * 255, theme.accent[2] * 255, theme.accent[3] * 255)
-        local enableLabel = activeCount > 0 and ("Enable |cff" .. accentHex .. "(" .. activeCount .. " active)|r") or
-            "Enable"
+        local enableLabel = activeCount > 0 and (L["Enable"] .. " |cff" .. accentHex .. "(" .. sformat(L["%d active"], activeCount) .. ")|r") or
+            L["Enable"]
 
         mainRow:Checkbox(enableLabel, {
             width = 0.5,
@@ -376,7 +338,7 @@ lib.premadeCards.LoadConditionsCard = {
         })
 
         if isEnabled then
-            mainRow:Dropdown("Category", {
+            mainRow:Dropdown(L["Category"], {
                 width = 0.5,
                 options = BuildCategoryOptions(db, config.specs),
                 value = selectedCategory,
@@ -394,14 +356,22 @@ lib.premadeCards.LoadConditionsCard = {
         if selectedCategory == "Instance" then
             local instanceDb = db.Instance
             instanceDb.Types = instanceDb.Types or {}
-            for i = 1, #INSTANCE_TYPES, 2 do
-                local isLastRow = i + 1 >= #INSTANCE_TYPES
-                AddCheckRow(instanceDb.Types, INSTANCE_TYPES[i], INSTANCE_TYPES[i + 1], isLastRow)
+            local instanceTypes = {
+                { key = "none",     label = L["Open World"] },
+                { key = "party",    label = L["Dungeon"] },
+                { key = "raid",     label = L["Raid"] },
+                { key = "pvp",      label = L["Battleground"] },
+                { key = "arena",    label = L["Arena"] },
+                { key = "scenario", label = L["Scenario"] },
+            }
+            for i = 1, #instanceTypes, 2 do
+                local isLastRow = i + 1 >= #instanceTypes
+                AddCheckRow(instanceDb.Types, instanceTypes[i], instanceTypes[i + 1], isLastRow)
             end
         elseif selectedCategory == "Spec" and config.specs then
             local types = db.Spec.Types
             local shortcuts = card:Row(30)
-            shortcuts:Button("Select My Class", {
+            shortcuts:Button(L["Select My Class"], {
                 width = 0.5,
                 height = 24,
                 callback = function()
@@ -414,7 +384,7 @@ lib.premadeCards.LoadConditionsCard = {
                     ScheduleRebuild()
                 end,
             })
-            shortcuts:Button("Clear", {
+            shortcuts:Button(L["Clear"], {
                 width = 0.5,
                 height = 24,
                 callback = function()
@@ -446,7 +416,7 @@ lib.premadeCards.LoadConditionsCard = {
                         dimmed = not picked,
                         borderColor = picked and theme.accent or nil,
                         tooltipTitle = sformat("|c%s%s|r", class.color, spec.name),
-                        tooltip = picked and "Loads in this spec. Click to remove it." or "Click to load in this spec.",
+                        tooltip = picked and L["Loads in this spec. Click to remove it."] or L["Click to load in this spec."],
                         onClick = function()
                             types[spec.id] = not picked or nil
                             fireChange()
@@ -458,15 +428,16 @@ lib.premadeCards.LoadConditionsCard = {
         elseif selectedCategory == "Talent" and config.specs then
             local spec = SingleSpec(db)
             if not spec then
-                card:Row(theme.rowHeightLast, 0):Text(nil, { width = 1, text = "Pick exactly one spec under Spec to filter by talents.", bgMode = "hide" })
+                card:Row(theme.rowHeightLast, 0):Text(nil, { width = 1, text = L["Pick exactly one spec under Spec to filter by talents."], bgMode = "hide" })
                 return
             end
             db.Talent.Specs[spec] = db.Talent.Specs[spec] or {}
             local picks = db.Talent.Specs[spec]
             local width = card.real and card.real.content and card.real.content:GetWidth() or 0
             if width <= 0 then width = 400 end -- the card hasn't been laid out yet
+            local sectionTitles = { main = L["Class & Spec Talents"], apex = L["Apex Talents"], hero = L["Hero Talents"] }
             for _, section in ipairs(lib.TalentTreeSections(spec)) do
-                card:Separator(TALENT_SECTIONS[section], { useLabel = true, centered = true, height = 20, spacing = 10 })
+                card:Separator(sectionTitles[section], { useLabel = true, centered = true, height = 20, spacing = 10 })
                 card:Row(lib.TalentTreeHeight(spec, width, section)):Widget("TalentTree", nil, {
                     width = 1,
                     specID = spec,
@@ -477,7 +448,7 @@ lib.premadeCards.LoadConditionsCard = {
             end
 
             card:Separator()
-            card:Row(30, 0):Button("Clear", {
+            card:Row(30, 0):Button(L["Clear"], {
                 width = 1,
                 height = 24,
                 callback = function()
@@ -488,7 +459,7 @@ lib.premadeCards.LoadConditionsCard = {
             })
         elseif selectedCategory == "Zone" then
             local zoneDb = db.Zone
-            card:Row(theme.rowHeight):EditBox("Map IDs", {
+            card:Row(theme.rowHeight):EditBox(L["Map IDs"], {
                 width = 1,
                 value = zoneDb.MapIDs or "",
                 tooltip = function(tooltip) FillZoneTooltip(tooltip, theme) end,
@@ -503,7 +474,7 @@ lib.premadeCards.LoadConditionsCard = {
             local mapID = C_Map.GetBestMapForUnit("player")
             local mapInfo = mapID and C_Map.GetMapInfo(mapID)
             if mapID and mapInfo then
-                card:Row(24):Button(sformat("Add Current Zone: %s (%d)", mapInfo.name, mapID), {
+                card:Row(24):Button(sformat(L["Add Current Zone: %s (%d)"], mapInfo.name, mapID), {
                     width = 1,
                     callback = function()
                         zoneDb.MapIDs = AddMapID(zoneDb.MapIDs or "", mapID)
@@ -513,7 +484,28 @@ lib.premadeCards.LoadConditionsCard = {
                 })
             end
         else
-            local cat = SIMPLE_CATEGORIES[selectedCategory]
+            -- category -> the simple checkbox list rendered under it
+            local simpleCategories = {
+                Group = { db = "Group", nested = "Types", list = {
+                    { key = "solo",  label = L["Solo"] },
+                    { key = "party", label = L["Party"] },
+                    { key = "raid",  label = L["Raid"] },
+                } },
+                Role = { db = "Role", nested = "Types", list = {
+                    { key = "TANK",    label = L["Tank"] },
+                    { key = "HEALER",  label = L["Healer"] },
+                    { key = "DAMAGER", label = L["DPS"] },
+                } },
+                Position = { db = "Position", nested = "Types", list = {
+                    { key = "MELEE",  label = L["Melee"] },
+                    { key = "RANGED", label = L["Ranged"] },
+                } },
+                Combat = { db = "Combat", list = {
+                    { key = "InCombat",    label = L["In Combat"] },
+                    { key = "OutOfCombat", label = L["Out of Combat"] },
+                } },
+            }
+            local cat = simpleCategories[selectedCategory]
             if cat then
                 local target = db[cat.db]
                 if cat.nested then

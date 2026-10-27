@@ -19,13 +19,13 @@ local PAGE_RAIDS = 'bwTimersRaids'
 local BOSS_HEADER_HEIGHT = 18
 local SPELL_ROW_HEIGHT = 28
 
-local COUNT_TOOLTIP = 'Which occurrences of the bar to match, using the count BigWigs shows in brackets.\n\n' ..
-    '2, 5, 6   the 2nd, 5th and 6th\n' ..
-    '2-6       the 2nd through 6th\n' ..
-    '/2        every 2nd\n' ..
-    '2/3       every 3rd starting from the 2nd\n' ..
-    '2-11/3    every 3rd from the 2nd to the 11th\n\n' ..
-    'Leave empty to match every occurrence.'
+local COUNT_TOOLTIP = L['Which occurrences of the bar to match, using the count BigWigs shows in brackets.'] .. '\n\n' ..
+    '2, 5, 6   ' .. L['the 2nd, 5th and 6th'] .. '\n' ..
+    '2-6       ' .. L['the 2nd through 6th'] .. '\n' ..
+    '/2        ' .. L['every 2nd'] .. '\n' ..
+    '2/3       ' .. L['every 3rd starting from the 2nd'] .. '\n' ..
+    '2-11/3    ' .. L['every 3rd from the 2nd to the 11th'] .. '\n\n' ..
+    L['Leave empty to match every occurrence.']
 
 local FORMAT_TOOLTIP = L['%n bar text, %t time left, %c count, %i icon, %s spell ID']
 
@@ -401,7 +401,7 @@ local function BuildSpellBrowser(page, instanceId, trigger, kind, onPick)
                 if spell.bossName ~= lastBoss then
                     lastBoss = spell.bossName
 
-                    local bossLabel = spell.bossNum and format('B%d %s', spell.bossNum, spell.bossName) or spell.bossName
+                    local bossLabel = spell.bossNum and format(L['B%d %s'], spell.bossNum, spell.bossName) or spell.bossName
 
                     c:Row(BOSS_HEADER_HEIGHT, 0):Text(NRSKNUI:ColorTextByTheme(bossLabel), {
                         width = 1,

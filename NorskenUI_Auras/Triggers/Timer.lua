@@ -185,6 +185,6 @@ end
 -- Conditions --
 
 CDM.ConditionChecks.timer = {
-    active    = { type = 'bool', get = function(layer, trigger) return CDM.TriggerTypes.timer.IsActive(layer, trigger) end },
+    active    = { type = 'bool', get = function(layer) return CDM.TriggerTypes.timer.IsActive(layer) end },
     remaining = { type = 'number', get = function(layer) return layer.endTime and layer.endTime - GetTime() or 0 end },
 }

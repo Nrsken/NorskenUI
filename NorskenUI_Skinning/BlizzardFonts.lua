@@ -2,6 +2,7 @@
 local NRSKNUI = _G.NorskenUI
 ---@class BlizzardMessagesModule
 local BlizzardMessages = NRSKNUI:GetModule('BlizzardMessages')
+local L = NRSKNUI.Libs.AL
 
 local _G = _G
 local pairs = pairs
@@ -24,54 +25,54 @@ local pinnedSizes = {
 BlizzardMessages.SpecialFonts = {
     {
         key = 'ZoneText',
-        label = 'Zone Text',
+        label = L['Zone Text'],
         objects = { 'ZoneTextFont', 'WorldMapTextFont' },
         sizeRange = { 8, 100 },
         position = true,
-        hideLabel = 'Hide Zone Texts',
+        hideLabel = L['Hide Zone Texts'],
         preview = 'PreviewZone',
     },
     {
         key = 'SubZoneText',
-        label = 'Sub Zone Text',
+        label = L['Sub Zone Text'],
         objects = { 'SubZoneTextFont' },
         sizeRange = { 8, 100 },
         preview = 'PreviewZone',
     },
     {
         key = 'PvPZoneText',
-        label = 'PvP Zone Text',
+        label = L['PvP Zone Text'],
         objects = { 'PVPArenaTextString', 'PVPInfoTextString' },
         sizeRange = { 8, 100 },
         preview = 'PreviewZone',
     },
     {
         key = 'ErrorText',
-        label = 'Error Text',
+        label = L['Error Text'],
         objects = { 'ErrorFont' },
         sizeRange = { 8, 24 },
         position = true,
-        hideLabel = 'Hide Error Messages',
+        hideLabel = L['Hide Error Messages'],
         preview = 'PreviewUIErrors',
     },
     {
         key = 'ActionStatus',
-        label = 'Action Status',
+        label = L['Action Status'],
         objects = { 'ActionStatus.Text' },
         sizeRange = { 8, 24 },
         position = true,
-        hideLabel = 'Hide Action Status',
+        hideLabel = L['Hide Action Status'],
         preview = 'PreviewActionStatus',
     },
     {
         key = 'ChatBubbles',
-        label = 'Chat Bubbles',
+        label = L['Chat Bubbles'],
         objects = { 'ChatBubbleFont' },
         sizeRange = { 6, 18 },
     },
     {
         key = 'Nameplates',
-        label = 'Nameplates',
+        label = L['Nameplates'],
         objects = {
             'SystemFont_NamePlate',
             'SystemFont_NamePlateFixed',
@@ -79,30 +80,30 @@ BlizzardMessages.SpecialFonts = {
             'SystemFont_LargeNamePlateFixed',
             'SystemFont_NamePlateCastBar',
         },
-        note = 'Applies to nameplate names and castbar text. Sizes stay native.',
+        note = L['Applies to nameplate names and castbar text. Sizes stay native.'],
     },
     {
         key = 'CombatText',
-        label = 'Combat Text',
+        label = L['Combat Text'],
         objects = { 'CombatTextFont' },
         lodAddon = 'Blizzard_CombatText',
-        note = 'Scrolling combat text (requires the Blizzard combat text feature).',
+        note = L['Scrolling combat text (requires the Blizzard combat text feature).'],
     },
     {
         key = 'CombatFont',
-        label = 'Combat Font',
+        label = L['Combat Font'],
         globalVar = 'DAMAGE_TEXT_FONT',
         relog = true,
         noOutline = true,
-        note = 'Floating damage text. Requires a relog to fully apply or revert.',
+        note = L['Floating damage text. Requires a relog to fully apply or revert.'],
     },
     {
         key = 'NameFont',
-        label = 'Unit Name Font',
+        label = L['Unit Name Font'],
         globalVar = 'UNIT_NAME_FONT',
         relog = true,
         noOutline = true,
-        note = 'Unit names in the world. Requires a relog to fully apply or revert.',
+        note = L['Unit names in the world. Requires a relog to fully apply or revert.'],
     },
 }
 

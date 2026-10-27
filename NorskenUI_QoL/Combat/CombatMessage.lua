@@ -3,6 +3,7 @@ local NRSKNUI = _G.NorskenUI
 ---@class CombatMessageModule
 local CombatMessage = NRSKNUI:GetModule('CombatMessage')
 local Anchors = NRSKNUI.Anchors
+local L = NRSKNUI.Libs.AL
 
 local CreateFrame = CreateFrame
 local unpack = unpack
@@ -85,7 +86,7 @@ function CombatMessage:CreateGroup()
         parentGroup[msgType.key] = text
     end
 
-    Anchors:Register(self, 'CombatMessages', parentGroup, 'combatMessage')
+    Anchors:Register(self, 'CombatMessages', parentGroup, 'combatMessage', { displayName = L['Combat Messages'] })
 end
 
 function CombatMessage:ApplySettings()

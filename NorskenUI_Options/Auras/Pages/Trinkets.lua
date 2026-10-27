@@ -23,13 +23,14 @@ local QUESTION_MARK, Reopen = Shared.QUESTION_MARK, Shared.Reopen
 local function BuildTrinketPage(page)
     page:SetEnabled(function() return CDM.db.Enabled end)
     local blacklist = page:Card(L['Trinket Blacklist'], 'all')
-    if Shared.trinketReturnKey and CDM:Get(Shared.trinketReturnKey) then
+    local returnKey = Shared.trinketReturnKey --[[@as string?]]
+    if returnKey and CDM:Get(returnKey) then
         blacklist:HeaderButton({
             texture = 'Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\right-arrow.png',
             size = 20,
             rotation = math.pi, -- our right arrow, pointing back
-            tooltip = format(L['Back to %s'], CDM:GetName(Shared.trinketReturnKey)),
-            onClick = function() Reopen(Shared.trinketReturnKey) end,
+            tooltip = format(L['Back to %s'], CDM:GetName(returnKey)),
+            onClick = function() Reopen(returnKey) end,
         })
     end
     blacklist:Rebuild(function(card)

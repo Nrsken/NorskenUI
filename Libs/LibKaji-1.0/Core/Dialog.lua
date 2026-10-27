@@ -70,6 +70,7 @@ if not lib then return end
 ---@class KajiGUIInstanceMixin
 local InstanceMixin = lib.InstanceMixin
 local pixel = lib.Pixel
+local L = lib.L
 
 local CreateFrame = CreateFrame
 local UIFrameFadeIn = UIFrameFadeIn
@@ -209,7 +210,7 @@ local function CreateDialogHeader(gui, dialog, title)
     local titleLabel = header:CreateFontString(nil, 'OVERLAY')
     titleLabel:SetPoint('CENTER', header, 'CENTER', 0, 0)
     gui:ApplyFont(titleLabel, 'large')
-    titleLabel:SetText(title or 'Confirm')
+    titleLabel:SetText(title or L['Confirm'])
     titleLabel:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
 
     return header
@@ -345,7 +346,7 @@ function InstanceMixin:Prompt(opts)
         if isCopyMode then
             editBox:SetScript('OnKeyDown', function(_, key)
                 if key == 'C' and (IsControlKeyDown() or IsMetaKeyDown()) then
-                    self:FlashMessage('Copied to clipboard', { duration = 2, size = 18, y = 350 })
+                    self:FlashMessage(L['Copied to clipboard'], { duration = 2, size = 18, y = 350 })
                     CloseDialog()
                 end
             end)
@@ -376,7 +377,7 @@ function InstanceMixin:Prompt(opts)
         buttonContainer:SetPoint('BOTTOMLEFT', dialog, 'BOTTOMLEFT', PADDING, PADDING)
         buttonContainer:SetPoint('BOTTOMRIGHT', dialog, 'BOTTOMRIGHT', -PADDING, PADDING)
 
-        local acceptBtn = self:CreateButton(buttonContainer, opts.acceptText or 'Accept', {
+        local acceptBtn = self:CreateButton(buttonContainer, opts.acceptText or L['Accept'], {
             width = BUTTON_WIDTH,
             height = BUTTON_HEIGHT,
             callback = function()
@@ -392,7 +393,7 @@ function InstanceMixin:Prompt(opts)
         })
         acceptBtn:SetPoint('RIGHT', buttonContainer, 'CENTER', -4, 0)
 
-        local cancelBtn = self:CreateButton(buttonContainer, opts.cancelText or 'Cancel', {
+        local cancelBtn = self:CreateButton(buttonContainer, opts.cancelText or L['Cancel'], {
             width = BUTTON_WIDTH,
             height = BUTTON_HEIGHT,
             callback = function()
@@ -422,6 +423,6 @@ function InstanceMixin:CopyDialog(title, text, label)
         title = title,
         text = text,
         editBox = true,
-        editBoxLabel = label or 'CTRL-C to copy',
+        editBoxLabel = label or L['CTRL-C to copy'],
     })
 end

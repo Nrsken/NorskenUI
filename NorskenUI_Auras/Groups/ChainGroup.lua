@@ -2,8 +2,9 @@
 local NRSKNUI = _G.NorskenUI
 ---@class CDMModule
 local CDM = NRSKNUI:GetModule('CDM')
+local Pixel = NRSKNUI.Libs.KAJI.Pixel
 
-local ipairs, pairs = ipairs, pairs
+local ipairs, pairs, next = ipairs, pairs, next
 local CreateFrame = CreateFrame
 local tsort, tremove = table.sort, table.remove
 local floor = math.floor
@@ -15,7 +16,7 @@ local _G = _G
 
 local PROBE_TEMPLATE = 'DisableUntrustedLayoutScriptsTemplate' -- anchoring to an aura button needs it
 
--- Per grow: the group's own anchor, the chain's links, and which axis the spacing pads.
+-- Per grow: the group's own anchor, the chain's links and which axis the spacing pads.
 local GROWS = {
     RIGHT      = { point = 'LEFT', first = 'LEFT', link = 'LEFT', to = 'RIGHT', horizontal = true, shift = 0 },
     LEFT       = { point = 'RIGHT', first = 'RIGHT', link = 'RIGHT', to = 'LEFT', horizontal = true, shift = 1 },
@@ -27,8 +28,8 @@ local GROWS = {
 CDM.CHAIN_GROWS = GROWS
 
 --[[
-A dynamic group the engine lays out: each icon sits in a slot chained to the one before, and probes
-measure what Lua can't read (an aura button's visibility, a text's size), so nothing secret is compared.
+A dynamic group laid out by anchors: each icon sits in a slot chained to the one before, and probe frames
+measure what we can't read (whether an aura is up, a text's size), so nothing secret is compared.
 ]]
 
 -- Layout --
@@ -46,7 +47,7 @@ local function Aligned(point, grow, align)
     return grow.horizontal and align .. point or point .. align
 end
 
----Measure a frame from its children's bounds; only the engine sees the result.
+---Size a frame to its children's bounds without ever reading the result, so secret sizes are fine.
 ---@param frame Frame
 local function Measure(frame)
     frame:SetIgnoringChildrenForBounds(false)
@@ -106,17 +107,22 @@ local function PlaceChain(self)
     local x = grow.horizontal and padX * grow.shift or 0
     local y = grow.horizontal and 0 or -padY * grow.shift
     if grow.shift == 0.5 then
-        local total = 0
+        local total, unknown = 0, false
         for _, record in ipairs(self.order) do
             if record.logic then
                 total = total + (grow.horizontal and record.width + padX or record.height + padY)
+            elseif record.loaded and (next(record.auraProbes) or record.child.fitsText) then
+                unknown = true
             end
         end
         local half = total / 2
+        -- With auras or texts in the row we can't tell if it lands on a whole or a half pixel. A quarter pixel off keeps
+        -- it clear of the half either way, where the slots' 0.001 sizes would round an icon and its border apart.
+        local nudge = unknown and Pixel.GetMult() * 0.25 or 0
         if grow.horizontal then
-            x = floor(x - half + 0.5) + half
+            x = floor(x - half + 0.5) + half - nudge
         else
-            y = -(floor(-y - half + 0.5) + half)
+            y = -(floor(-y - half + 0.5) + half) + nudge
         end
     end
     local point = Aligned(grow.point, grow, self.config.Align)
@@ -148,7 +154,7 @@ local function Resize(self)
     PlaceChain(self)
 end
 
--- What Lua knows (loaded, a logic trigger on show) is sized here; only an aura's visibility is left to the engine.
+-- What we can know (loaded, a readable trigger on show) is sized here; an aura opens its slot by itself while it's up.
 ---@param record CDMChainRecord
 ---@param padX number
 ---@param padY number
@@ -327,7 +333,7 @@ function ChainMixin:NotifyChildResized(childOrKey, width, height)
     Resize(self)
 end
 
----Whether the icon is loaded (its slot exists) and whether a trigger Lua can see is on show.
+---Whether the icon is loaded (its slot exists) and whether one of its readable triggers is on show.
 ---@param key string
 ---@param loaded boolean
 ---@param logic boolean
@@ -337,14 +343,14 @@ function ChainMixin:SetChildVisible(key, loaded, logic)
     logic = loaded and logic
     if record.loaded == loaded and record.logic == logic then return end
     record.loaded, record.logic = loaded, logic
-    -- The slot stays shown at zero size: a hidden one mid-chain makes the engine drop the slots after it from the bounds.
+    -- The slot stays shown at zero size: a hidden one mid-chain drops every slot after it from the row's size.
     record.child:SetShown(loaded)
     record.measure:SetShown(logic)
     SizeRecord(record, Padding(self))
     Resize(self)
 end
 
----Measure an aura button too, so the slot opens while the engine shows it.
+---Measure an aura button too, so the slot opens while the aura is up.
 ---@param key string
 ---@param button table the real aura button, from its initializeFrame
 function ChainMixin:WatchAuraButton(key, button)
@@ -354,13 +360,17 @@ function ChainMixin:WatchAuraButton(key, button)
     probe:SetSize(0.001, 0.001)
     probe:SetPoint('TOPLEFT', button, 'BOTTOMRIGHT')
     record.auraProbes[button] = probe
+    PlaceChain(self) -- an aura in the row changes how it centres
 end
 
 -- Measuring --
 
--- An aura button shows and hides without telling Lua, so every loaded slot is measured each frame.
+-- An aura button shows and hides without telling us, so every loaded slot is measured each frame.
 ---@param self CDMChainGroup
 local function OnUpdate(self)
+    -- Collapse the centred row before the slots: measured at last frame's width, its float noise fed back
+    -- into this frame's and the icons wobbled a hair every frame, shaking texts that sit on a pixel edge.
+    self.chain:SetSize(0.001, 0.001)
     for _, record in ipairs(self.order) do
         if record.loaded then
             Measure(record.slot)

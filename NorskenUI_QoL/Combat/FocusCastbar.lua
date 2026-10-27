@@ -2,6 +2,7 @@
 local NRSKNUI = _G.NorskenUI
 ---@class FocusCastbarModule
 local FocusCastbar = NRSKNUI:GetModule('FocusCastbar')
+local L = NRSKNUI.Libs.AL
 local Anchors = NRSKNUI.Anchors
 local LCG = NRSKNUI.Libs.LCG
 
@@ -34,7 +35,7 @@ local PetSpellBank = Enum.SpellBookSpellBank.Pet
 local INTERRUPTED = _G.INTERRUPTED
 
 local FALLBACK_ICON = 136243
-local INTERRUPTED_BY = 'Interrupted by %s'
+local INTERRUPTED_BY = L['Interrupted by %s']
 local KICK_STATE_THROTTLE = 0.1
 
 local CAST_EVENTS = {
@@ -152,7 +153,7 @@ function FocusCastbar:CreateFrame()
 
     -- Built once so the script can be attached and detached per cast without a closure each time.
     self.onUpdate = function(_, elapsed) self:OnUpdate(elapsed) end
-    Anchors:Register(self, 'FocusCastbar', coreFrame, 'focusCastbar')
+    Anchors:Register(self, 'FocusCastbar', coreFrame, 'focusCastbar', { displayName = L['Focus Castbar'] })
 end
 
 function FocusCastbar:ApplySettings()
@@ -823,7 +824,7 @@ function FocusCastbar:StartPreviewCast()
 
     self.castBar:SetTimerDuration(duration, Immediate, ElapsedTime)
     self.iconFrame.texture:SetTexture(FALLBACK_ICON)
-    self.castText:SetText('Focus Castbar')
+    self.castText:SetText(L['Focus Castbar'])
     self.spark:Show()
     self:SetupKickBar(duration)
     self:UpdateVisibility()

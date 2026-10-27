@@ -26,7 +26,7 @@ local ANCHOR_POINTS = NRSKNUI.AnchorOptions
 local function OutlineOptions(globalLabel)
     local options = NRSKNUI:GetOutlineOptions()
     if globalLabel then
-        tinsert(options, 1, { value = GLOBAL, text = format('Global (%s)', globalLabel) })
+        tinsert(options, 1, { value = GLOBAL, text = format(L['Global (%s)'], globalLabel) })
     end
     return options
 end
@@ -179,7 +179,7 @@ local function BuildSpecialView(page, entry)
     fontRow:Dropdown(L['Font'], {
         width = entry.noOutline and 1 or 0.5,
         media = 'font',
-        options = { { key = GLOBAL, text = format('Global (%s)', fontDB.FontFace) } },
+        options = { { key = GLOBAL, text = format(L['Global (%s)'], fontDB.FontFace) } },
         value = sdb.FontFace or GLOBAL,
         searchable = true,
         conditions = { 'spEnabled' },
@@ -220,7 +220,7 @@ local function BuildSpecialView(page, entry)
 
     if entry.hideLabel then
         local hideRow = card:Row(rowH)
-        hideRow:Checkbox(L[entry.hideLabel], {
+        hideRow:Checkbox(entry.hideLabel, {
             width = 1,
             value = sdb.Hide,
             conditions = { 'spEnabled' },
@@ -236,7 +236,7 @@ local function BuildSpecialView(page, entry)
         local noteRow = card:Row(noteHeight, 0)
         noteRow:Text(nil, {
             width = 1,
-            text = L[entry.note],
+            text = entry.note,
             height = noteHeight,
             autoHeight = true,
             bgMode = 'hide',

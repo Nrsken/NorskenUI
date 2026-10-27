@@ -52,8 +52,7 @@
 ---@field itemDuration LuaDurationObject? item triggers: built from plain cooldown numbers
 ---@field readyDuration LuaDurationObject? zero, handed to texts for ready (a cast lockout)
 ---@field realCooldown LuaDurationObject? spell triggers: a copy of the running cooldown, shown on while a GCD outlasts it
----@field heldGCD number? spell triggers: the GCD that overtook realCooldown, which shows until it ends
----@field timerDone boolean? set while OnCooldownDone re-reads the trigger
+---@field heldGCD number? spell triggers: the GCD that overtook realCooldown, which shows until it ends---@field timerDone boolean? set while OnCooldownDone re-reads the trigger
 ---@field count number? a count to show for %s instead of spell charges
 ---@field timerLength number? cast timers: the configured duration
 ---@field timerEnd number? cast timers: when the running timer ends

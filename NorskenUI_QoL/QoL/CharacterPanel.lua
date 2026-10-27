@@ -2,6 +2,7 @@
 local NRSKNUI = _G.NorskenUI
 ---@class CharacterPanelModule
 local CharacterPanel = NRSKNUI:GetModule('CharacterPanel')
+local L = NRSKNUI.Libs.AL
 function CharacterPanel:UpdateDB() self.db = self.namespace.profile end
 
 local Theme = NRSKNUI.Theme
@@ -885,9 +886,9 @@ end
 function CharacterPanel:CreateGemPopup()
     if self.gemPopup then return self.gemPopup end
 
-    self.gemPopup = CreateListPopup('NRSKNUI_GemPopup', 'Gems', function(row)
+    self.gemPopup = CreateListPopup('NRSKNUI_GemPopup', L['Gems'], function(row)
         if NRSKNUI:InCombat() then
-            NRSKNUI:Print('Cannot socket during combat')
+            NRSKNUI:Print(L['Cannot socket during combat'])
             return
         end
         if not row.data or not row.targetSlotID or not row.targetSocketIndex then return end
@@ -936,8 +937,8 @@ function CharacterPanel:ShowGemPopup(socketButton)
         end
     end
 
-    popup.title:SetText(socketButton.socket.filled and 'Replace Gem' or 'Socket Gem')
-    popup.empty:SetText(socketButton.socket.filled and 'No replacement gems' or 'No compatible gems')
+    popup.title:SetText(socketButton.socket.filled and L['Replace Gem'] or L['Socket Gem'])
+    popup.empty:SetText(socketButton.socket.filled and L['No replacement gems'] or L['No compatible gems'])
 
     LayoutRows(popup, entries, function(row, entry)
         row.targetSlotID = socketButton.socketInfo.slotID
@@ -959,12 +960,12 @@ function CharacterPanel:CreateEnchantPopup()
     if self.enchantPopup then return self.enchantPopup end
 
     -- Addon code can't start an armor kit, so the secure template uses the item and targets the slot.
-    self.enchantPopup = CreateListPopup('NRSKNUI_EnchantPopup', 'Enchants', function()
+    self.enchantPopup = CreateListPopup('NRSKNUI_EnchantPopup', L['Enchants'], function()
         CharacterPanel:HideEnchantPopup()
         CharacterPanel:HideSlotHighlight()
     end, 'SecureActionButtonTemplate')
 
-    self.enchantPopup.empty:SetText('No enchants in bags')
+    self.enchantPopup.empty:SetText(L['No enchants in bags'])
 
     return self.enchantPopup
 end
@@ -1076,7 +1077,7 @@ function CharacterPanel:CreateSocketButton(index)
 
     button:SetScript('OnClick', function(btn)
         if NRSKNUI:InCombat() then
-            NRSKNUI:Print('Cannot socket during combat')
+            NRSKNUI:Print(L['Cannot socket during combat'])
             return
         end
         if btn.socketInfo then SocketInventoryItem(btn.socketInfo.slotID) end

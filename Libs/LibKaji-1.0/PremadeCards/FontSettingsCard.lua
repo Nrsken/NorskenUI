@@ -19,6 +19,7 @@ if not lib then return end
 
 lib.premadeCards = lib.premadeCards or {}
 
+local L = lib.L
 local tinsert = table.insert
 local ipairs = ipairs
 local strsplit = strsplit
@@ -30,17 +31,6 @@ local NO_SHADOW_OUTLINES = {
     SOFTOUTLINE = true,
     SLUG = true,
     ["SLUG,OUTLINE"] = true,
-}
-
-local DEFAULT_OUTLINE_OPTIONS = {
-    { key = "NONE",                    text = "None" },
-    { key = "OUTLINE",                 text = "Outline" },
-    { key = "THICKOUTLINE",            text = "Thick" },
-    { key = "MONOCHROME",              text = "Mono" },
-    { key = "MONOCHROME,OUTLINE",      text = "Mono Outline" },
-    { key = "MONOCHROME,THICKOUTLINE", text = "Mono Thick" },
-    { key = "SLUG",                    text = "Slug" },
-    { key = "SLUG,OUTLINE",            text = "Slug Outline" },
 }
 
 --- Font face / size / outline / shadow settings bound to a db table.
@@ -64,7 +54,7 @@ lib.premadeCards.FontSettingsCard = {
 
         local globalOverride = config.globalOverride
         local globalOverrideKey = globalOverride and (globalOverride.dbKey or "UseGlobalFont")
-        local globalOverrideLabel = globalOverride and (globalOverride.label or "Use Global Font")
+        local globalOverrideLabel = globalOverride and (globalOverride.label or L["Use Global Font"])
 
         local keys = {
             fontFace = dbKeys.fontFace or "FontFace",
@@ -146,7 +136,7 @@ lib.premadeCards.FontSettingsCard = {
         -- Font face + outline.
         local row1 = card:Row(theme.rowHeight)
 
-        fontDropdown = row1:Dropdown("Font", {
+        fontDropdown = row1:Dropdown(L["Font"], {
             width = 0.5,
             media = "font",
             value = getValue(keys.fontFace, "Friz Quadrata TT"),
@@ -154,13 +144,22 @@ lib.premadeCards.FontSettingsCard = {
             callback = function(key) setValue(keys.fontFace, key) end,
         })
 
-        local outlineOptions = config.outlineOptions or DEFAULT_OUTLINE_OPTIONS
+        local outlineOptions = config.outlineOptions or {
+            { key = "NONE",                    text = L["None"] },
+            { key = "OUTLINE",                 text = L["Outline"] },
+            { key = "THICKOUTLINE",            text = L["Thick"] },
+            { key = "MONOCHROME",              text = L["Mono"] },
+            { key = "MONOCHROME,OUTLINE",      text = L["Mono Outline"] },
+            { key = "MONOCHROME,THICKOUTLINE", text = L["Mono Thick"] },
+            { key = "SLUG",                    text = L["Slug"] },
+            { key = "SLUG,OUTLINE",            text = L["Slug Outline"] },
+        }
         if includeSoftOutline then
             outlineOptions = { unpack(outlineOptions) }
-            tinsert(outlineOptions, { key = "SOFTOUTLINE", text = "Soft" })
+            tinsert(outlineOptions, { key = "SOFTOUTLINE", text = L["Soft"] })
         end
 
-        row1:Dropdown("Outline", {
+        row1:Dropdown(L["Outline"], {
             width = 0.5,
             options = outlineOptions,
             value = getValue(keys.fontOutline, "OUTLINE"),
@@ -180,7 +179,7 @@ lib.premadeCards.FontSettingsCard = {
                     local widthPct = 1 / countInRow
                     for j = i, min(i + perRow - 1, #fontSizes) do
                         local sizeConfig = fontSizes[j]
-                        row:Slider(sizeConfig.label or "Size", {
+                        row:Slider(sizeConfig.label or L["Size"], {
                             width = widthPct,
                             min = fontSizeRange[1],
                             max = fontSizeRange[2],
@@ -191,7 +190,7 @@ lib.premadeCards.FontSettingsCard = {
                     end
                 end
             else
-                card:Row(theme.rowHeight):Slider("Font Size", {
+                card:Row(theme.rowHeight):Slider(L["Font Size"], {
                     width = 1,
                     min = fontSizeRange[1],
                     max = fontSizeRange[2],
@@ -207,7 +206,7 @@ lib.premadeCards.FontSettingsCard = {
 
         -- Shadow enable + color.
         local row3 = card:Row(theme.rowHeight)
-        shadowEnableCheck = row3:Checkbox("Font Shadow", {
+        shadowEnableCheck = row3:Checkbox(L["Font Shadow"], {
             width = 0.5,
             value = shadowDb[shadowKeys.enabled] == true,
             callback = function(checked)
@@ -217,7 +216,7 @@ lib.premadeCards.FontSettingsCard = {
             end,
         })
 
-        shadowSubWidgets[#shadowSubWidgets + 1] = row3:ColorPicker("Shadow Color", {
+        shadowSubWidgets[#shadowSubWidgets + 1] = row3:ColorPicker(L["Shadow Color"], {
             width = 0.5,
             value = shadowDb[shadowKeys.color] or { 0, 0, 0, 1 },
             callback = function(r, g, b, a)
@@ -228,7 +227,7 @@ lib.premadeCards.FontSettingsCard = {
 
         -- Shadow X/Y offsets.
         local row4 = card:Row(theme.rowHeightLast, 0)
-        shadowSubWidgets[#shadowSubWidgets + 1] = row4:Slider("Shadow X", {
+        shadowSubWidgets[#shadowSubWidgets + 1] = row4:Slider(L["Shadow X"], {
             width = 0.5,
             min = shadowOffsetRange[1],
             max = shadowOffsetRange[2],
@@ -241,7 +240,7 @@ lib.premadeCards.FontSettingsCard = {
             end,
         })
 
-        shadowSubWidgets[#shadowSubWidgets + 1] = row4:Slider("Shadow Y", {
+        shadowSubWidgets[#shadowSubWidgets + 1] = row4:Slider(L["Shadow Y"], {
             width = 0.5,
             min = shadowOffsetRange[1],
             max = shadowOffsetRange[2],

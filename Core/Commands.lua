@@ -1,5 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
+local L = NRSKNUI.Libs.AL
 
 local string_gsub = string.gsub
 local format = string.format
@@ -26,7 +27,7 @@ function NRSKNUI:ResetGUIState()
         GUIFrame:ResetPosition()
     end
 
-    self:Print('GUI position and size reset to defaults.')
+    self:Print(L['GUI position and size reset to defaults.'])
 end
 
 -- Options --
@@ -40,7 +41,7 @@ local function LoadOptions()
 
     local _, _, _, _, reason = C_AddOns.GetAddOnInfo(OPTIONS)
     if reason == 'MISSING' then
-        NRSKNUI:Print(OPTIONS .. ' is missing, reinstall NorskenUI.')
+        NRSKNUI:Print(format(L['%s is missing, reinstall NorskenUI.'], OPTIONS))
         return false
     end
 
@@ -57,7 +58,7 @@ local function LoadOptions()
     local version = C_AddOns.GetAddOnMetadata(OPTIONS, 'Version')
     local coreVersion = C_AddOns.GetAddOnMetadata('NorskenUI', 'Version')
     if version ~= coreVersion then
-        NRSKNUI:Print(format('%s is version %s but NorskenUI is %s, update both.', OPTIONS, tostring(version), tostring(coreVersion)))
+        NRSKNUI:Print(format(L['%s is version %s but NorskenUI is %s, update both.'], OPTIONS, tostring(version), tostring(coreVersion)))
     end
     return true
 end
@@ -68,7 +69,7 @@ end
 function NRSKNUI:OpenOptions(pageId, context)
     -- loading builds the whole window, which waits until combat is over
     if InCombatLockdown() then
-        self:Print('Options will open after combat ends.')
+        self:Print(L['Options will open after combat ends.'])
         self:RunWhenSafe(function()
             self:OpenOptions(pageId, context)
         end)

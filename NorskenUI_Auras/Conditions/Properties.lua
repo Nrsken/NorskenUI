@@ -158,6 +158,20 @@ local PROPERTIES = {
             return false
         end,
     },
+    -- The value lives on the frame (see EvaluateConditions and GetMaxStacks); this only redraws what reads it.
+    maxStacks = {
+        apply = function(_, layer)
+            local trigger = layer.auraTrigger
+            if not (layer.isBar and trigger) then return end
+
+            CDM:SetStackTicks(layer, trigger)
+            CDM:QueueAuraRestyle(layer, function()
+                if layer.auraTrigger == trigger then
+                    CDM:StyleAuraButton(layer, trigger)
+                end
+            end)
+        end,
+    },
     backgroundColor = {
         apply = function(_, layer, value)
             if not layer.isBar then return end
@@ -299,5 +313,5 @@ function CDM:SplitProperty(key)
     return key, nil
 end
 
--- The engine's per-pip pass uses these too.
+-- The per-pip condition pass uses these too.
 CDM.ConditionRegions = { SubElement = SubElement, PaintRegion = PaintRegion }

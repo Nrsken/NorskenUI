@@ -173,6 +173,7 @@ local PROPERTIES = {
     { key = 'edge',            text = L['Show Edge'],               kind = 'bool',  iconOnly = true },
     { key = 'swipeColor',      text = L['Swipe Color'],             kind = 'color', iconOnly = true },
     { key = 'barColor',        text = L['Bar Color'],               kind = 'color', barOnly = true },
+    { key = 'maxStacks',       text = L['Max Stacks'],              kind = 'stacks', barOnly = true, stacksOnly = true },
     { key = 'backgroundColor', text = L['Background Color'],        kind = 'color', barOnly = true,  missing = true },
     { key = 'sound',           text = L['Play Sound'],              kind = 'sound' },
 }
@@ -183,6 +184,9 @@ local OFFSETS = {
 }
 
 local condOpen = {} -- [index] = open, for the session
+
+-- what a new change starts at, by its kind (colours make their own table each time)
+local DEFAULT_VALUES = { bool = true, alpha = 0.5, fontSize = 20, stacks = 10, offset = 0, text = '%p' }
 
 ---@class NRSKNUI.CDMConditionsTab
 local ConditionsTab = {}
@@ -204,9 +208,19 @@ local function PropertyList(display)
         return list, byKey
     end
 
+    -- Max Stacks only means something on a bar counting an aura's stacks
+    local stacksBar = false
+    for _, trigger in ipairs(display.Triggers or {}) do
+        if trigger.Type == 'aura' and trigger.BarMode == 'stacks' then
+            stacksBar = true
+        end
+    end
+
     for _, entry in ipairs(PROPERTIES) do
         local onType = entry.iconOnly and kind == 'icon' or entry.barOnly and kind == 'bar' or not (entry.iconOnly or entry.barOnly)
-        if onType and not (entry.noText and kind == 'text') then add(entry) end
+        if onType and not (entry.noText and kind == 'text') and not (entry.stacksOnly and not stacksBar) then
+            add(entry)
+        end
     end
     -- a dynamic group owns its icons' slots
     if not CDM:IsDynamic(display.parent) then
@@ -256,13 +270,10 @@ end
 ---@param entry table
 ---@return any
 local function DefaultValue(entry)
-    if entry.kind == 'bool' then return true end
-    if entry.kind == 'alpha' then return 0.5 end
-    if entry.kind == 'fontSize' then return 20 end
-    if entry.kind == 'offset' then return 0 end
-    if entry.kind == 'text' then return '%p' end
-    if entry.kind == 'color' then return entry.pandemic and entry.auraOnly and { 1, 0.25, 0.25, 1 } or { 1, 1, 1, 1 } end
-    return nil
+    if entry.kind == 'color' then
+        return entry.pandemic and entry.auraOnly and { 1, 0.25, 0.25, 1 } or { 1, 1, 1, 1 }
+    end
+    return DEFAULT_VALUES[entry.kind]
 end
 
 ---@param display table
@@ -536,6 +547,15 @@ local function ValueWidget(row, entry, change, set, edit)
             width = 0.5,
             min = 6,
             max = 72,
+            step = 1,
+            value = change.value,
+            callback = set,
+        })
+    elseif entry.kind == 'stacks' then
+        row:Slider(L['Max Stacks'], {
+            width = 0.5,
+            min = 1,
+            max = 100,
             step = 1,
             value = change.value,
             callback = set,

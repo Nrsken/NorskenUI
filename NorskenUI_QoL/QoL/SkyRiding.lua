@@ -5,6 +5,7 @@ local SkyRiding = NRSKNUI:GetModule('SkyRiding')
 function SkyRiding:UpdateDB() self.db = self.namespace.profile end
 
 local Anchors = NRSKNUI.Anchors
+local L = NRSKNUI.Libs.AL
 local kajiGUI = NRSKNUI.GUI
 local Pixel = NRSKNUI.Libs.KAJI.Pixel
 
@@ -112,7 +113,7 @@ function SkyRiding:CreateFrames()
     host:HookScript('OnShow', function() self:OnBarShow() end)
     host:HookScript('OnHide', function() self:OnBarHide() end)
 
-    Anchors:Register(self, 'SkyridingUI', group, 'skyRiding')
+    Anchors:Register(self, 'SkyridingUI', group, 'skyRiding', { displayName = L['Skyriding UI'] })
 end
 
 ---What a row draws, nil when it has nothing to show.

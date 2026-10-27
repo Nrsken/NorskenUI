@@ -6,8 +6,10 @@ local LDBIcon = NRSKNUI.Libs.LDBIcon
 local LDS = NRSKNUI.Libs.LDS
 local GUI = NRSKNUI.GUI
 local AceDB = NRSKNUI.Libs.AceDB
+local L = NRSKNUI.Libs.AL
 
 local UnitGUID = UnitGUID
+local format = string.format
 local after = C_Timer and C_Timer.After
 
 local LDBIconPath = 'Interface\\AddOns\\NorskenUI\\Media\\Logo\\logocookingsPT1128x128OTBRED.png'
@@ -45,7 +47,9 @@ function NRSKNUI:OnInitialize()
     self.MyGUID = UnitGUID('player')
 
     self.db = AceDB:New('NorskenUIDB', self:GetDefaultDB(), true)
-    ---@cast self.db NRSKNUI.DBObject
+
+    -- before any module folder loads, so their locale files keep only the chosen language
+    self:SetLanguage(self.db.global.Language)
 
     RunProfileScopeMigration(self.db)
 
@@ -127,9 +131,9 @@ local function SetupMinimapIcon()
         end,
         OnTooltipShow = function(tt)
             tt:AddLine(NRSKNUI:ColorTextByTheme('Norsken') .. '|cffb3b3b3UI|r')
-            tt:AddLine('Left-Click to open options', 0.70, 0.70, 0.70)
-            tt:AddLine('Right-Click to toggle anchors', 0.70, 0.70, 0.70)
-            tt:AddLine('Middle-Click to reset the options window position', 0.70, 0.70, 0.70)
+            tt:AddLine(L['Left-Click to open options'], 0.70, 0.70, 0.70)
+            tt:AddLine(L['Right-Click to toggle anchors'], 0.70, 0.70, 0.70)
+            tt:AddLine(L['Middle-Click to reset the options window position'], 0.70, 0.70, 0.70)
         end,
     })
     local minimapDB = NRSKNUI.db.profile.Minimap
@@ -157,7 +161,7 @@ function NRSKNUI:OnEnable()
 
     -- Show login message if enabled
     if self.db.profile.Minimap.hideMessage ~= true then
-        self:Print(self:ColorTextByTheme('/nui') .. ' to open the configuration window.')
+        self:Print(format(L['%s to open the configuration window.'], self:ColorTextByTheme('/nui')))
     end
 
     self.UFBlocked = self:ShouldNotLoadUF()

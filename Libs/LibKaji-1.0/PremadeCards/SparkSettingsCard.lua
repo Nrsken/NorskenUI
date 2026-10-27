@@ -24,6 +24,7 @@ if not lib then return end
 
 lib.premadeCards = lib.premadeCards or {}
 
+local L = lib.L
 local ipairs = ipairs
 
 --- Spark texture / scale / color settings bound to a db table.
@@ -47,14 +48,14 @@ lib.premadeCards.SparkSettingsCard = {
 
         local globalOverride = config.globalOverride
         local globalOverrideKey = globalOverride and (globalOverride.dbKey or "UseGlobalSpark")
-        local globalOverrideLabel = globalOverride and (globalOverride.label or "Use Global Spark")
+        local globalOverrideLabel = globalOverride and (globalOverride.label or L["Use Global Spark"])
 
         -- Hosts with a locale table can pass translated widget labels through here.
         local labels = config.labels or {}
-        local textureLabel = labels.texture or "Spark Texture"
-        local scaleLabel = labels.scale or "Spark Scale"
-        local widthLabel = labels.width or "Spark Width"
-        local colorLabel = labels.color or "Spark Color"
+        local textureLabel = labels.texture or L["Spark Texture"]
+        local scaleLabel = labels.scale or L["Spark Scale"]
+        local widthLabel = labels.width or L["Spark Width"]
+        local colorLabel = labels.color or L["Spark Color"]
 
         -- Defaults match the keys the host's spark resolver reads off a module db.
         local keys = {

@@ -21,6 +21,7 @@ local StopTracking = C_ContentTracking and C_ContentTracking.StopTracking
 local enterclicks = {
     'ABANDON_QUEST',
     'ABANDON_QUEST_WITH_ITEMS',
+    'CONFIRM_PURCHASE_NONREFUNDABLE_ITEM',
 }
 
 -- Confirm Popups with Enter

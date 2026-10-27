@@ -24,6 +24,7 @@ if not lib then return end
 
 lib.premadeCards = lib.premadeCards or {}
 
+local L = lib.L
 local ipairs = ipairs
 
 --- Backdrop + border colors with global override toggles, bound to a db table.
@@ -46,16 +47,16 @@ lib.premadeCards.BackdropColorsCard = {
             rows[#rows + 1] = {
                 overrideKey = config.backdropOverrideKey or "UseGlobalBackdrop",
                 colorKey = config.backdropKey or "BackdropColor",
-                overrideLabel = labels.useGlobalBackdrop or "Use Global Backdrop",
-                colorLabel = labels.backdrop or "Backdrop Color",
+                overrideLabel = labels.useGlobalBackdrop or L["Use Global Backdrop"],
+                colorLabel = labels.backdrop or L["Backdrop Color"],
             }
         end
         if config.showBorder ~= false then
             rows[#rows + 1] = {
                 overrideKey = config.borderOverrideKey or "UseGlobalBorder",
                 colorKey = config.borderKey or "BorderColor",
-                overrideLabel = labels.useGlobalBorder or "Use Global Border",
-                colorLabel = labels.border or "Border Color",
+                overrideLabel = labels.useGlobalBorder or L["Use Global Border"],
+                colorLabel = labels.border or L["Border Color"],
             }
         end
 
@@ -72,7 +73,7 @@ lib.premadeCards.BackdropColorsCard = {
         end
 
         if enable then
-            card:Row(theme.rowHeight):Checkbox(enable.label or "Enable Backdrop", {
+            card:Row(theme.rowHeight):Checkbox(enable.label or L["Enable Backdrop"], {
                 width = 1,
                 value = db[enable.dbKey],
                 callback = function(checked)

@@ -3,6 +3,7 @@ local NRSKNUI = _G.NorskenUI
 ---@class GatewayModule
 local Gateway = NRSKNUI:GetModule('Gateway')
 local Anchors = NRSKNUI.Anchors
+local L = NRSKNUI.Libs.AL
 
 local IsInGroup = IsInGroup
 local unpack = unpack
@@ -99,7 +100,7 @@ function Gateway:CreateAlertFrame()
 
     -- Finalize the frame and register it with Anchors.
     self.alertFrame = frame
-    Anchors:Register(self, 'GatewayAlert', self.alertFrame, 'gateway')
+    Anchors:Register(self, 'GatewayAlert', self.alertFrame, 'gateway', { displayName = L['Gateway Alert'] })
     frame:Hide()
 end
 

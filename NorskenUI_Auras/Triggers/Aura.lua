@@ -21,9 +21,35 @@ local PREVIEW_LENGTH, PREVIEW_PANDEMIC = CDM.PREVIEW_LENGTH, CDM.PREVIEW_PANDEMI
 local QUESTION_MARK = 134400
 
 --[[
-Aura and Aura Overlay triggers. The game shows the aura through an aura button and never tells Lua it's up,
+Aura and Aura Overlay triggers. The game shows the aura through an aura button and never tells us it's up,
 so this file points the button at its spells and draws the options preview and placeholder with the layer's own parts.
 ]]
+
+-- Restyle --
+
+---Restyle a layer's aura button now or once the restriction lifts: existing buttons deny tainted access while
+---auras are secret, not just in combat. The restriction queue keeps every entry, so a layer waits there once with its latest.
+---@param layer CDMLayer
+---@param restyle fun()
+function CDM:QueueAuraRestyle(layer, restyle)
+    if not NRSKNUI:AreAurasSecret() then
+        restyle()
+        return
+    end
+
+    layer.restyleAura = restyle
+    if NRSKNUI:IsRestricted() and not layer.restyleQueued then
+        layer.restyleQueued = true
+        NRSKNUI:DeferUntilUnrestricted(0, function()
+            layer.restyleQueued = nil
+            local queued = layer.restyleAura
+            layer.restyleAura = nil
+            if queued then
+                queued()
+            end
+        end)
+    end
+end
 
 -- Stand-in --
 
@@ -122,7 +148,7 @@ end
 
 -- Trigger --
 
--- Secret: whether the aura is up never reaches Lua, the layer's slot shows itself while it is.
+-- Secret: we never learn whether the aura is up; the layer's slot shows itself while it is.
 CDM.TriggerTypes.aura = {
     Secret = true,
 
@@ -152,23 +178,8 @@ CDM.TriggerTypes.aura = {
             if not configured then
                 CDM:ConfigureAuraLayer(layer, trigger, spellIDs)
             end
-            -- Existing aura buttons deny tainted access while auras are secret, not just in combat; new ones style on creation.
-            if NRSKNUI:AreAurasSecret() then
-                -- The restriction queue keeps every entry, so a layer waits there once with its latest restyle.
-                layer.restyleAura = Restyle
-                if NRSKNUI:IsRestricted() and not layer.restyleQueued then
-                    layer.restyleQueued = true
-                    NRSKNUI:DeferUntilUnrestricted(0, function()
-                        layer.restyleQueued = nil
-                        local restyle = layer.restyleAura
-                        layer.restyleAura = nil
-                        if restyle then
-                            restyle()
-                        end
-                    end)
-                end
-            elseif configured then
-                Restyle()
+            if configured or NRSKNUI:AreAurasSecret() then
+                CDM:QueueAuraRestyle(layer, Restyle)
             end
         end
         -- Re-resolved on every catalogue change: a fresh closure each time would pile up in the combat queue.
@@ -188,6 +199,7 @@ CDM.TriggerTypes.aura = {
     ---@param style table
     ---@param trigger table
     Update = function(layer, style, trigger)
+        CDM:SetStackTicks(layer, trigger)
         local preview = IsPreviewing(layer)
         local display = layer.owner.id and CDM:Get(layer.owner.id)
         local active, pandemicColor, pandemic, missing = {}, nil, {}, {}
@@ -255,7 +267,7 @@ CDM.TriggerTypes.aura = {
         layer.count = 1
         if layer.isBar and trigger.BarMode == 'stacks' then
             -- An explicit value takes the bar off the preview timer; the timer still loops the stand-in.
-            local maxStacks = trigger.MaxStacks or 10
+            local maxStacks = CDM:GetMaxStacks(layer, trigger)
             layer.count = ceil(maxStacks * 0.6)
             layer.Bar:SetMinMaxValues(0, maxStacks)
             layer.Bar:SetValue(layer.count)

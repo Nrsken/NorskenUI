@@ -44,7 +44,7 @@ local LOGO = 'Interface\\AddOns\\NorskenUI\\Media\\Logo\\'
 local TEX = 'Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\'
 local SOCIAL = 'Interface\\AddOns\\NorskenUI\\Media\\SupportLogos\\'
 
-NRSKNUI.GUIFrame.ReloadText = 'Disabling/Enabling this requires a reload to take full effect.'
+NRSKNUI.GUIFrame.ReloadText = L['Disabling/Enabling this requires a reload to take full effect.']
 
 -- Fired whenever the GUI edits a position, so the live anchor overlay and its nudge panel follow the sliders.
 -- The reverse direction (drag/nudge -> sliders) goes through GUI:RefreshPositionCards().
@@ -89,7 +89,8 @@ local window = GUI:CreateGUIWindow({
                 color = 'textSecondary'
             },
         },
-        version = NRSKNUI.Version,
+        -- the raw value stays English, exports and the version check carry it
+        version = NRSKNUI.Version == 'Development Version' and L['Development Version'] or NRSKNUI.Version,
         versionAnchor = { 'LEFT', 2, 'RIGHT', -45, -3 },
         versionColor = 'textSecondary',
     },
@@ -124,7 +125,7 @@ local window = GUI:CreateGUIWindow({
         end
     end,
     onCombatDefer = function()
-        NRSKNUI:Print('Options will open after combat ends.')
+        NRSKNUI:Print(L['Options will open after combat ends.'])
     end,
 })
 
@@ -138,7 +139,7 @@ window:AddHeaderButton({
     onClick = function()
         window:Hide()
     end,
-    tooltip = 'Close Settings',
+    tooltip = L['Close Settings'],
 })
 window:AddHeaderButton({
     icon = TEX .. 'HomeButtonv2.png',
@@ -147,7 +148,7 @@ window:AddHeaderButton({
     onClick = function()
         window:ShowPage('homePage')
     end,
-    tooltip = 'Open Home Page',
+    tooltip = L['Open Home Page'],
 })
 window:AddHeaderButton({
     icon = TEX .. 'anchor.png',
@@ -158,7 +159,7 @@ window:AddHeaderButton({
             NRSKNUI.Anchors:Toggle()
         end
     end,
-    tooltip = 'Open Anchors',
+    tooltip = L['Open Anchors'],
 })
 window:AddHeaderButton({
     icon = TEX .. 'fill.png',
@@ -167,7 +168,7 @@ window:AddHeaderButton({
     onClick = function()
         window:ShowPage('themePage')
     end,
-    tooltip = 'Open Theme Settings',
+    tooltip = L['Open Theme Settings'],
 })
 window:AddHeaderButton({
     icon = TEX .. 'eye.png',
@@ -180,7 +181,7 @@ window:AddHeaderButton({
         manager:SetForceAll(not manager:IsForceAll())
         btn:SetActive(manager:IsForceAll())
     end,
-    tooltip = 'Preview Every Display',
+    tooltip = L['Preview Every Display'],
 })
 
 -- Previews follow the open page, so the manager needs to hear about every page change. The host is
@@ -200,7 +201,7 @@ local function CopyPrompt(title, link, icon, glow)
         title = title,
         text = link,
         editBox = true,
-        editBoxLabel = 'CTRL-C to copy',
+        editBoxLabel = L['CTRL-C to copy'],
         texture = {
             path = icon,
             glow = glow,
@@ -220,7 +221,7 @@ window:AddFooterSocial({
     text = 'Twitch',
     width = 62,
     onClick = function()
-        CopyPrompt('Support My |cff9146FFTwitch|r', 'www.twitch.tv/norskenwow', SOCIAL .. 'twitchv2W.png', SOCIAL .. 'twitchv2W_glow.png')
+        CopyPrompt(format(L['Support My %s'], '|cff9146FFTwitch|r'), 'www.twitch.tv/norskenwow', SOCIAL .. 'twitchv2W.png', SOCIAL .. 'twitchv2W_glow.png')
     end,
 })
 window:AddFooterSocial({
@@ -229,7 +230,7 @@ window:AddFooterSocial({
     text = 'Discord',
     width = 68,
     onClick = function()
-        CopyPrompt('Join My |cff5865F2Discord|r', 'https://discord.com/invite/23bS8pHfuX', SOCIAL .. 'discordv2W.png', SOCIAL .. 'discordv2W_glow.png')
+        CopyPrompt(format(L['Join My %s'], '|cff5865F2Discord|r'), 'https://discord.com/invite/23bS8pHfuX', SOCIAL .. 'discordv2W.png', SOCIAL .. 'discordv2W_glow.png')
     end,
 })
 window:AddFooterSocial({
@@ -238,7 +239,7 @@ window:AddFooterSocial({
     text = 'GitHub',
     width = 68,
     onClick = function()
-        CopyPrompt('Support My |cffffffffGitHub|r', 'https://github.com/Nrsken/NorskenUI', SOCIAL .. 'github2W.png', SOCIAL .. 'github2W_glow.png')
+        CopyPrompt(format(L['Support My %s'], '|cffffffffGitHub|r'), 'https://github.com/Nrsken/NorskenUI', SOCIAL .. 'github2W.png', SOCIAL .. 'github2W_glow.png')
     end,
 })
 

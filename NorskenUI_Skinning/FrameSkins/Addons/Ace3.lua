@@ -940,6 +940,11 @@ local function SkinDecorations(widgetType, obj)
     decorate(obj)
 end
 
+---@class AceConfigDialogPopup : Frame
+---@field accept Button
+---@field cancel Button
+
+---@param popup AceConfigDialogPopup
 local function SkinPopup(popup)
     if popup.NUISkinned then return end
     popup.NUISkinned = true

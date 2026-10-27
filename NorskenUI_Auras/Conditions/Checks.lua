@@ -6,7 +6,7 @@ local CDM = NRSKNUI:GetModule('CDM')
 --[[
 What a condition can check on each trigger type and how it reads the answer.
 A trigger type adds its own checks to CDM.ConditionChecks.
-A curve check reads a secret time or percent: Lua never runs it, its Text Color changes become a curve the game evaluates.
+A curve check reads a secret time or percent, so we never run it ourselves: its Text Color changes become a curve the game evaluates.
 ]]
 
 local LoadConditions = NRSKNUI.LoadConditions

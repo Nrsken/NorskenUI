@@ -19,28 +19,12 @@ if not lib then return end
 ---@class KajiGUIInstanceMixin
 local InstanceMixin = lib.InstanceMixin
 local safecall = lib.safecall
+local L = lib.L
 
 lib.premadeCards = lib.premadeCards or {}
 
 local ipairs, pairs = ipairs, pairs
 local tinsert = table.insert
-
-local ANCHOR_FRAME_TYPES = {
-    { key = "SCREEN",      text = "Screen Center" },
-    { key = "UIPARENT",    text = "Screen (UIParent)" },
-    { key = "SELECTFRAME", text = "Select Frame" },
-}
-
-local STRATA_LIST = {
-    { key = "TOOLTIP",           text = "Tooltip" },
-    { key = "FULLSCREEN_DIALOG", text = "Fullscreen Dialog" },
-    { key = "FULLSCREEN",        text = "Fullscreen" },
-    { key = "DIALOG",            text = "Dialog" },
-    { key = "HIGH",              text = "High" },
-    { key = "MEDIUM",            text = "Medium" },
-    { key = "LOW",               text = "Low" },
-    { key = "BACKGROUND",        text = "Background" },
-}
 
 --- 9-point anchor selector + offset sliders bound to a db table.
 lib.premadeCards.PositionCard = {
@@ -136,7 +120,7 @@ lib.premadeCards.PositionCard = {
             for _, opt in ipairs(contextOptions) do tinsert(contextList, { key = opt.key, text = opt.text }) end
 
             if splitToggleKey then
-                contextRow:Checkbox("Split Positioning", {
+                contextRow:Checkbox(L["Split Positioning"], {
                     width = 0.5,
                     value = db[splitToggleKey],
                     callback = function(checked)
@@ -150,7 +134,7 @@ lib.premadeCards.PositionCard = {
                 })
             end
 
-            contextDropdown = contextRow:Dropdown("Configure For", {
+            contextDropdown = contextRow:Dropdown(L["Configure For"], {
                 width = 0.5,
                 options = contextList,
                 value = currentContext,
@@ -171,10 +155,13 @@ lib.premadeCards.PositionCard = {
         end
 
         if showAnchorFrameType then
-            local anchorTypeList = {}
-            for _, opt in ipairs(ANCHOR_FRAME_TYPES) do anchorTypeList[opt.key] = opt.text end
+            local anchorTypeList = {
+                SCREEN = L["Screen Center"],
+                UIPARENT = L["Screen (UIParent)"],
+                SELECTFRAME = L["Select Frame"],
+            }
 
-            card:Row(40):Dropdown("Anchored To", {
+            card:Row(40):Dropdown(L["Anchored To"], {
                 width = 1,
                 options = anchorTypeList,
                 value = currentType,
@@ -187,7 +174,7 @@ lib.premadeCards.PositionCard = {
 
             if currentType == "SELECTFRAME" then
                 local row2 = card:Row(40)
-                local frameInput = row2:EditBox("Frame", {
+                local frameInput = row2:EditBox(L["Frame"], {
                     width = 0.5,
                     value = getValue(keys.anchorFrameFrame, ""),
                     callback = function(val) setValue(keys.anchorFrameFrame, val ~= "" and val or nil) end,
@@ -195,7 +182,7 @@ lib.premadeCards.PositionCard = {
 
                 -- The host may inject its own picker; otherwise the library's is used.
                 local frameChooser = gui.services.frameChooser or gui:GetFrameChooser()
-                row2:Button("Select Frame", {
+                row2:Button(L["Select Frame"], {
                     width = 0.5,
                     height = 24,
                     yOffset = -14,
@@ -212,15 +199,15 @@ lib.premadeCards.PositionCard = {
         end
 
         local row3 = card:Row(80)
-        selfPointWidget = row3:AnchorPicker("Anchor From", {
+        selfPointWidget = row3:AnchorPicker(L["Anchor From"], {
             width = 0.5,
             value = getValue(keys.selfPoint, defaults.selfPoint or "CENTER"),
             callback = function(val) setValue(keys.selfPoint, val) end,
         })
         if disableAnchorFrom then selfPointWidget:SetEnabled(false) end
 
-        local anchorPointLabel = showAnchorFrameType and (currentType == "SELECTFRAME" and "To Frame's" or "To Screen's") or
-            "To Frame's"
+        local anchorPointLabel = showAnchorFrameType and (currentType == "SELECTFRAME" and L["To Frame's"] or L["To Screen's"]) or
+            L["To Frame's"]
         anchorPointWidget = row3:AnchorPicker(anchorPointLabel, {
             width = 0.5,
             value = getValue(keys.anchorPoint, defaults.anchorPoint or "CENTER"),
@@ -228,7 +215,7 @@ lib.premadeCards.PositionCard = {
         })
 
         local row4 = card:Row(40, showStrata and nil or 0)
-        xSlider = row4:Slider("X Offset", {
+        xSlider = row4:Slider(L["X Offset"], {
             width = 0.5,
             min = sliderRange[1],
             max = sliderRange[2],
@@ -238,7 +225,7 @@ lib.premadeCards.PositionCard = {
             callback = function(val) setValue(keys.xOffset, val) end,
         })
 
-        ySlider = row4:Slider("Y Offset", {
+        ySlider = row4:Slider(L["Y Offset"], {
             width = 0.5,
             min = sliderRange[1],
             max = sliderRange[2],
@@ -249,9 +236,18 @@ lib.premadeCards.PositionCard = {
         })
 
         if showStrata then
-            card:Row(theme.rowHeightLast, 0):Dropdown("Strata", {
+            card:Row(theme.rowHeightLast, 0):Dropdown(L["Strata"], {
                 width = 1,
-                options = STRATA_LIST,
+                options = {
+                    { key = "TOOLTIP",           text = L["Tooltip"] },
+                    { key = "FULLSCREEN_DIALOG", text = L["Fullscreen Dialog"] },
+                    { key = "FULLSCREEN",        text = L["Fullscreen"] },
+                    { key = "DIALOG",            text = L["Dialog"] },
+                    { key = "HIGH",              text = L["High"] },
+                    { key = "MEDIUM",            text = L["Medium"] },
+                    { key = "LOW",               text = L["Low"] },
+                    { key = "BACKGROUND",        text = L["Background"] },
+                },
                 value = getValue(keys.strata, defaults.strata or "HIGH"),
                 callback = function(key) setValue(keys.strata, key) end,
             })

@@ -23,6 +23,7 @@ if not lib then return end
 local InstanceMixin = lib.InstanceMixin
 local safecall = lib.safecall
 local pixel = lib.Pixel
+local L = lib.L
 
 local CreateFrame = CreateFrame
 local Mixin = Mixin
@@ -322,10 +323,10 @@ local function AcquireButton(self, index)
             GameTooltip:SetSpellByID(hovered.spellID)
             local theme = hovered.owner.gui.theme
             local state = hovered.owner._entries and hovered.owner._entries[hovered.entryID]
-            local text = state == true and "Must be talented" or state == false and "Must not be talented" or "Ignored"
+            local text = state == true and L["Must be talented"] or state == false and L["Must not be talented"] or L["Ignored"]
             GameTooltip:AddLine(" ")
             GameTooltip:AddLine(text, theme.accent[1], theme.accent[2], theme.accent[3])
-            GameTooltip:AddLine("Left-click: next state, right-click: previous", theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3])
+            GameTooltip:AddLine(L["Left-click: next state, right-click: previous"], theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3])
             GameTooltip:Show()
         end)
         button:SetScript("OnLeave", GameTooltip_Hide)

@@ -40,7 +40,7 @@ local function BuildGeneralSettingsTab(page, db)
         bgMode = 'hide',
         text = NRSKNUI:ColorTextByTheme('• ') ..
             L['Because of restrictions i cannot fully hide the button when loaded and at '] ..
-            L['|cffFFFFFFfull health|r'] .. ' and ' .. L['|cffFFFFFFnot in combat.|r'] ..
+            L['|cffFFFFFFfull health|r'] .. ' ' .. L['and'] .. ' ' .. L['|cffFFFFFFnot in combat.|r'] ..
             '\n  ' .. L['This means that the button is invisible but is still clickable.'],
         conditions = { 'all' },
     })

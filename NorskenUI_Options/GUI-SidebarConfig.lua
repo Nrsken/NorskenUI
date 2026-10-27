@@ -39,6 +39,7 @@ GUIFrame.SidebarConfig = {
                 { id = 'globalUIScale',      text = L['UI Scale'] },
                 { id = 'globalTextures',     text = L['Textures'] },
                 { id = 'globalDurationText', text = L['Duration Text'] },
+                { id = 'globalLanguage',     text = L['Language'] },
             }
         },
     },

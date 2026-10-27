@@ -29,7 +29,7 @@ local GLOBAL_RECOVERY_CATEGORY = Constants.SpellCooldownConsts.GLOBAL_RECOVERY_C
 local GCD_SPELL = 61304
 
 local inCooldownEvent = false
-local gcdCount = 0
+local gcdEnds = 0 -- steps each time OnGCDEnd sees the GCD end
 local gcdPassTime
 local changedSpell, changedBase -- the spell the running SPELL_UPDATE_COOLDOWN names
 local gcdAtEvent = false
@@ -53,6 +53,7 @@ local function OnGCDEnd(frame)
         return frame:NUIScheduleUpdate()
     end
 
+    gcdEnds = gcdEnds + 1
     for layer in pairs(recheck) do
         recheck[layer] = nil
         CDM:UpdateLayer(layer)
@@ -149,14 +150,20 @@ CDM.TriggerTypes.spell = {
             if changed then
                 layer.realCooldown = nil
             end
-            if not onGCD or changed or (layer.heldGCD and layer.heldGCD ~= gcdCount) then -- it always ends before the next GCD starts
+            -- Charge spells aren't held: a reset no event names reads exactly like this, so they count as ready once the GCD outlasts the recharge.
+            if not onGCD or changed or state.hasCharges then
                 layer.heldGCD = nil
             elseif not layer.heldGCD and layer.realCooldown then
-                layer.heldGCD = gcdCount
+                layer.heldGCD = gcdEnds
             end
             state.onGCD = onGCD
             layer.readInGCD = gcdAtEvent
-            recheck[layer] = nil
+            if layer.heldGCD then
+                recheck[layer] = true
+                gcdEndFrame:NUIScheduleUpdate()
+            else
+                recheck[layer] = nil
+            end
         else
             gcdRunning = GetSpellCooldown(GCD_SPELL).isActive
             if gcdRunning then
@@ -172,6 +179,9 @@ CDM.TriggerTypes.spell = {
                 end
                 state.onGCD, layer.readInGCD = false, false
             end
+        end
+        if layer.heldGCD ~= gcdEnds then -- the real cooldown was shorter than that GCD, so it's over too
+            layer.heldGCD = nil
         end
         local held = layer.heldGCD ~= nil
         local category = state.hasCharges and active and cooldown.activeCategory
@@ -205,11 +215,14 @@ CDM.TriggerTypes.spell = {
             swipe = duration
             state.onCooldown = true -- the preview's fake cooldown shows the on-cooldown conditions too
         end
-        local usable, noPower = IsSpellUsable(spellID)
-        state.usable = usable
-        -- unusable for another reason (Roll's lockout, a stun) says nothing about power
-        if usable or noPower then
-            state.noPower = noPower
+        -- only for a condition that reads it, as RefreshUsable
+        if layer.watchUsable then
+            local usable, noPower = IsSpellUsable(spellID)
+            state.usable = usable
+            -- unusable for another reason (Roll's lockout, a stun) says nothing about power
+            if usable or noPower then
+                state.noPower = noPower
+            end
         end
         state.proc = IsSpellOverlayed(spellID)
         state.inRange = rangeState[spellID]
@@ -295,7 +308,6 @@ local handlers = {
         -- One press fires a burst of GCD events in the same frame; the first one's pass already read every spell.
         if not spellID or (gcd and now ~= gcdPassTime) then
             if gcd then
-                gcdCount = gcdCount + 1
                 gcdPassTime = now
             end
             CDM:UpdateAllTriggers(CDM.SPELL_TYPES)

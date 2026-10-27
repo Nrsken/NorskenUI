@@ -47,10 +47,12 @@ AuraTriggers.Types = {
 
 local Types = AuraTriggers.Types
 
-AuraTriggers.UnitOptions = {
-    { value = 'player', text = L['Player'] },
-    { value = 'target', text = L['Target'] },
-}
+NRSKNUI:OnLanguageSet(function()
+    AuraTriggers.UnitOptions = {
+        { value = 'player', text = L['Player'] },
+        { value = 'target', text = L['Target'] },
+    }
+end)
 
 local Defaults = {
     Type = Types.AuraFilter,
