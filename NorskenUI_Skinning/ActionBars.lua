@@ -2,7 +2,7 @@
 local NRSKNUI = _G.NorskenUI
 ---@class ActionBarsModule
 local ACB = NRSKNUI:GetModule('ActionBars')
-function ACB:UpdateDB() self.db = NRSKNUI.Skinning.namespace.profile.ActionBars end
+function ACB:UpdateDB() self.db = self.namespace.profile end
 local L = NRSKNUI.Libs.AL
 
 local CreateFrame = CreateFrame
@@ -772,6 +772,9 @@ local function GetGrowth(point)
 end
 
 -- Calculate auto flyout direction based on bar position
+---@param container Frame?
+---@param anchorPoint string? the bar's anchor point, e.g. 'BOTTOMLEFT'
+---@return string direction
 local function CalculateAutoFlyoutDirection(container, anchorPoint)
     if not container then return "UP" end
 

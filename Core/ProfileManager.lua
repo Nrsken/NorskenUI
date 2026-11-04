@@ -12,21 +12,26 @@ local NorskenUIAPI = _G.NorskenUIAPI
 
 local geterrorhandler, error = geterrorhandler, error
 local type, next, wipe, time = type, next, wipe, time
+local GetSpecializationRole = GetSpecializationRole
 local pcall, xpcall = pcall, xpcall
-local tostring = tostring
-local pairs = pairs
+local pairs, ipairs = pairs, ipairs
 local format = string.format
+local tostring = tostring
+local sort = table.sort
+local rawget = rawget
 
 local GetNumSpecializationsForClassID = C_SpecializationInfo and C_SpecializationInfo.GetNumSpecializationsForClassID
-local SerializeCBOR = C_EncodingUtil and C_EncodingUtil.SerializeCBOR
+local GetSpecialization = C_SpecializationInfo and C_SpecializationInfo.GetSpecialization
+local DecompressString = C_EncodingUtil and C_EncodingUtil.DecompressString
 local DeserializeCBOR = C_EncodingUtil and C_EncodingUtil.DeserializeCBOR
 local CompressString = C_EncodingUtil and C_EncodingUtil.CompressString
-local DecompressString = C_EncodingUtil and C_EncodingUtil.DecompressString
+local SerializeCBOR = C_EncodingUtil and C_EncodingUtil.SerializeCBOR
 local EncodeBase64 = C_EncodingUtil and C_EncodingUtil.EncodeBase64
 local DecodeBase64 = C_EncodingUtil and C_EncodingUtil.DecodeBase64
+local after = C_Timer and C_Timer.After
 
-local deflateEnum = Enum and Enum.CompressionMethod and Enum.CompressionMethod.Deflate
 local optimizeForSizeEnum = Enum and Enum.CompressionLevel and Enum.CompressionLevel.OptimizeForSize
+local deflateEnum = Enum and Enum.CompressionMethod and Enum.CompressionMethod.Deflate
 
 local EXPORT_PREFIX = '!NRSKNUI2!' -- C_EncodingUtil: CBOR + Deflate + Base64
 local LEGACY_PREFIX = '!NRSKNUI1!' -- AceSerializer + LibDeflate, still decoded so old strings import
@@ -44,6 +49,135 @@ local function WithoutRefresh(fn)
     if not ok then
         error(err, 0)
     end
+end
+
+---@param src table
+---@return table|nil
+local function DeepCopy(src)
+    if type(src) ~= 'table' then
+        return src
+    end
+    local copy = {}
+    for k, v in pairs(src) do
+        copy[k] = DeepCopy(v)
+    end
+    return copy
+end
+
+-- Role sets --
+
+-- A module's settings for one role sit in its own namespace under a hidden profile key. The core db
+-- never has that key, so role sets stay out of the profile list.
+local ROLE_SEP = '\1'
+local ROLES = { TANK = true, HEALER = true, DAMAGER = true }
+local roleKnown = false
+local OWN = '' -- in editRoles: the namespace's own settings; no role is named this
+local editRoles = {} ---@type table<string, string> role the options window edits per namespace, OWN = its own
+
+---@param profileName string
+---@param role string
+---@return string
+local function RoleKey(profileName, role)
+    return profileName .. ROLE_SEP .. role
+end
+
+---The role the player's spec plays. The spec can't be trusted before login, so the last role seen stands in.
+---@return string|nil
+local function CurrentRole()
+    local char = NRSKNUI.db.char
+    if not roleKnown then
+        return char.LastRole
+    end
+
+    local spec = GetSpecialization()
+    local role = spec and GetSpecializationRole(spec)
+    if role and ROLES[role] then
+        char.LastRole = role
+    end
+    return char.LastRole
+end
+
+---Point every namespace at its settings for role, falling back to the profile's own where it has none.
+---A module open in the options window shows the role being edited there instead.
+---@param role string|nil nil points every namespace at the profile's own settings
+---@return boolean moved
+local function PointNamespaces(role)
+    local db = NRSKNUI.db
+    local profileName = db.keys.profile
+    local moved = false
+    for name, ns in pairs(db.children or {}) do
+        local nsRole = role
+        local edited = editRoles[name]
+        if role and edited ~= nil then
+            -- its own settings, which nil already means here
+            if edited == OWN then
+                nsRole = nil
+            else
+                nsRole = edited
+            end
+        end
+        local key = profileName
+        if nsRole and rawget(ns.profiles, RoleKey(profileName, nsRole)) then
+            key = RoleKey(profileName, nsRole)
+        end
+        if ns.keys.profile ~= key then
+            -- namespaces get no SetProfile of their own, AceDB switches them with this same function
+            db.SetProfile(ns, key)
+            -- logout only strips a profile AceDB has built
+            local _ = ns.profile
+            moved = true
+        end
+    end
+    return moved
+end
+
+---Run fn with every namespace on the profile's own settings. AceDB's copy and reset reach a namespace
+---through the key it points at, which would write into a role set.
+---@param fn fun()
+local function WithoutRoles(fn)
+    PointNamespaces(nil)
+    local ok, err = pcall(fn)
+    PointNamespaces(CurrentRole())
+    if not ok then
+        error(err, 0)
+    end
+end
+
+---Call fn(profiles, key, role, name) for every role set saved under a profile, loaded modules or not.
+---@param profileName string
+---@param fn fun(profiles: table, key: string, role: string, name: string)
+local function EachRoleSet(profileName, fn)
+    for name, saved in pairs(NRSKNUI.db.sv.namespaces or {}) do
+        for role in pairs(ROLES) do
+            local key = RoleKey(profileName, role)
+            if saved.profiles and saved.profiles[key] then
+                fn(saved.profiles, key, role, name)
+            end
+        end
+    end
+end
+
+---@param profileName string
+local function DropRoleSets(profileName)
+    EachRoleSet(profileName, function(profiles, key) profiles[key] = nil end)
+end
+
+---@param source string
+---@param target string
+local function CopyRoleSets(source, target)
+    DropRoleSets(target)
+    EachRoleSet(source, function(profiles, key, role)
+        profiles[RoleKey(target, role)] = DeepCopy(profiles[key])
+    end)
+end
+
+---@param oldName string
+---@param newName string
+local function MoveRoleSets(oldName, newName)
+    EachRoleSet(oldName, function(profiles, key, role)
+        profiles[RoleKey(newName, role)] = profiles[key]
+        profiles[key] = nil
+    end)
 end
 
 ---Run fn on another profile, then come back to the active one quietly.
@@ -81,6 +215,9 @@ local function OnProfile(profileName, fn)
         for _, each in ipairs(dbs) do
             local _ = each.profile
         end
+
+        -- coming back put every namespace on the profile's own settings
+        PointNamespaces(CurrentRole())
     end)
 end
 
@@ -256,11 +393,15 @@ function ProfileManager:CopyProfile(sourceProfile, targetProfile)
 
     -- AceDB's CopyProfile copies TO the current profile FROM the source
     if targetProfile == self:GetCurrentProfile() then
-        -- Copying into the active profile, OnProfileCopied drives the refresh.
-        NRSKNUI.db:CopyProfile(sourceProfile)
+        -- Copying into the active profile, OnProfileCopied drives the refresh, after the role sets are in place.
+        WithoutRoles(function()
+            CopyRoleSets(sourceProfile, targetProfile)
+            NRSKNUI.db:CopyProfile(sourceProfile)
+        end)
     else
         -- Copying into an inactive profile changes nothing we are looking at, so stay quiet.
         OnProfile(targetProfile, function() NRSKNUI.db:CopyProfile(sourceProfile) end)
+        CopyRoleSets(sourceProfile, targetProfile)
     end
 
     return true
@@ -302,6 +443,7 @@ function ProfileManager:DeleteProfile(profileName)
     self:RemapDualSpecProfile(profileName, nil)
 
     NRSKNUI.db:DeleteProfile(profileName)
+    DropRoleSets(profileName) -- AceDB only deletes the exact name
     return true
 end
 
@@ -399,6 +541,7 @@ function ProfileManager:RenameProfile(oldName, newName)
             end
         end
 
+        MoveRoleSets(oldName, newName) -- AceDB's copy and delete only see the exact name
         NRSKNUI.db:DeleteProfile(oldName)
     end)
 
@@ -415,77 +558,18 @@ end
 function ProfileManager:ResetProfile(profileName)
     if not NRSKNUI.db then return false end
 
+    -- defaults have no role sets
     local currentProfile = self:GetCurrentProfile()
     if not profileName or profileName == currentProfile then
-        NRSKNUI.db:ResetProfile() -- OnProfileReset drives the refresh
+        WithoutRoles(function()
+            DropRoleSets(currentProfile)
+            NRSKNUI.db:ResetProfile() -- OnProfileReset drives the refresh
+        end)
         return true
     end
 
     OnProfile(profileName, function() NRSKNUI.db:ResetProfile() end)
-    return true
-end
-
----Deep copy a table
----@param src table
----@return table|nil
-local function DeepCopy(src)
-    if type(src) ~= 'table' then return src end
-    local copy = {}
-    for k, v in pairs(src) do
-        copy[k] = DeepCopy(v)
-    end
-    return copy
-end
-
----Reset a specific module's settings to defaults
----@param dbPath string Dot-separated path to the module settings (e.g., 'Skinning.BuffTracking')
----@param moduleName? string Optional module name to refresh after reset
----@return boolean success
----@return string|nil error
-function ProfileManager:ResetModuleSettings(dbPath, moduleName)
-    if not NRSKNUI.db or not NRSKNUI.db.profile then
-        return false, L['Database not initialized']
-    end
-
-    local defaults = NRSKNUI:GetDefaultDB()
-    if not defaults or not defaults.profile then
-        return false, L['Defaults not found']
-    end
-
-    local pathParts = {}
-    for part in dbPath:gmatch('[^.]+') do pathParts[#pathParts + 1] = part end
-
-    if #pathParts == 0 then
-        return false, L['Invalid path']
-    end
-
-    local defaultSection = defaults.profile
-    local profileSection = NRSKNUI.db.profile
-
-    for i = 1, #pathParts - 1 do
-        local key = pathParts[i]
-        defaultSection = defaultSection[key]
-        profileSection = profileSection[key]
-        if not defaultSection or not profileSection then
-            return false, format(L['Path not found: %s'], dbPath)
-        end
-    end
-
-    local finalKey = pathParts[#pathParts]
-    if not defaultSection[finalKey] then
-        return false, format(L['Default settings not found for: %s'], dbPath)
-    end
-
-    profileSection[finalKey] = DeepCopy(defaultSection[finalKey])
-
-    if moduleName then
-        local aceModule = NRSKNUI:GetModule(moduleName, true)
-        if aceModule then
-            if aceModule.UpdateDB then aceModule:UpdateDB() end
-            if aceModule:IsEnabled() and aceModule.ApplySettings then aceModule:ApplySettings() end
-        end
-    end
-
+    DropRoleSets(profileName)
     return true
 end
 
@@ -626,6 +710,198 @@ function ProfileManager:GetGlobalProfile()
     return DEFAULT_PROFILE
 end
 
+-- Roles --
+
+---The spec is known from login on. Settles every module on its role's settings before modules build frames.
+function ProfileManager:SettleRole()
+    roleKnown = true
+    if not PointNamespaces(CurrentRole()) then return end
+
+    for _, aceModule in NRSKNUI:IterateModules() do
+        SafeCall(aceModule, 'UpdateDB')
+    end
+end
+
+---Modules with settings for the new spec's role switch to them.
+---Points every module at the current role's settings; a no-op when the role didn't change.
+local function ApplyRole()
+    if not PointNamespaces(CurrentRole()) then return end
+    ProfileManager:RefreshAllModules()
+    ProfileManager:PromptReload()
+end
+
+function ProfileManager:OnSpecChanged()
+    -- a frame later, so a LibDualSpec swap on the same change has already re-pointed everything in its
+    -- refresh; a change that lands in combat waits for it to end, the refresh rebuilds secure frames
+    after(0, function()
+        NRSKNUI:RunWhenSafe(ApplyRole)
+    end)
+end
+
+---Roles with their own settings for a module in the active profile.
+---@param name string namespace
+---@return table<string, boolean>
+function ProfileManager:GetRoleSets(name)
+    local db = NRSKNUI.db
+    local ns = db.children and db.children[name]
+    local sets = {}
+    if not ns then
+        return sets
+    end
+
+    for role in pairs(ROLES) do
+        if rawget(ns.profiles, RoleKey(db.keys.profile, role)) then
+            sets[role] = true
+        end
+    end
+    return sets
+end
+
+---Give a role its own settings for a module, starting from what fromRole uses (the module's own when nil).
+---@param name string namespace
+---@param role string
+---@param fromRole string?
+---@return boolean added
+function ProfileManager:AddRoleSet(name, role, fromRole)
+    local db = NRSKNUI.db
+    local ns = db.children and db.children[name]
+    if not ns or not ROLES[role] then return false end
+
+    local sets = self:GetRoleSets(name)
+    if sets[role] then return false end
+    -- three roles, so two role sets at most: one role always keeps the module's own settings
+    local count = 0
+    for _ in pairs(sets) do
+        count = count + 1
+    end
+    if count >= 2 then return false end
+
+    local profileName = db.keys.profile
+    local key = RoleKey(profileName, role)
+    local fromKey = fromRole and sets[fromRole] and RoleKey(profileName, fromRole) or profileName
+    ns.profiles[key] = DeepCopy(ns.profiles[fromKey] or {})
+
+    -- the copy holds the defaults AceDB filled in, a hop onto it and back strips them like a profile switch does
+    local current = ns.keys.profile
+    db.SetProfile(ns, key)
+    local _ = ns.profile
+    db.SetProfile(ns, current)
+    _ = ns.profile
+
+    if PointNamespaces(CurrentRole()) then
+        self:RefreshAllModules()
+    end
+    return true
+end
+
+---The role goes back to the module's own settings.
+---@param name string namespace
+---@param role string
+---@return boolean removed
+function ProfileManager:RemoveRoleSet(name, role)
+    local db = NRSKNUI.db
+    local ns = db.children and db.children[name]
+    if not ns or not self:GetRoleSets(name)[role] then return false end
+
+    local key = RoleKey(db.keys.profile, role)
+    local shown = ns.keys.profile == key
+    if shown then
+        db.SetProfile(ns, db.keys.profile)
+        local _ = ns.profile
+    end
+    ns.profiles[key] = nil
+    if editRoles[name] == role then
+        editRoles[name] = nil
+    end
+
+    if shown then
+        self:RefreshAllModules()
+    end
+    return true
+end
+
+---The role whose settings a module shows right now, nil when it shows its own.
+---@param name string namespace
+---@return string|nil
+function ProfileManager:GetShownRole(name)
+    local role = editRoles[name]
+    if role == OWN then return nil end
+
+    if role == nil then
+        role = CurrentRole()
+    end
+    if not role then return nil end
+
+    if self:GetRoleSets(name)[role] then
+        return role
+    end
+    return nil
+end
+
+---Put a module back to its defaults: the set it shows now or, with everything, its own settings with every
+---role set gone. Enabled stays as it was, a reset never turns a module on or off.
+---@param name string namespace
+---@param everything boolean
+function ProfileManager:ResetModule(name, everything)
+    local db = NRSKNUI.db
+    local ns = db.children and db.children[name]
+    if not ns then return end
+
+    local enabled = ns.profile.Enabled
+    if everything then
+        for role in pairs(self:GetRoleSets(name)) do
+            self:RemoveRoleSet(name, role)
+        end
+    end
+    -- the namespace points at the shown set; the table is wiped in place so modules keep their reference
+    ns:ResetProfile(nil, true)
+    ns.profile.Enabled = enabled
+    self:RefreshAllModules()
+end
+
+---Switch a module on or off for every role. Enabled sits in each role set too, so all of them get it
+---and a spec swap never turns the module back on or off.
+---@param name string namespace
+---@param enabled boolean
+function ProfileManager:SetModuleEnabled(name, enabled)
+    local db = NRSKNUI.db
+    local ns = db.children and db.children[name]
+    if not ns then return end
+
+    local profileName = db.keys.profile
+    ns.profiles[profileName] = ns.profiles[profileName] or {}
+    ns.profiles[profileName].Enabled = enabled
+    for role in pairs(self:GetRoleSets(name)) do
+        ns.profiles[RoleKey(profileName, role)].Enabled = enabled
+    end
+end
+
+---The player's role, from their spec.
+---@return string|nil
+function ProfileManager:GetPlayerRole()
+    return CurrentRole()
+end
+
+---While the options window edits a module, it shows (and edits) that role's settings. nil = the module's own.
+---@param name string namespace
+---@param role string|nil
+function ProfileManager:SetEditRole(name, role)
+    editRoles[name] = role or OWN
+    if PointNamespaces(CurrentRole()) then
+        self:RefreshAllModules()
+    end
+end
+
+---Every module back on the player's own role: the options window left the module or closed.
+function ProfileManager:ClearEditRoles()
+    if next(editRoles) == nil then return end
+
+    wipe(editRoles)
+    if PointNamespaces(CurrentRole()) then
+        self:RefreshAllModules()
+    end
+end
+
 -- Namespaces --
 
 local namespaces = {} ---@type table<string, AceDBObject-3.0>
@@ -685,12 +961,63 @@ local function Put(data, path, value)
     data[path[#path]] = value
 end
 
+---Namespace names ordered by how deep their old path sits. Skinning.ActionBars sits inside Skinning, so an
+---export fills Skinning in before ActionBars and an import takes ActionBars out before Skinning takes the rest.
+---@param map table<string, any>
+---@param deepestFirst boolean?
+---@return string[]
+local function ByPathDepth(map, deepestFirst)
+    local names, depth = {}, {}
+    for name in pairs(map) do
+        names[#names + 1] = name
+        depth[name] = #OldPath(name)
+    end
+    sort(names, function(a, b)
+        if depth[a] == depth[b] then
+            return a < b
+        end
+        if deepestFirst then
+            return depth[a] > depth[b]
+        end
+        return depth[a] < depth[b]
+    end)
+    return names
+end
+
 ---An imported profile carries every module's settings inside it at their old path, so hand them over.
 ---The import replaces the whole profile, so a namespace it carries nothing for starts over.
 ---@param profileName string
 local function ImportIntoNamespaces(profileName)
     local db = NRSKNUI.db
     local data = db.profiles[profileName]
+
+    -- the refill below lands in the profile's own tables; the old role sets go with the old profile
+    if profileName == db:GetCurrentProfile() then
+        PointNamespaces(nil)
+    end
+    DropRoleSets(profileName)
+
+    -- role sets ride along as _roles[namespace][role], straight into the save so unloaded modules get theirs too
+    local roles = data._roles
+    data._roles = nil
+    if type(roles) == 'table' then
+        db.sv.namespaces = db.sv.namespaces or {}
+        for name, sets in pairs(roles) do
+            if type(name) == 'string' and type(sets) == 'table' then
+                local saved = db.sv.namespaces[name] or {}
+                db.sv.namespaces[name] = saved
+                saved.profiles = saved.profiles or {}
+                -- the pasted string is untrusted: known roles only and one role always left on the module's own settings
+                local count = 0
+                for role, set in pairs(sets) do
+                    if ROLES[role] and type(set) == 'table' and count < 2 then
+                        saved.profiles[RoleKey(profileName, role)] = set
+                        count = count + 1
+                    end
+                end
+            end
+        end
+    end
 
     -- modules that aren't loaded pick their part up from the profile once they register
     for name, saved in pairs(db.sv.namespaces or {}) do
@@ -699,7 +1026,8 @@ local function ImportIntoNamespaces(profileName)
         end
     end
 
-    for name, ns in pairs(namespaces) do
+    for _, name in ipairs(ByPathDepth(namespaces, true)) do
+        local ns = namespaces[name]
         local saved = Take(data, OldPath(name))
         if profileName == db:GetCurrentProfile() then
             -- AceDB keeps serving its own table for the active profile, so refill that one.
@@ -738,8 +1066,22 @@ function ProfileManager:RegisterNamespace(name, defaults, oldPath)
         end
     end
 
+    -- a path that starts inside another namespace (Skinning.ActionBars) moves out of that one's save,
+    -- role sets included since they're profiles of it too
+    local outer = #path > 1 and sv.namespaces[path[1]]
+    if outer and outer ~= saved and outer.profiles then
+        for profileName, data in pairs(outer.profiles) do
+            local value = Take(data, path, 2)
+            if value then
+                saved.profiles = saved.profiles or {}
+                saved.profiles[profileName] = value
+            end
+        end
+    end
+
     local ns = db:RegisterNamespace(name, { profile = defaults })
     namespaces[name] = ns
+    PointNamespaces(CurrentRole()) -- before the module's UpdateDB reads it
     return ns
 end
 
@@ -755,12 +1097,20 @@ local function ExportData(profileName)
     for k, v in pairs(data) do
         out[k] = v
     end
-    for name, saved in pairs(db.sv.namespaces or {}) do
-        local nsData = saved.profiles and saved.profiles[profileName]
+    local saved = db.sv.namespaces or {}
+    for _, name in ipairs(ByPathDepth(saved)) do
+        local nsData = saved[name].profiles and saved[name].profiles[profileName]
         if nsData then
             Put(out, OldPath(name), nsData)
         end
     end
+
+    -- left out entirely when there are none, so those strings come out exactly as before
+    EachRoleSet(profileName, function(profiles, key, role, name)
+        out._roles = out._roles or {}
+        out._roles[name] = out._roles[name] or {}
+        out._roles[name][role] = profiles[key]
+    end)
 
     return out
 end
@@ -930,6 +1280,9 @@ end
 ---Fired by AceDB's profile callbacks, called directly only for changes AceDB does not announce.
 function ProfileManager:RefreshAllModules()
     if suppressDepth > 0 then return end
+
+    -- a profile switch drags every namespace onto the profile's own settings
+    PointNamespaces(CurrentRole())
 
     -- Profile-scoped shared state the modules read during ApplySettings.
     SafeCall(NRSKNUI, 'LoadCustomColors')

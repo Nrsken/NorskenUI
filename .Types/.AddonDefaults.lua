@@ -450,7 +450,6 @@
 ---@field AnchorMinWidth number
 ---@field Displays NRSKNUI.DBProfile.CDM.Displays
 ---@field Enabled boolean
----@field HideBlizzard boolean
 ---@field HidePlayerCastBar boolean
 ---@field TrinketBlacklist NRSKNUI.DBProfile.CDM.TrinketBlacklist
 ---@field Version number
@@ -1812,7 +1811,7 @@
 
 ---@class NRSKNUI.DBProfile.Skinning
 ---@field [string] any
----@field ActionBars NRSKNUI.DBProfile.Skinning.ActionBars
+---@field ActionBars? NRSKNUI.DBProfile.Skinning.ActionBars
 ---@field Battlenet NRSKNUI.DBProfile.Skinning.Battlenet
 ---@field BlizzardElements NRSKNUI.DBProfile.Skinning.BlizzardElements
 ---@field BlizzardMouseover NRSKNUI.DBProfile.Skinning.BlizzardMouseover

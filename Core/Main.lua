@@ -152,7 +152,9 @@ end
 function NRSKNUI:OnEnable()
     GUI:ApplyTheme()
     GUI:OnThemeChanged(function() -- None AceModules go into here.
-        if self.Anchors:IsActive() then self.Anchors:RefreshTheme() end
+        if self.Anchors:IsActive() then
+            self.Anchors:RefreshTheme()
+        end
     end)
 
     self:SetupSlashCommands()
@@ -165,6 +167,7 @@ function NRSKNUI:OnEnable()
     end
 
     self.UFBlocked = self:ShouldNotLoadUF()
+    self.ProfileManager:SettleRole()
 
     -- Automatically enable modules based on their saved settings.
     for name, aceModule in self:IterateModules() do
@@ -176,6 +179,7 @@ function NRSKNUI:OnEnable()
     -- Event Registration
     self:RegisterEvent('PLAYER_ENTERING_WORLD')
     self:RegisterEvent('UI_SCALE_CHANGED', 'ChangedScaleEvent')
+    self:RegisterEvent('ACTIVE_PLAYER_SPECIALIZATION_CHANGED', function() self.ProfileManager:OnSpecChanged() end)
     self:RegisterMessage('NRSKNUI_WORLD_READY', function()
         SetupMinimapIcon()
         self:UpdateValues()
