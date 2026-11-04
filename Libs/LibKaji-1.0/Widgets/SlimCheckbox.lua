@@ -39,6 +39,14 @@ local WIDGET_TYPE = "SlimCheckbox"
 local BOX_SIZE = 16
 local LABEL_GAP = 6
 
+local L = lib.L
+
+---@param value boolean
+---@return string
+local function DescribeValue(value)
+    return value and L["On"] or L["Off"]
+end
+
 ---@class KajiGUISlimCheckboxMixin : Frame
 ---@field gui KajiGUIInstance
 ---@field box KajiTickBox
@@ -58,6 +66,7 @@ function SlimCheckboxMixin:ApplyState(instant)
 
     local text = self._state and theme.textPrimary or theme.textSecondary
     self.label:SetTextColor(text[1], text[2], text[3], 1)
+    lib.PaintMixed(self, self.label)
 end
 
 ---Places the box for the current alignment, only final once the row has resolved the width.
@@ -115,7 +124,8 @@ function SlimCheckboxMixin:OnAcquire(parent, labelText, config)
     pixel.SetPixelHeight(self, config.height or BOX_SIZE + 4)
     self.explicitHeight = true
 
-    self._state = config.value == true
+    -- mixed shows unticked, so a click ticks them all
+    self._state = not config.mixed and config.value == true
     self._hovered = false
     self._align = config.align == "CENTER" and "CENTER" or "LEFT"
     self._callback = config.callback
@@ -123,6 +133,8 @@ function SlimCheckboxMixin:OnAcquire(parent, labelText, config)
     self.label:SetText(labelText or "")
     self.label:SetShown(labelText ~= nil and labelText ~= "")
     lib.SetTooltip(self, self.gui, labelText, config.tooltip)
+    lib.SetNotice(self, self.gui, self.label, config.notice)
+    lib.SetMixed(self, config.mixed, DescribeValue)
 
     self.button:EnableMouse(true)
     self.box:SetEnabled(true)
@@ -150,6 +162,8 @@ end
 ---@field align? 'LEFT'|'CENTER' where the box sits in its share of the row, LEFT by default
 ---@field height? number
 ---@field tooltip? any string, table or a filler function, see lib.SetTooltip
+---@field notice? KajiGUINotice a marker after the label, see lib.SetNotice
+---@field mixed? KajiGUIMixedEntry[] the things it edits disagree: unticked with a marked label, see lib.SetMixed
 
 lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     local row = CreateFrame("Frame", nil, gui._poolHost)
@@ -175,6 +189,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     Mixin(row, SlimCheckboxMixin)
 
     button:SetScript("OnClick", function()
+        row._mixed = nil -- ApplyState below repaints the label plain
         row._state = not row._state
         row:ApplyState()
         safecall(row._callback, row._state)

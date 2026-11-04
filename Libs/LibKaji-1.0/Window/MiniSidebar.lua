@@ -2,21 +2,21 @@
 # MiniSidebar
 
 * A left item-list column that a content host places beside its scroll region.
-* Owns only the list column: an optional button area on top, then a scrollable flat list of items.
+* Owns only the list column: a scrollable list of rows on the panel the module header uses.
 * Items are plain data: { key, text, icon? }. renderItem(itemFrame, item, selected) can override the default rendering.
 * Items may carry `accent` ({ r, g, b }), which colours the icon border (class colour, say), and `disabled`,
 * which dims the row and desaturates its icon. `iconColor` ({ r, g, b, a? }) tints the icon
 * and `iconCoords` ({ l, r, t, b }) crops it.
 * An item may instead be a section: { type = 'header', key, text, defaultExpanded?, items = { ... } }, which
-* renders a collapsible header with its children indented beneath. Sections are one level deep, and
-* open and close with an animation. `sd.onToggle(key, expanded)` lets a host remember the state; it
+* renders a collapsible head with its size and a chevron, its children beneath. Sections are one level deep,
+* and open and close with an animation. `sd.onToggle(key, expanded)` lets a host remember the state; it
 * hands it back as `defaultExpanded`.
-* An item may also be a caption: { type = 'label', key, text }, an inert row that titles the sections
-* below it, for a flat list whose sections come from more than one source.
+* An item may also be a caption: { type = 'label', key, text }, the same head without folding, which titles
+* the rows below it, for a flat list whose sections come from more than one source.
 * :SetConfig returns only the *selectable leaves*, flattened in display order, so a host can pick an
 * initial selection by key without knowing the tree exists.
-* A button def { text, key } is a selectable entry: it latches while selected and leads the leaves.
-* Without a key a button is a plain action firing def.onClick.
+* `sd.buttons` are the list's first rows. A button def { text, key } is a selectable entry and leads
+* the leaves; without a key it's an action row with a +, firing def.onClick.
 * Fires opts.onSelect(key, item) when an item is clicked. Self-restyles on theme change.
 * A descriptor may add onContextMenu(key, item, itemFrame), fired on right-click of an item or a
 * section header. The sidebar has no opinion on what that means; the host decides (typically
@@ -53,20 +53,24 @@ local ipairs, pairs = ipairs, pairs
 local wipe = wipe
 local type = type
 local strtrim = strtrim
-local mabs, mmin, mmax, mfloor = math.abs, math.min, math.max, math.floor
+local mmin, mmax, mfloor = math.min, math.max, math.floor
 local mpi = math.pi
 local C_Timer = C_Timer
 
 local DEFAULT_WIDTH = 192
-local HEADER_HEIGHT = 26
-local LABEL_HEIGHT = 24
-local ITEM_INDENT = 2
-local ITEM_HEIGHT = 28
+-- Sizes and steps match the main sidebar's, so this list reads as a small copy of it.
+local HEAD_HEIGHT = 28 -- captions and section heads alike
+local ITEM_HEIGHT = 26
 local ITEM_SPACING = 1
-local HOVER_DURATION = 0.12
+local TEXT_INSET = 8 -- heads and rows outside any head, from the panel's edge
+local ROW_STEP = 8 -- a head's rows step in to its text, so their bar sits under it
+local STEPPED_TEXT = 12 -- those rows' text from their bar
+local CHEVRON_SIZE = 10
+local GLYPH_SIZE = 10 -- an action row's +
+local HOVER_LIGHTEN = 0.6 -- how far a hovered label goes toward textPrimary, as in the sidebar
+local HOVER_FADE = 0.15 -- a section head's hover crossfade, as long as the rows' selection fade
 local EXPAND_DURATION = 0.2
 local COLLAPSE_DURATION = 0.15
-local ACCENT_BAR_WIDTH = 2
 local ICON_SIZE = 22
 local ICON_CROP = 0.08
 local DISABLED_ALPHA = 0.45
@@ -77,12 +81,8 @@ local OPEN_ON_HOVER = 0.6 -- seconds a dragged row rests on a closed section bef
 local SCROLL_EDGE = 24 -- the list scrolls while a dragged row is this close to its top or bottom
 local SCROLL_SPEED = 300 -- pixels a second at the very edge
 local ICON_BORDER = { 0, 0, 0, 1 }
-local BUTTON_SPACING = 4
-local UNDERLINE_GLOW_HEIGHT = 8
-local LABEL_TEXT_BOTTOM = 6 -- caption text sits this far above its row's bottom
-local SECTION_GAP = 10 -- extra space above every caption but the first, so captions group downwards
-local TAB_UNDERLINE = 2
-local TAB_BACKDROP = { bgFile = 'Interface\\Buttons\\WHITE8X8', edgeFile = 'Interface\\Buttons\\WHITE8X8', edgeSize = 1 }
+local SECTION_GAP = 8 -- above a head that follows rows; folded sections stack without it
+local BOX_BACKDROP = { bgFile = 'Interface\\Buttons\\WHITE8X8', edgeFile = 'Interface\\Buttons\\WHITE8X8', edgeSize = 1 }
 
 ---An item's crop and tint, back to the default zoomed icon when it names neither.
 ---@param texture Texture
@@ -111,78 +111,44 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
     local theme = self.theme
     local onSelect = opts.onSelect
     local pad = theme.paddingSmall
-    -- Buttons sit in the theme's header band, like the content sub-tabs and the search box.
-    local BUTTON_HEIGHT = theme.barControlHeight
-    local BAR_INSET = theme.barInset
 
-    local frame = CreateFrame('Frame', nil, parent, 'BackdropTemplate')
-    frame:SetBackdrop({ bgFile = 'Interface\\Buttons\\WHITE8X8' })
+    local frame = CreateFrame('Frame', nil, parent)
     pixel.SetPixelWidth(frame, DEFAULT_WIDTH)
 
-    local rightBorder = frame:CreateTexture(nil, 'BORDER')
-    pixel.SetPixelWidth(rightBorder, theme.borderSize)
-    pixel.SetPixelPoint(rightBorder, 'TOPRIGHT', frame, 'TOPRIGHT', 0, 0)
-    pixel.SetPixelPoint(rightBorder, 'BOTTOMRIGHT', frame, 'BOTTOMRIGHT', 0, 0)
+    -- a panel like the module header's, inset as it is; flush right, where the page's own card inset is the gap
+    local panel = CreateFrame('Frame', nil, frame, 'BackdropTemplate')
+    pixel.SetPixelPoint(panel, 'TOPLEFT', frame, 'TOPLEFT', pad, -pad)
+    pixel.SetPixelPoint(panel, 'BOTTOMRIGHT', frame, 'BOTTOMRIGHT', 0, pad)
+    local RestyleChrome = lib.CreatePanelChrome(panel, gui)
 
-    -- Button area: anchored to the top, height set in SetConfig; the list scrolls below it.
-    local buttonArea = CreateFrame('Frame', nil, frame)
-    pixel.SetPixelPoint(buttonArea, 'TOPLEFT', frame, 'TOPLEFT', pad, -BAR_INSET)
-    pixel.SetPixelPoint(buttonArea, 'TOPRIGHT', frame, 'TOPRIGHT', -pad - theme.borderSize, -BAR_INSET)
-    pixel.SetPixelHeight(buttonArea, 1)
-    buttonArea:Hide()
-
-    local buttonSeparator = buttonArea:CreateTexture(nil, 'ARTWORK')
-    pixel.SetPixelHeight(buttonSeparator, theme.borderSize)
-    pixel.SetPixelPoint(buttonSeparator, 'BOTTOMLEFT', buttonArea, 'BOTTOMLEFT', 0, 0)
-    pixel.SetPixelPoint(buttonSeparator, 'BOTTOMRIGHT', buttonArea, 'BOTTOMRIGHT', 0, 0)
-
-    local scrollFrame = CreateFrame('ScrollFrame', nil, frame)
-    scrollFrame:SetFrameLevel(frame:GetFrameLevel() + 5)
+    local scrollFrame = CreateFrame('ScrollFrame', nil, panel)
+    scrollFrame:SetFrameLevel(panel:GetFrameLevel() + 5)
     scrollFrame:SetClipsChildren(true)
-
-    local function AnchorScroll(belowButtons)
-        scrollFrame:ClearAllPoints()
-        if belowButtons then
-            pixel.SetPixelPoint(scrollFrame, 'TOPLEFT', buttonArea, 'BOTTOMLEFT', -pad, -pad)
-        else
-            pixel.SetPixelPoint(scrollFrame, 'TOPLEFT', frame, 'TOPLEFT', 0, 0)
-        end
-        pixel.SetPixelPoint(scrollFrame, 'BOTTOMRIGHT', frame, 'BOTTOMRIGHT', -theme.borderSize, pad)
-    end
-    AnchorScroll(false)
+    -- inside the panel's border, which the list would otherwise scroll over
+    pixel.SetPixelPoint(scrollFrame, 'TOPLEFT', panel, 'TOPLEFT', theme.borderSize, -theme.borderSize)
+    pixel.SetPixelPoint(scrollFrame, 'BOTTOMRIGHT', panel, 'BOTTOMRIGHT', -theme.borderSize, theme.borderSize)
 
     local scrollChild = CreateFrame('Frame', nil, scrollFrame)
     pixel.SetPixelHeight(scrollChild, 1)
     scrollChild:SetFrameLevel(scrollFrame:GetFrameLevel() + 1)
     scrollFrame:SetScrollChild(scrollChild)
 
-    -- The track spans the whole column, button area included; the buttons step aside for it.
     local scrollbar = gui:CreateScrollbar(scrollFrame, {
         width = theme.scrollbarWidth,
         thumbHeight = 40,
-        -- Flush with the column edge: the track's own right border doubles as the column's divider.
+        -- Flush with the panel's edge, so the track's own border lies on the panel's.
         padding = { top = 0, bottom = 0, right = 0 },
         scrollStep = 40,
     })
 
     local scrollbarVisible = false
-    local function AnchorButtonArea()
-        local right = pad + (scrollbarVisible and theme.scrollbarWidth or theme.borderSize)
-        buttonArea:ClearAllPoints()
-        pixel.SetPixelPoint(buttonArea, 'TOPLEFT', frame, 'TOPLEFT', pad, -BAR_INSET)
-        pixel.SetPixelPoint(buttonArea, 'TOPRIGHT', frame, 'TOPRIGHT', -right, -BAR_INSET)
-    end
     local function UpdateScrollChildWidth()
-        local w = frame:GetWidth()
+        local w = panel:GetWidth()
         if not w or w <= 0 then return end
-        pixel.SetPixelWidth(scrollChild, scrollbarVisible and (w - theme.scrollbarWidth) or (w - theme.borderSize))
+        pixel.SetPixelWidth(scrollChild, scrollbarVisible and (w - theme.scrollbarWidth - theme.borderSize) or (w - theme.borderSize * 2))
     end
     local function UpdateScrollbar()
-        local visible = scrollbar:UpdateVisibility(scrollChild:GetHeight(), scrollFrame:GetHeight())
-        if visible ~= scrollbarVisible then
-            scrollbarVisible = visible
-            AnchorButtonArea()
-        end
+        scrollbarVisible = scrollbar:UpdateVisibility(scrollChild:GetHeight(), scrollFrame:GetHeight())
         UpdateScrollChildWidth()
         -- A scroll child resized before its ScrollFrame has a rect is not redrawn once the rect resolves.
         scrollFrame:UpdateScrollChildRect()
@@ -190,7 +156,7 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
     scrollChild:HookScript('OnSizeChanged', UpdateScrollbar)
     scrollFrame:HookScript('OnSizeChanged', UpdateScrollbar)
     scrollFrame:HookScript('OnShow', function() UpdateScrollbar() end)
-    frame:HookScript('OnSizeChanged', UpdateScrollChildWidth)
+    panel:HookScript('OnSizeChanged', UpdateScrollChildWidth)
 
     local ms = {
         frame = frame,
@@ -207,22 +173,27 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
     local labelPool = {}
     local containerPool = {}
     local layout = {} -- ordered blocks: { frame, height } | { frame, section, full } | { gap }
-    local buttonPool = {}    -- unkeyed action buttons
-    local tabButtonPool = {} -- keyed, selectable tab-styled buttons
 
     local BeginDrag, EndRename -- defined with their features below
 
-    -- SetTextColor's alpha overrides FontString:SetAlpha, so the disabled dim rides on every text colour.
-    local function ApplyItemState(item)
+    ---An item's label: textSecondary at rest, lightening while hovered, the accent as it's selected.
+    ---SetTextColor's alpha overrides FontString:SetAlpha, so the disabled dim rides on the colour.
+    local function PaintLabel(item)
+        local l, h = lib.RowSelectionProgress(item)
+        local rest, hi, ac = theme.textSecondary, theme.textPrimary, theme.accent
+        local r = rest[1] + (hi[1] - rest[1]) * h * HOVER_LIGHTEN
+        local g = rest[2] + (hi[2] - rest[2]) * h * HOVER_LIGHTEN
+        local b = rest[3] + (hi[3] - rest[3]) * h * HOVER_LIGHTEN
         local alpha = item.item and item.item.disabled and DISABLED_ALPHA or 1
-        if item.key == ms.selected then
-            item.accentBar:SetColorTexture(theme.accent[1], theme.accent[2], theme.accent[3], 1)
-            item.accentBar:Show()
-            lib.PaintSelected(item, theme)
-            item.label:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], alpha)
-        else
-            item.accentBar:Hide(); item.selectedBg:Hide(); item.barGlow:Hide()
-            item.label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], alpha)
+        item.label:SetTextColor(r + (ac[1] - r) * l, g + (ac[2] - g) * l, b + (ac[3] - b) * l, alpha)
+    end
+
+    ---@param instant? boolean snap instead of crossfading, for a row just rendered or reconfigured
+    local function ApplyItemState(item, instant)
+        local selected = item.key == ms.selected
+        lib.SetRowSelection(item, theme, selected and 1 or 0, item.hovered and not selected and 1 or 0, instant)
+        if instant then
+            PaintLabel(item)
         end
         item:SetAlpha(ms.drag and ms.drag.key == item.key and DRAG_SOURCE_ALPHA or 1)
     end
@@ -232,33 +203,15 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
         pixel.SetPixelHeight(item, ITEM_HEIGHT)
         item:RegisterForClicks('LeftButtonUp', 'RightButtonUp')
 
-        local hoverBg = item:CreateTexture(nil, 'BACKGROUND')
-        hoverBg:SetAllPoints()
-        hoverBg:SetColorTexture(1, 1, 1, 0.05)
-        hoverBg:SetAlpha(0)
-        item.hoverBg = hoverBg
+        lib.CreateRowSelection(item, theme)
 
-        local selectedBg = item:CreateTexture(nil, 'BACKGROUND', nil, 1)
-        selectedBg:SetAllPoints()
-        selectedBg:Hide()
-        item.selectedBg = selectedBg
-
-        local accentBar = item:CreateTexture(nil, 'OVERLAY')
-        pixel.SetPixelWidth(accentBar, ACCENT_BAR_WIDTH)
-        pixel.SetPixelPoint(accentBar, 'TOPLEFT', item, 'TOPLEFT', 0, 0)
-        pixel.SetPixelPoint(accentBar, 'BOTTOMLEFT', item, 'BOTTOMLEFT', 0, 0)
-        accentBar:Hide()
-        item.accentBar = accentBar
-        item.barGlow = lib.CreateBarGlow(item, accentBar)
-
-        -- Runs through the spacing gap so the guide is unbroken; the selected item's bar covers its stretch.
-        local guide = item:CreateTexture(nil, 'BORDER')
-        pixel.SetPixelWidth(guide, theme.borderSize)
-        pixel.SetPixelPoint(guide, 'TOPLEFT', item, 'TOPLEFT', 0, 0)
-        pixel.SetPixelPoint(guide, 'BOTTOMLEFT', item, 'BOTTOMLEFT', 0, -ITEM_SPACING)
-        pixel.SetPixelSnap(guide)
-        guide:Hide()
-        item.guide = guide
+        local glyph = item:CreateTexture(nil, 'ARTWORK')
+        pixel.SetPixelSize(glyph, GLYPH_SIZE, GLYPH_SIZE)
+        pixel.SetPixelPoint(glyph, 'LEFT', item, 'LEFT', TEXT_INSET, 0)
+        pixel.SetPixelSnap(glyph)
+        glyph:SetTexture(theme.plusTexture)
+        glyph:Hide()
+        item.glyph = glyph
 
         local iconBorder = item:CreateTexture(nil, 'ARTWORK', nil, -1)
         pixel.SetPixelSize(iconBorder, ICON_SIZE, ICON_SIZE)
@@ -277,26 +230,17 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
         label:SetWordWrap(false)
         item.label = label
 
-        item.hoverTarget = 0
         item:SetScript('OnUpdate', function(self, elapsed)
-            local cur = hoverBg:GetAlpha()
-            if mabs(cur - self.hoverTarget) > 0.01 then
-                local speed = elapsed / HOVER_DURATION
-                hoverBg:SetAlpha(self.hoverTarget > cur and mmin(cur + speed, self.hoverTarget) or mmax(cur - speed, self.hoverTarget))
+            if lib.StepRowSelection(self, theme, elapsed) then
+                PaintLabel(self)
             end
         end)
         item:SetScript('OnEnter', function(self)
-            self.hoverTarget = 1
-            if self.key ~= ms.selected then
-                local alpha = self.item and self.item.disabled and DISABLED_ALPHA or 1
-                self.label:SetTextColor(theme.textPrimary[1], theme.textPrimary[2], theme.textPrimary[3], alpha)
-                -- Neon: the accent bar fades in partway, previewing the selection.
-                self.accentBar:SetColorTexture(theme.accent[1], theme.accent[2], theme.accent[3], lib.HOVER_BAR_ALPHA)
-                self.accentBar:Show()
-            end
+            self.hovered = true
+            ApplyItemState(self)
         end)
         item:SetScript('OnLeave', function(self)
-            self.hoverTarget = 0
+            self.hovered = nil
             ApplyItemState(self)
         end)
         item:SetScript('OnClick', function(self, button)
@@ -304,7 +248,11 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
                 if ms.onContextMenu then safecall(ms.onContextMenu, self.key, self.item, self) end
                 return
             end
-            if self.key ~= ms.selected then ms:Select(self.key) end
+            if self.item and self.item.action then
+                safecall(self.item.action)
+            elseif self.key ~= ms.selected then
+                ms:Select(self.key)
+            end
         end)
         item:SetScript('OnDoubleClick', function(self, button)
             if button == 'LeftButton' and self.item and self.item.renamable and ms.onRename then
@@ -319,38 +267,62 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
         return item
     end
 
+    ---A section's accent title whitens while hovered, the hint that it folds, as the main sidebar's headers; no wash behind it.
+    local function PaintHeader(header)
+        local p = header.lit
+        p = p * p * (3 - 2 * p) -- the rows' selection eases the same way
+        local rest, hot = theme.accent, theme.textPrimary
+        local dim, lit = theme.textMuted, theme.textPrimary
+        header.label:SetTextColor(rest[1] + (hot[1] - rest[1]) * p, rest[2] + (hot[2] - rest[2]) * p, rest[3] + (hot[3] - rest[3]) * p, 1)
+        header.arrow:SetVertexColor(dim[1] + (lit[1] - dim[1]) * p, dim[2] + (lit[2] - dim[2]) * p, dim[3] + (lit[3] - dim[3]) * p, 1)
+    end
+
+    local function StepHeader(header, elapsed)
+        local step = elapsed / HOVER_FADE
+        header.lit = header.litTo > header.lit and mmin(header.lit + step, 1) or mmax(header.lit - step, 0)
+        PaintHeader(header)
+        if header.lit == header.litTo then
+            header:SetScript('OnUpdate', nil)
+        end
+    end
+
+    ---@param on boolean
+    local function FadeHeader(header, on)
+        header.litTo = on and 1 or 0
+        header:SetScript('OnUpdate', StepHeader)
+    end
+
     local function CreateHeader()
         local header = CreateFrame('Button', nil, scrollChild)
-        pixel.SetPixelHeight(header, HEADER_HEIGHT)
+        pixel.SetPixelHeight(header, HEAD_HEIGHT)
         header:RegisterForClicks('LeftButtonUp', 'RightButtonUp')
-
-        local hoverBg = header:CreateTexture(nil, 'BACKGROUND')
-        hoverBg:SetAllPoints()
-        hoverBg:SetColorTexture(1, 1, 1, 0.05)
-        hoverBg:SetAlpha(0)
-        header.hoverBg = hoverBg
 
         local dropBg = header:CreateTexture(nil, 'BACKGROUND', nil, 1)
         dropBg:SetAllPoints()
         dropBg:Hide()
         header.dropBg = dropBg
 
-        local arrow = header:CreateTexture(nil, 'OVERLAY')
-        pixel.SetPixelSize(arrow, 10, 10)
-        arrow:SetTexture(theme.stepperTexture)
-        pixel.SetPixelSnap(arrow)
-        pixel.SetPixelPoint(arrow, 'LEFT', header, 'LEFT', pad, 0)
-        header.arrow = arrow
-
         local label = header:CreateFontString(nil, 'OVERLAY')
         label:SetJustifyH('LEFT')
         label:SetWordWrap(false)
-        pixel.SetPixelPoint(label, 'LEFT', arrow, 'RIGHT', 6, 0)
-        pixel.SetPixelPoint(label, 'RIGHT', header, 'RIGHT', -pad, 0)
+        pixel.SetPixelPoint(label, 'LEFT', header, 'LEFT', TEXT_INSET, 0)
         header.label = label
 
-        header:SetScript('OnEnter', function(self) self.hoverBg:SetAlpha(1) end)
-        header:SetScript('OnLeave', function(self) self.hoverBg:SetAlpha(0) end)
+        -- the section's size reads on after its name
+        local count = header:CreateFontString(nil, 'OVERLAY')
+        pixel.SetPixelPoint(count, 'BOTTOMLEFT', label, 'BOTTOMRIGHT', 6, 1)
+        header.count = count
+
+        local arrow = header:CreateTexture(nil, 'OVERLAY')
+        pixel.SetPixelSize(arrow, CHEVRON_SIZE, CHEVRON_SIZE)
+        arrow:SetTexture(theme.stepperTexture)
+        pixel.SetPixelSnap(arrow)
+        pixel.SetPixelPoint(arrow, 'RIGHT', header, 'RIGHT', -TEXT_INSET, 0)
+        header.arrow = arrow
+        header.lit, header.litTo = 0, 0
+
+        header:SetScript('OnEnter', function(self) FadeHeader(self, true) end)
+        header:SetScript('OnLeave', function(self) FadeHeader(self, false) end)
         header:SetScript('OnClick', function(self, button)
             if button == 'RightButton' then
                 if ms.onContextMenu then safecall(ms.onContextMenu, self.key, self.item, self) end
@@ -364,21 +336,23 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
 
     local function CreateLabel()
         local label = CreateFrame('Frame', nil, scrollChild)
-        pixel.SetPixelHeight(label, LABEL_HEIGHT)
+        pixel.SetPixelHeight(label, HEAD_HEIGHT)
 
         local text = label:CreateFontString(nil, 'OVERLAY')
         text:SetJustifyH('LEFT')
         text:SetWordWrap(false)
-        pixel.SetPixelPoint(text, 'BOTTOMLEFT', label, 'BOTTOMLEFT', pad, LABEL_TEXT_BOTTOM)
+        pixel.SetPixelPoint(text, 'LEFT', label, 'LEFT', TEXT_INSET, 0)
         label.text = text
 
         return label
     end
 
+    -- a head's rows: clipped so a folding section slides
     local function CreateContainer()
         local c = CreateFrame('Frame', nil, scrollChild)
         c:SetClipsChildren(true)
         c:SetFrameLevel(scrollChild:GetFrameLevel() + 1)
+
         return c
     end
 
@@ -406,14 +380,16 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
         for _, h in ipairs(headerPool) do
             if not h.inUse and h:IsShown() then
                 h.key = nil; h.item = nil
-                h.hoverBg:SetAlpha(0); h.dropBg:Hide()
+                h.lit, h.litTo = 0, 0
+                h:SetScript('OnUpdate', nil)
+                h.dropBg:Hide()
                 h:Hide(); h:ClearAllPoints()
             end
         end
         for _, it in ipairs(itemPool) do
             if not it.inUse and it:IsShown() then
-                it.key = nil; it.item = nil; it.hoverTarget = 0
-                it.hoverBg:SetAlpha(0); it.accentBar:Hide(); it.selectedBg:Hide(); it.barGlow:Hide()
+                it.key = nil; it.item = nil; it.hovered = nil
+                lib.SetRowSelection(it, theme, 0, 0, true)
                 it:Hide(); it:ClearAllPoints()
             end
         end
@@ -424,29 +400,38 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
         end
     end
 
-    ---@param host Frame the scroll child, or a section's container
-    local function ConfigureItem(item, data, guided, host, yOffset, indent)
+    ---@param host Frame the scroll child or a head's container
+    ---@param yOffset? number a head's row's place in its container; the scroll child's rows are placed by Relayout
+    local function ConfigureItem(item, data, host, yOffset)
         item:SetParent(host)
         item:SetFrameLevel(host:GetFrameLevel() + 2)
         item:ClearAllPoints()
         if yOffset then
-            pixel.SetPixelPoint(item, 'TOPLEFT', host, 'TOPLEFT', indent or 0, -yOffset)
+            pixel.SetPixelPoint(item, 'TOPLEFT', host, 'TOPLEFT', 0, -yOffset)
             pixel.SetPixelPoint(item, 'TOPRIGHT', host, 'TOPRIGHT', 0, -yOffset)
         end
-        item.guide:SetColorTexture(theme.widgetBorder[1], theme.widgetBorder[2], theme.widgetBorder[3], 1)
-        item.guide:SetShown(guided == true)
         item.key = data.key
         item.item = data
+        local inset = yOffset and STEPPED_TEXT or TEXT_INSET
 
         gui:ApplyFont(item.label, 'normal')
         item.label:SetText(data.text or '')
         item.label:Show()
         item.label:ClearAllPoints()
-        if data.icon then
+        item.glyph:SetShown(data.action ~= nil)
+        if data.action then
+            local ac = theme.accent
+            item.glyph:ClearAllPoints()
+            pixel.SetPixelPoint(item.glyph, 'LEFT', item, 'LEFT', inset, 0)
+            item.glyph:SetVertexColor(ac[1], ac[2], ac[3], 1)
+            item.iconBorder:Hide()
+            item.icon:Hide()
+            pixel.SetPixelPoint(item.label, 'LEFT', item.glyph, 'RIGHT', 6, 0)
+        elseif data.icon then
             local border = data.accent or ICON_BORDER
             item.iconBorder:SetColorTexture(border[1], border[2], border[3], 1)
             item.iconBorder:ClearAllPoints()
-            pixel.SetPixelPoint(item.iconBorder, 'LEFT', item, 'LEFT', 6, 0)
+            pixel.SetPixelPoint(item.iconBorder, 'LEFT', item, 'LEFT', inset, 0)
             item.iconBorder:Show()
             item.icon:SetTexture(data.icon)
             ApplyIconLook(item.icon, data)
@@ -455,14 +440,14 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
         else
             item.iconBorder:Hide()
             item.icon:Hide()
-            pixel.SetPixelPoint(item.label, 'LEFT', item, 'LEFT', 6, 0)
+            pixel.SetPixelPoint(item.label, 'LEFT', item, 'LEFT', inset, 0)
         end
         pixel.SetPixelPoint(item.label, 'RIGHT', item, 'RIGHT', -pad, 0)
 
         item.icon:SetDesaturated(data.disabled == true)
         item.icon:SetAlpha(data.disabled and DISABLED_ALPHA or 1)
 
-        ApplyItemState(item)
+        ApplyItemState(item, true)
         if ms.renderItem then safecall(ms.renderItem, item, data, data.key == ms.selected) end
         activeItems[#activeItems + 1] = item
     end
@@ -477,11 +462,22 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
         header.key = data.key
         header.item = data
 
-        gui:ApplyFont(header.label, 'normal')
+        local muted = theme.textMuted
+        gui:ApplyFont(header.count, 'normal')
+        header.count:SetText(#(data.items or {}))
+        header.count:SetTextColor(muted[1], muted[2], muted[3], 1)
+
+        -- a long name stops short of the count and chevron instead of running under them
+        gui:ApplyFont(header.label, 'medium')
+        header.label:SetWidth(0)
         header.label:SetText(data.text or '')
         header.label:Show()
-        header.label:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
-        header.arrow:SetVertexColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 0.7)
+        local gaps = 6 * 2 + TEXT_INSET -- before the count, before the chevron and the chevron's own inset
+        local room = scrollChild:GetWidth() - TEXT_INSET - header.count:GetStringWidth() - CHEVRON_SIZE - gaps
+        if room > 0 and header.label:GetStringWidth() > room then
+            pixel.SetPixelWidth(header.label, room)
+        end
+        PaintHeader(header)
         header.dropBg:SetColorTexture(theme.accent[1], theme.accent[2], theme.accent[3], DROP_TINT_ALPHA)
         header.dropBg:SetShown(ms.drag ~= nil and ms.drag.target == data.key and ms.drag.position == 'into')
 
@@ -496,10 +492,15 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
         return ms.expanded[key] and 1 or 0
     end
 
-    local function Place(block, y)
+    -- flush with the panel's border, so the selection's bar sits on the panel's edge; a head's rows step in
+    local function Place(block, y, x)
         block:ClearAllPoints()
-        pixel.SetPixelPoint(block, 'TOPLEFT', scrollChild, 'TOPLEFT', pad, -y)
-        pixel.SetPixelPoint(block, 'TOPRIGHT', scrollChild, 'TOPRIGHT', -pad, -y)
+        pixel.SetPixelPoint(block, 'TOPLEFT', scrollChild, 'TOPLEFT', x or 0, -y)
+        pixel.SetPixelPoint(block, 'TOPRIGHT', scrollChild, 'TOPRIGHT', 0, -y)
+    end
+
+    local function AcquireGroup()
+        return Acquire(containerPool, CreateContainer)
     end
 
     -- Cheap, so an animating section calls it every frame.
@@ -507,10 +508,12 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
         local y = pad
         for _, block in ipairs(layout) do
             if block.gap then
-                y = y + block.gap
-            elseif block.section then
-                local height = mfloor(block.full * SectionProgress(block.section) + 0.5)
-                Place(block.frame, y)
+                -- a gap under a section opens and closes with it
+                y = y + mfloor(block.gap * (block.after and SectionProgress(block.after) or 1) + 0.5)
+            elseif block.full then
+                -- a caption's rows never fold, a section's follow its animation
+                local height = mfloor(block.full * (block.section and SectionProgress(block.section) or 1) + 0.5)
+                Place(block.frame, y, ROW_STEP)
                 pixel.SetPixelHeight(block.frame, mmax(height, 1))
                 block.frame:SetShown(height > 0)
                 y = y + height
@@ -529,41 +532,70 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
         EndRename(false)
         ReleaseAll()
         local leaves = {}
-        local captioned = false -- items after a caption belong to its section and get the guide line
 
-        -- Keyed buttons lead the leaves, so a host default or remembered key can land on them.
-        for _, def in ipairs(ms._buttonsRef or {}) do
-            if def.key ~= nil then leaves[#leaves + 1] = def end
+        -- Buttons are the first rows; keyed ones lead the leaves, so a host default or remembered key can land on them.
+        for _, def in ipairs(ms.buttons or {}) do
+            local data = def
+            if def.key == nil then
+                data = { key = def, text = def.text, action = def.onClick or function() end }
+            else
+                leaves[#leaves + 1] = def
+            end
+            local item = Acquire(itemPool, CreateItem)
+            ConfigureItem(item, data, scrollChild)
+            layout[#layout + 1] = { frame = item, height = ITEM_HEIGHT + ITEM_SPACING }
         end
 
+        -- what sits above the next head: plain rows get the full gap, a section's rows a gap that folds with them
+        local afterRows = ms.buttons ~= nil and ms.buttons[1] ~= nil
+        local afterSection
+        local captionGroup -- the rows after a caption, stepped in until the next head
         for _, data in ipairs(ms.items or {}) do
+            if data.type == 'header' or data.type == 'label' then
+                if afterRows then
+                    layout[#layout + 1] = { gap = SECTION_GAP }
+                elseif afterSection then
+                    layout[#layout + 1] = { gap = SECTION_GAP, after = afterSection }
+                end
+                afterRows = false
+                afterSection = data.type == 'header' and data.items and data.items[1] and data.key or nil
+                captionGroup = nil
+            else
+                afterRows, afterSection = true, nil
+            end
+
             if data.type == 'header' then
                 local header = Acquire(headerPool, CreateHeader)
                 ConfigureHeader(header, data)
-                layout[#layout + 1] = { frame = header, height = HEADER_HEIGHT + ITEM_SPACING }
+                layout[#layout + 1] = { frame = header, height = HEAD_HEIGHT + ITEM_SPACING }
 
                 -- A closing section keeps its rows until the animation has closed over them.
                 local open = ms.expanded[data.key] or ms.anims[data.key]
-                local container = open and Acquire(containerPool, CreateContainer)
+                local container = open and AcquireGroup()
                 local y = 0
-                for _, child in ipairs(data.items or {}) do
+                local children = data.items or {}
+                for _, child in ipairs(children) do
                     -- Still selectable while closed, so a host restoring a remembered item isn't told it's gone.
                     leaves[#leaves + 1] = child
                     if container then
-                        ConfigureItem(Acquire(itemPool, CreateItem), child, true, container, y, ITEM_INDENT)
+                        ConfigureItem(Acquire(itemPool, CreateItem), child, container, y)
                         y = y + ITEM_HEIGHT + ITEM_SPACING
                     end
                 end
                 if container then layout[#layout + 1] = { frame = container, section = data.key, full = y } end
             elseif data.type == 'label' then
-                if layout[1] then layout[#layout + 1] = { gap = SECTION_GAP } end
                 local label = Acquire(labelPool, CreateLabel)
                 ConfigureLabel(label, data)
-                layout[#layout + 1] = { frame = label, height = LABEL_HEIGHT + ITEM_SPACING }
-                captioned = true
+                layout[#layout + 1] = { frame = label, height = HEAD_HEIGHT + ITEM_SPACING }
+                captionGroup = { frame = AcquireGroup(), full = 0 }
+                layout[#layout + 1] = captionGroup
+            elseif captionGroup then
+                ConfigureItem(Acquire(itemPool, CreateItem), data, captionGroup.frame, captionGroup.full)
+                captionGroup.full = captionGroup.full + ITEM_HEIGHT + ITEM_SPACING
+                leaves[#leaves + 1] = data
             else
                 local item = Acquire(itemPool, CreateItem)
-                ConfigureItem(item, data, captioned, scrollChild)
+                ConfigureItem(item, data, scrollChild)
                 layout[#layout + 1] = { frame = item, height = ITEM_HEIGHT + ITEM_SPACING }
                 leaves[#leaves + 1] = data
             end
@@ -577,7 +609,9 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
     ---Re-render in place, keeping the current items and expansion state.
     function ms:Render()
         RenderList()
-        for _, it in ipairs(activeItems) do ApplyItemState(it) end
+        for _, it in ipairs(activeItems) do
+            ApplyItemState(it, true)
+        end
     end
 
     -- Section animation --
@@ -630,7 +664,7 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
 
     local renameBox = CreateFrame('EditBox', nil, scrollChild, 'BackdropTemplate')
     renameBox:SetAutoFocus(false)
-    renameBox:SetBackdrop(TAB_BACKDROP)
+    renameBox:SetBackdrop(BOX_BACKDROP)
     renameBox:SetTextInsets(4, 4, 0, 0)
     renameBox:Hide()
 
@@ -703,7 +737,7 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
 
     local ghost = CreateFrame('Frame', nil, UIParent, 'BackdropTemplate')
     ghost:SetFrameStrata('TOOLTIP')
-    ghost:SetBackdrop(TAB_BACKDROP)
+    ghost:SetBackdrop(BOX_BACKDROP)
     pixel.SetPixelHeight(ghost, ITEM_HEIGHT)
     ghost:Hide()
 
@@ -862,143 +896,6 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
         StepDrag(dragFrame, 0)
     end
 
-    -- A keyed button reads like a content sub-tab: boxed, accent label + tint + underline while selected.
-    local function ApplyTabButtonState(tab)
-        local sec, pri, ac = theme.textSecondary, theme.textPrimary, theme.accent
-        if tab.key == ms.selected then
-            tab.label:SetTextColor(ac[1], ac[2], ac[3], 1)
-            tab.selectedBg:SetColorTexture(ac[1], ac[2], ac[3], 0.08)
-            tab.selectedBg:Show()
-            tab.underline:SetColorTexture(ac[1], ac[2], ac[3], 1)
-            tab.underline:Show()
-            -- VERTICAL runs bottom (first color) to top (second color).
-            tab.underGlow:SetGradient('VERTICAL', CreateColor(ac[1], ac[2], ac[3], theme.underlineGlowAlpha), CreateColor(ac[1], ac[2], ac[3], 0))
-            tab.underGlow:Show()
-        else
-            local c = tab:IsMouseOver() and pri or sec
-            tab.label:SetTextColor(c[1], c[2], c[3], 1)
-            tab.selectedBg:Hide()
-            tab.underline:Hide()
-            tab.underGlow:Hide()
-        end
-        tab:SetBackdropColor(theme.bgMedium[1], theme.bgMedium[2], theme.bgMedium[3], 1)
-        tab:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
-    end
-
-    local function CreateTabButton()
-        local tab = CreateFrame('Button', nil, buttonArea, 'BackdropTemplate')
-        pixel.SetPixelHeight(tab, BUTTON_HEIGHT)
-        tab:SetBackdrop(TAB_BACKDROP)
-        tab:RegisterForClicks('LeftButtonUp')
-        lib.AddTopSheen(tab, gui)
-        lib.AddTopHighlight(tab, gui)
-
-        local hoverBg = tab:CreateTexture(nil, 'BACKGROUND')
-        hoverBg:SetAllPoints()
-        hoverBg:SetColorTexture(1, 1, 1, 0.05)
-        hoverBg:Hide()
-
-        local selectedBg = tab:CreateTexture(nil, 'BACKGROUND', nil, 1)
-        selectedBg:SetAllPoints()
-        selectedBg:Hide()
-        tab.selectedBg = selectedBg
-
-        local label = tab:CreateFontString(nil, 'OVERLAY')
-        pixel.SetPixelPoint(label, 'CENTER', tab, 'CENTER', 0, 0)
-        label:SetWordWrap(false)
-        tab.label = label
-
-        local underline = tab:CreateTexture(nil, 'OVERLAY')
-        pixel.SetPixelHeight(underline, TAB_UNDERLINE)
-        pixel.SetPixelPoint(underline, 'BOTTOMLEFT', tab, 'BOTTOMLEFT', 1, theme.borderSize)
-        pixel.SetPixelPoint(underline, 'BOTTOMRIGHT', tab, 'BOTTOMRIGHT', -1, theme.borderSize)
-        underline:Hide()
-        tab.underline = underline
-
-        local underGlow = tab:CreateTexture(nil, 'ARTWORK')
-        underGlow:SetTexture('Interface\\Buttons\\WHITE8X8')
-        pixel.SetPixelHeight(underGlow, UNDERLINE_GLOW_HEIGHT)
-        pixel.SetPixelPoint(underGlow, 'BOTTOMLEFT', underline, 'TOPLEFT', 0, 0)
-        pixel.SetPixelPoint(underGlow, 'BOTTOMRIGHT', underline, 'TOPRIGHT', 0, 0)
-        underGlow:Hide()
-        tab.underGlow = underGlow
-
-        tab:SetScript('OnEnter', function(self)
-            hoverBg:SetShown(self.key ~= ms.selected)
-            ApplyTabButtonState(self)
-            if self.tooltip then
-                GameTooltip:SetOwner(self, 'ANCHOR_RIGHT')
-                GameTooltip:SetText(self.tooltip)
-                GameTooltip:Show()
-            end
-        end)
-        tab:SetScript('OnLeave', function(self)
-            hoverBg:Hide()
-            ApplyTabButtonState(self)
-            GameTooltip:Hide()
-        end)
-        tab:SetScript('OnClick', function(self)
-            hoverBg:Hide()
-            if self.key ~= ms.selected then ms:Select(self.key) end
-        end)
-
-        return tab
-    end
-
-    local function LayoutButtons(buttons)
-        for _, b in ipairs(buttonPool) do b:Hide() end
-        for _, t in ipairs(tabButtonPool) do t:Hide() end
-        if not buttons or #buttons == 0 then
-            buttonArea:Hide()
-            AnchorScroll(false)
-            return
-        end
-
-        local actions, tabs, y = 0, 0, 0
-        for _, def in ipairs(buttons) do
-            local btn
-            -- A keyed button is a selectable entry that latches, an unkeyed one stays an action.
-            if def.key ~= nil then
-                tabs = tabs + 1
-                btn = tabButtonPool[tabs]
-                if not btn then
-                    btn = CreateTabButton()
-                    tabButtonPool[tabs] = btn
-                end
-                btn.key = def.key
-                btn.tooltip = def.tooltip
-                gui:ApplyFont(btn.label, 'normal')
-                btn.label:SetText(def.text or '')
-                ApplyTabButtonState(btn)
-            else
-                actions = actions + 1
-                btn = buttonPool[actions]
-                if not btn then
-                    btn = gui:CreateButton(buttonArea, def.text, {
-                        height = BUTTON_HEIGHT,
-                        callback = def.onClick,
-                        tooltip = def.tooltip,
-                    })
-                    buttonPool[actions] = btn
-                else
-                    btn:SetLabel(def.text)
-                    btn:SetCallback(def.onClick)
-                    btn:SetTooltip(def.tooltip)
-                end
-            end
-            btn:Show()
-            btn:ClearAllPoints()
-            pixel.SetPixelPoint(btn, 'TOPLEFT', buttonArea, 'TOPLEFT', 0, -y)
-            pixel.SetPixelPoint(btn, 'TOPRIGHT', buttonArea, 'TOPRIGHT', 0, -y)
-            y = y + BUTTON_HEIGHT + BUTTON_SPACING
-        end
-
-        -- The separator lands on the band's bottom edge, the content tab strip's baseline.
-        pixel.SetPixelHeight(buttonArea, y - BUTTON_SPACING - BUTTON_HEIGHT + theme.barHeight - BAR_INSET)
-        buttonArea:Show()
-        AnchorScroll(true)
-    end
-
     ---Seeds expansion for any section seen for the first time, so a header's defaultExpanded is
     ---honoured once and the user's own collapsing survives a re-render.
     local function SeedExpansion(items)
@@ -1029,10 +926,7 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
         self.onRename = sd.onRename
         self.onMove = sd.onMove
         self.canDrop = sd.canDrop
-        if self._buttonsRef ~= sd.buttons then
-            self._buttonsRef = sd.buttons
-            LayoutButtons(sd.buttons)
-        end
+        self.buttons = sd.buttons
         self.items = type(sd.items) == 'function' and sd.items() or sd.items
         SeedExpansion(self.items)
         RenderList()
@@ -1060,16 +954,18 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
 
     ---Marks an item selected visually without firing onSelect.
     ---@param key any
-    function ms:SetSelected(key)
+    ---@param animate? boolean crossfade, for a click; a page opening on its remembered item snaps
+    function ms:SetSelected(key, animate)
         self.selected = key
-        for _, it in ipairs(activeItems) do ApplyItemState(it) end
-        for _, tab in ipairs(tabButtonPool) do ApplyTabButtonState(tab) end
+        for _, it in ipairs(activeItems) do
+            ApplyItemState(it, not animate)
+        end
     end
 
     ---Selects an item and fires onSelect.
     ---@param key any
     function ms:Select(key)
-        self:SetSelected(key)
+        self:SetSelected(key, true)
         if onSelect then
             for _, data in ipairs(self.leaves or {}) do
                 if data.key == key then
@@ -1082,17 +978,6 @@ function InstanceMixin:CreateMiniSidebar(parent, opts)
 
     function ms:GetSelected() return self.selected end
 
-    local function RestyleChrome()
-        frame:SetBackdropColor(theme.bgMedium[1], theme.bgMedium[2], theme.bgMedium[3], 0.2)
-        rightBorder:SetColorTexture(theme.border[1], theme.border[2], theme.border[3], theme.border[4])
-        -- Same black baseline as the content tab strip; the selected tab's underline carries the accent.
-        buttonSeparator:SetColorTexture(theme.border[1], theme.border[2], theme.border[3], theme.border[4])
-        for _, tab in ipairs(tabButtonPool) do
-            gui:ApplyFont(tab.label, 'normal')
-            ApplyTabButtonState(tab)
-        end
-    end
-    RestyleChrome()
     gui:OnThemeChanged(function()
         RestyleChrome()
         -- Through :Render, so selection colouring is reapplied to the freshly configured rows.

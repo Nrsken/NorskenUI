@@ -21,8 +21,8 @@ local SCROLLBAR_BACKDROP = {
     edgeFile = "Interface\\Buttons\\WHITE8X8",
     edgeSize = 1,
 }
-local THUMB_REST_ALPHA = 0.35
-local THUMB_ACTIVE_ALPHA = 0.8
+local THUMB_REST_ALPHA = 0.6 -- the slider thumb's grey
+local THUMB_HOVER_ALPHA = 0.5 -- accent, full while dragged
 
 local BORDER_ONLY_BACKDROP = {
     edgeFile = "Interface\\Buttons\\WHITE8X8",
@@ -101,14 +101,32 @@ function InstanceMixin:CreateScrollbar(scrollFrame, options)
     thumb:HookScript("OnShow", function() thumbBorder:Show() end)
     thumb:HookScript("OnHide", function() thumbBorder:Hide() end)
 
-    -- The thumb rests dim so it never reads as a selection; it lights up while hovered or dragged.
+    -- grey at rest as the slider thumb is, a dim accent under the cursor and the full accent while dragged
     local dragging = false
-    local function PaintThumb()
-        local alpha = (dragging or scrollbar:IsMouseOver()) and THUMB_ACTIVE_ALPHA or THUMB_REST_ALPHA
-        thumb:SetColorTexture(theme.accent[1], theme.accent[2], theme.accent[3], alpha)
+    local painted -- the state last drawn, so the hover poll only repaints on a change
+    local function PaintThumb(force)
+        local state = dragging and "drag" or (thumbBorder:IsMouseOver() and "hover" or "rest")
+        if state == painted and force ~= true then return end
+
+        painted = state
+        if state == "rest" then
+            local c = theme.textSecondary
+            thumb:SetColorTexture(c[1], c[2], c[3], THUMB_REST_ALPHA)
+        else
+            local c = theme.accent
+            thumb:SetColorTexture(c[1], c[2], c[3], state == "drag" and 1 or THUMB_HOVER_ALPHA)
+        end
     end
-    scrollbar:SetScript("OnEnter", PaintThumb)
-    scrollbar:SetScript("OnLeave", PaintThumb)
+
+    -- the thumb is a texture with no mouse scripts, so its hover is polled while the cursor is on the track
+    scrollbar:SetScript("OnEnter", function(self)
+        self:SetScript("OnUpdate", PaintThumb)
+        PaintThumb()
+    end)
+    scrollbar:SetScript("OnLeave", function(self)
+        self:SetScript("OnUpdate", nil)
+        PaintThumb()
+    end)
     scrollbar:SetScript("OnMouseDown", function()
         dragging = true
         PaintThumb()
@@ -122,7 +140,7 @@ function InstanceMixin:CreateScrollbar(scrollFrame, options)
     local function Restyle()
         scrollbar:SetBackdropColor(theme.bgDark[1], theme.bgDark[2], theme.bgDark[3], theme.bgDark[4])
         scrollbar:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
-        PaintThumb()
+        PaintThumb(true)
         thumbBorder:SetBackdropBorderColor(theme.border[1], theme.border[2], theme.border[3], 1)
     end
     Restyle()

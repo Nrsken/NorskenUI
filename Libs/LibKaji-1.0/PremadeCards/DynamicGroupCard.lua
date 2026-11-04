@@ -3,6 +3,8 @@
 
 * Premade card for a dynamic group's layout: grow direction, alignment, spacing,
   grid options and an optional visible-count limit.
+* `showLimit = false` drops the limit row; `limitNotice = { level, text }` (or a function returning one,
+  asked on every rebuild) keeps it but disabled, with a notice marker on Use Limit saying why it can't apply.
 * The alignment options and the GRID-only rows depend on the grow direction, so
   changing Grow rebuilds the card in place (no full page refresh).
 
@@ -63,6 +65,11 @@ lib.premadeCards.DynamicGroupCard = {
         local dbKeys = config.dbKeys or {}
         local onChange = config.onChangeCallback
         local showLimit = config.showLimit ~= false
+        -- the limit can't apply here: shown disabled, this says why; a function is asked again on every rebuild, as Grow may change it
+        local limitNotice = config.limitNotice
+        if type(limitNotice) == "function" then
+            limitNotice = limitNotice()
+        end
         local growOptions = config.growOptions or {
             { key = "DOWN",       text = L["Down"] },
             { key = "UP",         text = L["Up"] },
@@ -98,11 +105,14 @@ lib.premadeCards.DynamicGroupCard = {
             if onChange then onChange() end
         end
 
-        local limitSlider
+        local limitCheck, limitSlider
 
         local function UpdateLimitState()
+            if limitCheck and limitCheck.SetEnabled then
+                limitCheck:SetEnabled(not limitNotice)
+            end
             if limitSlider and limitSlider.SetEnabled then
-                limitSlider:SetEnabled(getValue(keys.UseLimit, false) == true)
+                limitSlider:SetEnabled(not limitNotice and getValue(keys.UseLimit, false) == true)
             end
         end
 
@@ -193,8 +203,9 @@ lib.premadeCards.DynamicGroupCard = {
             card:Separator()
 
             local rowLimit = card:Row(theme.rowHeightLast, 0)
-            rowLimit:Checkbox(L["Use Limit"], {
+            limitCheck = rowLimit:Checkbox(L["Use Limit"], {
                 width = 0.5,
+                notice = limitNotice,
                 value = getValue(keys.UseLimit, false),
                 callback = function(checked)
                     setValue(keys.UseLimit, checked)
@@ -212,8 +223,8 @@ lib.premadeCards.DynamicGroupCard = {
             })
         end
 
-        -- The limit slider only follows the master enable when Use Limit is on, so it is
-        -- re-derived after the manager's blanket pass.
+        -- The limit row only follows the master enable when Use Limit is on and a limit can
+        -- apply, so it is re-derived after the manager's blanket pass.
         card:SetEnabledHandler(function(enabled)
             if enabled then UpdateLimitState() end
         end)

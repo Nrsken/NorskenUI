@@ -151,6 +151,8 @@ end
 ---@field onCancel? function
 ---@field acceptText? string
 ---@field cancelText? string
+---@field altText? string a third button between accept and cancel, for a prompt with two ways forward
+---@field onAlt? function
 
 local function CalculateDialogSize(opts, textHeight)
     local width = opts.width or 300
@@ -403,6 +405,25 @@ function InstanceMixin:Prompt(opts)
         })
         cancelBtn:SetPoint('LEFT', buttonContainer, 'CENTER', 4, 0)
         cancelBtn.text:SetTextColor(theme.textPrimary[1], theme.textPrimary[2], theme.textPrimary[3], 1)
+
+        -- three buttons: the third takes the centre and the other two step out beside it
+        if opts.altText then
+            local altBtn = self:CreateButton(buttonContainer, opts.altText, {
+                width = BUTTON_WIDTH,
+                height = BUTTON_HEIGHT,
+                callback = function()
+                    if opts.onAlt then
+                        opts.onAlt()
+                    end
+                    CloseDialog()
+                end
+            })
+            altBtn:SetPoint('CENTER', buttonContainer, 'CENTER', 0, 0)
+            acceptBtn:ClearAllPoints()
+            acceptBtn:SetPoint('RIGHT', altBtn, 'LEFT', -8, 0)
+            cancelBtn:ClearAllPoints()
+            cancelBtn:SetPoint('LEFT', altBtn, 'RIGHT', 8, 0)
+        end
     end
 
     SetupEscapeHandler(self, dialog, opts.onCancel)

@@ -23,21 +23,26 @@ local CreateFrame = CreateFrame
 local ipairs = ipairs
 local pairs = pairs
 local wipe = wipe
-local mrad, mpi, mabs, mmin, mmax, mfloor = math.rad, math.pi, math.abs, math.min, math.max, math.floor
+local mpi, mmin, mmax, mfloor = math.pi, math.min, math.max, math.floor
 local format = string.format
 
-local HEADER_HEIGHT = 32
-local ITEM_HEIGHT = 28
-local HOVER_DURATION = 0.12
+-- Shared with MiniSidebar, so a page list reads as a small copy of this one.
+local HEADER_HEIGHT = 28
+local ITEM_HEIGHT = 26
+local CHEVRON_SIZE = 10
+local TEXT_INSET = 8 -- headers' text and the chevron from the panel's border; the rows run flush to it
+local ROW_STEP = 8 -- a section's rows step in to its header's text, so their bar sits under it
+local ROW_TEXT = 12 -- a row's text from its bar
 local EXPAND_DURATION = 0.2
 local COLLAPSE_DURATION = 0.15
-local ACCENT_BAR_WIDTH = 2
-local SECTION_SPACING = 4
+local HEADER_GAP = 2 -- between stacked headers
+local ROWS_GAP = 8 -- under a section's open rows, folding with them
 local ITEM_SPACING = 1
+local HOVER_LIGHTEN = 0.6 -- how far a hovered label goes toward textPrimary
 
 ---Creates the sidebar panel.
 ---@param parent Frame
----@param opts table { config: table[], onSelect: fun(id, searchResult?), isDisabled?: fun(entry): boolean }
+---@param opts table { config: table[], onSelect: fun(id, searchResult?), isDisabled?: fun(entry): boolean, top?: number room at the panel's top for what the host puts there (sidebar.panel), onScrollbar?: fun(shown: boolean) }
 ---@return table sidebar
 function InstanceMixin:CreateSidebar(parent, opts)
     opts = opts or {}
@@ -47,19 +52,23 @@ function InstanceMixin:CreateSidebar(parent, opts)
     local isDisabled = opts.isDisabled or function(e) return e.disabled end
     local pad = theme.paddingSmall
 
+    -- the column is page ground like the content area's, the list a panel on it as a page's list is
     local frame = CreateFrame("Frame", nil, parent, "BackdropTemplate")
     frame:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8" })
     lib.AddSurfaceTexture(frame, gui)
+    lib.AddSurfaceTexture(frame, gui, "page")
 
-    local rightBorder = frame:CreateTexture(nil, "BORDER")
-    pixel.SetPixelWidth(rightBorder, theme.borderSize)
-    pixel.SetPixelPoint(rightBorder, "TOPRIGHT", frame, "TOPRIGHT", 0, 0)
-    pixel.SetPixelPoint(rightBorder, "BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
+    -- inset as a page's list is: flush right, where the next column's own inset is the gap
+    local panel = CreateFrame("Frame", nil, frame, "BackdropTemplate")
+    pixel.SetPixelPoint(panel, "TOPLEFT", frame, "TOPLEFT", pad, -pad)
+    pixel.SetPixelPoint(panel, "BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, pad)
+    local RestylePanel = lib.CreatePanelChrome(panel, gui)
 
-    local scrollFrame = CreateFrame("ScrollFrame", nil, frame)
-    scrollFrame:SetFrameLevel(frame:GetFrameLevel() + 5)
-    pixel.SetPixelPoint(scrollFrame, "TOPLEFT", frame, "TOPLEFT", 0, 0)
-    pixel.SetPixelPoint(scrollFrame, "BOTTOMRIGHT", frame, "BOTTOMRIGHT", -theme.borderSize, pad)
+    local scrollFrame = CreateFrame("ScrollFrame", nil, panel)
+    scrollFrame:SetFrameLevel(panel:GetFrameLevel() + 5)
+    -- inside the panel's border, which the list would otherwise scroll over, under what the host tops it with
+    pixel.SetPixelPoint(scrollFrame, "TOPLEFT", panel, "TOPLEFT", theme.borderSize, -(theme.borderSize + (opts.top or 0)))
+    pixel.SetPixelPoint(scrollFrame, "BOTTOMRIGHT", panel, "BOTTOMRIGHT", -theme.borderSize, theme.borderSize)
     scrollFrame:SetClipsChildren(true)
 
     local scrollChild = CreateFrame("Frame", nil, scrollFrame)
@@ -76,12 +85,17 @@ function InstanceMixin:CreateSidebar(parent, opts)
 
     local scrollbarVisible = false
     local function UpdateScrollChildWidth()
-        local w = frame:GetWidth()
+        local w = scrollFrame:GetWidth()
         if not w or w <= 0 then return end
-        pixel.SetPixelWidth(scrollChild, scrollbarVisible and (w - theme.borderSize - (theme.scrollbarWidth or 16)) or (w - theme.borderSize))
+        pixel.SetPixelWidth(scrollChild, scrollbarVisible and (w - (theme.scrollbarWidth or 16)) or w)
     end
     local function UpdateScrollbar()
-        scrollbarVisible = scrollbar:UpdateVisibility(scrollChild:GetHeight(), scrollFrame:GetHeight())
+        local visible = scrollbar:UpdateVisibility(scrollChild:GetHeight(), scrollFrame:GetHeight())
+        -- the track runs the panel's full height, so whatever the host put at the top steps aside with the rows
+        if visible ~= scrollbarVisible and opts.onScrollbar then
+            safecall(opts.onScrollbar, visible)
+        end
+        scrollbarVisible = visible
         UpdateScrollChildWidth()
     end
     scrollChild:HookScript("OnSizeChanged", UpdateScrollbar)
@@ -91,6 +105,7 @@ function InstanceMixin:CreateSidebar(parent, opts)
 
     local sidebar = {
         frame = frame,
+        panel = panel,
         scrollFrame = scrollFrame,
         scrollChild = scrollChild,
         scrollbar = scrollbar,
@@ -103,6 +118,17 @@ function InstanceMixin:CreateSidebar(parent, opts)
 
     local headerPool, itemPool = {}, {}
     local activeHeaders, activeItems = {}, {}
+    local ApplyItemState, ApplyHeaderSelection -- defined under Visual state, the row scripts call them
+
+    ---A selectable row's label: its rest colour lightening while hovered, the accent as it's selected.
+    local function PaintLabel(row, rest)
+        local l, h = lib.RowSelectionProgress(row)
+        local hi, ac = theme.textPrimary, theme.accent
+        local r = rest[1] + (hi[1] - rest[1]) * h * HOVER_LIGHTEN
+        local g = rest[2] + (hi[2] - rest[2]) * h * HOVER_LIGHTEN
+        local b = rest[3] + (hi[3] - rest[3]) * h * HOVER_LIGHTEN
+        row.label:SetTextColor(r + (ac[1] - r) * l, g + (ac[2] - g) * l, b + (ac[3] - b) * l, 1)
+    end
 
     -- Header --
     local function CreateHeader()
@@ -111,34 +137,18 @@ function InstanceMixin:CreateSidebar(parent, opts)
         header:EnableMouse(true)
         header:RegisterForClicks("LeftButtonUp")
 
-        local hoverBg = header:CreateTexture(nil, "BACKGROUND")
-        hoverBg:SetAllPoints()
-        hoverBg:SetColorTexture(1, 1, 1, 0.04)
-        hoverBg:SetAlpha(0)
-        header.hoverBg = hoverBg
-
-        local selectedBg = header:CreateTexture(nil, "BACKGROUND", nil, 1)
-        selectedBg:SetAllPoints()
-        selectedBg:Hide()
-        header.selectedBg = selectedBg
-
-        local accentBar = header:CreateTexture(nil, "OVERLAY")
-        pixel.SetPixelWidth(accentBar, ACCENT_BAR_WIDTH)
-        pixel.SetPixelPoint(accentBar, "TOPLEFT", header, "TOPLEFT", 0, 0)
-        pixel.SetPixelPoint(accentBar, "BOTTOMLEFT", header, "BOTTOMLEFT", 0, 0)
-        accentBar:Hide()
-        header.accentBar = accentBar
-        header.barGlow = lib.CreateBarGlow(header, accentBar)
+        -- hover previews the selection dimmed, as on the rows, for a section header too
+        lib.CreateRowSelection(header, theme)
 
         local label = header:CreateFontString(nil, "OVERLAY")
-        label:SetPoint("LEFT", header, "LEFT", pad, 0)
+        pixel.SetPixelPoint(label, "LEFT", header, "LEFT", TEXT_INSET, 0)
         label:SetJustifyH("LEFT")
         label:SetWordWrap(false)
         header.label = label
 
         local arrow = header:CreateTexture(nil, "OVERLAY")
-        pixel.SetPixelSize(arrow, 14, 14)
-        pixel.SetPixelPoint(arrow, "RIGHT", header, "RIGHT", -pad, 0)
+        pixel.SetPixelSize(arrow, CHEVRON_SIZE, CHEVRON_SIZE)
+        pixel.SetPixelPoint(arrow, "RIGHT", header, "RIGHT", -TEXT_INSET, 0)
         arrow:SetTexture(theme.stepperTexture)
         pixel.SetPixelSnap(arrow)
         header.arrow = arrow
@@ -166,22 +176,24 @@ function InstanceMixin:CreateSidebar(parent, opts)
             animGroup:Play()
         end
 
-        local hoverTarget = 0
         header:SetScript("OnUpdate", function(_, elapsed)
-            local cur = hoverBg:GetAlpha()
-            if mabs(cur - hoverTarget) > 0.01 then
-                local speed = elapsed / HOVER_DURATION
-                hoverBg:SetAlpha(hoverTarget > cur and mmin(cur + speed, hoverTarget) or mmax(cur - speed, hoverTarget))
+            if lib.StepRowSelection(header, theme, elapsed) and not header.disabled then
+                PaintLabel(header, theme.accent)
             end
         end)
         header:SetScript("OnEnter", function()
             if header.disabled then return end
-            hoverTarget = 1
-            header.arrow:SetVertexColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
+            header.hovered = true
+            ApplyHeaderSelection(header)
+            if not header.leafId then
+                header.arrow:SetVertexColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
+            end
         end)
         header:SetScript("OnLeave", function()
-            hoverTarget = 0
-            if not header.disabled then
+            header.hovered = nil
+            if header.disabled then return end
+            ApplyHeaderSelection(header)
+            if not header.leafId then
                 header.arrow:SetVertexColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 0.7)
             end
         end)
@@ -216,55 +228,30 @@ function InstanceMixin:CreateSidebar(parent, opts)
         item:EnableMouse(true)
         item:RegisterForClicks("LeftButtonUp")
 
-        local hoverBg = item:CreateTexture(nil, "BACKGROUND")
-        hoverBg:SetAllPoints()
-        hoverBg:SetColorTexture(1, 1, 1, 0.05)
-        hoverBg:SetAlpha(0)
-        item.hoverBg = hoverBg
-
-        local selectedBg = item:CreateTexture(nil, "BACKGROUND", nil, 1)
-        selectedBg:SetAllPoints()
-        selectedBg:Hide()
-        item.selectedBg = selectedBg
-
-        local accentBar = item:CreateTexture(nil, "OVERLAY")
-        pixel.SetPixelWidth(accentBar, ACCENT_BAR_WIDTH)
-        pixel.SetPixelPoint(accentBar, "TOPLEFT", item, "TOPLEFT", 0, 0)
-        pixel.SetPixelPoint(accentBar, "BOTTOMLEFT", item, "BOTTOMLEFT", 0, 0)
-        accentBar:Hide()
-        item.accentBar = accentBar
-        item.barGlow = lib.CreateBarGlow(item, accentBar)
+        -- hover previews the selection dimmed, so there's no separate hover wash
+        lib.CreateRowSelection(item, theme)
 
         local label = item:CreateFontString(nil, "OVERLAY")
-        pixel.SetPixelPoint(label, "LEFT", item, "LEFT", 10, 0)
+        pixel.SetPixelPoint(label, "LEFT", item, "LEFT", ROW_TEXT, 0)
         pixel.SetPixelPoint(label, "RIGHT", item, "RIGHT", -pad, 0)
         label:SetJustifyH("LEFT")
         label:SetWordWrap(false)
         item.label = label
 
-        item.hoverTarget = 0
         item:SetScript("OnUpdate", function(self, elapsed)
-            local cur = hoverBg:GetAlpha()
-            if mabs(cur - self.hoverTarget) > 0.01 then
-                local speed = elapsed / HOVER_DURATION
-                hoverBg:SetAlpha(self.hoverTarget > cur and mmin(cur + speed, self.hoverTarget) or mmax(cur - speed, self.hoverTarget))
+            if lib.StepRowSelection(self, theme, elapsed) and not self.disabled then
+                PaintLabel(self, theme.textSecondary)
             end
         end)
         item:SetScript("OnEnter", function(self)
             if self.disabled then return end
-            self.hoverTarget = 1
-            if self.id ~= sidebar.selected then
-                self.label:SetTextColor(theme.textPrimary[1], theme.textPrimary[2], theme.textPrimary[3], 1)
-                -- Neon: the accent bar fades in partway, previewing the selection.
-                self.accentBar:SetColorTexture(theme.accent[1], theme.accent[2], theme.accent[3], lib.HOVER_BAR_ALPHA)
-                self.accentBar:Show()
-            end
+            self.hovered = true
+            ApplyItemState(self)
         end)
         item:SetScript("OnLeave", function(self)
-            self.hoverTarget = 0
-            if self.id ~= sidebar.selected and not self.disabled then
-                self.label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
-                self.accentBar:Hide()
+            self.hovered = nil
+            if not self.disabled then
+                ApplyItemState(self)
             end
         end)
         item:SetScript("OnClick", function(self)
@@ -289,33 +276,19 @@ function InstanceMixin:CreateSidebar(parent, opts)
     local containerPool = {}
     local layout = {} -- ordered blocks: { frame, height } | { frame, section, full } | { gap }
 
-    -- Re-tinted on every acquire: a theme change re-renders the tree, so this keeps pooled guides current.
-    local function PaintGuide(c)
-        c.guide:SetColorTexture(theme.widgetBorder[1], theme.widgetBorder[2], theme.widgetBorder[3], 1)
-        return c
-    end
-
     local function AcquireContainer()
         for _, c in ipairs(containerPool) do
             if not c.inUse then
-                c.inUse = true; c:Show(); return PaintGuide(c)
+                c.inUse = true; c:Show(); return c
             end
         end
         local c = CreateFrame("Frame", nil, scrollChild)
         c:SetClipsChildren(true)
         c:SetFrameLevel(scrollChild:GetFrameLevel() + 1)
 
-        -- On the accent bar's column, so the selected child's bar covers its stretch.
-        local guide = c:CreateTexture(nil, "BACKGROUND")
-        pixel.SetPixelWidth(guide, theme.borderSize)
-        pixel.SetPixelPoint(guide, "TOPLEFT", c, "TOPLEFT", 0, 0)
-        pixel.SetPixelPoint(guide, "BOTTOMLEFT", c, "BOTTOMLEFT", 0, 0)
-        pixel.SetPixelSnap(guide)
-        c.guide = guide
-
         c.inUse = true
         containerPool[#containerPool + 1] = c
-        return PaintGuide(c)
+        return c
     end
 
     -- Rows are only marked free here and hidden by SweepUnused once the render has claimed what it needs.
@@ -338,54 +311,58 @@ function InstanceMixin:CreateSidebar(parent, opts)
         end
         for _, h in ipairs(headerPool) do
             if not h.inUse and h:IsShown() then
-                h.hoverBg:SetAlpha(0); h.accentBar:Hide(); h.selectedBg:Hide(); h.barGlow:Hide(); h:Hide(); h:ClearAllPoints()
+                lib.SetRowSelection(h, theme, 0, 0, true)
+                h:Hide(); h:ClearAllPoints()
             end
         end
         for _, it in ipairs(itemPool) do
             if not it.inUse and it:IsShown() then
-                it.hoverTarget = 0
-                it.hoverBg:SetAlpha(0); it.accentBar:Hide(); it.selectedBg:Hide(); it.barGlow:Hide()
+                lib.SetRowSelection(it, theme, 0, 0, true)
                 it:Hide(); it:ClearAllPoints()
             end
         end
     end
 
     -- Visual state --
-    local function ApplyItemState(item)
+
+    ---@param instant? boolean snap, for a row just configured; selection and hover changes crossfade
+    function ApplyItemState(item, instant)
         if item.disabled then
+            lib.SetRowSelection(item, theme, 0, 0, true)
             item.label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 0.35)
-            item.accentBar:Hide(); item.selectedBg:Hide(); item.barGlow:Hide()
-        elseif item.id == sidebar.selected then
-            item.accentBar:SetColorTexture(theme.accent[1], theme.accent[2], theme.accent[3], 1)
-            item.accentBar:Show()
-            lib.PaintSelected(item, theme)
-            item.label:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
-        else
-            item.accentBar:Hide(); item.selectedBg:Hide(); item.barGlow:Hide()
-            item.label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
+            return
+        end
+        local selected = item.id == sidebar.selected
+        lib.SetRowSelection(item, theme, selected and 1 or 0, item.hovered and not selected and 1 or 0, instant)
+        if instant then
+            PaintLabel(item, theme.textSecondary)
         end
     end
 
-    local function ApplyHeaderSelection(header)
-        if header.leafId and not header.disabled and header.leafId == sidebar.selected then
-            header.accentBar:SetColorTexture(theme.accent[1], theme.accent[2], theme.accent[3], 1)
-            header.accentBar:Show()
-            lib.PaintSelected(header, theme)
-        else
-            header.accentBar:Hide(); header.selectedBg:Hide(); header.barGlow:Hide()
+    ---A leaf header selects like a row; a section header only ever shows the hover preview.
+    ---@param instant? boolean
+    function ApplyHeaderSelection(header, instant)
+        if header.disabled then
+            lib.SetRowSelection(header, theme, 0, 0, true)
+            return
+        end
+        local selected = header.leafId ~= nil and header.leafId == sidebar.selected
+        lib.SetRowSelection(header, theme, selected and 1 or 0, header.hovered and not selected and 1 or 0, instant)
+        if instant then
+            PaintLabel(header, theme.accent)
         end
     end
 
-    ---@param parent? Frame a section container, placed flush inside it; the scroll child otherwise
+    ---@param parent? Frame a section container; the scroll child otherwise
     local function ConfigureItem(item, id, text, yOffset, searchResult, parent)
         local host = parent or scrollChild
-        local inset = parent and 0 or pad
         item:SetParent(host)
         item:SetFrameLevel(host:GetFrameLevel() + 2)
         pixel.SetPixelHeight(item, ITEM_HEIGHT)
         item:ClearAllPoints()
-        pixel.SetPixelPoint(item, "TOPLEFT", host, "TOPLEFT", inset, -yOffset)
-        pixel.SetPixelPoint(item, "TOPRIGHT", host, "TOPRIGHT", -inset, -yOffset)
+        -- search results step in too, so every row's text shares one edge
+        pixel.SetPixelPoint(item, "TOPLEFT", host, "TOPLEFT", ROW_STEP, -yOffset)
+        pixel.SetPixelPoint(item, "TOPRIGHT", host, "TOPRIGHT", 0, -yOffset)
         item.id = id
         item.searchResult = searchResult
         item.label:Show()
@@ -405,21 +382,6 @@ function InstanceMixin:CreateSidebar(parent, opts)
         local disabled = isDisabled(entry) or false
         header.disabled = disabled
 
-        if isLeaf then
-            header.leafId = entry.id
-            header.sectionId = nil
-            header.arrow:Hide()
-            ApplyHeaderSelection(header)
-        else
-            header.leafId = nil
-            header.sectionId = entry.id
-            header.arrow:Show()
-            header.accentBar:Hide()
-            header.selectedBg:Hide()
-            header.barGlow:Hide()
-            header:SetArrowState(sidebar.expanded[entry.id] == true)
-        end
-
         if disabled then
             header.label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 0.35)
             header.arrow:SetVertexColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 0.35)
@@ -427,6 +389,18 @@ function InstanceMixin:CreateSidebar(parent, opts)
             header.label:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
             header.arrow:SetVertexColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 0.7)
         end
+
+        if isLeaf then
+            header.leafId = entry.id
+            header.sectionId = nil
+            header.arrow:Hide()
+        else
+            header.leafId = nil
+            header.sectionId = entry.id
+            header.arrow:Show()
+            header:SetArrowState(sidebar.expanded[entry.id] == true)
+        end
+        ApplyHeaderSelection(header, true)
         activeHeaders[#activeHeaders + 1] = header
     end
 
@@ -443,8 +417,8 @@ function InstanceMixin:CreateSidebar(parent, opts)
     ---@param y number
     local function Place(block, y)
         block:ClearAllPoints()
-        pixel.SetPixelPoint(block, "TOPLEFT", scrollChild, "TOPLEFT", pad, -y)
-        pixel.SetPixelPoint(block, "TOPRIGHT", scrollChild, "TOPRIGHT", -pad, -y)
+        pixel.SetPixelPoint(block, "TOPLEFT", scrollChild, "TOPLEFT", 0, -y)
+        pixel.SetPixelPoint(block, "TOPRIGHT", scrollChild, "TOPRIGHT", 0, -y)
     end
 
     -- Positions the rendered blocks top to bottom. Cheap, so an animating section can call it every frame.
@@ -495,12 +469,12 @@ function InstanceMixin:CreateSidebar(parent, opts)
                     ConfigureItem(item, child.id, child.text, y, nil, container)
                     item.disabled = sectionDisabled or isDisabled(child) or false
                     item:EnableMouse(not item.disabled)
-                    ApplyItemState(item)
+                    ApplyItemState(item, true)
                     y = y + ITEM_HEIGHT + ITEM_SPACING
                 end
-                layout[#layout + 1] = { frame = container, section = entry.id, full = y }
+                layout[#layout + 1] = { frame = container, section = entry.id, full = y - ITEM_SPACING + ROWS_GAP }
             end
-            layout[#layout + 1] = { gap = SECTION_SPACING }
+            layout[#layout + 1] = { gap = HEADER_GAP }
         end
         Relayout()
     end
@@ -559,7 +533,7 @@ function InstanceMixin:CreateSidebar(parent, opts)
             item.label:SetText(text)
             item.disabled = false
             item:EnableMouse(true)
-            ApplyItemState(item)
+            ApplyItemState(item, true)
             y = y + ITEM_HEIGHT + ITEM_SPACING
         end
         pixel.SetPixelHeight(scrollChild, y + pad)
@@ -607,16 +581,23 @@ function InstanceMixin:CreateSidebar(parent, opts)
     ---@param id string
     ---@param searchResult? table
     function sidebar:Select(id, searchResult)
-        self:SetSelected(id)
+        self:SetSelected(id, true)
         if onSelect then safecall(onSelect, id, searchResult) end
     end
 
     ---Marks an entry selected visually without firing onSelect (restore / external navigation).
-    function sidebar:SetSelected(id)
+    ---@param animate? boolean crossfade, for a click; restores and navigation from elsewhere snap
+    function sidebar:SetSelected(id, animate)
+        -- a click's onSelect navigates and lands back here; re-marking the same entry would cut its fade short
+        if id == self.selected and not animate then return end
         self.selected = id
-        for _, it in ipairs(activeItems) do ApplyItemState(it) end
+        for _, it in ipairs(activeItems) do
+            ApplyItemState(it, not animate)
+        end
         for _, h in ipairs(activeHeaders) do
-            if h.leafId then ApplyHeaderSelection(h) end
+            if h.leafId then
+                ApplyHeaderSelection(h, not animate)
+            end
         end
     end
 
@@ -666,8 +647,8 @@ function InstanceMixin:CreateSidebar(parent, opts)
     end
 
     local function RestyleChrome()
-        frame:SetBackdropColor(theme.bgMedium[1], theme.bgMedium[2], theme.bgMedium[3], theme.bgMedium[4])
-        rightBorder:SetColorTexture(theme.border[1], theme.border[2], theme.border[3], theme.border[4])
+        frame:SetBackdropColor(theme.bgDark[1], theme.bgDark[2], theme.bgDark[3], theme.bgDark[4])
+        RestylePanel()
     end
     RestyleChrome()
     gui:OnThemeChanged(function()

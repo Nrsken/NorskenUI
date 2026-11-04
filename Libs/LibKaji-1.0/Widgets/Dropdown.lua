@@ -513,6 +513,8 @@ DropdownMixin.SetOptions = DropdownMixin.UpdateOptions
 ---@field accentColor? number[] per-widget accent, overriding the theme's
 ---@field bgColor? number[] per-widget background for the closed row and its list, overriding the theme's
 ---@field tooltip? string
+---@field notice? KajiGUINotice a marker after the label, see lib.SetNotice
+---@field mixed? KajiGUIMixedEntry[] the things it edits disagree: nothing picked, see lib.SetMixed
 ---@field itemActions? fun(value: any): KajiGUIDropdownItemAction[]? icon buttons drawn on each option, left to right
 
 ---@class KajiGUIDropdownItemAction
@@ -691,6 +693,17 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         FitSelectedSwatch(value)
     end
     row._applySelected = ApplySelected
+    -- a value as the list names it, for the mixed tooltip; a multi-select value names each pick
+    row._describeValue = function(value)
+        if type(value) ~= "table" then
+            return value ~= nil and (row._normalizedOptions[value] or tostring(value)) or L["None"]
+        end
+        local names = {}
+        for i, key in ipairs(value) do
+            names[i] = row._normalizedOptions[key] or tostring(key)
+        end
+        return #names > 0 and table.concat(names, ", ") or L["None"]
+    end
 
     local dropdownList = CreateFrame("Frame", nil, row, "BackdropTemplate")
     pixel.SetPixelHeight(dropdownList, 1)
@@ -863,6 +876,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
             if row._hasPending then
                 local value = row._pendingValue
                 row._hasPending, row._pendingValue = false, nil
+                lib.ClearMixed(row)
                 safecall(row._callback, value)
             end
         else
@@ -918,6 +932,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
                 if btn._updateState then btn._updateState() end
             end
 
+            lib.ClearMixed(row)
             safecall(row._callback, values)
             return
         end
@@ -1302,6 +1317,7 @@ end
 
 function DropdownMixin:UpdateColors()
     self._restyle()
+    lib.PaintMixed(self, self.label)
 end
 
 ---@param parent Frame
@@ -1335,17 +1351,21 @@ function DropdownMixin:OnAcquire(parent, labelText, config)
 
     self.label:SetText(labelText or "")
     lib.SetTooltip(self, self.gui, labelText, config.tooltip)
+    lib.SetNotice(self, self.gui, self.label, config.notice)
 
     NormalizeOptions(self, ResolveMediaOptions(mediaType, config.options))
     self._applySearchLayout()
 
     -- Seeded before the callback is attached, so filling in a recycled dropdown never
     -- looks like the user just picked something.
+    -- mixed has no one value, so it shows the empty pick until something is chosen
+    lib.SetMixed(self, config.mixed, self._describeValue)
+    local value = not config.mixed and config.value or nil
     self._callback = nil
-    self._currentValue = config.value
+    self._currentValue = value
     RebuildSelectedSet(self)
-    if config.value ~= nil then
-        self._applySelected(config.value)
+    if value ~= nil then
+        self._applySelected(value)
     else
         self._setSelectedPlaceholder()
     end

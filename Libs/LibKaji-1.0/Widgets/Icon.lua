@@ -144,6 +144,18 @@ function IconMixin:SetEnabled(enabled)
     self:SetAlpha(enabled and 1 or 0.5)
 end
 
+---A tile's picture, centred from its left edge: anchored on the tile's TOP its centre lands on a half pixel
+---whenever the two widths differ by an odd count, which smears every texture drawn in it. The row calls this
+---with each new width.
+---@param width number
+function IconMixin:OnLayout(width)
+    if not self._tile or not width or width <= 0 then return end
+
+    local frame = self.iconFrame
+    frame:ClearAllPoints()
+    pixel.SetPixelPoint(frame, "TOPLEFT", self, "TOPLEFT", (width - (self._previewWidth or self._size)) / 2, -TILE_PAD)
+end
+
 ---Places the icon square inside the widget, and the label beside or above it.
 function IconMixin:LayoutIcon()
     local frame, label = self.iconFrame, self.label
@@ -153,7 +165,7 @@ function IconMixin:LayoutIcon()
     self.description:ClearAllPoints()
 
     if self._align == "FILL" then
-        frame:SetAllPoints()
+        pixel.SetPixelInside(frame, self, 0, 0)
         return
     end
 
@@ -178,7 +190,7 @@ function IconMixin:LayoutIcon()
 
     if self._tile then
         pixel.SetPixelSize(frame, self._previewWidth or self._size, self._size)
-        pixel.SetPixelPoint(frame, "TOP", self, "TOP", 0, -TILE_PAD)
+        self:OnLayout(self:GetWidth())
         pixel.SetPixelPoint(label, "TOP", frame, "BOTTOM", 0, -self._textSpacing)
         pixel.SetPixelPoint(label, "LEFT", self, "LEFT", 2, 0)
         pixel.SetPixelPoint(label, "RIGHT", self, "RIGHT", -2, 0)
@@ -458,7 +470,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     -- The border and quality pip are always built and simply hidden when unwanted, so a
     -- recycled icon can never come back missing one.
     local border = CreateFrame("Frame", nil, iconFrame, "BackdropTemplate")
-    border:SetAllPoints()
+    pixel.SetPixelInside(border, iconFrame, 0, 0)
     lib.SetBackdrop(border, gui, { border = { 0, 0, 0 }, borderAlpha = 1 })
     container.border = border
 
@@ -469,7 +481,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     container.qualityFrame = qualityFrame
 
     local qualityTexture = qualityFrame:CreateTexture(nil, "OVERLAY")
-    qualityTexture:SetAllPoints()
+    pixel.SetPixelInside(qualityTexture, qualityFrame, 0, 0)
     container.qualityTexture = qualityTexture
 
     -- Given the theme font up front: an icon built without a label still has SetText called on it.

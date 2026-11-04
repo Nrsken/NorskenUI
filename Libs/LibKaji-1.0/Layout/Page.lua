@@ -225,6 +225,14 @@ function FluentCard:SetTitle(title)
     return self
 end
 
+---A marker after the card's title, for a message about the whole card; nil removes it.
+---@param notice? KajiGUINotice
+---@return self
+function FluentCard:SetNotice(notice)
+    self.real:SetNotice(notice)
+    return self
+end
+
 ---Gives the card its own enable logic, for cards whose controls gate each other.
 ---The card is deferred in the state manager, so `fn(enabled)` runs after every plain
 ---widget has been set and its derivation wins. Stored as a field, not a script, so a

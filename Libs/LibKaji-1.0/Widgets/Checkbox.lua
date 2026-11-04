@@ -42,6 +42,13 @@ local ANIMATION_DURATION = 0.18
 local TOGGLE_GLOW = 10 -- how far the on-state glow reaches past the track
 local OFF_POSITION = KNOB_PADDING
 local ON_POSITION = TOGGLE_WIDTH - KNOB_SIZE - KNOB_PADDING
+local MIXED_POSITION = (OFF_POSITION + ON_POSITION) / 2 -- neither: the things it edits disagree
+
+---@param value boolean
+---@return string
+local function DescribeValue(value)
+    return value and L["On"] or L["Off"]
+end
 
 ---@class KajiGUICheckboxMixin : Frame
 ---@field gui KajiGUIInstance
@@ -52,6 +59,7 @@ local ON_POSITION = TOGGLE_WIDTH - KNOB_SIZE - KNOB_PADDING
 ---@field knobTexture Texture
 ---@field checkmark Texture
 ---@field crossmark Texture
+---@field dash Texture the mixed state's mark, on a knob parked in the middle
 ---@field button Button
 ---@field animGroup AnimationGroup
 ---@field slideAnim Animation
@@ -69,7 +77,11 @@ local ON_POSITION = TOGGLE_WIDTH - KNOB_SIZE - KNOB_PADDING
 local CheckboxMixin = {}
 
 function CheckboxMixin:UpdateIcons()
-    if self._state then
+    self.dash:SetShown(self._mixed ~= nil)
+    if self._mixed then
+        self.checkmark:Hide()
+        self.crossmark:Hide()
+    elseif self._state then
         self.checkmark:Show()
         self.crossmark:Hide()
         self.checkmark:SetVertexColor(1, 1, 1, 1)
@@ -94,6 +106,10 @@ function CheckboxMixin:ApplyStateColors(toState, instant)
         bgR, bgG, bgB, knobA = theme.bgDark[1], theme.bgDark[2], theme.bgDark[3], 0.4
     end
     local kr, kg, kb = theme.accent[1], theme.accent[2], theme.accent[3]
+    -- the usual indeterminate look: a knob in the middle, in the mixed colour, carrying a dash
+    if self._mixed then
+        kr, kg, kb, knobA = theme.mixed[1], theme.mixed[2], theme.mixed[3], 1
+    end
 
     if instant then
         self.toggle:SetBackdropColor(bgR, bgG, bgB, 1)
@@ -175,6 +191,7 @@ function CheckboxMixin:UpdateColors()
     self.crossmark:SetTexture(theme.crossTexture)
     -- Repaint from the current state so the track and knob land on the new palette.
     self:ApplyStateColors(self._state, true)
+    lib.PaintMixed(self, self.label)
 end
 
 ---@param parent Frame
@@ -198,11 +215,19 @@ function CheckboxMixin:OnAcquire(parent, labelText, config)
         spec = { text = spec.text }
     end
     lib.SetTooltip(self, self.gui, labelText, spec)
+    lib.SetNotice(self, self.gui, self.label, config.notice)
+    lib.SetMixed(self, config.mixed, DescribeValue)
 
     self._animating = false
     self._enabled = true
-    self._state = not (config.value or false) -- force AnimateToState to settle the visuals
-    self:AnimateToState(config.value or false, true)
+    -- mixed reads as off underneath, so a click turns them all on, as WA's toggle does from nil
+    local value = not config.mixed and config.value or false
+    self._state = not value -- force AnimateToState to settle the visuals
+    self:AnimateToState(value, true)
+    if config.mixed then
+        self.knob:ClearAllPoints()
+        pixel.SetPixelPoint(self.knob, "LEFT", self.toggle, "LEFT", MIXED_POSITION, 0)
+    end
 
     self.button:EnableMouse(true)
     self.toggle:SetAlpha(1)
@@ -237,6 +262,8 @@ end
 ---@field msgOff? string
 ---@field tooltip? any
 ---@field cvartooltip? boolean show the default value in the tooltip
+---@field notice? KajiGUINotice a marker after the label, see lib.SetNotice
+---@field mixed? KajiGUIMixedEntry[] the things it edits disagree: neither on nor off, see lib.SetMixed
 
 lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     local theme = gui.theme
@@ -299,6 +326,14 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     crossmark:Hide()
     row.crossmark = crossmark
 
+    local dash = knob:CreateTexture(nil, "OVERLAY")
+    pixel.SetPixelSize(dash, KNOB_SIZE / 2, 2)
+    pixel.SetPixelPoint(dash, "CENTER", knob, "CENTER", 0, 0)
+    dash:SetColorTexture(1, 1, 1, 1)
+    pixel.SetPixelSnap(dash)
+    dash:Hide()
+    row.dash = dash
+
     local animGroup = knob:CreateAnimationGroup()
     local slideAnim = animGroup:CreateAnimation("Translation")
     slideAnim:SetDuration(ANIMATION_DURATION)
@@ -334,6 +369,7 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     button:SetScript("OnClick", function()
         if animGroup:IsPlaying() then return end
 
+        lib.ClearMixed(row)
         local newState = not row._state
         row:AnimateToState(newState, false)
 
@@ -366,8 +402,9 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     -- One handler per event doing both the knob highlight and the tooltip, rather than
     -- layering the tooltip on top by wrapping these scripts (see lib.SetTooltip).
     button:SetScript("OnEnter", function()
-        local accent = row.gui.theme.accent
-        local baseA = row._state and 1 or 0.6
+        local theme = row.gui.theme
+        local accent = row._mixed and theme.mixed or theme.accent -- a mixed knob keeps its colour, brightened
+        local baseA = (row._state or row._mixed) and 1 or 0.6
         local hr, hg, hb = accent[1] * 1.2, accent[2] * 1.2, accent[3] * 1.2
         knobTexture:SetColorTexture(hr, hg, hb, baseA)
         row._syncKnob(hr, hg, hb, baseA)
@@ -375,8 +412,9 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         lib.ShowTooltip(row)
     end)
     button:SetScript("OnLeave", function()
-        local accent = row.gui.theme.accent
-        local a = row._state and 1 or 0.4
+        local theme = row.gui.theme
+        local accent = row._mixed and theme.mixed or theme.accent
+        local a = (row._state or row._mixed) and 1 or 0.4
         knobTexture:SetColorTexture(accent[1], accent[2], accent[3], a)
         row._syncKnob(accent[1], accent[2], accent[3], a)
         row._animateEdge(false)

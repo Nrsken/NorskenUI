@@ -33,6 +33,7 @@ local abs = math.abs
 local floor, max, min = math.floor, math.max, math.min
 local pi = math.pi
 local pairs = pairs
+local C_Timer = C_Timer
 local safecall = lib.safecall
 
 local CARD_TYPE = "Card"
@@ -321,6 +322,35 @@ end
 ---@param title string
 function CardMixin:SetTitle(title)
     self.titleText:SetText(title)
+    self:LayoutHeaderCut()
+end
+
+---A marker after the title for a message about the whole card; nil removes it.
+---@param notice? KajiGUINotice
+function CardMixin:SetNotice(notice)
+    lib.SetNotice(self, self.gui, self.titleText, notice)
+    self:LayoutHeaderCut()
+end
+
+---Places the band's 45° slash just past the title and its notice marker.
+function CardMixin:LayoutHeaderCut()
+    local width = self.titleText:GetStringWidth()
+    local tab = pixel.ToPixelGrid(self.gui.theme.paddingMedium * 2 + width + lib.NoticeWidth(self))
+    local h = pixel.ToPixelGrid(HEADER_HEIGHT)
+    local px = pixel.ToPixelGrid(1)
+    -- one physical pixel through the centres of the card's top edge and the band's foot, so the corners meet
+    self.slope:SetThickness(px)
+    self.slope:SetStartPoint("TOPLEFT", self.header, tab, -px / 2)
+    self.slope:SetEndPoint("TOPLEFT", self.header, tab + h, px / 2 - h)
+
+    -- a cold font measures 0 on a fresh login's first pass, so place it again once it has loaded
+    if width == 0 and (self.titleText:GetText() or "") ~= "" then
+        C_Timer.After(0, function()
+            if self.header:IsShown() then
+                self:LayoutHeaderCut()
+            end
+        end)
+    end
 end
 
 ---Y position the next card in a stack should start at.
@@ -344,8 +374,7 @@ function CardMixin:SetHeaderButton(config)
     if not button then
         button = CreateFrame("Button", nil, self.header)
         local icon = button:CreateTexture(nil, "ARTWORK")
-        icon:SetAllPoints()
-        pixel.SetPixelSnap(icon)
+        pixel.SetPixelInside(icon, button, 0, 0)
         button.icon = icon
         button:SetScript("OnEnter", function(b)
             b.icon:SetAlpha(1)
@@ -383,12 +412,13 @@ end
 function CardMixin:UpdateColors()
     local theme = self.gui.theme
     lib.RefreshBackdrop(self)
-    lib.RefreshBackdrop(self.header)
+    local band, edge = theme.bgMedium, theme.border
+    self.band:SetColorTexture(band[1], band[2], band[3], band[4])
+    self.slope:SetColorTexture(edge[1], edge[2], edge[3], edge[4])
+    self.baseline:SetColorTexture(edge[1], edge[2], edge[3], edge[4])
     self.titleText:SetTextColor(theme.accent[1], theme.accent[2], theme.accent[3], 1)
     if self.headerButton then self.headerButton.icon:SetVertexColor(theme.accent[1], theme.accent[2], theme.accent[3]) end
-    for _, tick in ipairs(self.cornerTicks) do
-        tick:SetColorTexture(theme.accent[1], theme.accent[2], theme.accent[3], theme.cardCornerAlpha)
-    end
+    lib.PaintCornerTicks(self.cornerTicks, theme)
 end
 
 ---@param parent Frame
@@ -421,6 +451,8 @@ function CardMixin:OnAcquire(parent, title, config)
     self.headerHeight = hasHeader and HEADER_HEIGHT or 0
     self.header:SetShown(hasHeader)
     self.titleText:SetText(title or "")
+    lib.SetNotice(self, self.gui, self.titleText, nil)
+    self:LayoutHeaderCut()
 
     self.content:ClearAllPoints()
     pixel.SetPixelPoint(self.content, "TOPLEFT", self, "TOPLEFT",
@@ -469,12 +501,26 @@ lib:RegisterWidgetType(CARD_TYPE, function(gui)
     card.headerHeight = 0
     card._yOffset = 0
 
-    local header = CreateFrame("Frame", nil, card, "BackdropTemplate")
+    local header = CreateFrame("Frame", nil, card)
     pixel.SetPixelHeight(header, HEADER_HEIGHT)
     pixel.SetPixelPoint(header, "TOPLEFT", card, "TOPLEFT", 0, 0)
     pixel.SetPixelPoint(header, "TOPRIGHT", card, "TOPRIGHT", 0, 0)
-    lib.SetBackdrop(header, gui, { bg = "bgMedium", border = "border", edgeSize = "borderSize" })
     card.header = header
+
+    local band = header:CreateTexture(nil, "BACKGROUND")
+    pixel.SetPixelInside(band, header, 0, 0)
+    card.band = band
+
+    -- a 45° slash across the band just past the title, as the portrait skins' tabs; LayoutHeaderCut places it
+    card.slope = header:CreateLine(nil, "BORDER")
+
+    -- the band's foot, running on past the cut to the card's edge
+    local baseline = header:CreateTexture(nil, "BORDER")
+    pixel.SetPixelHeight(baseline, theme.borderSize)
+    pixel.SetPixelPoint(baseline, "BOTTOMLEFT", header, "BOTTOMLEFT", 0, 0)
+    pixel.SetPixelPoint(baseline, "BOTTOMRIGHT", header, "BOTTOMRIGHT", 0, 0)
+    pixel.SetPixelSnap(baseline)
+    card.baseline = baseline
 
     local titleText = header:CreateFontString(nil, "OVERLAY")
     pixel.SetPixelPoint(titleText, "LEFT", header, "LEFT", theme.paddingMedium, 0)
@@ -491,22 +537,11 @@ lib:RegisterWidgetType(CARD_TYPE, function(gui)
 
     -- Own frame above the header band, which would otherwise cover the top-left ticks.
     local corners = CreateFrame("Frame", nil, card)
-    corners:SetAllPoints()
+    pixel.SetPixelInside(corners, card, 0, 0)
     corners:EnableMouse(false)
     card.corners = corners
 
-    local length, edge = theme.cardCornerLength, theme.borderSize
-    local function Tick(point, w, h)
-        local t = corners:CreateTexture(nil, "OVERLAY")
-        pixel.SetPixelSize(t, w, h)
-        pixel.SetPixelPoint(t, point, card, point, 0, 0)
-        pixel.SetPixelSnap(t)
-        return t
-    end
-    card.cornerTicks = {
-        Tick("TOPLEFT", length, edge), Tick("TOPLEFT", edge, length),
-        Tick("BOTTOMRIGHT", length, edge), Tick("BOTTOMRIGHT", edge, length),
-    }
+    card.cornerTicks = lib.CreateCornerTicks(corners, card, theme)
 
     -- Highlight on the corners frame so the header band never covers it.
     lib.AddTopSheen(header, gui)

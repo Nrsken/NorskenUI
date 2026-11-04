@@ -58,6 +58,7 @@ local MEDIA = lib.mediaBase
 ---@field error number[]
 ---@field success number[]
 ---@field warning number[]
+---@field mixed number[] a setting that differs between the displays being edited together
 local DEFAULT_THEME = {
     -- Colours mirror BASELINE_PRESET
     -- Backgrounds
@@ -83,6 +84,7 @@ local DEFAULT_THEME = {
     error                   = { 0.90, 0.30, 0.30, 1 },
     success                 = { 0.30, 0.80, 0.40, 1 },
     warning                 = { 0.90, 0.75, 0.30, 1 },
+    mixed                   = { 0.25, 0.50, 1.00, 1 }, -- WA's blue for "not all the same"
     -- Dimensions
     headerHeight            = 35,
     -- Band under the header, shared by search box, item-list buttons and sub-tabs so they share a baseline
@@ -120,14 +122,24 @@ local DEFAULT_THEME = {
     stepperTexture          = MEDIA .. "collapse.tga",
     colorSwatchTexture      = MEDIA .. "NUIcolorPickerBG.png",
     resizeHandleTexture     = MEDIA .. "NorskenCustomResizeHandle23px.png",
+    noticeTexture           = MEDIA .. "warning.png", -- white, tinted per notice level
     -- Drag cursors: an Enum.Cursormode or built-in cursor name, never a path (addon textures draw black)
     dragCursor              = Enum.Cursormode and Enum.Cursormode.GrabbingHandCursor or "UI_MOVE_CURSOR",
     dragCursorHeld          = Enum.Cursormode and Enum.Cursormode.HoldingHandCursor or "UI_MOVE_CURSOR",
-    -- Neon turns grain, corner ticks, sheen and highlight off at 0; raise a strength to bring one back.
+    -- Neon turns grain, sheen and highlight off at 0; raise a strength to bring one back.
     -- Tiling grain over sidebars, content area, header and footer
     surfaceTexture          = MEDIA .. "surface.png",
     surfaceAlpha            = 0,
-    -- Accent ticks on two corners of every card
+    -- Grain and registration marks on the page behind the cards only, strengths baked into page.png
+    pageTexture             = MEDIA .. "page.png",
+    pageAlpha               = 1,
+    -- The module header's dot field stood upright, thickening toward the foot of the mini sidebar
+    halftoneTexture         = MEDIA .. "halftone.png",
+    halftoneAlpha           = 0.22,
+    -- The page header's dot field (1024x128, dots in the right end) and the 45° mask that cuts it along the slash
+    headerHalftoneTexture   = MEDIA .. "halftone_wide.png",
+    diagonalMask            = MEDIA .. "diagonal.png",
+    -- Muted registration ticks on the corners of cards, the module header and the list panels; 0 hides them all
     cardCornerLength        = 7,
     cardCornerAlpha         = 0,
     -- Top sheen on header bands, 1px top highlight on cards and tabs
@@ -145,7 +157,6 @@ local DEFAULT_THEME = {
     glowControlAlpha        = 0.35, -- on-state toggle and slider fill
     iconGlowAlpha           = 0.6, -- baked icon glows, scaled by the icon's own hover alpha
     selectionGlowAlpha      = 0.22, -- selected row tint, fading out to the right
-    barGlowAlpha            = 0.45, -- glow spilling right from the selected row's accent bar
     -- Animation
     animDuration            = 0.18,
 }
@@ -185,6 +196,7 @@ local function BuildPreset(spec)
         error = { 0.90, 0.30, 0.30, 1 },
         success = { 0.30, 0.80, 0.40, 1 },
         warning = { 0.90, 0.75, 0.30, 1 },
+        mixed = { 0.25, 0.50, 1.00, 1 },
     }
 end
 
@@ -291,6 +303,7 @@ local THEME_COLOR_KEYS = {
     { key = "error",         name = "Error",               category = "Status Colors" },
     { key = "success",       name = "Success",             category = "Status Colors" },
     { key = "warning",       name = "Warning",             category = "Status Colors" },
+    { key = "mixed",         name = "Differs",             category = "Status Colors" },
 }
 lib.THEME_COLOR_KEYS = THEME_COLOR_KEYS
 
@@ -434,6 +447,7 @@ function InstanceMixin:_FireThemeChanged()
 
     for widget in pairs(self._acquired) do
         if widget.UpdateColors then widget:UpdateColors() end
+        lib.PaintNotice(widget)
     end
 end
 

@@ -27,6 +27,13 @@ local tostring = tostring
 
 local WIDGET_TYPE = "EditBox"
 
+---An unset value lists as blank, not "nil".
+---@param value any
+---@return string
+local function DescribeValue(value)
+    return (value == nil or value == false) and "" or tostring(value)
+end
+
 ---@class KajiGUIEditBoxMixin : Frame
 ---@field gui KajiGUIInstance
 ---@field editBox EditBox
@@ -66,6 +73,7 @@ function EditBoxMixin:UpdateColors()
     self.label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
     self.editBox:SetTextColor(theme.textPrimary[1], theme.textPrimary[2], theme.textPrimary[3], 1)
     self._syncBorder(theme.widgetBorder[1], theme.widgetBorder[2], theme.widgetBorder[3], theme.widgetBorder[4] or 1)
+    lib.PaintMixed(self, self.label)
 end
 
 ---@param parent Frame
@@ -99,12 +107,14 @@ function EditBoxMixin:OnAcquire(parent, labelText, config)
     self._callback = config.callback
     self._onTextChanged = config.onTextChanged
 
+    lib.SetMixed(self, config.mixed, DescribeValue)
     self.editBox:SetAutoFocus(autoFocus)
-    self.editBox:SetText(tostring(config.value or ""))
+    self.editBox:SetText(not config.mixed and tostring(config.value or "") or "") -- mixed is blank, as WA's
     self.editBox:EnableMouse(true)
     self.editBox:EnableKeyboard(true)
 
     lib.SetTooltip(self, self.gui, labelText, config.tooltip, config.tooltipBeside and { owner = self.container, beside = true } or nil)
+    lib.SetNotice(self, self.gui, self.label, config.notice)
 
     self:SetAlpha(1)
     self:UpdateColors()
@@ -137,6 +147,8 @@ end
 ---@field tooltipBeside? boolean the tooltip opens to the right of the input box instead of at the cursor
 ---@field inlineLabel? boolean Place the label left of the box instead of above it.
 ---@field labelWidth? number Width reserved for an inline label.
+---@field notice? KajiGUINotice a marker after the label, see lib.SetNotice
+---@field mixed? KajiGUIMixedEntry[] the things it edits disagree: blank until typed in, see lib.SetMixed
 
 lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     local theme = gui.theme
@@ -178,17 +190,20 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     -- Set once, reading the callback off the row, so a recycled box never fires the
     -- previous consumer's handler.
     editBox:SetScript("OnTextChanged", function(eb, userInput)
-        if userInput then safecall(row._onTextChanged, eb:GetText()) end
+        if userInput then
+            lib.ClearMixed(row) -- typed text is the one value they all get
+            safecall(row._onTextChanged, eb:GetText())
+        end
     end)
     editBox:SetScript("OnEscapePressed", function(eb) eb:ClearFocus() end)
-    editBox:SetScript("OnEnterPressed", function(eb)
-        eb:ClearFocus()
-        safecall(row._callback, eb:GetText())
-    end)
+    -- clearing focus runs OnEditFocusLost, which commits; a second call here could reach a field a rebuild re-pooled this box for
+    editBox:SetScript("OnEnterPressed", function(eb) eb:ClearFocus() end)
     editBox:SetScript("OnEditFocusLost", function(eb)
         local border = row.gui.theme.widgetBorder
         container:SetBackdropBorderColor(border[1], border[2], border[3], 1)
         row._paintGlow()
+        -- a mixed box nobody typed in stays as it was, rather than giving them all an empty value
+        if row._mixed then return end
         safecall(row._callback, eb:GetText())
     end)
     editBox:SetScript("OnEditFocusGained", function()

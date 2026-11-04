@@ -45,6 +45,12 @@ local THUMB_GLOW_REACH = 8 -- the small glow
 local STEPPER_SIZE = 20
 local THROTTLE_DELAY = 0.1
 
+---@param value number?
+---@return string
+local function DescribeValue(value)
+    return value and tostring(floor(value * 100 + 0.5) / 100) or ""
+end
+
 ---@class KajiGUISliderMixin : Frame
 ---@field gui KajiGUIInstance
 ---@field label FontString
@@ -90,7 +96,8 @@ function SliderMixin:UpdateFill()
 
     if not self._updating then
         self._updating = true
-        self.valueEdit:SetText(tostring(floor(val * 100 + 0.5) / 100))
+        -- mixed has no one value to show, as WA leaves it blank
+        self.valueEdit:SetText(self._mixed and "" or tostring(floor(val * 100 + 0.5) / 100))
         self._updating = false
     end
 end
@@ -159,6 +166,9 @@ end
 
 ---Parses the value box, clamping and wobbling on anything out of range or unparseable.
 function SliderMixin:CommitText()
+    -- clicking in and out of a mixed slider's empty box changes nothing
+    if self._mixed and self.valueEdit:GetText() == "" then return end
+
     local num = tonumber(self.valueEdit:GetText())
     if not num then
         Animations:Wobble(self.valueContainer)
@@ -200,6 +210,7 @@ function SliderMixin:UpdateColors()
     self._syncLeftStepper(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
     self._syncRightStepper(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
     self._syncValueBorder(theme.widgetBorder[1], theme.widgetBorder[2], theme.widgetBorder[3], theme.widgetBorder[4] or 1)
+    lib.PaintMixed(self, self.label)
 end
 
 ---@param parent Frame
@@ -229,10 +240,11 @@ function SliderMixin:OnAcquire(parent, labelText, config)
     -- acquire must not look like the user just moved the slider.
     self._callback = nil
     self._suppressCallback = true
+    lib.SetMixed(self, config.mixed, DescribeValue)
     self.fillBar:SetMinMaxValues(sliderMin, sliderMax)
     self.slider:SetMinMaxValues(sliderMin, sliderMax)
     self.slider:SetValueStep(step)
-    self.slider:SetValue(config.value or sliderMin)
+    self.slider:SetValue(not config.mixed and config.value or sliderMin) -- mixed rests at the start, unfilled
     self._suppressCallback = false
     self._callback = config.callback
 
@@ -242,6 +254,7 @@ function SliderMixin:OnAcquire(parent, labelText, config)
         spec = { text = spec.text }
     end
     lib.SetTooltip(self, self.gui, labelText, spec)
+    lib.SetNotice(self, self.gui, self.label, config.notice)
 
     self:SetEnabled(true)
     self:SetAlpha(1)
@@ -282,6 +295,8 @@ end
 ---@field callbackOnRelease? boolean fire callback only when the drag is released
 ---@field tooltip? any
 ---@field cvartooltip? boolean
+---@field notice? KajiGUINotice a marker after the label, see lib.SetNotice
+---@field mixed? KajiGUIMixedEntry[] the things it edits disagree: blank and unfilled, see lib.SetMixed
 
 lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     local theme = gui.theme
@@ -423,11 +438,28 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     rightStepper:SetScript("OnLeave", function() row._animateRightStepper(false); lib.HideTooltip() end)
 
     slider:SetScript("OnValueChanged", function(_, val)
+        -- a drag, a step or a typed number gives them all one value
+        if not row._suppressCallback then
+            lib.ClearMixed(row)
+        end
         row:UpdateFill()
         row:UpdateThumbPosition()
         if row._callbackOnRelease and row._dragging then return end
         local now = GetTime()
-        if now - row._lastUpdate < THROTTLE_DELAY then return end
+        if now - row._lastUpdate < THROTTLE_DELAY then
+            -- the value a quick drag stops on still lands once the window passes, or the setting lags what the slider shows
+            if not row._flushPending then
+                row._flushPending = true
+                local alive = lib.Generation(row)
+                C_Timer.After(THROTTLE_DELAY - (now - row._lastUpdate), function()
+                    row._flushPending = false
+                    if not alive() then return end
+                    row._lastUpdate = GetTime()
+                    row:FireCallback(slider:GetValue())
+                end)
+            end
+            return
+        end
         row._lastUpdate = now
         row:FireCallback(val)
     end)

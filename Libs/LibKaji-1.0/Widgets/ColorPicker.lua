@@ -74,6 +74,7 @@ end
 ---@param b number
 ---@param a? number
 function ColorPickerMixin:SetColor(r, g, b, a)
+    lib.ClearMixed(self) -- a pick gives them all this colour
     self:SetColorSilent(r, g, b, a)
     self._pendingColor = { r, g, b, a or 1 }
     if self._flushScheduled then return end
@@ -110,6 +111,7 @@ function ColorPickerMixin:UpdateColors()
     self.label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
     self.hexText:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
     self._syncBorder(theme.widgetBorder[1], theme.widgetBorder[2], theme.widgetBorder[3], theme.widgetBorder[4] or 1)
+    lib.PaintMixed(self, self.label)
 end
 
 ---@param parent Frame
@@ -117,15 +119,24 @@ end
 ---@param config table
 function ColorPickerMixin:OnAcquire(parent, labelText, config)
     local color = config.value or { 1, 1, 1, 1 }
+    if config.mixed then
+        color = { 0, 0, 0, 1 } -- black with no hex, as WA's
+    end
 
     self:SetParent(parent)
     self:ClearAllPoints()
     pixel.SetPixelHeight(self, 34)
 
     self.label:SetText(labelText or "")
+    lib.SetTooltip(self, self.gui, labelText) -- only shown while mixed, for the list of colours
+    lib.SetNotice(self, self.gui, self.label, config.notice)
+    lib.SetMixed(self, config.mixed, self._describeValue)
     self._pendingColor = nil
     self._callback = nil -- set after the initial color, so seeding never notifies
     self:SetColorSilent(color[1], color[2], color[3], color[4] or 1)
+    if config.mixed then
+        self.hexText:SetText("")
+    end
     self._callback = config.callback
 
     self.swatch:EnableMouse(true)
@@ -141,6 +152,7 @@ function ColorPickerMixin:OnRelease()
     self._callback = nil
     self.label:SetText("")
     self.hexText:SetText("")
+    lib.ClearTooltip(self)
 end
 
 ---@class KajiGUIColorPicker : KajiGUIColorPickerMixin
@@ -148,6 +160,8 @@ end
 ---@class KajiGUIColorPickerConfig
 ---@field value? number[]
 ---@field callback? KajiGUIColorChanged
+---@field notice? KajiGUINotice a marker after the label, see lib.SetNotice
+---@field mixed? KajiGUIMixedEntry[] the things it edits disagree: black with no hex, see lib.SetMixed
 
 lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     local theme = gui.theme
@@ -191,10 +205,26 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         function(r, g, b, a) swatch:SetBackdropBorderColor(r, g, b, a) end,
         theme.widgetBorder, theme.accent, theme.animDuration)
 
-    swatch:SetScript("OnEnter", function() row._animateBorder(true) end)
-    swatch:SetScript("OnLeave", function() row._animateBorder(false) end)
+    -- a colour has no tooltip of its own; a mixed one lists what each one has
+    row._describeValue = function(value)
+        if not value then return "" end
+        local hex = row.gui:RGBAToHex(value[1], value[2], value[3])
+        return "|cff" .. hex .. "#" .. hex .. "|r"
+    end
+
+    swatch:SetScript("OnEnter", function()
+        row._animateBorder(true)
+        if row._mixed then
+            lib.ShowTooltip(row)
+        end
+    end)
+    swatch:SetScript("OnLeave", function()
+        row._animateBorder(false)
+        lib.HideTooltip()
+    end)
     swatch:SetScript("OnClick", function()
         local prevR, prevG, prevB, prevA = swatch.r, swatch.g, swatch.b, swatch.a
+        local wasMixed = row._mixed ~= nil
         local info = { r = prevR, g = prevG, b = prevB, opacity = prevA, hasOpacity = true }
         info.swatchFunc = function()
             local r, g, b = ColorPickerFrame:GetColorRGB()
@@ -202,7 +232,11 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
             row:SetColor(r or 1, g or 1, b or 1, a or 1)
         end
         info.opacityFunc = info.swatchFunc
-        info.cancelFunc = function() row:SetColor(prevR, prevG, prevB, prevA) end
+        -- a mixed swatch's black is no one's colour, so cancelling it must not write that to them all
+        info.cancelFunc = function()
+            if wasMixed then return end
+            row:SetColor(prevR, prevG, prevB, prevA)
+        end
         ColorPickerFrame:SetupColorPickerAndShow(info)
     end)
 

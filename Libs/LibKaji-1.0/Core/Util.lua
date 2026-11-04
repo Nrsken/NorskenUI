@@ -2,9 +2,10 @@
 # Util
 
 * Helpers for the library and its consumers.
-* A safe call wrapper, a pixel-perfect scaling helper, a media resolver, and the two
-  shared primitives every widget is built from: the standard backdrop and the standard
-  tooltip.
+* A safe call wrapper, a pixel-perfect scaling helper, a media resolver, and the
+  shared primitives every widget is built from: the standard backdrop, the standard
+  tooltip and the notice marker (`notice = { level = 'warning', text = '…' }` on a widget,
+  `card:SetNotice(...)` on a card).
 
 --]]
 
@@ -20,6 +21,7 @@ local format = string.format
 local geterrorhandler = geterrorhandler
 local xpcall = xpcall
 local type = type
+local ipairs = ipairs
 local tostring = tostring
 
 local WHITE = "Interface\\Buttons\\WHITE8X8"
@@ -164,7 +166,7 @@ function lib.ShowTooltip(frame)
     local title, text, content = frame._tooltipTitle, frame._tooltipText, frame._tooltipContent
     -- An icon-only button carries "" as its label, which is a title we must not print.
     if title == "" then title = nil end
-    if not (title or text or content) then return end
+    if not (title or text or content or frame._mixed) then return end
 
     local theme = frame._kajiGui.theme
     local accent = frame._accentColor or theme.accent -- a config.accentColor widget titles in its own accent
@@ -192,12 +194,217 @@ function lib.ShowTooltip(frame)
     if frame._tooltipDefault then
         GameTooltip:AddLine(format(L["Default: %s"], frame._tooltipDefault), theme.success[1], theme.success[2], theme.success[3])
     end
+    -- a setting that differs: each one's value, as WA lists them
+    if frame._mixed then
+        local mixed, secondary, primary = theme.mixed, theme.textSecondary, theme.textPrimary
+        GameTooltip:AddLine(" ")
+        GameTooltip:AddLine(L["Differs"], mixed[1], mixed[2], mixed[3])
+        for _, entry in ipairs(frame._mixed) do
+            GameTooltip:AddDoubleLine(entry.name, frame._mixedDescribe(entry.value),
+                secondary[1], secondary[2], secondary[3], primary[1], primary[2], primary[3])
+        end
+    end
     GameTooltip:Show()
 end
 
 ---Counterpart to ShowTooltip, for the widget's own OnLeave.
 function lib.HideTooltip()
     GameTooltip:Hide()
+end
+
+-- Notice --
+
+local NOTICE_SIZE = 14
+local NOTICE_GAP = 3
+-- only something wrong pulses; an info marker just explains and stays still
+local NOTICE_LEVELS = {
+    info = { title = "Info", color = "textMuted" },
+    warning = { title = "Warning", color = "warning", pulse = true },
+    error = { title = "Error", color = "error", pulse = true },
+}
+
+local NOTICE_PULSE_ALPHA = 0.25
+local NOTICE_PULSE_STEP = 0.25 -- seconds per fade out or in; two flashes in all
+
+---@param marker Frame
+---@param label FontString?
+---@param before Frame? sit left of this frame instead of after the label
+local function PlaceNotice(marker, label, before)
+    marker:ClearAllPoints()
+    if before then
+        lib.Pixel.SetPixelPoint(marker, "RIGHT", before, "LEFT", -NOTICE_GAP, 0)
+        return
+    end
+    ---@cast label -nil
+    if label:GetNumPoints() == 1 then
+        -- a label held by one point sizes to its text, so its right edge is where the text ends
+        lib.Pixel.SetPixelPoint(marker, "LEFT", label, "RIGHT", NOTICE_GAP, 0)
+        return
+    end
+
+    local width = label:GetStringWidth()
+    lib.Pixel.SetPixelPoint(marker, "LEFT", label, "LEFT", math.min(width, label:GetWidth()) + NOTICE_GAP, 0)
+
+    -- a cold font measures 0 on a fresh login's first pass, so place it again once it has loaded
+    if width == 0 and (label:GetText() or "") ~= "" then
+        C_Timer.After(0, function()
+            if marker:IsShown() then
+                PlaceNotice(marker, label)
+            end
+        end)
+    end
+end
+
+---How far a shown notice marker reaches past its label, for layouts that place things after the label.
+---@param owner Frame
+---@return number
+function lib.NoticeWidth(owner)
+    local marker = owner._noticeMarker
+    return marker and marker._noticeLevel and NOTICE_SIZE + NOTICE_GAP or 0
+end
+
+---Tints a notice marker from the current theme; the theme fire repaints every acquired widget's.
+---@param owner Frame
+function lib.PaintNotice(owner)
+    local marker = owner._noticeMarker
+    if not (marker and marker._noticeLevel) then return end
+
+    local theme = marker._kajiGui.theme
+    local color = theme[marker._noticeLevel.color]
+    marker.icon:SetTexture(theme.noticeTexture)
+    marker.icon:SetVertexColor(color[1], color[2], color[3], 1)
+    marker._accentColor = color -- the tooltip titles in the level's colour
+end
+
+---@class KajiGUINotice
+---@field level? "info"|"warning"|"error" defaults to warning
+---@field title? string the tooltip's title, the level's name by default
+---@field text string|string[] what the marker's tooltip says; several messages list as bullets
+
+---@param text string|string[]
+---@return string
+local function NoticeText(text)
+    if type(text) ~= "table" then return text end
+    if #text == 1 then return text[1] end
+
+    local lines = {}
+    for i, line in ipairs(text) do
+        lines[i] = "• " .. line
+    end
+    return table.concat(lines, "\n")
+end
+
+---Two soft flashes, so a message that just appeared catches the eye; it sits still after.
+---Alpha rather than scale: a 14px marker scaled under pixel rounding steps a pixel at a time.
+---@param marker Frame
+local function PulseNotice(marker)
+    local pulse = marker._pulse
+    if not pulse then
+        pulse = marker:CreateAnimationGroup()
+        for i = 1, 4 do
+            local out = i % 2 == 1
+            local fade = pulse:CreateAnimation("Alpha")
+            fade:SetFromAlpha(out and 1 or NOTICE_PULSE_ALPHA)
+            fade:SetToAlpha(out and NOTICE_PULSE_ALPHA or 1)
+            fade:SetDuration(NOTICE_PULSE_STEP)
+            fade:SetSmoothing("IN_OUT")
+            fade:SetOrder(i)
+        end
+        marker._pulse = pulse
+    end
+    pulse:Stop()
+    pulse:Play()
+end
+
+---A marker after `label` that shows the message on hover; nil hides it. Call once the label has its text.
+---A warning or error pulses the first time it shows after the window opens; rebuilds that keep it don't.
+---@param owner Frame the widget or card the marker belongs to
+---@param gui KajiGUIInstance
+---@param label FontString? what the marker follows; unused with `before`
+---@param notice? KajiGUINotice
+---@param before? Frame sit left of this frame instead, for rows whose buttons end on the right
+function lib.SetNotice(owner, gui, label, notice, before)
+    local marker = owner._noticeMarker
+    if not notice then
+        if marker then
+            marker:Hide()
+            marker._noticeLevel = nil
+            lib.ClearTooltip(marker)
+        end
+        return
+    end
+
+    if not marker then
+        marker = CreateFrame("Frame", nil, owner)
+        marker:EnableMouse(true)
+        lib.Pixel.SetPixelSize(marker, NOTICE_SIZE, NOTICE_SIZE)
+        local icon = marker:CreateTexture(nil, "OVERLAY")
+        icon:SetAllPoints()
+        lib.Pixel.SetPixelSnap(icon)
+        marker.icon = icon
+        marker:SetScript("OnEnter", lib.ShowTooltip)
+        marker:SetScript("OnLeave", lib.HideTooltip)
+        owner._noticeMarker = marker
+    end
+
+    local level = NOTICE_LEVELS[notice.level] or NOTICE_LEVELS.warning
+    local text = NoticeText(notice.text)
+    marker._noticeLevel = level
+    lib.SetTooltip(marker, gui, notice.title or L[level.title], text, { anchor = "ANCHOR_TOP", x = 0, y = 4 })
+    -- above the widget's own hit areas, which can cover its label
+    marker:SetFrameLevel(owner:GetFrameLevel() + 10)
+    PlaceNotice(marker, label, before)
+    lib.PaintNotice(owner)
+    marker:Show()
+
+    -- keyed by the message, as pooled widgets and rebuilt cards hand the same one to different frames
+    if not level.pulse then return end
+    gui._noticesSeen = gui._noticesSeen or {}
+    if not gui._noticesSeen[text] then
+        gui._noticesSeen[text] = true
+        PulseNotice(marker)
+    end
+end
+
+-- Mixed --
+
+---@class KajiGUIMixedEntry
+---@field name string whose value it is, e.g. a display's name
+---@field value any
+
+---A setting that differs between the things edited together. The label takes theme.mixed, the tooltip lists each
+---value and the widget shows its empty state; the first change makes them all the same, so it goes (ClearMixed).
+---@param owner Frame the widget, whose own OnEnter shows the tooltip
+---@param mixed? KajiGUIMixedEntry[] nil when they all agree
+---@param describe fun(value: any): string a value as the widget words it
+function lib.SetMixed(owner, mixed, describe)
+    owner._mixed = mixed
+    owner._mixedDescribe = describe
+end
+
+---The mixed tint on a widget's label; widgets call it last in UpdateColors so a repaint keeps it.
+---@param owner Frame
+---@param label FontString
+function lib.PaintMixed(owner, label)
+    if not owner._mixed then return end
+
+    local c = owner.gui.theme.mixed
+    label:SetTextColor(c[1], c[2], c[3], 1)
+end
+
+---The first change writes one value to them all: the mark goes and the widget repaints as a plain one.
+---@param owner Frame a widget with UpdateColors
+function lib.ClearMixed(owner)
+    if not owner._mixed then return end
+
+    owner._mixed = nil
+    owner:UpdateColors()
+end
+
+---Lets every message pulse once more, for when the window opens again.
+---@param gui KajiGUIInstance
+function lib.ResetNoticePulses(gui)
+    gui._noticesSeen = nil
 end
 
 ---@param texture Texture
@@ -212,18 +419,20 @@ end
 
 -- Surface texture --
 
-local SURFACE_TEXTURE_SIZE = 128 -- surface.png is 128x128 texels
+local SURFACE_TEXTURE_SIZE = 128 -- the surface and page tiles are 128x128 texels
 
----Tiles the surface texture one texel per physical pixel, so scanlines don't shimmer at fractional UI scales.
+---Tiles the surface texture one texel per physical pixel, so grain doesn't shimmer at fractional UI scales.
 ---@param frame Frame
 ---@param gui KajiGUIInstance
+---@param kind? "surface"|"page" the theme's `<kind>Texture` and `<kind>Alpha`, surface by default
 ---@return Texture
-function lib.AddSurfaceTexture(frame, gui)
+function lib.AddSurfaceTexture(frame, gui, kind)
     local theme = gui.theme
-    local tex = frame:CreateTexture(nil, "BACKGROUND", nil, 1)
+    kind = kind or "surface"
+    local tex = frame:CreateTexture(nil, "BACKGROUND", nil, kind == "page" and 2 or 1)
     tex:SetAllPoints()
-    tex:SetTexture(theme.surfaceTexture, "REPEAT", "REPEAT")
-    tex:SetAlpha(theme.surfaceAlpha)
+    tex:SetTexture(theme[kind .. "Texture"], "REPEAT", "REPEAT")
+    tex:SetAlpha(theme[kind .. "Alpha"])
     lib.Pixel.SetPixelSnap(tex)
 
     local function Retile()
@@ -269,36 +478,222 @@ function lib.AddTopHighlight(frame, gui, layer)
     return line
 end
 
--- Selection glow --
+-- Corner ticks --
 
-local BAR_GLOW_WIDTH = 6
-
----A soft glow spilling right from a row's accent bar. Created hidden; lib.PaintSelected shows it.
----@param row Frame
----@param bar Texture the row's accent bar
----@return Texture
-function lib.CreateBarGlow(row, bar)
-    -- Above the selection tint (BACKGROUND 1), below icons and text.
-    local glow = row:CreateTexture(nil, "BACKGROUND", nil, 2)
-    glow:SetTexture(WHITE)
-    lib.Pixel.SetPixelWidth(glow, BAR_GLOW_WIDTH)
-    lib.Pixel.SetPixelPoint(glow, "TOPLEFT", bar, "TOPRIGHT", 0, 0)
-    lib.Pixel.SetPixelPoint(glow, "BOTTOMLEFT", bar, "BOTTOMRIGHT", 0, 0)
-    glow:Hide()
-    return glow
+---Registration marks on a frame's four corners, as the + marks on the page behind; the caller colours them.
+---@param owner Frame draws the ticks, so a frame above a covering band can hold them
+---@param target Frame whose corners they mark
+---@param theme table
+---@return Texture[] ticks
+function lib.CreateCornerTicks(owner, target, theme)
+    local length, edge = theme.cardCornerLength, theme.borderSize
+    local ticks = {}
+    for _, corner in ipairs({ "TOPLEFT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT" }) do
+        for _, across in ipairs({ true, false }) do
+            local tick = owner:CreateTexture(nil, "OVERLAY")
+            lib.Pixel.SetPixelSize(tick, across and length or edge, across and edge or length)
+            lib.Pixel.SetPixelPoint(tick, corner, target, corner, 0, 0)
+            lib.Pixel.SetPixelSnap(tick)
+            ticks[#ticks + 1] = tick
+        end
+    end
+    return ticks
 end
 
----Shows the row's selection tint and bar glow, both fading out to the right; the caller owns the bar.
----@param row { selectedBg: Texture, barGlow: Texture } a sidebar row
+---Colours a frame's corner ticks in the muted text colour.
+---@param ticks Texture[]
+---@param theme table
+function lib.PaintCornerTicks(ticks, theme)
+    local muted = theme.textMuted
+    for _, tick in ipairs(ticks) do
+        tick:SetColorTexture(muted[1], muted[2], muted[3], theme.cardCornerAlpha)
+    end
+end
+
+-- Panel chrome --
+
+local HALFTONE_COLUMNS = 128 -- the dots repeat across a panel every 128 texels
+local HALFTONE_ROWS = 1024 -- texels, drawn one per physical pixel
+
+--[[ # Panel chrome
+
+The list columns' panel: a bordered bgMedium fill with corner ticks and the header's dot field rising from
+its foot. The window sidebar, page lists and item trees all wear it, so they read as one family.
+
+## Example
+
+    local RestyleChrome = lib.CreatePanelChrome(panel, gui)
+    gui:OnThemeChanged(RestyleChrome)
+]]
+---@param panel Frame a BackdropTemplate frame
+---@param gui table
+---@return fun() restyle repaints for the current theme
+function lib.CreatePanelChrome(panel, gui)
+    local theme = gui.theme
+    local edge = theme.borderSize
+    lib.SetBackdrop(panel, gui, { bg = "bgMedium", border = "border", edgeSize = "borderSize" })
+    -- held above the panel's children, so a scrollbar running up its right edge doesn't cover the right corners
+    local corners = CreateFrame("Frame", nil, panel)
+    lib.Pixel.SetPixelInside(corners, panel, 0, 0)
+    corners:SetFrameLevel(panel:GetFrameLevel() + 50)
+    local cornerTicks = lib.CreateCornerTicks(corners, panel, theme)
+
+    local halftone = panel:CreateTexture(nil, "BACKGROUND", nil, 3)
+    halftone:SetTexture(theme.halftoneTexture, "REPEAT", "CLAMP")
+    lib.Pixel.SetPixelSnap(halftone)
+    lib.Pixel.SetPixelPoint(halftone, "BOTTOMLEFT", panel, "BOTTOMLEFT", edge, edge)
+    lib.Pixel.SetPixelPoint(halftone, "BOTTOMRIGHT", panel, "BOTTOMRIGHT", -edge, edge)
+
+    -- one texel per physical pixel so the dots stay crisp, never taller than the texture
+    local function LayoutHalftone()
+        local perUnit = panel:GetEffectiveScale() / lib.Pixel.GetPerfectPixel()
+        local w = (panel:GetWidth() - edge * 2) * perUnit
+        local h = math.min((panel:GetHeight() - edge * 2) * perUnit, HALFTONE_ROWS)
+        if w <= 0 or h <= 0 then return end
+
+        lib.Pixel.SetPixelHeight(halftone, h / perUnit)
+        halftone:SetTexCoord(0, w / HALFTONE_COLUMNS, 1 - h / HALFTONE_ROWS, 1)
+    end
+
+    panel:HookScript("OnSizeChanged", LayoutHalftone)
+
+    local function Restyle()
+        lib.RefreshBackdrop(panel)
+        lib.PaintCornerTicks(cornerTicks, theme)
+        local muted = theme.textMuted
+        halftone:SetVertexColor(muted[1], muted[2], muted[3], theme.halftoneAlpha)
+        LayoutHalftone()
+    end
+    Restyle()
+
+    return Restyle
+end
+
+-- Row selection --
+
+local SELECT_BAR = 2
+local SELECT_HOVER = 0.2 -- hover previews the selection at this strength, in white
+local SELECT_FADE = 0.15
+local SELECT_EDGE_ALPHA = 0.6 -- the lines above and below a list row's tint, where they leave the bar
+
+---A list row's or tab's selection in the line style, where every item stands on a track and the
+---selected one lights its stretch: a 2px bar on the track's edge and a tint fading away from it.
+---A list row's tint also gets a line along its top and bottom, fading out with it.
+---Dark until lib.SetRowSelection lights it; move `row.selection.bar` to light a narrower stretch.
+---@param row Frame
 ---@param theme KajiTheme
-function lib.PaintSelected(row, theme)
-    local a = theme.accent
-    local clear = CreateColor(a[1], a[2], a[3], 0)
-    row.selectedBg:SetTexture(WHITE)
-    row.selectedBg:SetGradient("HORIZONTAL", CreateColor(a[1], a[2], a[3], theme.selectionGlowAlpha), clear)
-    row.selectedBg:Show()
-    row.barGlow:SetGradient("HORIZONTAL", CreateColor(a[1], a[2], a[3], theme.barGlowAlpha), clear)
-    row.barGlow:Show()
+---@param edge? "left"|"bottom" the track's side: down a list's left (default) or along a tab row's foot
+---@param look? boolean|"line"|"none" true or "line": just the bar, no tint; "none": neither, only the eased
+---progress (lib.RowSelectionProgress) for the caller's label to fade by
+function lib.CreateRowSelection(row, theme, edge, look)
+    if look == true then
+        look = "line"
+    end
+    local s = { lit = 0, hover = 0, litTo = 0, hoverTo = 0, lineOnly = look == "line", none = look == "none" }
+    local bottom = edge == "bottom"
+    -- the tint fades away from the bar; VERTICAL runs bottom (first colour) to top
+    s.orientation = bottom and "VERTICAL" or "HORIZONTAL"
+
+    s.bar = row:CreateTexture(nil, "OVERLAY")
+    s.bar:SetTexture(WHITE)
+    if bottom then
+        lib.Pixel.SetPixelHeight(s.bar, SELECT_BAR)
+        lib.Pixel.SetPixelPoint(s.bar, "BOTTOMLEFT", row, "BOTTOMLEFT", 0, 0)
+        lib.Pixel.SetPixelPoint(s.bar, "BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)
+    else
+        lib.Pixel.SetPixelWidth(s.bar, SELECT_BAR)
+        lib.Pixel.SetPixelPoint(s.bar, "TOPLEFT", row, "TOPLEFT", 0, 0)
+        lib.Pixel.SetPixelPoint(s.bar, "BOTTOMLEFT", row, "BOTTOMLEFT", 0, 0)
+    end
+    lib.Pixel.SetPixelSnap(s.bar)
+
+    s.tint = row:CreateTexture(nil, "BACKGROUND", nil, 1)
+    s.tint:SetTexture(WHITE)
+    if bottom then
+        s.tint:SetPoint("BOTTOMLEFT", s.bar, "TOPLEFT")
+        s.tint:SetPoint("TOPRIGHT")
+    else
+        s.tint:SetPoint("TOPLEFT", s.bar, "TOPRIGHT")
+        s.tint:SetPoint("BOTTOMRIGHT")
+
+        -- above the tint, below icons and text
+        s.edges = {}
+        for _, side in ipairs({ "TOP", "BOTTOM" }) do
+            local line = row:CreateTexture(nil, "BACKGROUND", nil, 2)
+            line:SetTexture(WHITE)
+            lib.Pixel.SetPixelHeight(line, theme.borderSize)
+            lib.Pixel.SetPixelPoint(line, side .. "LEFT", s.bar, side .. "RIGHT", 0, 0)
+            lib.Pixel.SetPixelPoint(line, side .. "RIGHT", row, side .. "RIGHT", 0, 0)
+            lib.Pixel.SetPixelSnap(line)
+            s.edges[#s.edges + 1] = line
+        end
+    end
+
+    row.selection = s
+    lib.SetRowSelection(row, theme, 0, 0, true)
+end
+
+local function Smooth(p)
+    return p * p * (3 - 2 * p)
+end
+
+---The row's eased selection and hover, for painting its label alongside.
+---@return number lit
+---@return number hover
+function lib.RowSelectionProgress(row)
+    return Smooth(row.selection.lit), Smooth(row.selection.hover)
+end
+
+local function PaintRowSelection(row, theme)
+    local s = row.selection
+    local l, h = lib.RowSelectionProgress(row)
+    local light = l + h * SELECT_HOVER
+    local tinted = light > 0 and not s.none and not s.lineOnly
+    for _, line in ipairs(s.edges or {}) do
+        line:SetShown(tinted)
+    end
+    if light <= 0 or s.none then
+        s.bar:Hide(); s.tint:Hide()
+        return
+    end
+
+    -- a hover preview is white; the colour follows how much of the light is selection, so a click
+    -- blends it into the accent
+    local a, w = theme.accent, l / light
+    local r, g, b = 1 + (a[1] - 1) * w, 1 + (a[2] - 1) * w, 1 + (a[3] - 1) * w
+    local clear = CreateColor(r, g, b, 0)
+    s.bar:SetVertexColor(r, g, b, light)
+    s.tint:SetGradient(s.orientation, CreateColor(r, g, b, theme.selectionGlowAlpha * light), clear)
+    for _, line in ipairs(s.edges or {}) do
+        line:SetGradient("HORIZONTAL", CreateColor(r, g, b, SELECT_EDGE_ALPHA * light), clear)
+    end
+    s.bar:Show()
+    s.tint:SetShown(not s.lineOnly)
+end
+
+---Aims a row's selection at lit (selected) and hover, crossfading there unless instant.
+---@param lit number 0 or 1
+---@param hover number 0 or 1
+---@param instant? boolean snap, for a pooled row taking on a new entry
+function lib.SetRowSelection(row, theme, lit, hover, instant)
+    local s = row.selection
+    s.litTo, s.hoverTo = lit, hover
+    if instant then
+        s.lit, s.hover = lit, hover
+        PaintRowSelection(row, theme)
+    end
+end
+
+---Steps a row's selection toward its aim; call from the row's OnUpdate.
+---@return boolean moved repaint the label when true
+function lib.StepRowSelection(row, theme, elapsed)
+    local s = row.selection
+    if s.lit == s.litTo and s.hover == s.hoverTo then return false end
+    local step = elapsed / SELECT_FADE
+    s.lit = s.litTo > s.lit and math.min(s.lit + step, s.litTo) or math.max(s.lit - step, s.litTo)
+    s.hover = s.hoverTo > s.hover and math.min(s.hover + step, s.hoverTo) or math.max(s.hover - step, s.hoverTo)
+    PaintRowSelection(row, theme)
+    return true
 end
 
 -- Frame glow --
@@ -441,7 +836,6 @@ end
 lib.GLOW_HOVER = 0.5
 lib.GLOW_ACTIVE = 1
 lib.FIELD_GLOW_REACH = 8 -- the small glow
-lib.HOVER_BAR_ALPHA = 0.45 -- a hovered list row's accent bar, before it's selected
 
 -- Icon glow --
 

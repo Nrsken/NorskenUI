@@ -24,6 +24,7 @@
     <Script file="Window\ContentArea.lua" />
     <Script file="Window\Sidebar.lua" />
     <Script file="Window\MiniSidebar.lua" />
+    <Script file="Window\PageHeader.lua" />
     <Script file="Window\Search.lua" />
     <Script file="Window\Window.lua" />
 

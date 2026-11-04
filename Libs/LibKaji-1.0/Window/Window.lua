@@ -326,17 +326,29 @@ function WindowMixin:SetSidebar(config, opts)
     opts = opts or {}
     local gui, theme, frame = self.gui, self.gui.theme, self.frame
     self._sidebarConfig = config
-    -- One pixel taller and higher so the box's top edge shares the header's bottom line.
-    local searchBoxHeight = theme.barHeight + 1
+    local searchBoxHeight = lib.SearchBoxHeight(theme)
 
     -- Inset the content to the right of the sidebar column.
     self.contentContainer:ClearAllPoints()
     pixel.SetPixelPoint(self.contentContainer, "TOPLEFT", frame, "TOPLEFT", theme.sidebarWidth, -theme.headerHeight)
     pixel.SetPixelPoint(self.contentContainer, "BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, theme.footerHeight)
 
-    local sidebar
+    -- the search tops the sidebar's panel, the list under it; the scrollbar's track runs past it, so it steps aside
+    local sidebar, search
+    local scrollbarShown = false
+    local function AnchorSearch(shown)
+        scrollbarShown = shown
+        if not search then return end
+
+        search:ClearAllPoints()
+        pixel.SetPixelPoint(search, "TOPLEFT", sidebar.panel, "TOPLEFT", theme.borderSize, -theme.borderSize)
+        pixel.SetPixelPoint(search, "TOPRIGHT", sidebar.panel, "TOPRIGHT", -(shown and theme.scrollbarWidth or theme.borderSize), -theme.borderSize)
+    end
+
     sidebar = gui:CreateSidebar(frame, {
         config = config,
+        top = searchBoxHeight,
+        onScrollbar = AnchorSearch,
         isDisabled = opts.isDisabled,
         onSelect = function(id, searchResult)
             self._currentId = id
@@ -351,14 +363,13 @@ function WindowMixin:SetSidebar(config, opts)
             self:SavePosition()
         end,
     })
-    pixel.SetPixelPoint(sidebar.frame, "TOPLEFT", frame, "TOPLEFT", 0, -(theme.headerHeight + searchBoxHeight - 1))
+    pixel.SetPixelPoint(sidebar.frame, "TOPLEFT", frame, "TOPLEFT", 0, -theme.headerHeight)
     pixel.SetPixelPoint(sidebar.frame, "BOTTOMLEFT", frame, "BOTTOMLEFT", 0, theme.footerHeight)
     pixel.SetPixelWidth(sidebar.frame, theme.sidebarWidth)
     self.sidebar = sidebar
 
-    local search = gui:CreateSearchBox(frame, {
+    search = gui:CreateSearchBox(sidebar.panel, {
         height = searchBoxHeight,
-        fieldTop = theme.barInset + 1,
         onChanged = function(text)
             if text == "" then
                 sidebar:ClearResults()
@@ -367,8 +378,7 @@ function WindowMixin:SetSidebar(config, opts)
             end
         end,
     })
-    pixel.SetPixelPoint(search, "TOPLEFT", frame, "TOPLEFT", 0, -(theme.headerHeight -1))
-    pixel.SetPixelWidth(search, theme.sidebarWidth)
+    AnchorSearch(scrollbarShown)
     self.searchBox = search
 
     -- Initial render with config defaults. Session (expansion/selection) restores on first Show
@@ -396,6 +406,7 @@ function WindowMixin:Show()
         self._restored = true
     end
 
+    lib.ResetNoticePulses(self.gui)
     self.frame:Show()
     self.frame:Raise()
     if self._currentId then self:ShowPage(self._currentId) end

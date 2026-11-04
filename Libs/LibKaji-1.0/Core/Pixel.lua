@@ -114,7 +114,7 @@ local function SetPixelSnap(object)
 end
 
 ---Sets the size of a frame to the nearest pixel grid.
----@param object Frame
+---@param object Frame|Texture|FontString
 ---@param width number
 ---@param height number
 ---@param ... any Additional arguments to pass to SetSize
@@ -125,7 +125,7 @@ local function SetPixelSize(object, width, height, ...)
 end
 
 ---Sets the width of a frame to the nearest pixel grid.
----@param object Frame
+---@param object Frame|Texture|FontString
 ---@param width number
 ---@param ... any Additional arguments to pass to SetWidth
 local function SetPixelWidth(object, width, ...)
@@ -133,7 +133,7 @@ local function SetPixelWidth(object, width, ...)
 end
 
 ---Sets the height of a frame to the nearest pixel grid.
----@param object Frame
+---@param object Frame|Texture|FontString
 ---@param height number
 ---@param ... any Additional arguments to pass to SetHeight
 local function SetPixelHeight(object, height, ...)
@@ -141,7 +141,7 @@ local function SetPixelHeight(object, height, ...)
 end
 
 ---Sets the point of a frame to the nearest pixel grid.
----@param object Frame
+---@param object Frame|Texture|FontString
 ---@param point string
 ---@param arg2 Frame|string|number? The frame (or its global name) to anchor to, or a number for xOffset if omitted.
 ---@param arg3 string|number? The point on the anchor frame to attach to, or a number for yOffset if omitted.
@@ -171,11 +171,11 @@ end
 
 ---Anchor a region a fixed pixel inset to another frame via its corners.
 ---When `outside` is set the inset flips outward so the region frames the anchor instead of sitting in it.
----@param object Frame
----@param anchor Frame
+---@param object Frame|Texture|FontString
+---@param anchor Frame|Texture|FontString
 ---@param xOffset number
 ---@param yOffset number
----@param anchor2 Frame? Optional second anchor frame for the bottom-right corner. Defaults to `anchor`.
+---@param anchor2 Frame|Texture|FontString? Optional second anchor frame for the bottom-right corner. Defaults to `anchor`.
 ---@param outside boolean? If true, the inset flips outward instead of inward.
 local function AnchorPixelBox(object, anchor, xOffset, yOffset, anchor2, outside)
     anchor = anchor or object:GetParent()
@@ -191,21 +191,21 @@ local function AnchorPixelBox(object, anchor, xOffset, yOffset, anchor2, outside
 end
 
 ---Sets the point of a frame to the nearest pixel grid, inset from another frame's corners.
----@param object Frame
----@param anchor Frame
+---@param object Frame|Texture|FontString
+---@param anchor Frame|Texture|FontString
 ---@param xOffset number
 ---@param yOffset number
----@param anchor2 Frame? Optional second anchor frame for the bottom-right corner. Defaults to `anchor`.
+---@param anchor2 Frame|Texture|FontString? Optional second anchor frame for the bottom-right corner. Defaults to `anchor`.
 local function SetPixelInside(object, anchor, xOffset, yOffset, anchor2)
     AnchorPixelBox(object, anchor, xOffset, yOffset, anchor2, false)
 end
 
 ---Sets the point of a frame to the nearest pixel grid, outset from another frame's corners.
----@param object Frame
----@param anchor Frame
+---@param object Frame|Texture|FontString
+---@param anchor Frame|Texture|FontString
 ---@param xOffset number
 ---@param yOffset number
----@param anchor2 Frame? Optional second anchor frame for the bottom-right corner. Defaults to `anchor`.
+---@param anchor2 Frame|Texture|FontString? Optional second anchor frame for the bottom-right corner. Defaults to `anchor`.
 local function SetPixelOutside(object, anchor, xOffset, yOffset, anchor2)
     AnchorPixelBox(object, anchor, xOffset, yOffset, anchor2, true)
 end
@@ -225,7 +225,7 @@ local POINT_FRACTION = {
 }
 
 ---Sets the point of a frame to the nearest pixel grid, snapping the resulting edges onto the pixel grid.
----@param object Frame
+---@param object Frame|Texture|FontString
 ---@param point string
 ---@param relativeTo Frame|string? Anchor frame or its global name. Defaults to the object's parent.
 ---@param relativePoint string? Point on the anchor frame. Defaults to `point`.

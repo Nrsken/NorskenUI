@@ -33,6 +33,13 @@ local C_Timer = C_Timer
 local WIDGET_TYPE = "MultiLineEditBox"
 local LABEL_HEIGHT = 14
 
+---An unset value lists as blank, not "nil".
+---@param value any
+---@return string
+local function DescribeValue(value)
+    return (value == nil or value == false) and "" or tostring(value)
+end
+
 ---@class KajiGUIMultiLineEditBoxMixin : Frame
 ---@field gui KajiGUIInstance
 ---@field editBox EditBox
@@ -81,6 +88,7 @@ function MultiLineEditBoxMixin:UpdateColors()
     self.label:SetTextColor(theme.textSecondary[1], theme.textSecondary[2], theme.textSecondary[3], 1)
     self.editBox:SetTextColor(theme.textPrimary[1], theme.textPrimary[2], theme.textPrimary[3], 1)
     self._syncBorder(theme.widgetBorder[1], theme.widgetBorder[2], theme.widgetBorder[3], theme.widgetBorder[4] or 1)
+    lib.PaintMixed(self, self.label)
 end
 
 ---@param parent Frame
@@ -101,11 +109,13 @@ function MultiLineEditBoxMixin:OnAcquire(parent, labelText, config)
 
     self.editBox:EnableMouse(true)
     self.editBox:EnableKeyboard(true)
-    self.editBox:SetText(tostring(config.value or ""))
+    lib.SetMixed(self, config.mixed, DescribeValue)
+    self.editBox:SetText(not config.mixed and tostring(config.value or "") or "") -- mixed is blank, as WA's
     self.editBox:SetCursorPosition(0)
     self.container:EnableMouse(true)
 
     lib.SetTooltip(self, self.gui, config.tooltip, nil, { owner = self.container, anchor = "ANCHOR_TOP" })
+    lib.SetNotice(self, self.gui, self.label, config.notice)
 
     self:SetAlpha(1)
     self:UpdateColors()
@@ -131,6 +141,8 @@ end
 ---@field height? number
 ---@field tooltip? string
 ---@field callback? fun(text: string)
+---@field notice? KajiGUINotice a marker after the label, see lib.SetNotice
+---@field mixed? KajiGUIMixedEntry[] the things it edits disagree: blank until typed in, see lib.SetMixed
 
 lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     local theme = gui.theme
@@ -202,7 +214,10 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
     end)
 
     editBox:SetScript("OnTextChanged", function(eb, userInput)
-        if userInput then safecall(row._onTextChanged, eb:GetText()) end
+        if userInput then
+            lib.ClearMixed(row) -- typed text is the one value they all get
+            safecall(row._onTextChanged, eb:GetText())
+        end
         -- Deferred one frame so the edit box has resized first. Guarded because the
         -- widget may have been released and re-acquired by something else by then.
         local alive = lib.Generation(row)
@@ -222,6 +237,8 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         local border = row.gui.theme.widgetBorder
         container:SetBackdropBorderColor(border[1], border[2], border[3], 1)
         row._paintGlow()
+        -- a mixed box nobody typed in stays as it was, rather than giving them all an empty value
+        if row._mixed then return end
         safecall(row._callback, eb:GetText())
     end)
     editBox:SetScript("OnEditFocusGained", function()

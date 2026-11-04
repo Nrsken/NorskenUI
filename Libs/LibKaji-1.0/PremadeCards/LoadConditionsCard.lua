@@ -31,6 +31,7 @@ local ipairs = ipairs
 local pairs = pairs
 local next = next
 local tostring = tostring
+local unpack = unpack
 local sformat = string.format
 local C_Timer = C_Timer
 
@@ -208,19 +209,22 @@ local function FillZoneTooltip(tooltip, theme)
     end
 end
 
----A category only marks itself when it carries conditions.
-local function BuildCategoryOptions(db, specs)
-    local options = {
-        { key = "Instance", text = L["Instance"], indicator = IsCategoryActive(db, "Instance") and GREEN or nil },
-        { key = "Group",    text = L["Group"],    indicator = IsCategoryActive(db, "Group") and GREEN or nil },
-        { key = "Combat",   text = L["Combat"],   indicator = IsCategoryActive(db, "Combat") and GREEN or nil },
-        { key = "Role",     text = L["Role"],     indicator = IsCategoryActive(db, "Role") and GREEN or nil },
-        { key = "Position", text = L["Position"], indicator = IsCategoryActive(db, "Position") and GREEN or nil },
-        { key = "Zone",     text = L["Zone"],     indicator = IsCategoryActive(db, "Zone") and GREEN or nil },
-    }
+---A category only marks itself when it carries conditions; one that differs between the things edited takes the mixed colour.
+---@param mixed fun(path: string[]): table?
+local function BuildCategoryOptions(db, specs, mixed, theme)
+    local keys = { "Instance", "Group", "Combat", "Role", "Position", "Zone" }
     if specs then
-        options[#options + 1] = { key = "Spec", text = L["Spec"], indicator = IsCategoryActive(db, "Spec") and GREEN or nil }
-        options[#options + 1] = { key = "Talent", text = L["Talent"], indicator = IsCategoryActive(db, "Talent") and GREEN or nil }
+        keys[#keys + 1] = "Spec"
+        keys[#keys + 1] = "Talent"
+    end
+
+    local options = {}
+    for i, key in ipairs(keys) do
+        local indicator = IsCategoryActive(db, key) and GREEN or nil
+        if mixed({ key }) then
+            indicator = theme.mixed
+        end
+        options[i] = { key = key, text = L[key], indicator = indicator }
     end
     return options
 end
@@ -270,8 +274,14 @@ lib.premadeCards.LoadConditionsCard = {
             db.Talent = db.Talent or { Specs = {} }
         end
 
-        local function fireChange()
-            if onChange then onChange() end
+        -- the setting that changed, so a caller editing several things writes only that; nil after a bulk change
+        local function fireChange(path, value)
+            if onChange then onChange(path, value) end
+        end
+
+        -- what each of the things edited together has at a path, when they disagree (config.mixed)
+        local function Mixed(path)
+            return config.mixed and config.mixed(path) or nil
         end
 
         -- Both the enable toggle and every option checkbox rebuild the card, and they fire
@@ -287,28 +297,21 @@ lib.premadeCards.LoadConditionsCard = {
             end)
         end
 
-        -- Emits one or two checkboxes for { key, label } entries bound to a target table.
-        local function AddCheckRow(target, entry1, entry2, isLast)
+        -- Emits one or two checkboxes for { key, label } entries bound to a target table, which sits at `prefix` in db.
+        local function AddCheckRow(target, prefix, entry1, entry2, isLast)
             local height = isLast and theme.rowHeightLast or theme.rowHeight
             local row = card:Row(height, isLast and 0 or nil)
 
-            row:Checkbox(entry1.label, {
-                width = entry2 and 0.5 or 1,
-                value = target[entry1.key] == true,
-                callback = function(checked)
-                    target[entry1.key] = checked or nil
-                    fireChange()
-                    ScheduleRebuild()
-                end,
-            })
-
-            if entry2 then
-                row:Checkbox(entry2.label, {
-                    width = 0.5,
-                    value = target[entry2.key] == true,
+            for _, entry in ipairs({ entry1, entry2 }) do
+                local path = { unpack(prefix) }
+                path[#path + 1] = entry.key
+                row:Checkbox(entry.label, {
+                    width = entry2 and 0.5 or 1,
+                    value = target[entry.key] == true,
+                    mixed = Mixed(path),
                     callback = function(checked)
-                        target[entry2.key] = checked or nil
-                        fireChange()
+                        target[entry.key] = checked or nil
+                        fireChange(path, checked or nil)
                         ScheduleRebuild()
                     end,
                 })
@@ -322,7 +325,8 @@ lib.premadeCards.LoadConditionsCard = {
         local mainHeight = isEnabled and theme.rowHeight or theme.rowHeightLast
         local mainRow = card:Row(mainHeight, not isEnabled and 0 or nil)
 
-        local activeCount = GetActiveCount(db)
+        -- the conditions only count while load conditions are on; off, none of them applies
+        local activeCount = isEnabled and GetActiveCount(db) or 0
         local accentHex = sformat("%02x%02x%02x", theme.accent[1] * 255, theme.accent[2] * 255, theme.accent[3] * 255)
         local enableLabel = activeCount > 0 and (L["Enable"] .. " |cff" .. accentHex .. "(" .. sformat(L["%d active"], activeCount) .. ")|r") or
             L["Enable"]
@@ -330,9 +334,10 @@ lib.premadeCards.LoadConditionsCard = {
         mainRow:Checkbox(enableLabel, {
             width = 0.5,
             value = isEnabled,
+            mixed = Mixed({ "Enabled" }),
             callback = function(checked)
                 db.Enabled = checked
-                fireChange()
+                fireChange({ "Enabled" }, checked)
                 ScheduleRebuild()
             end,
         })
@@ -340,7 +345,7 @@ lib.premadeCards.LoadConditionsCard = {
         if isEnabled then
             mainRow:Dropdown(L["Category"], {
                 width = 0.5,
-                options = BuildCategoryOptions(db, config.specs),
+                options = BuildCategoryOptions(db, config.specs, Mixed, theme),
                 value = selectedCategory,
                 callback = function(value)
                     db.SelectedCategory = value
@@ -366,7 +371,7 @@ lib.premadeCards.LoadConditionsCard = {
             }
             for i = 1, #instanceTypes, 2 do
                 local isLastRow = i + 1 >= #instanceTypes
-                AddCheckRow(instanceDb.Types, instanceTypes[i], instanceTypes[i + 1], isLastRow)
+                AddCheckRow(instanceDb.Types, { "Instance", "Types" }, instanceTypes[i], instanceTypes[i + 1], isLastRow)
             end
         elseif selectedCategory == "Spec" and config.specs then
             local types = db.Spec.Types
@@ -419,7 +424,7 @@ lib.premadeCards.LoadConditionsCard = {
                         tooltip = picked and L["Loads in this spec. Click to remove it."] or L["Click to load in this spec."],
                         onClick = function()
                             types[spec.id] = not picked or nil
-                            fireChange()
+                            fireChange({ "Spec", "Types", spec.id }, not picked or nil)
                             ScheduleRebuild()
                         end,
                     })
@@ -462,11 +467,12 @@ lib.premadeCards.LoadConditionsCard = {
             card:Row(theme.rowHeight):EditBox(L["Map IDs"], {
                 width = 1,
                 value = zoneDb.MapIDs or "",
+                mixed = Mixed({ "Zone", "MapIDs" }),
                 tooltip = function(tooltip) FillZoneTooltip(tooltip, theme) end,
                 tooltipBeside = true,
                 callback = function(text)
                     zoneDb.MapIDs = text
-                    fireChange()
+                    fireChange({ "Zone", "MapIDs" }, text)
                     ScheduleRebuild()
                 end,
             })
@@ -508,12 +514,14 @@ lib.premadeCards.LoadConditionsCard = {
             local cat = simpleCategories[selectedCategory]
             if cat then
                 local target = db[cat.db]
+                local prefix = { cat.db }
                 if cat.nested then
                     target[cat.nested] = target[cat.nested] or {}
                     target = target[cat.nested]
+                    prefix[2] = cat.nested
                 end
                 for i, entry in ipairs(cat.list) do
-                    AddCheckRow(target, entry, nil, i == #cat.list)
+                    AddCheckRow(target, prefix, entry, nil, i == #cat.list)
                 end
             end
         end
