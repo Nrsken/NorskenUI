@@ -35,7 +35,7 @@ local BLIZZARD_VIEWERS = {
     'BuffBarCooldownViewer',
 }
 
-local hideViewers = false -- faded out but kept running, while a display reads their bars
+local hideViewers = false -- faded out but kept running while the module is on
 local hookedViewers = {} ---@type table<table, true>
 
 -- Lifecycle --
@@ -75,9 +75,7 @@ function CDM:OnInitialize()
 end
 
 function CDM:OnEnable()
-    if self.db.HideBlizzard then
-        self:SetBlizzardViewers(true)
-    end
+    self:SetBlizzardViewers(true)
     if self.db.HidePlayerCastBar then
         self:HidePlayerCastBar()
     end
@@ -96,9 +94,7 @@ function CDM:OnEnable()
 end
 
 function CDM:OnDisable()
-    if self.db.HideBlizzard then
-        self:SetBlizzardViewers(false)
-    end
+    self:SetBlizzardViewers(false)
 
     self:UnregisterTriggerEvents()
     self.Catalogue:UnregisterEvents()
@@ -467,7 +463,6 @@ function CDM:RefreshLoad(changedOnly)
     if self.onStateChanged then
         self.onStateChanged()
     end
-    self:SyncBlizzardViewers()
 end
 
 ---The shown dynamic groups carrying the unit frame anchor roles; the first in tree order wins.
@@ -546,6 +541,30 @@ function CDM:ApplySettings(id)
     self:RefreshLoad()
 end
 
+---Rebuild only these icons, bars and texts after a change to how they look: a style edit can't change what's loaded,
+---so RefreshLoad's pass over every display and the list is skipped. A group or multi edit calls this on every change.
+---@param ids string[]
+function CDM:ApplyDisplays(ids)
+    if not self:IsEnabled() then return end
+
+    for _, id in ipairs(ids) do
+        self:BuildIcon(id)
+    end
+
+    -- each as RefreshLoad leaves it: a shown one re-reads its triggers, a hidden one stays hidden
+    for _, id in ipairs(ids) do
+        local frame = self.icons[id]
+        if frame and frame.shown then
+            self:UpdateIcon(id)
+        elseif frame then
+            self:ApplyVisibility(id, frame)
+        end
+    end
+
+    -- dynamic groups and the unit frame anchor follow a size change
+    self:SendMessage('NRSKNUI_CDM_LAYOUT_CHANGED')
+end
+
 -- Blizzard frames --
 
 ---@param viewer table
@@ -554,35 +573,15 @@ local function ApplyViewerVisibility(viewer)
     viewer:EnableMouse(not hideViewers)
 end
 
----Whether a loaded or standby display reads a Cooldown Manager bar, which keeps Blizzard's viewers running.
----@return boolean
-function CDM:UsesViewerBar()
-    for id, display in pairs(self.db.Displays) do
-        if display.type == 'bar' and self:GetLoadState(id) ~= 'unloaded' then
-            for _, trigger in ipairs(display.Triggers) do
-                if trigger.Type == 'viewerbar' then return true end
-                if trigger.Type == 'power' and trigger.Mode == 'progress' and trigger.ProgressCooldownID then return true end
-            end
-        end
-    end
-    return false
-end
-
----Re-evaluate whether the hidden viewers must keep running, after displays load or unload.
-function CDM:SyncBlizzardViewers()
-    if self.db.HideBlizzard and self:UsesViewerBar() ~= hideViewers then
-        self:SetBlizzardViewers(true)
-    end
-end
-
----Hide Blizzard's Cooldown Manager: turned off or only faded out while a display reads its bars (an off viewer stops updating).
+---Fade Blizzard's Cooldown Manager out while ours runs or show it again. It keeps running either way: the
+---tracked bars and a charge spell's charge left or none are only readable off it (Triggers/ViewerBar.lua and
+---Triggers/Spell.lua), where a turned-off viewer stops updating. Measured too cheap to show in a frame's time.
 ---@param hide boolean
 function CDM:SetBlizzardViewers(hide)
-    local keepRunning = hide and self:UsesViewerBar()
-    hideViewers = keepRunning
+    hideViewers = hide
 
     NRSKNUI:RunWhenSafe(function()
-        SetCVar('cooldownViewerEnabled', (hide and not keepRunning) and '0' or '1')
+        SetCVar('cooldownViewerEnabled', '1')
 
         for _, name in ipairs(BLIZZARD_VIEWERS) do
             local viewer = _G[name]

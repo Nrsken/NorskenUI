@@ -34,14 +34,17 @@ local TABS = {
     { id = 'display',     text = L['Display'] },
     { id = 'trigger',     text = L['Trigger'] },
     { id = 'conditions',  text = L['Conditions'] },
-    { id = 'actions',     text = L['Actions'] },
-    { id = 'animations',  text = L['Animations'] },
     { id = 'load',        text = L['Load'] },
-    { id = 'custom',      text = L['Custom Options'] },
     { id = 'information', text = L['Information'] },
 }
 
--- An aura group only has what the Auras page gave it, and its look is split from where it sits.
+-- Several picked rows edit together, in the WA style: only what every display has, nothing that is one display's own.
+local MULTI_TABS = {
+    { id = 'display', text = L['Display'] },
+    { id = 'load',    text = L['Load'] },
+}
+
+-- An aura group only has what the Auras page gave it; its look is split from where it sits.
 local AURA_GROUP_TABS = {
     { id = 'display',     text = L['Display'] },
     { id = 'layout',      text = L['Layout'] },
@@ -60,12 +63,36 @@ local TYPE_NAMES = {
     auragroup = L['Aura Group'],
 }
 
-local expandedGroups = {} -- [group id] = true, for the session; groups start collapsed
+local expandedGroups = {} -- [group uid] = true, for the session; groups start collapsed. A uid is never reused, unlike an id
 
 ---@return table? tree
 local function Tree()
     local content = NRSKNUI.GUIFrame and NRSKNUI.GUIFrame.content
     return content and content.miniSidebar
+end
+
+---Every display a tab edits for the shown row: with two or more rows picked (it among them) each picked display,
+---a picked group standing for everything inside it; else a group's displays or the row alone.
+---@param id string
+---@return string[] ids each once, in tree order
+---@return boolean multi whether it's a multi selection
+local function EditTargets(id)
+    local tree = Tree()
+    local picked = tree and tree.picked and tree.picked[id] and tree:GetPicked()
+    if not (picked and picked[2]) then
+        return CDM:IsGroup(id) and CDM:GetLeaves(id) or { id }, false
+    end
+
+    local ids, seen = {}, {}
+    for _, key in ipairs(picked) do
+        for _, leaf in ipairs(CDM:IsGroup(key) and CDM:GetLeaves(key) or { key }) do
+            if not seen[leaf] then
+                seen[leaf] = true
+                ids[#ids + 1] = leaf
+            end
+        end
+    end
+    return ids, true
 end
 
 local function Reopen(selectKey)
@@ -74,7 +101,7 @@ local function Reopen(selectKey)
 
     if selectKey and CDM:Get(selectKey) then
         for _, ancestor in ipairs(CDM:GetAncestors(selectKey)) do
-            expandedGroups[ancestor] = true
+            expandedGroups[CDM:Get(ancestor).uid] = true
         end
     end
     window.content:ShowPage(PAGE, selectKey and { itemKey = selectKey } or nil)
@@ -108,6 +135,8 @@ local function IsCollapsed(key)
 end
 
 Shared.AURA_GROUP_TABS = AURA_GROUP_TABS
+Shared.MULTI_TABS = MULTI_TABS
+Shared.EditTargets = EditTargets
 Shared.Applier = Applier
 Shared.EnsureModuleEnabled = EnsureModuleEnabled
 Shared.GENERAL = GENERAL

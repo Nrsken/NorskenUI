@@ -208,7 +208,7 @@ CDM.TriggerTypes.aura = {
         end
         local overlay = trigger.Type == 'auraoverlay'
         local showIcon = not overlay or active.auraIcon == true
-        layer.Icon:SetShown(preview and showIcon and not (layer.isBar and not style.IconShow))
+        layer.Icon:SetShown(preview and showIcon and CDM:ShowsIcon(layer, style, display))
         layer.Cooldown:SetShown(preview and showIcon)
         layer.textHost:SetShown(preview)
         layer.borderHost:SetShown(preview and not overlay)
@@ -237,7 +237,7 @@ CDM.TriggerTypes.aura = {
             if trigger.Placeholder and not overlay and display then
                 -- The layer's own parts under the aura button, which covers them while it's up; While Missing is read onto them once.
                 CDM:SetIconTexture(layer, CDM:GetTriggerTexture(trigger))
-                layer.Icon:SetShown(not (layer.isBar and not style.IconShow))
+                layer.Icon:SetShown(CDM:ShowsIcon(layer, style, display))
                 PaintStandIn(layer, display, style, missing, false)
                 layer.Cooldown:Clear()
                 layer.borderHost:Show()
@@ -389,10 +389,12 @@ CDM.ConditionChecks.aura = {
     pandemic  = { type = 'bool', secret = true },
     missing   = { type = 'bool', secret = true },
     remaining = { type = 'number', curve = true },
+    stacks    = { type = 'number', curve = true },
 }
 
 CDM.ConditionChecks.auraoverlay = {
     active    = { type = 'bool', secret = true },
     pandemic  = { type = 'bool', secret = true },
     remaining = { type = 'number', curve = true },
+    stacks    = { type = 'number', curve = true },
 }

@@ -9,18 +9,38 @@ local Shared = NRSKNUI.CDMOptions
 local SpellList = NRSKNUI.GUISpellList
 local TriggerRows = Shared.TriggerRows
 
+local CAST_MODES = {
+    { value = 'all',      text = L['All Casts'] },
+    { value = 'specific', text = L['Specific Casts'] },
+}
+
 function TriggerRows.cast(card, typeRow, display, trigger, id, apply)
-    -- empty shows every cast
-    local source = SpellList:ArraySource(trigger, function() return trigger.SpellIDs or {} end, function(ids)
-        trigger.SpellIDs = ids[1] and ids or nil
-    end, function()
-        apply()
-        card:Rebuild()
-    end)
-    SpellList:BuildAdd(card, source)
-    SpellList:BuildList(card, source)
-    -- the list ends flush, so the rule brings its own gap; inSection keeps it in the trigger's section
-    card:Separator(nil, { inSection = true, height = 16 })
+    -- a save from before the mode is specific when it lists spells, as it matched
+    local mode = trigger.Casts or (trigger.SpellIDs and trigger.SpellIDs[1] and 'specific' or 'all')
+    typeRow:Dropdown(L['Casts'], {
+        width = 0.5,
+        options = CAST_MODES,
+        value = mode,
+        callback = function(value)
+            trigger.Casts = value
+            apply()
+            card:Rebuild()
+        end,
+    })
+
+    -- the list is kept while on all casts, so switching back finds it again
+    if mode == 'specific' then
+        local source = SpellList:ArraySource(trigger, function() return trigger.SpellIDs or {} end, function(ids)
+            trigger.SpellIDs = ids[1] and ids or nil
+        end, function()
+            apply()
+            card:Rebuild()
+        end)
+        SpellList:BuildAdd(card, source)
+        SpellList:BuildList(card, source)
+        -- the list ends flush, so the rule brings its own gap; inSection keeps it in the trigger's section
+        card:Separator(nil, { inSection = true, height = 16 })
+    end
 
     local row = card:Row(rowH)
     row:Slider(L['Hold Time'], {

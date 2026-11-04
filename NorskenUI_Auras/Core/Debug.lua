@@ -211,9 +211,9 @@ local function DebugLines(id)
     lines[#lines + 1] = format('  Combat: %s, restriction %d, auras secret %s, cooldowns secret %s', YesNo(NRSKNUI:InCombat()),
         NRSKNUI:GetRestrictionState(), YesNo(NRSKNUI:AreAurasSecret()), YesNo(NRSKNUI:AreCooldownsSecret()))
     lines[#lines + 1] = format('  Module: enabled %s, options open %s (previews show displays regardless)', YesNo(CDM.db.Enabled), YesNo(CDM.previewing))
-    lines[#lines + 1] = format('  Cooldown Manager: essential %d, utility %d, buffs %d, bars %d, viewer CVar %s, hide Blizzard %s',
+    lines[#lines + 1] = format('  Cooldown Manager: essential %d, utility %d, buffs %d, bars %d, viewer CVar %s',
         #CDM.Catalogue:GetList(Category.Essential), #CDM.Catalogue:GetList(Category.Utility), #CDM.Catalogue:GetList(Category.TrackedBuff),
-        #CDM.Catalogue:GetList(Category.TrackedBar), tostring(GetCVar('cooldownViewerEnabled')), YesNo(CDM.db.HideBlizzard))
+        #CDM.Catalogue:GetList(Category.TrackedBar), tostring(GetCVar('cooldownViewerEnabled')))
 
     local isGroup = CDM:IsGroup(id)
     local reported = ReportedDisplays(id)

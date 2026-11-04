@@ -15,6 +15,13 @@ local tonumber = tonumber
 
 local Shared = NRSKNUI.CDMOptions
 local Applier, PositionCard, RefreshTree, TriggerChip = Shared.Applier, Shared.PositionCard, Shared.RefreshTree, Shared.TriggerChip
+local EditTargets = Shared.EditTargets
+
+local format = string.format
+
+-- a group or selection holding several types: a block per type, in this order
+local TYPE_ORDER = { 'icon', 'bar', 'text' }
+local TYPE_TITLES = { icon = L['Icons (%d)'], bar = L['Bars (%d)'], text = L['Texts (%d)'] }
 
 ---Any debuff branch earns an aura group its dispel settings, as on the Auras page.
 ---@param trigger table?
@@ -126,24 +133,45 @@ end
 ---@param page table
 ---@param id string
 local function BuildDisplayTab(page, id)
-    local display = CDM:Get(id)
-    if display.type == 'auragroup' then
+    local targets, multi = EditTargets(id)
+    if not multi and CDM:Get(id).type == 'auragroup' then
         BuildAuraGroupDisplayTab(page, id)
-        return
-    elseif CDM:IsGroup(id) then
-        local ids = CDM:GetIcons(id)
-        local kind = ids[1] and CDM:Get(ids[1]).type
-        for _, iconId in ipairs(ids) do
-            if CDM:Get(iconId).type ~= kind then
-                page:Card(L['Display']):Row(rowHL, 0):Text(nil, { width = 1, text = L['This group holds more than one kind of display; edit their look per display.'], bgMode = 'hide' })
-                return
-            end
-        end
-        NRSKNUI.CDMDisplayTab:Build(page, ids, Applier(id), RefreshTree, TriggerChip)
         return
     end
 
-    NRSKNUI.CDMDisplayTab:Build(page, { id }, Applier(id), RefreshTree, TriggerChip)
+    -- icons, bars and texts edit together; an aura group keeps its look on its own page
+    local ids, byType, kinds = {}, {}, 0
+    for _, key in ipairs(targets) do
+        local kind = CDM:Get(key).type
+        if CDM.LAYERED_TYPES[kind] then
+            ids[#ids + 1] = key
+            if not byType[kind] then
+                byType[kind] = {}
+                kinds = kinds + 1
+            end
+            local list = byType[kind]
+            list[#list + 1] = key
+        end
+    end
+
+    -- A look change rebuilds only these, wherever they sit; a full apply on every slider step was the multi edit lag.
+    local DisplayTab = NRSKNUI.CDMDisplayTab
+    if kinds <= 1 then
+        DisplayTab:Build(page, ids, function() CDM:ApplyDisplays(ids) end, RefreshTree, TriggerChip)
+        return
+    end
+
+    -- several types: a block each editing only its own; what they all share sits on the All card
+    for _, kind in ipairs(TYPE_ORDER) do
+        local list = byType[kind]
+        if list then
+            DisplayTab:Build(page, list, function() CDM:ApplyDisplays(list) end, RefreshTree, TriggerChip, {
+                title = format(TYPE_TITLES[kind], #list),
+                noGeneral = true,
+            })
+        end
+    end
+    DisplayTab:BuildShared(page, ids, function() CDM:ApplyDisplays(ids) end)
 end
 
 Shared.BuildAuraGroupLayoutTab = BuildAuraGroupLayoutTab

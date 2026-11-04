@@ -32,11 +32,13 @@ local CHECK_ORDER = {
     'onGCD',
     'recharging',
     'waiting',
+    'charged',
     'noCharges',
     'usable',
     'noPower',
     'inRange',
     'proc',
+    'overridden',
     'remaining',
     'percent',
     'value',
@@ -45,6 +47,8 @@ local CHECK_ORDER = {
     'owned',
     'isCurrentSpec',
     'lootSpecID',
+    'inHuntZone',
+    'preyState',
     'pandemic',
     'missing',
     'combat',
@@ -67,11 +71,13 @@ local CHECK_NAMES = {
     onGCD = L['On Global Cooldown'],
     recharging = L['Recharging'],
     waiting = L['Waiting'],
+    charged = L['Supercharged'],
     noCharges = L['No Charges Left'],
     usable = L['Usable'],
     noPower = L['Not Enough Resources'],
     inRange = L['In Range'],
     proc = L['Proc Glow'],
+    overridden = L['Spell Overridden'],
     remaining = L['Remaining Time'],
     percent = L['Percent'],
     value = L['Value'],
@@ -80,6 +86,8 @@ local CHECK_NAMES = {
     owned = L['In Bags'],
     isCurrentSpec = L['Is Current Spec'],
     lootSpecID = L['Loot Specialization'],
+    inHuntZone = L['In Hunt Zone'],
+    preyState = L['Progress State'],
     combat = L['In Combat'],
     hasTarget = L['Has Target'],
     attackable = L['Attackable Target'],
@@ -104,7 +112,15 @@ local BOOLEAN = {
     { value = 'false', text = L['False'] },
 }
 -- Values a select check picks from, by its def.options; specs build on first use, like the CDM Strings page's.
-local SELECT_OPTIONS = setmetatable({ class = {} }, {
+local SELECT_OPTIONS = setmetatable({
+    class = {},
+    preyState = {
+        { value = Enum.PreyHuntProgressState.Cold,  text = L['Cold'] },
+        { value = Enum.PreyHuntProgressState.Warm,  text = L['Warm'] },
+        { value = Enum.PreyHuntProgressState.Hot,   text = L['Hot'] },
+        { value = Enum.PreyHuntProgressState.Final, text = L['Final'] },
+    },
+}, {
     __index = function(options, key)
         if key ~= 'spec' then return end
         local specs = {}
@@ -135,6 +151,7 @@ local OPERATORS = {
     { value = '==', text = '=' },
     { value = '>=', text = '>=' },
     { value = '>',  text = '>' },
+    { value = '~=', text = '~=' }, -- last, so CURVE_OPERATORS' picks stay put
 }
 -- A curve steps at its point, so a value is either below it or at it and up.
 local CURVE_OPERATORS = { OPERATORS[1], OPERATORS[4] }
@@ -153,6 +170,7 @@ local MIN_LIGHT = 0.35 -- a colour value in a condition's title is lifted to at 
 -- iconOnly / barOnly: the display type the property exists on; noText: not on a text display, which has no icon.
 -- up / pandemic: an aura's While Up / In Pandemic check can put it on the aura's button; auraOnly: nothing else can.
 -- missing: a lone aura's While Missing check can put it on its placeholder (only what the aura's button covers).
+-- whole: the display's own frame, outside the aura button, so any check can put it on a lone aura too.
 local PROPERTIES = {
     { key = 'auraIcon',        text = L['Aura Icon'],               kind = 'bool',  up = true,       auraOnly = true, iconOnly = true },
     { key = 'auraTexture',     text = L['Aura Icon Texture'],       kind = 'icon',  up = true,       auraOnly = true, iconOnly = true },
@@ -166,24 +184,24 @@ local PROPERTIES = {
     { key = 'pandemicColor',   text = L['Pandemic Border'],         kind = 'color', pandemic = true, auraOnly = true },
     { key = 'desaturate',      text = L['Desaturate'],              kind = 'bool',  noText = true,   missing = true },
     { key = 'color',           text = L['Icon Color'],              kind = 'color', noText = true,   missing = true },
-    { key = 'show',            text = L['Show Display'],            kind = 'bool' },
-    { key = 'alpha',           text = L['Alpha'],                   kind = 'alpha', missing = true },
+    { key = 'show',            text = L['Show Display'],            kind = 'bool',  whole = true },
+    { key = 'alpha',           text = L['Alpha'],                   kind = 'alpha', missing = true, whole = true },
     { key = 'swipe',           text = L['Show Swipe'],              kind = 'bool',  iconOnly = true },
     { key = 'inverse',         text = L['Inverse Swipe'],           kind = 'bool',  iconOnly = true },
     { key = 'edge',            text = L['Show Edge'],               kind = 'bool',  iconOnly = true },
     { key = 'swipeColor',      text = L['Swipe Color'],             kind = 'color', iconOnly = true },
     { key = 'barColor',        text = L['Bar Color'],               kind = 'color', barOnly = true },
-    { key = 'maxStacks',       text = L['Max Stacks'],              kind = 'stacks', barOnly = true, stacksOnly = true },
+    { key = 'maxStacks',       text = L['Max Stacks'],              kind = 'stacks', barOnly = true, stacksOnly = true, whole = true },
     { key = 'backgroundColor', text = L['Background Color'],        kind = 'color', barOnly = true,  missing = true },
-    { key = 'sound',           text = L['Play Sound'],              kind = 'sound' },
+    { key = 'sound',           text = L['Play Sound'],              kind = 'sound', whole = true },
 }
 -- Added to the saved position, so a mover drag keeps working underneath.
 local OFFSETS = {
-    { key = 'xOffset', text = L['X Offset'], kind = 'offset' },
-    { key = 'yOffset', text = L['Y Offset'], kind = 'offset' },
+    { key = 'xOffset', text = L['X Offset'], kind = 'offset', whole = true },
+    { key = 'yOffset', text = L['Y Offset'], kind = 'offset', whole = true },
 }
 
-local condOpen = {} -- [index] = open, for the session
+local condOpen = {} -- [display uid][index] = open, for the session; a uid is never reused, unlike an id
 
 -- what a new change starts at, by its kind (colours make their own table each time)
 local DEFAULT_VALUES = { bool = true, alpha = 0.5, fontSize = 20, stacks = 10, offset = 0, text = '%p' }
@@ -251,7 +269,11 @@ end
 ---@param variable string?
 ---@param def table? the check's definition
 ---@return boolean
-local function Allowed(entry, variable, def)
+local function Allowed(entry, variable, def, loneAura)
+    -- a lone aura is only ever its button, which only its own checks reach; anything else gets the whole display
+    if loneAura and not (def and (def.secret or def.curve)) then
+        return entry.whole == true
+    end
     if def and def.curve then
         return entry.curve == true
     end
@@ -285,6 +307,16 @@ local function CheckDef(display, check)
     return trigger, checks and checks[check.variable]
 end
 
+---Whether the game decides this check out of our sight (an aura's own checks, the colour curves), so nothing knows if it matched.
+---A combination can't hold one, so only the top check counts.
+---@param display table
+---@param check table
+---@return boolean
+local function GameDecided(display, check)
+    local _, def = CheckDef(display, check)
+    return def ~= nil and (def.secret == true or def.curve == true)
+end
+
 ---@param trigger table?
 ---@param skipSecret boolean? inside a combination, where an aura's checks can't be combined
 ---@param only table<string, boolean>? the checks allowed, on a group
@@ -295,7 +327,8 @@ local function CheckOptions(trigger, skipSecret, only)
     for _, key in ipairs(CHECK_ORDER) do
         local def = checks and checks[key]
         if def and not (skipSecret and (def.secret or def.curve)) and not (only and not only[key]) and not (key == 'missing' and not trigger.Placeholder)
-            and not (key == 'stacks' and trigger.PowerType ~= CDM.MAELSTROM_WEAPON) then
+            and not (key == 'stacks' and trigger.Type == 'power' and trigger.PowerType ~= CDM.MAELSTROM_WEAPON)
+            and not (key == 'charged' and not CDM.CHARGED_POWER[trigger.PowerType]) then
             options[#options + 1] = { value = key, text = def.secret and AURA_CHECK_NAMES[key] or CHECK_NAMES[key] }
             first = first or key
         end
@@ -587,6 +620,10 @@ function ConditionsTab:Build(page, id, apply, triggerTitle, triggerChip)
     local display = CDM:Get(id)
     display.Conditions = display.Conditions or {} -- a group gets its list on first visit
     local conditions = display.Conditions
+    -- only ever alone: beside other triggers it's an overlay (NormalizeAuraTypes)
+    local loneAura = display.Triggers ~= nil and display.Triggers[1] ~= nil and display.Triggers[1].Type == 'aura'
+    condOpen[display.uid] = condOpen[display.uid] or {}
+    local opened = condOpen[display.uid]
 
     local firstCheck
     for index, trigger in ipairs(display.Triggers or {}) do
@@ -622,7 +659,8 @@ function ConditionsTab:Build(page, id, apply, triggerTitle, triggerChip)
                 width = 0.5,
                 tooltip = def and def.secret and (check.variable == 'missing' and L["The game hides whether an aura is up, so this check can't be combined with others and only changes the placeholder."]
                         or L["The game hides whether an aura is up, so this check can't be combined with others and only changes the aura's own button."])
-                    or def and def.curve and L["The game reads this in combat, so it only colours a text showing this trigger's %p and can't be combined with others."] or nil,
+                    or def and def.curve and (check.variable == 'stacks' and L["The game reads this in combat, so it only colours a text showing this aura's %s and can't be combined with others."]
+                        or L["The game reads this in combat, so it only colours a text showing this trigger's %p and can't be combined with others."]) or nil,
                 options = IfOptions(display, triggerTitle, depth, parentChecks ~= nil),
                 value = combination and check.variable or (check.trigger and check.variable and check.trigger .. ':' .. check.variable) or nil,
                 callback = function(value)
@@ -681,41 +719,78 @@ function ConditionsTab:Build(page, id, apply, triggerTitle, triggerChip)
             local check = condition.check
             local trigger, def = CheckDef(display, check)
             local secret = def ~= nil and def.secret == true
-            local linked = condition.linked and index > 1
+            -- Else If needs to know whether the one above matched, which the game keeps to itself for these
+            local noElseIf = index > 1 and (GameDecided(display, check) or GameDecided(display, conditions[index - 1].check or {}))
+            local linked = condition.linked and index > 1 and not noElseIf
 
-            local open = condOpen[index]
-            if open == nil then open = #conditions <= 2 end
+            local open = opened[index]
+            if open == nil then
+                open = #conditions <= 2
+            end
 
+            -- the open state travels with its condition, as WA's collapse data does
             local title, summary = Title(index, condition, byKey, display, triggerChip)
             local expanded, header = card:Section(title, {
                 key = 'cdm:condition:' .. index,
                 summary = summary,
                 collapsed = not open,
                 onToggle = function()
-                    condOpen[index] = not open
+                    opened[index] = not open
                     card:Rebuild()
                 end,
                 onMoveUp = index > 1 and function()
-                    Edit(function() conditions[index], conditions[index - 1] = conditions[index - 1], conditions[index] end)
+                    Edit(function()
+                        conditions[index], conditions[index - 1] = conditions[index - 1], conditions[index]
+                        opened[index], opened[index - 1] = opened[index - 1], opened[index]
+                    end)
                 end or nil,
                 onMoveDown = index < #conditions and function()
-                    Edit(function() conditions[index], conditions[index + 1] = conditions[index + 1], conditions[index] end)
+                    Edit(function()
+                        conditions[index], conditions[index + 1] = conditions[index + 1], conditions[index]
+                        opened[index], opened[index + 1] = opened[index + 1], opened[index]
+                    end)
                 end or nil,
                 onDuplicate = function()
-                    Edit(function() tinsert(conditions, index + 1, CopyTable(condition)) end)
+                    Edit(function()
+                        -- opened has holes (unset = the default), so it shifts by hand rather than with tinsert
+                        for i = #conditions, index + 1, -1 do
+                            opened[i + 1] = opened[i]
+                        end
+                        opened[index + 1] = opened[index]
+                        tinsert(conditions, index + 1, CopyTable(condition))
+                    end)
                 end,
                 onDelete = function()
-                    Edit(function() tremove(conditions, index) end)
+                    Edit(function()
+                        for i = index, #conditions do
+                            opened[i] = opened[i + 1]
+                        end
+                        tremove(conditions, index)
+                    end)
                 end,
             })
 
             if expanded then
                 -- a value edit keeps the card, so only the header is retitled
-                local function ApplyValue()
-                    apply()
+                local function Retitle()
                     local newTitle, newSummary = Title(index, condition, byKey, display, triggerChip)
                     header:SetSummary(newSummary)
                     header:SetTitle(newTitle)
+                end
+                local function ApplyValue()
+                    apply()
+                    Retitle()
+                end
+                -- A change's value only moves what the engine puts on, so re-running the conditions is enough; sliders call
+                -- this while dragging and a full rebuild redraws every display and the list. The game styles aura and curve
+                -- checks into the button and texts, so those still rebuild.
+                local function ApplyChange()
+                    if CDM.icons[id] and not GameDecided(display, check) then
+                        CDM:Derive(id)
+                        Retitle()
+                    else
+                        ApplyValue()
+                    end
                 end
 
                 local ifLabel = linked and L['Else If'] or L['If']
@@ -730,9 +805,12 @@ function ConditionsTab:Build(page, id, apply, triggerTitle, triggerChip)
                     for other, otherChange in ipairs(condition.changes) do
                         if other ~= changeIndex and otherChange.property then used[otherChange.property] = true end
                     end
+                    -- one already set that can't reach the display stays listed, so it shows with its warning
+                    local current = change.property and byKey[change.property]
+                    local unreachable = current ~= nil and not Allowed(current, check.variable, def, loneAura)
                     local options = {}
                     for _, entry in ipairs(properties) do
-                        if not used[entry.key] and Allowed(entry, check.variable, def) then
+                        if not used[entry.key] and (Allowed(entry, check.variable, def, loneAura) or entry == current) then
                             options[#options + 1] = { value = entry.key, text = secret and check.variable ~= 'missing' and entry.overlayText or entry.text }
                         end
                     end
@@ -741,6 +819,7 @@ function ConditionsTab:Build(page, id, apply, triggerTitle, triggerChip)
                     local changeRow = card:Row(rowH)
                     changeRow:Dropdown(changeIndex == 1 and L['Then'] or L['And'], {
                         width = 0.5,
+                        notice = unreachable and { text = L["This can't change an aura's icon, the game locks it."] } or nil,
                         options = options,
                         value = change.property,
                         callback = function(value)
@@ -758,7 +837,7 @@ function ConditionsTab:Build(page, id, apply, triggerTitle, triggerChip)
                     if entry then
                         ValueWidget(changeRow, entry, change, function(value)
                             change.value = value
-                            ApplyValue()
+                            ApplyChange()
                         end, Edit)
                     end
                 end
@@ -771,10 +850,18 @@ function ConditionsTab:Build(page, id, apply, triggerTitle, triggerChip)
                     callback = function() Edit(function() condition.changes[#condition.changes + 1] = {} end) end,
                 })
                 if index > 1 then
+                    local elseIfKey = 'cdm:elseIf:' .. index
+                    page:SetCondition(elseIfKey, function() return not noElseIf end)
                     addRow:Checkbox(L['Else If'], {
                         width = 0.5,
+                        conditions = { elseIfKey },
                         tooltip = L['Only checked when the condition above it does not match.'],
-                        value = condition.linked == true,
+                        notice = noElseIf and {
+                            level = 'info',
+                            title = L['Else If'],
+                            text = L["Else If doesn't work next to aura checks, the game keeps them secret."],
+                        } or nil,
+                        value = linked == true,
                         callback = function(checked) Edit(function() condition.linked = checked or nil end) end,
                     })
                 end
@@ -791,7 +878,7 @@ function ConditionsTab:Build(page, id, apply, triggerTitle, triggerChip)
             callback = function()
                 Edit(function()
                     conditions[#conditions + 1] = { check = CopyTable(firstCheck or { trigger = 0, variable = 'combat', value = true }), changes = { {} } }
-                    condOpen[#conditions] = true
+                    opened[#conditions] = true
                 end)
             end,
         })

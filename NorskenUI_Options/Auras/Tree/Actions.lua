@@ -109,9 +109,16 @@ end
 ---@param id string
 ---@param keepChildren boolean?
 local function DeletePrompt(id, keepChildren)
-    local text = keepChildren
-        and format(L["Remove the group '%s'? Everything inside it stays."], CDM:GetName(id))
-        or format(L["Delete '%s'? This cannot be undone."], CDM:GetName(id))
+    local name = CDM:GetName(id)
+    local inside = not keepChildren and CDM:IsGroup(id) and #CDM:GetLeaves(id) or 0
+    local text
+    if keepChildren then
+        text = format(L["Remove the group '%s'? Everything inside it stays."], name)
+    elseif inside > 0 then
+        text = format(L["Delete '%s' and the %d displays inside it? This cannot be undone."], name, inside)
+    else
+        text = format(L["Delete '%s'? This cannot be undone."], name)
+    end
 
     NRSKNUI:CreatePrompt({
         title = L['Delete'],
@@ -133,9 +140,21 @@ local function MultiContextMenu(ids)
         {
             text = L['Delete All'],
             onClick = function()
+                -- everything that goes: the picked rows and what their groups hold, each once
+                local going, count = {}, 0
+                for _, id in ipairs(ids) do
+                    local all = CDM:IsGroup(id) and CDM:GetLeaves(id) or {}
+                    all[#all + 1] = id
+                    for _, key in ipairs(all) do
+                        if not going[key] then
+                            going[key] = true
+                            count = count + 1
+                        end
+                    end
+                end
                 NRSKNUI:CreatePrompt({
                     title = L['Delete All'],
-                    text = format(L['Delete %d displays? Groups take everything inside them. This cannot be undone.'], #ids),
+                    text = format(L['Delete %d displays? This cannot be undone.'], count),
                     onAccept = function()
                         for _, id in ipairs(ids) do CDM:Delete(id) end -- a child already taken by its group is skipped
                         CDM:ApplySettings()

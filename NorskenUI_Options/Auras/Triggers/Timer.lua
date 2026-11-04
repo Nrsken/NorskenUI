@@ -35,7 +35,7 @@ function TriggerRows.timer(card, typeRow, display, trigger, id, apply)
     row:Slider(L['Duration'], {
         width = 0.5,
         min = 1,
-        max = 60,
+        max = 1000,
         step = 0.5,
         value = trigger.Duration,
         callback = function(value)

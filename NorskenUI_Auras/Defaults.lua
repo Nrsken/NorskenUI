@@ -5,7 +5,6 @@ local CDM = NRSKNUI:GetModule('CDM')
 
 CDM.Defaults = {
     Enabled = false,
-    HideBlizzard = false,
     HidePlayerCastBar = false,
     AnchorMinWidth = 0,
     TrinketBlacklist = {}, -- [itemID] = true, trinkets whose on-use isn't worth tracking

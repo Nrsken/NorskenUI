@@ -166,6 +166,65 @@ end
 
 -- Decode --
 
+---As WA's validate: a missing or wrongly typed field takes the default, nested tables included; a field the
+---default doesn't have is left alone.
+---@param input table
+---@param default table
+local function Conform(input, default)
+    for key, value in pairs(default) do
+        local have = input[key]
+        if type(value) == 'table' then
+            if type(have) ~= 'table' then
+                input[key] = CopyTable(value)
+            else
+                Conform(have, value)
+            end
+        elseif type(have) ~= type(value) then
+            input[key] = value
+        end
+    end
+end
+
+---Puts an imported display's fields in shape, so nothing reads a wrong type later. Its lists can't be patched
+---without changing what a trigger or condition number points at, so a broken one fails the whole string.
+---@param display table
+---@return boolean ok
+local function ConformDisplay(display)
+    local conditions = display.Conditions
+    if conditions ~= nil and type(conditions) ~= 'table' then return false end
+    for _, condition in ipairs(conditions or {}) do
+        if type(condition) ~= 'table' then return false end
+        if condition.check ~= nil and type(condition.check) ~= 'table' then return false end
+        if condition.changes ~= nil and type(condition.changes) ~= 'table' then return false end
+    end
+    Conform(display, { Position = CDM.POSITION_TEMPLATE })
+
+    if CDM.LAYERED_TYPES[display.type] then
+        for _, trigger in ipairs(display.Triggers) do
+            if type(trigger) ~= 'table' or type(trigger.Type) ~= 'string' then return false end
+        end
+
+        local elements = display.SubRegions
+        if elements ~= nil and type(elements) ~= 'table' then return false end
+        for _, element in ipairs(elements or {}) do
+            local template = type(element) == 'table' and CDM.SUBREGION_TEMPLATES[element.type]
+            if not template then return false end
+            Conform(element, template)
+        end
+
+        Conform(display.Style, CDM.STYLE_TEMPLATES[display.type] or CDM.STYLE_TEMPLATE)
+        Conform(display, { Load = NRSKNUI.LoadConditions:GetDefaults() })
+    elseif display.type == 'auragroup' then
+        if type(display.Trigger) ~= 'table' then return false end
+        Conform(display, CDM.AURA_GROUP_TEMPLATE)
+        Conform(display, { Load = NRSKNUI.LoadConditions:GetDefaults() })
+    elseif display.type == 'dynamicgroup' then
+        Conform(display, { Layout = CDM.LAYOUT_TEMPLATE })
+    end
+
+    return true
+end
+
 ---Every display in a payload is reachable from the root and the tree follows the group rules.
 ---@param d table<string, table>
 ---@param root string
@@ -179,6 +238,9 @@ local function ValidateTree(d, root)
             return L['The string is damaged.']
         end
         if CDM.LAYERED_TYPES[display.type] and (type(display.Triggers) ~= 'table' or type(display.Style) ~= 'table') then
+            return L['The string is damaged.']
+        end
+        if not ConformDisplay(display) then
             return L['The string is damaged.']
         end
 

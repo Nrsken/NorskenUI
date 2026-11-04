@@ -22,6 +22,7 @@ local wipe = wipe
 
 local NewTimer = C_Timer and C_Timer.NewTimer
 local CreateColorCurve = C_CurveUtil and C_CurveUtil.CreateColorCurve
+local CreateNumericRuleFormatter = C_StringUtil and C_StringUtil.CreateNumericRuleFormatter
 local CreateColor = CreateColor
 
 -- Evaluate --
@@ -131,6 +132,33 @@ local function Collect(conditions, display, frame, pip, overrides, matches)
     end
 end
 
+---Move a display by its offset conditions; inside a dynamic group the group owns its slot.
+---@param frame CDMIcon
+---@param display table
+local function PlaceOffset(frame, display)
+    if CDM:IsDynamic(display.parent) then return end
+
+    -- one function per frame, as the combat queue dedupes by identity
+    frame.placeOffset = frame.placeOffset or function()
+        local current = CDM:Get(frame.id)
+        if current and not CDM:IsDynamic(current.parent) then
+            CDM:Place(frame, frame.id, current)
+        end
+    end
+
+    -- Our own frames move fine in combat, which is when an In Combat offset matters. Only one hanging off a picked frame,
+    -- itself or through a group, can join a protected frame's anchor family, so that one waits for combat to end.
+    local current = display
+    while current do
+        if current.anchorFrameType == 'SELECTFRAME' and current.ParentFrame and current.ParentFrame ~= 'UIParent' then
+            NRSKNUI:RunWhenSafe(frame.placeOffset)
+            return
+        end
+        current = current.parent and CDM:Get(current.parent)
+    end
+    frame.placeOffset()
+end
+
 local pipOverrides, pipMatches, pipKeys = {}, {}, {}
 
 ---A change decided per pip: Visible or Color of an Each Rune text or border.
@@ -186,6 +214,23 @@ function CDM:EvaluateConditions(id, frame, display)
             PROPERTIES.maxStacks.apply(frame, each, maxStacks, display)
         end
     end
+
+    -- Offsets are the display's too: a cast bar has no layer between casts, so they'd reset every cast and wait out combat to come back
+    local x, y = tonumber(overrides.xOffset) or 0, tonumber(overrides.yOffset) or 0
+    overrides.xOffset, overrides.yOffset = nil, nil
+    if (frame.conditionX or 0) ~= x or (frame.conditionY or 0) ~= y then
+        frame.conditionX, frame.conditionY = x, y
+        PlaceOffset(frame, display)
+    end
+
+    -- Alpha is the display's frame, ours and outside the aura button the game locks, so it reaches a lone aura that never
+    -- has an active layer; set on every pass while a condition holds it, as restyling the frame puts the style's back
+    local alpha = overrides.alpha
+    overrides.alpha = nil
+    if alpha ~= nil or frame.conditionAlpha ~= nil then
+        frame:SetAlpha(alpha or frame.style.Alpha)
+    end
+    frame.conditionAlpha = alpha
 
     local layer = frame.activeLayer
     local show = overrides.show
@@ -316,7 +361,7 @@ function CDM:ResetConditions(frame)
     frame.conditionTimer, frame.conditionApplied, frame.conditionActive, frame.conditionLayer = nil, nil, nil, nil
     frame.forceHidden, frame.standbyLayer = nil, nil
     frame.conditionX, frame.conditionY = nil, nil
-    frame.conditionMaxStacks = nil
+    frame.conditionMaxStacks, frame.conditionAlpha = nil, nil
 end
 
 -- Groups --
@@ -433,6 +478,62 @@ function CDM:TextColorCurve(display, triggerIndex, scales, ordinal, base)
         curve:AddPoint(at, CreateColor(unpack(ColorAt(after and (at + after) / 2 or at + 1))))
     end
     return curve
+end
+
+---The formatter an aura's stack count follows from its Stacks checks, nil when no condition colours this text that way.
+---@param display table
+---@param triggerIndex number the aura trigger whose count the text shows
+---@param ordinal number the text's place among the display's texts
+---@return table? formatter a NumericRuleFormatter for SetApplicationCount
+function CDM:StackCountFormatter(display, triggerIndex, ordinal)
+    local steps
+    for _, condition in ipairs(display.Conditions or {}) do
+        local check = condition.check or {}
+        if check.trigger == triggerIndex and check.variable == 'stacks' then
+            for _, change in ipairs(condition.changes or {}) do
+                local name, sub = self:SplitProperty(change.property or '')
+                if name == 'subColor' then
+                    local element, textOrdinal = SubElement(display, sub)
+                    if element and element.type == 'text' and textOrdinal == ordinal then
+                        steps = steps or {}
+                        steps[#steps + 1] = { above = check.op == '>=', at = tonumber(check.value) or 0, color = change.value }
+                    end
+                end
+            end
+        end
+    end
+    if not steps then return nil end
+
+    -- the count is secret, so the game picks the breakpoint and its colour code; later conditions win
+    local function FormatAt(value)
+        local color
+        for _, step in ipairs(steps) do
+            if (step.above and value >= step.at) or (not step.above and value < step.at) then
+                color = step.color
+            end
+        end
+        return color and CreateColor(unpack(color)):WrapTextInColorCode('%d') or '%d'
+    end
+
+    -- every step starts a breakpoint, so each one reads the same colour across its whole range
+    local points, seen = { 2 }, { [2] = true }
+    for _, step in ipairs(steps) do
+        if step.at > 2 and not seen[step.at] then
+            seen[step.at] = true
+            points[#points + 1] = step.at
+        end
+    end
+    tsort(points)
+
+    -- a single stack stays blank, as Blizzard draws a count without a formatter
+    local breakpoints = { { threshold = 0, format = '' } }
+    for _, at in ipairs(points) do
+        breakpoints[#breakpoints + 1] = { threshold = at, format = FormatAt(at) }
+    end
+
+    local formatter = CreateNumericRuleFormatter()
+    formatter:SetBreakpoints(breakpoints)
+    return formatter
 end
 
 -- Remap --

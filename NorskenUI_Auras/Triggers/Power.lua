@@ -11,6 +11,8 @@ a power type (Maelstrom Weapon, Stagger). Values only ever reach widgets, so a s
 
 local UnitPower, UnitPowerMax, UnitPowerMissing, UnitPowerType = UnitPower, UnitPowerMax, UnitPowerMissing, UnitPowerType
 local UnitPartialPower, UnitPowerDisplayMod = UnitPartialPower, UnitPowerDisplayMod
+local GetUnitChargedPowerPoints = GetUnitChargedPowerPoints
+local tContains = tContains
 local GetPowerRegenForPowerType = GetPowerRegenForPowerType
 local GetSpecialization = GetSpecialization
 local UnitPowerPercent = UnitPowerPercent
@@ -89,6 +91,12 @@ CDM.SEGMENTED_POWER = {
 }
 local SEGMENTED_POWER = CDM.SEGMENTED_POWER
 
+-- Resources whose points can be supercharged, as Blizzard's combo point and Essence bars draw them.
+CDM.CHARGED_POWER = {
+    [PowerType.ComboPoints] = true,
+    [PowerType.Essence] = true,
+}
+
 -- One of each, for "Each Rune" and the like.
 CDM.PIP_NAMES = {
     [PowerType.ComboPoints] = L['Combo Point'],
@@ -166,7 +174,7 @@ end
 local function UpdatePips(layer, trigger)
     local powerType, count, state = layer.powerType --[[@as Enum.PowerType]], layer.pipCount --[[@as number]], layer.state
     local progress = trigger.Mode == 'progress'
-    state.recharging, state.waiting = false, false
+    state.recharging, state.waiting, state.charged = false, false, false
     layer.duration = nil
 
     if powerType == PowerType.Runes then
@@ -209,8 +217,13 @@ local function UpdatePips(layer, trigger)
         mod = 1
     end
     local value = UnitPower('player', powerType, progress)
+    -- the player's charged points read plain in combat, same as UnitPower (probed)
+    local charged = layer.readsCharged and GetUnitChargedPowerPoints('player')
     for n = 1, count do
         CDM:SetLayerPipValue(layer, n, value, n * mod, (n - 1) * mod, false)
+        local isCharged = charged and tContains(charged, n) or false
+        layer.pips[n].charged = isCharged
+        state.charged = state.charged or isCharged
     end
 
     local current, max = UnitPower('player', powerType), UnitPowerMax('player', powerType)
@@ -283,6 +296,9 @@ CDM.TriggerTypes.power = {
         layer.spellID, layer.baseSpellID = nil, nil
         layer.staggerBand = nil
         powerLayers[layer] = trigger
+        -- only a Supercharged check reads the charged points, so nothing else pays for the table
+        local display = layer.owner.id and CDM:Get(layer.owner.id)
+        layer.readsCharged = CDM.CHARGED_POWER[powerType] and display and CDM:ConditionsUse(display, layer.index, 'charged') or nil
         if powerType == MAELSTROM_WEAPON then
             layer.max = select(2, MaelstromWeapon())
         elseif powerType == STAGGER then
@@ -434,7 +450,7 @@ local function OnPowerEvent(_, event)
     for layer, trigger in pairs(powerLayers) do
         if layer.owner.shown and (AURA_POWER[layer.powerType] == true) == aura then
             -- a new max or display power can change the pips, ticks and Power Color
-            if event ~= 'UNIT_POWER_FREQUENT' and event ~= 'RUNE_POWER_UPDATE' and not aura then
+            if event ~= 'UNIT_POWER_FREQUENT' and event ~= 'RUNE_POWER_UPDATE' and event ~= 'UNIT_POWER_POINT_CHARGE' and not aura then
                 powerTrigger.Resolve(layer, trigger)
             end
             if (layer.pipCount or 0) > 0 or layer.powerType == MAELSTROM_WEAPON then
@@ -450,6 +466,7 @@ local POWER_EVENTS = {
     'UNIT_POWER_FREQUENT',
     'UNIT_MAXPOWER',
     'UNIT_DISPLAYPOWER',
+    'UNIT_POWER_POINT_CHARGE',
     'UNIT_AURA',
 }
 
@@ -471,7 +488,7 @@ end
 
 -- Conditions --
 
--- The value can be secret, so nothing compares it but the game's curve on a %p text; a split bar's Recharging is plain and per rune for Bar Color.
+-- The value can be secret, so nothing compares it but the game's curve on a %p text; a split bar's Recharging and Supercharged are plain and per pip for Bar Color.
 -- Maelstrom Weapon's stacks are the one plain value, so only its trigger offers Stacks.
 CDM.ConditionChecks.power = {
     active     = { type = 'bool', get = function() return CDM.TriggerTypes.power.IsActive() end },
@@ -494,6 +511,15 @@ CDM.ConditionChecks.power = {
                 return pip.waiting == true
             end
             return layer.state.waiting == true
+        end,
+    },
+    charged    = {
+        type = 'bool',
+        get = function(layer, _, pip)
+            if pip then
+                return pip.charged == true
+            end
+            return layer.state.charged == true
         end,
     },
 }

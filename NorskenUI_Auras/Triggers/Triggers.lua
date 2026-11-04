@@ -144,8 +144,15 @@ end
 ---@param trigger table
 ---@return number?
 function CDM:GetTriggerSpell(trigger)
-    if (trigger.Type == 'aura' or trigger.Type == 'auraoverlay') and trigger.Source == 'custom' then
-        return trigger.SpellIDs and trigger.SpellIDs[1]
+    if trigger.Type == 'aura' or trigger.Type == 'auraoverlay' then
+        if trigger.Source == 'custom' then
+            return trigger.SpellIDs and trigger.SpellIDs[1]
+        end
+
+        local info = trigger.CooldownID and self.Catalogue:GetEntry(trigger.CooldownID)
+        if info then
+            return self.Catalogue:DisplaySpell(info)
+        end
     end
 
     return trigger.SpellID or (trigger.SpellIDs and trigger.SpellIDs[1])
@@ -209,6 +216,7 @@ function CDM:GetWarnings(id)
         end
     end
 
+    local dropped = self:DroppedAuraTexts(display)
     local textIndex = 0
     for _, element in ipairs(display.SubRegions or {}) do
         if element.type == 'text' then
@@ -218,6 +226,9 @@ function CDM:GetWarnings(id)
                 if not triggers[n] then
                     warnings[#warnings + 1] = format(L['Text %d reads trigger %d, which does not exist.'], textIndex, n)
                 end
+            end
+            if dropped[element] then
+                warnings[#warnings + 1] = format(L["Text %d stays empty: an earlier text already shows the aura's timer or stacks."], textIndex)
             end
         end
     end
@@ -238,7 +249,7 @@ function CDM:ResolveTriggers(frame, display)
         local secret = triggerType ~= nil and triggerType.Secret == true
 
         -- An aura layer is drawn by its aura button, so its own parts hide.
-        layer.Icon:SetShown(not secret and not layer.isText and not (layer.isBar and not frame.style.IconShow))
+        layer.Icon:SetShown(not secret and self:ShowsIcon(layer, frame.style, display))
         if layer.isBar then
             layer.Bar:SetShown(not secret)
         end
@@ -267,9 +278,10 @@ function CDM:ResolveOverrides(baseSpellID)
             for i, trigger in ipairs(display.Triggers) do
                 if (trigger.Type == 'spell' or trigger.Type == 'timer') and (not baseSpellID or trigger.SpellID == baseSpellID) then
                     local layer = frame.layers[i]
-                    local before = layer.spellID
+                    local before, wasOverridden = layer.spellID, layer.overridden
                     self.TriggerTypes[trigger.Type].Resolve(layer, trigger)
-                    changed = changed or layer.spellID ~= before
+                    -- an Ignore Override icon keeps its spell, but its Overridden condition still flips
+                    changed = changed or layer.spellID ~= before or layer.overridden ~= wasOverridden
                 end
             end
 

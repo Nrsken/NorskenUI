@@ -9,6 +9,7 @@ local TriggerEditor = NRSKNUI.GUITriggerEditor
 local IconPicker = NRSKNUI.CDMIconPicker
 
 local ipairs = ipairs
+local select = select
 
 local Shared = NRSKNUI.CDMOptions
 local AURA_GROUP_TABS, Applier, BuildAuraGroupLayoutTab, BuildDisplayTab = Shared.AURA_GROUP_TABS, Shared.Applier, Shared.BuildAuraGroupLayoutTab, Shared.BuildDisplayTab
@@ -18,6 +19,7 @@ local ContextMenu, IMPORT, MultiContextMenu, PAGE = Shared.ContextMenu, Shared.I
 local PreviewLevel, RefreshTree, SETTINGS, SectionIcons = Shared.PreviewLevel, Shared.RefreshTree, Shared.SETTINGS, Shared.SectionIcons
 local TABS, TRINKETS, TreeContent, TriggerChip = Shared.TABS, Shared.TRINKETS, Shared.TreeContent, Shared.TriggerChip
 local TriggerTitle, expandedGroups = Shared.TriggerTitle, Shared.expandedGroups
+local EditTargets, MULTI_TABS, Reopen = Shared.EditTargets, Shared.MULTI_TABS, Shared.Reopen
 
 GUI:RegisterPage(PAGE, {
     mode = 'tabs',
@@ -31,7 +33,7 @@ GUI:RegisterPage(PAGE, {
     end,
     sidebar = {
         width = 260,
-        create = NRSKNUI.CreateCDMTree,
+        create = NRSKNUI.CreateItemTree,
         locked = function() return not CDM.db.Enabled end,
         items = TreeContent,
         onSelectionChanged = function(key)
@@ -39,7 +41,7 @@ GUI:RegisterPage(PAGE, {
         end,
         onToggleExpanded = function(key, expanded)
             if CDM:IsGroup(key) then
-                expandedGroups[key] = expanded or nil
+                expandedGroups[CDM:Get(key).uid] = expanded or nil
             else
                 NRSKNUI.db.global.SidebarCollapsed[PAGE][key] = (not expanded) or nil
             end
@@ -107,16 +109,33 @@ GUI:RegisterPage(PAGE, {
             if CDM:Get(key) then ContextMenu(key) end
         end,
         onMultiContextMenu = MultiContextMenu,
+        -- a Ctrl/Shift pick turns the shown row's page into the multi edit and back
+        onPicksChanged = function()
+            local tree = Shared.Tree()
+            Reopen(tree and tree:GetSelected())
+        end,
     },
     tabs = function(itemKey)
         local display = CDM:Get(itemKey)
-        if not display then return {} end -- the new display page has no tabs
+        -- the new display page has no tabs
+        if not display then
+            return {}
+        end
 
-        if display.type == 'auragroup' then return AURA_GROUP_TABS end
+        if select(2, EditTargets(itemKey)) then
+            return MULTI_TABS
+        end
+        if display.type == 'auragroup' then
+            return AURA_GROUP_TABS
+        end
 
+        -- a group has no triggers of its own and its children's work too differently to edit together
+        local skip = CDM:IsGroup(itemKey) and 'trigger' or 'group'
         local tabs = {}
         for _, tab in ipairs(TABS) do
-            if tab.id ~= 'group' or CDM:IsGroup(itemKey) then tabs[#tabs + 1] = tab end
+            if tab.id ~= skip then
+                tabs[#tabs + 1] = tab
+            end
         end
         return tabs
     end,

@@ -28,6 +28,7 @@
     <Script file="Triggers\Cast.lua" />
     <Script file="Triggers\Stat.lua" />
     <Script file="Triggers\LootSpec.lua" />
+    <Script file="Triggers\Prey.lua" />
     <Script file="Triggers\ViewerBar.lua" />
     <Script file="Displays\Glow.lua" />
     <Script file="Groups\ChainGroup.lua" />

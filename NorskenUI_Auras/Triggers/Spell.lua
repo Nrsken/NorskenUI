@@ -6,8 +6,10 @@ local IsPreviewing, PreviewDuration = CDM.IsPreviewingLayer, CDM.PreviewDuration
 local PREVIEW_LENGTH = CDM.PREVIEW_LENGTH
 local L = NRSKNUI.Libs.AL
 
-local pairs = pairs
+local pairs, ipairs = pairs, ipairs
+local type = type
 local select = select
+local hooksecurefunc = hooksecurefunc
 local GetTime = GetTime
 local format = string.format
 local CreateFrame = CreateFrame
@@ -60,6 +62,70 @@ local function OnGCDEnd(frame)
     end
 end
 
+-- Blizzard's charge verdict --
+
+-- Blizzard's own viewer tells a charge left from none with currentCharges, secret to us in combat; it leaves the
+-- answer on its icon as a plain wasSetFromCharges (CooldownViewer.lua CheckCacheCooldownValuesFromCharges, live).
+-- Shadow Dance needs it: through the Dance buff a charge left and none read exactly alike to us.
+local CHARGE_VIEWERS = { 'EssentialCooldownViewer', 'UtilityCooldownViewer' }
+local hookedItems = {} ---@type table<table, true>
+local chargeLayers = {} ---@type table<CDMLayer, true> layers reading a viewer item's verdict
+
+---@param item table
+local function OnItemCached(item)
+    for layer in pairs(chargeLayers) do
+        if layer.chargeItem == item and item.wasSetFromCharges ~= layer.fromCharges then
+            CDM:UpdateLayer(layer)
+        end
+    end
+end
+
+---The viewer icon Blizzard draws for this layer's spell, nil when the spell isn't in its Cooldown Manager.
+---@param layer CDMLayer
+---@return table? item
+local function ChargeItem(layer)
+    local cooldownID = CDM.Catalogue:FindBySpell(layer.baseSpellID, 'cooldown') or CDM.Catalogue:FindBySpell(layer.spellID, 'cooldown')
+    local item = layer.chargeItem
+    local id = item and item.cooldownID
+    -- a pooled frame can be handed to another entry, so the cached one is checked first
+    if item and id ~= nil and not NRSKNUI:IsSecretValue(id) and id == cooldownID then
+        return item
+    end
+
+    layer.chargeItem = nil
+    if not cooldownID then return nil end
+
+    for _, name in ipairs(CHARGE_VIEWERS) do
+        local pool = _G[name] and _G[name].itemFramePool
+        if pool and pool.EnumerateActive then
+            for child in pool:EnumerateActive() do
+                local childID = child.cooldownID
+                if childID ~= nil and not NRSKNUI:IsSecretValue(childID) and childID == cooldownID then
+                    if not hookedItems[child] and child.CacheCooldownValues then
+                        hookedItems[child] = true
+                        hooksecurefunc(child, 'CacheCooldownValues', OnItemCached)
+                    end
+                    layer.chargeItem = child
+                    return child
+                end
+            end
+        end
+    end
+end
+
+---Blizzard's word on whether a charge is left: true while one is, false otherwise, nil when it has none to give.
+---@param layer CDMLayer
+---@return boolean?
+local function ChargesLeft(layer)
+    chargeLayers[layer] = true
+    local item = ChargeItem(layer)
+    local fromCharges = item and item.wasSetFromCharges
+    layer.fromCharges = fromCharges
+    if type(fromCharges) ~= 'boolean' or NRSKNUI:IsSecretValue(fromCharges) then return nil end
+
+    return fromCharges
+end
+
 ---A zero duration: texts keep counting the last one they were given, so "ready" is handed one explicitly.
 ---@param layer CDMLayer
 ---@return LuaDurationObject
@@ -96,9 +162,15 @@ CDM.TriggerTypes.spell = {
     Resolve = function(layer, trigger)
         local base = trigger.SpellID
         layer.baseSpellID = base
+        -- found again on the next update, for whichever spell the layer tracks now
+        chargeLayers[layer], layer.chargeItem, layer.fromCharges = nil, nil, nil
         local display = layer.owner.id and CDM:Get(layer.owner.id)
         layer.watchUsable = display ~= nil and (CDM:ConditionsUse(display, layer.index, 'usable') or CDM:ConditionsUse(display, layer.index, 'noPower'))
         CDM:WatchSpell(base, layer.owner.id)
+
+        -- read even when the icon ignores the override, so an Overridden condition can still follow it
+        local override = base and GetOverrideSpell(base)
+        layer.overridden = override ~= nil and override ~= base
 
         if trigger.IgnoreOverride then
             layer.spellID = base
@@ -184,8 +256,19 @@ CDM.TriggerTypes.spell = {
             layer.heldGCD = nil
         end
         local held = layer.heldGCD ~= nil
+        -- Without Blizzard's verdict (the spell isn't in its lists): Roll with charges left reads no category; when
+        -- the category is secret the lockout still shows as isOnGCD left nil, where a spell out of charges reads false
         local category = state.hasCharges and active and cooldown.activeCategory
-        local lockout = state.hasCharges and active and not NRSKNUI:IsSecretValue(category) and category == nil -- Roll with charges left
+        local chargesLeft = state.hasCharges and ChargesLeft(layer)
+        local lockout
+        if chargesLeft ~= nil then
+            -- Blizzard's verdict wins when it gives one: a charge left is never No Charges Left, none is the real cooldown
+            lockout = chargesLeft
+        elseif NRSKNUI:IsSecretValue(category) then
+            lockout = cooldown.isOnGCD == nil
+        else
+            lockout = state.hasCharges and active and category == nil
+        end
         state.onCooldown = held or (active and not state.onGCD and not lockout)
         state.recharging = state.hasCharges and charges.isActive
 
@@ -364,5 +447,6 @@ CDM.ConditionChecks.spell = {
     noPower    = { type = 'bool', get = function(layer) return layer.state.noPower == true end },
     inRange    = { type = 'bool', get = function(layer) return layer.state.inRange ~= false end },
     proc       = { type = 'bool', get = function(layer) return layer.state.proc == true end },
+    overridden = { type = 'bool', get = function(layer) return layer.overridden == true end },
     remaining  = { type = 'number', curve = true }, -- secret in combat, so only a %p text's colour follows it
 }

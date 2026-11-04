@@ -410,12 +410,14 @@ end
 
 -- Creating --
 
----A new display's starting spot: the middle of the screen.
+---A new display's identity and starting spot, the middle of the screen. The uid comes now rather than at the next
+---login's EnsureUids, as the options key session state by it.
 ---@param display table
-local function PlaceAt(display)
+local function StartDisplay(display)
+    display.uid = CDM:NewUid()
     display.anchorFrameType = 'UIPARENT'
     display.ParentFrame = 'UIParent'
-    display.Position = { AnchorFrom = 'CENTER', AnchorTo = 'CENTER', XOffset = 0, YOffset = 0 }
+    display.Position = CopyTable(CDM.POSITION_TEMPLATE)
 end
 
 ---@param name string
@@ -428,9 +430,9 @@ function CDM:CreateGroup(name, dynamic, parentId)
     local id = NextId()
     local display = { type = dynamic and 'dynamicgroup' or 'group', name = name, Enabled = true }
     if dynamic then
-        display.Layout = { Grow = 'HORIZONTAL', Spacing = 2, UseLimit = false, Limit = 10 }
+        display.Layout = CopyTable(CDM.LAYOUT_TEMPLATE)
     end
-    PlaceAt(display)
+    StartDisplay(display)
     Store()[id] = display
 
     if parentId then
@@ -457,7 +459,7 @@ function CDM:CreateIcon(name, trigger, parentId)
         SubRegions = CDM:DefaultIconSubRegions(),
         Load = NRSKNUI.LoadConditions:GetDefaults(),
     }
-    PlaceAt(display)
+    StartDisplay(display)
     Store()[id] = display
 
     if parentId then
@@ -484,7 +486,7 @@ function CDM:CreateBar(name, trigger, parentId)
         SubRegions = CDM:DefaultBarSubRegions(),
         Load = NRSKNUI.LoadConditions:GetDefaults(),
     }
-    PlaceAt(display)
+    StartDisplay(display)
     Store()[id] = display
 
     if parentId then
@@ -512,7 +514,7 @@ function CDM:CreateText(name, trigger, parentId)
         SubRegions = { CDM:NewSubRegion('text', { FontSize = 20, Justify = 'LEFT' }) },
         Load = NRSKNUI.LoadConditions:GetDefaults(),
     }
-    PlaceAt(display)
+    StartDisplay(display)
     Store()[id] = display
 
     if parentId then
@@ -558,7 +560,7 @@ function CDM:CreateAuraGroup(name, presetKey, parentId)
     display.Trigger = presetKey
         and NRSKNUI.AuraTriggers:ToAuraFilter({ Type = NRSKNUI.AuraTriggers.Types.Preset, Preset = presetKey, Unit = 'player' })
         or NRSKNUI.AuraTriggers:New()
-    PlaceAt(display)
+    StartDisplay(display)
 
     local id = NextId()
     Store()[id] = display
@@ -607,6 +609,7 @@ local function CopySubtree(id, parentId)
     copy.parent = parentId or copy.parent
     copy.uid = CDM:NewUid()
     copy.preferToUpdate = nil
+    copy.builtin = nil -- a copy of a built-in is the user's own, at any depth
     Store()[newId] = copy
 
     for _, child in ipairs(CDM:GetChildren(id)) do
@@ -646,7 +649,6 @@ function CDM:Duplicate(id)
     local copy = self:Get(newId)
     copy.name = CopyName(self:GetName(id))
     copy.order = nil
-    copy.builtin = nil -- a copy of a built-in is the user's own
 
     if source.parent then
         self:MoveNextTo(newId, id, 'after')

@@ -20,19 +20,37 @@ local ICON_SOURCES, ANCHOR_POINTS = DisplayTab.ICON_SOURCES, DisplayTab.ANCHOR_P
 ---@param page table
 ---@param style table read side
 ---@param set fun(path: string[], value: any)
+---@param mixed fun(path: (string|number)[], default: any?): KajiGUIMixedEntry[]? where the displays edited together disagree (DisplayTab.Differ)
 ---@param refreshTree fun() the sidebar shows the icon too
-local function IconSettings(card, page, style, set, refreshTree)
-    card:Row(rowH):ColorPicker(L['Color'], {
-        width = 1,
+local function IconSettings(card, page, style, set, mixed, refreshTree)
+    page:SetCondition('cdm:icon', function() return style.IconShow ~= false or mixed({ 'IconShow' }) end)
+
+    local showRow = card:Row(rowH)
+    showRow:Checkbox(L['Show Icon'], {
+        width = 0.5,
+        tooltip = L['Off leaves only the texts, borders and glows, such as an aura shown as just its stacks.'],
+        value = style.IconShow ~= false,
+        mixed = mixed({ 'IconShow' }),
+        callback = function(checked)
+            set({ 'IconShow' }, checked)
+            page:Refresh()
+        end,
+    })
+    showRow:ColorPicker(L['Color'], {
+        width = 0.5,
+        conditions = { 'cdm:icon' },
         value = style.Color,
+        mixed = mixed({ 'Color' }),
         callback = function(r, g, b, a) set({ 'Color' }, { r, g, b, a }) end,
     })
 
     local sourceRow = card:Row(rowH)
     sourceRow:Dropdown(L['Icon Source'], {
         width = 0.5,
+        conditions = { 'cdm:icon' },
         options = ICON_SOURCES,
         value = style.IconSource,
+        mixed = mixed({ 'IconSource' }),
         callback = function(value)
             set({ 'IconSource' }, value)
             refreshTree()
@@ -41,8 +59,10 @@ local function IconSettings(card, page, style, set, refreshTree)
     })
     sourceRow:EditBox(L['Manual Icon'], {
         width = 0.4,
+        conditions = { 'cdm:icon' },
         tooltip = L['An icon file ID. Automatic uses it for triggers without an icon of their own, such as Player Stat.'],
         value = style.ManualIcon and tostring(style.ManualIcon) or '',
+        mixed = mixed({ 'ManualIcon' }),
         callback = function(text)
             set({ 'ManualIcon' }, tonumber(text))
             refreshTree()
@@ -53,12 +73,14 @@ local function IconSettings(card, page, style, set, refreshTree)
             set({ 'ManualIcon' }, texture)
             refreshTree()
         end)
-    end)
+    end, { 'cdm:icon' })
 
     local lookRow = card:Row(rowH)
     lookRow:Checkbox(L['Desaturate'], {
         width = 0.5,
+        conditions = { 'cdm:icon' },
         value = style.Desaturate,
+        mixed = mixed({ 'Desaturate' }),
         callback = function(checked) set({ 'Desaturate' }, checked) end,
     })
     lookRow:Slider(L['Zoom'], {
@@ -66,13 +88,17 @@ local function IconSettings(card, page, style, set, refreshTree)
         min = 0,
         max = 1,
         step = 0.01,
+        conditions = { 'cdm:icon' },
         value = style.Zoom or NRSKNUI.GlobalZoom,
+        mixed = mixed({ 'Zoom' }, NRSKNUI.GlobalZoom),
         callback = function(value) set({ 'Zoom' }, value) end,
     })
     card:Row(rowH):Checkbox(L['Keep Aspect Ratio'], {
         width = 0.5,
+        conditions = { 'cdm:icon' },
         tooltip = L['Crop the icon to the frame shape instead of stretching it.'],
         value = style.KeepAspectRatio,
+        mixed = mixed({ 'KeepAspectRatio' }),
         callback = function(checked) set({ 'KeepAspectRatio' }, checked) end,
     })
 end
@@ -81,12 +107,14 @@ end
 ---@param page table
 ---@param style table
 ---@param set fun(path: string[], value: any)
-local function SwipeSettings(card, page, style, set)
-    page:SetCondition('cdm:swipe', function() return style.DrawSwipe == true end)
+---@param mixed fun(path: (string|number)[], default: any?): KajiGUIMixedEntry[]? where the displays edited together disagree (DisplayTab.Differ)
+local function SwipeSettings(card, page, style, set, mixed)
+    page:SetCondition('cdm:swipe', function() return style.DrawSwipe == true or mixed({ 'DrawSwipe' }) end)
     local row1 = card:Row(rowH)
     row1:Checkbox(L['Enable Swipe'], {
         width = 0.5,
         value = style.DrawSwipe,
+        mixed = mixed({ 'DrawSwipe' }),
         callback = function(checked)
             set({ 'DrawSwipe' }, checked)
             page:Refresh()
@@ -96,6 +124,7 @@ local function SwipeSettings(card, page, style, set)
         width = 0.5,
         conditions = { 'cdm:swipe' },
         value = style.Reverse,
+        mixed = mixed({ 'Reverse' }),
         callback = function(checked) set({ 'Reverse' }, checked) end,
     })
 
@@ -104,6 +133,7 @@ local function SwipeSettings(card, page, style, set)
         width = 0.5,
         conditions = { 'cdm:swipe' },
         value = style.DrawEdge,
+        mixed = mixed({ 'DrawEdge' }),
         callback = function(checked) set({ 'DrawEdge' }, checked) end,
     })
     row2:Checkbox(L['Show Global Cooldown'], {
@@ -111,6 +141,7 @@ local function SwipeSettings(card, page, style, set)
         conditions = { 'cdm:swipe' },
         tooltip = L['Run the swipe for the global cooldown too.'],
         value = style.ShowGCD,
+        mixed = mixed({ 'ShowGCD' }),
         callback = function(checked) set({ 'ShowGCD' }, checked) end,
     })
 
@@ -118,6 +149,7 @@ local function SwipeSettings(card, page, style, set)
         width = 0.5,
         conditions = { 'cdm:swipe' },
         value = style.SwipeColor,
+        mixed = mixed({ 'SwipeColor' }),
         callback = function(r, g, b, a) set({ 'SwipeColor' }, { r, g, b, a }) end,
     })
 end
@@ -127,10 +159,12 @@ end
 ---@param page table
 ---@param style table
 ---@param set fun(path: string[], value: any)
----@param triggers table[] the first icon's, for the trigger picker
-local function TimerTextSettings(card, page, style, set, triggers)
-    page:SetCondition('cdm:timerText', function() return not style.HideCountdown end)
-    page:SetCondition('cdm:timerFont', function() return not style.HideCountdown and not style.TimerText.UseGlobalFont end)
+---@param mixed fun(path: (string|number)[], default: any?): KajiGUIMixedEntry[]? where the displays edited together disagree (DisplayTab.Differ)
+---@param triggers table[] the longest list among the displays, for the trigger picker
+local function TimerTextSettings(card, page, style, set, mixed, triggers)
+    local function counts() return not style.HideCountdown or mixed({ 'HideCountdown' }) end
+    page:SetCondition('cdm:timerText', counts)
+    page:SetCondition('cdm:timerFont', function() return counts() and (not style.TimerText.UseGlobalFont or mixed({ 'TimerText', 'UseGlobalFont' })) end)
     -- The whole table is written, so an icon saved before Timer Text existed never holds half of one.
     local function setTimer(key, value)
         local timer = CopyTable(style.TimerText)
@@ -144,6 +178,7 @@ local function TimerTextSettings(card, page, style, set, triggers)
         width = 0.5,
         tooltip = L["The cooldown's own countdown, as the action bar shows it; unlike %p it speeds up with recovery-rate buffs."],
         value = not style.HideCountdown,
+        mixed = mixed({ 'HideCountdown' }),
         callback = function(checked)
             set({ 'HideCountdown' }, not checked)
             page:Refresh()
@@ -153,6 +188,7 @@ local function TimerTextSettings(card, page, style, set, triggers)
         width = 0.5,
         conditions = { 'cdm:timerText' },
         value = timer.UseGlobalFont,
+        mixed = mixed({ 'TimerText', 'UseGlobalFont' }),
         callback = function(checked)
             setTimer('UseGlobalFont', checked)
             page:Refresh()
@@ -165,6 +201,7 @@ local function TimerTextSettings(card, page, style, set, triggers)
         media = 'font',
         conditions = { 'cdm:timerFont' },
         value = timer.FontFace,
+        mixed = mixed({ 'TimerText', 'FontFace' }),
         callback = function(value) setTimer('FontFace', value) end,
     })
     sizeRow:Slider(L['Size'], {
@@ -174,6 +211,7 @@ local function TimerTextSettings(card, page, style, set, triggers)
         max = 40,
         step = 1,
         value = timer.FontSize,
+        mixed = mixed({ 'TimerText', 'FontSize' }),
         callback = function(value) setTimer('FontSize', value) end,
     })
 
@@ -183,12 +221,14 @@ local function TimerTextSettings(card, page, style, set, triggers)
         conditions = { 'cdm:timerText' },
         options = NRSKNUI:GetOutlineOptions(),
         value = timer.FontOutline,
+        mixed = mixed({ 'TimerText', 'FontOutline' }),
         callback = function(value) setTimer('FontOutline', value) end,
     })
     outlineRow:ColorPicker(L['Color'], {
         width = 0.5,
         conditions = { 'cdm:timerText' },
         value = timer.Color,
+        mixed = mixed({ 'TimerText', 'Color' }),
         callback = function(r, g, b, a) setTimer('Color', { r, g, b, a }) end,
     })
 
@@ -201,6 +241,7 @@ local function TimerTextSettings(card, page, style, set, triggers)
         tooltip = L["Whose countdown shows: Automatic is the icon's own, never an aura overlay's; a picked trigger's shows only while its layer does."],
         options = sources,
         value = timer.Trigger or 0,
+        mixed = mixed({ 'TimerText', 'Trigger' }, 0),
         callback = function(value) setTimer('Trigger', value ~= 0 and value or nil) end,
     })
     sourceRow:Dropdown(L['Anchor'], {
@@ -208,6 +249,7 @@ local function TimerTextSettings(card, page, style, set, triggers)
         conditions = { 'cdm:timerText' },
         options = ANCHOR_POINTS,
         value = timer.AnchorTo,
+        mixed = mixed({ 'TimerText', 'AnchorTo' }),
         callback = function(point) setTimer('AnchorTo', point) end,
     })
     local offsetRow = card:Row(rowH)
@@ -218,6 +260,7 @@ local function TimerTextSettings(card, page, style, set, triggers)
         max = 40,
         step = 1,
         value = timer.XOffset,
+        mixed = mixed({ 'TimerText', 'XOffset' }),
         callback = function(value) setTimer('XOffset', value) end,
     })
     offsetRow:Slider(L['Y Offset'], {
@@ -227,6 +270,7 @@ local function TimerTextSettings(card, page, style, set, triggers)
         max = 40,
         step = 1,
         value = timer.YOffset,
+        mixed = mixed({ 'TimerText', 'YOffset' }),
         callback = function(value) setTimer('YOffset', value) end,
     })
 end

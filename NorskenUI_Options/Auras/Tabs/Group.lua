@@ -31,7 +31,19 @@ local function BuildGroupTab(page, id)
     local apply = Applier(id)
 
     if display.type == 'dynamicgroup' then
-        page:DynamicGroupCard({ title = L['Dynamic Group Settings'], db = display.Layout, onChangeCallback = apply })
+        page:DynamicGroupCard({
+            title = L['Dynamic Group Settings'],
+            db = display.Layout,
+            -- a chained group never reads the limit; asked on every rebuild, as switching to Grid lifts it
+            limitNotice = function()
+                return CDM:WantsChain(id) and {
+                    level = 'info',
+                    title = L['Limit Information'],
+                    text = L["Auras and texts are secret, so we can't count how many are showing. Use Grid if you need a limit."],
+                } or nil
+            end,
+            onChangeCallback = apply,
+        })
         page:Card(L['Unit Frame Anchor'], 'all'):Row(rowHL, 0):Dropdown(L['Anchor Role'], {
             width = 1,
             options = ANCHOR_ROLES,

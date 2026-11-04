@@ -24,7 +24,6 @@ L['Triggers'] = "Auslöser"
 
 -- Cooldown Manager
 L['Description'] = "Beschreibung"
-L['Warnings'] = "Warnungen"
 L['Debug report for %s saved to BugSack.'] = "Debug-Bericht für %s in BugSack gespeichert."
 L['Names'] = "Namen"
 L['Size & Position'] = "Größe & Position"
@@ -43,6 +42,7 @@ L['Trigger %d: no aura chosen.'] = "Auslöser %d: keine Aura gewählt."
 L['Trigger %d: no item ID.'] = "Auslöser %d: keine Gegenstands-ID."
 L['Trigger %d: item ID %d does not exist.'] = "Auslöser %d: Gegenstands-ID %d existiert nicht."
 L['Text %d reads trigger %d, which does not exist.'] = "Text %d liest Auslöser %d, der nicht existiert."
+L["Text %d stays empty: an earlier text already shows the aura's timer or stacks."] = "Text %d bleibt leer: Ein früherer Text zeigt schon den Timer oder die Stapel der Aura."
 L['Rune'] = "Rune"
 L['Combo Point'] = "Combopunkt"
 L['Soul Shard'] = "Seelensplitter"
@@ -56,6 +56,13 @@ L['Leech'] = "Lebensraub"
 L['Avoidance'] = "Vermeidung"
 L['Highest Secondary'] = "Höchster Sekundärwert"
 L['Lowest Secondary'] = "Niedrigster Sekundärwert"
+
+-- CDM prey hunts
+L['Prey Hunt'] = "Beutejagd"
+L['Cold'] = "Kalt"
+L['Warm'] = "Warm"
+L['Hot'] = "Heiß"
+L['Final'] = "Final"
 
 -- AuraGroup
 L['Aura group "%s" has an unusable unit (%s), falling back to player.'] = "Aurengruppe „%s“ hat eine unbrauchbare Einheit (%s), verwende stattdessen den Spieler."

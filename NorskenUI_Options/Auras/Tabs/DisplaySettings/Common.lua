@@ -3,9 +3,10 @@ local NRSKNUI = _G.NorskenUI
 if not C_AddOns.IsAddOnLoaded('NorskenUI_Auras') then return end
 local L = NRSKNUI.Libs.AL
 
-local pairs = pairs
+local pairs, ipairs = pairs, ipairs
 local CopyTable = CopyTable
 local type = type
+local floor = math.floor
 
 local SUB_INDENT = 12
 
@@ -67,6 +68,66 @@ local function Assign(target, path, value)
     node[path[#path]] = type(value) == 'table' and CopyTable(value) or value
 end
 
+---Two settings read the same, as WA's sameAll: numbers to 2 decimals, colours and other tables key by key, unset as false.
+---@param a any
+---@param b any
+---@return boolean
+local function Same(a, b)
+    if type(a) == 'table' or type(b) == 'table' then
+        if type(a) ~= 'table' or type(b) ~= 'table' then return false end
+        for key, value in pairs(a) do
+            if not Same(value, b[key]) then return false end
+        end
+        for key, value in pairs(b) do
+            if a[key] == nil and not Same(nil, value) then return false end
+        end
+        return true
+    end
+    if type(a) == 'number' and type(b) == 'number' then
+        return floor(a * 100 + 0.5) == floor(b * 100 + 0.5)
+    end
+    return (a or false) == (b or false)
+end
+
+---A `mixed(path)` for the widgets of several displays edited together: each one's value at `path` under `read(display)`
+---where they disagree, nil where they all match, so the widget shows its empty state and lists them (Kaji SetMixed).
+---One display never differs, so it gets a function that always says so.
+---A condition gating rows on a setting adds `or mixed(path)`: rows that apply to any of them stay on.
+---A setting the widget reads as `x or default` passes that default, so unset compares and lists as what it draws.
+---@param displays table[]
+---@param read fun(display: table): table? where the path starts: its style, a sub element, the display itself
+---@return fun(path: (string|number)[], default: any?): KajiGUIMixedEntry[]?
+local function Differ(displays, read)
+    if not displays[2] then
+        return function() return nil end
+    end
+
+    local function At(display, path, default)
+        local node = read(display)
+        for _, key in ipairs(path) do
+            if node == nil then return default end
+            node = node[key]
+        end
+        if node == nil then return default end
+        return node
+    end
+
+    return function(path, default)
+        local base = At(displays[1], path, default)
+        local differs = false
+        for i = 2, #displays do
+            differs = differs or not Same(base, At(displays[i], path, default))
+        end
+        if not differs then return nil end
+
+        local entries = {}
+        for i, display in ipairs(displays) do
+            entries[i] = { name = display.name, value = At(display, path, default) }
+        end
+        return entries
+    end
+end
+
 ---A collapsible WeakAuras-style section, closed until opened. Its rows only exist while it is open.
 ---@param card table
 ---@param key string
@@ -88,6 +149,7 @@ end
 
 DisplayTab.ANCHOR_POINTS = ANCHOR_POINTS
 DisplayTab.Assign = Assign
+DisplayTab.Differ = Differ
 DisplayTab.ICON_SOURCES = ICON_SOURCES
 DisplayTab.SUB_INDENT = SUB_INDENT
 DisplayTab.Section = Section

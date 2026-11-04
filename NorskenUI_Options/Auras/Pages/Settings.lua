@@ -34,15 +34,6 @@ local function BuildSettingsPage(page)
     })
 
     local integration = page:Card(L['Integration'], 'all')
-    integration:Row(rowH):Checkbox(L['Hide Blizzard Cooldown Manager'], {
-        width = 1,
-        value = CDM.db.HideBlizzard,
-        tooltip = L["Hides Blizzard's Cooldown Manager. It is turned off completely, unless a Cooldown Bar trigger needs it: then it keeps running out of sight. Its spell list still feeds the icon picker."],
-        callback = function(checked)
-            CDM.db.HideBlizzard = checked
-            if CDM:IsEnabled() then CDM:SetBlizzardViewers(checked) end
-        end,
-    })
     integration:Row(rowH):Checkbox(L['Hide Blizzard Player Cast Bar'], {
         width = 1,
         value = CDM.db.HidePlayerCastBar,

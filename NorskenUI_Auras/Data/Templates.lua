@@ -87,6 +87,13 @@ local STYLE_TEMPLATES = {
     bar = CDM.BAR_STYLE_TEMPLATE,
     text = CDM.TEXT_STYLE_TEMPLATE
 }
+CDM.STYLE_TEMPLATES = STYLE_TEMPLATES
+
+-- Where every new display starts: the middle of the screen.
+CDM.POSITION_TEMPLATE = { AnchorFrom = 'CENTER', AnchorTo = 'CENTER', XOffset = 0, YOffset = 0 }
+
+-- A new dynamic group's layout.
+CDM.LAYOUT_TEMPLATE = { Grow = 'HORIZONTAL', Spacing = 2, UseLimit = false, Limit = 10 }
 
 ---An icon's, bar's or text's style; keys added after it was saved read from its type's template.
 ---@param display table
@@ -240,6 +247,7 @@ local BUILTIN_BASE = {
     anchorFrameType = 'SELECTFRAME',
     ParentFrame = 'NUF_Player',
 }
+CDM.AURA_GROUP_TEMPLATE = BUILTIN_BASE -- what any aura group's own fields look like, which an import is checked against
 
 ---@param into table
 ---@param from table

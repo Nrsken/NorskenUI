@@ -8,7 +8,6 @@ local Theme = NRSKNUI.Theme
 local rowH = Theme.rowHeight
 
 local tconcat = table.concat
-local ipairs = ipairs
 local tostring = tostring
 local format = string.format
 
@@ -23,13 +22,20 @@ local function BuildInformationTab(page, id)
     local display = CDM:Get(id)
 
     -- Card 1
+    local warnings = CDM:GetWarnings(id)
     local infoCard = page:Card(L['Information'], 'all')
-    infoCard:Row(rowH):EditBox(L['Name'], {
+    infoCard:SetNotice(warnings[1] and { text = warnings } or nil)
+    local nameBox
+    nameBox = infoCard:Row(rowH):EditBox(L['Name'], {
         width = 1,
         value = display.name,
         callback = function(text)
             text = strtrim(text or '')
-            if text == '' then return end
+            -- a display always has a name, so an emptied box gets it back
+            if text == '' then
+                nameBox:SetValue(display.name)
+                return
+            end
             CDM:Rename(id, text)
             RefreshTree()
         end,
@@ -66,14 +72,6 @@ local function BuildInformationTab(page, id)
     page:Card(L['Metadata'], 'all'):Row(metaHeight, 0):Text(nil, { width = 1, height = metaHeight, autoHeight = true, bgMode = 'hide', text = lines })
 
     -- Card 3
-    local warnings = CDM:GetWarnings(id)
-    if warnings[1] then
-        for i, warning in ipairs(warnings) do warnings[i] = NRSKNUI:ColorText(warning, Theme.warning) end
-        local warnHeight = #warnings * 16
-        page:Card(L['Warnings'], 'all'):Row(warnHeight, 0):Text(nil, { width = 1, height = warnHeight, autoHeight = true, bgMode = 'hide', text = warnings })
-    end
-
-    -- Card 4
     local debugHeight = 24
     page:Card(L['Debug'], 'all'):Row(debugHeight):Button(L['Create Debug Report'], {
         width = 1,

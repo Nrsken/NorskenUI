@@ -63,12 +63,12 @@ function CDM:Place(frame, id, display, point)
             end
         end
 
-        local y = above and gap or padY - gap
+        local y = (above and gap or padY - gap) + extraY
         local edge, groupEdge = above and 'BOTTOM' or 'TOP', above and 'TOP' or 'BOTTOM'
         frame:SetParent(parent and self.containers[display.parent] or UIParent)
         frame:ClearAllPoints()
-        frame:NUISetPixelPoint(edge .. 'LEFT', left, groupEdge .. 'LEFT', 0, y)
-        frame:NUISetPixelPoint(edge .. 'RIGHT', right, groupEdge .. 'RIGHT', -padX, y)
+        frame:NUISetPixelPoint(edge .. 'LEFT', left, groupEdge .. 'LEFT', extraX, y)
+        frame:NUISetPixelPoint(edge .. 'RIGHT', right, groupEdge .. 'RIGHT', extraX - padX, y)
         frame:SetFrameStrata(display.Strata or matched:GetFrameStrata())
         Anchors:Unregister(id)
         return

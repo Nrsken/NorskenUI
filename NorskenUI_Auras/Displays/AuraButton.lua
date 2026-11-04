@@ -129,6 +129,33 @@ end
 
 -- Styling --
 
+---The texts an aura's button leaves empty: it has one time and one count, which go to the first text asking
+---for each, in the order StyleAuraButton hands them out. A text reading another trigger takes neither.
+---@param display table
+---@return table<table, true> dropped text elements
+function CDM:DroppedAuraTexts(display)
+    local dropped = {}
+    for index, trigger in ipairs(display.Triggers or {}) do
+        if trigger.Type == 'aura' or trigger.Type == 'auraoverlay' then
+            local hasTime, hasCount = false, false
+            for _, element in ipairs(display.SubRegions or {}) do
+                if element.type == 'text' and element.Enabled then
+                    local isDuration, isCount, source = self:ClassifyText(element.Text or '')
+                    if source == nil or source == index then
+                        if isDuration and hasTime or not isDuration and isCount and hasCount then
+                            dropped[element] = true
+                        end
+                        hasTime = hasTime or isDuration
+                        hasCount = hasCount or (isCount and not isDuration)
+                    end
+                end
+            end
+        end
+    end
+
+    return dropped
+end
+
 ---Style the slot on show from the icon's style and its sub elements: the first %p/%t text becomes the
 ---native duration text, the first %s text its stack count, the rest stay plain.
 ---@param layer CDMLayer
@@ -144,9 +171,9 @@ function CDM:StyleAuraButton(layer, trigger)
     local active, pandemicColor, pandemic = self:GetAuraConditionChanges(display, layer.index)
     local overlay = trigger.Type == 'auraoverlay'
     local isBar = display.type == 'bar' and not overlay
-    local showIcon = not overlay or active.auraIcon == true
-    if isBar then
-        showIcon = style.IconShow == true
+    local showIcon = active.auraIcon == true
+    if not overlay then
+        showIcon = self:ShowsIcon(layer, style, display)
     end
 
     local subRegions = layer.subRegions or {}
@@ -280,7 +307,7 @@ function CDM:StyleAuraButton(layer, trigger)
                     hasCount = true
                     local fs = Text(entry, 'count')
                     StyleAuraText(fs, element, textParent)
-                    button:SetApplicationCount(fs, {})
+                    button:SetApplicationCount(fs, { formatter = self:StackCountFormatter(display, layer.index, ordinal) })
                     fs:Show()
                 elseif not isDuration and not isCount then
                     local fs = Text(entry, 'static')

@@ -24,7 +24,6 @@ L['Triggers'] = true
 
 -- Cooldown Manager
 L['Description'] = true
-L['Warnings'] = true
 L['Debug report for %s saved to BugSack.'] = true
 L['Names'] = true
 L['Size & Position'] = true
@@ -43,6 +42,7 @@ L['Trigger %d: no aura chosen.'] = true
 L['Trigger %d: no item ID.'] = true
 L['Trigger %d: item ID %d does not exist.'] = true
 L['Text %d reads trigger %d, which does not exist.'] = true
+L["Text %d stays empty: an earlier text already shows the aura's timer or stacks."] = true
 L['Rune'] = true
 L['Combo Point'] = true
 L['Soul Shard'] = true
@@ -56,6 +56,13 @@ L['Leech'] = true
 L['Avoidance'] = true
 L['Highest Secondary'] = true
 L['Lowest Secondary'] = true
+
+-- CDM prey hunts
+L['Prey Hunt'] = true
+L['Cold'] = true
+L['Warm'] = true
+L['Hot'] = true
+L['Final'] = true
 
 -- AuraGroup
 L['Aura group "%s" has an unusable unit (%s), falling back to player.'] = true

@@ -6,6 +6,7 @@ local CDM = NRSKNUI:GetModule('CDM')
 --[[
 Everything a condition can change on a display and how to put it back.
 'base' is the value with no condition on it. Desaturate has none, since the trigger resets it every update anyway.
+X and Y Offset aren't here: they move the whole display, so EvaluateConditions puts them on the frame itself.
 ]]
 
 local tonumber = tonumber
@@ -74,22 +75,6 @@ local function PaintRegion(element, region, name, value)
     end
 end
 
----Move a display by its offset conditions; inside a dynamic group the group owns its slot.
----@param frame CDMIcon
----@param display table
-local function PlaceOffset(frame, display)
-    if CDM:IsDynamic(display.parent) then return end
-
-    -- one function per frame, as the combat queue dedupes by identity
-    frame.placeOffset = frame.placeOffset or function()
-        local current = CDM:Get(frame.id)
-        if current and not CDM:IsDynamic(current.parent) then
-            CDM:Place(frame, frame.id, current)
-        end
-    end
-    NRSKNUI:RunWhenSafe(frame.placeOffset)
-end
-
 -- Properties --
 
 ---@type table<string, { apply: fun(frame: CDMIcon, layer: CDMLayer, value: any, display: table, sub: number?), base?: fun(frame: CDMIcon, layer: CDMLayer, display: table, sub: number?): any }>
@@ -97,6 +82,10 @@ local PROPERTIES = {
     desaturate = {
         apply = function(_, layer, value)
             layer.Icon:SetDesaturated(value == true)
+        end,
+        -- only a trigger update resets it otherwise, which a combat or target change doesn't run
+        base = function(frame)
+            return frame.style.Desaturate
         end,
     },
     color = {
@@ -107,14 +96,7 @@ local PROPERTIES = {
             return frame.style.Color
         end,
     },
-    alpha = {
-        apply = function(frame, _, value)
-            frame:SetAlpha(value)
-        end,
-        base = function(frame)
-            return frame.style.Alpha
-        end,
-    },
+    -- alpha is the display's, not a layer's: Derive sets it on the frame (see Engine.lua)
     swipe = {
         apply = function(_, layer, value)
             layer.Cooldown:SetDrawSwipe(value == true)
@@ -252,24 +234,6 @@ local PROPERTIES = {
         base = function(_, _, display, sub)
             local element = SubElement(display, sub)
             return element and element.FontSize
-        end,
-    },
-    xOffset = {
-        apply = function(frame, _, value, display)
-            frame.conditionX = tonumber(value)
-            PlaceOffset(frame, display)
-        end,
-        base = function()
-            return 0
-        end,
-    },
-    yOffset = {
-        apply = function(frame, _, value, display)
-            frame.conditionY = tonumber(value)
-            PlaceOffset(frame, display)
-        end,
-        base = function()
-            return 0
         end,
     },
     text = {

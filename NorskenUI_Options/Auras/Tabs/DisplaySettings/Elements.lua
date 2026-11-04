@@ -17,6 +17,7 @@ local tsort = table.sort
 ---@class NRSKNUI.CDMDisplayTab
 local DisplayTab = NRSKNUI.CDMDisplayTab
 local Assign, Section, SplitPower, TextRows = DisplayTab.Assign, DisplayTab.Section, DisplayTab.SplitPower, DisplayTab.TextRows
+local Differ = DisplayTab.Differ
 
 local SUBREGION_NAMES = { text = L['Text'], border = L['Border'], glow = L['Glow'], tick = L['Tick'] }
 
@@ -62,16 +63,18 @@ end
 ---@param page table
 ---@param element table
 ---@param set fun(path: string[], value: any)
+---@param mixed fun(path: (string|number)[], default: any?): KajiGUIMixedEntry[]? where the displays edited together disagree (DisplayTab.Differ)
 ---@param key string
 ---@param pipName string? a split power bar's "Rune", whose borders can repeat on each one
-local function BorderRows(card, page, element, set, key, pipName)
+local function BorderRows(card, page, element, set, mixed, key, pipName)
     local shown = key .. ':shown'
-    page:SetCondition(shown, function() return element.Enabled == true end)
+    page:SetCondition(shown, function() return element.Enabled == true or mixed({ 'Enabled' }) end)
 
     local showRow = card:Row(rowH)
     showRow:Checkbox(L['Show Border'], {
         width = pipName and 0.5 or 1,
         value = element.Enabled,
+        mixed = mixed({ 'Enabled' }),
         callback = function(checked)
             set({ 'Enabled' }, checked)
             page:Refresh()
@@ -83,6 +86,7 @@ local function BorderRows(card, page, element, set, key, pipName)
             conditions = { shown },
             tooltip = format(L['Outline every %s instead of the whole bar.'], pipName),
             value = element.EachPip,
+            mixed = mixed({ 'EachPip' }),
             callback = function(checked) set({ 'EachPip' }, checked or nil) end,
         })
     end
@@ -91,6 +95,7 @@ local function BorderRows(card, page, element, set, key, pipName)
         width = 1,
         conditions = { shown },
         value = element.Color,
+        mixed = mixed({ 'Color' }),
         callback = function(r, g, b, a) set({ 'Color' }, { r, g, b, a }) end,
     })
 
@@ -102,6 +107,7 @@ local function BorderRows(card, page, element, set, key, pipName)
         max = 16,
         step = 1,
         value = element.Size,
+        mixed = mixed({ 'Size' }),
         callback = function(value) set({ 'Size' }, value) end,
     })
     sizeRow:Slider(L['Border Offset'], {
@@ -111,6 +117,7 @@ local function BorderRows(card, page, element, set, key, pipName)
         max = 10,
         step = 1,
         value = element.Offset,
+        mixed = mixed({ 'Offset' }),
         callback = function(value) set({ 'Offset' }, value) end,
     })
 end
@@ -119,17 +126,20 @@ end
 ---@param page table
 ---@param element table read side
 ---@param set fun(path: string[], value: any)
+---@param mixed fun(path: (string|number)[], default: any?): KajiGUIMixedEntry[]? where the displays edited together disagree (DisplayTab.Differ)
 ---@param key string
-local function TickRows(card, page, element, set, key)
+local function TickRows(card, page, element, set, mixed, key)
     local shown, placed, manualLength = key .. ':shown', key .. ':placed', key .. ':length'
-    page:SetCondition(shown, function() return element.Enabled == true end)
-    page:SetCondition(placed, function() return element.Enabled == true and element.Placement ~= 'auto' end)
-    page:SetCondition(manualLength, function() return element.Enabled == true and not element.AutoLength end)
+    local function on() return element.Enabled == true or mixed({ 'Enabled' }) end
+    page:SetCondition(shown, on)
+    page:SetCondition(placed, function() return on() and (element.Placement ~= 'auto' or mixed({ 'Placement' })) end)
+    page:SetCondition(manualLength, function() return on() and (not element.AutoLength or mixed({ 'AutoLength' })) end)
 
     local showRow = card:Row(rowH)
     showRow:Checkbox(L['Show Tick'], {
         width = 0.5,
         value = element.Enabled,
+        mixed = mixed({ 'Enabled' }),
         callback = function(checked)
             set({ 'Enabled' }, checked)
             page:Refresh()
@@ -139,6 +149,7 @@ local function TickRows(card, page, element, set, key)
         width = 0.5,
         conditions = { shown },
         value = element.Color,
+        mixed = mixed({ 'Color' }),
         callback = function(r, g, b, a) set({ 'Color' }, { r, g, b, a }) end,
     })
 
@@ -149,6 +160,7 @@ local function TickRows(card, page, element, set, key)
         tooltip = L['Automatic splits combo points, chi and other point resources into segments, and marks channel ticks and empower stages. At Value counts power, or seconds into a cast.'],
         options = TICK_PLACEMENTS,
         value = element.Placement,
+        mixed = mixed({ 'Placement' }),
         callback = function(value)
             set({ 'Placement' }, value)
             page:Refresh()
@@ -159,6 +171,7 @@ local function TickRows(card, page, element, set, key)
         conditions = { placed },
         tooltip = L['One or more values, comma separated.'],
         value = element.Placements,
+        mixed = mixed({ 'Placements' }),
         callback = function(text) set({ 'Placements' }, text) end,
     })
 
@@ -170,6 +183,7 @@ local function TickRows(card, page, element, set, key)
         max = 10,
         step = 1,
         value = element.Thickness,
+        mixed = mixed({ 'Thickness' }),
         callback = function(value) set({ 'Thickness' }, value) end,
     })
     sizeRow:Checkbox(L['Automatic Length'], {
@@ -177,6 +191,7 @@ local function TickRows(card, page, element, set, key)
         conditions = { shown },
         tooltip = L['Spans the whole bar.'],
         value = element.AutoLength,
+        mixed = mixed({ 'AutoLength' }),
         callback = function(checked)
             set({ 'AutoLength' }, checked)
             page:Refresh()
@@ -189,6 +204,7 @@ local function TickRows(card, page, element, set, key)
         max = 100,
         step = 1,
         value = element.Length,
+        mixed = mixed({ 'Length' }),
         callback = function(value) set({ 'Length' }, value) end,
     })
 end
@@ -197,11 +213,13 @@ end
 ---@param card table
 ---@param element table
 ---@param set fun(path: string[], value: any)
-local function GlowRows(card, element, set)
+---@param mixed fun(path: (string|number)[], default: any?): KajiGUIMixedEntry[]? where the displays edited together disagree (DisplayTab.Differ)
+local function GlowRows(card, element, set, mixed)
     card:Row(rowH):Checkbox(L['Show Glow'], {
         width = 1,
         tooltip = L['Shows the glow all the time. Leave it off and let a condition show it, like Proc Glow.'],
         value = element.Enabled,
+        mixed = mixed({ 'Enabled' }),
         callback = function(checked) set({ 'Enabled' }, checked) end,
     })
 
@@ -210,6 +228,7 @@ local function GlowRows(card, element, set)
         width = 0.5,
         options = GLOW_TYPES,
         value = element.Type,
+        mixed = mixed({ 'Type' }),
         callback = function(value)
             set({ 'Type' }, value)
             card:Rebuild()
@@ -219,20 +238,22 @@ local function GlowRows(card, element, set)
         width = 0.5,
         options = GLOW_COLOR_MODES,
         value = element.ColorMode,
+        mixed = mixed({ 'ColorMode' }),
         callback = function(value)
             set({ 'ColorMode' }, value)
             card:Rebuild()
         end,
     })
-    if element.ColorMode == 'custom' then
+    if element.ColorMode == 'custom' or mixed({ 'ColorMode' }) then
         card:Row(rowH):ColorPicker(L['Color'], {
             width = 0.5,
             value = element.Color,
+            mixed = mixed({ 'Color' }),
             callback = function(r, g, b, a) set({ 'Color' }, { r, g, b, a }) end,
         })
     end
 
-    if element.Type == 'pixel' then
+    if element.Type == 'pixel' or mixed({ 'Type' }) then
         local defaults = CDM.GLOW_DEFAULTS -- glows made before these settings existed draw with the defaults
         card:Row(rowH):Slider(L['Speed'], {
             width = 0.5,
@@ -240,6 +261,7 @@ local function GlowRows(card, element, set)
             max = 1,
             step = 0.05,
             value = element.Frequency or defaults.Frequency,
+            mixed = mixed({ 'Frequency' }, defaults.Frequency),
             callback = function(value) set({ 'Frequency' }, value) end,
         })
         local linesRow = card:Row(rowH)
@@ -249,6 +271,7 @@ local function GlowRows(card, element, set)
             max = 16,
             step = 1,
             value = element.Lines,
+            mixed = mixed({ 'Lines' }),
             callback = function(value) set({ 'Lines' }, value) end,
         })
         linesRow:Slider(L['Length'], {
@@ -257,6 +280,7 @@ local function GlowRows(card, element, set)
             max = 20,
             step = 1,
             value = element.Length or defaults.Length,
+            mixed = mixed({ 'Length' }, defaults.Length),
             callback = function(value) set({ 'Length' }, value) end,
         })
         local sizeRow = card:Row(rowH)
@@ -266,19 +290,24 @@ local function GlowRows(card, element, set)
             max = 8,
             step = 1,
             value = element.Thickness,
+            mixed = mixed({ 'Thickness' }),
             callback = function(value) set({ 'Thickness' }, value) end,
         })
         sizeRow:Checkbox(L['Border'], {
             width = 0.5,
             tooltip = L['A dark band behind the lines.'],
             value = element.Border ~= false,
+            mixed = mixed({ 'Border' }, true),
             callback = function(checked) set({ 'Border' }, checked) end,
         })
-    elseif element.Type == 'modern' then
+    end
+
+    if element.Type == 'modern' or mixed({ 'Type' }) then
         card:Row(rowH):Checkbox(L['Start Animation'], {
             width = 0.5,
             tooltip = L["Plays Blizzard's proc burst when the glow starts."],
             value = element.StartAnim ~= false,
+            mixed = mixed({ 'StartAnim' }, true),
             callback = function(checked) set({ 'StartAnim' }, checked) end,
         })
     end
@@ -321,7 +350,11 @@ local function SubElements(card, page, icons, apply, triggerChip)
 
     local counts = {}
     local elements = first.SubRegions
-    local pipName = CDM.PIP_NAMES[SplitPower(first) or false]
+    local powerType
+    for _, display in ipairs(icons) do
+        powerType = powerType or SplitPower(display)
+    end
+    local pipName = CDM.PIP_NAMES[powerType or false]
 
     -- The overlays sit in the list at their slot (one icon only: slots differ per icon), listed bottom layer first like the elements.
     local overlays = {}
@@ -372,12 +405,16 @@ local function SubElements(card, page, icons, apply, triggerChip)
     for index, element in ipairs(elements) do
         counts[element.type] = (counts[element.type] or 0) + 1
         local title = format('%s %d', SUBREGION_NAMES[element.type] or element.type, counts[element.type])
-        local key = 'cdm:sub:' .. index .. ':' .. element.type
+        local key = 'cdm:sub:' .. first.type .. ':' .. index .. ':' .. element.type -- a mixed selection has a list per type
 
         local function set(path, value)
-            for _, display in ipairs(icons) do Assign(display.SubRegions[index], path, value) end
+            for _, display in ipairs(icons) do
+                Assign(display.SubRegions[index], path, value)
+            end
             apply()
         end
+        -- the same layout on all of them (SameLayout), so this element is each one's element at this index
+        local mixed = Differ(icons, function(display) return display.SubRegions[index] end)
 
         local above, below = Adjacent(index - 1, false), Adjacent(index, true)
         local expanded = Section(card, key, title, {
@@ -414,13 +451,13 @@ local function SubElements(card, page, icons, apply, triggerChip)
 
         if expanded then
             if element.type == 'text' then
-                TextRows(card, page, element, set, key, first.Triggers, pipName)
+                TextRows(card, page, element, set, mixed, key, icons, index, pipName, false, CDM:DroppedAuraTexts(first)[element] == true)
             elseif element.type == 'border' then
-                BorderRows(card, page, element, set, key, pipName)
+                BorderRows(card, page, element, set, mixed, key, pipName)
             elseif element.type == 'glow' then
-                GlowRows(card, element, set)
+                GlowRows(card, element, set, mixed)
             elseif element.type == 'tick' then
-                TickRows(card, page, element, set, key)
+                TickRows(card, page, element, set, mixed, key)
             end
             if index < #elements then card:Separator() end -- the last one meets the divider above the add buttons
         end

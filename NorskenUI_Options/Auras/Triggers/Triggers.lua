@@ -6,7 +6,7 @@ local CDM = NRSKNUI:GetModule('CDM')
 local L = NRSKNUI.Libs.AL
 local Theme = NRSKNUI.Theme
 
-local tinsert = table.insert
+local tinsert, tremove = table.insert, table.remove
 local ipairs = ipairs
 local format = string.format
 local CopyTable = CopyTable
@@ -43,12 +43,14 @@ local TRIGGER_TYPES = {
     { value = 'totem',       text = L['Totem'] },
     { value = 'stat',        text = L['Player Stat'],         group = 'unit' },
     { value = 'lootSpec',    text = L['Loot Specialization'], group = 'unit' },
+    { value = 'prey',        text = L['Prey Hunt'],           group = 'unit' },
 }
 local BAR_TRIGGER_TYPES = {
     { value = 'cast',        text = L['Cast'] },
     { value = 'power',       text = L['Power'] },
     { value = 'aura',        text = L['Aura'] },
     { value = 'stat',        text = L['Player Stat'], group = 'unit' },
+    { value = 'prey',        text = L['Prey Hunt'],   group = 'unit' },
     { value = 'viewerbar',   text = L['Cooldown Bar'] },
     { value = 'spell',       text = L['Cooldown'] },
     { value = 'item',        text = L['Item'] },
@@ -57,13 +59,14 @@ local BAR_TRIGGER_TYPES = {
 }
 -- No auras: an aura draws through a native aura button, which a text has none of.
 local TEXT_TRIGGER_TYPES = {
-    { value = 'spell', text = L['Cooldown'] },
-    { value = 'power', text = L['Power'] },
-    { value = 'stat',  text = L['Player Stat'], group = 'unit' },
-    { value = 'cast',  text = L['Cast'] },
-    { value = 'item',  text = L['Item'] },
-    { value = 'timer', text = L['Cast Timer'] },
+    { value = 'spell',    text = L['Cooldown'] },
+    { value = 'power',    text = L['Power'] },
+    { value = 'stat',     text = L['Player Stat'],         group = 'unit' },
+    { value = 'cast',     text = L['Cast'] },
+    { value = 'item',     text = L['Item'] },
+    { value = 'timer',    text = L['Cast Timer'] },
     { value = 'lootSpec', text = L['Loot Specialization'], group = 'unit' },
+    { value = 'prey',     text = L['Prey Hunt'],           group = 'unit' },
 }
 local TRIGGER_LISTS = { bar = BAR_TRIGGER_TYPES, text = TEXT_TRIGGER_TYPES }
 -- The Type dropdown shows a group once, a second dropdown picks the type inside it.
@@ -85,9 +88,10 @@ local TRIGGER_DEFAULTS = {
     totem       = {},
     power       = {},
     viewerbar   = {},
-    cast        = { HoldTime = 0.5, ShowLatency = true },
+    cast        = { Casts = 'all', HoldTime = 0.5, ShowLatency = true },
     stat        = { Stat = 'haste' },
     lootSpec    = {},
+    prey        = {},
 }
 local AURA_SOURCES = {
     { value = 'cdm',    text = L['Cooldown Manager'] },
@@ -143,18 +147,48 @@ local function TriggerLabel(index, trigger)
     return CDM:GetTriggerName(trigger) and (label .. ' - ' .. TriggerChip(index, trigger)) or label
 end
 
+---The condition an overlay starts with: its aura's own icon while it's up.
+---@param condition table
+---@param index number
+---@param exact boolean only the untouched one we added, not one the user has built on
+---@return boolean
+local function IsOverlayIcon(condition, index, exact)
+    local check, changes = condition.check or {}, condition.changes or {}
+    if check.trigger ~= index or check.variable ~= 'active' or check.value == false or check.checks then return false end
+
+    for _, change in ipairs(changes) do
+        if change.property == 'auraIcon' and change.value == true then
+            return not exact or (#changes == 1 and not condition.linked)
+        end
+    end
+    return false
+end
+
 ---An aura alone is the icon; beside other triggers it's an overlay on them, which starts with the aura's own icon.
+---Going back to alone drops that starting condition again, as a lone aura ignores it.
 ---@param display table
 local function NormalizeAuraTypes(display)
     local triggers = display.Triggers
     local alone = #triggers == 1
+    display.Conditions = display.Conditions or {}
+    local conditions = display.Conditions
     for index, trigger in ipairs(triggers) do
         if trigger.Type == 'aura' and not alone then
             trigger.Type = 'auraoverlay'
-            display.Conditions = display.Conditions or {}
-            tinsert(display.Conditions, { check = { trigger = index, variable = 'active', value = true }, changes = { { property = 'auraIcon', value = true } } })
+            local has = false
+            for _, condition in ipairs(conditions) do
+                has = has or IsOverlayIcon(condition, index, false)
+            end
+            if not has then
+                tinsert(conditions, { check = { trigger = index, variable = 'active', value = true }, changes = { { property = 'auraIcon', value = true } } })
+            end
         elseif trigger.Type == 'auraoverlay' and alone then
             trigger.Type = 'aura'
+            for i = #conditions, 1, -1 do
+                if IsOverlayIcon(conditions[i], index, true) then
+                    tremove(conditions, i)
+                end
+            end
         end
     end
 end
@@ -184,9 +218,10 @@ local function CatalogueOptions(categories)
     for _, category in ipairs(categories) do
         for _, cooldownID in ipairs(CDM.Catalogue:GetList(category)) do
             local info = CDM.Catalogue:GetEntry(cooldownID)
-            if info and info.spellID then
-                local texture = GetSpellTexture(info.spellID) or QUESTION_MARK
-                local name = GetSpellName(info.spellID) or info.spellID
+            local shown = info and CDM.Catalogue:DisplaySpell(info)
+            if shown then
+                local texture = GetSpellTexture(shown) or QUESTION_MARK
+                local name = GetSpellName(shown) or shown
                 if info.isKnown then
                     known[#known + 1] = { value = cooldownID, spellID = info.spellID, text = format('|T%d:16:16:0:0:64:64:5:59:5:59|t %s', texture, name) }
                 else
@@ -213,9 +248,9 @@ local function CataloguePicker(trigger, display, id, apply)
     return function(cooldownID)
         local info = CDM.Catalogue:GetEntry(cooldownID)
         if not info or cooldownID == trigger.CooldownID then return end
-        -- A new icon, or one still named after its spell, takes the new spell's name.
-        if display.name == L['New Icon'] or (trigger.SpellID and display.name == GetSpellName(trigger.SpellID)) then
-            display.name = GetSpellName(info.spellID) or display.name
+        -- a new icon or one still named after its spell takes the new spell's name
+        if display.name == L['New Icon'] or display.name == CDM:GetTriggerName(trigger) then
+            display.name = GetSpellName(CDM.Catalogue:DisplaySpell(info)) or display.name
         end
         trigger.SpellID = info.spellID
         trigger.CooldownID = cooldownID

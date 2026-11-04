@@ -6,7 +6,10 @@ local CDM = NRSKNUI:GetModule('CDM')
 local L = NRSKNUI.Libs.AL
 local GUI = NRSKNUI.GUI
 local Theme = NRSKNUI.Theme
+local pixel = NRSKNUI.Libs.KAJI.Pixel
 
+local CreateFrame = CreateFrame
+local GetTime = GetTime
 local ipairs = ipairs
 local floor = math.floor
 
@@ -16,7 +19,6 @@ local Shared = NRSKNUI.CDMOptions
 local IMPORT, NEW_TILE_HEIGHT, NEW_TILE_ICON, NEW_TILE_PREVIEW = Shared.IMPORT, Shared.NEW_TILE_HEIGHT, Shared.NEW_TILE_ICON, Shared.NEW_TILE_PREVIEW
 local NewAuraGroup, NewGroup, NewIcon, NewProgressBar = Shared.NewAuraGroup, Shared.NewGroup, Shared.NewIcon, Shared.NewProgressBar
 local NewResourceBar, NewText, Reopen, SETTINGS = Shared.NewResourceBar, Shared.NewText, Shared.Reopen, Shared.SETTINGS
-
 
 -- New page pictures: small versions of each type, drawn from the player's own spec --
 
@@ -146,7 +148,8 @@ local function DrawIconSample(canvas, height, width)
     local icon = SampleIcon(parts, 1, SampleIcons({ Enum.CooldownViewerCategory.Essential }, 1)[1], height, floor((width - height) / 2), 0)
     local cooldown = parts.cooldown
     cooldown:ClearAllPoints()
-    cooldown:SetAllPoints(icon)
+    -- through Kaji directly, a Cooldown frame isn't sure to carry the injected NUI methods
+    pixel.SetPixelInside(cooldown, icon, 0, 0)
     cooldown:Show()
     cooldown:SetCooldown(GetTime(), SAMPLE_COOLDOWN)
     -- Blizzard's countdown carries its own shadowed font; the GUI's texts are outlined without a shadow.
@@ -177,7 +180,7 @@ local function DrawProgressSample(canvas, height, width)
     GUI:ApplyFont(timer, 'small')
     timer:SetText('6.2')
     timer:ClearAllPoints()
-    timer:SetPoint('RIGHT', parts.barBg, 'RIGHT', -2, 0)
+    timer:NUISetPixelPoint('RIGHT', parts.barBg, 'RIGHT', -2, 0)
     timer:Show()
     return true
 end
@@ -285,7 +288,7 @@ local function DrawAuraSample(canvas, height, width)
             GUI:ApplyFont(stack, 'normal')
             stack:SetText(SAMPLE_STACKS[i])
             stack:ClearAllPoints()
-            stack:SetPoint('BOTTOMRIGHT', icon, 'BOTTOMRIGHT', 1, 0)
+            stack:NUISetPixelPoint('BOTTOMRIGHT', icon, 'BOTTOMRIGHT', 1, 0)
             stack:Show()
         end
     end
@@ -302,7 +305,7 @@ local function DrawTextSample(canvas)
     fs:SetText('Abc')
     fs:SetTextColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
     fs:ClearAllPoints()
-    fs:SetPoint('CENTER')
+    fs:NUISetPixelPoint('CENTER', canvas, 'CENTER', 0, 0)
     fs:Show()
     return true
 end

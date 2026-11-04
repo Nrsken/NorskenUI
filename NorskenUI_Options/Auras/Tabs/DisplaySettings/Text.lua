@@ -104,118 +104,16 @@ local function SubSection(card, key, title, summary)
     })
 end
 
----@param card table
----@param page table
----@param element table read side
----@param set fun(path: string[], value: any)
----@param key string unique per element, for its conditions and sub-sections
----@param triggers table[] the icon's triggers, which %N.p tokens point into
----@param pipName string? a split power bar's "Rune", whose texts can repeat on each one
----@param main boolean? a text display's own text: always shown, pinned at its alignment, no rotation
-local function TextRows(card, page, element, set, key, triggers, pipName, main)
-    local shown, customFont, shadow = key .. ':shown', key .. ':font', key .. ':shadow'
-    local customTime, decimals, fixedWidth = key .. ':time', key .. ':decimals', key .. ':fixed'
-    page:SetCondition(shown, function() return element.Enabled == true end)
-    page:SetCondition(customFont, function() return element.UseGlobalFont ~= true end)
-    page:SetCondition(shadow, function() return element.FontShadow.Enabled == true end)
-    page:SetCondition(customTime, function() return element.TimeFormat == 'custom' end)
-    page:SetCondition(decimals, function() return element.TimeFormat == 'custom' and element.PrecisionBelow > 0 end)
-    page:SetCondition(fixedWidth, function() return element.WidthMode == 'fixed' end)
-
-    local textRow = card:Row(rowH)
-    if not main then
-        textRow:Checkbox(L['Show Text'], {
-            width = 0.5,
-            value = element.Enabled,
-            callback = function(checked)
-                set({ 'Enabled' }, checked)
-                page:Refresh()
-            end,
-        })
-    end
-    textRow:EditBox(L['Display Text'], {
-        width = main and 1 or 0.5,
-        conditions = { shown },
-        tooltip = DisplayTextTooltip,
-        value = element.Text,
-        callback = function(text)
-            set({ 'Text' }, text)
-            card:Rebuild()
-        end,
-    })
-    if pipName then
-        card:Row(rowH):Checkbox(format(L['Each %s'], pipName), {
-            width = 0.5,
-            conditions = { shown },
-            tooltip = format(L['Repeat the text on every %s.'], pipName),
-            value = element.EachPip,
-            callback = function(checked) set({ 'EachPip' }, checked or nil) end,
-        })
-    end
-
-    local hasDuration, hasCharges, source = CDM:ClassifyText(element.Text or '')
-    if hasDuration and hasCharges then
-        card:Row(rowH):Text(nil, {
-            width = 1,
-            text = L["%s is dropped here: a time and a charge count can't share one text. Add a second text for it."],
-            bgMode = 'hide',
-        })
-    end
-    local sourceTrigger = source and triggers[source]
-    local sourceNote
-    if source and not sourceTrigger then
-        sourceNote = format(L["There's no Trigger %d, so this text stays empty."], source)
-    elseif sourceTrigger and (sourceTrigger.Type == 'aura' or sourceTrigger.Type == 'auraoverlay') then
-        sourceNote = format(L['Only shows on the Trigger %d overlay.'], source)
-    end
-    if sourceNote then
-        card:Row(rowH):Text(nil, { width = 1, text = sourceNote, bgMode = 'hide' })
-    end
-
-    local fontRow = card:Row(rowH)
-    fontRow:Checkbox(L['Use Global Font'], {
-        width = 0.5,
-        conditions = { shown },
-        value = element.UseGlobalFont,
-        callback = function(checked)
-            set({ 'UseGlobalFont' }, checked)
-            page:Refresh()
-        end,
-    })
-    fontRow:Dropdown(L['Font'], {
-        width = 0.5,
-        media = 'font',
-        conditions = { shown, customFont },
-        value = element.FontFace,
-        callback = function(value) set({ 'FontFace' }, value) end,
-    })
-
-    local sizeRow = card:Row(rowH)
-    sizeRow:Slider(L['Size'], {
-        width = 0.5,
-        conditions = { shown },
-        min = 6,
-        max = main and 72 or 40,
-        step = 1,
-        value = element.FontSize,
-        callback = function(value) set({ 'FontSize' }, value) end,
-    })
-    sizeRow:Dropdown(L['Outline'], {
-        width = 0.5,
-        conditions = { shown },
-        options = NRSKNUI:GetOutlineOptions(),
-        value = element.FontOutline,
-        callback = function(value) set({ 'FontOutline' }, value) end,
-    })
-
-    card:Row(rowH):ColorPicker(L['Color'], {
-        width = 0.5,
-        conditions = { shown },
-        value = element.Color,
-        callback = function(r, g, b, a) set({ 'Color' }, { r, g, b, a }) end,
-    })
-
-    -- What %p/%t stand for: a time on most triggers, a value on Power and Stat. A plain token reads every layer's own trigger.
+---What a text's %p/%t stand for: a time on most triggers, a value on Power and Stat. A plain token reads every layer's own trigger.
+---@param text string?
+---@param triggers table[]
+---@return boolean readsTime
+---@return boolean readsValue
+---@return boolean readsPower
+---@return boolean readsCount
+---@return number? source the trigger its %N. token names
+local function Reads(text, triggers)
+    local hasDuration, hasCharges, source = CDM:ClassifyText(text or '')
     local readsTime, readsValue, readsPower, readsCount = false, false, false, false
     for index, trigger in ipairs(triggers) do
         if not source or index == source then
@@ -229,10 +127,149 @@ local function TextRows(card, page, element, set, key, triggers, pipName, main)
             end
         end
     end
-    page:SetCondition(key .. ':numberDecimals', function() return element.NumberFormat == 'decimals' end)
+    return readsTime, readsValue, readsPower, readsCount, source
+end
 
-    -- Only a text with a time, a value, a count or a name has anything to format.
+---@param card table
+---@param page table
+---@param element table read side
+---@param set fun(path: string[], value: any)
+---@param mixed fun(path: (string|number)[], default: any?): KajiGUIMixedEntry[]? where the displays edited together disagree (DisplayTab.Differ)
+---@param key string unique per element, for its conditions and sub-sections
+---@param displays table[] the displays this text is on; the first one's triggers are what %N.p tokens point into
+---@param slot number where the text sits in each one's SubRegions
+---@param pipName string? a split power bar's "Rune", whose texts can repeat on each one
+---@param main boolean? a text display's own text: always shown, pinned at its alignment, no rotation
+---@param noAuraSlot boolean? an earlier text already took the aura button's one time or count, see CDM:DroppedAuraTexts
+local function TextRows(card, page, element, set, mixed, key, displays, slot, pipName, main, noAuraSlot)
+    local shown, customFont, shadow = key .. ':shown', key .. ':font', key .. ':shadow'
+    local customTime, decimals, fixedWidth = key .. ':time', key .. ':decimals', key .. ':fixed'
+    page:SetCondition(shown, function() return element.Enabled == true or mixed({ 'Enabled' }) end)
+    page:SetCondition(customFont, function() return element.UseGlobalFont ~= true or mixed({ 'UseGlobalFont' }) end)
+    page:SetCondition(shadow, function() return element.FontShadow.Enabled == true or mixed({ 'FontShadow', 'Enabled' }) end)
+    page:SetCondition(customTime, function() return element.TimeFormat == 'custom' or mixed({ 'TimeFormat' }) end)
+    page:SetCondition(decimals, function()
+        return (element.TimeFormat == 'custom' or mixed({ 'TimeFormat' })) and (element.PrecisionBelow > 0 or mixed({ 'PrecisionBelow' }))
+    end)
+    page:SetCondition(fixedWidth, function() return element.WidthMode == 'fixed' or mixed({ 'WidthMode' }) end)
+
+    local triggers = displays[1].Triggers
+    local readsTime, readsValue, readsPower, readsCount, source = Reads(element.Text, triggers)
+
+    -- what the text can't show goes on its Display Text marker; a missing trigger or a dropped %s is a warning
+    local sourceTrigger = source and triggers[source]
+    local notes, level = {}, 'info'
+    if readsTime and readsCount then -- a time's binding has no slot for a count; a Power or Stat value text mixes them fine
+        notes[#notes + 1] = L["%s is dropped here: a time and a charge count can't share one text. Add a second text for it."]
+        level = 'warning'
+    end
+    if source and not sourceTrigger then
+        notes[#notes + 1] = format(L["There's no Trigger %d, so this text stays empty."], source)
+        level = 'warning'
+    elseif sourceTrigger and (sourceTrigger.Type == 'aura' or sourceTrigger.Type == 'auraoverlay') then
+        notes[#notes + 1] = format(L['Only shows on the Trigger %d overlay.'], source)
+    end
+    if noAuraSlot then
+        notes[#notes + 1] = L["An aura can only show one timer and one stack count. An earlier text already shows it, so this one stays empty."]
+        level = 'warning'
+    end
+
+    local textRow = card:Row(rowH)
+    if not main then
+        textRow:Checkbox(L['Show Text'], {
+            width = 0.5,
+            value = element.Enabled,
+            mixed = mixed({ 'Enabled' }),
+            callback = function(checked)
+                set({ 'Enabled' }, checked)
+                page:Refresh()
+            end,
+        })
+    end
+    textRow:EditBox(L['Display Text'], {
+        width = main and 1 or 0.5,
+        conditions = { shown },
+        tooltip = DisplayTextTooltip,
+        notice = notes[1] and { level = level, text = notes } or nil,
+        value = element.Text,
+        mixed = mixed({ 'Text' }),
+        callback = function(text)
+            set({ 'Text' }, text)
+            card:Rebuild()
+        end,
+    })
+    if pipName then
+        card:Row(rowH):Checkbox(format(L['Each %s'], pipName), {
+            width = 0.5,
+            conditions = { shown },
+            tooltip = format(L['Repeat the text on every %s.'], pipName),
+            value = element.EachPip,
+            mixed = mixed({ 'EachPip' }),
+            callback = function(checked) set({ 'EachPip' }, checked or nil) end,
+        })
+    end
+
+    local fontRow = card:Row(rowH)
+    fontRow:Checkbox(L['Use Global Font'], {
+        width = 0.5,
+        conditions = { shown },
+        value = element.UseGlobalFont,
+        mixed = mixed({ 'UseGlobalFont' }),
+        callback = function(checked)
+            set({ 'UseGlobalFont' }, checked)
+            page:Refresh()
+        end,
+    })
+    fontRow:Dropdown(L['Font'], {
+        width = 0.5,
+        media = 'font',
+        conditions = { shown, customFont },
+        value = element.FontFace,
+        mixed = mixed({ 'FontFace' }),
+        callback = function(value) set({ 'FontFace' }, value) end,
+    })
+
+    local sizeRow = card:Row(rowH)
+    sizeRow:Slider(L['Size'], {
+        width = 0.5,
+        conditions = { shown },
+        min = 6,
+        max = main and 72 or 40,
+        step = 1,
+        value = element.FontSize,
+        mixed = mixed({ 'FontSize' }),
+        callback = function(value) set({ 'FontSize' }, value) end,
+    })
+    sizeRow:Dropdown(L['Outline'], {
+        width = 0.5,
+        conditions = { shown },
+        options = NRSKNUI:GetOutlineOptions(),
+        value = element.FontOutline,
+        mixed = mixed({ 'FontOutline' }),
+        callback = function(value) set({ 'FontOutline' }, value) end,
+    })
+
+    card:Row(rowH):ColorPicker(L['Color'], {
+        width = 0.5,
+        conditions = { shown },
+        value = element.Color,
+        mixed = mixed({ 'Color' }),
+        callback = function(r, g, b, a) set({ 'Color' }, { r, g, b, a }) end,
+    })
+
+    page:SetCondition(key .. ':numberDecimals', function() return element.NumberFormat == 'decimals' or mixed({ 'NumberFormat' }, 'auto') end)
+
+    -- Only a text with a time, a value, a count or a name has anything to format; any display's text earns the rows.
     local readsName = strfind(element.Text or '', '%%%d*%.?n') ~= nil
+    for i = 2, #displays do
+        local other = displays[i].SubRegions[slot].Text
+        local time, value, power, count = Reads(other, displays[i].Triggers)
+        readsTime = readsTime or time
+        readsValue = readsValue or value
+        readsPower = readsPower or power
+        readsCount = readsCount or count
+        readsName = readsName or strfind(other or '', '%%%d*%.?n') ~= nil
+    end
     local formatOpen = (readsTime or readsValue or readsCount or readsName) and SubSection(card, key .. ':format', L['Format Options'])
     if formatOpen and readsName then
         local nameRow = card:Row(rowH, nil, SUB_INDENT)
@@ -242,6 +279,7 @@ local function TextRows(card, page, element, set, key, triggers, pipName, main)
             tooltip = L['How %n reads. First Letter turns Mastery into M, Uppercase into MASTERY.'],
             options = NAME_FORMATS,
             value = element.NameFormat or 'full',
+            mixed = mixed({ 'NameFormat' }, 'full'),
             callback = function(value) set({ 'NameFormat' }, value) end,
         })
         nameRow:Dropdown(L['Name Color'], {
@@ -250,6 +288,7 @@ local function TextRows(card, page, element, set, key, triggers, pipName, main)
             tooltip = L["The colour of %n. Custom uses the text's Color."],
             options = NRSKNUI.ColorModeOptions,
             value = element.NameColor or 'custom',
+            mixed = mixed({ 'NameColor' }, 'custom'),
             callback = function(value) set({ 'NameColor' }, value) end,
         })
     end
@@ -262,6 +301,7 @@ local function TextRows(card, page, element, set, key, triggers, pipName, main)
                 or L['How a Power or Stat value reads. Automatic: whole numbers, as the character sheet shows them.'],
             options = readsPower and POWER_NUMBER_FORMATS or NUMBER_FORMATS,
             value = element.NumberFormat or 'auto',
+            mixed = mixed({ 'NumberFormat' }, 'auto'),
             callback = function(value)
                 set({ 'NumberFormat' }, value)
                 page:Refresh()
@@ -274,6 +314,7 @@ local function TextRows(card, page, element, set, key, triggers, pipName, main)
             max = 3,
             step = 1,
             value = element.Decimals or 1,
+            mixed = mixed({ 'Decimals' }, 1),
             callback = function(value) set({ 'Decimals' }, value) end,
         })
     end
@@ -283,6 +324,7 @@ local function TextRows(card, page, element, set, key, triggers, pipName, main)
             conditions = { shown },
             tooltip = L['%s shows nothing instead of 0.'],
             value = element.HideZero,
+            mixed = mixed({ 'HideZero' }),
             callback = function(checked) set({ 'HideZero' }, checked or nil) end,
         })
     end
@@ -293,6 +335,7 @@ local function TextRows(card, page, element, set, key, triggers, pipName, main)
             tooltip = L['Global uses the duration breakpoints from the global settings.'],
             options = TIME_FORMATS,
             value = element.TimeFormat,
+            mixed = mixed({ 'TimeFormat' }),
             callback = function(value)
                 set({ 'TimeFormat' }, value)
                 page:Refresh()
@@ -308,6 +351,7 @@ local function TextRows(card, page, element, set, key, triggers, pipName, main)
             max = 60,
             step = 1,
             value = element.PrecisionBelow,
+            mixed = mixed({ 'PrecisionBelow' }),
             callback = function(value)
                 set({ 'PrecisionBelow' }, value)
                 page:Refresh()
@@ -318,6 +362,7 @@ local function TextRows(card, page, element, set, key, triggers, pipName, main)
             conditions = { shown, decimals },
             options = PRECISIONS,
             value = element.Precision,
+            mixed = mixed({ 'Precision' }),
             callback = function(value) set({ 'Precision' }, value) end,
         })
     end
@@ -340,6 +385,7 @@ local function TextRows(card, page, element, set, key, triggers, pipName, main)
             width = 0.5,
             conditions = { shown },
             value = fontShadow.Enabled,
+            mixed = mixed({ 'FontShadow', 'Enabled' }),
             callback = function(checked)
                 setShadow({ 'FontShadow', 'Enabled' }, checked)
                 page:Refresh()
@@ -349,6 +395,7 @@ local function TextRows(card, page, element, set, key, triggers, pipName, main)
             width = 0.5,
             conditions = { shown, shadow },
             value = fontShadow.Color,
+            mixed = mixed({ 'FontShadow', 'Color' }),
             callback = function(r, g, b, a) setShadow({ 'FontShadow', 'Color' }, { r, g, b, a }) end,
         })
 
@@ -360,6 +407,7 @@ local function TextRows(card, page, element, set, key, triggers, pipName, main)
             max = 5,
             step = 1,
             value = fontShadow.OffsetX,
+            mixed = mixed({ 'FontShadow', 'OffsetX' }),
             callback = function(value) setShadow({ 'FontShadow', 'OffsetX' }, value) end,
         })
         offsetRow:Slider(L['Shadow Y'], {
@@ -369,6 +417,7 @@ local function TextRows(card, page, element, set, key, triggers, pipName, main)
             max = 5,
             step = 1,
             value = fontShadow.OffsetY,
+            mixed = mixed({ 'FontShadow', 'OffsetY' }),
             callback = function(value) setShadow({ 'FontShadow', 'OffsetY' }, value) end,
         })
 
@@ -379,6 +428,7 @@ local function TextRows(card, page, element, set, key, triggers, pipName, main)
                 conditions = { shown },
                 options = TEXT_ROTATIONS,
                 value = element.Rotation,
+                mixed = mixed({ 'Rotation' }),
                 callback = function(value) set({ 'Rotation' }, value) end,
             })
         end
@@ -388,6 +438,7 @@ local function TextRows(card, page, element, set, key, triggers, pipName, main)
             tooltip = main and L['The side the text grows from, and how its lines line up.'] or L['Automatic aligns the text to the side it is anchored on.'],
             options = main and TEXT_ALIGNMENTS or TEXT_JUSTIFY,
             value = element.Justify,
+            mixed = mixed({ 'Justify' }),
             callback = function(value) set({ 'Justify' }, value) end,
         })
 
@@ -397,6 +448,7 @@ local function TextRows(card, page, element, set, key, triggers, pipName, main)
             conditions = { shown },
             options = WIDTH_MODES,
             value = element.WidthMode,
+            mixed = mixed({ 'WidthMode' }),
             callback = function(value)
                 set({ 'WidthMode' }, value)
                 page:Refresh()
@@ -409,6 +461,7 @@ local function TextRows(card, page, element, set, key, triggers, pipName, main)
             max = 256,
             step = 1,
             value = element.FixedWidth,
+            mixed = mixed({ 'FixedWidth' }),
             callback = function(value) set({ 'FixedWidth' }, value) end,
         })
         card:Row(rowH, nil, SUB_INDENT):Checkbox(L['Word Wrap'], {
@@ -416,6 +469,7 @@ local function TextRows(card, page, element, set, key, triggers, pipName, main)
             conditions = { shown, fixedWidth },
             tooltip = L['Off cuts a text longer than the width short instead of wrapping it.'],
             value = element.WordWrap,
+            mixed = mixed({ 'WordWrap' }),
             callback = function(checked) set({ 'WordWrap' }, checked) end,
         })
     end
@@ -444,6 +498,7 @@ local function TextRows(card, page, element, set, key, triggers, pipName, main)
             tooltip = L["The text's own point. Automatic keeps the text inside the icon at the frame's point."],
             options = TEXT_SELF_POINTS,
             value = position.AnchorFrom,
+            mixed = mixed({ 'Position', 'AnchorFrom' }),
             callback = function(point) setPosition({ 'Position', 'AnchorFrom' }, point) end,
         })
         pointRow:Dropdown(L["To Frame's"], {
@@ -451,6 +506,7 @@ local function TextRows(card, page, element, set, key, triggers, pipName, main)
             conditions = { shown },
             options = ANCHOR_POINTS,
             value = position.AnchorTo,
+            mixed = mixed({ 'Position', 'AnchorTo' }),
             callback = function(point) setPosition({ 'Position', 'AnchorTo' }, point) end,
         })
 
@@ -462,6 +518,7 @@ local function TextRows(card, page, element, set, key, triggers, pipName, main)
             max = 40,
             step = 1,
             value = position.XOffset,
+            mixed = mixed({ 'Position', 'XOffset' }),
             callback = function(value) setPosition({ 'Position', 'XOffset' }, value) end,
         })
         offsetRow:Slider(L['Y Offset'], {
@@ -471,6 +528,7 @@ local function TextRows(card, page, element, set, key, triggers, pipName, main)
             max = 40,
             step = 1,
             value = position.YOffset,
+            mixed = mixed({ 'Position', 'YOffset' }),
             callback = function(value) setPosition({ 'Position', 'YOffset' }, value) end,
         })
     end

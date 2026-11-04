@@ -71,8 +71,13 @@ Cast Bar triggers: the player's own cast, channel or empower, with the castbar e
 ---@param trigger table
 ---@return boolean
 local function Matches(trigger)
+    if trigger.Casts == 'all' then return true end
+
     local ids = trigger.SpellIDs
-    if not (ids and ids[1]) then return true end
+    -- specific casts with none listed match nothing; a save from before the mode reads an empty list as every cast
+    if not (ids and ids[1]) then
+        return trigger.Casts == nil
+    end
     for _, spellID in ipairs(ids) do
         if spellID == cast.spellID then return true end
     end
@@ -369,7 +374,7 @@ CDM.TriggerTypes.cast = {
                 ClearExtras(layer)
             end
         elseif CDM.IsPreviewingLayer(layer) then
-            local spellID = trigger.SpellIDs and trigger.SpellIDs[1]
+            local spellID = trigger.Casts ~= 'all' and trigger.SpellIDs and trigger.SpellIDs[1]
             layer.duration = CDM.PreviewDuration(layer, PREVIEW_CAST)
             CDM:SetLayerTimer(layer, layer.duration, CDM.BAR_ELAPSED)
             CDM:SetIconTexture(layer, spellID and GetSpellTexture(spellID))
@@ -431,6 +436,8 @@ CDM.TriggerTypes.cast = {
     ---@param trigger table
     ---@param warnings string[]
     Warnings = function(i, trigger, warnings)
+        if trigger.Casts == 'all' then return end
+
         for _, spellID in ipairs(trigger.SpellIDs or {}) do
             CDM:WarnUnknownSpell(warnings, i, spellID)
         end

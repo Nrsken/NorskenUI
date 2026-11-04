@@ -8,7 +8,6 @@
     <Script file="Sidebar.lua" />
     <Script file="Widgets\IconPicker.lua" />
     <Script file="Widgets\Thumbnail.lua" />
-    <Script file="Widgets\Tree.lua" />
     <Script file="Tabs\DisplaySettings\Common.lua" />
     <Script file="Tabs\DisplaySettings\Icon.lua" />
     <Script file="Tabs\DisplaySettings\Bar.lua" />
@@ -23,6 +22,7 @@
     <Script file="Triggers\Aura.lua" />
     <Script file="Triggers\Stat.lua" />
     <Script file="Triggers\LootSpec.lua" />
+    <Script file="Triggers\Prey.lua" />
     <Script file="Triggers\Item.lua" />
     <Script file="Triggers\Timer.lua" />
     <Script file="Triggers\Power.lua" />

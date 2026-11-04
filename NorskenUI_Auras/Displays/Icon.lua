@@ -15,7 +15,7 @@ An icon layer's art, cropped to the icon's shape, and the cooldown frame's own c
 
 ---The trigger's texture, unless the style picks one by hand; a trigger with none falls back to the manual icon.
 ---@param layer CDMLayer
----@param texture number?
+---@param texture (number|string)?
 function CDM:SetIconTexture(layer, texture)
     local style = layer.owner.style
     if style and style.ManualIcon and (style.IconSource == 'manual' or not texture) then
@@ -60,6 +60,20 @@ function CDM:StyleIconParts(layer, style)
     cooldown:SetSwipeColor(unpack(style.SwipeColor))
     cooldown:SetHideCountdownNumbers(not self:ShowsTimerText(layer, style))
     self:StyleTimerText(cooldown, style)
+end
+
+---Whether a layer draws its icon: an icon display's unless Show Icon is off (older icons never saved it), a bar's only when it's on.
+---@param layer CDMLayer
+---@param style table
+---@param display table?
+---@return boolean
+function CDM:ShowsIcon(layer, style, display)
+    if layer.isText then return false end
+    if display and display.type == 'icon' then
+        return style.IconShow ~= false
+    end
+    -- an aura overlay on a bar is styled as an icon, not as the bar
+    return not layer.isBar or style.IconShow == true
 end
 
 -- Timer Text --

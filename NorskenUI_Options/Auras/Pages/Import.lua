@@ -40,8 +40,9 @@ end
 ---@param card table
 local function BuildImportSummary(card)
     local plan = importState.plan
+    -- the box above keeps its focus while typing, so a bad string marks this card, which rebuilds on every change
+    card:SetNotice(importState.error and { level = 'error', text = importState.error } or nil)
     if importState.error then
-        TextBlock(card, { NRSKNUI:ColorText(importState.error, Theme.warning) })
         return
     elseif not plan then
         TextBlock(card, { NRSKNUI:ColorText(L['Paste a string to see what it adds.'], Theme.textSecondary) })

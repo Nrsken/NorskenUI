@@ -108,6 +108,14 @@ function Catalogue:ResolveSpell(info)
     return info.overrideSpellID or info.spellID
 end
 
+---The spell Blizzard names and pictures an entry by while none of its auras are up (CooldownViewerItemData.lua GetSpellID, live).
+---An aura entry's base spell can be the passive that grants it, like the spec's own, so the tooltip spell goes first.
+---@param info CooldownViewerCooldown
+---@return number?
+function Catalogue:DisplaySpell(info)
+    return info.overrideTooltipSpellID or self:ResolveSpell(info)
+end
+
 -- Events --
 
 -- Same triggers Blizzard's own data provider rebuilds on (CooldownViewerSettingsDataProvider.lua, live).

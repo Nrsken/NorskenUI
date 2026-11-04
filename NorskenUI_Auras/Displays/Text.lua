@@ -33,6 +33,7 @@ Times and power values can be secret, so they only ever go through a duration bi
 -- number formats for value texts; each takes a secret number (LocalizationDocumentation, AllowedWhenTainted)
 local ABBREVIATORS = { abbreviate = AbbreviateNumbers, large = AbbreviateLargeNumbers, breakup = BreakUpLargeNumbers }
 local LITERAL_PERCENT = '\001' -- a typed %%, until the text's kind decides how a percent sign is written
+local args = {} -- one SetFormattedText argument per token, refilled on every update
 
 local TEXT_ROTATIONS = { LEFT = math.pi / 2, RIGHT = -math.pi / 2 }
 local TEXT_PINS = { LEFT = 'LEFT', RIGHT = 'RIGHT', CENTER = 'CENTER', AUTO = 'CENTER' } -- a text display's text, by its alignment
@@ -345,14 +346,19 @@ local function UpdateText(text, from)
         end
 
         if charges then
-            text.fs:SetFormattedText(text.format, charges, charges, charges, charges) -- extra arguments are ignored
+            for i = 1, text.tokens do
+                args[i] = charges
+            end
+            text.fs:SetFormattedText(text.format, unpack(args, 1, text.tokens))
         else
             text.fs:SetText('')
         end
     elseif text.kind == 'value' then
         local order, abbreviate, percent = text.order, text.abbreviate, text.percent
-        text.fs:SetFormattedText(text.format, ValueOf(from, order[1], abbreviate, percent), ValueOf(from, order[2], abbreviate, percent),
-            ValueOf(from, order[3], abbreviate, percent), ValueOf(from, order[4], abbreviate, percent))
+        for i = 1, #order do
+            args[i] = ValueOf(from, order[i], abbreviate, percent)
+        end
+        text.fs:SetFormattedText(text.format, unpack(args, 1, #order))
 
         -- a Value condition's share of the max moves when the max does (talents); a secret max keeps the last one
         local max = from.max

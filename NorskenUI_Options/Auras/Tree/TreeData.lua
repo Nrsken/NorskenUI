@@ -9,6 +9,7 @@ local Theme = NRSKNUI.Theme
 local IconPicker = NRSKNUI.CDMIconPicker
 
 local pairs, ipairs = pairs, ipairs
+local format = string.format
 
 local GetSpellTexture = C_Spell and C_Spell.GetSpellTexture
 
@@ -66,11 +67,15 @@ local function RowData(id, depth, childIndex, index, count)
         depth = depth,
         enabled = display.Enabled,
         draggable = true,
-        expanded = isGroup and expandedGroups[id] == true,
+        expanded = isGroup and expandedGroups[display.uid] == true,
         childCount = children and #children or 0,
         canMoveUp = index ~= nil and index > 1,
         canMoveDown = index ~= nil and index < count,
     }
+
+    -- the row's warning marker: its own warnings and on a group how many displays inside have some
+    local warnings = CDM:GetWarnings(id)
+    data.warned = not isGroup and warnings[1] and 1 or 0
 
     if isGroup then
         local rank = CDM.STATE_RANK
@@ -80,11 +85,17 @@ local function RowData(id, depth, childIndex, index, count)
         for i, child in ipairs(children) do
             local row = RowData(child.key, depth + 1, childIndex, i, #children)
             data.children[i] = row
+            data.warned = data.warned + row.warned
             if row.leaves > 0 then -- an empty group inside adds nothing, as it has no leaves
-                if not best or rank[row.loadState] > rank[best] then best = row.loadState end
+                if not best or rank[row.loadState] > rank[best] then
+                    best = row.loadState
+                end
                 leafIcon = leafIcon or row.leafIcon
                 leaves, pinned, hidden = leaves + row.leaves, pinned + row.pinned, hidden + row.hidden
             end
+        end
+        if data.warned > 0 then
+            warnings[#warnings + 1] = format(L['Displays inside with warnings: %d'], data.warned)
         end
         data.loadState = display.Enabled and (best or 'loaded') or 'unloaded'
         data.icon = display.Icon or leafIcon or QUESTION_MARK
@@ -98,6 +109,8 @@ local function RowData(id, depth, childIndex, index, count)
         data.leafIcon, data.leaves = data.icon, 1
         data.pinned, data.hidden = level == 2 and 1 or 0, level == 0 and 1 or 0
     end
+
+    data.warnings = warnings[1] and warnings or nil
 
     local icon = data.icon
     data.draw = function(canvas, size) return Thumbnail:Draw(canvas, display, size, icon) end
