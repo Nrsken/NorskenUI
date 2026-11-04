@@ -82,10 +82,13 @@ function NRSKNUI:GetJustifyFromAnchor(anchorPoint)
     return 'CENTER'
 end
 
----Check if a specific class is present in the current group.
+---Check if a specific class is present in the current group, the player included (solo too).
 ---@param classFilenameToCheck 'WARRIOR'|'HUNTER'|'ROGUE'|'MAGE'|'PRIEST'|'WARLOCK'|'DRUID'|'SHAMAN'|'PALADIN'|'DEATHKNIGHT'|'MONK'|'DEMONHUNTER'
 ---@return boolean
 function NRSKNUI:IsClassInGroup(classFilenameToCheck)
+    -- a raid's units include the player but a party's don't, so the player is checked first for both
+    if self.MyClass == classFilenameToCheck then return true end
+
     local numMembers = GetNumGroupMembers()
     local prefix = (IsInRaid() and 'raid') or 'party'
     local maxCheck = (IsInRaid() and numMembers) or (numMembers - 1)

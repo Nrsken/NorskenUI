@@ -11,6 +11,7 @@ local IsInGroup = IsInGroup
 local wipe, next = wipe, next
 local CreateFrame = CreateFrame
 local IsInInstance = IsInInstance
+local UnitAffectingCombat = UnitAffectingCombat
 local ipairs, pairs = ipairs, pairs
 local GetInstanceInfo = GetInstanceInfo
 
@@ -79,6 +80,17 @@ local function CheckGroup(config)
 end
 
 -- Combat condition
+-- Read from the REGEN event our own frame gets: NRSKNUI:InCombat()'s flag is set by another frame's handler for
+-- the same event, which may run after ours; InCombatLockdown() can still read false on PLAYER_REGEN_DISABLED.
+local inCombat = false
+
+local function InCombat()
+    if eventFrame then
+        return inCombat
+    end
+    return NRSKNUI:InCombat() -- nothing has registered yet, so no events are tracked
+end
+
 local function CheckCombat(config)
     if not config then return true end
 
@@ -87,8 +99,8 @@ local function CheckCombat(config)
 
     if not wantsInCombat and not wantsOutOfCombat then return true end
     if wantsInCombat and wantsOutOfCombat then return true end
-    if wantsInCombat and not NRSKNUI:InCombat() then return false end
-    if wantsOutOfCombat and NRSKNUI:InCombat() then return false end
+    if wantsInCombat and not InCombat() then return false end
+    if wantsOutOfCombat and InCombat() then return false end
 
     return true
 end
@@ -278,6 +290,12 @@ local TALENT_EVENTS = {
 }
 
 local function OnEvent(_, event)
+    if event == "PLAYER_REGEN_DISABLED" then
+        inCombat = true
+    elseif event == "PLAYER_REGEN_ENABLED" then
+        inCombat = false
+    end
+
     -- the talent config can still be missing on login, so a loading screen rescans too
     local playerChanged = TALENT_EVENTS[event] or event == "PLAYER_SPECIALIZATION_CHANGED" or event == "PLAYER_ENTERING_WORLD"
     if playerChanged then talentsDirty = true end
@@ -290,6 +308,8 @@ end
 local function SetupEventFrame()
     if eventFrame then return end
 
+    -- a reload in combat starts here already in combat, before any REGEN event
+    inCombat = NRSKNUI:InCombat() or UnitAffectingCombat("player")
     eventFrame = CreateFrame("Frame")
     eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
     eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
