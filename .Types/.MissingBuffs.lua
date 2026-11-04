@@ -39,7 +39,8 @@
 ---@field unsafeRestricted? boolean reads nothing while auras are secret despite NeverSecret
 ---@field readyCheckOnly? boolean
 ---@field groupOnly? boolean
----@field suppressedBy? string
+---@field suppressedBy? string[] hidden while any of these entries shows
+---@field poison? 'lethal'|'nonLethal' a Rogue poison's kind in MissingBuffs.Poisons
 ---@field hideOnCooldown? boolean
 ---@field noExpiry? boolean
 

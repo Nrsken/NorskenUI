@@ -91,7 +91,7 @@ MissingBuffs.SpecBeneficiaries = {
     },
 }
 
--- Priority order, the first known and enabled missing one is cast next, lethal before non-lethal.
+-- Priority order: a kind short of poisons shows its first known missing ones.
 MissingBuffs.Poisons = {
     lethal = {
         381664, -- Amplifying
@@ -244,7 +244,7 @@ MissingBuffs.Data = {
             class = 'ROGUE',
             levelRequired = 80,
             groupOnly = true,
-            suppressedBy = 'RoguePoisons',
+            suppressedBy = { 'AtrophicPoison', 'NumbingPoison' },
         },
         {
             key = 'DevotionAura', nameSpellID = 465,
@@ -292,7 +292,14 @@ MissingBuffs.Data = {
         { key = 'GrimoireOfSacrifice', nameSpellID = 108503,  spellID = 196099,                 castSpellID = 108503, class = 'WARLOCK' },
         { key = 'RiteOfAdjuration', nameSpellID = 433583,     spellID = 433584,                 castSpellID = 433583, class = 'PALADIN',        enchantID = 7144,         noExpiry = true,                useWeapon = true },
         { key = 'RiteOfSanctification', nameSpellID = 433568, spellID = 433550,                 castSpellID = 433568, class = 'PALADIN',        enchantID = 7143,         noExpiry = true,                useWeapon = true },
-        { key = 'RoguePoisons',         castSpellID = 315584,             class = 'ROGUE',      icon = 136242,            check = 'Poisons' },
+        -- One icon per poison, so a refresh shows the one running out; all configured as Rogue Poisons.
+        { key = 'AmplifyingPoison',     castSpellID = 381664,             class = 'ROGUE',      poison = 'lethal',        check = 'Poisons',        settingsKey = 'RoguePoisons' },
+        { key = 'DeadlyPoison',         castSpellID = 2823,               class = 'ROGUE',      poison = 'lethal',        check = 'Poisons',        settingsKey = 'RoguePoisons' },
+        { key = 'RoguePoisons',         castSpellID = 315584,             class = 'ROGUE',      poison = 'lethal',        check = 'Poisons' }, -- Instant
+        { key = 'WoundPoison',          castSpellID = 8679,               class = 'ROGUE',      poison = 'lethal',        check = 'Poisons',        settingsKey = 'RoguePoisons' },
+        { key = 'AtrophicPoison',       castSpellID = 381637,             class = 'ROGUE',      poison = 'nonLethal',     check = 'Poisons',        settingsKey = 'RoguePoisons' },
+        { key = 'NumbingPoison',        castSpellID = 5761,               class = 'ROGUE',      poison = 'nonLethal',     check = 'Poisons',        settingsKey = 'RoguePoisons' },
+        { key = 'CripplingPoison',      castSpellID = 3408,               class = 'ROGUE',      poison = 'nonLethal',     check = 'Poisons',        settingsKey = 'RoguePoisons' },
         { key = 'Runeforge',            castSpellID = 53428,              class = 'DEATHKNIGHT', icon = 237523,       check = 'Runeforge',      noExpiry = true },
         -- Only Frost dual wields. Its own icon, but configured on the Runeforge page.
         { key = 'RuneforgeOffHand',     castSpellID = 53428,              class = 'DEATHKNIGHT', specID = 251,        icon = 237523,            check = 'Runeforge',      enchantSlot = 'offhand',  noExpiry = true, settingsKey = 'Runeforge' },

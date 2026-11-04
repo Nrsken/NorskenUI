@@ -602,9 +602,6 @@ function MissingBuffs:ShowPreviewIcons()
     for _, group in pairs(self.groups) do group:ForceLayout() end
 end
 
--- Every group previews on every Missing Buffs page, so moving between them changes nothing.
-function MissingBuffs:UpdatePreviewScope() end
-
 function MissingBuffs:ShowPreview()
     self:CreateFrames()
     self.isPreview = true

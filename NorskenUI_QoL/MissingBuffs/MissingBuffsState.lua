@@ -60,7 +60,6 @@ local SpecBeneficiaries = MissingBuffs.SpecBeneficiaries
 local ClassBeneficiaries = MissingBuffs.ClassBeneficiaries
 
 local CATEGORY_ORDER = { 'Self', 'Raid', 'Presence', 'Targeted', 'Consumable', 'Utility' }
-local POISON_ORDER = { 'lethal', 'nonLethal' }
 
 MissingBuffs.results = {} ---@type table<MissingBuffs.Category, MissingBuffs.Result[]>
 MissingBuffs.shown = {} ---@type table<string, MissingBuffs.Result>
@@ -573,39 +572,36 @@ end
 
 local Checks = {}
 
+---One poison's icon: its own expiry while it's up, else shown when its kind is short and no known poison ahead of it is missing too.
 ---@param entry MissingBuffs.Entry
 function Checks.Poisons(entry)
-    local poisons = MissingBuffs.Poisons
+    local id = entry.castSpellID
+    local aura = GetUnitAuraBySpellID('player', id)
+    if aura then
+        CheckExpiring(entry, 'Self', GetRemaining(aura))
+        return
+    end
+    if not IsSpellKnown(id) then return end
+
     local perCategory = IsSpellKnown(MissingBuffs.DragonTemperedBlades) and 2 or 1
-    local nextCast, minRemaining
-
-    for _, kind in ipairs(POISON_ORDER) do
-        local list = poisons[kind]
-        local known, active, firstMissing = 0, 0, nil
-        for _, id in ipairs(list) do
-            local isKnown = IsSpellKnown(id)
-            if isKnown then known = known + 1 end
-
-            local aura = GetUnitAuraBySpellID('player', id)
-            if aura then
-                active = active + 1
-                local remaining = GetRemaining(aura)
-                if remaining and (not minRemaining or remaining < minRemaining) then minRemaining = remaining end
-            elseif isKnown and not firstMissing then
-                firstMissing = id
-            end
+    local known, active, ahead, reached = 0, 0, 0, false
+    for _, other in ipairs(MissingBuffs.Poisons[entry.poison]) do
+        local isKnown = IsSpellKnown(other)
+        if isKnown then
+            known = known + 1
         end
-
-        local required = known < perCategory and known or perCategory
-        if active < required and not nextCast then nextCast = firstMissing end
+        if other == id then
+            reached = true
+        elseif GetUnitAuraBySpellID('player', other) then
+            active = active + 1
+        elseif isKnown and not reached then
+            ahead = ahead + 1
+        end
     end
 
-    if nextCast then
-        local result = Push(entry, 'Self')
-        result.icon = GetSpellTexture(nextCast)
-        result.castSpell = nextCast
-    else
-        CheckExpiring(entry, 'Self', minRemaining)
+    local required = known < perCategory and known or perCategory
+    if active + ahead < required then
+        Push(entry, 'Self')
     end
 end
 
@@ -770,7 +766,9 @@ end
 
 ---@param entry MissingBuffs.Entry
 function Evaluate.Presence(entry)
-    if entry.suppressedBy and MissingBuffs.shown[entry.suppressedBy] then return end
+    for _, key in ipairs(entry.suppressedBy or {}) do
+        if MissingBuffs.shown[key] then return end
+    end
     if entry.readyCheckOnly and not MissingBuffs.inReadyCheck then return end
     if entry.groupOnly and #units <= 1 then return end
 
