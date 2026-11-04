@@ -272,7 +272,7 @@ function AuraIndicators:Duplicate(key)
 
     local copy = CopyTable(source)
     copy.name = name
-    copy.group, copy.order = nil, nil
+    copy.group, copy.order, copy.category = nil, nil, nil
     store[name] = copy
     self:Invalidate(name)
     return name

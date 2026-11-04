@@ -11,7 +11,29 @@ local GetRealZoneText = GetRealZoneText
 local CURRENT_SEASON_RAIDS = {
     [2987] = true, -- The Tidebound Grotto
     [3004] = true, -- The Venomous Abyss
+    [3095] = true, -- The Unbinding of Kith'ix
 }
+
+-- The game has square icons for dungeons (C_ChallengeMode) but none for raid bosses, so these are kept by hand
+-- each tier, keyed by journal encounter ID as BigWigs' boss modules declare them. A missing boss shows its portrait.
+local BOSS_ICONS = {
+    [2849] = 3012069, -- Nymrissa Wavecaller
+    [2888] = 7966621, -- Nek'zali the Soulcoiler
+    [2874] = 7966620, -- Entombed Sentinels
+    [2894] = 7966622, -- The Lost Explorers
+    [2882] = 7966618, -- Vashnik the Malignant
+    [2871] = 7966619, -- Sszorak
+    [2887] = 7966623, -- The Twin Fangs
+    [2883] = 7966625, -- The Coiled Altar
+    [2895] = 7966624, -- Ula'tek
+    [2896] = 8214194, -- Kith'ix
+}
+
+---@param journalId number
+---@return number? fileID
+function BigWigsTimers:GetBossIcon(journalId)
+    return BOSS_ICONS[journalId]
+end
 
 local seasonData
 

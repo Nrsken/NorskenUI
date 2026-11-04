@@ -39,11 +39,9 @@ BigWigsTimers.matched = {}
 BigWigsTimers.previewEntries = {}
 BigWigsTimers.announceWindow = 0
 
--- Anchors only resolve the two group settings pages, so the trigger pages are claimed directly.
+-- Anchors only resolve the display page, so the trigger pages are claimed directly.
 BigWigsTimers.previewPages = {
-    'bwTimers',
-    'bwTimersBars',
-    'bwTimersTexts',
+    'bwTimersDisplay',
     'bwTimersDungeons',
     'bwTimersRaids',
 }
@@ -106,8 +104,8 @@ function BigWigsTimers:CreateFrames()
     updater:NUIApplyOnUpdate(UPDATE_THROTTLE, function() self:OnUpdate() end)
     self.updater = updater
 
-    Anchors:Register(self, 'BigWigsTimerBars', self.groups[BARS], 'bwTimersBars', { db = self.db[BARS], displayName = L['BigWigs Timer Bars'] })
-    Anchors:Register(self, 'BigWigsTimerTexts', self.groups[TEXTS], 'bwTimersTexts', { db = self.db[TEXTS], displayName = L['BigWigs Timer Texts'] })
+    Anchors:Register(self, 'BigWigsTimerBars', self.groups[BARS], 'bwTimersDisplay', { db = self.db[BARS], displayName = L['BigWigs Timer Bars'], guiContext = { tabId = 'bars' } })
+    Anchors:Register(self, 'BigWigsTimerTexts', self.groups[TEXTS], 'bwTimersDisplay', { db = self.db[TEXTS], displayName = L['BigWigs Timer Texts'], guiContext = { tabId = 'texts' } })
 end
 
 ---@param index number

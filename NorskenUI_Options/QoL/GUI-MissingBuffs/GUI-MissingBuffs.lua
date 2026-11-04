@@ -126,69 +126,67 @@ end
 
 -- Sidebar --
 
+local folded = {} -- [band key] = true while closed, for the session; the bands start open
+
+---@param key string
+---@param text string
+---@return table
+local function Band(key, text)
+    return { key = key, text = text, collapsed = folded[key] == true, rows = {} }
+end
+
+---The group's own settings in a band of their own, then a band per category of buffs.
 ---@param groupPage table
----@return fun(): table[]
-local function SidebarItems(groupPage)
+---@return fun(): table
+local function TreeContent(groupPage)
     return function()
         local buffs = NRSKNUI.MissingBuffs.db.Buffs
-        local items = {
-            { type = 'label', key = 'category:general', text = L['General Settings'] },
-            { key = GENERAL, text = L['Dynamic Group'], icon = GENERAL_ICON },
-        }
+        local general = { key = GENERAL, text = L['Dynamic Group'], icon = GENERAL_ICON, depth = 0, enabled = true }
+        local settings = Band('band:general', L['General Settings'])
+        settings.rows[1] = general
+        local sections = { settings }
 
         for _, category in ipairs(groupPage.categories) do
-            items[#items + 1] = { type = 'label', key = 'category:' .. category, text = CATEGORIES[category].text }
+            local band = Band('band:' .. category, CATEGORIES[category].text)
             for _, entry in ipairs(MissingBuffs.Data[category]) do
                 -- An entry sharing another's settings is configured on that entry's page.
                 if not entry.settingsKey then
-                    items[#items + 1] = {
+                    local enabled = buffs[entry.key].Enabled == true
+                    band.rows[#band.rows + 1] = {
                         key = entry.key,
                         text = GetEntryName(entry),
                         icon = GetEntryIcon(entry),
-                        disabled = not buffs[entry.key].Enabled,
+                        depth = 0,
+                        enabled = enabled,
+                        loadState = enabled and 'loaded' or 'unloaded',
+                        stateTitle = enabled and L['Enabled'] or L['Disabled'],
                     }
                 end
             end
+            sections[#sections + 1] = band
         end
 
-        return items
+        -- deselecting a buff lands back on the group's settings
+        return { general = general, sections = sections }
     end
 end
 
----@param groupPage table
-local function RefreshSidebar(groupPage)
+---Re-render the tree in place, so a buff switched on or off shows it without rebuilding the page.
+local function RefreshSidebar()
     local window = NRSKNUI.GUIFrame
     local sidebar = window and window.content and window.content.miniSidebar
     if not sidebar then return end
 
-    local selected = sidebar:GetSelected()
-    sidebar:SetItems(groupPage.items())
-    sidebar:SetSelected(selected)
+    sidebar:SetItems()
 end
 
 -- General Tab --
 
-local function BuildModuleCards(page, db)
-    local enableCard = page:Card(L['Missing Buffs'])
-    enableCard:Row(rowH):Checkbox(L['Enable Missing Buffs'], {
-        width = 1,
-        master = true,
-        value = db.Enabled == true,
-        msgPopup = true,
-        msgText = L['Missing Buffs'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('MissingBuffs', checked)
-            page:Refresh()
-            if checked and MissingBuffs then MissingBuffs:ShowPreview() end
-        end,
-    })
-
-    enableCard:Separator()
-
-    local dropdownRow = enableCard:Row(rowHL, 0)
-    dropdownRow:Dropdown(L['Raid Buff Mode'], {
-        width = 1,
+local function BuildBehaviourCard(page, db)
+    local behaviourCard = page:Card(L['Behaviour (All Groups)'], 'all')
+    local modeRow = behaviourCard:Row(rowH)
+    modeRow:Dropdown(L['Raid Buff Mode'], {
+        width = 0.5,
         options = RAID_MODE_OPTIONS,
         value = db.RaidBuffMode,
         tooltip = L['Group shows a raid buff when anyone it helps is missing it. Personal shows it only when you are missing it and someone in the group can cast it. A buff you cast yourself always uses Group.'],
@@ -197,10 +195,8 @@ local function BuildModuleCards(page, db)
             ApplySettings()
         end,
     })
-
-    local behaviourCard = page:Card(L['Behaviour (All Groups)'], 'all')
-    behaviourCard:Row(rowH):Checkbox(L['Click to Cast'], {
-        width = 1,
+    modeRow:Checkbox(L['Click to Cast'], {
+        width = 0.5,
         value = db.ClickToCast,
         tooltip = L['Click an icon out of combat to cast the buff or use the consumable.'],
         callback = function(checked)
@@ -361,7 +357,7 @@ local function BuildRuneforgeCard(page)
     end
 end
 
-local function BuildBuffSettingsTab(page, groupPage, entry, category, settings)
+local function BuildBuffSettingsTab(page, entry, category, settings)
     local info = CATEGORIES[category]
     local infoCard = page:Card(GetEntryName(entry))
     infoCard:Row(40):Icon({
@@ -398,7 +394,7 @@ local function BuildBuffSettingsTab(page, groupPage, entry, category, settings)
         callback = function(checked)
             settings.Enabled = checked
             page:Refresh()
-            RefreshSidebar(groupPage)
+            RefreshSidebar()
             ApplySettings()
         end,
     })
@@ -446,15 +442,18 @@ end
 -- Pages --
 
 for _, groupPage in ipairs(GROUP_PAGES) do
-    groupPage.items = SidebarItems(groupPage)
-
     GUI:RegisterPage(groupPage.page, {
         mode = 'tabs',
         search = { L['Missing Buffs'], groupPage.text },
         sidebar = {
-            items = groupPage.items,
-            width = 210,
+            width = 260,
+            create = NRSKNUI.CreateItemTree,
+            locked = function() return not NRSKNUI.MissingBuffs.db.Enabled end,
+            items = TreeContent(groupPage),
             default = GENERAL,
+            onToggleExpanded = function(key, open)
+                folded[key] = not open or nil
+            end,
         },
         tabs = function(itemKey)
             return itemKey == GENERAL and GENERAL_TABS or BUFF_TABS
@@ -467,7 +466,7 @@ for _, groupPage in ipairs(GROUP_PAGES) do
             if itemKey == GENERAL then
                 local groupDb = db.Groups[groupPage.group]
                 if tabId == 'general' then
-                    BuildModuleCards(page, db)
+                    BuildBehaviourCard(page, db)
                     BuildAppearanceCard(page, groupDb)
                 elseif tabId == 'font' then
                     page:FontSettingsCard({ db = groupDb, includeSoftOutline = true, onChangeCallback = ApplySettings, globalOverride = {} })
@@ -485,7 +484,7 @@ for _, groupPage in ipairs(GROUP_PAGES) do
             page:SetEnabled(function() return db.Enabled == true and settings.Enabled == true end)
 
             if tabId == 'settings' then
-                BuildBuffSettingsTab(page, groupPage, entry, category, settings)
+                BuildBuffSettingsTab(page, entry, category, settings)
             elseif tabId == 'glow' then
                 page:GlowSettingsCard({
                     db = settings,
@@ -497,11 +496,22 @@ for _, groupPage in ipairs(GROUP_PAGES) do
             elseif tabId == 'load' then
                 page:LoadConditionsCard({
                     db = settings.LoadConditions,
+                    specs = true,
                     onChangeCallback = function()
-                        if MissingBuffs and MissingBuffs:IsEnabled() then MissingBuffs:RequestUpdate() end
+                        if MissingBuffs and MissingBuffs:IsEnabled() then
+                            MissingBuffs:RequestUpdate()
+                        end
                     end,
                 })
             end
         end,
     })
 end
+
+-- the tree locks with the module; switching on shows what it would flag
+NRSKNUI.ModuleHeader:OnToggle('MissingBuffs', function(enabled)
+    RefreshSidebar()
+    if enabled and MissingBuffs then
+        MissingBuffs:ShowPreview()
+    end
+end)

@@ -15,15 +15,25 @@ local TriggerEditor = NRSKNUI.GUITriggerEditor
 local AuraCards = NRSKNUI.GUIAuraCards
 local OutlineOptions = NRSKNUI:GetOutlineOptions(true)
 
-local ipairs = ipairs
+local ipairs, pairs = ipairs, pairs
 local tonumber = tonumber
 local format = string.format
+local insert = table.insert
 local CopyTable = CopyTable
 local wipe = wipe
+local GetSpellTexture = C_Spell.GetSpellTexture
 
 local PAGE = 'unitFramesIndicators'
-local INDICATORS_SECTION = 'auraIndicators_section'
+local NEW = 'new'
+local PRESETS_SECTION = 'band:presets'
+local OWN_SECTION = 'band:own'
+local CATEGORY_PREFIX = 'category:'
+local BUTTON_ROW_HEIGHT = 24 -- Kaji's own widget height, so a row of buttons takes no more than they do
+local BUFF_ICON_SPELL = 21562 -- Power Word: Fortitude
+local DEBUFF_ICON_SPELL = 589 -- Shadow Word: Pain
 local Styles = AuraIndicators.Styles
+
+local openGroups = {} -- [group key] = true while open, for the session; every class and user group starts folded
 
 local STYLE_OPTIONS = {
     { value = Styles.Overlay,  text = L['Overlay Tint'] },
@@ -58,18 +68,17 @@ local function Reopen(selectKey)
     window.content:ShowPage(PAGE, selectKey and { itemKey = selectKey } or nil)
 end
 
----@return table? miniSidebar
-local function MiniSidebar()
+---@return table? tree
+local function Tree()
     local content = NRSKNUI.GUIFrame and NRSKNUI.GUIFrame.content
     return content and content.miniSidebar
 end
 
----@param presetKey string? start from this preset
----@param presetName string? its name, the suggested indicator name
-local function CreateIndicatorPrompt(presetKey, presetName)
+---@param groupKey string? the group it goes into
+local function CreateIndicatorPrompt(groupKey)
     NRSKNUI:CreatePrompt({
         title = L['Create Indicator'],
-        text = presetName or '',
+        text = '',
         editBox = true,
         editBoxLabel = L['Indicator Name'],
         onAccept = function(name)
@@ -82,26 +91,17 @@ local function CreateIndicatorPrompt(presetKey, presetName)
                 return
             end
 
-            AuraIndicators:Create(name, name, presetKey)
+            AuraIndicators:Create(name, name)
+            -- the new indicator is the selection, so its group has to be open for it to be seen
+            if groupKey then
+                AuraIndicators:SetGroup(name, groupKey)
+                Tree():SetExpanded(groupKey, true)
+            end
             Reopen(name)
         end,
         acceptText = L['Create'],
         cancelText = L['Cancel'],
     })
-end
-
-local function NewIndicatorMenu()
-    local entries = {
-        { text = L['Empty Indicator'], onClick = function() CreateIndicatorPrompt() end },
-        { divider = true },
-    }
-    for _, preset in ipairs(Premade:GetList()) do
-        entries[#entries + 1] = {
-            text = format(L['From %s'], preset.text),
-            onClick = function() CreateIndicatorPrompt(preset.key, preset.text) end,
-        }
-    end
-    GUI:ShowContextMenu(entries)
 end
 
 ---Make a group and move this indicator into it.
@@ -153,51 +153,59 @@ local function DuplicateIndicator(key)
     if newKey then Reopen(newKey) end
 end
 
+---@param keys string[] shipped indicators to put back
+---@param title string
+---@param text string
+local function ResetPrompt(keys, title, text)
+    NRSKNUI:CreatePrompt({
+        title = title,
+        text = text,
+        onAccept = function()
+            for _, key in ipairs(keys) do
+                AuraIndicators:ResetBuiltin(key)
+            end
+            -- whatever is open may be one of them, so it rebuilds from the reset spec
+            Reopen(Tree():GetSelected())
+        end,
+        acceptText = L['Reset'],
+        cancelText = L['Cancel'],
+    })
+end
+
 ---@param key string
 local function BuiltinMenu(key)
     local spec = AuraIndicators:GetSpec(key)
-    local shipped = AuraTriggers:GetShipped(spec.Trigger)
-    local entries = {
+
+    GUI:ShowContextMenu({
         { text = L['Duplicate as Custom'], onClick = function() DuplicateIndicator(key) end },
         { divider = true },
-    }
-
-    if shipped and (shipped.Added or shipped.Removed) then
-        entries[#entries + 1] = {
-            text = L['Reset Spells to Default'],
+        {
+            text = L['Reset to Default'],
             onClick = function()
-                NRSKNUI:CreatePrompt({
-                    title = L['Reset Spells to Default'],
-                    text = L['Remove the spells you added and switch every default spell back on?'],
-                    onAccept = function()
-                        shipped.Added, shipped.Removed = nil, nil
-                        Changed(key)
-                        Reopen(key)
-                    end,
-                    acceptText = L['Reset'],
-                    cancelText = L['Cancel'],
-                })
+                ResetPrompt({ key }, L['Reset to Default'],
+                    format(L["Put '%s' back to how it shipped, its triggers and color included?"], spec.name or key))
             end,
-        }
+        },
+    })
+end
+
+---@param item table a class group's tree row
+local function CategoryMenu(item)
+    local keys = {}
+    for _, child in ipairs(item.children) do
+        keys[#keys + 1] = child.key
     end
 
-    entries[#entries + 1] = {
-        text = L['Reset Everything to Default'],
-        onClick = function()
-            NRSKNUI:CreatePrompt({
-                title = L['Reset Everything to Default'],
-                text = format(L["Put '%s' back to how it shipped, its triggers and color included?"], spec.name or key),
-                onAccept = function()
-                    AuraIndicators:ResetBuiltin(key)
-                    Reopen(key)
-                end,
-                acceptText = L['Reset'],
-                cancelText = L['Cancel'],
-            })
-        end,
-    }
-
-    GUI:ShowContextMenu(entries)
+    local title = format(L['Reset %s to Default'], item.text)
+    GUI:ShowContextMenu({
+        {
+            text = title,
+            onClick = function()
+                ResetPrompt(keys, title,
+                    format(L['Put every %s indicator back to how it shipped, triggers and colors included?'], item.text))
+            end,
+        },
+    })
 end
 
 local function BuildLibraryPage(page, key, spec)
@@ -238,18 +246,37 @@ local function BuildLibraryPage(page, key, spec)
     })
 end
 
----@param key string
----@param text string
+-- Sidebar --
+
+---The sidebar's icon, only a picture: the lowest spell it whitelists, which is the baseline one when a
+---spell has an echo or a talent copy, else a stand-in for its aura type.
 ---@param spec table
----@return table
-local function IndicatorItem(key, text, spec)
-    return {
-        key = key,
-        text = text,
-        draggable = true,
-        renamable = true,
-        grouped = spec.group ~= nil,
-    }
+---@return number|string?
+local function IndicatorIcon(spec)
+    local trigger = spec.Trigger or {}
+    local maps = {}
+    -- an unconverted SpellIDs save is AceDB-refilled with its old list after conversion, so only its type says it's live
+    if trigger.Type == AuraTriggers.Types.SpellIDs then
+        maps[1] = trigger.SpellIDs
+    else
+        for _, branch in ipairs(trigger.branches or {}) do
+            maps[#maps + 1] = branch.candidates and branch.candidates.includeSpellIDs
+        end
+    end
+
+    local lowest
+    for _, map in ipairs(maps) do
+        for id, on in pairs(map) do
+            if on and (not lowest or id < lowest) then
+                lowest = id
+            end
+        end
+    end
+    if lowest then
+        return GetSpellTexture(lowest)
+    end
+
+    return GetSpellTexture(trigger.Base == AuraUtil.AuraFilters.Harmful and DEBUFF_ICON_SPELL or BUFF_ICON_SPELL)
 end
 
 ---@param key string
@@ -258,71 +285,146 @@ local function IsOpen(key)
     return not NRSKNUI.db.global.SidebarCollapsed[PAGE][key]
 end
 
----Defaults first, then groups and loose indicators by name; only a group's own indicators keep a manual order.
----@return table[]
-local function SidebarItems()
-    local items = {}
+---@param key string
+---@param text string
+---@param depth number
+---@return table
+local function IndicatorRow(key, text, depth)
+    local shipped = AuraIndicators:IsBuiltin(key)
 
-    local shipped = {}
-    for _, entry in ipairs(AuraIndicators:GetList()) do
-        if AuraIndicators:IsBuiltin(entry.key) then
-            shipped[#shipped + 1] = { key = entry.key, text = entry.text }
+    return {
+        key = key,
+        text = text,
+        icon = IndicatorIcon(AuraIndicators:GetSpec(key)),
+        depth = depth,
+        enabled = true,
+        draggable = not shipped,
+        fixed = shipped,
+    }
+end
+
+-- the canvas only ever holds this one texture on this page, so it's kept on the canvas and re-pointed
+---@param classFile string
+---@return fun(canvas: Frame): boolean
+local function DrawClassIcon(classFile)
+    return function(canvas)
+        local texture = canvas.NUIClassIcon
+        if not texture then
+            texture = canvas:CreateTexture(nil, 'ARTWORK')
+            texture:NUISetPixelInside(canvas, 0, 0)
+            canvas.NUIClassIcon = texture
         end
+        texture:SetAtlas(GetClassAtlas(classFile:lower()))
+        texture:Show()
+        return true
     end
+end
 
-    if shipped[1] then
-        items[#items + 1] = {
-            type = 'header',
-            key = INDICATORS_SECTION,
-            text = L['Default Indicators'],
-            defaultExpanded = IsOpen(INDICATORS_SECTION),
-            items = shipped,
-        }
-    end
+---The shipped indicators under Presets, the unclassed ones loose and a folding group per class, then the
+---user's own: their groups and loose ones by name, only a group's members keeping a manual order. An empty
+---user group stays listed so it can be dropped into.
+---@return table
+local function TreeContent()
+    local presets = { key = PRESETS_SECTION, text = L['Presets'], collapsed = not IsOpen(PRESETS_SECTION), rows = {} }
+    local own = { key = OWN_SECTION, text = L['Your Indicators'], collapsed = not IsOpen(OWN_SECTION), rows = {} }
+    local categories = {}
 
-    -- An empty group stays listed, so an indicator can be dragged back into it.
     for _, group in ipairs(AuraIndicators:GetGroups()) do
-        local members = {}
-        for _, member in ipairs(AuraIndicators:GetMembers(group.key)) do
-            members[#members + 1] = IndicatorItem(member.key, member.text, AuraIndicators:GetSpec(member.key))
+        local children = {}
+        local members = AuraIndicators:GetMembers(group.key)
+        for index, member in ipairs(members) do
+            local child = IndicatorRow(member.key, member.text, 1)
+            child.canMoveUp = index > 1
+            child.canMoveDown = index < #members
+            insert(children, child)
         end
 
-        items[#items + 1] = {
-            type = 'header',
+        -- a group wears its first member's icon
+        insert(own.rows, {
             key = group.key,
             text = group.name,
+            icon = children[1] and children[1].icon or GetSpellTexture(BUFF_ICON_SPELL),
+            depth = 0,
+            enabled = true,
             isGroup = true,
-            defaultExpanded = IsOpen(group.key),
-            items = members,
-        }
+            expanded = openGroups[group.key] == true,
+            children = children,
+            childCount = #children,
+        })
     end
 
     for _, entry in ipairs(AuraIndicators:GetList()) do
         local spec = AuraIndicators:GetSpec(entry.key)
-        if spec and not spec.group and not AuraIndicators:IsBuiltin(entry.key) then
-            items[#items + 1] = IndicatorItem(entry.key, entry.text, spec)
+        local category = spec.category
+        if category then
+            categories[category] = categories[category] or {}
+            insert(categories[category], IndicatorRow(entry.key, entry.text, 1))
+        elseif AuraIndicators:IsBuiltin(entry.key) then
+            insert(presets.rows, IndicatorRow(entry.key, entry.text, 0))
+        elseif not spec.group then
+            insert(own.rows, IndicatorRow(entry.key, entry.text, 0))
         end
     end
 
-    return items
+    -- the classes as the presets order them, a shared group like Trinkets after them
+    for _, category in ipairs(Premade.Groups) do
+        local children = categories[category]
+        if children then
+            local key = CATEGORY_PREFIX .. category
+            local isClass = Premade:IsClassGroup(category)
+            insert(presets.rows, {
+                key = key,
+                text = Premade:GetGroupName(category),
+                icon = not isClass and children[1].icon or nil,
+                draw = isClass and DrawClassIcon(category) or nil,
+                depth = 0,
+                enabled = true,
+                isGroup = true,
+                shipped = true,
+                expanded = openGroups[key] == true,
+                children = children,
+                childCount = #children,
+            })
+        end
+    end
+
+    return { general = { key = NEW, text = L['New Indicator'] }, sections = { presets, own } }
 end
 
-local function RefreshSidebar()
-    local sidebar = MiniSidebar()
-    if sidebar then sidebar:SetItems(SidebarItems()) end
+local function RefreshTree()
+    local tree = Tree()
+    if not tree then return end
+
+    tree:SetItems()
 end
 
 ---@param groupKey string
 local function GroupMenu(groupKey)
     GUI:ShowContextMenu({
-        { text = L['Rename'], onClick = function() MiniSidebar():BeginRename(groupKey) end },
+        { text = L['New Indicator'], onClick = function() CreateIndicatorPrompt(groupKey) end },
+        { divider = true },
+        { text = L['Rename'],        onClick = function() Tree():BeginRename(groupKey) end },
         {
             text = L['Delete Group'],
             onClick = function()
                 AuraIndicators:DeleteGroup(groupKey)
-                RefreshSidebar()
+                RefreshTree()
             end,
         },
+    })
+end
+
+---What a group's or nothing's selection opens on, an indicator made inside the group when it's one of the
+---user's; a preset is picked later on its trigger.
+---@param page KajiGUIPage
+---@param item table? the tree row, a group's for its name
+local function BuildNewPage(page, item)
+    local groupKey = item and item.isGroup and not item.shipped and item.key or nil
+
+    page:Card(groupKey and item.text or L['New Indicator']):Row(BUTTON_ROW_HEIGHT):Button(L['Create Indicator'], {
+        width = 1,
+        height = BUTTON_ROW_HEIGHT,
+        callback = function() CreateIndicatorPrompt(groupKey) end,
     })
 end
 
@@ -330,52 +432,96 @@ GUI:RegisterPage(PAGE, {
     mode = 'clean',
     search = {},
     sidebar = {
-        buttons = {
-            { text = L['New Indicator'], onClick = NewIndicatorMenu },
-        },
-        items = SidebarItems,
-        onToggle = function(key, expanded)
-            NRSKNUI.db.global.SidebarCollapsed[PAGE][key] = (not expanded) or nil
+        width = 260,
+        create = NRSKNUI.CreateItemTree,
+        items = TreeContent,
+        -- the two bands start open and remember closing, every group starts folded and remembers opening
+        onToggleExpanded = function(key, expanded)
+            if key == PRESETS_SECTION or key == OWN_SECTION then
+                NRSKNUI.db.global.SidebarCollapsed[PAGE][key] = (not expanded) or nil
+            else
+                openGroups[key] = expanded or nil
+            end
         end,
         onRename = function(key, text, item)
             if item.isGroup then
                 AuraIndicators:RenameGroup(key, text)
-                RefreshSidebar()
+                RefreshTree()
                 return
             end
 
-            -- An indicator is keyed by its name, so a taken name is refused and a rename moves the key.
+            -- an indicator is keyed by its name, so a taken name is refused and a rename moves the key
             local newKey = AuraIndicators:Rename(key, text)
-            if not newKey then return false end
-            if MiniSidebar():GetSelected() == key then
+            if not newKey then
+                NRSKNUI:Print(L['An indicator with that name already exists'])
+                return
+            end
+            if Tree():GetSelected() == key then
                 Reopen(newKey)
             else
-                RefreshSidebar()
+                RefreshTree()
             end
         end,
-        -- Into a group, or next to a grouped indicator; next to a loose one only takes an indicator out of its group.
+        -- into a group or next to a grouped indicator; next to a loose one only takes an indicator out of its group
         canDrop = function(item, target, position)
-            if position == 'into' then return target.isGroup == true end
-            return target.draggable == true and (target.grouped or item.grouped)
-        end,
-        onMove = function(key, targetKey, position)
             if position == 'into' then
-                AuraIndicators:SetGroup(key, targetKey)
-            else
-                AuraIndicators:MoveNextTo(key, targetKey, position)
+                return target.isGroup == true and not target.shipped
             end
-            RefreshSidebar()
-            if position == 'into' then MiniSidebar():SetExpanded(targetKey, true) end
+            if not target.draggable then return false end
+
+            return AuraIndicators:GetSpec(target.key).group ~= nil or AuraIndicators:GetSpec(item.key).group ~= nil
+        end,
+        onMove = function(keys, targetKey, position)
+            -- after the target each one follows it, so going in reverse keeps their order
+            local reverse = position == 'after'
+            for i = reverse and #keys or 1, reverse and 1 or #keys, reverse and -1 or 1 do
+                if position == 'into' then
+                    AuraIndicators:SetGroup(keys[i], targetKey)
+                else
+                    AuraIndicators:MoveNextTo(keys[i], targetKey, position)
+                end
+            end
+
+            if position == 'into' then
+                Tree():SetExpanded(targetKey, true)
+            else
+                RefreshTree()
+            end
+        end,
+        onMoveInGroup = function(key, delta)
+            local members = AuraIndicators:GetMembers(AuraIndicators:GetSpec(key).group)
+            for index, member in ipairs(members) do
+                local neighbour = member.key == key and members[index + delta]
+                if neighbour then
+                    AuraIndicators:MoveNextTo(key, neighbour.key, delta < 0 and 'before' or 'after')
+                    break
+                end
+            end
+            RefreshTree()
+        end,
+        onUngroup = function(key)
+            AuraIndicators:SetGroup(key, nil)
+            RefreshTree()
         end,
         onContextMenu = function(key, item)
-            if item and item.isGroup then return GroupMenu(key) end
-            if AuraIndicators:IsBuiltin(key) then return BuiltinMenu(key) end
+            if item and item.shipped then
+                CategoryMenu(item)
+                return
+            end
+            if item and item.isGroup then
+                GroupMenu(key)
+                return
+            end
+            if AuraIndicators:IsBuiltin(key) then
+                BuiltinMenu(key)
+                return
+            end
 
             local spec = AuraIndicators:GetSpec(key)
             if not spec then return end
 
             local entries = {
-                { text = L['Rename'],           onClick = function() MiniSidebar():BeginRename(key) end },
+                { text = L['Rename'],           onClick = function() Tree():BeginRename(key) end },
                 { text = L['Duplicate'],        onClick = function() DuplicateIndicator(key) end },
                 { text = L['Delete'],           onClick = function() DeleteIndicatorPrompt(key) end },
                 { divider = true },
@@ -388,7 +534,7 @@ GUI:RegisterPage(PAGE, {
                         text = format(L['Add to %s'], group.name),
                         onClick = function()
                             AuraIndicators:SetGroup(key, group.key)
-                            RefreshSidebar()
+                            RefreshTree()
                         end,
                     }
                 end
@@ -399,7 +545,7 @@ GUI:RegisterPage(PAGE, {
                     text = L['Remove from Group'],
                     onClick = function()
                         AuraIndicators:SetGroup(key, nil)
-                        RefreshSidebar()
+                        RefreshTree()
                     end,
                 }
             end
@@ -407,17 +553,12 @@ GUI:RegisterPage(PAGE, {
             GUI:ShowContextMenu(entries)
         end,
     },
-    build = function(page, _, itemKey)
+    build = function(page, _, itemKey, item)
         if not NRSKNUI.db or not Store() then return end
 
         local spec = itemKey and AuraIndicators:GetSpec(itemKey)
         if not spec then
-            page:Card(L['Aura Indicators']):Row(rowH):Text(L['Aura Indicators'], {
-                width = 1,
-                text = L['No indicators yet. Use New Indicator to create one.'],
-                height = rowH,
-                bgMode = 'hide',
-            })
+            BuildNewPage(page, item)
             return
         end
 

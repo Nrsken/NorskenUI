@@ -326,23 +326,3 @@ function BigWigsTimers:SetTriggerBoss(instanceId, triggerId, bossId)
     self:RebuildActiveTriggers()
 end
 
----Moving keeps the trigger's settings but not its Id, which belongs to the instance it came from.
----@param fromId number
----@param triggerId number
----@param toId number
----@return number? newTriggerId
-function BigWigsTimers:MoveTriggerToInstance(fromId, triggerId, toId)
-    local trigger, index = self:GetTrigger(fromId, triggerId)
-    if not trigger or not index or fromId == toId then return end
-
-    local target = self:GetInstanceDB(toId)
-
-    remove(self:GetInstanceDB(fromId).Triggers, index)
-    trigger.BossId = 0 -- a journal ID means nothing in the instance it just left
-    trigger.Id = target.NextId
-    target.NextId = target.NextId + 1
-    insert(target.Triggers, trigger)
-    self:RebuildActiveTriggers()
-
-    return trigger.Id
-end

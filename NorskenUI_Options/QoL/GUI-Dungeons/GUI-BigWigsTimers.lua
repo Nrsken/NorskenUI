@@ -11,48 +11,15 @@ local rowHL = Theme.rowHeightLast
 
 local function ApplySettings() BigWigsTimers:ApplySettings() end
 
--- General --
+-- Display --
 
-GUI:RegisterPage('bwTimers', {
-    mode = 'clean',
-    search = { L['BigWigs Timers'], L['Boss Mod Timer'] },
-    build = function(page)
-        local db = NRSKNUI.BigWigsTimers.db
-
-        local enableCard = page:Card(L['BigWigs Timers'])
-        enableCard:Row(rowH):Checkbox(L['Enable BigWigs Timers'], {
-            width = 1,
-            master = true,
-            value = db.Enabled,
-            msgPopup = true,
-            msgText = L['BigWigs Timers'],
-            callback = function(checked)
-                db.Enabled = checked
-                NRSKNUI:ToggleModule('BigWigsTimers', checked)
-                page:Refresh()
-            end,
-        })
-
-        enableCard:Separator()
-
-        enableCard:Row(rowHL, 0):Text(L['About'], {
-            width = 1,
-            autoHeight = true,
-            bgMode = 'hide',
-            text = NRSKNUI:ColorTextByTheme('• ') ..
-                L['Timers are configured per instance under Dungeons and Raids. Dungeons follow the season BigWigs reports; raids are grouped by boss and limited to the current tier.'],
-        })
-    end,
-})
-
--- Bar and text groups --
+-- one tab per kind of timer (bar, text), each kind's look out to where its group sits in one scroll
 
 ---@param page KajiGUIPage
 ---@param db table
-local function BuildBarAppearance(page, db)
-    local sizeCard = page:Card(L['Bar Appearance'], 'all')
-    local sizeRow = sizeCard:Row(rowH)
-
+local function BuildBarCard(page, db)
+    local card = page:Card(L['Bar'], 'all')
+    local sizeRow = card:Row(rowH)
     sizeRow:Slider(L['Width'], {
         width = 0.5,
         min = 60,
@@ -60,7 +27,8 @@ local function BuildBarAppearance(page, db)
         step = 1,
         value = db.Width,
         callback = function(val)
-            db.Width = val; ApplySettings()
+            db.Width = val
+            ApplySettings()
         end,
     })
     sizeRow:Slider(L['Height'], {
@@ -70,11 +38,12 @@ local function BuildBarAppearance(page, db)
         step = 1,
         value = db.Height,
         callback = function(val)
-            db.Height = val; ApplySettings()
+            db.Height = val
+            ApplySettings()
         end,
     })
 
-    local textureRow = sizeCard:Row(rowH)
+    local textureRow = card:Row(rowH)
     textureRow:Checkbox(L['Use Global Bar'], {
         width = 0.5,
         value = db.UseGlobalBar,
@@ -91,71 +60,61 @@ local function BuildBarAppearance(page, db)
         conditions = { 'customBar' },
         value = db.StatusBarTexture,
         callback = function(key)
-            db.StatusBarTexture = key; ApplySettings()
+            db.StatusBarTexture = key
+            ApplySettings()
         end,
     })
 
-    sizeCard:Row(rowHL, 0):Checkbox(L['Show Spell Icon'], {
+    card:Row(rowHL, 0):Checkbox(L['Show Spell Icon'], {
         width = 1,
         value = db.Icon.Enabled,
         callback = function(checked)
-            db.Icon.Enabled = checked; ApplySettings()
+            db.Icon.Enabled = checked
+            ApplySettings()
         end,
     })
-
-    page:BackdropColorsCard({ db = db, onChangeCallback = ApplySettings })
 end
 
----One registration for each group. The text group has nothing to put on an Appearance tab: its
----alignment is the dynamic group's own Align setting, on the Layout tab.
----@param pageId string
----@param dbKey 'Bars'|'Texts'
----@param title string
----@param BuildAppearance? fun(page: KajiGUIPage, db: table)
+---The cards both kinds share, after whatever is the kind's own.
+---@param page KajiGUIPage
+---@param db table
 ---@param fontSizeLabel string
-local function RegisterGroupPage(pageId, dbKey, title, BuildAppearance, fontSizeLabel)
-    local tabs = {
-        { id = 'layout',   text = L['Layout'] },
-        { id = 'font',     text = L['Font Settings'] },
-        { id = 'position', text = L['Position Settings'] },
-    }
-
-    if BuildAppearance then
-        table.insert(tabs, 1, { id = 'appearance', text = L['Appearance'] })
-    end
-
-    GUI:RegisterPage(pageId, {
-        mode = 'tabs',
-        search = { title },
-        tabs = tabs,
-        build = function(page, tabId)
-            local db = NRSKNUI.BigWigsTimers.db[dbKey]
-
-            page:SetEnabled(function() return NRSKNUI.BigWigsTimers.db.Enabled end)
-            page:SetCondition('customBar', function() return not db.UseGlobalBar end)
-
-            if tabId == 'appearance' and BuildAppearance then
-                BuildAppearance(page, db)
-            elseif tabId == 'layout' then
-                page:DynamicGroupCard({ db = db.Config, onChangeCallback = ApplySettings })
-            elseif tabId == 'font' then
-                page:FontSettingsCard({
-                    db = db,
-                    fontSizes = { { label = fontSizeLabel, dbKey = 'FontSize' } },
-                    onChangeCallback = ApplySettings,
-                    globalOverride = {},
-                })
-            elseif tabId == 'position' then
-                page:PositionCard({
-                    db = db,
-                    showAnchorFrameType = true,
-                    showStrata = true,
-                    onChangeCallback = ApplySettings,
-                })
-            end
-        end,
+local function BuildGroupCards(page, db, fontSizeLabel)
+    page:FontSettingsCard({
+        db = db,
+        fontSizes = { { label = fontSizeLabel, dbKey = 'FontSize' } },
+        onChangeCallback = ApplySettings,
+        globalOverride = {},
+    })
+    page:DynamicGroupCard({ db = db.Config, onChangeCallback = ApplySettings })
+    page:PositionCard({
+        db = db,
+        showAnchorFrameType = true,
+        showStrata = true,
+        onChangeCallback = ApplySettings,
     })
 end
 
-RegisterGroupPage('bwTimersBars', 'Bars', L['Bar Settings'], BuildBarAppearance, L['Bar Text'])
-RegisterGroupPage('bwTimersTexts', 'Texts', L['Text Settings'], nil, L['Text Size'])
+GUI:RegisterPage('bwTimersDisplay', {
+    mode = 'tabs',
+    search = { L['BigWigs Timers'], L['Boss Mod Timer'], L['Bar Settings'], L['Text Settings'] },
+    tabs = {
+        { id = 'bars',  text = L['Bars'] },
+        { id = 'texts', text = L['Texts'] },
+    },
+    build = function(page, tabId)
+        local module = NRSKNUI.BigWigsTimers.db
+        page:SetEnabled(function() return module.Enabled end)
+
+        if tabId == 'texts' then
+            BuildGroupCards(page, module.Texts, L['Text Size'])
+            return
+        end
+
+        local db = module.Bars
+        page:SetCondition('customBar', function() return not db.UseGlobalBar end)
+        BuildBarCard(page, db)
+        page:BackdropColorsCard({ db = db, onChangeCallback = ApplySettings })
+        BuildGroupCards(page, db, L['Bar Text'])
+    end,
+})

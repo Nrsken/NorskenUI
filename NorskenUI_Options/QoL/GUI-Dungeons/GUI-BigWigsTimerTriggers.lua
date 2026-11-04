@@ -9,7 +9,7 @@ local Theme = NRSKNUI.Theme
 local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
 
-local ipairs, pairs = ipairs, pairs
+local ipairs, pairs, next, select = ipairs, pairs, next, select
 local insert, sort = table.insert, table.sort
 local format, tonumber, tostring = string.format, tonumber, tostring
 local strlower = string.lower
@@ -17,6 +17,7 @@ local strlower = string.lower
 local PAGE_DUNGEONS = 'bwTimersDungeons'
 local PAGE_RAIDS = 'bwTimersRaids'
 local BOSS_HEADER_HEIGHT = 18
+local BUTTON_ROW_HEIGHT = 24 -- Kaji's own widget height, so a row of buttons takes no more than they do
 local SPELL_ROW_HEIGHT = 28
 
 local COUNT_TOOLTIP = L['Which occurrences of the bar to match, using the count BigWigs shows in brackets.'] .. '\n\n' ..
@@ -94,83 +95,169 @@ end
 
 -- Sidebar --
 
----Groups are always emitted, empty or not, so an instance with no timers is still reachable.
+local expanded = {} -- [group key] = true while open, for the session; every instance starts folded
+local folded = {} -- [band key] = true while closed, for the session; the bands start open
+local SEASON_KEY = 'band:season'
+
+---@param key string
+---@param text string
+---@return table
+local function Band(key, text)
+    return { key = key, text = text, collapsed = folded[key] == true, rows = {} }
+end
+
+local dungeonIcons -- [instance map ID] = the season's square dungeon icon, from the Mythic+ UI's own data
+
+---A season dungeon's icon as the Mythic+ tab draws it (Blizzard_ChallengesUI.lua, live); the journal's
+---instance art is a wide banner that crops badly, so it's only the fallback for raids.
+---@param mapId number
+---@return number|string?
+local function InstanceIcon(mapId)
+    if not dungeonIcons then
+        local found = {}
+        for _, challengeId in ipairs(C_ChallengeMode.GetMapTable() or {}) do
+            local _, _, _, texture, _, instanceMapId = C_ChallengeMode.GetMapUIInfo(challengeId)
+            if instanceMapId and texture then
+                found[instanceMapId] = texture
+            end
+        end
+        -- kept once the season's maps have answered, so an early empty read is asked again
+        if next(found) then
+            dungeonIcons = found
+        end
+    end
+    if dungeonIcons and dungeonIcons[mapId] then
+        return dungeonIcons[mapId]
+    end
+
+    local journalId = C_EncounterJournal.GetInstanceForGameMap(mapId)
+    return journalId and select(4, EJ_GetInstanceInfo(journalId))
+end
+
+---A boss's square icon from the season table, else its portrait as the Encounter Journal's boss list draws it.
+---@param encounterId number
+---@return number|string?
+local function BossIcon(encounterId)
+    return BigWigsTimers:GetBossIcon(encounterId) or select(5, EJ_GetCreatureInfo(1, encounterId))
+end
+
+---@param key string
+---@param text string
+---@param icon number|string?
+---@return table
+local function Group(key, text, icon)
+    return {
+        key = key,
+        text = text,
+        icon = icon,
+        depth = 0,
+        enabled = true,
+        isGroup = true,
+        expanded = expanded[key] == true,
+        children = {},
+    }
+end
+
+---@param group table
+---@param trigger table
+---@param instanceId number
+local function AddTimerRow(group, trigger, instanceId)
+    local spellId = tonumber(trigger.SpellId)
+    local enabled = trigger.Enabled ~= false
+
+    insert(group.children, {
+        key = MakeKey(instanceId, trigger.Id),
+        text = trigger.Name,
+        icon = spellId and spellId > 0 and C_Spell.GetSpellTexture(spellId) or nil,
+        depth = 1,
+        enabled = enabled,
+        loadState = enabled and 'loaded' or 'unloaded',
+        stateTitle = enabled and L['Enabled'] or L['Disabled'],
+    })
+end
+
+---A group's timers step within it, so the first can't go up and the last can't go down.
+---@param group table
+local function FinishGroup(group)
+    local children = group.children
+    for i, child in ipairs(children) do
+        child.canMoveUp = i > 1
+        child.canMoveDown = i < #children
+    end
+    group.childCount = #children
+end
+
+---The timers as the collection tree's groups: one per dungeon under the season's band, one per boss under
+---its raid's band with the unassigned ones last. Groups are always emitted, empty or not, so an instance
+---with no timers can still take one.
 ---@param kind 'dungeon'|'raid'
----@return fun(): table[]
-local function SidebarItems(kind)
+---@return fun(): table
+local function TreeContent(kind)
     return function()
         local instances = NRSKNUI.BigWigsTimers.db.Instances
-        local items = {}
+        local sections = {}
+
+        -- the season's dungeons share one band, titled as the Mythic+ tab counts seasons
+        local dungeons
+        if kind == 'dungeon' then
+            local season = C_MythicPlus.GetCurrentUIDisplaySeason()
+            dungeons = Band(SEASON_KEY, season and format(L['Season %d Dungeons'], season) or L['Dungeons'])
+            insert(sections, dungeons)
+        end
 
         for _, info in ipairs(SortedInstances(kind)) do
             local instance = instances[info.instanceId]
-            local headers, byBoss, loose = {}, {}, {}
+            local bosses, byBoss = {}, {}
+            -- a raid is its own band, its bosses the groups in it
+            local band = dungeons or Band('band:raid:' .. info.instanceId, info.name)
+            if not dungeons then
+                insert(sections, band)
+            end
 
             if kind == 'raid' then
                 for _, boss in ipairs(BigWigsTimers:GetBossesForInstance(info.instanceId)) do
-                    local header = {
-                        type = 'header',
-                        key = BossKey(info.instanceId, boss.journalId),
-                        text = format('B%d %s', boss.num, boss.name),
-                        defaultExpanded = false,
-                        items = {},
-                    }
+                    local group = Group(BossKey(info.instanceId, boss.journalId), format('B%d %s', boss.num, boss.name), BossIcon(boss.journalId))
 
-                    byBoss[boss.journalId] = header.items
-                    insert(headers, header)
+                    byBoss[boss.journalId] = group
+                    insert(bosses, group)
                 end
             end
 
-            if instance then
-                for _, trigger in ipairs(instance.Triggers) do
-                    local spellId = tonumber(trigger.SpellId)
+            local loose = kind == 'dungeon' and Group('instance:' .. info.instanceId, info.name, InstanceIcon(info.instanceId))
+                or Group(BossKey(info.instanceId, 0), L['Unassigned'], InstanceIcon(info.instanceId))
 
-                    insert(byBoss[trigger.BossId] or loose, {
-                        key = MakeKey(info.instanceId, trigger.Id),
-                        text = trigger.Name,
-                        icon = spellId and spellId > 0 and C_Spell.GetSpellTexture(spellId) or nil,
-                    })
-                end
+            for _, trigger in ipairs(instance and instance.Triggers or {}) do
+                AddTimerRow(byBoss[trigger.BossId] or loose, trigger, info.instanceId)
             end
 
-            if kind == 'dungeon' then
-                insert(headers, {
-                    type = 'header',
-                    key = 'instance:' .. info.instanceId,
-                    text = info.name,
-                    defaultExpanded = false,
-                    items = loose,
-                })
-            elseif #loose > 0 or #headers == 0 then
-                insert(headers, {
-                    type = 'header',
-                    key = BossKey(info.instanceId, 0),
-                    -- No raid heading above it any more, so it names its raid itself.
-                    text = format('%s (%s)', L['Unassigned'], info.name),
-                    defaultExpanded = false,
-                    items = loose,
-                })
+            for _, group in ipairs(bosses) do
+                FinishGroup(group)
+                insert(band.rows, group)
             end
-
-            for _, header in ipairs(headers) do insert(items, header) end
+            if kind == 'dungeon' or loose.children[1] or not bosses[1] then
+                FinishGroup(loose)
+                insert(band.rows, loose)
+            end
         end
 
-        return items
+        return { sections = sections }
     end
 end
 
----Re-render the mini-sidebar in place, so a renamed timer or a new spell icon shows up without
+---Re-render the tree in place, so a renamed timer or a new spell icon shows up without
 ---rebuilding the whole page (which would restart the preview).
----@param kind 'dungeon'|'raid'
----@param expandKey string? a group to open, so a timer that just moved into it stays in view
-local function RefreshSidebar(kind, expandKey)
+---@param expandKey string? a section to open, so a timer that just moved into it stays in view
+local function RefreshSidebar(expandKey)
     local sidebar = Sidebar()
     if not sidebar then return end
 
     local selected = sidebar:GetSelected()
 
-    sidebar:SetItems(SidebarItems(kind)())
-    if expandKey then sidebar:SetExpanded(expandKey, true) end
+    if expandKey then
+        sidebar:SetExpanded(expandKey, true)
+    else
+        sidebar:SetItems()
+    end
     sidebar:SetSelected(selected)
 end
 
@@ -203,39 +290,13 @@ local function NewTimerPrompt(pageId, groupKey)
     })
 end
 
+---A timer belongs to its instance for good, so the menu only edits it in place; a raid timer's boss is
+---picked on its Trigger tab.
 ---@param pageId string
----@param kind 'dungeon'|'raid'
----@param instanceId number
----@param triggerId number
----@param toInstance number
----@param bossId number
-local function MoveTo(pageId, kind, instanceId, triggerId, toInstance, bossId)
-    local newId = triggerId
-
-    if toInstance ~= instanceId then
-        newId = BigWigsTimers:MoveTriggerToInstance(instanceId, triggerId, toInstance)
-        if not newId then return end
-    end
-
-    BigWigsTimers:SetTriggerBoss(toInstance, newId, bossId)
-
-    local sidebar = Sidebar()
-
-    if sidebar then
-        sidebar:SetExpanded(kind == 'raid' and BossKey(toInstance, bossId) or ('instance:' .. toInstance), true)
-    end
-
-    Apply()
-    Reopen(pageId, MakeKey(toInstance, newId))
-end
-
----@param pageId string
----@param kind 'dungeon'|'raid'
 ---@return fun(key: string, item: table)
-local function ContextMenu(pageId, kind)
+local function ContextMenu(pageId)
     return function(key, item)
-        -- Right-clicking a group header is the only way to add a timer to an empty one.
-        if item and item.type == 'header' then
+        if item and item.isGroup then
             GUI:ShowContextMenu({
                 { text = L['New Timer'], onClick = function() NewTimerPrompt(pageId, key) end },
             })
@@ -310,43 +371,7 @@ local function ContextMenu(pageId, kind)
                     Reopen(pageId, key)
                 end,
             },
-            { divider = true },
         }
-
-        for _, info in ipairs(SortedInstances(kind)) do
-            local target = info.instanceId
-
-            if kind == 'dungeon' then
-                if target ~= instanceId then
-                    insert(entries, {
-                        text = format(L['Move to %s'], info.name),
-                        onClick = function() MoveTo(pageId, kind, instanceId, triggerId, target, 0) end,
-                    })
-                end
-            else
-                local heading = #entries + 1
-
-                insert(entries, { text = info.name, disabled = true })
-
-                for _, boss in ipairs(BigWigsTimers:GetBossesForInstance(target)) do
-                    if target ~= instanceId or boss.journalId ~= trigger.BossId then
-                        insert(entries, {
-                            text = format(L['Move to %s'], format('B%d %s', boss.num, boss.name)),
-                            onClick = function() MoveTo(pageId, kind, instanceId, triggerId, target, boss.journalId) end,
-                        })
-                    end
-                end
-
-                if target ~= instanceId or trigger.BossId ~= 0 then
-                    insert(entries, {
-                        text = format(L['Move to %s'], L['Unassigned']),
-                        onClick = function() MoveTo(pageId, kind, instanceId, triggerId, target, 0) end,
-                    })
-                end
-
-                if #entries == heading then entries[heading] = nil end
-            end
-        end
 
         GUI:ShowContextMenu(entries)
     end
@@ -356,11 +381,10 @@ end
 
 ---@param page KajiGUIPage
 ---@param instanceId number
----@param trigger table
----@param kind 'dungeon'|'raid'
----@param onPick fun() redraws the card holding the Spell ID box, which lives outside this one
+---@param bossId fun(): number the boss whose spells to list, 0 for the whole instance; read on every redraw
+---@param action { label: string, onUse: fun(spell: table) } what a spell's button does
 ---@return KajiGUIFluentCard card so a boss change can redraw the list
-local function BuildSpellBrowser(page, instanceId, trigger, kind, onPick)
+local function BuildSpellBrowser(page, instanceId, bossId, action)
     local card = page:Card(L['Browse BigWigs Spells'], 'all')
 
     card:Rebuild(function(c)
@@ -389,11 +413,11 @@ local function BuildSpellBrowser(page, instanceId, trigger, kind, onPick)
         })
 
         local needle = strlower(filter)
-        local bossId = trigger.BossId
+        local boss = bossId()
         local matched, lastBoss = 0, nil
 
         for _, spell in ipairs(spells) do
-            if (bossId == 0 or spell.journalId == bossId) and (needle == '' or
+            if (boss == 0 or spell.journalId == boss) and (needle == '' or
                     strlower(spell.name):find(needle, 1, true) or
                     tostring(spell.spellId):find(needle, 1, true)) then
                 matched = matched + 1
@@ -426,18 +450,12 @@ local function BuildSpellBrowser(page, instanceId, trigger, kind, onPick)
                         size = 'small',
                     },
                 })
-                row:Button(L['Use'], {
+                row:Button(action.label, {
                     width = 0.3,
                     height = 22,
                     yOffset = -3,
                     tooltip = spell.name,
-                    callback = function()
-                        trigger.SpellId = tostring(spellId)
-                        Apply()
-                        onPick()
-                        RefreshSidebar(kind)
-                        c:Rebuild()
-                    end,
+                    callback = function() action.onUse(spell) end,
                 })
             end
         end
@@ -476,7 +494,7 @@ local function BuildTriggerTab(page, instanceId, trigger, kind)
 
                 trigger.Name = text
                 Apply()
-                RefreshSidebar(kind)
+                RefreshSidebar()
             end,
         })
         nameRow:Dropdown(L['Trigger Type'], {
@@ -505,7 +523,7 @@ local function BuildTriggerTab(page, instanceId, trigger, kind)
                 callback = function(bossId)
                     BigWigsTimers:SetTriggerBoss(instanceId, trigger.Id, bossId)
                     Apply()
-                    RefreshSidebar(kind, BossKey(instanceId, bossId))
+                    RefreshSidebar(BossKey(instanceId, bossId))
                     browser:Rebuild()
                 end,
             })
@@ -522,7 +540,7 @@ local function BuildTriggerTab(page, instanceId, trigger, kind)
             callback = function(text)
                 trigger.SpellId = text
                 Apply()
-                RefreshSidebar(kind)
+                RefreshSidebar()
                 c:Rebuild()
             end,
         })
@@ -655,7 +673,16 @@ local function BuildTriggerTab(page, instanceId, trigger, kind)
         })
     end)
 
-    browser = BuildSpellBrowser(page, instanceId, trigger, kind, function() card:Rebuild() end)
+    browser = BuildSpellBrowser(page, instanceId, function() return trigger.BossId end, {
+        label = L['Use'],
+        onUse = function(spell)
+            trigger.SpellId = tostring(spell.spellId)
+            Apply()
+            card:Rebuild()
+            RefreshSidebar()
+            browser:Rebuild()
+        end,
+    })
 end
 
 ---@param page KajiGUIPage
@@ -812,7 +839,112 @@ local function BuildActionsTab(page, trigger)
     end
 end
 
+-- Group page --
+
+---@param key string? a tree group's key: 'instance:<id>' or 'boss:<id>:<journalId>'
+---@return number? instanceId, number? bossId 0 for a dungeon or a raid's unassigned timers
+local function ParseGroupKey(key)
+    if not key then return end
+
+    local instanceId, bossId = key:match('^boss:(%d+):(%d+)$')
+    if instanceId then
+        return tonumber(instanceId), tonumber(bossId)
+    end
+
+    instanceId = key:match('^instance:(%d+)$')
+    return tonumber(instanceId), instanceId and 0 or nil
+end
+
+---The timers a group holds, as the tree sorts them: a dungeon's are all of them, a raid boss's its own,
+---and a raid's unassigned ones every timer whose boss isn't one of its bosses.
+---@param kind 'dungeon'|'raid'
+---@param instanceId number
+---@param bossId number
+---@return table[]
+local function GroupTriggers(kind, instanceId, bossId)
+    local instance = NRSKNUI.BigWigsTimers.db.Instances[instanceId]
+    local known = {}
+    if kind == 'raid' and bossId == 0 then
+        for _, boss in ipairs(BigWigsTimers:GetBossesForInstance(instanceId)) do
+            known[boss.journalId] = true
+        end
+    end
+
+    local list = {}
+    for _, trigger in ipairs(instance and instance.Triggers or {}) do
+        local mine = kind == 'dungeon'
+            or (bossId ~= 0 and trigger.BossId == bossId)
+            or (bossId == 0 and not known[trigger.BossId])
+        if mine then
+            insert(list, trigger)
+        end
+    end
+    return list
+end
+
+---A dungeon's or a boss's own page: actions for all its timers at once and the BigWigs spells to make new
+---ones from, so filling a dungeon is a few clicks instead of a prompt per timer.
+---@param page KajiGUIPage
+---@param pageId string
+---@param kind 'dungeon'|'raid'
+---@param groupKey string
+---@param item table? the tree row, for the group's name
+local function BuildGroupPage(page, pageId, kind, groupKey, item)
+    local instanceId, bossId = ParseGroupKey(groupKey)
+    if not instanceId or not bossId then return end
+
+    local triggers = GroupTriggers(kind, instanceId, bossId)
+    page:SetCondition('hasTimers', function() return triggers[1] ~= nil end)
+
+    local actions = page:Card(item and item.text or L['Timers'])
+    local actionRow = actions:Row(BUTTON_ROW_HEIGHT)
+    actionRow:Button(L['New Timer'], {
+        width = 1 / 3,
+        height = BUTTON_ROW_HEIGHT,
+        callback = function() NewTimerPrompt(pageId, groupKey) end,
+    })
+    for _, state in ipairs({ true, false }) do
+        actionRow:Button(state and L['Enable All'] or L['Disable All'], {
+            width = 1 / 3,
+            height = BUTTON_ROW_HEIGHT,
+            conditions = { 'hasTimers' },
+            callback = function()
+                for _, trigger in ipairs(triggers) do
+                    trigger.Enabled = state
+                end
+                Apply()
+                Reopen(pageId, groupKey)
+            end,
+        })
+    end
+
+    -- a spell becomes a timer under its own boss, named the way the browser numbers the bosses
+    BuildSpellBrowser(page, instanceId, function() return bossId end, {
+        label = L['Add'],
+        onUse = function(spell)
+            local boss = kind == 'raid' and (bossId ~= 0 and bossId or spell.journalId or 0) or 0
+            local name = spell.bossNum and format(L['B%d %s'], spell.bossNum, spell.name) or spell.name
+            local trigger = BigWigsTimers:CreateTrigger(instanceId, name, boss)
+            trigger.SpellId = tostring(spell.spellId)
+
+            local sidebar = Sidebar()
+            if sidebar then
+                sidebar:SetExpanded(kind == 'raid' and BossKey(instanceId, boss) or groupKey, true)
+            end
+            Apply()
+            Reopen(pageId, MakeKey(instanceId, trigger.Id))
+        end,
+    })
+end
+
 -- Pages --
+
+local TRIGGER_TABS = {
+    { id = 'trigger', text = L['Trigger'] },
+    { id = 'display', text = L['Display'] },
+    { id = 'load',    text = L['Load'] },
+    { id = 'actions', text = L['Actions'] },
+}
 
 ---@param pageId string
 ---@param kind 'dungeon'|'raid'
@@ -822,16 +954,34 @@ local function RegisterTriggerPage(pageId, kind, title)
         mode = 'tabs',
         search = { title, L['BigWigs Timers'] },
         sidebar = {
-            items = SidebarItems(kind),
-            onContextMenu = ContextMenu(pageId, kind),
+            width = 260,
+            create = NRSKNUI.CreateItemTree,
+            locked = function() return not NRSKNUI.BigWigsTimers.db.Enabled end,
+            items = TreeContent(kind),
+            -- bands start open and remember closing, groups start folded and remember opening
+            onToggleExpanded = function(key, open)
+                if key:find('^band:') then
+                    folded[key] = not open or nil
+                else
+                    expanded[key] = open or nil
+                end
+            end,
+            onMoveInGroup = function(key, delta)
+                local instanceId, triggerId = ParseKey(key)
+                if not instanceId or not triggerId then return end
+
+                BigWigsTimers:MoveTrigger(instanceId, triggerId, delta)
+                Apply()
+                RefreshSidebar()
+            end,
+            onContextMenu = ContextMenu(pageId),
         },
-        tabs = {
-            { id = 'trigger', text = L['Trigger'] },
-            { id = 'display', text = L['Display'] },
-            { id = 'load',    text = L['Load'] },
-            { id = 'actions', text = L['Actions'] },
-        },
-        build = function(page, tabId, itemKey)
+        -- a timer has its tabs; a dungeon, a boss or nothing picked gets the whole width
+        tabs = function(itemKey)
+            local _, triggerId = ParseKey(itemKey)
+            return triggerId and TRIGGER_TABS or {}
+        end,
+        build = function(page, tabId, itemKey, item)
             local db = NRSKNUI.BigWigsTimers.db
 
             page:SetEnabled(function() return db.Enabled end)
@@ -841,6 +991,11 @@ local function RegisterTriggerPage(pageId, kind, title)
 
             BigWigsTimers:SetPreviewTrigger(trigger or nil)
 
+            if not trigger and ParseGroupKey(itemKey) then
+                BuildGroupPage(page, pageId, kind, itemKey, item)
+                return
+            end
+
             if not trigger or not instanceId then
                 local card = page:Card(L['No Timer Selected'])
 
@@ -848,7 +1003,7 @@ local function RegisterTriggerPage(pageId, kind, title)
                     width = 1,
                     autoHeight = true,
                     bgMode = 'hide',
-                    text = L['Right-click an instance on the left and choose New Timer, or pick an existing one.'],
+                    text = L['Pick an instance on the left to add timers to it, or pick an existing timer.'],
                 })
 
                 return
@@ -859,7 +1014,7 @@ local function RegisterTriggerPage(pageId, kind, title)
             elseif tabId == 'display' then
                 BuildDisplayTab(page, trigger)
             elseif tabId == 'load' then
-                page:LoadConditionsCard({ db = trigger.LoadConditions, onChangeCallback = Apply })
+                page:LoadConditionsCard({ db = trigger.LoadConditions, specs = true, onChangeCallback = Apply })
             elseif tabId == 'actions' then
                 BuildActionsTab(page, trigger)
             end
