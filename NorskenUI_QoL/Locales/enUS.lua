@@ -148,6 +148,7 @@ L['Cannot socket during combat'] = true
 L['Gems'] = true
 L['No compatible gems'] = true
 L['No enchants in bags'] = true
+L['Battle Arts'] = true
 L['No replacement gems'] = true
 L['Replace Gem'] = true
 L['Socket Gem'] = true

@@ -17,21 +17,6 @@ end
 
 -- General Settings Tab.
 local function BuildGeneralSettingsTab(page, db)
-    local enableCard = page:Card(L['Automation'])
-    local enableRow = enableCard:Row(rowHL, 0)
-    enableRow:Checkbox(L['Enable Automation'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['Automation'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('Automation', checked)
-            page:Refresh()
-        end,
-    })
-
     local overrideCard = page:Card(L['Override Key'], 'all')
     local overrideRow = overrideCard:Row(rowHL, 0)
     overrideRow:Dropdown(L['Override Key'], {

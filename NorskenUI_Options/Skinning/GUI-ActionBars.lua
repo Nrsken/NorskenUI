@@ -78,10 +78,25 @@ local function RefreshSidebar()
     if miniSidebar then miniSidebar:Render() end
 end
 
+-- the pet and stance bars aren't numbered action bars, so they caption apart
+local OTHER_BARS = { PetBar = true, StanceBar = true }
+
 local function SidebarItems()
-    local items = { { key = GLOBAL, text = L['Global Settings'] } }
+    local items = {
+        { type = 'label', key = 'general', text = L['General'] },
+        { key = GLOBAL, text = L['Global Settings'] },
+        { type = 'label', key = 'bars', text = L['Action Bars'] },
+    }
     for _, bar in ipairs(barList) do
-        items[#items + 1] = { key = bar.key, text = bar.text }
+        if not OTHER_BARS[bar.key] then
+            items[#items + 1] = { key = bar.key, text = bar.text }
+        end
+    end
+    items[#items + 1] = { type = 'label', key = 'otherBars', text = L['Other Bars'] }
+    for _, bar in ipairs(barList) do
+        if OTHER_BARS[bar.key] then
+            items[#items + 1] = { key = bar.key, text = bar.text }
+        end
     end
 
     return items
@@ -89,7 +104,7 @@ end
 
 -- Items are pooled, so both branches always set the alpha back.
 local function RenderItem(itemFrame, item)
-    local bars = NRSKNUI.Skinning.namespace.profile.ActionBars.Bars
+    local bars = ACB.namespace.profile.Bars
     local barDB = bars and bars[item.key]
     local enabled = not barDB or barDB.Enabled
     itemFrame.label:SetAlpha(enabled and 1 or 0.5)
@@ -99,24 +114,7 @@ end
 local function BuildGlobalPage(page, db)
     page:SetCondition('customFont', function() return not db.UseGlobalFont end)
 
-    -- Card 1: Enable
-    local enableCard = page:Card(L['Action Bars'])
-    local enableRow = enableCard:Row(rowHL, 0)
-    enableRow:Checkbox(L['Enable Action Bars Skinning'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['Action Bars'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('ActionBars', checked)
-            NRSKNUI:CreateReloadPrompt(L['Enabling/Disabling Action Bars requires a reload to take full effect.'])
-            page:Refresh()
-        end,
-    })
-
-    -- Card 2: General
+    -- Card 1: General
     local generalCard = page:Card(L['General Settings'], 'all')
     local textRow = generalCard:Row(rowH)
     textRow:Checkbox(L['Hide Profession Texture'], {
@@ -171,7 +169,7 @@ local function BuildGlobalPage(page, db)
         end,
     })
 
-    -- Card 3: Global Font
+    -- Card 2: Global Font
     -- Hand-built rather than a FontSettingsCard: the module clears every text shadow, so the
     -- premade card's shadow controls would be dead settings here.
     local fontCard = page:Card(L['Global Font Settings'], 'all')
@@ -254,7 +252,7 @@ local function BuildGlobalPage(page, db)
         end,
     })
 
-    -- Card 4: Global Mouseover
+    -- Card 3: Global Mouseover
     local mouseoverCard = page:Card(L['Global Mouseover Settings'], 'all')
     local toggleRow = mouseoverCard:Row(rowH)
     toggleRow:Checkbox(L['Enable Global Mouseover'], {
@@ -310,7 +308,7 @@ local function BuildGlobalPage(page, db)
         end,
     })
 
-    -- Card 5: Bar toggles
+    -- Card 4: Bar toggles
     local barsCard = page:Card(L['Bar Enable/Disable'], 'all')
     for i = 1, #barList, 2 do
         local last = i + 2 > #barList
@@ -734,7 +732,7 @@ GUI:RegisterPage(PAGE, {
         }
     end,
     build = function(page, tabId, itemKey)
-        local db = NRSKNUI.Skinning.namespace.profile.ActionBars
+        local db = ACB.namespace.profile
         if not db then return end
         page:SetEnabled(function() return db.Enabled end)
 
@@ -752,3 +750,7 @@ GUI:RegisterPage(PAGE, {
         end
     end,
 })
+
+NRSKNUI.ModuleHeader:OnToggle('ActionBars', function()
+    NRSKNUI:CreateReloadPrompt(L['Enabling/Disabling Action Bars requires a reload to take full effect.'])
+end)

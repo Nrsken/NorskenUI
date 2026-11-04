@@ -15,23 +15,7 @@ end
 
 -- General Settings Tab.
 local function BuildGeneralSettingsTab(page, db)
-    -- Card 1: Enable
-    local enableCard = page:Card(L['Combat Res Tracker'])
-    local enableRow = enableCard:Row(rowHL, 0)
-    enableRow:Checkbox(L['Enable Combat Res Tracker'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['Combat Res Tracker'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('CombatRes', checked)
-            page:Refresh()
-        end,
-    })
-
-    -- Card 2: Text Format
+    -- Card 1: Text Format
     local textFormatCard = page:Card(L['Text Format'], 'all')
     local formatInputRow = textFormatCard:Row(rowH)
     formatInputRow:EditBox(L['Format'], {

@@ -11,6 +11,7 @@ GUIFrame:AddSidebarEntry({
     type = 'header',
     text = L['Missing Buffs'],
     defaultExpanded = false,
+    module = 'MissingBuffs',
     items = {
         { id = 'missingBuffsRaid', text = L['Buffs'] },
         { id = 'missingBuffsTargeted', text = L['Targeted Buffs'] },

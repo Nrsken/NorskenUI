@@ -13,6 +13,11 @@ local L = NRSKNUI.Libs.AL
 * order:            Top-level entries only, sorts them. Core's entries sit here, every other folder adds its own
                     with GUIFrame:AddSidebarEntry from its Sidebar.lua.
 
+* module:           Optional AceModule name whose settings the entry's pages (a header's: all its items) edit.
+                    Those pages open under the module header: its name, its on/off and its actions.
+* roles:            Set true beside `module` to give the header role tabs, so a role can have its own settings
+                    for that module. Off by default: only modules whose look really differs per role want it.
+
 * 'header' entries can have the following optional properties:
 * defaultExpanded:  Optional boolean for headers to indicate if they should be expanded by default.
 * items:            Optional array of child entries for headers. Each child must follow the same structure.

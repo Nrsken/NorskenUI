@@ -18,29 +18,7 @@ local function BuildPage(page, db)
     page:SetCondition('fontEnabled', function() return objDb.FontStyling end)
     page:SetCondition('customColor', function() return objDb.ColorMode == 'custom' end)
 
-    -- Card 1: Enable
-    local enableCard = page:Card(L['Objective Tracker Skinning'])
-    local enableRow = enableCard:Row(rowHL, 0)
-    enableRow:Checkbox(L['Enable Objective Tracker Skinning'], {
-        width = 1,
-        master = true,
-        value = objDb.Enabled,
-        msgPopup = true,
-        msgText = L['Objective Tracker Skinning'],
-        callback = function(checked)
-            objDb.Enabled = checked
-            NRSKNUI:ToggleModule('BlizzObjectiveTracker', checked)
-            if checked then
-                ApplySettings()
-            else
-                NRSKNUI:CreateReloadPrompt(
-                    L['Restoring the default Objective Tracker requires a reload to take full effect.'])
-            end
-            page:Refresh()
-        end,
-    })
-
-    -- Card 2: Color
+    -- Card 1: Color
     local colorCard = page:Card(L['Color'], 'all')
     local colorRow = colorCard:Row(rowHL, 0)
     colorRow:Dropdown(L['Color Mode'], {
@@ -62,7 +40,7 @@ local function BuildPage(page, db)
         end,
     })
 
-    -- Card 3: Font Styling
+    -- Card 2: Font Styling
     local fontCard = page:Card(L['Font Styling'], 'all')
     local fontToggleRow = fontCard:Row(rowH)
     fontToggleRow:Checkbox(L['Enable Font Styling'], {
@@ -116,3 +94,12 @@ GUI:RegisterPage('objectiveTracker', {
         BuildPage(page, db)
     end,
 })
+
+-- the tracker's own look comes back only with a reload
+NRSKNUI.ModuleHeader:OnToggle('BlizzObjectiveTracker', function(enabled)
+    if enabled then
+        ApplySettings()
+        return
+    end
+    NRSKNUI:CreateReloadPrompt(L['Restoring the default Objective Tracker requires a reload to take full effect.'])
+end)

@@ -12,13 +12,13 @@ GUIFrame:AddSidebarEntry({
     text = L['Combat Util'],
     defaultExpanded = false,
     items = {
-        { id = 'combatTimer',   text = L['Combat Timer'] },
-        { id = 'combatCross',   text = L['Combat Cross'] },
-        { id = 'combatRes',     text = L['Combat Res Tracker'] },
-        { id = 'combatMessage', text = L['Combat Message'] },
-        { id = 'cursorCircle',  text = L['Cursor Circle'] },
-        { id = 'focusCastbar',  text = L['Focus Castbar'] },
-        { id = 'rangeChecker',  text = L['Range Checker'] },
-        { id = 'potionReady',   text = L['Potion Ready'] },
+        { id = 'combatTimer',   text = L['Combat Timer'],       module = 'CombatTimer' },
+        { id = 'combatCross',   text = L['Combat Cross'],       module = 'CombatCross' },
+        { id = 'combatRes',     text = L['Combat Res Tracker'], module = 'CombatRes' },
+        { id = 'combatMessage', text = L['Combat Message'],     module = 'CombatMessage' },
+        { id = 'cursorCircle',  text = L['Cursor Circle'],      module = 'CursorCircle' },
+        { id = 'focusCastbar',  text = L['Focus Castbar'],      module = 'FocusCastbar' },
+        { id = 'rangeChecker',  text = L['Range Checker'],      module = 'RangeChecker' },
+        { id = 'potionReady',   text = L['Potion Ready'],       module = 'PotionReady' },
     }
 })

@@ -24,23 +24,7 @@ GUI:RegisterPage('combatCross', {
         page:SetCondition('diamondMode', function() return db.Mode == 'diamond' end)
         local function ApplySettings() CombatCross:ApplySettings() end
 
-        -- Card 1: Enable
-        local enableCard = page:Card(L['Combat Cross'])
-        local enableRow = enableCard:Row(rowHL, 0)
-        enableRow:Checkbox(L['Enable Combat Cross'], {
-            width = 1,
-            master = true,
-            value = db.Enabled,
-            msgPopup = true,
-            msgText = L['Combat Cross'],
-            callback = function(checked)
-                db.Enabled = checked
-                NRSKNUI:ToggleModule('CombatCross', checked)
-                page:Refresh()
-            end,
-        })
-
-        -- Card 2: Appearance
+        -- Card 1: Appearance
         local appearanceCard = page:Card(L['Appearance'], 'all')
         appearanceCard:Rebuild(function(card)
             local modeRow = card:Row(rowH)
@@ -150,7 +134,7 @@ GUI:RegisterPage('combatCross', {
             end
         end)
 
-        -- Card 3: Color
+        -- Card 2: Color
         local colorCard = page:Card(L['Color'], 'all')
         local colorRow = colorCard:Row(rowHL, 0)
         colorRow:Dropdown(L['Color Mode'], {
@@ -173,7 +157,7 @@ GUI:RegisterPage('combatCross', {
             end,
         })
 
-        -- Card 4: Range Warning
+        -- Card 3: Range Warning
         local rangeCard = page:Card(L['Range Warning'], 'all')
         local toggleRow = rangeCard:Row(rowH)
         toggleRow:Checkbox(L['Enable for melee specs'], {
@@ -208,7 +192,7 @@ GUI:RegisterPage('combatCross', {
             end,
         })
 
-        -- Card 5: Position
+        -- Card 4: Position
         page:PositionCard({
             db = db,
             showAnchorFrameType = false,

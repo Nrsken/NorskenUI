@@ -16,23 +16,9 @@ end
 
 -- General Settings Tab.
 local function BuildGeneralSettingsTab(page, db)
-    local enableCard = page:Card(L['Recuperate Button'])
-    local enableRow = enableCard:Row(rowH)
-    enableRow:Checkbox(L['Enable Recuperate Button'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['Recuperate Button'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('Recuperate', checked)
-            page:Refresh()
-        end,
-    })
-
+    local generalCard = page:Card(L['General Settings'], 'all')
     local infoRowSize = 50
-    local infoRow = enableCard:Row(infoRowSize)
+    local infoRow = generalCard:Row(infoRowSize)
     infoRow:Text(NRSKNUI:ColorTextByTheme(L['Functionality Info']), {
         width = 1,
         height = infoRowSize,
@@ -45,9 +31,9 @@ local function BuildGeneralSettingsTab(page, db)
         conditions = { 'all' },
     })
 
-    enableCard:Separator()
+    generalCard:Separator()
 
-    local loadInRaidRow = enableCard:Row(rowH)
+    local loadInRaidRow = generalCard:Row(rowH)
     loadInRaidRow:Checkbox(L['Load in Raid'], {
         width = 1,
         value = db.LoadInRaid,
@@ -58,7 +44,7 @@ local function BuildGeneralSettingsTab(page, db)
         end
     })
 
-    local loadInPartyRow = enableCard:Row(rowHL, 0)
+    local loadInPartyRow = generalCard:Row(rowHL, 0)
     loadInPartyRow:Checkbox(L['Load in Party'], {
         width = 1,
         value = db.LoadInParty,

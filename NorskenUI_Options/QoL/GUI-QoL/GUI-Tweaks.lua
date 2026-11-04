@@ -13,24 +13,6 @@ local function ApplySettings()
     Tweaks:ApplySettings()
 end
 
--- General Settings Tab.
-local function BuildGeneralSettingsTab(page, db)
-    local enableCard = page:Card(L['Tweaks'])
-    local enableRow = enableCard:Row(rowH)
-    enableRow:Checkbox(L['Enable Tweaks'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['Tweaks'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('Tweaks', checked)
-            page:Refresh()
-        end,
-    })
-end
-
 -- Hide Misc Elements Tab.
 local function BuildHideMiscElementsTab(page, db)
     local hideCard = page:Card(L['Hide Misc Elements'], 'all')
@@ -132,8 +114,8 @@ end
 GUI:RegisterPage('tweaks', {
     mode = 'tabs',
     search = {},
+    -- the on/off is the module header's, so the first tab is the first set of tweaks
     tabs = {
-        { id = 'general', text = L['General Settings'] },
         { id = 'hide',    text = L['Hide Misc Elements'] },
         { id = 'misc',    text = L['Misc Tweaks'] },
         { id = 'whisper', text = L['Whisper Sounds'] },
@@ -143,9 +125,7 @@ GUI:RegisterPage('tweaks', {
         if not db then return end
         page:SetEnabled(function() return db.Enabled end)
 
-        if tabId == 'general' then
-            BuildGeneralSettingsTab(page, db)
-        elseif tabId == 'hide' then
+        if tabId == 'hide' then
             BuildHideMiscElementsTab(page, db)
         elseif tabId == 'misc' then
             BuildMiscTweaksTab(page, db)

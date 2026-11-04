@@ -65,24 +65,8 @@ end
 
 local function BuildGeneralSection(page, db)
     local conflictAddon = NRSKNUI:GetConflictingUFAddon()
-    local enableCard = page:Card(L['Unit Frames'])
-
-    local enableToggle = enableCard:Row(conflictAddon and rowH or rowHL, 0):Checkbox(L['Enable Unit Frames'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['Unit Frames'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('UnitFrames', checked)
-            page:Refresh()
-        end,
-    })
-
     if conflictAddon then
-        enableToggle:SetEnabled(not NRSKNUI.UFBlocked)
-
+        local enableCard = page:Card(L['Unit Frames'])
         enableCard:Row(rowHL, 0):Checkbox(format(L['Defer To %s'], conflictAddon), {
             width = 1,
             master = true,
@@ -362,7 +346,7 @@ GUI:RegisterPage('unitFramesGeneral', {
     search = {},
     sidebar = {
         items = {
-            { type = 'label', key = 'frames', text = L['Unit Frames'] },
+            { type = 'label', key = 'frames', text = L['Frames'] },
             { key = 'general',   text = L['General'] },
             { key = 'text',      text = L['Text'] },
             { key = 'dispel',    text = L['Dispel'] },

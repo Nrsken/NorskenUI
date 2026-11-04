@@ -12,7 +12,7 @@ GUIFrame:AddSidebarEntry({
     text = L['Class Utility'],
     defaultExpanded = false,
     items = {
-        { id = 'petTexts', text = L['Pet Status Texts'] },
-        { id = 'gateway',  text = L['Gateway Alert'] },
+        { id = 'petTexts', text = L['Pet Status Texts'], module = 'PetTexts' },
+        { id = 'gateway',  text = L['Gateway Alert'], module = 'Gateway' },
     }
 })

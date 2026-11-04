@@ -119,6 +119,7 @@ local window = GUI:CreateGUIWindow({
     end,
     onClose = function()
         NRSKNUI.GUIOpen = false
+        NRSKNUI.ModuleHeader:OnClose()
         PromptPendingReload()
         if NRSKNUI.PreviewManager then
             NRSKNUI.PreviewManager:SetGUIOpen(false)
@@ -188,6 +189,7 @@ window:AddHeaderButton({
 -- hooked rather than window:ShowPage, since the sidebar shows pages through the host directly.
 if window.content then
     window.content.onPageChanged = function(pageId, previousId)
+        NRSKNUI.ModuleHeader:OnPage(pageId) -- before the page lays out, it sizes the header slot
         if NRSKNUI.PreviewManager then
             NRSKNUI.PreviewManager:SetPage(pageId)
         end

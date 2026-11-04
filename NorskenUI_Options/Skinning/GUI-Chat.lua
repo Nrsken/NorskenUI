@@ -56,33 +56,7 @@ end
 
 -- General Settings Tab.
 local function BuildGeneralSettingsTab(page, db)
-    -- Card 1: Enable
-    local enableCard = page:Card(L['Chat'])
-    local enableRow = enableCard:Row(rowHL, 0)
-    enableRow:Checkbox(L['Enable Custom Chat Panel'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['Chat'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('Chatv2', checked)
-            if not checked then
-                NRSKNUI:CreatePrompt({
-                    title = L['Chat Module Disabled'],
-                    text = L['The chat module has been disabled.'] .. '\n\n' ..
-                        L['A UI reload is recommended to fully restore the default chat.'],
-                    onAccept = function() ReloadUI() end,
-                    acceptText = L['Reload Now'],
-                    cancelText = L['Later'],
-                })
-            end
-            page:Refresh()
-        end,
-    })
-
-    -- Card 2: Panel Size
+    -- Card 1: Panel Size
     local sizeCard = page:Card(L['Panel Size'], 'all')
     local sizeRow = sizeCard:Row(rowHL, 0)
     sizeRow:Slider(L['Width'], {
@@ -106,7 +80,7 @@ local function BuildGeneralSettingsTab(page, db)
         end,
     })
 
-    -- Card 3: Backdrop
+    -- Card 2: Backdrop
     page:BackdropColorsCard({
         db = db.Backdrop,
         title = L['Backdrop'],
@@ -117,7 +91,7 @@ local function BuildGeneralSettingsTab(page, db)
 
     page:BackdropColorsCard({ db = db.EditBox, title = L['Editbox'], onChangeCallback = ApplySettings })
 
-    -- Card 4: Editbox & History
+    -- Card 3: Editbox & History
     local historyCard = page:Card(L['Editbox & History'], 'all')
     local positionRow = historyCard:Row(rowH)
     positionRow:Dropdown(L['Editbox Position'], {
@@ -363,3 +337,17 @@ GUI:RegisterPage('chat', {
         end
     end,
 })
+
+-- the default chat comes back fully only with a reload
+NRSKNUI.ModuleHeader:OnToggle('Chatv2', function(enabled)
+    if enabled then return end
+
+    NRSKNUI:CreatePrompt({
+        title = L['Chat Module Disabled'],
+        text = L['The chat module has been disabled.'] .. '\n\n' ..
+            L['A UI reload is recommended to fully restore the default chat.'],
+        onAccept = function() ReloadUI() end,
+        acceptText = L['Reload Now'],
+        cancelText = L['Later'],
+    })
+end)

@@ -34,31 +34,11 @@ end
 local function BuildBlizzardView(page)
     local blizzDB = BlizzardMessages.db
 
-    page:SetCondition('blizzFontsON', function() return blizzDB.Enabled end)
-
-    local blizzCard = page:Card(L['Blizzard UI Font'])
-    local blizzRow1 = blizzCard:Row(rowH)
-    blizzRow1:Checkbox(L['Style Blizzard Fonts'], {
-        width = 1,
-        value = blizzDB.Enabled,
-        msgPopup = true,
-        msgText = L['Blizzard UI Font'],
-        tooltip = L["Apply your global font face across Blizzard's UI, adding an outline where it reads cleanly. Big display text and unsafe fonts keep their native outline."],
-        callback = function(checked)
-            blizzDB.Enabled = checked
-            BlizzardMessages:ApplyBlizzardFonts(true)
-            ApplySettings()
-            page:Refresh()
-        end,
-    })
-
-    blizzCard:Separator()
-
+    local blizzCard = page:Card(L['Blizzard UI Font'], 'all')
     blizzCard:Row(rowH):Checkbox(L['Hide Shadows'], {
         width = 1,
         value = blizzDB.HideShadow,
         tooltip = L['Remove the drop shadow from styled fonts for a flatter look. Native shadows return when unchecked.'],
-        conditions = { 'blizzFontsON' },
         callback = function(checked)
             blizzDB.HideShadow = checked
             BlizzardMessages:ApplyBlizzardFonts()
@@ -70,7 +50,6 @@ local function BuildBlizzardView(page)
         width = 0.5,
         options = OutlineOptions(),
         value = blizzDB.Outline,
-        conditions = { 'blizzFontsON' },
         callback = function(key)
             blizzDB.Outline = key
             BlizzardMessages:ApplyBlizzardFonts()
@@ -81,7 +60,6 @@ local function BuildBlizzardView(page)
         width = 0.5,
         value = blizzDB.Slug,
         tooltip = L['Higher-quality glyph rendering on supported fonts, combined with the outline above where enabled.'],
-        conditions = { 'blizzFontsON' },
         callback = function(checked)
             blizzDB.Slug = checked
             BlizzardMessages:ApplyBlizzardFonts()
@@ -97,7 +75,6 @@ local function BuildBlizzardView(page)
             max = 8,
             step = 1,
             value = blizzDB.Families[famKey] or 0,
-            conditions = { 'blizzFontsON' },
             tooltip = tooltip,
             callback = function(val)
                 blizzDB.Families[famKey] = val
@@ -282,20 +259,38 @@ local function BuildSpecialView(page, entry)
     end
 end
 
-local items = { { key = 'blizzardFonts', text = L['Blizzard UI Font'] } }
-for _, entry in ipairs(BlizzardMessages.SpecialFonts) do
-    items[#items + 1] = { key = entry.key, text = entry.label }
+-- the special fonts captioned by where they show up, in the order they're listed in
+local GROUPS = {
+    { key = 'zones',    text = L['Zone Names'], fonts = { ZoneText = true, SubZoneText = true, PvPZoneText = true } },
+    { key = 'messages', text = L['Messages'],   fonts = { ErrorText = true, ActionStatus = true } },
+    { key = 'world',    text = L['In World'],   fonts = { ChatBubbles = true, Nameplates = true, CombatText = true, CombatFont = true, NameFont = true } },
+}
+
+local items = {
+    { type = 'label', key = 'general', text = L['General'] },
+    { key = 'blizzardFonts', text = L['Blizzard UI Font'] },
+}
+for _, group in ipairs(GROUPS) do
+    items[#items + 1] = { type = 'label', key = group.key, text = group.text }
+    for _, entry in ipairs(BlizzardMessages.SpecialFonts) do
+        if group.fonts[entry.key] then
+            items[#items + 1] = { key = entry.key, text = entry.label }
+        end
+    end
 end
 
 GUI:RegisterPage('blizzardFonts', {
     mode = 'clean',
     search = {
-        L['Style Blizzard Fonts'], L['Outline'], L['Use Slug Rendering'],
+        L['Outline'], L['Use Slug Rendering'],
         L['Hide Shadows'], L['Tiny Size'], L['Small Size'], L['Medium Size'], L['Large Size'],
         L['Huge Size'], L['Display Size'], L['Font Size'],
     },
     sidebar = { items = items },
     build = function(page, _, itemKey)
+        -- the header's switch is every font's parent, the special ones' own toggles included
+        page:SetEnabled(function() return BlizzardMessages.db.Enabled end)
+
         if not itemKey or itemKey == 'blizzardFonts' then
             BuildBlizzardView(page)
             return
@@ -308,3 +303,9 @@ GUI:RegisterPage('blizzardFonts', {
         end
     end,
 })
+
+-- the fonts restyle or go back to Blizzard's at once, the special frames with them
+NRSKNUI.ModuleHeader:OnToggle('BlizzardMessages', function()
+    BlizzardMessages:ApplyBlizzardFonts(true)
+    ApplySettings()
+end)

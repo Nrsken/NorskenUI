@@ -13,23 +13,7 @@ local function ApplySettings() RerollKeystone:ApplySettings() end
 
 -- General Settings Tab.
 local function BuildGeneralSettingsTab(page, db)
-    -- Card 1: Enable
-    local enableCard = page:Card(L['Reroll Keystone'])
-    local enableRow = enableCard:Row(rowHL, 0)
-    enableRow:Checkbox(L['Enable Reroll Keystone'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['Reroll Keystone'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('RerollKeystone', checked)
-            page:Refresh()
-        end,
-    })
-
-    -- Card 2: Appearance
+    -- Card 1: Appearance
     local appearanceCard = page:Card(L['Appearance'], 'all')
     local sizeRow = appearanceCard:Row(rowH)
     sizeRow:Slider(L['Icon Size'], {

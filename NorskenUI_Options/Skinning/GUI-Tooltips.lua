@@ -21,30 +21,12 @@ end
 
 -- General Settings Tab.
 local function BuildGeneralSettingsTab(page, db)
-    -- Card 1: Enable
-    local enableCard = page:Card(L['Tooltip Skinning'])
-    local enableRow = enableCard:Row(rowHL, 0)
-    enableRow:Checkbox(L['Enable Tooltip Skinning'], {
-        width = 1,
-        master = true,
-        value = db.Enabled ~= false,
-        msgPopup = true,
-        msgText = L['Tooltip Skinning'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('Tooltips', checked)
-            if not checked then
-                NRSKNUI:CreateReloadPrompt(L['Enabling Blizzard UI elements requires a reload to take full effect.'])
-            end
-            page:Refresh()
-        end,
-    })
-
-    enableCard:Separator()
-
-    local inforRowHeight = 90
-    local overrideKeyRow = enableCard:Row(inforRowHeight, 0)
-    overrideKeyRow:Text(NRSKNUI:ColorTextByTheme(L['Override Key']), {
+    -- Card 1: Override Key
+    local overrideCard = page:Card(L['Override Key'], 'all')
+    -- the card's title names it, so the text runs without a label of its own
+    local inforRowHeight = 68
+    local overrideKeyRow = overrideCard:Row(inforRowHeight, 0)
+    overrideKeyRow:Text(nil, {
         text = L['This key is used to temporarily show: '] .. '\n' ..
             NRSKNUI:ColorTextByTheme('  • ') .. L['Tooltips in combat'] .. '\n' ..
             NRSKNUI:ColorTextByTheme('  • ') .. L['Mount tooltips on mounted players'] .. '\n' ..
@@ -259,3 +241,10 @@ GUI:RegisterPage('tooltip', {
         end
     end,
 })
+
+-- Blizzard's tooltip look comes back only with a reload
+NRSKNUI.ModuleHeader:OnToggle('Tooltips', function(enabled)
+    if enabled then return end
+
+    NRSKNUI:CreateReloadPrompt(L['Enabling Blizzard UI elements requires a reload to take full effect.'])
+end)

@@ -26,25 +26,9 @@ local function ApplySettings() DungeonCasts:ApplySettings() end
 local function BuildGeneralSettingsTab(page, db)
     page:SetCondition('customBar', function() return not db.UseGlobalBar end)
 
-    -- Card 1: Enable
-    local enableCard = page:Card(L['Dungeon Casts'])
-    local enableRow = enableCard:Row(rowH)
-    enableRow:Checkbox(L['Enable Dungeon Casts'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['Dungeon Casts'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('DungeonCasts', checked)
-            page:Refresh()
-        end,
-    })
-
-    enableCard:Separator()
-
-    enableCard:Row(rowHL, 0):Checkbox(L['Hide Un-Pulled Mobs'], {
+    -- Card 1: General Settings
+    local generalCard = page:Card(L['General Settings'], 'all')
+    generalCard:Row(rowHL, 0):Checkbox(L['Hide Un-Pulled Mobs'], {
         width = 1,
         value = db.RequireCombat,
         callback = function(checked)

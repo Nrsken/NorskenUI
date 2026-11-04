@@ -79,14 +79,14 @@ local DispelColorTypes = {
 }
 
 local formatOptions = {
-    { key = '%0.1f',  text = L['Tenths (2.4)'] },
-    { key = '%0.1fs', text = L['Tenths with s (2.4s)'] },
-    { key = '%d',     text = L['Seconds (7)'] },
-    { key = '%ds',    text = L['Seconds with s (7s)'] },
+    { key = '%0.1f',                        text = L['Tenths (2.4)'] },
+    { key = '%0.1fs',                       text = L['Tenths with s (2.4s)'] },
+    { key = '%d',                           text = L['Seconds (7)'] },
+    { key = '%ds',                          text = L['Seconds with s (7s)'] },
     { key = NRSKNUI.MINUTES_SECONDS_FORMAT, text = L['Minutes and Seconds (2:10)'] },
-    { key = '%dm',    text = L['Minutes (3m)'] },
-    { key = '%dh',    text = L['Hours (2h)'] },
-    { key = '%dd',    text = L['Days (3d)'] },
+    { key = '%dm',                          text = L['Minutes (3m)'] },
+    { key = '%dh',                          text = L['Hours (2h)'] },
+    { key = '%dd',                          text = L['Days (3d)'] },
 }
 
 -- Aura buttons are built once by the game, so formatter edits only show after a reload.
@@ -98,14 +98,14 @@ end
 
 -- key indexes db.profile.Colors.
 local ColorCategories = {
-    { type = 'label', key = 'colors', text = L['Colors'] },
+    { type = 'label',   key = 'colors',       text = L['Colors'] },
     { key = 'Class',    text = L['Class'],    title = L['Class Colors'],    specs = ClassColorSpecs },
     { key = 'Power',    text = L['Power'],    title = L['Power Colors'],    specs = PowerColorSpecs },
     { key = 'Runes',    text = L['Runes'],    title = L['Rune Colors'],     specs = RuneColorSpecs },
     { key = 'Stagger',  text = L['Stagger'],  title = L['Stagger Colors'],  specs = StaggerColorSpecs },
     { key = 'Reaction', text = L['Reaction'], title = L['Reaction Colors'], specs = ReactionColorSpecs },
-    { key = 'Status',   text = L['Status'],   title = L['Status Colors'],   specs = StatusColorSpecs, storeAlpha = true },
-    { key = 'Dispel',   text = L['Dispel'],   title = L['Dispel Colors'],   specs = DispelColorTypes, storeAlpha = true },
+    { key = 'Status',   text = L['Status'],   title = L['Status Colors'],   specs = StatusColorSpecs,  storeAlpha = true },
+    { key = 'Dispel',   text = L['Dispel'],   title = L['Dispel Colors'],   specs = DispelColorTypes,  storeAlpha = true },
 }
 
 local function RefreshColors()

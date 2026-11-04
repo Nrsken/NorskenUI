@@ -179,27 +179,13 @@ local STATUS_TEXT = {
     unknown = { text = L['Open the Cooldown Manager to compare'], color = { 0.6, 0.6, 0.6, 1 } },
 }
 
+---Ungated: the Cooldown Manager's own settings open with the module off too.
 ---@param page KajiGUIPage
-local function BuildEnableCard(page, db)
-    local card = page:Card(L['CDM Profiles'])
-
-    card:Row(rowH):Checkbox(L['Enable CDM Profiles'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['CDM Profiles'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('CooldownStrings', checked)
-            page:Refresh()
-        end,
-    })
-
-    card:Separator()
+local function BuildInfoCard(page)
+    local card = page:Card(L['Information'])
 
     local infoHeight = 50
-    card:Row(infoHeight, 0):Text(NRSKNUI:ColorTextByTheme(L['Functionality Info']), {
+    card:Row(infoHeight, 0):Text(nil, {
         width = 1,
         height = infoHeight,
         autoHeight = true,
@@ -379,7 +365,7 @@ GUI:RegisterPage(PAGE, {
         page:SetCondition('sameClass', function() return itemKey and CooldownStrings:IsForThisClass(itemKey) end)
 
         -- Card 1
-        BuildEnableCard(page, db)
+        BuildInfoCard(page)
 
         if not itemKey or not db.Profiles[itemKey] then
             local card = page:Card(L['Backup'], 'all')

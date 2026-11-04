@@ -440,18 +440,20 @@ function BlizzardMessages:ApplyGlobalFontVars()
         if entry.globalVar then
             local sdb = specials[entry.key]
 
-            if sdb and sdb.Enabled then
+            if self.db.Enabled and sdb and sdb.Enabled then
                 _G[entry.globalVar] = NRSKNUI:ResolveMediaPath('font', sdb.FontFace or profileFont.FontFace)
             end
         end
     end
 end
 
----Apply the Specials settings to the objects they control, skipping any that are not enabled.
+---Apply the Specials settings to the objects they control, skipping any that are not enabled. The module's own
+---switch is their parent: off, every special goes back to Blizzard's font whatever its own toggle says.
 function BlizzardMessages:ApplySpecialFonts()
     local specials = self.db.Specials
     if not specials then return end
 
+    local styled = self.db.Enabled
     self:ApplyGlobalFontVars()
 
     for i = 1, #self.SpecialFonts do
@@ -463,7 +465,7 @@ function BlizzardMessages:ApplySpecialFonts()
                 local obj = LookupObject(entry.objects[j])
 
                 if obj then
-                    if sdb.Enabled then
+                    if styled and sdb.Enabled then
                         self:SetFont(obj, true, nil, sdb)
                     else
                         RestoreOriginal(obj)
@@ -483,8 +485,8 @@ end)
 
 -- Events --
 
--- The specials still apply with the master toggle off, so the fonts follow login and the profile font
--- through their own listener rather than the module, which only runs while that toggle is on.
+-- The fonts follow login and the profile font through their own listener rather than the module, which only runs
+-- while it's on: off, the pass is what puts every font back to Blizzard's.
 local listener = {}
 LibStub('AceEvent-3.0'):Embed(listener)
 local function Restyle()

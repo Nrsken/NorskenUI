@@ -10,27 +10,11 @@ local rowHL = Theme.rowHeightLast
 local function BuildTab(page, db)
     page:SetEnabled(function() return db.Enabled end)
 
-    -- Card 1: Enable
-    local enableCard = page:Card(L['Copy Anything'])
-    local enableRow = enableCard:Row(rowH)
-    enableRow:Checkbox(L['Enable Copy Anything'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['Copy Anything'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('CopyAnything', checked)
-            page:Refresh()
-        end,
-    })
-
-    enableCard:Separator()
-
+    -- Card 1: Information
+    local infoCard = page:Card(L['Information'], 'all')
     local textRowSize = 50
-    local infoRow = enableCard:Row(textRowSize)
-    infoRow:Text(NRSKNUI:ColorTextByTheme(L['Functionality Info']), {
+    local infoRow = infoCard:Row(textRowSize, 0)
+    infoRow:Text(nil, {
         width = 1,
         height = textRowSize,
         autoHeight = true,

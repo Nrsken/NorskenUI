@@ -177,7 +177,8 @@ function PlayerAuras:ApplySettings()
         local cfg = self.db[kind]
         local host = self:GetHost(kind)
 
-        if cfg.Enabled then
+        -- one switch for both frames, the module's own
+        if self.db.Enabled then
             self:ResizeHost(kind)
             host:Show()
             host:NUIApplyPosition(cfg)
@@ -207,7 +208,7 @@ function PlayerAuras:ApplySettings()
 
     NRSKNUI:RunWhenSafe(function()
         for kind in pairs(KINDS) do
-            if self.db[kind].Enabled then
+            if self.db.Enabled then
                 self:BuildContainer(kind)
             end
         end
@@ -219,7 +220,7 @@ function PlayerAuras:OnEnable()
 
     NRSKNUI:RunWhenSafe(function()
         for kind, info in pairs(KINDS) do
-            if self.db[kind].Enabled then
+            if self.db.Enabled then
                 local frame = _G[info.blizzardFrame]
                 frame:NUIBanish()
                 for _, cvar in ipairs(info.cvarCallbacks or {}) do

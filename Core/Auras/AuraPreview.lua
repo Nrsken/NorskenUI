@@ -300,8 +300,9 @@ function DummyMixin:SetDurationCooldown(cooldown)
     self.nuiCooldown = cooldown
 end
 
-function DummyMixin:SetApplicationCount(fontString)
+function DummyMixin:SetApplicationCount(fontString, options)
     self.nuiCount = fontString
+    self.nuiCountFormatter = options and options.formatter
 end
 
 function DummyMixin:SetDurationText(fontString, options)
@@ -359,7 +360,7 @@ local function ResetDummy(button)
     ResetPools(button.nuiAuraOverlay)
     button.Cooldown:Hide()
 
-    button.nuiIcon, button.nuiCooldown, button.nuiCount = nil, nil, nil
+    button.nuiIcon, button.nuiCooldown, button.nuiCount, button.nuiCountFormatter = nil, nil, nil, nil
     button.nuiTime, button.nuiTimeOptions = nil, nil
     button.nuiDispelCount = 0
 end
@@ -458,7 +459,10 @@ local function StartAura(button, entry, now)
 
     if button.nuiIcon then button.nuiIcon:SetTexture(entry.icon) end
     if button.nuiCooldown then button.nuiCooldown:SetCooldown(start, entry.duration) end
-    if button.nuiCount then button.nuiCount:SetText(entry.stacks > 1 and entry.stacks or '') end
+    if button.nuiCount then
+        local formatter = button.nuiCountFormatter
+        button.nuiCount:SetText(formatter and formatter:FormatNumber(entry.stacks) or entry.stacks > 1 and entry.stacks or '')
+    end
 
     if button.nuiBinding and CreateDuration then
         local duration = button.nuiDuration

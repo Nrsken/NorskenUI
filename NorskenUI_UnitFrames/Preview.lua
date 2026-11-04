@@ -553,6 +553,9 @@ local function SetAnchorLayout(shown)
     end)
 end
 
+-- The preview differs per unit page and for the everything view, so a scope change restarts it.
+UF.previewScoped = true
+
 ---Show a preview for a page. The page is responsible for calling Release when it closes or switches away.
 ---Raid tiers sit out the everything view and only preview from their own page.
 ---@param pageId string? the page asking, e.g. 'unitFrames_target'

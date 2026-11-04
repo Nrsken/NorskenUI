@@ -23,23 +23,7 @@ end
 local function BuildGeneralSettingsTab(page, db)
     page:SetCondition('customBar', function() return not db.UseGlobalBar end)
 
-    -- Card 1: Enable
-    local enableCard = page:Card(L['Focus Castbar'])
-    local enableRow = enableCard:Row(rowHL, 0)
-    enableRow:Checkbox(L['Enable Focus Castbar'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['Focus Castbar'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('FocusCastbar', checked)
-            page:Refresh()
-        end,
-    })
-
-    -- Card 2: Bar Appearance
+    -- Card 1: Bar Appearance
     local barCard = page:Card(L['Bar Appearance'], 'all')
     local sizeRow = barCard:Row(rowH)
     sizeRow:Slider(L['Width'], {

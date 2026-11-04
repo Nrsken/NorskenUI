@@ -3,7 +3,6 @@ local NRSKNUI = select(2, ...)
 local L = NRSKNUI.Libs.AL
 
 local ReloadUI = ReloadUI
-local format = string.format
 
 ---@class PromptOptions : KajiPromptOptions
 
@@ -44,26 +43,5 @@ function NRSKNUI:CreateReloadPrompt(reason)
         onAccept = function() ReloadUI() end,
         acceptText = L["Reload Now"],
         cancelText = L["Later"],
-    })
-end
-
----@param modulePath string ProfileManager module path (e.g., "Skinning.BuffTracking")
----@param moduleName string Display name for the module
----@param promptText? string Custom prompt text
-function NRSKNUI:CreateResetModulePrompt(modulePath, moduleName, promptText)
-    return NRSKNUI.GUI:Prompt({
-        title = L["Reset Module"],
-        text = promptText or format(L["Reset %s settings to defaults?"], moduleName),
-        width = 320,
-        onAccept = function()
-            local success, err = NRSKNUI.ProfileManager:ResetModuleSettings(modulePath, moduleName)
-            if success then
-                NRSKNUI:CreateReloadPrompt(L["Settings reset. Reload to apply all changes."])
-            else
-                NRSKNUI:Print(format(L["Reset failed: %s"], err or L["unknown error"]))
-            end
-        end,
-        acceptText = L["Reset"],
-        cancelText = L["Cancel"],
     })
 end

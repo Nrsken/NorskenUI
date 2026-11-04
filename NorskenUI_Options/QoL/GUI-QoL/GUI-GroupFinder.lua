@@ -31,21 +31,6 @@ end
 
 -- General Settings Tab.
 local function BuildGeneralSettingsTab(page, db)
-    local enableCard = page:Card(L['Group Finder'])
-    local enableRow = enableCard:Row(rowHL, 0)
-    enableRow:Checkbox(L['Enable Group Finder'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['Group Finder'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('GroupFinder', checked)
-            page:Refresh()
-        end,
-    })
-
     local panelCard = page:Card(L['Side Panel'], 'all')
     local panelRow = panelCard:Row(rowH)
     panelRow:Checkbox(L['Show Side Panel'], {

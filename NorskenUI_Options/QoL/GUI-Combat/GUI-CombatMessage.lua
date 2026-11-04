@@ -45,23 +45,7 @@ local function BuildGeneralSettingsTab(page, db)
     page:SetCondition('noTarget', function() return db.NoTarget.Enabled end)
     page:SetCondition('partyDeath', function() return db.PartyDeath.Enabled end)
 
-    -- Card 1: Enable
-    local enableCard = page:Card(L['Combat Message'])
-    local enableRow = enableCard:Row(rowHL, 0)
-    enableRow:Checkbox(L['Enable Combat Message'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['Combat Message'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('CombatMessage', checked)
-            page:Refresh()
-        end,
-    })
-
-    -- Card 2: General Settings
+    -- Card 1: General Settings
     local generalCard = page:Card(L['General Settings'], 'all')
     local durationRow = generalCard:Row(rowHL, 0)
     durationRow:Slider(L['Message Duration'], {
@@ -76,7 +60,7 @@ local function BuildGeneralSettingsTab(page, db)
         end
     })
 
-    -- Card 3: Message Types
+    -- Card 2: Message Types
     local typesCard = page:Card(L['Message Types'], 'all')
 
     -- Enter Combat Message

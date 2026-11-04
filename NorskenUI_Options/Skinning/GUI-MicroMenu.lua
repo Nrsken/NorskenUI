@@ -15,24 +15,7 @@ end
 
 -- General Settings Tab.
 local function BuildGeneralSettingsTab(page, db)
-    -- Card 1: Enable
-    local enableCard = page:Card(L['Micro Menu Skinning'])
-    local enableRow = enableCard:Row(rowHL, 0)
-    enableRow:Checkbox(L['Enable Micro Menu Skinning'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['Micro Menu Skinning'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('MicroMenu', checked)
-            NRSKNUI:CreateReloadPrompt(L['Enabling/Disabling this UI element requires a reload to take full effect.'])
-            page:Refresh()
-        end,
-    })
-
-    -- Card 2: Buttons
+    -- Card 1: Buttons
     local buttonCard = page:Card(L['Button Settings'], 'all')
     local sizeRow = buttonCard:Row(rowH)
     sizeRow:Slider(L['Button Width'], {
@@ -181,3 +164,7 @@ GUI:RegisterPage('microMenu', {
         end
     end,
 })
+
+NRSKNUI.ModuleHeader:OnToggle('MicroMenu', function()
+    NRSKNUI:CreateReloadPrompt(L['Enabling/Disabling this UI element requires a reload to take full effect.'])
+end)

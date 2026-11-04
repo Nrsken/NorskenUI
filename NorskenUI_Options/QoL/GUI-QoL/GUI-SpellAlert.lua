@@ -23,27 +23,11 @@ end
 local function BuildTab(page, db)
     page:SetEnabled(function() return db.Enabled end)
 
-    -- Card 1: Enable
-    local enableCard = page:Card(L['Spell Alerts'])
-    local enableRow = enableCard:Row(rowH)
-    enableRow:Checkbox(L['Enable Spell Alerts'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['Spell Alerts'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('SpellAlert', checked)
-            page:Refresh()
-        end,
-    })
-
-    enableCard:Separator()
-
+    -- Card 1: Information
+    local infoCard = page:Card(L['Information'], 'all')
     local infoRowSize = 50
-    local infoRow = enableCard:Row(infoRowSize)
-    infoRow:Text(NRSKNUI:ColorTextByTheme(L['Functionality Info']), {
+    local infoRow = infoCard:Row(infoRowSize, 0)
+    infoRow:Text(nil, {
         autoHeight = true,
         width = 1,
         height = infoRowSize,

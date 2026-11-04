@@ -12,8 +12,8 @@ GUIFrame:AddSidebarEntry({
     text = L['Dungeons'],
     defaultExpanded = false,
     items = {
-        { id = 'dungeonCasts',   text = L['Dungeon Casts'] },
-        { id = 'rerollKeystone', text = L['Reroll Keystone'] },
+        { id = 'dungeonCasts',   text = L['Dungeon Casts'], module = 'DungeonCasts' },
+        { id = 'rerollKeystone', text = L['Reroll Keystone'], module = 'RerollKeystone' },
     }
 })
 
@@ -23,10 +23,9 @@ GUIFrame:AddSidebarEntry({
     type = 'header',
     text = L['BigWigs Timers'],
     defaultExpanded = false,
+    module = 'BigWigsTimers',
     items = {
-        { id = 'bwTimers',         text = L['General'] },
-        { id = 'bwTimersBars',     text = L['Bar Settings'] },
-        { id = 'bwTimersTexts',    text = L['Text Settings'] },
+        { id = 'bwTimersDisplay',  text = L['Display'] },
         { id = 'bwTimersDungeons', text = L['Dungeons'] },
         { id = 'bwTimersRaids',    text = L['Raids'] },
     }

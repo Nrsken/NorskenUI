@@ -15,24 +15,7 @@ end
 
 -- General Settings Tab.
 local function BuildGeneralSettingsTab(page, db)
-    -- Card 1: Enable
-    local enableCard = page:Card(L['Pet Status Texts'])
-    local enableRow = enableCard:Row(rowHL, 0)
-    enableRow:Checkbox(L['Enable Pet Status Texts'], {
-        width = 1,
-        master = true,
-        value = db.Enabled ~= false,
-        msgPopup = true,
-        msgText = L['Pet Status Texts'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('PetTexts', checked)
-            page:Refresh()
-            if checked and PetTexts then PetTexts:ShowPreview() end
-        end,
-    })
-
-    -- Card 2: State Settings
+    -- Card 1: State Settings
     local stateCard = page:Card(L['State Settings'], 'all')
 
     local missingRow = stateCard:Row(rowH)
@@ -140,3 +123,9 @@ GUI:RegisterPage('petTexts', {
         end
     end,
 })
+
+NRSKNUI.ModuleHeader:OnToggle('PetTexts', function(enabled)
+    if enabled and PetTexts then
+        PetTexts:ShowPreview()
+    end
+end)

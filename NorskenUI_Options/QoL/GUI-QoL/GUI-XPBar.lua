@@ -15,21 +15,6 @@ end
 
 -- General Settings Tab.
 local function BuildGeneralSettingsTab(page, db)
-    local enableCard = page:Card(L['XP Bar'])
-    local enableRow = enableCard:Row(rowHL, 0)
-    enableRow:Checkbox(L['Enable XP Bar'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['XP Bar'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('XPBar', checked)
-            page:Refresh()
-        end,
-    })
-
     local cardGeneral = page:Card(L['General Settings'], 'all')
     local showRestedRow = cardGeneral:Row(rowH)
     showRestedRow:Checkbox(L['Show Rested Bar'], {

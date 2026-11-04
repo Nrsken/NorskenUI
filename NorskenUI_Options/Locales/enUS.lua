@@ -57,7 +57,6 @@ L['Out of Range Color'] = true
 
 -- Combat Message
 L['Combat Message'] = true
-L['Enable Combat Message'] = true
 L['Message Duration'] = true
 L['Message Types'] = true
 L['Enter Combat'] = true
@@ -77,7 +76,6 @@ L['Use |cffffffff%name|r to insert the name of the player who died and |cfffffff
 
 -- Combat Res Tracker
 L['Combat Res Tracker'] = true
-L['Enable Combat Res Tracker'] = true
 L['Available Tokens'] = true
 L['Battle res charges'] = true
 L['Separator (chosen below)'] = true
@@ -127,7 +125,6 @@ L['Used by every module set to follow the global backdrop.'] = true
 L['Used by every castbar set to follow the global spark.'] = true
 L['Used by every module set to follow the global texture.'] = true
 L['Textures'] = true
-L['Style Blizzard Fonts'] = true
 L['Tiny Size'] = true
 L['UI Scale'] = true
 L['Use Global Bar Texture'] = true
@@ -156,7 +153,6 @@ L['Start Time'] = true
 
 -- Global Fonts
 L['Anchor'] = true
-L["Apply your global font face across Blizzard's UI, adding an outline where it reads cleanly. Big display text and unsafe fonts keep their native outline."] = true
 L['Blizzard UI Font'] = true
 L['Global'] = true
 L['Global Font'] = true
@@ -220,7 +216,6 @@ L['Use one of the pre-made color themes.'] = true
 L['Welcome to NorskenUI'] = true
 
 -- Combat Cross
-L['Enable Combat Cross'] = true
 
 -- Combat Message
 L['DPS Sound'] = true
@@ -232,13 +227,11 @@ L['Tank Sound'] = true
 L['Background Height'] = true
 L['Background Width'] = true
 L['Combat Only'] = true
-L['Enable Combat Timer'] = true
 L['Print Duration to Chat'] = true
 
 -- Range Checker
 L['Close (0-10)'] = true
 L['Color Gradient'] = true
-L['Enable Range Checker'] = true
 L['Far (40+ yards)'] = true
 L['Mid-Close (10-20)'] = true
 L['Mid-Far (20-40)'] = true
@@ -248,7 +241,6 @@ L['Update Throttle'] = true
 
 -- Cursor Circle
 L['Cursor Circle'] = true
-L['Enable Cursor Circle'] = true
 L['GCD Mode'] = true
 L['GCD Ring'] = true
 L['GCD Settings'] = true
@@ -265,7 +257,6 @@ L['Visibility'] = true
 L['Bar Appearance'] = true
 L['Bar Texture'] = true
 L['Colors & Indicators'] = true
-L['Enable Focus Castbar'] = true
 L['Height'] = true
 L['Hold Timer'] = true
 L['Important Spell Glow'] = true
@@ -285,15 +276,12 @@ L['Width'] = true
 -- Potion Ready
 L['Alert Color'] = true
 L['Alert Text'] = true
-L['Enable Potion Ready'] = true
 L['Potion Ready'] = true
 
 -- Gateway Alert
-L['Enable Gateway Alert'] = true
 L['Gateway Usable Alert'] = true
 
 -- Missing Buffs
-L['Enable Missing Buffs'] = true
 L['Click to Cast'] = true
 L['Raid Buff Mode'] = true
 L['Count Anchor'] = true
@@ -351,7 +339,6 @@ L['Only during a ready check.'] = true
 
 -- Pet Status Texts
 L['Dead Color'] = true
-L['Enable Pet Status Texts'] = true
 L['Missing Color'] = true
 L['Passive Color'] = true
 L['Pet Dead Text'] = true
@@ -368,7 +355,6 @@ L['Bar Width'] = true
 L['Custom Foreground Color'] = true
 L['Custom Quest Color'] = true
 L['Custom Rested Color'] = true
-L['Enable XP Bar'] = true
 L['Foreground Color Mode'] = true
 L['Progress Texture'] = true
 L['Quest Color Mode'] = true
@@ -412,7 +398,6 @@ L['Profile manager is not available.'] = true
 
 -- Tooltips Skinning
 L['Tooltip Skinning'] = true
-L['Enable Tooltip Skinning'] = true
 L['Hide Threat Line'] = true
 L['Hides the current threat line on tooltips for units that you are in combat with.'] = true
 L['Show Mount'] = true
@@ -433,7 +418,6 @@ L['Normal Text'] = true
 L['Small Text'] = true
 
 -- Minimap Skinning
-L['Enable Minimap'] = true
 L['Mouse Middle-click: Opens calendar.'] = true
 L['Mouse Right-click: Opens tracking menu.'] = true
 L['Minimap Settings'] = true
@@ -458,7 +442,6 @@ L['Show AddOn Compartment'] = true
 
 -- QoL: Copy Anything
 L['Copy Anything'] = true
-L['Enable Copy Anything'] = true
 L['Functionality Info'] = true
 L['Copies SpellID, ItemID, AuraID, MacroID and Unitnames on mouseover'] = true
 L['Limited functionality in certain environments because of secret values.'] = true
@@ -470,7 +453,6 @@ L['Ctrl + Shift + Alt'] = true
 L['Copy Keybind, Single Letter Only'] = true
 
 -- QoL: Tweaks
-L['Enable Tweaks'] = true
 L['Hide Misc Elements'] = true
 L['Hide Talking Head Frame'] = true
 L['Hide Boss Banner'] = true
@@ -478,7 +460,6 @@ L['Misc Tweaks'] = true
 L['Confirm Popups with Enter'] = true
 
 -- QoL: Recuperate Button
-L['Enable Recuperate Button'] = true
 L['Because of restrictions i cannot fully hide the button when loaded and at '] = true
 L['|cffFFFFFFfull health|r'] = true
 L['|cffFFFFFFnot in combat.|r'] = true
@@ -488,7 +469,6 @@ L['Load in Party'] = true
 L['Button Size'] = true
 
 -- QoL: Automation
-L['Enable Automation'] = true
 L['Override Behaviour'] = true
 L['Hold to Skip'] = true
 L['Hold to Enable'] = true
@@ -523,7 +503,6 @@ L['Auto Bonus Roll Mode'] = true
 -- QoL: Quest Tracker
 L['A name of your own, shown instead of the quest title. Leave empty to use the title.'] = true
 L['Add Quest ID'] = true
-L['Enable Quest Tracker'] = true
 L['Hidden Quest'] = true
 L['Tracked Quests'] = true
 L['Type a quest ID and press Enter to track it on every character.'] = true
@@ -532,6 +511,7 @@ L['Character Tab Only'] = true
 L['Daily'] = true
 L['Hide the panel on the Reputation and Currency tabs.'] = true
 L['Never'] = true
+L['Never load this, whatever the conditions below say. A group takes everything inside it along.'] = true
 L['Only max level characters are listed.'] = true
 L['Resets'] = true
 L['Right-click a quest in your log to track it.'] = true
@@ -542,7 +522,6 @@ L['Right-click to show it on the panel'] = true
 
 -- QoL: Auction House Filter
 L['Auction House Filter'] = true
-L['Enable Auction House Filter'] = true
 L['Blizzard Auction House'] = true
 L['Current Expansion Only'] = true
 L['Auto Focus Search Bar'] = true
@@ -553,7 +532,6 @@ L['Not Loaded'] = true
 
 -- QoL: Durability Util
 L['Durability Util'] = true
-L['Enable Durability Low Warning'] = true
 L['Durability Low Warning'] = true
 L['Low Threshold Text'] = true
 L['Low Threshold Color'] = true
@@ -563,7 +541,6 @@ L['Threshold %'] = true
 
 -- QoL: Character Panel
 L['Character Panel'] = true
-L['Enable Character Panel'] = true
 L['Gear'] = true
 L['Panel Texts'] = true
 L['Adds upgrade track letters to the character panel gear slots.'] = true
@@ -595,7 +572,6 @@ L['Stats Size'] = true
 L['Adds a button to the socket bar that applies enchants from your bags, highlighting the slots each one fits.'] = true
 
 -- QoL: Skyriding UI
-L['Enable Skyriding UI'] = true
 L['Show Vigor'] = true
 L['Show Whirling Surge'] = true
 L['Show Second Wind'] = true
@@ -616,7 +592,6 @@ L['Speed Text Font'] = true
 
 -- QoL: Spell Alerts
 L['Spell Alerts'] = true
-L['Enable Spell Alerts'] = true
 L['Alert Settings'] = true
 L['Alert Scale'] = true
 L['Alert Opacity'] = true
@@ -628,7 +603,6 @@ L['A separate set of values for this specialization only.'] = true
 L['Only %s uses these values. Your other specializations keep their own.'] = true
 
 -- QoL: CDM Profiles
-L['Enable CDM Profiles'] = true
 L['Backs up Cooldown Manager layouts as profile strings you can restore later.'] = true
 L['Layouts from your other characters are snapshotted on logout, so they stay available here.'] = true
 L['Capture from CDM'] = true
@@ -660,7 +634,6 @@ L['Could not read the spec out of that string, pick one on the profile page.'] =
 -- Unit Frames GUI
 L['Unit Frames'] = true
 L['General'] = true
-L['Enable Unit Frames'] = true
 L['Defer To %s'] = true
 L['%s is loaded and brings its own unit frames. Running both sets at once crashes the client, so keep this on unless you have turned that addon\'s unit frames off.'] = true
 L['Unit frame ownership only changes on a fresh load.'] = true
@@ -793,11 +766,13 @@ L['On Cooldown'] = true
 L['On Global Cooldown'] = true
 L['Recharging'] = true
 L['Waiting'] = true
+L['Supercharged'] = true
 L['No Charges Left'] = true
 L['Usable'] = true
 L['Not Enough Resources'] = true
 L['In Range'] = true
 L['Proc Glow'] = true
+L['Spell Overridden'] = true
 L['Remaining Time'] = true
 L['Count'] = true
 L['True'] = true
@@ -846,6 +821,8 @@ L['or %s'] = true
 L['and'] = true
 L['or'] = true
 L['Only checked when the condition above it does not match.'] = true
+L["Else If doesn't work next to aura checks, the game keeps them secret."] = true
+L["This can't change an aura's icon, the game locks it."] = true
 L['Add Condition'] = true
 L['Hide Passive Trinkets'] = true
 L['Ignore Override'] = true
@@ -932,12 +909,17 @@ L['Failed'] = true
 L['Cast'] = true
 L['Power Type'] = true
 L['Primary Power follows your form and spec.'] = true
+L['All Casts'] = true
+L['Specific Casts'] = true
 L['Hold Time'] = true
 L['Show Latency'] = true
 L['Latency Color'] = true
 L['Tick Color'] = true
-L["Aura triggers don't count toward trigger combination, the game doesn't tell addons whether an aura is up or not."] = true
-L['This group holds more than one kind of display; edit their look per display.'] = true
+L["Aura triggers aren't part of the combination system, the game keeps them secret."] = true
+L['Icons (%d)'] = true
+L['Bars (%d)'] = true
+L['Texts (%d)'] = true
+L['All (%d)'] = true
 L['Hide Blizzard Player Cast Bar'] = true
 L["For a cast bar of your own. Showing Blizzard's again takes a reload."] = true
 L["Blizzard's cast bar comes back after a reload. Reload now?"] = true
@@ -999,8 +981,6 @@ L['Important'] = true
 
 -- Aura Displays (Advanced Debuffs / Defensives / Standard Buffs / Standard Debuffs) --
 L['Buffs & Debuffs'] = true
-L['Enable Standard Buffs'] = true
-L['Enable Standard Debuffs'] = true
 
 -- Layout tab
 L['Max Auras'] = true
@@ -1050,8 +1030,14 @@ L['Copied %d aura indicators from %s'] = true
 L['Copy Aura Indicators'] = true
 L['Create Indicator'] = true
 L["Put '%s' back to how it shipped, its triggers and color included?"] = true
-L['Empty Indicator'] = true
-L['Default Indicators'] = true
+L['Reset %s to Default'] = true
+L['Put every %s indicator back to how it shipped, triggers and colors included?'] = true
+L['Your Indicators'] = true
+L['Presets'] = true
+L['Other Bars'] = true
+L['Zone Names'] = true
+L['Messages'] = true
+L['In World'] = true
 L['Delete Indicator'] = true
 L['Dispel Colored Border'] = true
 L['Duration Text'] = true
@@ -1065,7 +1051,6 @@ L['Put every layer back where it shipped?'] = true
 L['Shared Layer %s'] = true
 L['Draw Order'] = true
 L['New Indicator'] = true
-L['No indicators yet. Use New Indicator to create one.'] = true
 L['Overlay Tint'] = true
 L['Paste Aura Indicators'] = true
 L['Paste from %s'] = true
@@ -1177,7 +1162,6 @@ L['Remove from Group'] = true
 
 -- Skinning: Action Bars --
 L['Action Bars'] = true
-L['Enable Action Bars Skinning'] = true
 L['Bar'] = true
 L['Enable Bar'] = true
 L['Bar Enable/Disable'] = true
@@ -1225,7 +1209,6 @@ L['Hides the backdrop behind buttons that hold no action.'] = true
 
 -- Skinning: Chat --
 L['Chat'] = true
-L['Enable Custom Chat Panel'] = true
 L['Chat Module Disabled'] = true
 L['The chat module has been disabled.'] = true
 L['A UI reload is recommended to fully restore the default chat.'] = true
@@ -1262,7 +1245,6 @@ L['Enable Tab Backdrop'] = true
 
 -- Skinning: Micro Menu --
 L['Micro Menu Skinning'] = true
-L['Enable Micro Menu Skinning'] = true
 L['Button Settings'] = true
 L['Button Width'] = true
 L['Button Height'] = true
@@ -1282,12 +1264,7 @@ L['Battle.net Whisper Sound'] = true
 
 -- Skinning: Details Backdrop --
 L['Details Backdrop'] = true
-L['Enable Details Backdrop'] = true
 L['Enable This Backdrop'] = true
-L['About Details Backdrops'] = true
-L['Draws a NorskenUI backdrop behind each of your Details windows'] = true
-L['Each backdrop is configured on its own page and can be moved with the anchors'] = true
-L['Auto size resizes the Details window itself to sit inside the backdrop'] = true
 L['Size Mode'] = true
 L['Auto Size To Details Window'] = true
 L['Amount Of Bars To Show'] = true
@@ -1299,7 +1276,6 @@ L['Yes'] = true
 
 -- Dungeons: Dungeon Casts --
 L['Dungeons'] = true
-L['Enable Dungeon Casts'] = true
 L['Hide Un-Pulled Mobs'] = true
 L['Casting'] = true
 L['Channeling'] = true
@@ -1315,7 +1291,6 @@ L['After Spell Name'] = true
 L['Before Timer'] = true
 
 -- Dungeons: Reroll Keystone --
-L['Enable Reroll Keystone'] = true
 L['Text Size'] = true
 L['Key Text Color'] = true
 L['Key Text Size'] = true
@@ -1323,7 +1298,6 @@ L['Key Text Size'] = true
 -- Skinning: Frames --
 L['Frames'] = true
 L['Frame Skinning'] = true
-L['Enable Frame Skinning'] = true
 L['Skin Colors'] = true
 L['Accent Mode'] = true
 L['Custom Accent'] = true
@@ -1353,7 +1327,6 @@ L['Search Box'] = true
 -- Skinning: Objective Tracker --
 L['Objective Tracker'] = true
 L['Objective Tracker Skinning'] = true
-L['Enable Objective Tracker Skinning'] = true
 L['Font Styling'] = true
 L['Enable Font Styling'] = true
 L['The font face and shadow are taken from Skinning > Frames > Font Settings.'] = true
@@ -1362,7 +1335,6 @@ L['Quest Text Size'] = true
 
 -- Skinning: Blizzard Mouseover --
 L['Blizzard Mouseover'] = true
-L['Enable Blizzard Mouseover'] = true
 L['Alpha When Not Hovered'] = true
 L['Alpha the element rests at while the mouse is away from it.'] = true
 L['Fully hides the element instead of fading it in on mouseover.'] = true
@@ -1374,7 +1346,6 @@ L['Class Bar'] = true
 L['Class Circle'] = true
 L['Sort Order'] = true
 L['Panel Width'] = true
-L['Enable Group Finder'] = true
 L['Side Panel'] = true
 L['Search Results'] = true
 L['Requires the RaiderIO addon.'] = true
@@ -1383,7 +1354,6 @@ L['Requires the RaiderIO addon.'] = true
 L['Add Spell'] = true
 L['Delete Group'] = true
 L['Duplicate as Custom'] = true
-L['From %s'] = true
 L['No spell found'] = true
 L["Put '%s' back to how it shipped, spells, layout and position included?"] = true
 L['Remove the spells you added and switch every default spell back on?'] = true
@@ -1420,8 +1390,8 @@ L['Cooldown Manager'] = true
 L['New Group'] = true
 L['New Icon'] = true
 L['Ungroup'] = true
-L['Move to %s'] = true
 L["Delete '%s'? This cannot be undone."] = true
+L["Delete '%s' and the %d displays inside it? This cannot be undone."] = true
 L['Spell'] = true
 L["Spells Blizzard's Cooldown Manager tracks for your current spec."] = true
 L['Swipe Color'] = true
@@ -1442,6 +1412,7 @@ L['Group Icon'] = true
 L['Icon ID'] = true
 L['The icon this group shows in the list. Empty uses its first icon.'] = true
 L['No Children'] = true
+L['Displays inside with warnings: %d'] = true
 L['ID'] = true
 L['UID'] = true
 L['Children'] = true
@@ -1495,7 +1466,7 @@ L['Click to keep this display shown while the options are open.'] = true
 L["Remove the group '%s'? Everything inside it stays."] = true
 L['Delete Group and Contents'] = true
 L['Delete All'] = true
-L['Delete %d displays? Groups take everything inside them. This cannot be undone.'] = true
+L['Delete %d displays? This cannot be undone.'] = true
 L['%d Displays'] = true
 L['Static Single Bar'] = true
 L['Static Segments'] = true
@@ -1543,6 +1514,11 @@ L['Loot Specialization'] = true
 L['Is Current Spec'] = true
 L['Current Spec'] = true
 L['Not Current Spec'] = true
+L['Quest Title'] = true
+L['Progress State'] = true
+L['In Hunt Zone'] = true
+L['Hunt Hint'] = true
+L['What %n shows. The state and hint are only known inside the hunt zone.'] = true
 L['Current Specialization'] = true
 L['Active while the loot specialization is one of these. None picked is any.'] = true
 L['Whether loot goes to the spec you are playing. Loot set to Current Specialization always is.'] = true
@@ -1567,6 +1543,7 @@ L['Separated (12,345)'] = true
 L['Full'] = true
 L['Value'] = true
 L["The game reads this in combat, so it only colours a text showing this trigger's %p and can't be combined with others."] = true
+L["The game reads this in combat, so it only colours a text showing this aura's %s and can't be combined with others."] = true
 L['Spell icon'] = true
 L["Trigger 2's icon"] = true
 L['A percent sign'] = true
@@ -1581,6 +1558,7 @@ L["The game hides whether an aura is up, so this check can't be combined with ot
 L['Automatic'] = true
 L['Border Offset'] = true
 L['Crop the icon to the frame shape instead of stretching it.'] = true
+L['Off leaves only the texts, borders and glows, such as an aura shown as just its stacks.'] = true
 L['Desaturate'] = true
 L['Display Text'] = true
 L['Enable Swipe'] = true
@@ -1597,8 +1575,6 @@ L['Show Edge'] = true
 L['Show Text'] = true
 L['Sub Elements'] = true
 L['Integration'] = true
-L['Hide Blizzard Cooldown Manager'] = true
-L["Hides Blizzard's Cooldown Manager. It is turned off completely, unless a Cooldown Bar trigger needs it: then it keeps running out of sight. Its spell list still feeds the icon picker."] = true
 L['Unit Frame Anchor Minimum Width'] = true
 L['The unit frame anchor is never narrower than this, so frames beside it keep their distance from a short group.'] = true
 L['Unit Frame Anchor'] = true
@@ -1606,6 +1582,8 @@ L['Anchor Role'] = true
 L['Primary'] = true
 L['Secondary'] = true
 L['The unit frame anchor follows the loaded group with this role. Give one group per class or spec the Primary role.'] = true
+L['Limit Information'] = true
+L["Auras and texts are secret, so we can't count how many are showing. Use Grid if you need a limit."] = true
 L['These icons have different sub elements; edit them per icon.'] = true
 L['Tooltip on Mouseover'] = true
 L['Zoom'] = true
@@ -1621,10 +1599,10 @@ L['Required for Activation'] = true
 L['Dynamic information from first active trigger'] = true
 L['Dynamic information from Trigger %d'] = true
 L['Dynamic Information'] = true
-L['The trigger whose icon, texts and conditions the display shows while it is active. An aura trigger only has something to show while its aura is up.'] = true
 L['%2.p, %2.t or %2.s read Trigger 2 instead of the shown trigger. A text reads one trigger.'] = true
 L["There's no Trigger %d, so this text stays empty."] = true
 L['Only shows on the Trigger %d overlay.'] = true
+L["An aura can only show one timer and one stack count. An earlier text already shows it, so this one stays empty."] = true
 L['Fixed'] = true
 L['Time Format'] = true
 L['Global uses the duration breakpoints from the global settings.'] = true
@@ -1659,8 +1637,6 @@ L["|cffFF0000Not Loaded|r"] = true
 L['About'] = true
 L['Bar Text'] = true
 L['Boss Mod Timer'] = true
-L['Enable BigWigs Timers'] = true
-L['Timers are configured per instance under Dungeons and Raids. Dungeons follow the season BigWigs reports; raids are grouped by boss and limited to the current tier.'] = true
 
 -- BigWigsTimerTriggers
 L['%n bar text, %t time left, %c count, %i icon, %s spell ID'] = true
@@ -1692,7 +1668,11 @@ L['Only show while the time left passes this test.'] = true
 L['Raids'] = true
 L['Rename Timer'] = true
 L['Right Text'] = true
-L['Right-click an instance on the left and choose New Timer, or pick an existing one.'] = true
+L['Pick an instance on the left to add timers to it, or pick an existing timer.'] = true
+L['Season %d Dungeons'] = true
+L['Enable All'] = true
+L['Disable All'] = true
+L['Timers'] = true
 L['Search spells'] = true
 L['Seconds'] = true
 L['Show Decimals'] = true
@@ -1840,3 +1820,16 @@ L['B%d %s'] = true
 
 -- CursorCircle
 L['Circle %d'] = true
+
+-- Role settings
+L['All Roles'] = true
+L['Reset Everything'] = true
+L['Reset %s'] = true
+L['Reset only the %s settings for %s, or everything including the role settings?'] = true
+L['Show %s on every one of its pages, or hide it on its own'] = true
+L['Move %s, with every other anchor hidden'] = true
+L['Put %s back to its defaults'] = true
+L['Give a role its own settings'] = true
+L['Remove %s settings'] = true
+L['Remove the %s settings?'] = true
+L['%s specs go back to the %s settings.'] = true

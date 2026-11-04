@@ -14,23 +14,7 @@ local function BuildTab(page, db)
     page:SetCondition("auctionator", function() return auctionatorLoaded end)
     page:SetEnabled(function() return db.Enabled end)
 
-    -- Card 1: Enable
-    local enableCard = page:Card(L['Auction House Filter'])
-    local enableRow = enableCard:Row(rowHL, 0)
-    enableRow:Checkbox(L['Enable Auction House Filter'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['Auction House Filter'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('AuctionHouseFilter', checked)
-            page:Refresh()
-        end,
-    })
-
-    -- Card 2: Blizzard Auction House
+    -- Card 1: Blizzard Auction House
     local blizzardAHCard = page:Card(L['Blizzard Auction House'], 'all')
     local blizzardCurrExpRow = blizzardAHCard:Row(rowH)
     blizzardCurrExpRow:Checkbox(L['Current Expansion Only'], {
@@ -73,7 +57,7 @@ local function BuildTab(page, db)
         end
     })
 
-    -- Card 3: Auctionator
+    -- Card 2: Auctionator
     local addonName = L["Auctionator, "]
     local loadedText = L["|cff00FF00Loaded|r"]
     local notLoadedText = L["|cffFF0000Not Loaded|r"]

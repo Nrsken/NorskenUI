@@ -22,23 +22,7 @@ formatOptions['MM:SS.f'] = '01:30.5'
 
 -- General Settings Tab.
 local function BuildGeneralSettingsTab(page, db)
-    -- Card 1: Enable
-    local enableCard = page:Card(L['Combat Timer'])
-    local enableRow = enableCard:Row(rowHL, 0)
-    enableRow:Checkbox(L['Enable Combat Timer'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['Combat Timer'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('CombatTimer', checked)
-            page:Refresh()
-        end,
-    })
-
-    -- Card 2: Options
+    -- Card 1: Options
     local optionsCard = page:Card(L['Options'], 'all')
     local optionsRow = optionsCard:Row(rowH)
     optionsRow:Checkbox(L['Combat Only'], {

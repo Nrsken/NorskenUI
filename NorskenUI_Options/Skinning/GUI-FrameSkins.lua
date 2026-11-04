@@ -53,29 +53,7 @@ end
 local function BuildGeneralSettingsTab(page, db)
     page:SetCondition('customAccent', function() return db.General.AccentMode == 'custom' end)
 
-    -- Card 1: Enable
-    local enableCard = page:Card(L['Frame Skinning'])
-    local enableRow = enableCard:Row(rowHL, 0)
-    enableRow:Checkbox(L['Enable Frame Skinning'], {
-        width = 1,
-        master = true,
-        value = db.Enabled ~= false,
-        msgPopup = true,
-        msgText = L['Frame Skinning'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('Skinning', checked)
-            if checked then
-                ApplySettings()
-            else
-                NRSKNUI:CreateReloadPrompt(
-                    L['Restoring the default frames requires a reload to take full effect.'])
-            end
-            page:Refresh()
-        end,
-    })
-
-    -- Card 2: Frame Colors
+    -- Card 1: Frame Colors
     page:BackdropColorsCard({
         db = db.General,
         title = L['Frame Colors'],
@@ -83,7 +61,7 @@ local function BuildGeneralSettingsTab(page, db)
         onChangeCallback = ApplySettings,
     })
 
-    -- Card 3: Skin Colors
+    -- Card 2: Skin Colors
     local colorCard = page:Card(L['Skin Colors'], 'all')
     local widgetRow = colorCard:Row(rowH)
     widgetRow:ColorPicker(L['Widget Border Color'], {
@@ -204,3 +182,12 @@ GUI:RegisterPage('frameSkins', {
         end
     end,
 })
+
+-- the skins come off the frames only with a reload
+NRSKNUI.ModuleHeader:OnToggle('Skinning', function(enabled)
+    if enabled then
+        ApplySettings()
+        return
+    end
+    NRSKNUI:CreateReloadPrompt(L['Restoring the default frames requires a reload to take full effect.'])
+end)

@@ -41,23 +41,7 @@ local function SearchTerms()
 end
 
 local function BuildGeneralPage(page, db)
-    -- Card 1: Enable
-    local enableCard = page:Card(L['Blizzard Mouseover'])
-    local enableRow = enableCard:Row(rowHL, 0)
-    enableRow:Checkbox(L['Enable Blizzard Mouseover'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['Blizzard Mouseover'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('BlizzardMouseover', checked)
-            page:Refresh()
-        end,
-    })
-
-    -- Card 2: Mouseover Settings
+    -- Card 1: Mouseover Settings
     local settingsCard = page:Card(L['Mouseover Settings'], 'all')
     local alphaRow = settingsCard:Row(rowH)
     alphaRow:Slider(L['Alpha When Not Hovered'], {

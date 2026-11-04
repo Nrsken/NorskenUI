@@ -17,28 +17,11 @@ end
 
 -- General Settings Tab.
 local function BuildGeneralSettingsTab(page, db)
-    -- Card 1: Enable
-    local enableCard = page:Card(L['Minimap'])
-    local enableRow = enableCard:Row(rowH)
-    enableRow:Checkbox(L['Enable Minimap'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['Minimap'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('Minimap', checked)
-            NRSKNUI:CreateReloadPrompt(L['Enabling/Disabling this UI element requires a reload to take full effect.'])
-            page:Refresh()
-        end,
-    })
-
-    enableCard:Separator()
-
+    -- Card 1: Information
+    local infoCard = page:Card(L['Information'], 'all')
     local infoRowSize = 60
-    local infoRow = enableCard:Row(infoRowSize, 0)
-    infoRow:Text(NRSKNUI:ColorTextByTheme(L['Information']), {
+    local infoRow = infoCard:Row(infoRowSize, 0)
+    infoRow:Text(nil, {
         width = 1,
         height = infoRowSize,
         bgMode = 'hide',
@@ -521,3 +504,7 @@ GUI:RegisterPage('minimap', {
         end
     end,
 })
+
+NRSKNUI.ModuleHeader:OnToggle('Minimap', function()
+    NRSKNUI:CreateReloadPrompt(L['Enabling/Disabling this UI element requires a reload to take full effect.'])
+end)

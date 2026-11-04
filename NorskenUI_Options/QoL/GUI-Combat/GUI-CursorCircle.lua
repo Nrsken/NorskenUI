@@ -29,23 +29,7 @@ end
 local function BuildGeneralSettingsTab(page, db)
     local gcd = db.GCD
 
-    -- Card 1: Enable
-    local enableCard = page:Card(L['Cursor Circle'])
-    local enableRow = enableCard:Row(rowHL, 0)
-    enableRow:Checkbox(L['Enable Cursor Circle'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['Cursor Circle'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('CursorCircle', checked)
-            page:Refresh()
-        end,
-    })
-
-    -- Card 2: General Settings
+    -- Card 1: General Settings
     local generalCard = page:Card(L['General Settings'], 'all')
     local generalRow = generalCard:Row(rowHL, 0)
     generalRow:Dropdown(L['GCD Mode'], {

@@ -14,23 +14,7 @@ end
 
 -- General Settings Tab.
 local function BuildGeneralSettingsTab(page, db)
-    -- Card 1: Enable
-    local enableCard = page:Card(L['Gateway Usable Alert'])
-    local enableRow = enableCard:Row(rowHL, 0)
-    enableRow:Checkbox(L['Enable Gateway Alert'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['Gateway Alert'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('Gateway', checked)
-            page:Refresh()
-        end,
-    })
-
-    -- Card 2: Appearance
+    -- Card 1: Appearance
     local appearanceCard = page:Card(L['Appearance'], 'all')
     local appearanceRow = appearanceCard:Row(rowHL, 0)
     appearanceRow:EditBox(L['Alert Text'], {

@@ -6,7 +6,6 @@ PlayerAuras.dbKey = 'Auras' -- its old profile key, which keeps saved profiles a
 PlayerAuras.Defaults = {
     Enabled = true,
     Buffs = {
-        Enabled = true,
         size = 40,
         perRow = 10,
         maxFrameCount = 38,
@@ -60,7 +59,6 @@ PlayerAuras.Defaults = {
         },
     },
     Debuffs = {
-        Enabled = true,
         -- Aura container options, names match Blizzard's (see Core/AuraContainer.lua).
         size = 46,
         perRow = 8,

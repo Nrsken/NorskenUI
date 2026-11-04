@@ -10,6 +10,8 @@ GUIFrame:AddSidebarEntry({
     order = 40,
     type = 'header',
     text = L['Unit Frames'],
+    module = 'UnitFrames',
+    roles = true,
     defaultExpanded = false,
     items = {
         { id = 'unitFramesGeneral',       text = L['General'] },

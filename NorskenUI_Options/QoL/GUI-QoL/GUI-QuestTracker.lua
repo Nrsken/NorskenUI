@@ -92,25 +92,10 @@ local function BuildPage(page, db)
     local data = QuestTracker.data
     page:SetEnabled(function() return db.Enabled end)
 
-    -- Card 1: Enable
-    local enableCard = page:Card(L['Quest Tracker'])
-    enableCard:Row(rowH):Checkbox(L['Enable Quest Tracker'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['Quest Tracker'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('QuestTracker', checked)
-            page:Refresh()
-        end,
-    })
-
-    enableCard:Separator()
-
+    -- Card 1: Information
+    local infoCard = page:Card(L['Information'], 'all')
     local infoRowSize = 50
-    enableCard:Row(infoRowSize):Text(NRSKNUI:ColorTextByTheme(L['Functionality Info']), {
+    infoCard:Row(infoRowSize):Text(nil, {
         width = 1,
         height = infoRowSize,
         autoHeight = true,
@@ -121,9 +106,9 @@ local function BuildPage(page, db)
         conditions = { 'all' },
     })
 
-    enableCard:Separator()
+    infoCard:Separator()
 
-    enableCard:Row(rowH, 0):Checkbox(L['Character Tab Only'], {
+    infoCard:Row(rowH, 0):Checkbox(L['Character Tab Only'], {
         width = 1,
         value = db.CharacterTabOnly,
         tooltip = L['Hide the panel on the Reputation and Currency tabs.'],

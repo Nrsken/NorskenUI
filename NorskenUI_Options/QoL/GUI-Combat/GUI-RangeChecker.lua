@@ -15,23 +15,7 @@ end
 
 -- General Settings Tab.
 local function BuildGeneralSettingsTab(page, db)
-    -- Card 1: Enable
-    local enableCard = page:Card(L['Range Checker'])
-    local enableRow = enableCard:Row(rowHL, 0)
-    enableRow:Checkbox(L['Enable Range Checker'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['Range Checker'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('RangeChecker', checked)
-            page:Refresh()
-        end,
-    })
-
-    -- Card 2: General Settings
+    -- Card 1: General Settings
     local generalCard = page:Card(L['General Settings'], 'all')
     local combatRow = generalCard:Row(rowH)
     combatRow:Checkbox(L['Show In Combat Only'], {

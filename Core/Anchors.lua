@@ -11,6 +11,7 @@ Anchors.registry = {}
 Anchors.overlays = {}
 Anchors.selectedKey = nil
 Anchors.isShiftFaded = false
+Anchors.onlyModule = nil
 
 local math_floor, math_ceil, math_abs, math_rad = math.floor, math.ceil, math.abs, math.rad
 local GetPhysicalScreenSize = GetPhysicalScreenSize
@@ -265,17 +266,24 @@ end
 
 -- Registration --
 
+---Whether an anchor belongs in the open view: every anchor or only the module the view opened for.
+---@param entry table
+---@return boolean
+local function InView(entry)
+    return Anchors.onlyModule == nil or entry.module == Anchors.onlyModule
+end
+
 ---Registers a frame as a draggable anchor.
----@param module NRSKNUI.ModuleBase
+---@param aceModule NRSKNUI.ModuleBase
 ---@param key string Unique anchor key.
 ---@param frame Frame? The frame to move; defaults to module.frame.
 ---@param guiPath string? Sidebar item id opened by the panel's Open Settings button.
 ---@param opts table? db, positionKey, xKey, yKey, apply, displayName, frameName, guiContext
-function Anchors:Register(module, key, frame, guiPath, opts)
-    if not module or not key then return end
+function Anchors:Register(aceModule, key, frame, guiPath, opts)
+    if not aceModule or not key then return end
     opts = opts or {}
 
-    frame = frame or opts.frame or module.frame
+    frame = frame or opts.frame or aceModule.frame
     if not frame and not opts.frameName then return end
 
     local entry = self.registry[key]
@@ -284,7 +292,7 @@ function Anchors:Register(module, key, frame, guiPath, opts)
         self.registry[key] = entry
     end
 
-    entry.module = module
+    entry.module = aceModule
     entry.frame = frame
     entry.frameName = opts.frameName
     entry.db = opts.db -- nil means 'read module.db live', see GetTables
@@ -300,11 +308,13 @@ function Anchors:Register(module, key, frame, guiPath, opts)
     -- a group of chained frames is dragged by the one frame that carries the position, but should be grabbable across all of them.
     entry.overlayFrame = opts.overlayFrame
 
-    if type(entry.apply) == 'string' and type(module[entry.apply]) ~= 'function' then
+    if type(entry.apply) == 'string' and type(aceModule[entry.apply]) ~= 'function' then
         NRSKNUI:Print(format("Anchor '%s' registered with apply='%s', which the module does not define.", key, entry.apply))
     end
 
-    if self.isActive then self:CreateOverlay(key) end
+    if self.isActive and InView(entry) then
+        self:CreateOverlay(key)
+    end
 end
 
 ---@param key string
@@ -563,10 +573,13 @@ function Anchors:RefreshOverlayState(key)
     if overlay then ApplyOverlayState(key, overlay) end
 end
 
----Re-applies the state look to every live overlay.
+---Re-applies the state look to every live overlay in the view.
 function Anchors:RefreshOverlayStates()
     for key, overlay in pairs(self.overlays) do
-        ApplyOverlayState(key, overlay)
+        -- the fade shows what it fades in, so one put away for a single module's view would come back
+        if InView(overlay.entry) then
+            ApplyOverlayState(key, overlay)
+        end
     end
 end
 
@@ -664,7 +677,8 @@ end)
 
 -- Lifecycle --
 
-function Anchors:Enter()
+---@param aceModule? table show only this module's anchors, from its settings header; every anchor without it
+function Anchors:Enter(aceModule)
     if self.isActive then return end
     if NRSKNUI:InCombat() then
         NRSKNUI:Print(L['Cannot open Anchors during combat.'])
@@ -672,13 +686,19 @@ function Anchors:Enter()
     end
 
     self.isActive = true
+    self.onlyModule = aceModule
 
     if NRSKNUI.PreviewManager then
-        NRSKNUI.PreviewManager:SetAnchorsActive(true)
+        NRSKNUI.PreviewManager:SetAnchorsActive(true, aceModule)
     end
 
-    for key in pairs(self.registry) do
-        self:CreateOverlay(key)
+    -- overlays outlive a session, so one left from a wider view is put away
+    for key, entry in pairs(self.registry) do
+        if InView(entry) then
+            self:CreateOverlay(key)
+        elseif self.overlays[key] then
+            self.overlays[key]:Hide()
+        end
     end
 
     self.selectedKey = nil
@@ -694,6 +714,7 @@ function Anchors:Enter()
     eventHandler:RegisterEvent('MODIFIER_STATE_CHANGED')
 
     self:ShowPanel()
+    NRSKNUI:SendMessage('NRSKNUI_ANCHORS_CHANGED')
 end
 
 function Anchors:Exit()
@@ -708,6 +729,7 @@ function Anchors:Exit()
     self.isShiftFaded = false
 
     HideGrid()
+    self.onlyModule = nil
     if NRSKNUI.PreviewManager then NRSKNUI.PreviewManager:SetAnchorsActive(false) end
 
     FadeOverlays(0)
@@ -715,6 +737,7 @@ function Anchors:Exit()
     keyHandler:Hide()
     eventHandler:UnregisterAllEvents()
     self:HidePanel()
+    NRSKNUI:SendMessage('NRSKNUI_ANCHORS_CHANGED')
 end
 
 function Anchors:Toggle()
@@ -914,8 +937,10 @@ end
 function Anchors:OnExternalPositionChange()
     if not self.isActive then return end
 
-    for key in pairs(self.registry) do
-        self:UpdateOverlay(key)
+    for key, entry in pairs(self.registry) do
+        if InView(entry) then
+            self:UpdateOverlay(key)
+        end
     end
     self:UpdatePanel()
 end

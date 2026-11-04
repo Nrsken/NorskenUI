@@ -15,21 +15,6 @@ end
 
 -- General Settings Tab.
 local function BuildGeneralSettingsTab(page, db)
-    local enableCard = page:Card(L['Durability Util'])
-    local enableRow = enableCard:Row(rowHL, 0)
-    enableRow:Checkbox(L['Enable Durability Low Warning'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['Durability Low Warning'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('Durability', checked)
-            page:Refresh()
-        end,
-    })
-
     local cardGeneral = page:Card(L['General Settings'], 'all')
     local lowThresholdRow = cardGeneral:Row(rowH)
     lowThresholdRow:EditBox(L['Low Threshold Text'], {

@@ -46,13 +46,17 @@
 ---@field duration LuaDurationObject? what time texts count, without the global cooldown
 ---@field spellID number?
 ---@field baseSpellID number?
+---@field overridden boolean? a spell trigger's spell is currently overridden, read even with Ignore Override
 ---@field itemID number? item triggers: the item shown
 ---@field itemSlot number? item triggers: the equipment slot read
 ---@field itemFamily number[]? item triggers: the items counted together
 ---@field itemDuration LuaDurationObject? item triggers: built from plain cooldown numbers
 ---@field readyDuration LuaDurationObject? zero, handed to texts for ready (a cast lockout)
 ---@field realCooldown LuaDurationObject? spell triggers: a copy of the running cooldown, shown on while a GCD outlasts it
----@field heldGCD number? spell triggers: the GCD that overtook realCooldown, which shows until it ends---@field timerDone boolean? set while OnCooldownDone re-reads the trigger
+---@field heldGCD number? spell triggers: the GCD that overtook realCooldown, which shows until it ends
+---@field chargeItem table? spell triggers: Blizzard's viewer icon for the spell, whose verdict tells a charge left from none
+---@field fromCharges boolean? spell triggers: that icon's wasSetFromCharges last read
+---@field timerDone boolean? set while OnCooldownDone re-reads the trigger
 ---@field count number? a count to show for %s instead of spell charges
 ---@field timerLength number? cast timers: the configured duration
 ---@field timerEnd number? cast timers: when the running timer ends
@@ -234,14 +238,12 @@
 
 ---@class CDMTreeRow : Button
 ---@field data table
+---@field _noticeMarker? Frame the warning marker left of the eye, made by LibKaji SetNotice
 ---@field inUse boolean
 ---@field bg Texture
----@field hoverBg Texture
----@field hoverTarget number
----@field selectedBg Texture
+---@field hovered boolean?
+---@field selection table Kaji.CreateRowSelection's state; its bar sits on bg
 ---@field dropFill Texture
----@field accentBar Texture
----@field barGlow Texture
 ---@field up CDMTreeSmallButton
 ---@field ungroup CDMTreeSmallButton
 ---@field down CDMTreeSmallButton
@@ -253,10 +255,9 @@
 ---@field state CDMTreeSmallButton
 ---@field eye CDMTreeSmallButton
 
----@class CDMTreeSection : Frame
+---@class CDMTreeSection : Frame, BackdropTemplate
 ---@field data table
 ---@field inUse boolean
----@field bg Texture
 ---@field label FontString
 ---@field collapse CDMTreeSmallButton
 ---@field eye CDMTreeSmallButton

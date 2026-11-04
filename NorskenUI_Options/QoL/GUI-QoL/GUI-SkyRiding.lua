@@ -21,22 +21,6 @@ end
 -- General Settings Tab.
 local function BuildGeneralSettingsTab(page, db)
     -- Card 1
-    local enableCard = page:Card(L['Skyriding UI'])
-    local enableRow = enableCard:Row(rowHL, 0)
-    enableRow:Checkbox(L['Enable Skyriding UI'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['Skyriding UI'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('SkyRiding', checked)
-            page:Refresh()
-        end,
-    })
-
-    -- Card 2
     local barsCard = page:Card(L['Bars'], 'all')
     local vigorRow = barsCard:Row(rowH)
     vigorRow:Checkbox(L['Show Vigor'], {
@@ -79,7 +63,7 @@ local function BuildGeneralSettingsTab(page, db)
         end,
     })
 
-    -- Card 3
+    -- Card 2
     local speedCard = page:Card(L['Speed Text'], 'all')
     local speedEnableRow = speedCard:Row(rowH)
     speedEnableRow:Checkbox(L['Show Speed Text'], {

@@ -12,7 +12,6 @@ local rowHL = Theme.rowHeightLast
 local format = string.format
 local tonumber = tonumber
 
-local GLOBAL = 'global'
 local MAX_BACKDROPS = 5
 
 local function Apply(index)
@@ -27,7 +26,7 @@ local function RefreshSidebar()
 end
 
 local function SidebarItems()
-    local items = { { key = GLOBAL, text = L['Global Settings'] } }
+    local items = {}
     for index = 1, MAX_BACKDROPS do
         items[#items + 1] = { key = tostring(index), text = format(L['Details Backdrop %d'], index) }
     end
@@ -40,38 +39,6 @@ local function RenderItem(itemFrame, item)
     local backdrops = NRSKNUI.Skinning.namespace.profile.DetailsBackdrop.backdrops
     local bgDB = backdrops and backdrops[tonumber(item.key)]
     itemFrame.label:SetAlpha((not bgDB or bgDB.Enabled) and 1 or 0.5)
-end
-
-local function BuildGlobalPage(page, db)
-    -- Card 1: Enable
-    local enableCard = page:Card(L['Details Backdrop'])
-    local enableRow = enableCard:Row(rowH)
-    enableRow:Checkbox(L['Enable Details Backdrop'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['Details Backdrop'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('DetailsBackdrop', checked)
-            RefreshSidebar()
-            page:Refresh()
-        end,
-    })
-
-    local infoRow = enableCard:Row(76, 0)
-    infoRow:Text(L['About Details Backdrops'], {
-        width = 1,
-        master = true,
-        text = {
-            L['Draws a NorskenUI backdrop behind each of your Details windows'],
-            L['Each backdrop is configured on its own page and can be moved with the anchors'],
-            L['Auto size resizes the Details window itself to sit inside the backdrop'],
-        },
-        height = 76,
-        bgMode = 'hide',
-    })
 end
 
 -- Size Settings Tab.
@@ -189,23 +156,17 @@ GUI:RegisterPage('detailsBackdrop', {
     sidebar = {
         items = SidebarItems,
         renderItem = RenderItem,
-        default = GLOBAL,
+        default = '1',
     },
-    tabs = function(itemKey)
-        if itemKey == GLOBAL then return {} end
-
-        return {
-            { id = 'size',     text = L['Size'] },
-            { id = 'style',    text = L['Style'] },
-            { id = 'position', text = L['Position Settings'] },
-        }
-    end,
+    tabs = {
+        { id = 'size',     text = L['Size'] },
+        { id = 'style',    text = L['Style'] },
+        { id = 'position', text = L['Position Settings'] },
+    },
     build = function(page, tabId, itemKey)
         local db = NRSKNUI.Skinning.namespace.profile.DetailsBackdrop
         if not db then return end
         page:SetEnabled(function() return db.Enabled end)
-
-        if itemKey == GLOBAL then return BuildGlobalPage(page, db) end
 
         local index = tonumber(itemKey)
         local bgDB = index and db.backdrops[index]
@@ -220,3 +181,6 @@ GUI:RegisterPage('detailsBackdrop', {
         end
     end,
 })
+
+-- the backdrop rows dim with the module
+NRSKNUI.ModuleHeader:OnToggle('DetailsBackdrop', RefreshSidebar)

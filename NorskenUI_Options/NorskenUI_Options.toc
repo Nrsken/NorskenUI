@@ -15,8 +15,10 @@ Locales\Locales.xml
 # the window and what every page builds with
 GUI-Core.lua
 GUI-SidebarConfig.lua
+GUI-ModuleHeader.lua
 GUI-AuraCards.lua
 GUI-SpellList.lua
+GUI-ItemTree.lua
 GUI-TriggerEditor.lua
 GUI-Global\GUI-Global.xml
 GUI-Miscellaneous\GUI-Miscellaneous.xml

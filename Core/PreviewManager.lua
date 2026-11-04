@@ -13,7 +13,9 @@ local HOME_PAGE = 'homePage'
 local PreviewManager = {
     guiOpen = false,
     anchorsActive = false,
+    anchorsModule = nil, -- the module the anchors view opened for, nil when it shows every anchor
     forceAll = false,
+    overrides = {}, -- module -> true (previews on every page) | false (never), from the module header
     currentPage = nil,
     active = {},
 }
@@ -75,7 +77,7 @@ end
 ---Whether everything previews at once, rather than only what the open page configures.
 ---@return boolean
 function PreviewManager:ShouldShowAll()
-    return self.forceAll or self.anchorsActive or self.currentPage == HOME_PAGE
+    return self.forceAll or (self.anchorsActive and not self.anchorsModule) or self.currentPage == HOME_PAGE
 end
 
 ---What a module is currently previewing, as one comparable value, so the diff can tell a module that
@@ -92,6 +94,7 @@ end
 ---restart anything that stays but is now previewing something else.
 function PreviewManager:Refresh()
     local wanted = {}
+    local whole = {} -- module -> true, previewing as in the everything view on its own
     local showAll = false
 
     if self.guiOpen or self.anchorsActive then
@@ -101,18 +104,37 @@ function PreviewManager:Refresh()
         -- module the page id, so a module that shows extra for its own page keeps showing it.
         if showAll then ResolveAll(wanted) end
         ResolvePage(self.currentPage, wanted)
+
+        -- a module pinned from its header or opened in the anchors view previews whole, as in the
+        -- everything view, while keeping its page so it still shows what that page adds
+        for module, on in pairs(self.overrides) do
+            if not on then
+                wanted[module] = nil
+            elseif IsPreviewable(module) then
+                wanted[module] = wanted[module] or true
+                whole[module] = true
+            end
+        end
+        local anchored = self.anchorsActive and self.anchorsModule
+        if anchored and IsPreviewable(anchored) then
+            wanted[anchored] = wanted[anchored] or true
+            whole[anchored] = true
+        end
     end
 
     local active = self.active
 
-    -- Anything leaving is dropped. A module that stays but changes scope is either retargeted in place
-    -- through :UpdatePreviewScope, or dropped and told again below so it previews the right part of itself.
+    -- Anything leaving is dropped. A module that stays but changes scope keeps its running preview unless
+    -- it says that preview depends on the scope (`previewScoped`). Then :UpdatePreviewScope retargets it in
+    -- place when it has one; without, it's dropped and told again below to preview the right part of itself.
     for module, key in pairs(active) do
         local scope = wanted[module]
-        local newKey = ScopeKey(scope, showAll)
+        local newKey = ScopeKey(scope, showAll or whole[module] == true)
         if newKey ~= key then
-            if scope ~= nil and module.UpdatePreviewScope then
-                module:UpdatePreviewScope(scope ~= true and scope or nil, showAll)
+            if scope ~= nil and not module.previewScoped then
+                active[module] = newKey
+            elseif scope ~= nil and module.UpdatePreviewScope then
+                module:UpdatePreviewScope(scope ~= true and scope or nil, showAll or whole[module] == true)
                 active[module] = newKey
             else
                 module:HidePreview()
@@ -123,10 +145,13 @@ function PreviewManager:Refresh()
 
     for module, scope in pairs(wanted) do
         if active[module] == nil then
-            module:ShowPreview(scope ~= true and scope or nil, showAll)
-            active[module] = ScopeKey(scope, showAll)
+            local all = showAll or whole[module] == true
+            module:ShowPreview(scope ~= true and scope or nil, all)
+            active[module] = ScopeKey(scope, all)
         end
     end
+
+    NRSKNUI:SendMessage('NRSKNUI_PREVIEWS_CHANGED')
 end
 
 ---@param open boolean
@@ -134,14 +159,42 @@ function PreviewManager:SetGUIOpen(open)
     self.guiOpen = open
     -- Intent goes with the window, so reopening resolves from the home page it always lands on rather
     -- than from wherever it was closed. forceAll is deliberately kept: it is a session-long override.
-    if not open then self.currentPage = nil end
+    if not open then
+        self.currentPage = nil
+        wipe(self.overrides)
+    end
     self:Refresh()
 end
 
 ---@param active boolean
-function PreviewManager:SetAnchorsActive(active)
+---@param module? table the one module the view opened for, which then previews alone
+function PreviewManager:SetAnchorsActive(active, module)
     self.anchorsActive = active
+    self.anchorsModule = active and module or nil
     self:Refresh()
+end
+
+---The module header's Preview: pin one module's preview on across its pages or keep it off even on its own.
+---Lasts until the window closes.
+---@param module table
+---@param on boolean
+function PreviewManager:SetModulePreview(module, on)
+    self.overrides[module] = on
+    self:Refresh()
+end
+
+---Every module back to following the page, for when the window moves on to another module.
+function PreviewManager:ClearModulePreviews()
+    if next(self.overrides) == nil then return end
+
+    wipe(self.overrides)
+    self:Refresh()
+end
+
+---@param module table
+---@return boolean
+function PreviewManager:IsModulePreviewing(module)
+    return self.active[module] ~= nil
 end
 
 ---Called on every GUI page change, see window.content.onPageChanged.

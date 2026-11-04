@@ -14,23 +14,7 @@ end
 
 -- General Settings Tab.
 local function BuildGeneralSettingsTab(page, db)
-    -- Card 1: Enable
-    local enableCard = page:Card(L['Potion Ready'])
-    local enableRow = enableCard:Row(rowHL, 0)
-    enableRow:Checkbox(L['Enable Potion Ready'], {
-        width = 1,
-        master = true,
-        value = db.Enabled,
-        msgPopup = true,
-        msgText = L['Potion Ready'],
-        callback = function(checked)
-            db.Enabled = checked
-            NRSKNUI:ToggleModule('PotionReady', checked)
-            page:Refresh()
-        end,
-    })
-
-    -- Card 2: Appearance
+    -- Card 1: Appearance
     local appearanceCard = page:Card(L['Appearance'], 'all')
     local appearanceRow = appearanceCard:Row(rowHL, 0)
     appearanceRow:EditBox(L['Alert Text'], {
@@ -59,6 +43,7 @@ local function BuildLoadConditionsTab(page, db)
     db.LoadConditions = db.LoadConditions or NRSKNUI.LoadConditions:GetDefaults()
     page:LoadConditionsCard({
         db = db.LoadConditions,
+        specs = true,
         onChangeCallback = function()
             if PotionReady then PotionReady:UpdateCooldownState() end
         end,
