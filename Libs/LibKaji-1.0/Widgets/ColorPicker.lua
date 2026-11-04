@@ -31,6 +31,9 @@ local C_Timer = C_Timer
 local WIDGET_TYPE = "ColorPicker"
 local THROTTLE_DELAY = 0.1 -- Blizzard's picker reports every mouse move, and consumers may rebuild on each
 
+local mixedPick ---@type KajiGUIColorPicker? the mixed swatch waiting on the picker's Okay
+local okayHooked = false
+
 ---@alias KajiGUIColorChanged fun(r: number, g: number, b: number, a: number)
 
 ---@class KajiGUIColorSwatch : Button, BackdropTemplate
@@ -148,6 +151,9 @@ function ColorPickerMixin:OnAcquire(parent, labelText, config)
 end
 
 function ColorPickerMixin:OnRelease()
+    if mixedPick == self then
+        mixedPick = nil
+    end
     self:FlushColor() -- a page rebuilt or closed mid-drag still keeps the last pick
     self._callback = nil
     self.label:SetText("")
@@ -229,13 +235,36 @@ lib:RegisterWidgetType(WIDGET_TYPE, function(gui)
         info.swatchFunc = function()
             local r, g, b = ColorPickerFrame:GetColorRGB()
             local a = ColorPickerFrame:GetColorAlpha()
-            row:SetColor(r or 1, g or 1, b or 1, a or 1)
+            if not wasMixed then
+                row:SetColor(r or 1, g or 1, b or 1, a or 1)
+            elseif mixedPick == row then
+                row:SetColorSilent(r or 1, g or 1, b or 1, a or 1)
+            end
         end
         info.opacityFunc = info.swatchFunc
-        -- a mixed swatch's black is no one's colour, so cancelling it must not write that to them all
+        -- each one's own colour can't be put back from here, so a mixed swatch only previews until Okay
         info.cancelFunc = function()
-            if wasMixed then return end
-            row:SetColor(prevR, prevG, prevB, prevA)
+            if not wasMixed then
+                row:SetColor(prevR, prevG, prevB, prevA)
+                return
+            end
+            if mixedPick ~= row then return end
+
+            mixedPick = nil
+            row:SetColorSilent(prevR, prevG, prevB, prevA)
+            row.hexText:SetText("")
+        end
+        mixedPick = wasMixed and row or nil
+        -- Okay is the only way out that skips cancelFunc, and it has no callback of its own
+        if wasMixed and not okayHooked then
+            okayHooked = true
+            ColorPickerFrame.Footer.OkayButton:HookScript("OnClick", function()
+                local picked = mixedPick
+                if not picked then return end
+
+                mixedPick = nil
+                picked:SetColor(picked:GetColor())
+            end)
         end
         ColorPickerFrame:SetupColorPickerAndShow(info)
     end)
