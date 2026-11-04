@@ -138,12 +138,13 @@ NRSKNUI.PET_CLASSES = {
 
 ---@class NRSKNUI.ItemSlotInfo
 ---@field slot number
----@field frame Frame
+---@field frame Frame & { NUITrackOverlay: Frame? }
 ---@field rightColumn boolean? Paperdoll button sits in the right column
 ---@field socketable boolean?
 ---@field enchants string[]? Tooltip keywords that target this slot
 
 -- Table with all item slots, their paperdoll frame and any enchant keywords that target them.
+---@type NRSKNUI.ItemSlotInfo[]
 NRSKNUI.ITEM_SLOTS = {
     { slot = INVSLOT_HEAD,     frame = _G['CharacterHeadSlot'],          enchants = { 'helm', 'head' },                socketable = true, },
     { slot = INVSLOT_NECK,     frame = _G['CharacterNeckSlot'],          enchants = { 'neck' },                        socketable = true, },
@@ -171,6 +172,12 @@ NRSKNUI.ITEM_TRACKS = {
     { key = 'VETERAN',  min = 279, max = 296, letter = 'V', color = { 0.00, 0.80, 0.00 } },
 }
 
+-- Keys are matched against the tooltip text, so like the crafted marker this only works on English clients.
+NRSKNUI.ITEM_VENOMFORGED = {
+    { key = 'Ascendant Venomforged: Hero', itemLevel = 328, letter = 'H', color = { 0.00, 0.70, 1.00 } },
+    { key = 'Ascendant Venomforged: Myth', itemLevel = 341, letter = 'M', color = { 1.00, 0.50, 0.00 } },
+}
+
 -- PvP gear carries an explicit item level floor instead of an upgrade track.
 NRSKNUI.PVP_ITEM_TRACKS = {
     { key = 'CONQUEST', itemLevel = 344, letter = 'C', color = { 1.00, 0.50, 0.00 } },
@@ -182,6 +189,14 @@ NRSKNUI.CRAFTED_ITEM_MARKER = 'Tidal Crafted'
 NRSKNUI.CRAFTED_ITEM_TRACKS = {
     { key = 'MYTH', itemLevel = 331 },
     { key = 'HERO', itemLevel = 318 },
+}
+
+-- Reusable delve glove imbues, shown apart from regular enchants.
+NRSKNUI.BATTLE_ART_ITEMS = {
+    [280563] = true, -- Falco Strikes
+    [283996] = true, -- Heat Wave
+    [283997] = true, -- Ursine's Ironhide
+    [283998] = true, -- Eye of the Lynx
 }
 
 -- Second tooltip line on gear from instanced content.
@@ -237,6 +252,13 @@ do
     -- has to be ordered, otherwise a pairs() walk resolves ambiguous enchants differently per run.
     sort(NRSKNUI.ENCHANT_SLOT_KEYWORDS, function(a, b) return #a.keyword > #b.keyword end)
 
-    for _, track in ipairs(NRSKNUI.ITEM_TRACKS) do NRSKNUI.ITEM_TRACK_INFO[track.key] = track end
-    for _, track in ipairs(NRSKNUI.PVP_ITEM_TRACKS) do NRSKNUI.ITEM_TRACK_INFO[track.key] = track end
+    for _, track in ipairs(NRSKNUI.ITEM_TRACKS) do
+        NRSKNUI.ITEM_TRACK_INFO[track.key] = track
+    end
+    for _, track in ipairs(NRSKNUI.PVP_ITEM_TRACKS) do
+        NRSKNUI.ITEM_TRACK_INFO[track.key] = track
+    end
+    for _, track in ipairs(NRSKNUI.ITEM_VENOMFORGED) do
+        NRSKNUI.ITEM_TRACK_INFO[track.key] = track
+    end
 end

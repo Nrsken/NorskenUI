@@ -41,8 +41,11 @@ local GetTooltipData = C_TooltipInfo and C_TooltipInfo.GetHyperlink
 local GetItemLevel = C_Item and C_Item.GetDetailedItemLevelInfo
 local GetItemInfoInstant = C_Item and C_Item.GetItemInfoInstant
 local GetItemIconByID = C_Item and C_Item.GetItemIconByID
+local GetItemNameByID = C_Item and C_Item.GetItemNameByID
+local GetItemCount = C_Item and C_Item.GetItemCount
 local GetItemGem = C_Item and C_Item.GetItemGem
 
+local LINE_ENCHANT = Enum and Enum.TooltipDataLineType.ItemEnchantmentPermanent
 local LINE_UPGRADE = Enum and Enum.TooltipDataLineType.ItemUpgradeLevel
 local ITEM_CLASS_ENHANCEMENT = Enum and Enum.ItemClass.ItemEnhancement
 local ITEM_CLASS_GEM = Enum and Enum.ItemClass.Gem
@@ -51,6 +54,7 @@ local C_Timer = C_Timer
 local MAX_SOCKETS = 3
 local _G = _G
 
+local BATTLE_ART_BUTTON_ICON = 4549175
 local ENCHANT_BUTTON_ICON = 4620672
 local EMPTY_SOCKET_ICON = 458977
 
@@ -205,10 +209,20 @@ end
 local function ResolveFromTooltipData(data, itemLevel)
     if not data or not data.lines then return end
 
-    local trackText, level, maxLevel, difficulty, pvpLevel, isCrafted
+    local trackText, level, maxLevel, difficulty, pvpLevel, isCrafted, venomforged
 
+    local venomT = NRSKNUI.ITEM_VENOMFORGED
     for _, line in ipairs(data.lines) do
         local text = line.leftText
+        if text and not venomforged then
+            for _, track in ipairs(venomT) do
+                if string_find(text, track.key, 1, true) then
+                    venomforged = track.key
+                    break
+                end
+            end
+        end
+
         if line.type == LINE_UPGRADE then
             trackText = text
             level, maxLevel = string_match(text or '', '(%d+)%s*/%s*(%d+)')
@@ -227,6 +241,17 @@ local function ResolveFromTooltipData(data, itemLevel)
     end
 
     level, maxLevel, pvpLevel = tonumber(level), tonumber(maxLevel), tonumber(pvpLevel)
+
+    -- Forging lifts gear past its own track, a Hero piece would read as Myth by item level.
+    if venomforged then
+        return {
+            track = venomforged,
+            itemLevel = itemLevel,
+            atMax = true,
+            difficulty = difficulty,
+            source = 'VENOMFORGED',
+        }
+    end
 
     -- A track line is authoritative whenever it exists.
     if trackText then
@@ -337,9 +362,7 @@ function CharacterPanel:UpdateSlotTrackIndicator(slotID)
     local overlay = self:CreateTrackOverlay(slotInfo)
 
     local itemLink = GetInventoryItemLink('player', slotID)
-    if not itemLink then return end
-
-    local info = ResolveFromTooltipData(GetSlotTooltipData('player', slotID), GetItemLevel and GetItemLevel(itemLink))
+    local info = itemLink and ResolveFromTooltipData(GetSlotTooltipData('player', slotID), GetItemLevel and GetItemLevel(itemLink))
     local display = info and info.track and NRSKNUI.ITEM_TRACK_INFO[info.track]
 
     -- A band match is a guess, so it is not worth putting a letter on the paperdoll for.
@@ -363,6 +386,7 @@ function CharacterPanel:UpdateAllTrackIndicators()
 end
 
 function CharacterPanel:HideAllTrackIndicators()
+    ---@type NRSKNUI.ItemSlotInfo[]
     local slotT = NRSKNUI.ITEM_SLOTS
     for _, slotInfo in ipairs(slotT) do
         local overlay = slotInfo.frame and slotInfo.frame.NUITrackOverlay
@@ -599,6 +623,33 @@ function CharacterPanel:FindBestEnchantSlot(targetSlots)
     end
 end
 
+local function HasBattleArt()
+    if not GetInventoryItemLink('player', INVSLOT_HAND) then return false end
+
+    for itemID in pairs(NRSKNUI.BATTLE_ART_ITEMS) do
+        if GetItemCount(itemID) > 0 then return true end
+    end
+
+    return false
+end
+
+-- The enchant line reads "Enchanted: <item name>", which is the only link back to the item.
+local function GetActiveBattleArtIcon()
+    local data = GetSlotTooltipData('player', INVSLOT_HAND)
+    if not data or not data.lines then return end
+
+    for _, line in ipairs(data.lines) do
+        if line.type == LINE_ENCHANT and line.leftText then
+            for itemID in pairs(NRSKNUI.BATTLE_ART_ITEMS) do
+                local name = GetItemNameByID(itemID)
+                if name and string_find(line.leftText, name, 1, true) then
+                    return GetItemIconByID(itemID)
+                end
+            end
+        end
+    end
+end
+
 -- Slot highlights --
 
 function CharacterPanel:CreateSlotHighlight()
@@ -668,6 +719,7 @@ local function IsMouseOverUI()
         or IsHovered(enchantPopup, enchantPopup and enchantPopup.rows)
         or IsHovered(bar, bar and bar.buttons)
         or IsHovered(CharacterPanel.enchantButton)
+        or IsHovered(CharacterPanel.battleArtButton)
 end
 
 local function CloseAfterLeave()
@@ -970,14 +1022,20 @@ function CharacterPanel:CreateEnchantPopup()
     return self.enchantPopup
 end
 
-function CharacterPanel:ShowEnchantPopup(anchor)
+---@param anchor Frame
+---@param battleArts boolean List Battle Arts instead of regular enchants
+function CharacterPanel:ShowEnchantPopup(anchor, battleArts)
     if InCombatLockdown() then return end
 
     local popup = self:CreateEnchantPopup()
+    local battleArtT = NRSKNUI.BATTLE_ART_ITEMS
     local entries = {}
 
+    popup.title:SetText(battleArts and L['Battle Arts'] or L['Enchants'])
+
     for _, enchantData in pairs(self:ScanBagsForEnchants()) do
-        local targetSlotID = self:FindBestEnchantSlot(enchantData.targetSlots)
+        local isBattleArt = battleArtT[enchantData.itemID] == true
+        local targetSlotID = isBattleArt == battleArts and self:FindBestEnchantSlot(enchantData.targetSlots)
         if targetSlotID then
             enchantData.resolvedSlotID = targetSlotID
             tinsert(entries, enchantData)
@@ -1087,16 +1145,14 @@ function CharacterPanel:CreateSocketButton(index)
     return button
 end
 
-function CharacterPanel:CreateEnchantButton()
-    if self.enchantButton then return self.enchantButton end
-
+function CharacterPanel:CreateEnchantButton(icon, battleArts)
     local size = self.db.Sockets.ButtonSize
     local button = CreateFrame('Button', nil, self.socketBar)
     button:NUISetPixelSize(size, size)
 
     button.icon = button:CreateTexture(nil, 'ARTWORK')
     button.icon:SetAllPoints()
-    button.icon:SetTexture(ENCHANT_BUTTON_ICON)
+    button.icon:SetTexture(icon)
     button.icon:NUISetZoom()
 
     button:NUIAddBorders()
@@ -1110,13 +1166,12 @@ function CharacterPanel:CreateEnchantButton()
     button:SetScript('OnEnter', function(btn)
         CharacterPanel:HideGemPopup()
         CharacterPanel:HideSlotHighlight()
-        CharacterPanel:ShowEnchantPopup(btn)
+        CharacterPanel:ShowEnchantPopup(btn, battleArts)
     end)
 
     button:SetScript('OnLeave', CloseAfterLeave)
 
     button:Hide()
-    self.enchantButton = button
     return button
 end
 
@@ -1126,7 +1181,9 @@ function CharacterPanel:RefreshEnchantButton()
         return false
     end
 
-    local button = self:CreateEnchantButton()
+    self.enchantButton = self.enchantButton or self:CreateEnchantButton(ENCHANT_BUTTON_ICON, false)
+
+    local button = self.enchantButton
     local db = self.db.Sockets
     local last
 
@@ -1145,6 +1202,32 @@ function CharacterPanel:RefreshEnchantButton()
     else
         button:NUISetPixelPoint('LEFT', self.socketBar, 'LEFT', 0, 0)
     end
+
+    button:Show()
+    return true
+end
+
+-- Runs after RefreshEnchantButton, which this anchors to.
+function CharacterPanel:RefreshBattleArtButton()
+    if not self.db.Enchants.Enabled or not HasBattleArt() then
+        if self.battleArtButton then
+            self.battleArtButton:Hide()
+        end
+        return false
+    end
+
+    self.battleArtButton = self.battleArtButton or self:CreateEnchantButton(BATTLE_ART_BUTTON_ICON, true)
+
+    local button = self.battleArtButton
+    local db = self.db.Sockets
+
+    button:NUISetPixelSize(db.ButtonSize, db.ButtonSize)
+    button:ClearAllPoints()
+    button:NUISetPixelPoint('LEFT', self.enchantButton, 'RIGHT', db.ButtonSpacing, 0)
+
+    local activeIcon = GetActiveBattleArtIcon()
+    button.icon:SetTexture(activeIcon or BATTLE_ART_BUTTON_ICON)
+    button.icon:SetDesaturated(not activeIcon)
 
     button:Show()
     return true
@@ -1199,7 +1282,9 @@ function CharacterPanel:LayoutSocketBar()
     for i = index, #self.socketBar.buttons do self.socketBar.buttons[i]:Hide() end
 
     local socketCount = index - 1
-    local total = socketCount + (self:RefreshEnchantButton() and 1 or 0)
+    local enchantCount = self:RefreshEnchantButton() and 1 or 0
+    local battleArtCount = self:RefreshBattleArtButton() and 1 or 0
+    local total = socketCount + enchantCount + battleArtCount
 
     if total == 0 then
         self.socketBar:Hide()
@@ -1254,6 +1339,11 @@ function CharacterPanel:SetupPanel()
         end)
 
         self:RegisterEvent('PLAYER_REGEN_DISABLED', function() self:HideEnchantPopup() end)
+
+        -- Battle Arts aren't consumed, so applying one may not touch the bags.
+        self:RegisterEvent('ENCHANT_SPELL_COMPLETED', function()
+            self:RefreshSocketBar()
+        end)
 
         self:RegisterEvent('BAG_UPDATE_DELAYED', function()
             if self.socketBar and self.socketBar:IsVisible() then self:RefreshSocketBar() end
