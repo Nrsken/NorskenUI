@@ -28,6 +28,7 @@
             "CustomAuraContainerAuraProcessingPolicy",
             "LoadAddOnWithErrorHandling",
             "TimeUtil",
+            "UnitFrameUtil",
             "BigWigsLoader"
         ],
         "write": [

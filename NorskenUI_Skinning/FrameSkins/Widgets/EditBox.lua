@@ -10,6 +10,7 @@ local math_abs = math.abs
 local math_max = math.max
 local math_min = math.min
 
+---@class SkinnedEditBoxMixin
 local SkinnedEditBoxMixin = {}
 
 -- Input art sits on BACKGROUND/BORDER, sparing the search icon, clear button and Instructions.

@@ -25,7 +25,6 @@ local _G = _G
 local GetLocale = GetLocale
 local UnitClass = UnitClass
 local UnitFullName = UnitFullName
-local assert = assert
 
 local GetAddOnMetadata = C_AddOns and C_AddOns.GetAddOnMetadata
 

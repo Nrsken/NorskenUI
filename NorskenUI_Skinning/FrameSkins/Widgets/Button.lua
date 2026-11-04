@@ -7,6 +7,7 @@ local hooksecurefunc = hooksecurefunc
 local ipairs = ipairs
 local Mixin = Mixin
 
+---@class SkinnedButtonMixin
 local SkinnedButtonMixin = {}
 Skinning.ButtonMixin = SkinnedButtonMixin
 
