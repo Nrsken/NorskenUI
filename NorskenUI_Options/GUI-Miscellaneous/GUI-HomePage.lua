@@ -87,6 +87,7 @@ GUI:RegisterPage('homePage', {
             text = NRSKNUI:ColorTextByTheme("• ") ..
                 L['Disables all skinning modules when ElvUI is loaded.\n  This way you can still use the non skinning features of the addon without conflict.'],
             height = infoRowH,
+            autoHeight = true,
             bgMode = "hide"
         })
 

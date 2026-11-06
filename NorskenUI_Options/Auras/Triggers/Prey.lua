@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = _G.NorskenUI
-if not C_AddOns.IsAddOnLoaded('NorskenUI_Auras') then return end
+if not C_AddOns.IsAddOnLoaded('NorskenAuras') then return end
 local L = NRSKNUI.Libs.AL
 
 local Shared = NRSKNUI.CDMOptions
@@ -14,7 +14,7 @@ local HUNT_TEXTS = {
 
 function TriggerRows.prey(_, typeRow, _, trigger, _, apply)
     typeRow:Dropdown(L['Text'], {
-        width = 0.5,
+        width = 1,
         tooltip = L['What %n shows. The state and hint are only known inside the hunt zone.'],
         options = HUNT_TEXTS,
         value = trigger.Text or 'title',

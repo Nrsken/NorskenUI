@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = _G.NorskenUI
-if not C_AddOns.IsAddOnLoaded('NorskenUI_Auras') then return end
+if not C_AddOns.IsAddOnLoaded('NorskenAuras') then return end
 ---@class CDMModule
 local CDM = NRSKNUI:GetModule('CDM')
 local L = NRSKNUI.Libs.AL
@@ -14,7 +14,7 @@ function TriggerRows.stat(card, typeRow, display, trigger, id, apply)
     local options = {}
     for _, stat in ipairs(CDM.STATS) do options[#options + 1] = { value = stat.key, text = stat.name } end
     typeRow:Dropdown(L['Stat'], {
-        width = 0.5,
+        width = 1,
         tooltip = L['%p is the percent, %t the rating, as the character sheet shows them. Versatility is its rating part.'],
         options = options,
         value = trigger.Stat or 'haste',

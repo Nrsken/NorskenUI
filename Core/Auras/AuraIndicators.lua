@@ -7,7 +7,7 @@ local L = NRSKNUI.Libs.AL
 
 local tsort, tremove = table.sort, table.remove
 local ipairs, pairs = ipairs, pairs
-local format, gsub = string.format, string.gsub
+local format = string.format
 local CopyTable = CopyTable
 local wipe = wipe
 local type = type
@@ -261,8 +261,7 @@ function AuraIndicators:Duplicate(key)
     local source = self:GetSpec(key)
     if not source then return nil end
 
-    -- Shipped names carry a class colour escape, which a user's key should not.
-    local plain = gsub(gsub(source.name or key, '|c%x%x%x%x%x%x%x%x', ''), '|r', '')
+    local plain = source.name or key
     local store = GetStore()
     local name, n = format(L['%s (Copy)'], plain), 1
     while store[name] do

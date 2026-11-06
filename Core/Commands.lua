@@ -26,6 +26,12 @@ function NRSKNUI:ResetGUIState()
     if GUIFrame and GUIFrame.ResetPosition then
         GUIFrame:ResetPosition()
     end
+    if self.db and self.db.global then
+        self.db.global.CDMGUIState = { frame = {} }
+    end
+    if self.CDMWindow then
+        self.CDMWindow:ResetPosition()
+    end
 
     self:Print(L['GUI position and size reset to defaults.'])
 end
@@ -77,7 +83,7 @@ function NRSKNUI:OpenOptions(pageId, context)
     end
     if not LoadOptions() then return end
 
-    local window = self.GUIFrame
+    local window = self.PageWindows[pageId] or self.GUIFrame
     if not window:IsShown() then
         window:Show()
     end

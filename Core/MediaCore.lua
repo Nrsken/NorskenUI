@@ -43,9 +43,9 @@ local mediaKeys = {
 }
 
 local mediaPaths = {
-    font = [[Interface\AddOns\NorskenUI\Media\Fonts\]],
-    statusbar = [[Interface\AddOns\NorskenUI\Media\Statusbars\]],
-    sound = [[Interface\AddOns\NorskenUI\Media\Sounds\]],
+    font = [[Interface\AddOns\NorskenCore\Media\Fonts\]],
+    statusbar = [[Interface\AddOns\NorskenCore\Media\Statusbars\]],
+    sound = [[Interface\AddOns\NorskenCore\Media\Sounds\]],
     spark = '',
 }
 

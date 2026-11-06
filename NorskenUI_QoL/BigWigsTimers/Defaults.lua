@@ -107,11 +107,8 @@ BigWigsTimers.Defaults = {
         ActionOnShowSound = "None",
         ActionOnHideSound = "None",
         LoadConditions = {
-            Enabled = false,
-            SelectedCategory = "Instance",
             Instance = { Types = {} },
             Group = { Types = {} },
-            Combat = {},
             Role = { Types = {} },
             Position = { Types = {} },
         },

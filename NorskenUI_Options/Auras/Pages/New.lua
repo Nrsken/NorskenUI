@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = _G.NorskenUI
-if not C_AddOns.IsAddOnLoaded('NorskenUI_Auras') then return end
+if not C_AddOns.IsAddOnLoaded('NorskenAuras') then return end
 ---@class CDMModule
 local CDM = NRSKNUI:GetModule('CDM')
 local L = NRSKNUI.Libs.AL
@@ -18,7 +18,7 @@ local GetSpellTexture = C_Spell and C_Spell.GetSpellTexture
 local Shared = NRSKNUI.CDMOptions
 local IMPORT, NEW_TILE_HEIGHT, NEW_TILE_ICON, NEW_TILE_PREVIEW = Shared.IMPORT, Shared.NEW_TILE_HEIGHT, Shared.NEW_TILE_ICON, Shared.NEW_TILE_PREVIEW
 local NewAuraGroup, NewGroup, NewIcon, NewProgressBar = Shared.NewAuraGroup, Shared.NewGroup, Shared.NewIcon, Shared.NewProgressBar
-local NewResourceBar, NewText, Reopen, SETTINGS = Shared.NewResourceBar, Shared.NewText, Shared.Reopen, Shared.SETTINGS
+local NewResourceBar, NewText, Reopen = Shared.NewResourceBar, Shared.NewText, Shared.Reopen
 
 -- New page pictures: small versions of each type, drawn from the player's own spec --
 
@@ -185,22 +185,36 @@ local function DrawProgressSample(canvas, height, width)
     return true
 end
 
----Resource Bar: the class's own points, a little over half full, in their power colour.
+---Resource Bar: the spec's own points or main bar, a little over half full, in their power colour.
 ---@param canvas Frame
 ---@param height number
 ---@param width number
 ---@return boolean
 local function DrawResourceSample(canvas, height, width)
     local parts = SampleParts(canvas)
-    local powerType = CDM.CLASS_RESOURCES[NRSKNUI.MyClass] or Enum.PowerType.ComboPoints
-    local count = math.max(3, math.min(UnitPowerMax('player', powerType) or 5, SAMPLE_SLOTS))
+    local resource = CDM:GetSpecResource()
+    local powerType = resource == 'primary' and UnitPowerType('player') or resource
     local color = NRSKNUI.Colors.power[powerType]
     local r, g, b = 1, 0.96, 0.41
     if color then r, g, b = color:GetRGB() end
+    local barHeight = floor(height * 0.35)
+    local y = floor((height - barHeight) / 2)
+
+    if not CDM.SEGMENTED_POWER[resource] then
+        Place(parts.frame, 0, y, width, barHeight)
+        parts.barBg:SetColorTexture(0.15, 0.15, 0.17, 1)
+        Place(parts.barBg, 1, y + 1, width - 2, barHeight - 2)
+        parts.barFill:SetColorTexture(r, g, b, 1)
+        Place(parts.barFill, 1, y + 1, floor((width - 2) * 0.6), barHeight - 2)
+        return true
+    end
+
+    -- Maelstrom Weapon is a buff's stacks, not a power type UnitPowerMax can read
+    local max = type(powerType) == 'number' and UnitPowerMax('player', powerType) or 5
+    local count = math.max(3, math.min(max, SAMPLE_SLOTS))
     local pipWidth = floor((width - 1) / count) - 1
     local barWidth = count * (pipWidth + 1) + 1
-    local barHeight = floor(height * 0.35)
-    local x, y = floor((width - barWidth) / 2), floor((height - barHeight) / 2)
+    local x = floor((width - barWidth) / 2)
     Place(parts.frame, x, y, barWidth, barHeight)
     for i = 1, count do
         local pip = parts.pips[i]
@@ -317,7 +331,7 @@ end
 local function DrawTextureSample(canvas, height)
     local texture = canvas.nuiTextureSample or canvas:CreateTexture(nil, 'ARTWORK')
     canvas.nuiTextureSample = texture
-    texture:SetTexture('Interface\\AddOns\\NorskenUI\\Media\\CursorCircles\\nauraThick.png')
+    texture:SetTexture('Interface\\AddOns\\NorskenCore\\Media\\CursorCircles\\nauraThick.png')
     texture:SetVertexColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
     texture:ClearAllPoints()
     texture:NUISetPixelSize(height, height)
@@ -358,7 +372,7 @@ local NEW_SECTIONS = {
         types = {
             {
                 text = L['Resource Bar'],
-                description = L['Class points'],
+                description = L["Your spec's resource"],
                 draw = DrawResourceSample,
                 create = function() NewResourceBar() end,
             },
@@ -389,12 +403,7 @@ local function BuildNewPage(page)
     page:SetEnabled(function() return CDM.db.Enabled end)
     -- The card's side padding is the gap between the tiles and below the last row too.
     local gap, edge = Theme.paddingMedium, Theme.paddingMedium - Theme.paddingSmall
-    local card = page:Card(L['New Display'], 'all'):HeaderButton({
-        atlas = 'questlog-icon-setting',
-        size = 18,
-        tooltip = L['Cooldown & Aura Manager Settings'],
-        onClick = function() Reopen(SETTINGS) end,
-    })
+    local card = page:Card(L['New Display'], 'all')
     for s, section in ipairs(NEW_SECTIONS) do
         NRSKNUI.CDMDisplayTab.Heading(card, section.title)
         local row = card:Row(NEW_TILE_HEIGHT, s == #NEW_SECTIONS and edge or gap):Even()

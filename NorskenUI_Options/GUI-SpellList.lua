@@ -22,7 +22,7 @@ local ICON_SIZE = 24
 local BUTTON_ROW_HEIGHT = 30
 local CROSS_WIDTH = 0.06
 local UNKNOWN_ICON = 134400
-local CROSS = 'Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\NorskenCustomCrossv3.png'
+local CROSS = 'Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\NorskenCustomCrossv3.png'
 local DELETE_COLOR = { 1, 0, 0 }
 
 local states = setmetatable({}, { __mode = 'k' })

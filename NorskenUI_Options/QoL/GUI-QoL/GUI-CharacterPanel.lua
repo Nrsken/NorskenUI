@@ -196,6 +196,7 @@ local function BuildFontsView(page, db)
 end
 
 local items = {
+    { type = 'label', key = 'panel', text = L['Character Panel'] },
     { key = 'gear',  text = L['Gear'] },
     { key = 'texts', text = L['Panel Texts'] },
     { key = 'fonts', text = L['Fonts'] },

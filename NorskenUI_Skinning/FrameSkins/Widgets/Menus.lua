@@ -8,7 +8,7 @@ local math_max = math.max
 local setmetatable = setmetatable
 local hooksecurefunc = hooksecurefunc
 
-local ARROW_TEXTURE = 'Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\collapse.tga'
+local ARROW_TEXTURE = 'Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\collapse.tga'
 
 -- Closing a menu releases every attachment with a SetToDefaults(), so styling is reapplied per open.
 local menuBackdrops = setmetatable({}, { __mode = 'k' })

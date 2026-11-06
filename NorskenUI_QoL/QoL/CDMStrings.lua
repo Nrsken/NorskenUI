@@ -674,7 +674,7 @@ function CooldownStrings:CreatePanel()
 
     local openIcon = open:CreateTexture(nil, 'ARTWORK')
     openIcon:SetAllPoints()
-    openIcon:SetTexture('Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\NorskenCustomCrossv3.png')
+    openIcon:SetTexture('Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\NorskenCustomCrossv3.png')
     openIcon:SetVertexColor(Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3], 1)
     openIcon:NUISetPixelSnap()
     open:SetNormalTexture(openIcon)

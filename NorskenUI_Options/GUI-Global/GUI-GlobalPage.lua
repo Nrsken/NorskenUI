@@ -241,7 +241,7 @@ local PREVIEW_TYPE = 'NUITexturePreview'
 local PREVIEW_BAR_HEIGHT = 22
 local PREVIEW_FILL = 0.62
 local PREVIEW_PAD = 12 -- checker showing around the bar, so the backdrop and border sit on it
-local PREVIEW_CHECKER = 'Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\PreviewChecker.png'
+local PREVIEW_CHECKER = 'Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\PreviewChecker.png'
 
 -- GUI-only sentinel for the flat backdrop, the db stores nil.
 local FLAT_BACKGROUND = '__FLAT'

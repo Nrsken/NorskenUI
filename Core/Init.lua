@@ -18,6 +18,9 @@
 ---@field Libs NRSKNUI.Libraries
 ---@field GUI KajiGUIInstance
 ---@field Theme KajiTheme
+---@field CDMWindow GUIFrame? the Cooldown & Aura Manager window, once the options have loaded
+---@field OptionWindows GUIFrame[]?
+---@field PageWindows table<string, GUIFrame>?
 local NRSKNUI = select(2, ...)
 local addonName = select(1, ...)
 
@@ -29,8 +32,7 @@ local UnitFullName = UnitFullName
 local GetAddOnMetadata = C_AddOns and C_AddOns.GetAddOnMetadata
 
 -- Create the addon object
-local AceAddon = _G.LibStub('AceAddon-3.0')
-AceAddon:NewAddon(NRSKNUI, addonName, 'AceEvent-3.0', 'AceTimer-3.0', 'AceHook-3.0')
+_G.NorskenCore:NewAddon(NRSKNUI, addonName, 'AceEvent-3.0', 'AceTimer-3.0', 'AceHook-3.0')
 _G.NorskenUI = NRSKNUI
 _G.NorskenUIAPI = _G.NorskenUIAPI or {} -- Global API table for things we want to expose to other addons, like WagoUI Packs and profile installers.
 

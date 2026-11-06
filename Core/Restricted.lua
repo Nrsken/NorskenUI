@@ -256,6 +256,15 @@ function NRSKNUI:InCombat()
     return active.Combat or InCombatLockdown()
 end
 
+---Whether any restriction is on. Read live: a handler for the same event can run before ours sets the flags.
+---@return boolean
+function NRSKNUI:IsRestricted()
+    for i in pairs(typeName) do
+        if GetAddOnRestrictionState(i) ~= RestrictionInactive then return true end
+    end
+    return false
+end
+
 ---Current restriction state (0 none, 1 partial, 2 full).
 ---@return integer
 function NRSKNUI:GetRestrictionState()

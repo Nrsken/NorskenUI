@@ -11,6 +11,8 @@ local rowHL = Theme.rowHeightLast
 
 local min = math.min
 
+local TOGGLE_ROW_HEIGHT = 24
+
 local BLIZZARD_TOGGLES = {
     { key = 'CharacterFrame', label = L['Character Frame'] },
     { key = 'GameMenu',       label = L['Game Menu'] },
@@ -119,14 +121,12 @@ local function BuildToggleCard(card, db, specs)
     local count = #specs
 
     for i = 1, count, 4 do
-        local isLast = (i + 3) >= count
-        local rowHeight = (isLast and rowHL) or rowH
-        local row = card:Row(rowHeight, (isLast and 0) or nil)
+        local row = card:Row(TOGGLE_ROW_HEIGHT, 0)
 
         for j = i, min(i + 3, count) do
             local spec = specs[j]
 
-            row:Checkbox(spec.label, {
+            row:SlimCheckbox(spec.label, {
                 width = (1 / 4),
                 value = db.Frames[spec.key] ~= false,
                 callback = function(checked)

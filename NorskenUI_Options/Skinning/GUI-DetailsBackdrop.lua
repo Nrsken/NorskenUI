@@ -26,7 +26,7 @@ local function RefreshSidebar()
 end
 
 local function SidebarItems()
-    local items = {}
+    local items = { { type = 'label', key = 'backdrops', text = L['Backdrops'] } }
     for index = 1, MAX_BACKDROPS do
         items[#items + 1] = { key = tostring(index), text = format(L['Details Backdrop %d'], index) }
     end

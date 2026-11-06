@@ -242,7 +242,7 @@ function NRSKNUI:SkinAuraButton(container, options, button)
     local borderColor = Opt(options, container, 'borderColor')
     if borderColor then
         local enchantBorder = overlay:CreateTexture(nil, 'OVERLAY')
-        enchantBorder:SetTexture('Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\AuraOverlay.png') -- Use our own border texture.
+        enchantBorder:SetTexture('Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\AuraOverlay.png') -- Use our own border texture.
         enchantBorder:NUISetPixelSnap()
         enchantBorder:NUISetPixelInside(button)
         enchantBorder:SetVertexColor(borderColor[1], borderColor[2], borderColor[3], borderColor[4] or 1)
@@ -253,7 +253,7 @@ function NRSKNUI:SkinAuraButton(container, options, button)
     local showDebuffBorder = Opt(options, container, 'showDebuffBorder')
     if showBuffBorder or showDebuffBorder then
         local border = overlay:CreateTexture(nil, 'OVERLAY')
-        border:SetTexture('Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\AuraOverlay.png') -- Use our own border texture.
+        border:SetTexture('Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\AuraOverlay.png') -- Use our own border texture.
         border:NUISetPixelSnap()
         border:NUISetPixelInside(button)
         button.Border = border

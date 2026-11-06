@@ -23,7 +23,7 @@ local FRAMES = {
     { key = 'debuffs', title = L['Standard Debuffs'], harmful = true,  dbKey = 'Debuffs' },
 }
 -- both frames come and go with the module header's one switch
-local ITEMS = {}
+local ITEMS = { { type = 'label', key = 'frames', text = L['Frames'] } }
 for _, frame in ipairs(FRAMES) do
     FRAMES[frame.key] = frame
     ITEMS[#ITEMS + 1] = { key = frame.key, text = frame.title }

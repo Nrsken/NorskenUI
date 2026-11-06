@@ -1133,7 +1133,7 @@ function ProfileManager:ExportProfile(profileName)
 
     -- Create export package with metadata
     local exportData = {
-        _v = 2,           -- Version
+        _v = 4,           -- Version
         _n = profileName, -- Original profile name
         _t = time(),      -- Timestamp
         d = profileData   -- Profile data
@@ -1234,6 +1234,15 @@ function ProfileManager:ImportProfile(importString, targetName, activate)
     -- Both decoders guarantee a table, so only the payload itself is left to check.
     if not exportData.d then
         return false, L['Invalid data structure']
+    end
+
+    -- older strings still carry the load conditions Enable toggle and the Combat pair
+    local version = exportData._v or 0
+    if version < 3 then
+        NRSKNUI.LoadConditions:DropEnableToggle(exportData.d)
+    end
+    if version < 4 then
+        NRSKNUI.LoadConditions:MoveCombatToState(exportData.d)
     end
 
     -- Determine target profile name

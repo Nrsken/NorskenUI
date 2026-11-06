@@ -8,7 +8,7 @@
 ## IconTexture: Interface\AddOns\NorskenUI\Media\Logo\LogoRed.png
 ## LoadOnDemand: 1
 ## Dependencies: NorskenUI
-## OptionalDeps: NorskenUI_Auras, NorskenUI_UnitFrames, NorskenUI_Skinning, NorskenUI_QoL
+## OptionalDeps: NorskenAuras, NorskenUI_UnitFrames, NorskenUI_Skinning, NorskenUI_QoL
 
 Locales\Locales.xml
 

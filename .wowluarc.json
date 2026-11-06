@@ -4,6 +4,7 @@
     ],
     "library": [
         "Libs/",
+        "../NorskenCore/Libs/",
         "NorskenUI_UnitFrames/Libs/"
     ],
     "flavors": [

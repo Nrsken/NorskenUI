@@ -27,7 +27,7 @@ local type = type
 local C_Timer = C_Timer
 local UIParent = UIParent
 
-local ARROW_TEXTURE = 'Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\collapse.tga'
+local ARROW_TEXTURE = 'Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\collapse.tga'
 
 -- Overlay Config
 local FILL_ALPHA = 0.8
@@ -688,6 +688,11 @@ function Anchors:Enter(aceModule)
     self.isActive = true
     self.onlyModule = aceModule
 
+    -- the options step aside while positioning, Exit brings back the one that was open
+    for _, window in ipairs(NRSKNUI.OptionWindows or {}) do
+        window:Suspend()
+    end
+
     if NRSKNUI.PreviewManager then
         NRSKNUI.PreviewManager:SetAnchorsActive(true, aceModule)
     end
@@ -737,6 +742,9 @@ function Anchors:Exit()
     keyHandler:Hide()
     eventHandler:UnregisterAllEvents()
     self:HidePanel()
+    for _, window in ipairs(NRSKNUI.OptionWindows or {}) do
+        window:Resume()
+    end
     NRSKNUI:SendMessage('NRSKNUI_ANCHORS_CHANGED')
 end
 
@@ -926,6 +934,8 @@ function Anchors:OpenSelectedSettings()
     if type(context) == 'string' then
         context = { itemKey = context }
     end
+
+    self:Exit() -- the window can't sit on top of the anchors
 
     -- ShowPage resolves and expands the owning sidebar header itself.
     NRSKNUI:OpenOptions(entry.guiPath, context)

@@ -21,7 +21,7 @@ local RESET_OPTIONS = {
 local CHARACTER_ROW_HEIGHT = 32
 local CHARACTER_ICON_SIZE = 24
 local CROSS_WIDTH = 0.06
-local CROSS = 'Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\NorskenCustomCrossv3.png'
+local CROSS = 'Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\NorskenCustomCrossv3.png'
 local DELETE_COLOR = { 1, 0, 0 }
 
 -- the Icon widget only takes files and class icons are atlases, so draw one onto its canvas;

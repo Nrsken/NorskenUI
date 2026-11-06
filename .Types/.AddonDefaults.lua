@@ -393,12 +393,10 @@
 ---@class NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults.LoadConditions
 ---@field [string] any
 ---@field Combat NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults.LoadConditions.Combat
----@field Enabled boolean
 ---@field Group NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults.LoadConditions.Group
 ---@field Instance NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults.LoadConditions.Instance
 ---@field Position NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults.LoadConditions.Position
 ---@field Role NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults.LoadConditions.Role
----@field SelectedCategory string
 
 ---@class NRSKNUI.DBProfile.BigWigsTimers.TriggerDefaults.LoadConditions.Combat
 ---@field [string] any
@@ -1683,10 +1681,8 @@
 ---@class NRSKNUI.DBProfile.PotionReady.LoadConditions
 ---@field [string] any
 ---@field Combat NRSKNUI.DBProfile.PotionReady.LoadConditions.Combat
----@field Enabled boolean
 ---@field Group NRSKNUI.DBProfile.PotionReady.LoadConditions.Group
 ---@field Instance NRSKNUI.DBProfile.PotionReady.LoadConditions.Instance
----@field SelectedCategory string
 
 ---@class NRSKNUI.DBProfile.PotionReady.LoadConditions.Combat
 ---@field [string] any

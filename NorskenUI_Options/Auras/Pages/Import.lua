@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = _G.NorskenUI
-if not C_AddOns.IsAddOnLoaded('NorskenUI_Auras') then return end
+if not C_AddOns.IsAddOnLoaded('NorskenAuras') then return end
 ---@class CDMModule
 local CDM = NRSKNUI:GetModule('CDM')
 local L = NRSKNUI.Libs.AL
@@ -147,7 +147,7 @@ local function BuildImportPage(page)
     ReadImport(importState.text) -- the tree may have changed since the string was pasted
     local summary
     page:Card(L['Import'], 'all'):HeaderButton({
-        texture = 'Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\right-arrow.png',
+        texture = 'Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\right-arrow.png',
         size = 20,
         rotation = math.pi,
         tooltip = L['Back'],

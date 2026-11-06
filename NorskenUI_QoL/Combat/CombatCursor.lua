@@ -18,12 +18,12 @@ local HOLD_DELAY = 0.15 -- For mouse button held visibility modes, without delay
 ---@field key string
 ---@field path string
 local circleTypes = {
-    { key = 'Circle 1', path = 'Interface\\AddOns\\NorskenUI\\Media\\CursorCircles\\Circle.tga' },
-    { key = 'Circle 2', path = 'Interface\\AddOns\\NorskenUI\\Media\\CursorCircles\\Aura73.tga' },
-    { key = 'Circle 3', path = 'Interface\\AddOns\\NorskenUI\\Media\\CursorCircles\\Aura103.tga' },
-    { key = 'Circle 4', path = 'Interface\\AddOns\\NorskenUI\\Media\\CursorCircles\\nauraThin.png' },
-    { key = 'Circle 5', path = 'Interface\\AddOns\\NorskenUI\\Media\\CursorCircles\\nauraMedium.png' },
-    { key = 'Circle 6', path = 'Interface\\AddOns\\NorskenUI\\Media\\CursorCircles\\nauraThick.png' },
+    { key = 'Circle 1', path = 'Interface\\AddOns\\NorskenCore\\Media\\CursorCircles\\Circle.tga' },
+    { key = 'Circle 2', path = 'Interface\\AddOns\\NorskenCore\\Media\\CursorCircles\\Aura73.tga' },
+    { key = 'Circle 3', path = 'Interface\\AddOns\\NorskenCore\\Media\\CursorCircles\\Aura103.tga' },
+    { key = 'Circle 4', path = 'Interface\\AddOns\\NorskenCore\\Media\\CursorCircles\\nauraThin.png' },
+    { key = 'Circle 5', path = 'Interface\\AddOns\\NorskenCore\\Media\\CursorCircles\\nauraMedium.png' },
+    { key = 'Circle 6', path = 'Interface\\AddOns\\NorskenCore\\Media\\CursorCircles\\nauraThick.png' },
 }
 
 ---@class GCDModeOption

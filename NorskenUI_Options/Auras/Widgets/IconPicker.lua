@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = _G.NorskenUI
-if not C_AddOns.IsAddOnLoaded('NorskenUI_Auras') then return end
+if not C_AddOns.IsAddOnLoaded('NorskenAuras') then return end
 local L = NRSKNUI.Libs.AL
 local Theme = NRSKNUI.Theme
 local CDM = NRSKNUI:GetModule('CDM')
@@ -160,7 +160,7 @@ end
 local driver = CreateFrame('Frame')
 driver:Hide()
 driver:SetScript('OnUpdate', function(self)
-    local window = NRSKNUI.GUIFrame
+    local window = NRSKNUI.CDMWindow
     if NRSKNUI:InCombat() or not (window and window:IsShown()) then
         self:Hide()
         return
@@ -353,7 +353,7 @@ function IconPicker:Build(page)
     local grid, timer
 
     local header = page:Card(L['Choose an Icon'], 'all'):HeaderButton({
-        texture = 'Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\right-arrow.png',
+        texture = 'Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\right-arrow.png',
         size = 20,
         rotation = math.pi,
         tooltip = L['Back'],

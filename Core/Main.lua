@@ -42,6 +42,25 @@ local function RunProfileScopeMigration(db)
     db.global.ProfileScopeMigrated = true
 end
 
+-- Load conditions migrations --
+
+---@param db NRSKNUI.DBObject
+local function RunLoadEnableMigration(db)
+    if db.global.LoadEnableDropped then return end
+
+    -- the raw save, so namespaces and profiles other than the active one come along
+    NRSKNUI.LoadConditions:DropEnableToggle(db.sv)
+    db.global.LoadEnableDropped = true
+end
+
+---@param db NRSKNUI.DBObject
+local function RunLoadCombatMigration(db)
+    if db.global.LoadCombatMoved then return end
+
+    NRSKNUI.LoadConditions:MoveCombatToState(db.sv)
+    db.global.LoadCombatMoved = true
+end
+
 -- OnInitialize: Called when the addon is initialized
 function NRSKNUI:OnInitialize()
     self.MyGUID = UnitGUID('player')
@@ -52,6 +71,8 @@ function NRSKNUI:OnInitialize()
     self:SetLanguage(self.db.global.Language)
 
     RunProfileScopeMigration(self.db)
+    RunLoadEnableMigration(self.db)
+    RunLoadCombatMigration(self.db)
 
     LDS:EnhanceDatabase(self.db, 'NorskenUI')
     self.ProfileManager:SyncGlobalProfile()

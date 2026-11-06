@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = _G.NorskenUI
-if not C_AddOns.IsAddOnLoaded('NorskenUI_Auras') then return end
+if not C_AddOns.IsAddOnLoaded('NorskenAuras') then return end
 ---@class CDMModule
 local CDM = NRSKNUI:GetModule('CDM')
 local L = NRSKNUI.Libs.AL
@@ -23,6 +23,9 @@ local TRIGGER_TYPES = Shared.TRIGGER_TYPES
 local TriggerLabel = Shared.TriggerLabel
 local TriggerRows = Shared.TriggerRows
 local triggerOpen = Shared.triggerOpen
+
+-- types that start on rows of their own height, an unused type row would leave a gap
+local OWN_ROWS = { conditions = true }
 
 ---@param page table
 ---@param id string
@@ -180,7 +183,7 @@ local function BuildTriggerTab(page, id)
                         value = trigger.Type,
                         callback = SetType,
                     })
-                    typeRow = card:Row(rowH)
+                    typeRow = not OWN_ROWS[trigger.Type] and card:Row(rowH) or nil
                 end
 
                 local rows = TriggerRows[trigger.Type]

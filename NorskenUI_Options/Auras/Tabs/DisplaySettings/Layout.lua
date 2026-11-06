@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = _G.NorskenUI
-if not C_AddOns.IsAddOnLoaded('NorskenUI_Auras') then return end
+if not C_AddOns.IsAddOnLoaded('NorskenAuras') then return end
 ---@class CDMModule
 local CDM = NRSKNUI:GetModule('CDM')
 local L = NRSKNUI.Libs.AL
@@ -14,6 +14,11 @@ local pairs, ipairs = pairs, ipairs
 local DisplayTab = NRSKNUI.CDMDisplayTab
 local Assign, Differ = DisplayTab.Assign, DisplayTab.Differ
 
+local ANCHOR_TYPES = {
+    { value = 'SCREEN',      text = L['Screen Center'] },
+    { value = 'UIPARENT',    text = L['Screen (UIParent)'] },
+    { value = 'SELECTFRAME', text = L['Select Frame'] },
+}
 local STRATA = {
     { value = 'INHERIT',           text = L['Inherited'] },
     { value = 'BACKGROUND',        text = L['Background'] },
@@ -175,6 +180,69 @@ local function PositionAndSize(card, page, style, set, mixed, displays, apply, m
 
     local display = first
     local position = display.Position
+
+    -- what a display can anchor to: inside a dynamic group the group places it
+    if any(function(d) return not CDM:IsDynamic(d.parent) end) then
+        local function rebuild(key, value)
+            place({ key }, value)
+            card:Rebuild()
+        end
+        card:Row(rowH):Dropdown(L['Anchored To'], {
+            width = 1,
+            conditions = { freeGroup },
+            options = ANCHOR_TYPES,
+            value = display.anchorFrameType or 'SCREEN',
+            mixed = placed({ 'anchorFrameType' }, 'SCREEN'),
+            callback = function(value) rebuild('anchorFrameType', value) end,
+        })
+
+        if any(function(d) return d.anchorFrameType == 'SELECTFRAME' end) then
+            local gui = page.gui
+            local frameRow = card:Row(rowH)
+            local frameBox = frameRow:EditBox(L['Frame'], {
+                width = 0.5,
+                conditions = { freeGroup },
+                value = display.ParentFrame or '',
+                mixed = placed({ 'ParentFrame' }),
+                callback = function(text) place({ 'ParentFrame' }, text ~= '' and text or nil) end,
+            })
+            frameRow:Button(L['Select Frame'], {
+                width = 0.5,
+                height = 24,
+                yOffset = -14,
+                conditions = { freeGroup },
+                callback = function()
+                    local chooser = gui.services.frameChooser or gui:GetFrameChooser()
+                    chooser:Start(function(frameName, isPreview)
+                        if not frameName then return end
+
+                        frameBox:SetValue(frameName)
+                        if not isPreview then
+                            place({ 'ParentFrame' }, frameName)
+                        end
+                    end, display.ParentFrame or '')
+                end,
+            })
+        end
+    end
+
+    local onScreen = not first.parent and first.anchorFrameType ~= 'SELECTFRAME'
+    local pickerRow = card:Row(80)
+    pickerRow:AnchorPicker(L['Anchor From'], {
+        width = 0.5,
+        conditions = { freeGroup },
+        value = position.AnchorFrom,
+        mixed = placed({ 'Position', 'AnchorFrom' }),
+        callback = function(value) place({ 'Position', 'AnchorFrom' }, value) end,
+    })
+    pickerRow:AnchorPicker(onScreen and L["To Screen's"] or L["To Frame's"], {
+        width = 0.5,
+        conditions = { freeGroup },
+        value = position.AnchorTo,
+        mixed = placed({ 'Position', 'AnchorTo' }),
+        callback = function(value) place({ 'Position', 'AnchorTo' }, value) end,
+    })
+
     local offsetRow = card:Row(rowH)
     offsetRow:Slider(L['X Offset'], {
         width = 0.5,

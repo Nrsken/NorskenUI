@@ -12,7 +12,11 @@ local rowHL = Theme.rowHeightLast
 local ipairs = ipairs
 
 local function SidebarItems()
-    local items = { { key = 'general', text = L['General Settings'] } }
+    local items = {
+        { type = 'label', key = 'generalCaption', text = L['General'] },
+        { key = 'general', text = L['General Settings'] },
+        { type = 'label', key = 'elements', text = L['Elements'] },
+    }
     for _, element in ipairs(BMO.elementOrder) do
         items[#items + 1] = { key = element.key, text = element.label }
     end

@@ -137,7 +137,7 @@ local RAID_ICON = [[Interface\TargetingFrame\UI-RaidTargetingIcons]]
 local STATE_ICON = [[Interface\CharacterFrame\UI-StateIcon]]
 local TAGS_ICON = [[Interface\Icons\INV_Misc_Note_01]]
 -- The dispel highlight's own art: a top-to-bottom fade the game tints by dispel type.
-local DISPEL_GRADIENT = 'Interface\\AddOns\\NorskenUI\\Media\\white_gradient.tga'
+local DISPEL_GRADIENT = 'Interface\\AddOns\\NorskenCore\\Media\\white_gradient.tga'
 
 ---@param color table { r, g, b, a } or an oUF color
 ---@return table rgba

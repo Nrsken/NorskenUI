@@ -651,10 +651,10 @@ function GroupMixin:UpdateGroupPosition(source, grow, extraX, extraY)
     end
     parent = parent or UIParent
 
-    local growAnchor = self:GetResolvedAnchor(grow or source.Grow)
+    local point = posConfig.SelfPoint or self:GetResolvedAnchor(grow or source.Grow)
 
     self:ClearAllPoints()
-    self:NUISetPixelPoint(growAnchor, parent, posConfig.AnchorTo or 'CENTER', (posConfig.XOffset or 0) + (extraX or 0), (posConfig.YOffset or 0) + (extraY or 0))
+    self:NUISetPixelPoint(point, parent, posConfig.AnchorTo or 'CENTER', (posConfig.XOffset or 0) + (extraX or 0), (posConfig.YOffset or 0) + (extraY or 0))
     self:SetFrameStrata(source.Strata or 'MEDIUM')
 end
 

@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = _G.NorskenUI
-if not C_AddOns.IsAddOnLoaded('NorskenUI_Auras') then return end
+if not C_AddOns.IsAddOnLoaded('NorskenAuras') then return end
 ---@class CDMModule
 local CDM = NRSKNUI:GetModule('CDM')
 local L = NRSKNUI.Libs.AL
@@ -15,7 +15,7 @@ local type = type
 local unpack = unpack
 local CopyTable = CopyTable
 
----The values that differ between two load tables, by path. Unset and false are both unticked; the open category is the card's own.
+---The values that differ between two load tables, by path. A talent's false is "must not have", never the same as unset.
 ---@param old table
 ---@param new table
 ---@param path string[]
@@ -35,13 +35,13 @@ local function Diff(old, new, path, changes)
         at[#at + 1] = key
         if type(before) == 'table' or type(after) == 'table' then
             Diff(type(before) == 'table' and before or {}, type(after) == 'table' and after or {}, at, changes)
-        elseif key ~= 'SelectedCategory' and (before or false) ~= (after or false) then
+        elseif before ~= after then
             changes[#changes + 1] = { path = at, value = after }
         end
     end
 end
 
----Two load values read the same: unset, false, '' and an empty table all mean nothing picked; the open category is the card's own.
+---Two load values read the same: unset, '' and an empty table all mean nothing picked.
 ---@param a any
 ---@param b any
 ---@return boolean
@@ -49,10 +49,10 @@ local function Same(a, b)
     if type(a) == 'table' or type(b) == 'table' then
         local ta, tb = type(a) == 'table' and a or {}, type(b) == 'table' and b or {}
         for key, value in pairs(ta) do
-            if key ~= 'SelectedCategory' and not Same(value, tb[key]) then return false end
+            if not Same(value, tb[key]) then return false end
         end
         for key, value in pairs(tb) do
-            if key ~= 'SelectedCategory' and not Same(ta[key], value) then return false end
+            if not Same(ta[key], value) then return false end
         end
         return true
     end
@@ -62,7 +62,7 @@ local function Same(a, b)
     if b == '' then
         b = nil
     end
-    return (a or false) == (b or false)
+    return a == b
 end
 
 ---@param load table
@@ -90,22 +90,27 @@ local function BuildLoadTab(page, id)
         off = off + (enabled and 0 or 1)
         mixed[i] = { name = CDM:GetName(key), value = not enabled }
     end
-    page:Card(L['Load'], 'all'):Row(rowHL, 0):Checkbox(L['Never'], {
-        width = 0.5,
-        tooltip = L['Never load this, whatever the conditions below say. A group takes everything inside it along.'],
-        value = off == #owners,
-        mixed = off > 0 and off < #owners and mixed or nil,
-        callback = function(checked)
-            for _, key in ipairs(owners) do
-                CDM:Get(key).Enabled = not checked
-            end
-            -- only what's loaded changes; a disabled display keeps its frame, so nothing needs rebuilding
-            CDM:RefreshLoad()
-        end,
-    })
+
+    local function NeverCheckbox(row)
+        row:SlimCheckbox(L['Never'], {
+            width = 0.5,
+            tooltip = L['Never load this, whatever the conditions below say. A group takes everything inside it along.'],
+            value = off == #owners,
+            mixed = off > 0 and off < #owners and mixed or nil,
+            callback = function(checked)
+                for _, key in ipairs(owners) do
+                    CDM:Get(key).Enabled = not checked
+                end
+                -- only what's loaded changes; a disabled display keeps its frame, so nothing needs rebuilding
+                CDM:RefreshLoad()
+            end,
+        })
+    end
 
     if #iconIds == 0 then
-        page:Card(L['Load']):Row(rowHL, 0):Text(L['This group has no icons yet.'], { width = 1 })
+        local card = page:Card(L['Load Conditions'], 'all')
+        NeverCheckbox(card:Row(rowHL))
+        card:Row(rowHL, 0):Text(L['This group has no icons yet.'], { width = 1 })
         return
     end
 
@@ -114,6 +119,7 @@ local function BuildLoadTab(page, id)
     page:LoadConditionsCard({
         db = first.Load,
         specs = true,
+        general = NeverCheckbox,
         -- each one's value where they disagree, which the card marks
         mixed = function(path)
             local base = Read(first.Load, path)

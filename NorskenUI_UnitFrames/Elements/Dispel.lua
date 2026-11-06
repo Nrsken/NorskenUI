@@ -9,7 +9,7 @@ local ipairs, pairs = ipairs, pairs
 
 local AF = AuraUtil.AuraFilters
 
-local GRADIENT_TEXTURE = 'Interface\\AddOns\\NorskenUI\\Media\\white_gradient.tga'
+local GRADIENT_TEXTURE = 'Interface\\AddOns\\NorskenCore\\Media\\white_gradient.tga'
 
 local BORDER_EDGES = {
     { from = 'TOPLEFT',    to = 'TOPRIGHT',    height = true },

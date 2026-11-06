@@ -5,7 +5,6 @@
         <Size x="36" y="36" />
     </Button>
 
-    <Script file="Sidebar.lua" />
     <Script file="Widgets\IconPicker.lua" />
     <Script file="Widgets\Thumbnail.lua" />
     <Script file="Tabs\DisplaySettings\Common.lua" />
@@ -23,6 +22,7 @@
     <Script file="Triggers\Stat.lua" />
     <Script file="Triggers\LootSpec.lua" />
     <Script file="Triggers\Prey.lua" />
+    <Script file="Triggers\Conditions.lua" />
     <Script file="Triggers\Item.lua" />
     <Script file="Triggers\Timer.lua" />
     <Script file="Triggers\Power.lua" />
@@ -41,4 +41,5 @@
     <Script file="Pages\Settings.lua" />
     <Script file="Pages\Import.lua" />
     <Script file="Page.lua" />
+    <Script file="Window.lua" />
 </Ui>

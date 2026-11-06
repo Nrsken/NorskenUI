@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = _G.NorskenUI
-if not C_AddOns.IsAddOnLoaded('NorskenUI_Auras') then return end
+if not C_AddOns.IsAddOnLoaded('NorskenAuras') then return end
 local L = NRSKNUI.Libs.AL
 
 local pairs, ipairs = pairs, ipairs
@@ -37,8 +37,8 @@ local TEXT_JUSTIFY = {
     { value = 'RIGHT',  text = L['Right'] },
 }
 
--- Sections and sub-sections start closed, Icon Settings aside; what the user opens or closes holds for the session.
-local sectionOpen = { icon = true, bar = true, text = true } -- [section key] = true
+-- Sections and sub-sections start closed, each tab's first aside; what the user opens or closes holds for the session.
+local sectionOpen = { icon = true, bar = true, text = true, groupLayout = true, groupPosition = true } -- [section key] = true
 
 local subOpen = {}                              -- [sub-section key] = true
 

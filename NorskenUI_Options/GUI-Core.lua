@@ -13,11 +13,11 @@ function NRSKNUI:RequestReload(reason)
     pendingReload = reason
 end
 
-local function PromptPendingReload()
+function NRSKNUI:PromptPendingReload()
     if not pendingReload then return end
     local reason = pendingReload
     pendingReload = nil
-    NRSKNUI:CreateReloadPrompt(reason)
+    self:CreateReloadPrompt(reason)
 end
 
 -- Dropdown option lists every tab shares. Dropdown.lua reads value or key, so value serves both.
@@ -41,7 +41,7 @@ NRSKNUI.GrowthOptions = {
 }
 
 local LOGO = 'Interface\\AddOns\\NorskenUI\\Media\\Logo\\'
-local TEX = 'Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\'
+local TEX = 'Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\'
 local SOCIAL = 'Interface\\AddOns\\NorskenUI\\Media\\SupportLogos\\'
 
 NRSKNUI.GUIFrame.ReloadText = L['Disabling/Enabling this requires a reload to take full effect.']
@@ -65,14 +65,9 @@ function NRSKNUI:GetGUI()
     return GUI
 end
 
-local GUI = NRSKNUI:GetGUI()
----@type GUIFrame
-local window = GUI:CreateGUIWindow({
-    name = 'NorskenUIGUIFrame',
-    size = { 950, 700 },
-    minSize = { 950, 700 },
-    defaultPage = 'homePage',
-    logo = {
+-- a function: each window paints its own copy of the layers
+function NRSKNUI.GUILogoConfig()
+    return {
         layers = {
             {
                 texture = LOGO .. 'logocookingsPT1128x128OT.png',
@@ -93,7 +88,17 @@ local window = GUI:CreateGUIWindow({
         version = NRSKNUI.Version == 'Development Version' and L['Development Version'] or NRSKNUI.Version,
         versionAnchor = { 'LEFT', 2, 'RIGHT', -45, -3 },
         versionColor = 'textSecondary',
-    },
+    }
+end
+
+local GUI = NRSKNUI:GetGUI()
+---@type GUIFrame
+local window = GUI:CreateGUIWindow({
+    name = 'NorskenUIGUIFrame',
+    size = { 950, 700 },
+    minSize = { 950, 700 },
+    defaultPage = 'homePage',
+    logo = NRSKNUI.GUILogoConfig(),
     state = {
         load = function()
             local data = NRSKNUI.db and NRSKNUI.db.global and NRSKNUI.db.global.GUIState
@@ -112,6 +117,10 @@ local window = GUI:CreateGUIWindow({
         end,
     },
     onShow = function()
+        -- one settings window at a time, the previews follow a single page
+        if NRSKNUI.CDMWindow and NRSKNUI.CDMWindow:IsShown() then
+            NRSKNUI.CDMWindow:Hide()
+        end
         NRSKNUI.GUIOpen = true
         if NRSKNUI.PreviewManager then
             NRSKNUI.PreviewManager:SetGUIOpen(true)
@@ -120,7 +129,7 @@ local window = GUI:CreateGUIWindow({
     onClose = function()
         NRSKNUI.GUIOpen = false
         NRSKNUI.ModuleHeader:OnClose()
-        PromptPendingReload()
+        NRSKNUI:PromptPendingReload()
         if NRSKNUI.PreviewManager then
             NRSKNUI.PreviewManager:SetGUIOpen(false)
         end
@@ -193,7 +202,7 @@ if window.content then
         if NRSKNUI.PreviewManager then
             NRSKNUI.PreviewManager:SetPage(pageId)
         end
-        if pageId ~= previousId then PromptPendingReload() end
+        if pageId ~= previousId then NRSKNUI:PromptPendingReload() end
     end
 end
 
@@ -247,3 +256,5 @@ window:AddFooterSocial({
 
 -- The window already provides Show/Hide/Toggle/IsShown/ShowPage, so it is the public handle.
 NRSKNUI.GUIFrame = window
+NRSKNUI.OptionWindows = { window } -- every window the anchors step around
+NRSKNUI.PageWindows = {}           -- pages living in another window than the main one

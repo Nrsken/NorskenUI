@@ -1,8 +1,7 @@
 ---@class NRSKNUI
 local NRSKNUI = select(2, ...)
 
---TODO: Add: Race, spell known, NOT spell known, item equipped, in encounter, mounted, skyriding, player level, alive
---TODO: Some of these might need triple state widget, for example in encounter can be: In Encounter, Not In Encounter or Off
+--TODO: Add: item equipped, player level
 
 local select = select
 local tonumber = tonumber
@@ -11,8 +10,24 @@ local IsInGroup = IsInGroup
 local wipe, next = wipe, next
 local CreateFrame = CreateFrame
 local IsInInstance = IsInInstance
+local IsMounted = IsMounted
+local IsResting = IsResting
+local IsPlayerMoving = IsPlayerMoving
+local UnitRace = UnitRace
+local UnitExists = UnitExists
+local UnitIsDead = UnitIsDead
+local UnitIsPVP = UnitIsPVP
+local UnitOnTaxi = UnitOnTaxi
+local UnitInVehicle = UnitInVehicle
+local UnitHasVehicleUI = UnitHasVehicleUI
+local UnitIsDeadOrGhost = UnitIsDeadOrGhost
+local HasOverrideActionBar = HasOverrideActionBar
+local HasVehicleActionBar = HasVehicleActionBar
+local IsEncounterInProgress = IsEncounterInProgress
 local UnitAffectingCombat = UnitAffectingCombat
 local ipairs, pairs = ipairs, pairs
+local type = type
+local After = C_Timer.After
 local GetInstanceInfo = GetInstanceInfo
 
 local GetSpecialization = C_SpecializationInfo and C_SpecializationInfo.GetSpecialization
@@ -25,18 +40,44 @@ local GetSubTreeInfo = C_Traits and C_Traits.GetSubTreeInfo
 local GetBestMapForUnit = C_Map and C_Map.GetBestMapForUnit
 local GetMapGroupID = C_Map and C_Map.GetMapGroupID
 local GetMapChildrenInfo = C_Map and C_Map.GetMapChildrenInfo
+local IsSpellKnownOrInSpellBook = C_SpellBook and C_SpellBook.IsSpellKnownOrInSpellBook
+local IsInPetBattle = C_PetBattles and C_PetBattles.IsInBattle
+local IsWarModeActive = C_PvP and C_PvP.IsWarModeActive
+local GetGlidingInfo = C_PlayerInfo and C_PlayerInfo.GetGlidingInfo
+
+local PET_SPELLS = Enum.SpellBookSpellBank.Pet
 
 ---@class LoadConditions
 local LoadConditions = {}
 NRSKNUI.LoadConditions = LoadConditions
 
 local callbacks = {}
+local stateCallbacks = {}
 local eventFrame = nil
 
 local function HasAnyEnabled(tbl)
     if not tbl then return false end
-    for _, enabled in pairs(tbl) do if enabled then return true end end
+    for _, enabled in pairs(tbl) do
+        if enabled then return true end
+    end
     return false
+end
+
+-- Events only one condition cares about start once a load table asks for it, so nothing listens for what isn't used.
+local watchedSets = {}
+
+---@param events table<string, true|string> each event to true or the unit it's registered for
+local function Watch(events)
+    if not eventFrame or watchedSets[events] then return end
+
+    watchedSets[events] = true
+    for event, unit in pairs(events) do
+        if unit == true then
+            eventFrame:RegisterEvent(event)
+        else
+            eventFrame:RegisterUnitEvent(event, unit)
+        end
+    end
 end
 
 -- Instance condition
@@ -49,12 +90,19 @@ local function CheckInstance(config)
 
     if not config.Types[instanceType] then return false end
 
-    if config.DifficultyID then
-        local _, _, currentDifficulty = GetInstanceInfo()
-        if currentDifficulty ~= config.DifficultyID then return false end
-    end
-
     return true
+end
+
+-- Difficulty condition: any picked difficultyID, none picked means any.
+-- Starting a key turns the dungeon's difficulty into Mythic Keystone without a zone change.
+local DIFFICULTY_EVENTS = { PLAYER_DIFFICULTY_CHANGED = true, CHALLENGE_MODE_START = true, CHALLENGE_MODE_COMPLETED = true }
+
+local function CheckDifficulty(config)
+    if not config or not config.Types or not HasAnyEnabled(config.Types) then return true end
+
+    Watch(DIFFICULTY_EVENTS)
+    local _, _, difficultyID = GetInstanceInfo()
+    return config.Types[difficultyID] == true
 end
 
 -- Group condition
@@ -79,7 +127,7 @@ local function CheckGroup(config)
     return true
 end
 
--- Combat condition
+-- Combat state
 -- Read from the REGEN event our own frame gets: NRSKNUI:InCombat()'s flag is set by another frame's handler for
 -- the same event, which may run after ours; InCombatLockdown() can still read false on PLAYER_REGEN_DISABLED.
 local inCombat = false
@@ -89,20 +137,6 @@ local function InCombat()
         return inCombat
     end
     return NRSKNUI:InCombat() -- nothing has registered yet, so no events are tracked
-end
-
-local function CheckCombat(config)
-    if not config then return true end
-
-    local wantsInCombat = config.InCombat == true
-    local wantsOutOfCombat = config.OutOfCombat == true
-
-    if not wantsInCombat and not wantsOutOfCombat then return true end
-    if wantsInCombat and wantsOutOfCombat then return true end
-    if wantsInCombat and not InCombat() then return false end
-    if wantsOutOfCombat and InCombat() then return false end
-
-    return true
 end
 
 -- Check Role condition
@@ -249,24 +283,168 @@ local function CheckTalent(config, conditions)
     return true
 end
 
+-- Race condition: any picked race, keyed by UnitRace's file name; none picked means any race.
+local function CheckRace(config)
+    if not config or not config.Types or not HasAnyEnabled(config.Types) then return true end
+    local _, race = UnitRace("player")
+    return config.Types[race] == true
+end
+
+-- Spell condition: the player's or the pet's spellbook, overrides included; answers are kept so an event can tell what changed.
+local knownSpells = {} ---@type table<number, boolean>
+local SPELL_EVENTS = { SPELLS_CHANGED = true, UNIT_PET = "player" }
+
+---@param spellID number
+---@return boolean
+local function ReadKnown(spellID)
+    return IsSpellKnownOrInSpellBook(spellID) or IsSpellKnownOrInSpellBook(spellID, PET_SPELLS)
+end
+
+---@param spellID number
+---@return boolean
+local function IsKnown(spellID)
+    Watch(SPELL_EVENTS)
+    local known = ReadKnown(spellID)
+    knownSpells[spellID] = known
+    return known
+end
+
+---@return boolean changed
+local function SpellsChanged()
+    local changed = false
+    for spellID, known in pairs(knownSpells) do
+        if ReadKnown(spellID) ~= known then
+            changed = true
+        end
+    end
+    return changed
+end
+
+local function CheckSpells(config)
+    if config.Known and not IsKnown(config.Known) then return false end
+    if config.NotKnown and IsKnown(config.NotKnown) then return false end
+    return true
+end
+
+-- State condition: true = must be, false = must not be, unset leaves it out. Load and the Conditions trigger list these in order.
+local inEncounter = false
+
+local STATES = {
+    { key = "Always", label = "Always Active", read = function() return true end, triggerOnly = true },
+    { key = "InCombat", label = "In Combat", read = InCombat },
+    { key = "InEncounter", label = "In Encounter", read = function() return inEncounter end },
+    {
+        key = "Alive",
+        label = "Alive",
+        read = function() return not UnitIsDeadOrGhost("player") end,
+        events = { PLAYER_DEAD = true, PLAYER_ALIVE = true, PLAYER_UNGHOST = true },
+    },
+    { key = "WarMode", label = "In War Mode", read = IsWarModeActive, events = { PLAYER_FLAGS_CHANGED = "player" } },
+    {
+        key = "InPetBattle",
+        label = "In Pet Battle",
+        read = IsInPetBattle,
+        events = { PET_BATTLE_OPENING_START = true, PET_BATTLE_CLOSE = true },
+    },
+    {
+        key = "InVehicle",
+        label = "In Vehicle",
+        read = function() return UnitInVehicle("player") end,
+        events = { UNIT_ENTERED_VEHICLE = "player", UNIT_EXITED_VEHICLE = "player" },
+    },
+    {
+        key = "VehicleUI",
+        label = "Has Vehicle UI",
+        read = function() return UnitHasVehicleUI("player") or HasOverrideActionBar() or HasVehicleActionBar() end,
+        events = { VEHICLE_UPDATE = true, UPDATE_VEHICLE_ACTIONBAR = true, UPDATE_OVERRIDE_ACTIONBAR = true },
+    },
+    {
+        -- the control events are for taxis, UnitOnTaxi has no event of its own
+        key = "Skyriding",
+        label = "Skyriding",
+        read = function()
+            local _, canGlide = GetGlidingInfo()
+            return canGlide and not UnitOnTaxi("player")
+        end,
+        events = { PLAYER_CAN_GLIDE_CHANGED = true, PLAYER_CONTROL_LOST = true, PLAYER_CONTROL_GAINED = true },
+    },
+    { key = "Mounted", label = "Mounted", read = IsMounted, events = { PLAYER_MOUNT_DISPLAY_CHANGED = true } },
+    {
+        key = "Restricted",
+        label = "Secret Restrictions Active",
+        read = function() return NRSKNUI:IsRestricted() end,
+        events = { ADDON_RESTRICTION_STATE_CHANGED = true },
+    },
+    { key = "Resting", label = "Resting", read = IsResting, events = { PLAYER_UPDATE_RESTING = true }, triggerOnly = true },
+    {
+        key = "HasPet",
+        label = "Has Pet",
+        read = function() return UnitExists("pet") and not UnitIsDead("pet") end,
+        events = { UNIT_PET = "player" },
+        triggerOnly = true,
+    },
+    {
+        key = "Moving",
+        label = "Moving",
+        read = IsPlayerMoving,
+        events = { PLAYER_STARTED_MOVING = true, PLAYER_STOPPED_MOVING = true },
+        triggerOnly = true,
+    },
+    {
+        key = "PvPFlagged",
+        label = "PvP Flagged",
+        read = function() return UnitIsPVP("player") end,
+        events = { PLAYER_FLAGS_CHANGED = "player" },
+        triggerOnly = true,
+    },
+}
+LoadConditions.STATES = STATES
+NRSKNUI.GUI.loadStates = STATES -- Kaji's load card can't reach the addon, so it gets the list handed over
+
+local function CheckState(config)
+    for _, state in ipairs(STATES) do
+        local wanted = config[state.key]
+        if wanted ~= nil then
+            if state.events then
+                Watch(state.events)
+            end
+            if (state.read() == true) ~= wanted then return false end
+        end
+    end
+    return true
+end
+
 local checkers = {
     Instance = CheckInstance,
     Group = CheckGroup,
-    Combat = CheckCombat,
     Role = CheckRole,
     Position = CheckPosition,
     Zone = CheckZone,
     Spec = CheckSpec,
     Talent = CheckTalent,
+    Race = CheckRace,
+    Spells = CheckSpells,
+    Difficulty = CheckDifficulty,
+    State = CheckState,
 }
 
 -- Conditions that change during a session
 local SITUATIONAL = {
     Instance = true,
     Group = true,
-    Combat = true,
     Zone = true,
+    Spells = true, -- the pet can change at any time
+    Difficulty = true,
+    State = true,
 }
+
+local function FireStateCallbacks()
+    for aceModule, callback in pairs(stateCallbacks) do
+        if aceModule:IsEnabled() then
+            callback(aceModule)
+        end
+    end
+end
 
 ---@param playerChanged boolean spec or talents may have changed
 local function FireCallbacks(playerChanged)
@@ -275,6 +453,7 @@ local function FireCallbacks(playerChanged)
             callback(aceModule, playerChanged)
         end
     end
+    FireStateCallbacks()
 end
 
 -- Subzone events fire constantly while moving, only a new map ID can change a Zone condition.
@@ -289,12 +468,37 @@ local TALENT_EVENTS = {
     ACTIVE_PLAYER_SPECIALIZATION_CHANGED = true,
 }
 
-local function OnEvent(_, event)
+-- What only a triggerOnly state reads: moving flips on every step, so these leave load alone.
+local STATE_ONLY_EVENTS = { PLAYER_STARTED_MOVING = true, PLAYER_STOPPED_MOVING = true, PLAYER_UPDATE_RESTING = true }
+
+local function OnEvent(_, event, isInitialLogin)
     if event == "PLAYER_REGEN_DISABLED" then
         inCombat = true
     elseif event == "PLAYER_REGEN_ENABLED" then
         inCombat = false
+    elseif event == "ENCOUNTER_START" then
+        inEncounter = true
+    elseif event == "ENCOUNTER_END" then
+        inEncounter = false
+    elseif event == "PLAYER_ENTERING_WORLD" then
+        -- hearthing out of a pull is the one way to leave without an ENCOUNTER_END
+        inEncounter = IsEncounterInProgress()
+        -- canGlide isn't settled yet on the first loading screen
+        if isInitialLogin then
+            After(2, function() FireCallbacks(false) end)
+        end
     end
+
+    if STATE_ONLY_EVENTS[event] then
+        FireStateCallbacks()
+        return
+    end
+    if event == "UNIT_PET" then
+        FireStateCallbacks()
+    end
+
+    -- SPELLS_CHANGED comes with every combat override swap, only a spell a condition asked about matters
+    if (event == "SPELLS_CHANGED" or event == "UNIT_PET") and not SpellsChanged() then return end
 
     -- the talent config can still be missing on login, so a loading screen rescans too
     local playerChanged = TALENT_EVENTS[event] or event == "PLAYER_SPECIALIZATION_CHANGED" or event == "PLAYER_ENTERING_WORLD"
@@ -310,7 +514,10 @@ local function SetupEventFrame()
 
     -- a reload in combat starts here already in combat, before any REGEN event
     inCombat = NRSKNUI:InCombat() or UnitAffectingCombat("player")
+    inEncounter = IsEncounterInProgress()
     eventFrame = CreateFrame("Frame")
+    eventFrame:RegisterEvent("ENCOUNTER_START")
+    eventFrame:RegisterEvent("ENCOUNTER_END")
     eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
     eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
     eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
@@ -328,7 +535,6 @@ end
 ---@return string? failed the category that failed
 function LoadConditions:Check(conditions, skipSituational)
     if not conditions then return true end
-    if not conditions.Enabled then return true end
 
     for category, checker in pairs(checkers) do
         local config = conditions[category]
@@ -354,16 +560,17 @@ end
 ---@return table Default LoadConditions structure
 function LoadConditions:GetDefaults()
     return {
-        Enabled = false,
-        SelectedCategory = "Instance",
         Instance = { Types = {} },
         Group = { Types = {} },
-        Combat = {},
         Role = { Types = {} },
         Position = { Types = {} },
         Zone = {},
         Spec = { Types = {} },
         Talent = { Specs = {} },
+        Race = { Types = {} },
+        Spells = {},
+        Difficulty = { Types = {} },
+        State = {},
     }
 end
 
@@ -379,4 +586,71 @@ end
 ---@param aceModule table
 function LoadConditions:UnregisterCallback(aceModule)
     callbacks[aceModule] = nil
+end
+
+---Register a module to hear about every state change, the triggerOnly ones included.
+---@param aceModule table AceModule with IsEnabled method
+---@param callback fun(aceModule: table)
+function LoadConditions:RegisterStateCallback(aceModule, callback)
+    SetupEventFrame()
+    stateCallbacks[aceModule] = callback
+end
+
+---@param aceModule table
+function LoadConditions:UnregisterStateCallback(aceModule)
+    stateCallbacks[aceModule] = nil
+end
+
+-- Saved data --
+
+---@param block table
+---@return boolean
+local function IsLoadBlock(block)
+    if block.Enabled ~= nil or block.SelectedCategory ~= nil or block.Combat then return true end
+    for category in pairs(checkers) do
+        if block[category] then return true end
+    end
+    return false
+end
+
+---@param saved table any saved or imported table, searched at every depth
+---@param fn fun(block: table)
+local function EachLoadBlock(saved, fn)
+    for key, value in pairs(saved) do
+        if type(value) == "table" then
+            if (key == "LoadConditions" or key == "Load") and IsLoadBlock(value) then
+                fn(value)
+            else
+                EachLoadBlock(value, fn)
+            end
+        end
+    end
+end
+
+---Brings saved load tables over from the old Enable toggle. Off meant the picks were ignored so they go;
+---AceDB strips a value equal to its default, so off reads as unset and only true means it was on.
+---@param saved table
+function LoadConditions:DropEnableToggle(saved)
+    EachLoadBlock(saved, function(block)
+        if block.Enabled == true then
+            block.Enabled, block.SelectedCategory = nil, nil
+        else
+            wipe(block)
+        end
+    end)
+end
+
+---Moves the old In Combat and Out of Combat pair onto the one tri-state. Neither or both ticked meant no limit.
+---@param saved table
+function LoadConditions:MoveCombatToState(saved)
+    EachLoadBlock(saved, function(block)
+        local combat = block.Combat
+        if not combat then return end
+
+        if (combat.InCombat == true) ~= (combat.OutOfCombat == true) then
+            block.State = block.State or {}
+            block.State.InCombat = combat.InCombat == true
+        end
+        block.Combat = nil
+    end)
 end

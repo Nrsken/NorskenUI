@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = _G.NorskenUI
-if not C_AddOns.IsAddOnLoaded('NorskenUI_Auras') then return end
+if not C_AddOns.IsAddOnLoaded('NorskenAuras') then return end
 ---@class CDMModule
 local CDM = NRSKNUI:GetModule('CDM')
 local L = NRSKNUI.Libs.AL
@@ -8,20 +8,29 @@ local Theme = NRSKNUI.Theme
 local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
 
-local Shared = NRSKNUI.CDMOptions
-local GENERAL, RefreshTree, Reopen, ScheduleAnchorUpdate = Shared.GENERAL, Shared.RefreshTree, Shared.Reopen, Shared.ScheduleAnchorUpdate
+local ipairs = ipairs
 
----The module's own settings, behind the New card's cog.
+local GUI = NRSKNUI.GUI
+local Shared = NRSKNUI.CDMOptions
+local PAGE, RefreshTree, ScheduleAnchorUpdate = Shared.PAGE, Shared.RefreshTree, Shared.ScheduleAnchorUpdate
+local SETTINGS_PAGE, TRINKETS = Shared.SETTINGS_PAGE, Shared.TRINKETS
+local BuildTrinketPage = Shared.BuildTrinketPage
+
+local GENERAL_ITEM = 'general'
+
+-- the main window's own pages, built here as they are
+local GLOBAL_PAGES = {
+    { key = 'globalFonts',        text = L['Fonts'] },
+    { key = 'globalTextures',     text = L['Textures'] },
+    { key = 'globalDurationText', text = L['Duration Text'] },
+    { key = 'globalLanguage',     text = L['Language'] },
+    { key = 'themePage',          text = L['Theme'] },
+}
+
 ---@param page table
-local function BuildSettingsPage(page)
+local function BuildGeneralPage(page)
     page:SetEnabled(function() return CDM.db.Enabled end)
-    page:Card(L['Cooldown & Aura Manager']):HeaderButton({
-        texture = 'Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\right-arrow.png',
-        size = 20,
-        rotation = math.pi, -- our right arrow, pointing back
-        tooltip = L['Back'],
-        onClick = function() Reopen(GENERAL) end,
-    }):Row(rowHL, 0):Checkbox(L['Enable Cooldown & Aura Manager'], {
+    page:Card(L['Cooldown & Aura Manager']):Row(rowHL, 0):Checkbox(L['Enable Cooldown & Aura Manager'], {
         width = 1,
         master = true,
         value = CDM.db.Enabled,
@@ -66,4 +75,45 @@ local function BuildSettingsPage(page)
     })
 end
 
-Shared.BuildSettingsPage = BuildSettingsPage
+---@return table[]
+local function SettingsItems()
+    local items = {
+        { type = 'label', key = 'cdm:settings', text = L['Cooldown & Aura Manager'] },
+        { key = GENERAL_ITEM, text = L['General'] },
+        { key = TRINKETS, text = L['Trinket Blacklist'] },
+    }
+    for _, item in ipairs(GUI._pages.globalColors.sidebar.items) do
+        items[#items + 1] = item
+    end
+    items[#items + 1] = { type = 'label', key = 'cdm:global', text = L['Global Settings'] }
+    for _, item in ipairs(GLOBAL_PAGES) do
+        items[#items + 1] = item
+    end
+    return items
+end
+
+GUI:RegisterPage(SETTINGS_PAGE, {
+    mode = 'clean',
+    sidebar = {
+        items = SettingsItems,
+        default = GENERAL_ITEM,
+        buttons = {
+            {
+                text = L['Back'],
+                onClick = function() NRSKNUI.CDMWindow:ShowPage(PAGE) end,
+            },
+        },
+    },
+    build = function(page, _, itemKey, item)
+        if itemKey == GENERAL_ITEM then
+            BuildGeneralPage(page)
+        elseif itemKey == TRINKETS then
+            Shared.trinketReturnKey = nil -- this way in has no trigger to go back to
+            BuildTrinketPage(page)
+        elseif item.specs then
+            GUI._pages.globalColors.build(page, nil, nil, item)
+        else
+            GUI._pages[itemKey].build(page)
+        end
+    end,
+})

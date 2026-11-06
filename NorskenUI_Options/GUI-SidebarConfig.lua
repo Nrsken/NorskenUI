@@ -50,8 +50,17 @@ GUIFrame.SidebarConfig = {
     },
 }
 
+GUIFrame.SidebarRedirects = {} -- [entry id] = fn, for entries that open another window rather than a page
+
 -- Hand the config to the window, it builds the sidebar + search box and drives ShowPage on selection.
 GUIFrame:SetSidebar(GUIFrame.SidebarConfig.systems, {
+    redirect = function(id)
+        local open = GUIFrame.SidebarRedirects[id]
+        if not open then return false end
+
+        open()
+        return true
+    end,
     isDisabled = function(entry)
         return entry.elvUIDisabled and NRSKNUI.ShouldNotLoadModule and NRSKNUI:ShouldNotLoadModule() or false
     end,

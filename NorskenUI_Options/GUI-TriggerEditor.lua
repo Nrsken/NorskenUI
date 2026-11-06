@@ -19,7 +19,7 @@ local tinsert, tremove = table.insert, table.remove
 local min, rad = math.min, math.rad
 local CopyTable = CopyTable
 
-local TEX = 'Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\'
+local TEX = 'Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\'
 local DELETE_COLOR = { 1, 0, 0 }
 
 -- A "trigger" here is one branch of the saved trigger: an aura group inside the display's container.

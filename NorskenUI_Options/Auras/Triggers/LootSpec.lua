@@ -1,9 +1,7 @@
 ---@class NRSKNUI
 local NRSKNUI = _G.NorskenUI
-if not C_AddOns.IsAddOnLoaded('NorskenUI_Auras') then return end
+if not C_AddOns.IsAddOnLoaded('NorskenAuras') then return end
 local L = NRSKNUI.Libs.AL
-local Theme = NRSKNUI.Theme
-local rowH = Theme.rowHeight
 
 local Shared = NRSKNUI.CDMOptions
 local TriggerRows = Shared.TriggerRows
@@ -14,7 +12,7 @@ local CURRENT_SPEC = {
     { value = 'other',   text = L['Not Current Spec'] },
 }
 
-function TriggerRows.lootSpec(card, typeRow, display, trigger, id, apply)
+function TriggerRows.lootSpec(_, typeRow, _, trigger, _, apply)
     typeRow:Dropdown(L['Loot Specialization'], {
         width = 0.5,
         multiSelect = true,
@@ -27,8 +25,7 @@ function TriggerRows.lootSpec(card, typeRow, display, trigger, id, apply)
         end,
     })
 
-    local currentRow = card:Row(rowH)
-    currentRow:Dropdown(L['Current Specialization'], {
+    typeRow:Dropdown(L['Current Specialization'], {
         width = 0.5,
         tooltip = L['Whether loot goes to the spec you are playing. Loot set to Current Specialization always is.'],
         options = CURRENT_SPEC,

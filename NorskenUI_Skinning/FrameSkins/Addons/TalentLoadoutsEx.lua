@@ -12,7 +12,7 @@ local IsAddOnLoaded = C_AddOns and C_AddOns.IsAddOnLoaded
 
 local ADDON_NAME = 'TalentLoadoutsEx'
 
-local CHECK_TEXTURE = 'Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\check.png'
+local CHECK_TEXTURE = 'Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\check.png'
 
 local ROW_HIGHLIGHT_ALPHA = 0.25
 local ROW_SELECTED_ALPHA = 0.35

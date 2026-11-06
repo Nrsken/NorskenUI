@@ -24,6 +24,7 @@ local function BuildGeneralSettingsTab(page, db)
     infoRow:Text(nil, {
         width = 1,
         height = infoRowSize,
+        autoHeight = true,
         bgMode = 'hide',
         text = NRSKNUI:ColorTextByTheme('• ') .. L['Mouse Middle-click: Opens calendar.'] .. '\n' ..
             NRSKNUI:ColorTextByTheme('• ') .. L['Mouse Right-click: Opens tracking menu.'],

@@ -22,7 +22,7 @@ local tremove = table.remove
 local C_Timer = C_Timer
 local pi = math.pi
 
-local MEDIA = 'Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\'
+local MEDIA = 'Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\'
 local WHITE = 'Interface\\Buttons\\WHITE8X8'
 local BOX_BACKDROP = { bgFile = WHITE, edgeFile = WHITE, edgeSize = 1 }
 

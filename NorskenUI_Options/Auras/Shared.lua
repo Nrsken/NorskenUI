@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = _G.NorskenUI
-if not C_AddOns.IsAddOnLoaded('NorskenUI_Auras') then return end
+if not C_AddOns.IsAddOnLoaded('NorskenAuras') then return end
 ---@class CDMModule
 local CDM = NRSKNUI:GetModule('CDM')
 local L = NRSKNUI.Libs.AL
@@ -13,9 +13,9 @@ NRSKNUI.CDMOptions = {}
 local Shared = NRSKNUI.CDMOptions
 
 local PAGE = 'cooldownManager'
+local SETTINGS_PAGE = 'cooldownManagerSettings'
 local GENERAL = 'cdm:general'
 local TRINKETS = 'cdm:trinkets'
-local SETTINGS = 'cdm:settings'
 local IMPORT = 'cdm:import'
 local SECTION_LOADED = 'cdm:section:loaded'
 local SECTION_UNLOADED = 'cdm:section:unloaded'
@@ -67,8 +67,9 @@ local expandedGroups = {} -- [group uid] = true, for the session; groups start c
 
 ---@return table? tree
 local function Tree()
-    local content = NRSKNUI.GUIFrame and NRSKNUI.GUIFrame.content
-    return content and content.miniSidebar
+    -- the Settings view swaps the column for its own list, the tree rebuilds on the way back
+    local window = NRSKNUI.CDMWindow
+    return window and window.content.currentId == PAGE and window.content.miniSidebar or nil
 end
 
 ---Every display a tab edits for the shown row: with two or more rows picked (it among them) each picked display,
@@ -96,15 +97,15 @@ local function EditTargets(id)
 end
 
 local function Reopen(selectKey)
-    local window = NRSKNUI.GUIFrame
-    if not (window and window.content) then return end
+    local window = NRSKNUI.CDMWindow
+    if not window then return end
 
     if selectKey and CDM:Get(selectKey) then
         for _, ancestor in ipairs(CDM:GetAncestors(selectKey)) do
             expandedGroups[CDM:Get(ancestor).uid] = true
         end
     end
-    window.content:ShowPage(PAGE, selectKey and { itemKey = selectKey } or nil)
+    window:ShowPage(PAGE, selectKey and { itemKey = selectKey } or nil)
 end
 
 IconPicker.navigate = Reopen
@@ -152,7 +153,7 @@ Shared.RefreshTree = RefreshTree
 Shared.Reopen = Reopen
 Shared.SECTION_LOADED = SECTION_LOADED
 Shared.SECTION_UNLOADED = SECTION_UNLOADED
-Shared.SETTINGS = SETTINGS
+Shared.SETTINGS_PAGE = SETTINGS_PAGE
 Shared.TABS = TABS
 Shared.TRINKETS = TRINKETS
 Shared.TYPE_NAMES = TYPE_NAMES

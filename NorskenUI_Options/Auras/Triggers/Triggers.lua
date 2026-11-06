@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = _G.NorskenUI
-if not C_AddOns.IsAddOnLoaded('NorskenUI_Auras') then return end
+if not C_AddOns.IsAddOnLoaded('NorskenAuras') then return end
 ---@class CDMModule
 local CDM = NRSKNUI:GetModule('CDM')
 local L = NRSKNUI.Libs.AL
@@ -20,18 +20,22 @@ local Applier, QUESTION_MARK, Reopen = Shared.Applier, Shared.QUESTION_MARK, Sha
 
 -- Tabs --
 
----@param page table
+---What a group's or aura group's position section builds from.
 ---@param id string
-local function PositionCard(page, id)
+---@return table
+local function PositionConfig(id)
     local display = CDM:Get(id)
-    page:PositionCard({
-        title = L['Position and Size Settings'],
+    local dynamic = display.type == 'dynamicgroup'
+    local frame = dynamic and CDM.containers[id]
+    return {
         db = display,
         showAnchorFrameType = not CDM:IsDynamic(display.parent), -- inside a static group, Screen means the group
         showStrata = display.parent == nil,
-        disableAnchorFrom = display.type == 'dynamicgroup',      -- a dynamic group anchors from its grow direction
+        -- a dynamic group's saved AnchorFrom was never read, so its pick has a key of its own
+        dbKeys = dynamic and { selfPoint = 'SelfPoint' } or nil,
+        defaults = dynamic and { selfPoint = frame and CDM:GroupPoint(frame, display) } or nil,
         onChangeCallback = Applier(id),
-    })
+    }
 end
 
 local TRIGGER_TYPES = {
@@ -44,6 +48,7 @@ local TRIGGER_TYPES = {
     { value = 'stat',        text = L['Player Stat'],         group = 'unit' },
     { value = 'lootSpec',    text = L['Loot Specialization'], group = 'unit' },
     { value = 'prey',        text = L['Prey Hunt'],           group = 'unit' },
+    { value = 'conditions',  text = L['Conditions'],          group = 'unit' },
 }
 local BAR_TRIGGER_TYPES = {
     { value = 'cast',        text = L['Cast'] },
@@ -51,6 +56,7 @@ local BAR_TRIGGER_TYPES = {
     { value = 'aura',        text = L['Aura'] },
     { value = 'stat',        text = L['Player Stat'], group = 'unit' },
     { value = 'prey',        text = L['Prey Hunt'],   group = 'unit' },
+    { value = 'conditions',  text = L['Conditions'],  group = 'unit' },
     { value = 'viewerbar',   text = L['Cooldown Bar'] },
     { value = 'spell',       text = L['Cooldown'] },
     { value = 'item',        text = L['Item'] },
@@ -59,14 +65,15 @@ local BAR_TRIGGER_TYPES = {
 }
 -- No auras: an aura draws through a native aura button, which a text has none of.
 local TEXT_TRIGGER_TYPES = {
-    { value = 'spell',    text = L['Cooldown'] },
-    { value = 'power',    text = L['Power'] },
-    { value = 'stat',     text = L['Player Stat'],         group = 'unit' },
-    { value = 'cast',     text = L['Cast'] },
-    { value = 'item',     text = L['Item'] },
-    { value = 'timer',    text = L['Cast Timer'] },
-    { value = 'lootSpec', text = L['Loot Specialization'], group = 'unit' },
-    { value = 'prey',     text = L['Prey Hunt'],           group = 'unit' },
+    { value = 'spell',      text = L['Cooldown'] },
+    { value = 'power',      text = L['Power'] },
+    { value = 'stat',       text = L['Player Stat'],           group = 'unit' },
+    { value = 'cast',       text = L['Cast'] },
+    { value = 'item',       text = L['Item'] },
+    { value = 'timer',      text = L['Cast Timer'] },
+    { value = 'lootSpec',   text = L['Loot Specialization'],   group = 'unit' },
+    { value = 'prey',       text = L['Prey Hunt'],             group = 'unit' },
+    { value = 'conditions', text = L['Conditions'],            group = 'unit' },
 }
 local TRIGGER_LISTS = { bar = BAR_TRIGGER_TYPES, text = TEXT_TRIGGER_TYPES }
 -- The Type dropdown shows a group once, a second dropdown picks the type inside it.
@@ -92,6 +99,7 @@ local TRIGGER_DEFAULTS = {
     stat        = { Stat = 'haste' },
     lootSpec    = {},
     prey        = {},
+    conditions  = { Conditions = { State = { Always = true } } },
 }
 local AURA_SOURCES = {
     { value = 'cdm',    text = L['Cooldown Manager'] },
@@ -271,7 +279,7 @@ Shared.CataloguePicker = CataloguePicker
 Shared.ITEMS = ITEMS
 Shared.LinkedAuraTrigger = LinkedAuraTrigger
 Shared.NormalizeAuraTypes = NormalizeAuraTypes
-Shared.PositionCard = PositionCard
+Shared.PositionConfig = PositionConfig
 Shared.SHOW_ON = SHOW_ON
 Shared.TRIGGER_DEFAULTS = TRIGGER_DEFAULTS
 Shared.TRIGGER_GROUPS = TRIGGER_GROUPS

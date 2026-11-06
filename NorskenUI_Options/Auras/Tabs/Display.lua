@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = _G.NorskenUI
-if not C_AddOns.IsAddOnLoaded('NorskenUI_Auras') then return end
+if not C_AddOns.IsAddOnLoaded('NorskenAuras') then return end
 ---@class CDMModule
 local CDM = NRSKNUI:GetModule('CDM')
 local L = NRSKNUI.Libs.AL
@@ -14,7 +14,7 @@ local tostring = tostring
 local tonumber = tonumber
 
 local Shared = NRSKNUI.CDMOptions
-local Applier, PositionCard, RefreshTree, TriggerChip = Shared.Applier, Shared.PositionCard, Shared.RefreshTree, Shared.TriggerChip
+local Applier, PositionConfig, RefreshTree, TriggerChip = Shared.Applier, Shared.PositionConfig, Shared.RefreshTree, Shared.TriggerChip
 local EditTargets = Shared.EditTargets
 
 local format = string.format
@@ -102,15 +102,17 @@ local function BuildAuraGroupDisplayTab(page, id)
         Heading(card, L['General'])
         if HasHarmful(display.Trigger) then AuraCards:Dispel(sections, display, ctx) end
         AuraCards:Tooltip(sections, display, ctx)
+        if sections:Card(L['Font Settings']) == card then
+            card:Premade('FontSettingsCard', {
+                db = display,
+                includeSoftOutline = true,
+                globalOverride = {},
+                hideFontSize = true, -- each string's size sits with the rest of its settings in its section
+                onChangeCallback = ctx.Apply,
+            })
+        end
     end)
 
-    page:FontSettingsCard({
-        db = display,
-        includeSoftOutline = true,
-        globalOverride = {},
-        hideFontSize = true, -- each string's size sits with the rest of its settings in its section
-        onChangeCallback = ctx.Apply,
-    })
     AuraCards:Reload(page)
 end
 
@@ -126,8 +128,10 @@ local function BuildAuraGroupLayoutTab(page, id)
         AuraCards:Grid(sections, display, ctx)
         AuraCards:Growth(sections, display, ctx)
         AuraCards:Sorting(sections, display, ctx)
+        if sections:Card(L['Position and Size Settings']) == card then
+            card:Premade('PositionCard', PositionConfig(id))
+        end
     end)
-    PositionCard(page, id)
 end
 
 ---@param page table

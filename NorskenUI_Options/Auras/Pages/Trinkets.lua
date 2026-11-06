@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = _G.NorskenUI
-if not C_AddOns.IsAddOnLoaded('NorskenUI_Auras') then return end
+if not C_AddOns.IsAddOnLoaded('NorskenAuras') then return end
 ---@class CDMModule
 local CDM = NRSKNUI:GetModule('CDM')
 local L = NRSKNUI.Libs.AL
@@ -26,7 +26,7 @@ local function BuildTrinketPage(page)
     local returnKey = Shared.trinketReturnKey --[[@as string?]]
     if returnKey and CDM:Get(returnKey) then
         blacklist:HeaderButton({
-            texture = 'Interface\\AddOns\\NorskenUI\\Media\\GUITextures\\right-arrow.png',
+            texture = 'Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\right-arrow.png',
             size = 20,
             rotation = math.pi, -- our right arrow, pointing back
             tooltip = format(L['Back to %s'], CDM:GetName(returnKey)),

@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = _G.NorskenUI
-if not C_AddOns.IsAddOnLoaded('NorskenUI_Auras') then return end
+if not C_AddOns.IsAddOnLoaded('NorskenAuras') then return end
 ---@class CDMModule
 local CDM = NRSKNUI:GetModule('CDM')
 local L = NRSKNUI.Libs.AL
@@ -15,7 +15,7 @@ local GetSpellTexture = C_Spell and C_Spell.GetSpellTexture
 
 local Shared = NRSKNUI.CDMOptions
 local CAST_ICON, GENERAL, IMPORT, IsCollapsed = Shared.CAST_ICON, Shared.GENERAL, Shared.IMPORT, Shared.IsCollapsed
-local QUESTION_MARK, SECTION_LOADED, SECTION_UNLOADED, SETTINGS = Shared.QUESTION_MARK, Shared.SECTION_LOADED, Shared.SECTION_UNLOADED, Shared.SETTINGS
+local QUESTION_MARK, SECTION_LOADED, SECTION_UNLOADED = Shared.QUESTION_MARK, Shared.SECTION_LOADED, Shared.SECTION_UNLOADED
 local TRINKETS, TYPE_NAMES, expandedGroups = Shared.TRINKETS, Shared.TYPE_NAMES, Shared.expandedGroups
 
 -- Tree data --
@@ -196,7 +196,6 @@ local function TreeContent()
         general = { key = GENERAL, text = L['General'] },
         pages = {
             { key = TRINKETS,        text = L['Trinket Blacklist'] },
-            { key = SETTINGS,        text = L['Cooldown & Aura Manager Settings'] },
             { key = IMPORT,          text = L['Import'] },
             { key = IconPicker.PAGE, text = L['Choose an Icon'] },
         },

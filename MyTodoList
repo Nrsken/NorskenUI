@@ -1,0 +1,61 @@
+CDM:
+
+- _New display's resource bar, only works for combo point styled specs, which isnt totally correct since it can be used for other resources than just standard combo points._
+
+- _The cogwheel on New Display header, update it to use C:\Users\erika\Desktop\Addons\NorskenUI\Media\GUITextures\cogwheel.png instead. And fix the scuffed darkened coloring for it and the go back arrow._
+
+- Aura groups, just go over all of the GUI settings, they are super scuffed and does not match the rest of the CDM tabs that we use imo.
+
+- Explore if the CDM feature should have a header in the GUI
+
+- Go over which modules we currently have in the addon, mainly NorskenUI_QoL that can be turned into CDM displays, e.g Gateway alert, pet status texts and so on. 
+
+- Add actions tab with On Show, On Hide and for for auras we are able to play sound everytime a aura gains a stack
+
+- Add animation tab with On Show, On Hide and Active
+
+- Have a look at trigger and conditons section widget and see if we can imporve the text to be cleaner, mainly condition ones that i feel become long text always when you do multiple condition one with all of/ any or just several then conditons.
+
+- _For all the sections that can be duplicated, we use a + texture for it, i dont like this, need to find a better duplicate texture, + does not mean duplicate so its just misleading._
+
+- _Get rid of the "Add *display type*" in the context menu when you right click groups, dont want that._
+
+- We only hide blizzard CDM by alpha currently, which means that if user has tooltips enabled for it, they are shown if you hover the alpha 0 CDM.
+
+GUI In general:
+
+- _Spell alerts, minimap, copy anything, spell alerts all have scuffed text widgets from the time we removed titles from them, probaly needs auto height enabled or something like that._
+
+- _Blizzard mouseover, buffs and debuffs, details backdrops, character panel, add sectioning to minisidebar (like we have for unitframes and actionbars e.g)_
+
+- _Skinning frame, use smaller checkbox for blizzard and addon frames GUI, currently uses the normal one but instead we use the one we use for general sections load conditions e.g_
+
+- _Aura indicators, remove the class coloring from the preset indicators text_
+
+- _Dropdowns with LSM bars, make the bar preview section not as wide, on a 0.5 dropdown, it takes up basically half the dropdown width, giving very little space for the bars name text._
+
+- _Elvui Intergration card on homepage, its information text widget needs auto height i think, its currently scuffed._
+
+Bugs:
+
+- _When i click on dispel page for unitframes, i get a popup that i need to reload, even tho i have not changed anything, but it tells me i did change something and thati need to reload._
+
+- When i am on the UI Scale page, and then move to any other page, the game has a hitch freeze, figure out why.
+
+General:
+
+- Check what actually requires a full reload and what doesnt with auraContainers and aurabuttons/slots
+
+- _The spec icon in the portrait frame for spec, talents and spellbook skinning does not update when i change specs, it goes stale._
+
+- Check exactly what NorskenUI does when you enter/leave combat, noticing some hitches now and then when doing so and i wonder if that is our addons doing.
+
+Unitframes:
+
+- Check what we can do with raid frame anchors, currently we display them all which makes it hard to select the correct one if they are placed on eachother.
+
+- Clicking around between units different settings pages causes a small micro freeze each time you swap page, might be related to the role settings system maybe?, there is for sure something going on there that is scuffy.
+
+Low prio:
+
+- Generate localization for the other languages, only got english and german currently.

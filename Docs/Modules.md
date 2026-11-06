@@ -5,7 +5,7 @@ NorskenUI ships as one project with several addon folders. `NorskenUI` is the co
 | Folder | Holds |
 |---|---|
 | `NorskenUI` | Core helpers, the aura engine, shared settings (theme, UI scale, colors, global media), profiles, `NorskenUIDB` |
-| `NorskenUI_Auras` | Cooldown & Aura Manager |
+| `NorskenAuras` | Cooldown & Aura Manager |
 | `NorskenUI_UnitFrames` | Unit, party, raid and boss frames, plus oUF |
 | `NorskenUI_Skinning` | Blizzard skins, action bars, chat, minimap, tooltips, Blizzard fonts, player buffs |
 | `NorskenUI_QoL` | QoL, Combat, ClassUtility, Dungeons, BigWigsTimers, MissingBuffs |

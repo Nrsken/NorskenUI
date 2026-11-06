@@ -1,6 +1,6 @@
 ---@class NRSKNUI
 local NRSKNUI = _G.NorskenUI
-if not C_AddOns.IsAddOnLoaded('NorskenUI_Auras') then return end
+if not C_AddOns.IsAddOnLoaded('NorskenAuras') then return end
 ---@class CDMModule
 local CDM = NRSKNUI:GetModule('CDM')
 local L = NRSKNUI.Libs.AL
@@ -14,9 +14,9 @@ local select = select
 local Shared = NRSKNUI.CDMOptions
 local AURA_GROUP_TABS, Applier, BuildAuraGroupLayoutTab, BuildDisplayTab = Shared.AURA_GROUP_TABS, Shared.Applier, Shared.BuildAuraGroupLayoutTab, Shared.BuildDisplayTab
 local BuildGroupTab, BuildImportPage, BuildInformationTab, BuildLoadTab = Shared.BuildGroupTab, Shared.BuildImportPage, Shared.BuildInformationTab, Shared.BuildLoadTab
-local BuildNewPage, BuildSettingsPage, BuildTriggerTab, BuildTrinketPage = Shared.BuildNewPage, Shared.BuildSettingsPage, Shared.BuildTriggerTab, Shared.BuildTrinketPage
+local BuildNewPage, BuildTriggerTab, BuildTrinketPage = Shared.BuildNewPage, Shared.BuildTriggerTab, Shared.BuildTrinketPage
 local ContextMenu, IMPORT, MultiContextMenu, PAGE = Shared.ContextMenu, Shared.IMPORT, Shared.MultiContextMenu, Shared.PAGE
-local PreviewLevel, RefreshTree, SETTINGS, SectionIcons = Shared.PreviewLevel, Shared.RefreshTree, Shared.SETTINGS, Shared.SectionIcons
+local PreviewLevel, RefreshTree, SectionIcons = Shared.PreviewLevel, Shared.RefreshTree, Shared.SectionIcons
 local TABS, TRINKETS, TreeContent, TriggerChip = Shared.TABS, Shared.TRINKETS, Shared.TreeContent, Shared.TriggerChip
 local TriggerTitle, expandedGroups = Shared.TriggerTitle, Shared.expandedGroups
 local EditTargets, MULTI_TABS, Reopen = Shared.EditTargets, Shared.MULTI_TABS, Shared.Reopen
@@ -153,9 +153,6 @@ GUI:RegisterPage(PAGE, {
             return
         elseif itemKey == IMPORT then
             BuildImportPage(page)
-            return
-        elseif itemKey == SETTINGS then
-            BuildSettingsPage(page)
             return
         elseif not display then
             BuildNewPage(page)

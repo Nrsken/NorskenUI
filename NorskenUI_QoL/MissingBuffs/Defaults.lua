@@ -119,11 +119,8 @@ MissingBuffs.Defaults = {
             GlowStartAnim = false,
             GlowDuration = 1,
             LoadConditions = {
-                Enabled = false,
-                SelectedCategory = "Instance",
                 Instance = { Types = {} },
                 Group = { Types = {} },
-                Combat = {},
                 Role = { Types = {} },
                 Position = { Types = {} },
             },
