@@ -202,6 +202,19 @@ Skinning:RegisterSkin('Blizzard_PlayerSpells', 'PlayerSpells', function(S)
     if not PlayerSpellsFrame then return end
 
     S:HandlePortraitFrame(PlayerSpellsFrame)
+
+    -- Blizzard only hears spec changes while this is open and OnShow doesn't repaint, so a swap made while closed goes stale
+    local header = S:CreatePortraitHeader(PlayerSpellsFrame)
+    PlayerSpellsFrame:HookScript('OnShow', function(self)
+        if not header or self:IsInspecting() then return end
+
+        local specID = PlayerUtil.GetCurrentSpecID()
+        local icon = specID and PlayerUtil.GetSpecIconBySpecID(specID)
+        if icon then
+            header:NUISetIconTexture(icon)
+        end
+    end)
+
     S:HandleAccentFont(PlayerSpellsFrame.TitleContainer and PlayerSpellsFrame.TitleContainer.TitleText)
     S:HandleTabRow(PlayerSpellsFrame.TabSystem, PlayerSpellsFrame, true)
 
