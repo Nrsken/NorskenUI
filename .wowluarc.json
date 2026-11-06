@@ -1,10 +1,9 @@
 {
-    "ignore": [
-        "Tools/"
-    ],
+    "ignore": [],
     "library": [
         "Libs/",
-        "../NorskenCore/Libs/",
+        "../NorskenCore/",
+        "../NorskenAuras/",
         "NorskenUI_UnitFrames/Libs/"
     ],
     "flavors": [
@@ -12,25 +11,27 @@
     ],
     "globals": {
         "read": [
-            "NorskenUIDB",
-            "BugGrabber",
-            "HidingBarAddon",
-            "BugSack",
-            "_FRAME",
-            "_ENG",
-            "_G",
-            "SCMAPI",
             "AuraButtonBorderStyle",
-            "AuraContainerSortMethod",
-            "AuraContainerSortDirection",
-            "AuraContainerItemEnchantmentSlot",
-            "CustomAuraContainerItemEnchantmentPlacement",
             "AuraContainerInbound",
+            "AuraContainerItemEnchantmentSlot",
+            "AuraContainerSortDirection",
+            "AuraContainerSortMethod",
+            "BigWigsLoader",
+            "BugGrabber",
+            "BugSack",
             "CustomAuraContainerAuraProcessingPolicy",
+            "CustomAuraContainerItemEnchantmentPlacement",
+            "HidingBarAddon",
             "LoadAddOnWithErrorHandling",
+            "NorskenAuras",
+            "NorskenCore",
+            "NorskenUIDB",
+            "SCMAPI",
             "TimeUtil",
             "UnitFrameUtil",
-            "BigWigsLoader"
+            "_ENG",
+            "_FRAME",
+            "_G"
         ],
         "write": [
             "NorskenUI",

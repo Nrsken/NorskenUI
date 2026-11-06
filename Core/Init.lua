@@ -18,9 +18,9 @@
 ---@field Libs NRSKNUI.Libraries
 ---@field GUI KajiGUIInstance
 ---@field Theme KajiTheme
----@field CDMWindow GUIFrame? the Cooldown & Aura Manager window, once the options have loaded
----@field OptionWindows GUIFrame[]?
----@field PageWindows table<string, GUIFrame>?
+---@field CDMWindow KajiGUIWindow? the Cooldown & Aura Manager window, once the options have loaded
+---@field OptionWindows KajiGUIWindow[]?
+---@field PageWindows table<string, KajiGUIWindow>?
 local NRSKNUI = select(2, ...)
 local addonName = select(1, ...)
 
