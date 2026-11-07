@@ -6,9 +6,6 @@
     <Script file='PixelPerfect.lua' />
     <Script file='GlobalAPI.lua' />
     <Script file='Auras/AuraIndicators.lua' />
-    <Script file='PreviewManager.lua' />
-    <Script file='Anchors.lua' />
     <Script file='Commands.lua' />
     <Script file='ProfileManager.lua' />
-    <Script file='Testenv.lua' />
 </Ui>

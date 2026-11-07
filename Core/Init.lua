@@ -1,6 +1,7 @@
 ---@class NRSKNUI : AceAddon-3.0, AceEvent-3.0, AceTimer-3.0, AceHook-3.0
 ---@field db NRSKNUI.DBObject
 ---@field Locale string
+---@field L table<string, string> the registry, Core/Localization.lua
 ---@field AddOnName string?
 ---@field Version string?
 ---@field Author string?
@@ -34,6 +35,8 @@ local GetAddOnMetadata = C_AddOns and C_AddOns.GetAddOnMetadata
 local NorskenCore = _G.NorskenCore --[[@as NorskenCoreAPI]]
 NorskenCore:NewAddon(NRSKNUI, addonName, 'AceEvent-3.0', 'AceTimer-3.0', 'AceHook-3.0')
 _G.NorskenUI = NRSKNUI
+NRSKNUI.Anchors = NorskenCore:NewAnchors(NRSKNUI)
+NRSKNUI.PreviewManager = NorskenCore:NewPreviewManager(NRSKNUI)
 _G.NorskenUIAPI = _G.NorskenUIAPI or {} -- Global API table for things we want to expose to other addons, like WagoUI Packs and profile installers.
 
 NRSKNUI:SetDefaultModuleState(false)

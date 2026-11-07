@@ -7,8 +7,8 @@
 ## Author: Norsken
 ## IconTexture: Interface\AddOns\NorskenUI\Media\Logo\LogoRed.png
 ## LoadOnDemand: 1
-## Dependencies: NorskenUI
-## OptionalDeps: NorskenAuras, NorskenUI_UnitFrames, NorskenUI_Skinning, NorskenUI_QoL
+## Dependencies: NorskenUI, NorskenCore_Options
+## OptionalDeps: NorskenUI_UnitFrames, NorskenUI_Skinning, NorskenUI_QoL
 
 Locales\Locales.xml
 
@@ -16,15 +16,10 @@ Locales\Locales.xml
 GUI-Core.lua
 GUI-SidebarConfig.lua
 GUI-ModuleHeader.lua
-GUI-AuraCards.lua
-GUI-SpellList.lua
-GUI-ItemTree.lua
-GUI-TriggerEditor.lua
 GUI-Global\GUI-Global.xml
 GUI-Miscellaneous\GUI-Miscellaneous.xml
 
 # each module's pages return early when that module is disabled
-Auras\GUI-CDM.xml
 UnitFrames\GUI-UnitFrames.xml
 Skinning\GUI-Skinning.xml
 QoL\GUI-Combat\GUI-Combat.xml

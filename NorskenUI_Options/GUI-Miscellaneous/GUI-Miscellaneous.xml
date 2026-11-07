@@ -3,5 +3,4 @@
 
     <Script file="GUI-HomePage.lua" />
     <Script file="GUI-Profiles.lua" />
-    <Script file="GUI-ThemePage.lua" />
 </Ui>

@@ -955,7 +955,7 @@ local function RegisterTriggerPage(pageId, kind, title)
         search = { title, L['BigWigs Timers'] },
         sidebar = {
             width = 260,
-            create = NRSKNUI.CreateItemTree,
+            create = NRSKNUI.Libs.KAJI.CreateItemTree,
             locked = function() return not NRSKNUI.BigWigsTimers.db.Enabled end,
             items = TreeContent(kind),
             -- bands start open and remember closing, groups start folded and remember opening

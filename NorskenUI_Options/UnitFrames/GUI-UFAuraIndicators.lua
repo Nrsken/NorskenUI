@@ -433,7 +433,7 @@ GUI:RegisterPage(PAGE, {
     search = {},
     sidebar = {
         width = 260,
-        create = NRSKNUI.CreateItemTree,
+        create = NRSKNUI.Libs.KAJI.CreateItemTree,
         items = TreeContent,
         -- the two bands start open and remember closing, every group starts folded and remembers opening
         onToggleExpanded = function(key, expanded)

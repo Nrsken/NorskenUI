@@ -14,8 +14,6 @@ L['Global Profile'] = true
 L['Profiles'] = true
 
 -- Theme Page
-L['Custom'] = true
-L['Theme'] = true
 
 -- Missing Buffs
 L['Display'] = true
@@ -46,8 +44,6 @@ L['Bars'] = true
 -- NRSKNUI.FontOutlines
 L['Focus'] = true
 L['Boss'] = true
-L['Class'] = true
-L['Power'] = true
 L['Ready Check'] = true
 L['Blizzard'] = true
 
@@ -57,32 +53,18 @@ L['Back'] = true
 L['Item'] = true
 
 -- CDM bars
-L['Stagger'] = true
-L['Combo Points'] = true
-L['Holy Power'] = true
-L['Soul Shards'] = true
-L['Chi'] = true
-L['Arcane Charges'] = true
-L['Essence'] = true
-L['Runes'] = true
-L['Any'] = true
 L['Exclude'] = true
 L['Require'] = true
-L['Remove'] = true
 
 -- Aura indicator library (UnitFrames sidebar)
 L['Indicator %d'] = true
 L['Replace'] = true
 
 -- Dispel highlight (UnitFrames General + per unit)
-L['Dispel'] = true
 
 -- Sorting (AuraContainerSortMethod / AuraContainerSortDirection)
-L['Default'] = true
-L['Normal'] = true
 
 -- Statuses --
-L['Status'] = true
 
 -- Aura Triggers & Displays --
 L['Trigger'] = true
@@ -92,7 +74,6 @@ L['Texts'] = true
 
 -- Skinning: Blizzard Mouseover --
 L['Hide'] = true
-L['Filters'] = true
 L['Search'] = true
 
 -- Aura trackers
@@ -102,22 +83,7 @@ L['Disable'] = true
 
 -- Cooldown Manager
 L['Show'] = true
-L['Collapse'] = true
-L['Expand'] = true
 L['Update'] = true
-L['View'] = true
-
--- Anchors
-L["Anchor '%s' has %d anchor points and cannot be dragged."] = true
-L['Anchors closed due to entering combat.'] = true
-L['Cannot open Anchors during combat.'] = true
-L['Click to select'] = true
-L['No anchor selected.'] = true
-L['No anchor selected. Click an overlay to select it.'] = true
-L['Nudge Tool'] = true
-L['Open Settings'] = true
-L['X Offset:'] = true
-L['Y Offset:'] = true
 
 -- Commands
 L['%s is missing, reinstall NorskenUI.'] = true

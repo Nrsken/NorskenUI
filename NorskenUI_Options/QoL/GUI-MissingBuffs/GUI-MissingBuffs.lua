@@ -447,7 +447,7 @@ for _, groupPage in ipairs(GROUP_PAGES) do
         search = { L['Missing Buffs'], groupPage.text },
         sidebar = {
             width = 260,
-            create = NRSKNUI.CreateItemTree,
+            create = NRSKNUI.Libs.KAJI.CreateItemTree,
             locked = function() return not NRSKNUI.MissingBuffs.db.Enabled end,
             items = TreeContent(groupPage),
             default = GENERAL,

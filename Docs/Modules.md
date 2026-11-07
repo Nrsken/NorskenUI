@@ -117,4 +117,5 @@ Module folders don't depend on each other, so their load order is not fixed and 
 | `NRSKNUI_CDM_LAYOUT_CHANGED` | CDM | A display or group layout changed (unit frames re-anchor) |
 | `NRSKNUI_COLORS_UPDATED` | Core | The color palette was rebuilt (unit frames push it into oUF) |
 | `NRSKNUI_PROFILE_FONT_CHANGED` | Core | The global font changed or finished resolving (Blizzard fonts restyle) |
+| `NRSKNUI_SHARED_SETTINGS_CHANGED` | Core | A shared font, texture, color or duration setting changed, from any addon's window (each addon re-applies its own) |
 | `NRSKNUI_WORLD_READY` | Core | One second after the first world entry after login |

@@ -18,7 +18,8 @@ local function GetCDMFrames()
         return _G['CoolinatorPrimaryGroupAnchor'], nil
     end
 
-    local CDM = NRSKNUI:GetModule('CDM', true)
+    local Auras = _G.NorskenAuras --[[@as NRSKNUI?]]
+    local CDM = Auras and Auras.CDM
     if CDM and CDM:IsEnabled() then
         local primary, secondary = CDM:GetAnchorGroups()
         if primary then return primary, secondary, CDM.db.AnchorMinWidth end

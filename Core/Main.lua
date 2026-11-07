@@ -216,7 +216,7 @@ function NRSKNUI:OnEnable()
     self:RegisterEvent('PLAYER_ENTERING_WORLD')
     self:RegisterEvent('UI_SCALE_CHANGED', 'ChangedScaleEvent')
     self:RegisterEvent('ACTIVE_PLAYER_SPECIALIZATION_CHANGED', function() self.ProfileManager:OnSpecChanged() end)
-    self:RegisterMessage('NRSKNUI_LATE_FONT', 'QueueApplyToAllModules') -- modules reading GetFont aren't registered strings
+    self:RegisterMessage('NRSKNUI_SHARED_SETTINGS_CHANGED', 'QueueApplyToAllModules')
     self:RegisterMessage('NRSKNUI_WORLD_READY', function()
         SetupMinimapIcon()
         self:UpdateValues()

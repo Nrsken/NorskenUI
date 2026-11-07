@@ -561,7 +561,7 @@ UF.previewScoped = true
 ---@param pageId string? the page asking, e.g. 'unitFrames_target'
 ---@param showAll boolean? whether everything is being previewed
 function UF:ShowPreview(pageId, showAll)
-    SetAnchorLayout(NRSKNUI.Anchors.isActive == true)
+    SetAnchorLayout(NRSKNUI.Anchors:IsActive())
 
     if showAll then
         Preview:Request('boss')
@@ -586,7 +586,7 @@ end
 
 ---Called by PreviewManager when the page changes or the window closes.
 function UF:HidePreview()
-    SetAnchorLayout(NRSKNUI.Anchors.isActive == true)
+    SetAnchorLayout(NRSKNUI.Anchors:IsActive())
 
     Preview:ReleaseAllAuras()
     Preview:ReleaseAllAuraIndicators()

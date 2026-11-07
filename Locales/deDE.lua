@@ -14,8 +14,6 @@ L['Global Profile'] = "Globales Profil"
 L['Profiles'] = "Profile"
 
 -- Theme Page
-L['Custom'] = "Benutzerdefiniert"
-L['Theme'] = "Design"
 
 -- Missing Buffs
 L['Display'] = "Anzeige"
@@ -46,8 +44,6 @@ L['Bars'] = "Balken"
 -- NRSKNUI.FontOutlines
 L['Focus'] = "Fokus"
 L['Boss'] = "Boss"
-L['Class'] = "Klasse"
-L['Power'] = "Ressource"
 L['Ready Check'] = "Bereitschaftscheck"
 L['Blizzard'] = "Blizzard"
 
@@ -57,32 +53,18 @@ L['Back'] = "Zurück"
 L['Item'] = "Gegenstand"
 
 -- CDM bars
-L['Stagger'] = "Staffelung"
-L['Combo Points'] = "Combopunkte"
-L['Holy Power'] = "Heilige Kraft"
-L['Soul Shards'] = "Seelensplitter"
-L['Chi'] = "Chi"
-L['Arcane Charges'] = "Arkane Aufladungen"
-L['Essence'] = "Essenz"
-L['Runes'] = "Runen"
-L['Any'] = "Beliebig"
 L['Exclude'] = "Ausgeschlossen"
 L['Require'] = "Erforderlich"
-L['Remove'] = "Entfernen"
 
 -- Aura indicator library (UnitFrames sidebar)
 L['Indicator %d'] = "Indikator %d"
 L['Replace'] = "Ersetzen"
 
 -- Dispel highlight (UnitFrames General + per unit)
-L['Dispel'] = "Bannen"
 
 -- Sorting (AuraContainerSortMethod / AuraContainerSortDirection)
-L['Default'] = "Standard"
-L['Normal'] = "Normal"
 
 -- Statuses --
-L['Status'] = "Status"
 
 -- Aura Triggers & Displays --
 L['Trigger'] = "Auslöser"
@@ -92,7 +74,6 @@ L['Texts'] = "Texte"
 
 -- Skinning: Blizzard Mouseover --
 L['Hide'] = "Verbergen"
-L['Filters'] = "Filter"
 L['Search'] = "Suchen"
 
 -- Aura trackers
@@ -102,22 +83,7 @@ L['Disable'] = "Deaktivieren"
 
 -- Cooldown Manager
 L['Show'] = "Anzeigen"
-L['Collapse'] = "Einklappen"
-L['Expand'] = "Erweitern"
 L['Update'] = "Aktualisieren"
-L['View'] = "Sichtbarkeit"
-
--- Anchors
-L["Anchor '%s' has %d anchor points and cannot be dragged."] = "Anker „%s“ hat %d Ankerpunkte und kann nicht gezogen werden."
-L['Anchors closed due to entering combat.'] = "Anker wurden wegen Kampfbeginn geschlossen."
-L['Cannot open Anchors during combat.'] = "Anker können im Kampf nicht geöffnet werden."
-L['Click to select'] = "Zum Auswählen klicken"
-L['No anchor selected.'] = "Kein Anker ausgewählt."
-L['No anchor selected. Click an overlay to select it.'] = "Kein Anker ausgewählt. Klicke auf ein Overlay, um es auszuwählen."
-L['Nudge Tool'] = "Feinjustierung"
-L['Open Settings'] = "Einstellungen öffnen"
-L['X Offset:'] = "X-Versatz:"
-L['Y Offset:'] = "Y-Versatz:"
 
 -- Commands
 L['%s is missing, reinstall NorskenUI.'] = "%s fehlt, installiere NorskenUI neu."

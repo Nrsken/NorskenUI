@@ -5,34 +5,7 @@ NRSKNUI.GUIFrame = NRSKNUI.GUIFrame or {}
 local Theme = NRSKNUI.Theme
 local L = NRSKNUI.Libs.AL
 
--- Load-time settings prompt one reload when the user leaves the page, never per edit; latest reason wins.
-local pendingReload
-
----@param reason string shown in the reload prompt
-function NRSKNUI:RequestReload(reason)
-    pendingReload = reason
-end
-
-function NRSKNUI:PromptPendingReload()
-    if not pendingReload then return end
-    local reason = pendingReload
-    pendingReload = nil
-    self:CreateReloadPrompt(reason)
-end
-
 -- Dropdown option lists every tab shares. Dropdown.lua reads value or key, so value serves both.
-NRSKNUI.AnchorOptions = {
-    { value = 'TOPLEFT',     text = L['Top Left'] },
-    { value = 'TOP',         text = L['Top'] },
-    { value = 'TOPRIGHT',    text = L['Top Right'] },
-    { value = 'LEFT',        text = L['Left'] },
-    { value = 'CENTER',      text = L['Center'] },
-    { value = 'RIGHT',       text = L['Right'] },
-    { value = 'BOTTOMLEFT',  text = L['Bottom Left'] },
-    { value = 'BOTTOM',      text = L['Bottom'] },
-    { value = 'BOTTOMRIGHT', text = L['Bottom Right'] },
-}
-
 NRSKNUI.GrowthOptions = {
     { value = 'DOWN',  text = L['Down'] },
     { value = 'UP',    text = L['Up'] },
@@ -43,6 +16,7 @@ NRSKNUI.GrowthOptions = {
 local LOGO = 'Interface\\AddOns\\NorskenUI\\Media\\Logo\\'
 local TEX = 'Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\'
 local SOCIAL = 'Interface\\AddOns\\NorskenUI\\Media\\SupportLogos\\'
+local LUCIDE = 'Interface\\AddOns\\NorskenCore\\Media\\Lucide\\'
 
 NRSKNUI.GUIFrame.ReloadText = L['Disabling/Enabling this requires a reload to take full effect.']
 
@@ -118,9 +92,6 @@ local window = GUI:CreateGUIWindow({
     },
     onShow = function()
         -- one settings window at a time, the previews follow a single page
-        if NRSKNUI.CDMWindow and NRSKNUI.CDMWindow:IsShown() then
-            NRSKNUI.CDMWindow:Hide()
-        end
         NRSKNUI.GUIOpen = true
         if NRSKNUI.PreviewManager then
             NRSKNUI.PreviewManager:SetGUIOpen(true)
@@ -142,6 +113,59 @@ local window = GUI:CreateGUIWindow({
 NRSKNUI.GUIOpen = false
 
 window:AddHeaderButton({
+    icon = LUCIDE .. 'x.png',
+    --glow = TEX .. 'NorskenCustomCrossv3_glow.png',
+    size = 32,
+    --rotation = 45,
+    onClick = function()
+        window:Hide()
+    end,
+    tooltip = L['Close Settings'],
+})
+window:AddHeaderButton({
+    icon = LUCIDE .. 'house.png',
+    --glow = TEX .. 'HomeButtonv2_glow.png',
+    size = 32,
+    onClick = function()
+        window:ShowPage('homePage')
+    end,
+    tooltip = L['Open Home Page'],
+})
+window:AddHeaderButton({
+    icon = LUCIDE .. 'anchor.png',
+    --glow = TEX .. 'anchor_glow.png',
+    size = 32,
+    onClick = function()
+        if NRSKNUI.Anchors then
+            NRSKNUI.Anchors:Toggle()
+        end
+    end,
+    tooltip = L['Open Anchors'],
+})
+window:AddHeaderButton({
+    icon = LUCIDE .. 'paint-bucket.png',
+    --glow = TEX .. 'fill_glow.png',
+    size = 32,
+    onClick = function()
+        window:ShowPage('themePage')
+    end,
+    tooltip = L['Open Theme Settings'],
+})
+window:AddHeaderButton({
+    icon = LUCIDE .. 'eye.png',
+    --glow = TEX .. 'eye_glow.png',
+    size = 32,
+    onClick = function(btn)
+        local manager = NRSKNUI.PreviewManager
+        if not manager then return end
+
+        manager:SetForceAll(not manager:IsForceAll())
+        btn:SetActive(manager:IsForceAll())
+    end,
+    tooltip = L['Preview Every Display'],
+})
+
+--[[ window:AddHeaderButton({
     icon = TEX .. 'NorskenCustomCrossv3.png',
     glow = TEX .. 'NorskenCustomCrossv3_glow.png',
     size = 22,
@@ -192,7 +216,7 @@ window:AddHeaderButton({
         btn:SetActive(manager:IsForceAll())
     end,
     tooltip = L['Preview Every Display'],
-})
+}) ]]
 
 -- Previews follow the open page, so the manager needs to hear about every page change. The host is
 -- hooked rather than window:ShowPage, since the sidebar shows pages through the host directly.
