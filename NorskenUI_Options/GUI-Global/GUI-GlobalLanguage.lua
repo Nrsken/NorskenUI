@@ -8,7 +8,7 @@ local rowHL = Theme.rowHeightLast
 local format = string.format
 
 local function BuildLanguageView(page)
-    local db = NRSKNUI.db.global
+    local db = NRSKNUI:GetSharedSettings()
 
     -- languages keep their own names so a reader can always find theirs
     local byKey, options = {}, {}

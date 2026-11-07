@@ -6,6 +6,7 @@ local L = NRSKNUI.Libs.AL
 local Theme = NRSKNUI.Theme
 
 local CreateFrame = CreateFrame
+local InCombatLockdown = InCombatLockdown
 local UIParent = UIParent
 local GameTooltip = GameTooltip
 local _G = _G
@@ -2514,7 +2515,12 @@ end
 
 function CHAT:LockChatInBlizzEditMode(chat)
     if not chat then return end
-    if NRSKNUI:InCombat() then return end
+
+    -- setup never retries and a reload in combat reads InCombat without being locked yet
+    if InCombatLockdown() then
+        NRSKNUI:RunWhenSafe(function() self:LockChatInBlizzEditMode(chat) end)
+        return
+    end
 
     local selection = chat.Selection
     if selection then

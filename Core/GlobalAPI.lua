@@ -8,10 +8,8 @@ local UnitTokenFromGUID = UnitTokenFromGUID
 local UnitIsFeignDeath = UnitIsFeignDeath
 local GetUnitName = GetUnitName
 local UnitIsDead = UnitIsDead
-local UnitClass = UnitClass
 local UnitGUID = UnitGUID
 local IsInRaid = IsInRaid
-local select = select
 local type = type
 
 local EditModeManagerFrame = EditModeManagerFrame
@@ -80,27 +78,6 @@ function NRSKNUI:GetJustifyFromAnchor(anchorPoint)
         return 'LEFT'
     end
     return 'CENTER'
-end
-
----Check if a specific class is present in the current group, the player included (solo too).
----@param classFilenameToCheck 'WARRIOR'|'HUNTER'|'ROGUE'|'MAGE'|'PRIEST'|'WARLOCK'|'DRUID'|'SHAMAN'|'PALADIN'|'DEATHKNIGHT'|'MONK'|'DEMONHUNTER'
----@return boolean
-function NRSKNUI:IsClassInGroup(classFilenameToCheck)
-    -- a raid's units include the player but a party's don't, so the player is checked first for both
-    if self.MyClass == classFilenameToCheck then return true end
-
-    local numMembers = GetNumGroupMembers()
-    local prefix = (IsInRaid() and 'raid') or 'party'
-    local maxCheck = (IsInRaid() and numMembers) or (numMembers - 1)
-    for i = 1, maxCheck do
-        local unit = prefix .. i
-        local classFilename = select(2, UnitClass(unit))
-        ---@diagnostic disable-next-line: secret-comparison
-        if classFilename == classFilenameToCheck then
-            return true
-        end
-    end
-    return false
 end
 
 ---Check if a unit is actually dead, ignoring hunters feign death.

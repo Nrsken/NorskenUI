@@ -26,13 +26,13 @@ local addonName = select(1, ...)
 
 local _G = _G
 local GetLocale = GetLocale
-local UnitClass = UnitClass
 local UnitFullName = UnitFullName
 
 local GetAddOnMetadata = C_AddOns and C_AddOns.GetAddOnMetadata
 
 -- Create the addon object
-_G.NorskenCore:NewAddon(NRSKNUI, addonName, 'AceEvent-3.0', 'AceTimer-3.0', 'AceHook-3.0')
+local NorskenCore = _G.NorskenCore --[[@as NorskenCoreAPI]]
+NorskenCore:NewAddon(NRSKNUI, addonName, 'AceEvent-3.0', 'AceTimer-3.0', 'AceHook-3.0')
 _G.NorskenUI = NRSKNUI
 _G.NorskenUIAPI = _G.NorskenUIAPI or {} -- Global API table for things we want to expose to other addons, like WagoUI Packs and profile installers.
 
@@ -59,11 +59,7 @@ NRSKNUI.Locale = GetLocale()
 NRSKNUI.AddOnName = GetAddOnMetadata(addonName, 'Title')
 NRSKNUI.Version = GetAddOnMetadata(addonName, 'Version')
 NRSKNUI.Author = GetAddOnMetadata(addonName, 'Author')
-NRSKNUI.MyClassLocale, NRSKNUI.MyClass, NRSKNUI.MyClassID = UnitClass('player')
 NRSKNUI.MyName, NRSKNUI.MyRealm = UnitFullName('player')
-NRSKNUI.ClearTexture = 0
-NRSKNUI.WhiteTexture = 'Interface\\Buttons\\WHITE8X8'
-NRSKNUI.GlobalZoom = 0.3
 NRSKNUI:OnLanguageSet(function()
     NRSKNUI.Separators = {
         ['||'] = '|',
@@ -101,27 +97,12 @@ NRSKNUI.Libs = {
     LDS = _G.LibStub('LibDualSpec-1.0'),
     KAJI = _G.LibStub('LibKaji-1.0'),
 }
-NRSKNUI.Libs.KAJI:SetLocale(NRSKNUI.Libs.AL)
 
 do
     -- Convert GitHub version string to a more user-friendly format for display in the GUI.
     if NRSKNUI.Version == '@project-version@' then
         NRSKNUI.Version = 'Development Version'
     end
-
-    -- Get player data via LibSpecialization and let the Lib handle changes.
-    local LS = NRSKNUI.Libs.LS
-    NRSKNUI.MySpec = {
-        id = nil,
-        role = nil,
-        position = nil,
-        talents = nil,
-    }
-    local function UpdateSpec()
-        NRSKNUI.MySpec.id, NRSKNUI.MySpec.role, NRSKNUI.MySpec.position, NRSKNUI.MySpec.talents = LS.MySpecialization()
-    end
-    NRSKNUI:RegisterEvent('PLAYER_LOGIN', UpdateSpec) -- Update initial spec info on login
-    LS.RegisterPlayerSpecChange(NRSKNUI, UpdateSpec)
 
     -- Setup KAJI GUI & Utilities for NorskenUI
     local KAJI = NRSKNUI.Libs.KAJI
@@ -137,5 +118,3 @@ do
     NRSKNUI.Theme = NRSKNUI.GUI:GetTheme()
 end
 
--- RestrictedActions Module
-NRSKNUI.Restricted = NRSKNUI:NewModule('Restricted', 'AceEvent-3.0')

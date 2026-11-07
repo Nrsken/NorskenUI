@@ -111,7 +111,7 @@ local function BuildBlizzardView(page)
 end
 
 local function BuildSpecialView(page, entry)
-    local fontDB = NRSKNUI.db.profile.globalMedia.profileFont
+    local fontDB = NRSKNUI:GetSharedSettings().globalMedia.profileFont
     local blizzDB = BlizzardMessages.db
     local sdb = blizzDB.Specials[entry.key]
 

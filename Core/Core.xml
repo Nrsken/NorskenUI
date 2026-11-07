@@ -1,29 +1,14 @@
 <Ui xmlns='http://www.blizzard.com/wow/ui/'
     xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd'>
 
-    <Script file='Restricted.lua' />
     <Script file='Defaults.lua' />
     <Script file='Main.lua' />
     <Script file='PixelPerfect.lua' />
-    <Script file='InjectAPI.lua' />
     <Script file='GlobalAPI.lua' />
-    <Script file='Formatting.lua' />
-    <Script file='MediaCore.lua' />
-    <Script file='FontCore.lua' />
-    <Script file='Curves.lua' />
-    <Script file='DynamicGroup.lua' />
-    <Script file='Auras/AuraContainer.lua' />
-    <Script file='Auras/AuraFilters.lua' />
-    <Script file='Auras/AuraPresets.lua' />
-    <Script file='Auras/AuraTriggers.lua' />
     <Script file='Auras/AuraIndicators.lua' />
-    <Script file='Auras/AuraPreview.lua' />
     <Script file='PreviewManager.lua' />
     <Script file='Anchors.lua' />
     <Script file='Commands.lua' />
     <Script file='ProfileManager.lua' />
-    <Script file='Dialog.lua' />
-    <Script file='Colors.lua' />
-    <Script file='LoadConditions.lua' />
     <Script file='Testenv.lua' />
 </Ui>

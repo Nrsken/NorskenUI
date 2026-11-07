@@ -14,7 +14,7 @@ local ipairs, pairs = ipairs, pairs
 local CopyTable = CopyTable
 local _G = _G
 
--- { key, label } specs drive the color-picker grids below. key indexes db.profile.Colors.<category>.
+-- { key, label } specs drive the color-picker grids below. key indexes the shared Colors.<category>.
 -- Game terms pull Blizzard's own localized global strings so they translate for free.
 local PowerColorSpecs = {
     { key = 0,  label = _G.MANA },
@@ -96,7 +96,7 @@ local function RefreshFormatter()
     NRSKNUI:RequestReload(L['Duration text changes show on auras after a reload.'])
 end
 
--- key indexes db.profile.Colors.
+-- key indexes the shared Colors.
 local ColorCategories = {
     { type = 'label',   key = 'colors',       text = L['Colors'] },
     { key = 'Class',    text = L['Class'],    title = L['Class Colors'],    specs = ClassColorSpecs },
@@ -145,8 +145,8 @@ local function BuildColorsPage(page, db, category)
                     title = L['Reset to Default'],
                     text = format(L["Reset all %s to their defaults?"], category.title),
                     onAccept = function()
-                        -- Written in place, dbTable is the live profile table the pickers hold.
-                        for key, color in pairs(NRSKNUI:GetDefaultDB().profile.Colors[category.key]) do
+                        -- Written in place, dbTable is the live shared table the pickers hold.
+                        for key, color in pairs(NRSKNUI:GetSharedDefaults().Colors[category.key]) do
                             dbTable[key] = CopyTable(color)
                         end
                         RefreshColors()
@@ -630,7 +630,7 @@ GUI:RegisterPage('globalColors', {
     build = function(page, _, _, item)
         -- The search harvester walks the caption row too, it has no card.
         if item.type == 'label' then return end
-        BuildColorsPage(page, NRSKNUI.db.profile.Colors, item)
+        BuildColorsPage(page, NRSKNUI:GetSharedSettings().Colors, item)
     end,
 })
 
@@ -643,11 +643,11 @@ GUI:RegisterPage('globalUIScale', {
 GUI:RegisterPage('globalTextures', {
     mode = 'clean',
     search = {},
-    build = function(page) BuildTexturesPage(page, NRSKNUI.db.profile.globalMedia) end,
+    build = function(page) BuildTexturesPage(page, NRSKNUI:GetSharedSettings().globalMedia) end,
 })
 
 GUI:RegisterPage('globalDurationText', {
     mode = 'clean',
     search = {},
-    build = function(page) BuildDurationTextPage(page, NRSKNUI.db.profile.globalMedia) end,
+    build = function(page) BuildDurationTextPage(page, NRSKNUI:GetSharedSettings().globalMedia) end,
 })

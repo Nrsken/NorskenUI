@@ -6,7 +6,6 @@ L['General Settings'] = true
 L['Color Mode'] = true
 L['Load Condition'] = true
 L['Test'] = true
-L['Always'] = true
 L['Any Group'] = true
 L['In Party'] = true
 L['In Raid'] = true
@@ -40,7 +39,6 @@ L['Found a bug or have a suggestion?'] = true
 L['Join the '] = true
 L[' or open an issue on '] = true
 
--- Combat Modules --
 -- Combat Cross
 L['Cross'] = true
 L['Dot'] = true
@@ -214,8 +212,6 @@ L['Use one of the pre-made color themes.'] = true
 
 -- Home Page
 L['Welcome to NorskenUI'] = true
-
--- Combat Cross
 
 -- Combat Message
 L['DPS Sound'] = true
@@ -393,6 +389,12 @@ L['Failed to delete profile: %s'] = true
 L['Export Success'] = true
 L['Export failed: %s'] = true
 L['Imported profile: %s'] = true
+L['Include Shared Settings'] = true
+L['Adds your fonts, textures and colors to the string.'] = true
+L['Shared Settings'] = true
+L['This string also holds fonts, textures and colors. Use them for every Norsken addon?'] = true
+L['Use Them'] = true
+L['Keep Mine'] = true
 L['Import failed: %s'] = true
 L['Profile manager is not available.'] = true
 
@@ -632,8 +634,6 @@ L['No Cooldown Manager layouts found. Open the Cooldown Manager once first.'] = 
 L['Could not read the spec out of that string, pick one on the profile page.'] = true
 
 -- Unit Frames GUI
-L['Unit Frames'] = true
-L['General'] = true
 L['Defer To %s'] = true
 L['%s is loaded and brings its own unit frames. Running both sets at once crashes the client, so keep this on unless you have turned that addon\'s unit frames off.'] = true
 L['Unit frame ownership only changes on a fresh load.'] = true
@@ -803,7 +803,6 @@ L['Fill Overlay'] = true
 L['Missing Overlay'] = true
 L['Bar Overlay'] = true
 L['Pandemic Border'] = true
-L['Not %s'] = true
 L['And'] = true
 L['Glow Color'] = true
 L['Add Property Change'] = true
@@ -974,7 +973,6 @@ L['Blacklist'] = true
 L['Whitelist'] = true
 L['All Spells'] = true
 L['Spell ID'] = true
-L['Add'] = true
 L['Important'] = true
 
 -- Aura Displays (Advanced Debuffs / Defensives / Standard Buffs / Standard Debuffs) --
@@ -1206,7 +1204,6 @@ L['Hide Empty Backdrops'] = true
 L['Hides the backdrop behind buttons that hold no action.'] = true
 
 -- Skinning: Chat --
-L['Chat'] = true
 L['Chat Module Disabled'] = true
 L['The chat module has been disabled.'] = true
 L['A UI reload is recommended to fully restore the default chat.'] = true
@@ -1817,7 +1814,6 @@ L['B%d %s'] = true
 L['Circle %d'] = true
 
 -- Role settings
-L['All Roles'] = true
 L['Reset Everything'] = true
 L['Reset %s'] = true
 L['Reset only the %s settings for %s, or everything including the role settings?'] = true

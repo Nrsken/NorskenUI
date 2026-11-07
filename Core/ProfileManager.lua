@@ -984,6 +984,35 @@ local function ByPathDepth(map, deepestFirst)
     return names
 end
 
+---Shared settings left the profile: the old values only stay in the saved one as a way back. The skinning
+---namespace sharing their key isn't one of them.
+---@param data table
+local function DropSharedSettings(data)
+    local media = data.globalMedia
+    local fonts = type(media) == 'table' and media.blizzardFonts
+    data.globalMedia = fonts and { blizzardFonts = fonts } or nil
+    data.Colors = nil
+    data._shared = nil
+end
+
+---The shared settings a string carries: its _shared block, or where a profile held them in older strings.
+---@param data table
+---@return table|nil block
+local function SharedBlock(data)
+    local block = type(data._shared) == 'table' and data._shared or data
+    if not NRSKNUI:HoldsSharedSettings(block) then return nil end
+
+    return { globalMedia = block.globalMedia, Colors = block.Colors }
+end
+
+---Goes after everything else in an import that can fail: an error here would leave the account half changed.
+---Modules and colors refresh with the profile switch, registered fonts only hear about real ones.
+---@param block table
+local function ApplyShared(block)
+    NRSKNUI:ApplySharedSettings(block)
+    NRSKNUI:DeferUntilUnrestricted(0, function() NRSKNUI:RefreshFontStyles() end)
+end
+
 ---An imported profile carries every module's settings inside it at their old path, so hand them over.
 ---The import replaces the whole profile, so a namespace it carries nothing for starts over.
 ---@param profileName string
@@ -1087,8 +1116,9 @@ end
 
 ---A profile with every namespace folded back in at its old path, the layout export strings have always used.
 ---@param profileName string
+---@param includeShared boolean|nil
 ---@return table|nil
-local function ExportData(profileName)
+local function ExportData(profileName, includeShared)
     local db = NRSKNUI.db
     local data = db.profiles[profileName]
     if not data then return end
@@ -1097,6 +1127,8 @@ local function ExportData(profileName)
     for k, v in pairs(data) do
         out[k] = v
     end
+    DropSharedSettings(out)
+
     local saved = db.sv.namespaces or {}
     for _, name in ipairs(ByPathDepth(saved)) do
         local nsData = saved[name].profiles and saved[name].profiles[profileName]
@@ -1112,21 +1144,27 @@ local function ExportData(profileName)
         out._roles[name][role] = profiles[key]
     end)
 
+    if includeShared then
+        local shared = NRSKNUI:GetSharedSettings()
+        out._shared = { globalMedia = shared.globalMedia, Colors = shared.Colors } -- Language stays the reader's own
+    end
+
     return out
 end
 
 ---Export a profile to a string
 ---@param profileName string|nil Profile to export (current if nil)
+---@param includeShared boolean|nil Add the shared fonts, textures and colors
 ---@return string|nil exportString
 ---@return string|nil error
-function ProfileManager:ExportProfile(profileName)
+function ProfileManager:ExportProfile(profileName, includeShared)
     profileName = profileName or self:GetCurrentProfile()
 
     if not NRSKNUI.db then
         return nil, L['Database not initialized']
     end
 
-    local profileData = ExportData(profileName)
+    local profileData = ExportData(profileName, includeShared)
     if not profileData then
         return nil, format(L['Profile: %s, not found'], profileName)
     end
@@ -1203,20 +1241,10 @@ local function DecodeCurrent(encoded)
     return exportData
 end
 
----Import a profile from a string
----@param importString string The export string
----@param targetName string|nil Name for the imported profile (uses embedded name if nil)
----@param activate boolean|nil Make the imported profile the one in use
----@return boolean success
----@return string|nil nameOrError
-function ProfileManager:ImportProfile(importString, targetName, activate)
-    if not importString or importString == '' then
-        return false, L['Import string is empty']
-    end
-    if not NRSKNUI.db then
-        return false, L['Database not initialized']
-    end
-
+---@param importString string
+---@return table|nil exportData
+---@return string|nil error
+local function DecodeImport(importString)
     -- Route on the prefix so strings from either format still import.
     local exportData, decodeError
     if importString:sub(1, #EXPORT_PREFIX) == EXPORT_PREFIX then
@@ -1224,16 +1252,46 @@ function ProfileManager:ImportProfile(importString, targetName, activate)
     elseif importString:sub(1, #LEGACY_PREFIX) == LEGACY_PREFIX then
         exportData, decodeError = DecodeLegacy(importString:sub(#LEGACY_PREFIX + 1))
     else
-        return false, L['Invalid format (missing or wrong prefix)']
+        return nil, L['Invalid format (missing or wrong prefix)']
     end
 
     if not exportData then
-        return false, decodeError or L['Decoding failed']
+        return nil, decodeError or L['Decoding failed']
     end
 
     -- Both decoders guarantee a table, so only the payload itself is left to check.
-    if not exportData.d then
-        return false, L['Invalid data structure']
+    if type(exportData.d) ~= 'table' then
+        return nil, L['Invalid data structure']
+    end
+    return exportData
+end
+
+---Whether importing this string would ask about the shared settings.
+---@param importString string
+---@return boolean
+function ProfileManager:CarriesSharedSettings(importString)
+    local exportData = DecodeImport(importString)
+    return exportData ~= nil and SharedBlock(exportData.d) ~= nil
+end
+
+---Import a profile from a string
+---@param importString string The export string
+---@param targetName string|nil Name for the imported profile (uses embedded name if nil)
+---@param activate boolean|nil Make the imported profile the one in use
+---@param applyShared boolean|nil Take on the shared settings the string carries
+---@return boolean success
+---@return string|nil nameOrError
+function ProfileManager:ImportProfile(importString, targetName, activate, applyShared)
+    if not importString or importString == '' then
+        return false, L['Import string is empty']
+    end
+    if not NRSKNUI.db then
+        return false, L['Database not initialized']
+    end
+
+    local exportData, decodeError = DecodeImport(importString)
+    if not exportData then
+        return false, decodeError
     end
 
     -- older strings still carry the load conditions Enable toggle and the Combat pair
@@ -1266,8 +1324,14 @@ function ProfileManager:ImportProfile(importString, targetName, activate)
         end
     end
 
+    local block = applyShared and SharedBlock(exportData.d)
+    DropSharedSettings(exportData.d)
+
     NRSKNUI.db.profiles[finalName] = exportData.d -- new name, so no profile hop or refresh to write it
     ImportIntoNamespaces(finalName)
+    if block then
+        ApplyShared(block)
+    end
     if activate then
         self:UseProfile(finalName)
     end
@@ -1293,7 +1357,7 @@ function ProfileManager:RefreshAllModules()
     -- a profile switch drags every namespace onto the profile's own settings
     PointNamespaces(CurrentRole())
 
-    -- Profile-scoped shared state the modules read during ApplySettings.
+    -- Shared state the modules read during ApplySettings.
     SafeCall(NRSKNUI, 'LoadCustomColors')
     SafeCall(NRSKNUI, 'RefreshCurves')
     SafeCall(NRSKNUI, 'RefreshAuraDurationFormatter')
@@ -1342,7 +1406,7 @@ end
 function NorskenUIAPI:ExportProfile(profileKey)
     if not NRSKNUI.db then return '' end
 
-    local profileData = ExportData(profileKey)
+    local profileData = ExportData(profileKey, true)
     if not profileData then
         return ''
     end
@@ -1368,7 +1432,7 @@ function NorskenUIAPI.ImportProfile(profileString, profileKey, methodKey)
         or profileString:sub(1, #LEGACY_PREFIX) == LEGACY_PREFIX then
         local success, nameOrError
         WithoutPrompt(function()
-            success, nameOrError = ProfileManager:ImportProfile(profileString, profileKey, true)
+            success, nameOrError = ProfileManager:ImportProfile(profileString, profileKey, true, true)
         end)
         return success, nameOrError
     end
@@ -1376,23 +1440,31 @@ function NorskenUIAPI.ImportProfile(profileString, profileKey, methodKey)
     local profileData = NorskenUIAPI:DecodeProfileString(profileString)
     if not next(profileData) then return end
 
+    local block = SharedBlock(profileData)
+    DropSharedSettings(profileData)
+
     -- WagoUI re-imports into the same key on every pack update, so the key is used as given.
     profileKey = (type(profileKey) == 'string' and profileKey ~= '') and profileKey or 'Imported'
 
     WithoutPrompt(function()
         local db = NRSKNUI.db
-        if db:GetCurrentProfile() == profileKey then
+        local isActive = db:GetCurrentProfile() == profileKey
+        if isActive then
             -- AceDB keeps serving its own table for the active profile, so refill that one.
             wipe(db.profile)
             for k, v in pairs(profileData) do
                 db.profile[k] = v
             end
             db:RegisterDefaults(db.defaults)
-            ImportIntoNamespaces(profileKey)
-            ProfileManager:RefreshAllModules()
         else
             db.profiles[profileKey] = profileData
-            ImportIntoNamespaces(profileKey)
+        end
+        ImportIntoNamespaces(profileKey)
+        if block then
+            ApplyShared(block)
+        end
+        if isActive then
+            ProfileManager:RefreshAllModules()
         end
         ProfileManager:UseProfile(profileKey)
     end)

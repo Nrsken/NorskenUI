@@ -320,16 +320,35 @@ local function BuildProfilesTab(page, PM)
     copyCard = page:Card(L['Copy Profile']):Rebuild(function(card) BuildCopyCard(card, PM) end)
 end
 
+local includeShared = true
+
+local function ImportString(PM, importString, targetName, applyShared)
+    local success, nameOrErr = PM:ImportProfile(importString, targetName, true, applyShared)
+    if success then
+        NRSKNUI:Print(format(L['Imported profile: %s'], nameOrErr))
+    else
+        NRSKNUI:Print(format(L['Import failed: %s'], nameOrErr or L['Unknown error']))
+    end
+end
+
 -- Profile sharing tab: import/export.
 local function BuildSharingTab(page, PM)
     -- Export
     local exportCard = page:Card(L['Export Profile'])
+    exportCard:Row(rowH):Checkbox(L['Include Shared Settings'], {
+        width = 1,
+        value = includeShared,
+        tooltip = L['Adds your fonts, textures and colors to the string.'],
+        callback = function(checked)
+            includeShared = checked
+        end,
+    })
     exportCard:Row(rowHL - 9, 0):Button(L['Export Current Profile'], {
         width = 1,
         height = 30,
         yOffset = -2,
         callback = function()
-            local exportString, err = PM:ExportProfile()
+            local exportString, err = PM:ExportProfile(nil, includeShared)
             if exportString then
                 NRSKNUI:CreateCopyDialog(L['Export Profile'], exportString, L['Copy the string above (Ctrl+C)'])
                 NRSKNUI:Print(L['Export Success'])
@@ -360,12 +379,20 @@ local function BuildSharingTab(page, PM)
                         editBoxLabel = L['Enter profile name (leave empty for original)'],
                         onAccept = function(profileName)
                             local targetName = (profileName and profileName ~= "") and profileName or nil
-                            local success, nameOrErr = PM:ImportProfile(importString, targetName, true)
-                            if success then
-                                NRSKNUI:Print(format(L['Imported profile: %s'], nameOrErr))
-                            else
-                                NRSKNUI:Print(format(L['Import failed: %s'], nameOrErr or L['Unknown error']))
+                            if not PM:CarriesSharedSettings(importString) then
+                                ImportString(PM, importString, targetName, false)
+                                return
                             end
+
+                            -- closing this one keeps them: the import was already confirmed, the settings weren't
+                            NRSKNUI:CreatePrompt({
+                                title = L['Shared Settings'],
+                                text = L['This string also holds fonts, textures and colors. Use them for every Norsken addon?'],
+                                onAccept = function() ImportString(PM, importString, targetName, true) end,
+                                onCancel = function() ImportString(PM, importString, targetName, false) end,
+                                acceptText = L['Use Them'],
+                                cancelText = L['Keep Mine'],
+                            })
                         end,
                         acceptText = L['Import'],
                         cancelText = L['Cancel'],

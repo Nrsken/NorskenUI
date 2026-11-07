@@ -233,7 +233,7 @@ end
 ---@param spec table? Specials db entry, FontFace/Size/Outline/HideShadow override the globals
 function BlizzardMessages:SetFont(obj, outlineMode, noSlug, spec)
     if not obj then return end
-    local font = NRSKNUI.db.profile.globalMedia.profileFont.FontFace
+    local font = NRSKNUI:GetSharedSettings().globalMedia.profileFont.FontFace
     local blizDB = self.db
 
     local orig = StoreOriginalFontData(obj)
@@ -278,7 +278,7 @@ function BlizzardMessages:ApplyBlizzardFonts(force)
     end
 
     -- Skip the full pass when nothing that shapes it changed.
-    local sig = NRSKNUI:ResolveMediaPath('font', NRSKNUI.db.profile.globalMedia.profileFont.FontFace) .. '|' .. tostring(cfg.Outline) .. '|' .. tostring(cfg.Slug) .. '|' .. tostring(cfg.HideShadow)
+    local sig = NRSKNUI:ResolveMediaPath('font', NRSKNUI:GetSharedSettings().globalMedia.profileFont.FontFace) .. '|' .. tostring(cfg.Outline) .. '|' .. tostring(cfg.Slug) .. '|' .. tostring(cfg.HideShadow)
     if not force and sig == lastSignature then return end
     lastSignature = sig
 
@@ -430,7 +430,7 @@ end
 
 ---Apply the global font variables for special fonts.
 function BlizzardMessages:ApplyGlobalFontVars()
-    local profileFont = NRSKNUI.db.profile.globalMedia.profileFont
+    local profileFont = NRSKNUI:GetSharedSettings().globalMedia.profileFont
     local specials = self.db.Specials
     if not specials then return end
 

@@ -60,7 +60,6 @@
 ---@field BlizzardRM NRSKNUI.DBProfile.BlizzardRM
 ---@field CDM NRSKNUI.DBProfile.CDM
 ---@field CharacterPanel NRSKNUI.DBProfile.CharacterPanel
----@field Colors NRSKNUI.DBProfile.Colors
 ---@field CombatCross NRSKNUI.DBProfile.CombatCross
 ---@field CombatMessage NRSKNUI.DBProfile.CombatMessage
 ---@field CombatTimer NRSKNUI.DBProfile.CombatTimer
@@ -83,7 +82,6 @@
 ---@field UnitFrames NRSKNUI.DBProfile.UnitFrames
 ---@field UseElvUI NRSKNUI.DBProfile.UseElvUI
 ---@field UseOtherUF NRSKNUI.DBProfile.UseOtherUF
----@field globalMedia NRSKNUI.DBProfile.globalMedia
 
 ---@class NRSKNUI.DBProfile.AuraIndicatorGroups
 ---@field [string] any
@@ -500,6 +498,13 @@
 ---@class NRSKNUI.DBProfile.CharacterPanel.TrackIndicators
 ---@field [string] any
 ---@field Enabled boolean
+
+---What NorskenCoreDB holds, read with GetSharedSettings
+---@class NRSKNUI.SharedSettings
+---@field Adopted boolean?
+---@field Language string 'auto' or a locale from NRSKNUI.LANGUAGES
+---@field Colors NRSKNUI.DBProfile.Colors
+---@field globalMedia NRSKNUI.DBProfile.globalMedia
 
 ---@class NRSKNUI.DBProfile.Colors
 ---@field [string] any

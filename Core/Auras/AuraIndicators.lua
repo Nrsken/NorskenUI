@@ -3,6 +3,7 @@ local NRSKNUI = select(2, ...)
 ---@class AuraIndicators
 local AuraIndicators = {}
 NRSKNUI.AuraIndicators = AuraIndicators
+NRSKNUI.AuraPreview.indicators = AuraIndicators
 local L = NRSKNUI.Libs.AL
 
 local tsort, tremove = table.sort, table.remove
@@ -288,25 +289,6 @@ function AuraIndicators:ResetBuiltin(key)
     self:Invalidate(key)
 end
 
----Readable summary of what an indicator matches, for the GUI card.
----@param key string?
----@return string[] lines
----@return string heading
-function AuraIndicators:Describe(key)
-    local spec = self:GetSpec(key)
-    if not spec then
-        return {}, NRSKNUI:ColorTextByTheme(L['This indicator no longer exists.'])
-    end
-
-    local lines = NRSKNUI.AuraTriggers:Describe(spec.Trigger)
-
-    if not lines[1] then
-        return {}, NRSKNUI:ColorTextByTheme(L['This indicator matches nothing yet.'])
-    end
-
-    return lines, NRSKNUI:ColorTextByTheme(L['Shows while a matching aura is up:'])
-end
-
 -- What an indicator is: the aura it means and the colour it carries. Everything about how it is drawn lives per unit, in PlacementDefaults below.
 local SpecDefaults = {
     Trigger = nil, -- filled in by :Create, since every indicator needs its own table
@@ -578,7 +560,7 @@ local StyleBuilders = {
 ---@param level number
 ---@param fontDB table?
 ---@return boolean drawn
-function NRSKNUI:BuildAuraIndicatorPreview(dummy, owner, placement, spec, level, fontDB)
+function AuraIndicators:BuildPreview(dummy, owner, placement, spec, level, fontDB)
     local build = AuraIndicators.Previewable[placement.Style] and StyleBuilders[placement.Style]
     if not build then return false end
 

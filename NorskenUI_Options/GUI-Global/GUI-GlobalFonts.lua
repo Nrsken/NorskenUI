@@ -6,7 +6,7 @@ local Theme = NRSKNUI.Theme
 local rowHL = Theme.rowHeightLast
 
 local function BuildGlobalView(page)
-    local fontDB = NRSKNUI.db.profile.globalMedia.profileFont
+    local fontDB = NRSKNUI:GetSharedSettings().globalMedia.profileFont
 
     page:SetCondition('globFontON', function() return fontDB.Enabled end)
 

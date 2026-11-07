@@ -6,7 +6,6 @@ L['General Settings'] = "Allgemeine Einstellungen"
 L['Color Mode'] = "Farbmodus"
 L['Load Condition'] = "Ladebedingung"
 L['Test'] = "Test"
-L['Always'] = "Immer"
 L['Any Group'] = "Beliebige Gruppe"
 L['In Party'] = "In Gruppe"
 L['In Raid'] = "Im Schlachtzug"
@@ -40,7 +39,6 @@ L['Found a bug or have a suggestion?'] = "Fehler gefunden oder einen Vorschlag?"
 L['Join the '] = "Tritt dem "
 L[' or open an issue on '] = " bei oder eröffne ein Issue auf "
 
--- Combat Modules --
 -- Combat Cross
 L['Cross'] = "Kreuz"
 L['Dot'] = "Punkt"
@@ -214,8 +212,6 @@ L['Use one of the pre-made color themes.'] = "Eines der vorgefertigten Farbdesig
 
 -- Home Page
 L['Welcome to NorskenUI'] = "Willkommen bei NorskenUI"
-
--- Combat Cross
 
 -- Combat Message
 L['DPS Sound'] = "DPS-Sound"
@@ -393,6 +389,12 @@ L['Failed to delete profile: %s'] = "Profil konnte nicht gelöscht werden: %s"
 L['Export Success'] = "Export erfolgreich"
 L['Export failed: %s'] = "Export fehlgeschlagen: %s"
 L['Imported profile: %s'] = "Profil importiert: %s"
+L['Include Shared Settings'] = "Gemeinsame Einstellungen einbeziehen"
+L['Adds your fonts, textures and colors to the string.'] = "Fügt deine Schriftarten, Texturen und Farben hinzu."
+L['Shared Settings'] = "Gemeinsame Einstellungen"
+L['This string also holds fonts, textures and colors. Use them for every Norsken addon?'] = "Diese Zeichenfolge enthält auch Schriftarten, Texturen und Farben. Für alle Norsken-Addons verwenden?"
+L['Use Them'] = "Verwenden"
+L['Keep Mine'] = "Meine behalten"
 L['Import failed: %s'] = "Import fehlgeschlagen: %s"
 L['Profile manager is not available.'] = "Die Profilverwaltung ist nicht verfügbar."
 
@@ -632,8 +634,6 @@ L['No Cooldown Manager layouts found. Open the Cooldown Manager once first.'] = 
 L['Could not read the spec out of that string, pick one on the profile page.'] = "Die Spezialisierung ließ sich nicht aus dem String lesen. Wähle eine auf der Profilseite."
 
 -- Unit Frames GUI
-L['Unit Frames'] = "Einheitenfenster"
-L['General'] = "Allgemein"
 L['Defer To %s'] = "%s Vorrang geben"
 L['%s is loaded and brings its own unit frames. Running both sets at once crashes the client, so keep this on unless you have turned that addon\'s unit frames off.'] = "%s ist geladen und bringt eigene Einheitenfenster mit. Beide gleichzeitig zu betreiben bringt den Client zum Absturz, also lass das an, solange du die Einheitenfenster dieses Addons nicht ausgeschaltet hast."
 L['Unit frame ownership only changes on a fresh load.'] = "Welches Addon die Einheitenfenster stellt, ändert sich nur bei einem frischen Laden."
@@ -803,7 +803,6 @@ L['Fill Overlay'] = "Füllungs-Overlay"
 L['Missing Overlay'] = "Fehlend-Overlay"
 L['Bar Overlay'] = "Balken-Overlay"
 L['Pandemic Border'] = "Pandemie-Rahmen"
-L['Not %s'] = "Nicht %s"
 L['And'] = "Und"
 L['Glow Color'] = "Leuchtfarbe"
 L['Add Property Change'] = "Eigenschaftsänderung hinzufügen"
@@ -974,7 +973,6 @@ L['Blacklist'] = "Sperrliste"
 L['Whitelist'] = "Positivliste"
 L['All Spells'] = "Alle Zauber"
 L['Spell ID'] = "Zauber-ID"
-L['Add'] = "Hinzufügen"
 L['Important'] = "Wichtig"
 
 -- Aura Displays (Advanced Debuffs / Defensives / Standard Buffs / Standard Debuffs) --
@@ -1206,7 +1204,6 @@ L['Hide Empty Backdrops'] = "Leere Hintergründe verbergen"
 L['Hides the backdrop behind buttons that hold no action.'] = "Verbirgt den Hintergrund hinter Tasten ohne Aktion."
 
 -- Skinning: Chat --
-L['Chat'] = "Chat"
 L['Chat Module Disabled'] = "Chatmodul deaktiviert"
 L['The chat module has been disabled.'] = "Das Chatmodul wurde deaktiviert."
 L['A UI reload is recommended to fully restore the default chat.'] = "Ein Neuladen der UI wird empfohlen, um den Standardchat vollständig wiederherzustellen."
@@ -1817,7 +1814,6 @@ L['B%d %s'] = "B%d %s"
 L['Circle %d'] = "Kreis %d"
 
 -- Role settings
-L['All Roles'] = "Alle Rollen"
 L['Reset Everything'] = "Alles zurücksetzen"
 L['Reset %s'] = "%s zurücksetzen"
 L['Reset only the %s settings for %s, or everything including the role settings?'] = "Nur die %s-Einstellungen für %s zurücksetzen oder alles samt Rolleneinstellungen?"

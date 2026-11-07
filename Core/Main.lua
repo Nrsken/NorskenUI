@@ -9,8 +9,12 @@ local AceDB = NRSKNUI.Libs.AceDB
 local L = NRSKNUI.Libs.AL
 
 local UnitGUID = UnitGUID
+local xpcall = xpcall
+local geterrorhandler = geterrorhandler
 local format = string.format
 local after = C_Timer and C_Timer.After
+
+local profilesDiffered -- said at login, a message this early can go unseen
 
 local LDBIconPath = 'Interface\\AddOns\\NorskenUI\\Media\\Logo\\logocookingsPT1128x128OTBRED.png'
 
@@ -67,18 +71,24 @@ function NRSKNUI:OnInitialize()
 
     self.db = AceDB:New('NorskenUIDB', self:GetDefaultDB(), true)
 
-    -- before any module folder loads, so their locale files keep only the chosen language
-    self:SetLanguage(self.db.global.Language)
-
     RunProfileScopeMigration(self.db)
     RunLoadEnableMigration(self.db)
     RunLoadCombatMigration(self.db)
 
     LDS:EnhanceDatabase(self.db, 'NorskenUI')
     self.ProfileManager:SyncGlobalProfile()
+
+    -- raw reads: these keys left the defaults, so only saved values exist
+    local source = self:ChooseSharedSource(self.db.profiles, self.db:GetCurrentProfile(), self.db.sv.profileKeys)
+    local adopted = self:AdoptSharedSettings(source and source.globalMedia, source and source.Colors, self.db.global.Language)
+    profilesDiffered = adopted and source and self:SharedSettingsDiffer(self.db.profiles, source)
+
+    -- before any module folder loads, so their locale files keep only the chosen language
+    self:SetLanguage(self:GetSharedSettings().Language)
+
     self.db.char.Class = self.MyClass -- lets the profile page class-colour alts
 
-    -- Load custom colors from the profile
+    -- Load the shared colors
     self:LoadCustomColors()
     self:RefreshCurves()
     self:RefreshAuraDurationFormatter()
@@ -86,7 +96,9 @@ function NRSKNUI:OnInitialize()
     -- Profile change callbacks. RefreshAllModules owns the whole sequence so there is exactly one
     -- ordering to reason about, and it re-points every module db before anything reads one.
     local function OnProfileRefresh()
-        self.ProfileManager:RefreshAllModules()
+        -- one broken module mustn't cost the rest: fonts go after it, since styled strings hold module db blocks
+        xpcall(function() self.ProfileManager:RefreshAllModules() end, geterrorhandler())
+        self:DeferUntilUnrestricted(0, function() self:RefreshFontStyles() end)
         self.ProfileManager:PromptReload()
     end
     self.db.RegisterCallback(self, 'OnProfileChanged', OnProfileRefresh)
@@ -186,6 +198,9 @@ function NRSKNUI:OnEnable()
     if self.db.profile.Minimap.hideMessage ~= true then
         self:Print(format(L['%s to open the configuration window.'], self:ColorTextByTheme('/nui')))
     end
+    if profilesDiffered then
+        self:Print(L['Fonts, textures and colors now apply to every profile. Yours differed, so check them in Global Settings.'])
+    end
 
     self.UFBlocked = self:ShouldNotLoadUF()
     self.ProfileManager:SettleRole()
@@ -201,6 +216,7 @@ function NRSKNUI:OnEnable()
     self:RegisterEvent('PLAYER_ENTERING_WORLD')
     self:RegisterEvent('UI_SCALE_CHANGED', 'ChangedScaleEvent')
     self:RegisterEvent('ACTIVE_PLAYER_SPECIALIZATION_CHANGED', function() self.ProfileManager:OnSpecChanged() end)
+    self:RegisterMessage('NRSKNUI_LATE_FONT', 'QueueApplyToAllModules') -- modules reading GetFont aren't registered strings
     self:RegisterMessage('NRSKNUI_WORLD_READY', function()
         SetupMinimapIcon()
         self:UpdateValues()
