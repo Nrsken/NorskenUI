@@ -16,7 +16,6 @@ local UnitShouldDisplaySpellTargetName = UnitShouldDisplaySpellTargetName
 local UnitSpellTargetName, UnitSpellTargetClass = UnitSpellTargetName, UnitSpellTargetClass
 local UnitNameFromGUID, UnitClassFromGUID = UnitNameFromGUID, UnitClassFromGUID
 local IsSpellImportant = C_Spell.IsSpellImportant
-local GetClassColor = C_ClassColor.GetClassColor
 local INTERRUPTED = INTERRUPTED
 
 local EvaluateColorFromBoolean = C_CurveUtil and C_CurveUtil.EvaluateColorFromBoolean
@@ -43,9 +42,9 @@ end
 local function CastNormalColor(element, unit)
     local color = element.nuiColor
     if element.nuiColorByClass and not NRSKNUI:IsSecretUnit(unit) then
-        local class = select(2, UnitClass(unit))
-        if class then
-            color = NRSKNUI:CreateColor(NRSKNUI:GetClassColorRaw(class)) --[[@as colorRGBA]]
+        local classColor = NRSKNUI:GetClassColor(select(2, UnitClass(unit)))
+        if classColor then
+            color = NRSKNUI:CreateColor(classColor) --[[@as colorRGBA]]
         end
     end
 
@@ -81,8 +80,7 @@ local function PostCastStart(element, unit, spellID, notInterruptible, name)
     local target = UnitSpellTargetName(unit)
     if target == nil then return end
 
-    local class = UnitSpellTargetClass(unit)
-    local color = class ~= nil and GetClassColor(class)
+    local color = NRSKNUI:GetClassColor(UnitSpellTargetClass(unit))
     if color then target = color:WrapTextInColorCode(target) end
     element.Text:SetFormattedText('%s %s %s', name, UF.TagSeparator, target)
 end
@@ -111,8 +109,7 @@ local function PostCastInterrupted(element, _, _, interruptedBy)
     local name = UnitNameFromGUID(interruptedBy)
     if name == nil then return end
 
-    local _, class = UnitClassFromGUID(interruptedBy)
-    local color = class ~= nil and GetClassColor(class)
+    local color = NRSKNUI:GetClassColor(select(2, UnitClassFromGUID(interruptedBy)))
     if color then name = color:WrapTextInColorCode(name) end
     element.Text:SetFormattedText('%s (%s)', INTERRUPTED, name)
 end

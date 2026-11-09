@@ -65,7 +65,7 @@ function MM:CreateMicroBar()
     local backdrop = CreateFrame("Frame", nil, microBar, "BackdropTemplate")
     backdrop:SetFrameLevel(microBar:GetFrameLevel() - 1)
     backdrop:SetAllPoints(microBar)
-    backdrop:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8" })
+    backdrop:SetBackdrop({ bgFile = NRSKNUI.WhiteTexture })
     backdrop:SetBackdropColor(unpack(NRSKNUI:GetBackdropColor(self.db)))
     microBar.backdrop = backdrop
 

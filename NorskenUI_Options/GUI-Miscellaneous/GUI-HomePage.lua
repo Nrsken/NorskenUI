@@ -20,8 +20,7 @@ GUI:RegisterPage('homePage', {
         local function reloadUI() ReloadUI() end
 
         local playerNameColored = NRSKNUI:ColorTextByClass(NRSKNUI.MyName, NRSKNUI.MyClass)
-        local version = NRSKNUI.Version == 'Development Version' and L['Development Version'] or NRSKNUI.Version
-        local versionLine = L['Version: '] .. NRSKNUI:ColorTextByTheme(version)
+        local versionLine = L['Version: '] .. NRSKNUI:ColorTextByTheme(NRSKNUI:GetVersionText())
         local profileLine = L['Active Profile: '] .. NRSKNUI:ColorTextByTheme(NRSKNUI.db:GetCurrentProfile())
 
         -- Card 1: Welcome
@@ -36,16 +35,7 @@ GUI:RegisterPage('homePage', {
 
         welcomeCard:Separator()
 
-        local mapIconRow = welcomeCard:Row(rowH)
-        mapIconRow:Checkbox(L['Hide Minimap Icon'], {
-            width = 1,
-            value = db.Minimap.hide,
-            msgPopup = true,
-            msgText = L['Hide Minimap Icon'],
-            callback = function(checked)
-                db.Minimap.hide = checked
-            end,
-        })
+        NRSKNUI.GUISharedPages:LauncherRow(welcomeCard, NRSKNUI)
 
         local loginMsgRow = welcomeCard:Row(rowH)
         loginMsgRow:Checkbox(L['Hide Login Message'], {

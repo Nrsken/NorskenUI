@@ -29,20 +29,7 @@ local Defaults = {
         },
     },
     profile = {
-        Theme = {
-            mode           = "preset",
-            selectedPreset = "NUI Neon",
-            customColors   = {},
-            fontFace       = "Interface\\AddOns\\NorskenCore\\Media\\Fonts\\Expressway.TTF",
-            fontSizeNormal = 12,
-            fontSizeSmall  = 12,
-            fontSizeLarge  = 16,
-            fontOutline    = "OUTLINE",
-            fontShadow     = false,
-            windowOpacity  = 1,     -- how solid the settings window is, 0.3-1
-            zoneContrast   = 1,     -- spacing between the window zones' tones, 0.5-2
-            surfaceTint    = 1,     -- how much of the base hue the surfaces carry, 0-3
-        },
+        Theme = CopyTable(NRSKNUI.ThemeDefaults),
         -- UIParent scale.
         UIScale = {
             Enabled = false,

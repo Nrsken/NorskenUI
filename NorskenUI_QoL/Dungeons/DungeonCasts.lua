@@ -24,7 +24,6 @@ local unpack = unpack
 local min = math.min
 
 local CreateDuration = C_DurationUtil and C_DurationUtil.CreateDuration
-local GetClassColor = C_ClassColor and C_ClassColor.GetClassColor
 
 local Immediate = Enum and Enum.StatusBarInterpolation.Immediate
 local ElapsedTime = Enum and Enum.StatusBarTimerDirection.ElapsedTime
@@ -388,14 +387,9 @@ end
 function DungeonCasts:GetTargetText(unit, targetName, preview)
     if self.targetClassColor then
         if not preview then
-            local className = UnitSpellTargetClass(unit)
-            if className then
-                local color = GetClassColor(className)
-                targetName = color:WrapTextInColorCode(targetName)
-            end
+            targetName = NRSKNUI:ColorTextByClass(targetName, UnitSpellTargetClass(unit))
         else
-            local color = GetClassColor(NRSKNUI.MyClass)
-            targetName = color:WrapTextInColorCode(targetName)
+            targetName = NRSKNUI:ColorTextByClass(targetName, NRSKNUI.MyClass)
         end
     end
 

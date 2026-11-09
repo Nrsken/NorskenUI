@@ -400,7 +400,7 @@ end
 ---@return boolean
 local function IsOnCooldown(spellID)
     if NRSKNUI:AreCooldownsSecret() then return true end
-    local info = NRSKNUI:GetSpellCooldownInfo(spellID)
+    local info = C_Spell.GetSpellCooldown(spellID)
     return info ~= nil and info.isActive and not info.isOnGCD
 end
 

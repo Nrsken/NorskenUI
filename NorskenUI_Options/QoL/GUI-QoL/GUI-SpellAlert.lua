@@ -17,7 +17,7 @@ local function ApplySettings() SpellAlert:ApplySettings() end
 ---@param icon number|string
 ---@return string
 local function SpecLabel(name, icon)
-    return format('|T%s:0:0:0:-2:64:64:5:59:5:59|t %s', icon, NRSKNUI:ColorTextByClass(name))
+    return format('|T%s:0:0:0:-2:64:64:5:59:5:59|t %s', icon, NRSKNUI:ColorTextByClass(name, NRSKNUI.MyClass))
 end
 
 local function BuildTab(page, db)
@@ -43,7 +43,7 @@ local function BuildTab(page, db)
     settingsCard:Rebuild(function(card)
         local specID, specName, specIcon = SpellAlert:GetSpecInfo()
         local specOption = specID and SpecLabel(specName, specIcon) or nil
-        local specText = specID and NRSKNUI:ColorTextByClass(specName) or nil
+        local specText = specID and NRSKNUI:ColorTextByClass(specName, NRSKNUI.MyClass) or nil
         local useGlobal = db.UseGlobal or not specID
         local scopeDesc
 

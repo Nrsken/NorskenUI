@@ -64,7 +64,7 @@ local function NormalizeFontOutline(outline)
     return outline
 end
 local TAB_TEXTURES = { "", "Selected", "Active", "Highlight" }
-local BACKDROP_TEMPLATE = { bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1, }
+local BACKDROP_TEMPLATE = { bgFile = NRSKNUI.WhiteTexture, edgeFile = NRSKNUI.WhiteTexture, edgeSize = 1, }
 
 local TAB_STYLES = {
     NONE   = "%s",
@@ -99,6 +99,15 @@ local HYPERLINK_TYPES = {
 local cachedFontPath
 local cachedTabAccentColor = { r = 1, g = 0.82, b = 0 }
 local cachedThemeAccentColor = { r = 1, g = 1, b = 1 }
+
+---The colour of a tab that isn't selected, the chat accent until a custom one is picked.
+---@param db table
+---@return number r, number g, number b
+local function InactiveTabColor(db)
+    local customColor = db.TabTextColor or cachedTabAccentColor
+    local r, g, b = NRSKNUI:GetAccentColor(db.TabTextColorMode or "custom", { customColor.r, customColor.g, customColor.b, 1 })
+    return r, g, b
+end
 
 local SHORT_CHANNELS = {
     GUILD = "G",
@@ -288,7 +297,7 @@ function CHAT:BuildCopyChatFrame()
 
     local frame = CreateFrame("Frame", "NRSKNUI_CopyChatFrame", UIParent, "BackdropTemplate")
     tinsert(_G.UISpecialFrames, "NRSKNUI_CopyChatFrame")
-    frame:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1, })
+    frame:SetBackdrop({ bgFile = NRSKNUI.WhiteTexture, edgeFile = NRSKNUI.WhiteTexture, edgeSize = 1, })
     frame:SetBackdropColor(Theme.bgDark[1], Theme.bgDark[2], Theme.bgDark[3], Theme.bgDark[4])
     frame:SetBackdropBorderColor(Theme.border[1], Theme.border[2], Theme.border[3], 1)
     frame:SetSize(COPY_FRAME_WIDTH, COPY_FRAME_HEIGHT)
@@ -308,7 +317,7 @@ function CHAT:BuildCopyChatFrame()
     header:SetHeight(HEADER_HEIGHT)
     header:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
     header:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
-    header:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8" })
+    header:SetBackdrop({ bgFile = NRSKNUI.WhiteTexture })
     header:SetBackdropColor(Theme.bgMedium[1], Theme.bgMedium[2], Theme.bgMedium[3], Theme.bgMedium[4])
     header:EnableMouse(true)
     header:RegisterForDrag("LeftButton")
@@ -386,7 +395,7 @@ function CHAT:BuildCopyChatFrame()
     scrollbar:SetWidth(SCROLLBAR_WIDTH)
     scrollbar:SetPoint("TOPRIGHT", contentArea, "TOPRIGHT", 0, 0)
     scrollbar:SetPoint("BOTTOMRIGHT", contentArea, "BOTTOMRIGHT", 0, 0)
-    scrollbar:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1, })
+    scrollbar:SetBackdrop({ bgFile = NRSKNUI.WhiteTexture, edgeFile = NRSKNUI.WhiteTexture, edgeSize = 1, })
     scrollbar:SetBackdropColor(Theme.bgDark[1], Theme.bgDark[2], Theme.bgDark[3], 0.5)
     scrollbar:SetBackdropBorderColor(Theme.border[1], Theme.border[2], Theme.border[3], 1)
     scrollbar:SetOrientation("VERTICAL")
@@ -1051,7 +1060,7 @@ function CHAT:OnFCFTab_UpdateColors(tab, selected)
 
             local nameLower = not tab.classColor and NRSKNUI:NotSecretValue(name) and strlower(name)
             local classMatch = nameLower and self.ClassNames[nameLower]
-            if classMatch then tab.classColor = self:GetClassColor(classMatch) end
+            if classMatch then tab.classColor = NRSKNUI:GetClassColor(classMatch) end
 
             if tab.classColor then
                 tab.Text:SetTextColor(tab.classColor.r, tab.classColor.g, tab.classColor.b)
@@ -1062,10 +1071,7 @@ function CHAT:OnFCFTab_UpdateColors(tab, selected)
         else
             if nameTextNotSecret and not selected then tab:SetText(name) end
 
-            local colorMode = db.TabTextColorMode or "custom"
-            local customColor = db.TabTextColor or cachedTabAccentColor
-            local r, g, b = NRSKNUI:GetAccentColor(colorMode, { customColor.r, customColor.g, customColor.b, 1 })
-            tab.Text:SetTextColor(r, g, b)
+            tab.Text:SetTextColor(InactiveTabColor(db))
         end
     end
 end
@@ -1159,10 +1165,7 @@ function CHAT:OnFCFDockOverflowButton_UpdatePulseState(btn)
             btn.Texture:SetVertexColor(1, 1, 1)
         end
     elseif not btn:IsMouseOver() then
-        local colorMode = db.TabTextColorMode or "custom"
-        local customColor = db.TabTextColor or cachedTabAccentColor
-        local r, g, b = NRSKNUI:GetAccentColor(colorMode, { customColor.r, customColor.g, customColor.b, 1 })
-        btn.Texture:SetVertexColor(r, g, b)
+        btn.Texture:SetVertexColor(InactiveTabColor(db))
     end
 end
 
@@ -1274,17 +1277,12 @@ local function EditStoredMessage(_, entry)
     entry.message = CHAT:AddMessageEdits(entry.message)
 end
 
-function CHAT:GetClassColor(class)
-    if not class then return nil end
-    return RAID_CLASS_COLORS and RAID_CLASS_COLORS[class]
-end
-
 function CHAT:OnGetPlayerInfoByGUID(guid)
     if NRSKNUI:IsSecretValue(guid) then return end
 
     local data = self.GuidCache[guid]
     if data then
-        if data.classColor then data.classColor = self:GetClassColor(data.englishClass) end
+        if data.classColor then data.classColor = NRSKNUI:GetClassColor(data.englishClass) end
         return data
     end
 
@@ -1322,7 +1320,7 @@ function CHAT:OnGetPlayerInfoByGUID(guid)
     self.GuidCache[guid] = data
     self.GuidCacheCount = self.GuidCacheCount + 1
 
-    data.classColor = self:GetClassColor(englishClass)
+    data.classColor = NRSKNUI:GetClassColor(englishClass)
 
     return data
 end
@@ -1599,7 +1597,7 @@ local function ReplaceSetupTextureCoordinates(frame)
     end
 end
 
-local BLANK_TEX = "Interface\\Buttons\\WHITE8x8"
+local BLANK_TEX = NRSKNUI.WhiteTexture
 
 local function GetTemplateColors(template)
     local backdropR, backdropG, backdropB, backdropA = 0.1, 0.1, 0.1, 0.9
@@ -2149,10 +2147,7 @@ function CHAT:StyleOverflowButton()
 
     local function ApplyInactiveColor()
         if not btn.Texture then return end
-        local colorMode = self.db.TabTextColorMode or "custom"
-        local customColor = self.db.TabTextColor or cachedTabAccentColor
-        local r, g, b = NRSKNUI:GetAccentColor(colorMode, { customColor.r, customColor.g, customColor.b, 1 })
-        btn.Texture:SetVertexColor(r, g, b)
+        btn.Texture:SetVertexColor(InactiveTabColor(self.db))
     end
 
     local function ApplySelectedColor()

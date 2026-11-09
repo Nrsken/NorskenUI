@@ -160,9 +160,9 @@ Skins.CheckBox = function(widget)
 
     -- SetType re-applies Blizzard's art every time the widget comes back out of the pool.
     checkbg:SetTexture()
-    checkbg.SetTexture = NRSKNUI.NOP
-    highlight.SetTexture = NRSKNUI.NOP
-    check.SetTexture = NRSKNUI.NOP
+    checkbg.SetTexture = nop
+    highlight.SetTexture = nop
+    check.SetTexture = nop
 
     check:SetParent(backdrop)
     check:ClearAllPoints()

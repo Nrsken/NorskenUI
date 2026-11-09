@@ -86,16 +86,9 @@ L['Show'] = true
 L['Update'] = true
 
 -- Commands
-L['%s is missing, reinstall NorskenUI.'] = true
-L['%s is version %s but NorskenUI is %s, update both.'] = true
-L['GUI position and size reset to defaults.'] = true
-L['Options will open after combat ends.'] = true
 
 -- Core / Main
 L['%s to open the configuration window.'] = true
-L['Left-Click to open options'] = true
-L['Middle-Click to reset the options window position'] = true
-L['Right-Click to toggle anchors'] = true
 
 -- Dialog
 L["Reset %s settings to defaults?"] = true
@@ -128,7 +121,5 @@ L['Combat'] = true
 L['Out of Combat'] = true
 
 -- Core / Init
-L['Space'] = true
 
 -- Shared with the options pages
-L['Development Version'] = true

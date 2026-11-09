@@ -32,7 +32,6 @@ local GetChatCategory = Chat_GetChatCategory or GetChatCategory
 local RemoveExtraSpaces = RemoveExtraSpaces
 local RemoveNewlines = RemoveNewlines
 local GMChatFrame_IsGM = GMChatFrame_IsGM
-local C_ClassColor_GetClassColor = C_ClassColor and C_ClassColor.GetClassColor
 local IsChatLineCensored = C_ChatInfo and C_ChatInfo.IsChatLineCensored
 local SafePack = SafePack
 
@@ -133,11 +132,7 @@ end
 function CMH:GetColoredName(event, _, arg2, _, _, _, _, _, arg8, _, _, _, arg12)
     if NRSKNUI:IsSecretValue(arg12) then
         local _, englishClass = GetPlayerInfoByGUID(arg12)
-        if englishClass and C_ClassColor_GetClassColor then
-            local classColor = C_ClassColor_GetClassColor(englishClass)
-            return (classColor and classColor:WrapTextInColorCode(arg2)) or arg2
-        end
-        return arg2
+        return NRSKNUI:ColorTextByClass(arg2, englishClass)
     elseif NRSKNUI:IsSecretValue(arg2) then
         return arg2
     end
@@ -157,11 +152,9 @@ function CMH:GetColoredName(event, _, arg2, _, _, _, _, _, arg8, _, _, _, arg12)
     local info = name and arg12 and _G.ChatTypeInfo[chatType]
     if info and ShouldColorChatByClass and ShouldColorChatByClass(info) then
         local _, englishClass = GetPlayerInfoByGUID(arg12)
-        if englishClass then
-            local classColor = C_ClassColor_GetClassColor and C_ClassColor_GetClassColor(englishClass)
-            if classColor then
-                return classColor:WrapTextInColorCode(name)
-            end
+        local classColor = NRSKNUI:GetClassColor(englishClass)
+        if classColor then
+            return classColor:WrapTextInColorCode(name)
         end
     end
 
@@ -230,7 +223,7 @@ function CMH:ChatFrame_ReplaceIconAndGroupExpressions(message, noIconReplacement
                 for i = 1, GetNumGroupMembers() do
                     local name, _, subgroup, _, _, classFilename = GetRaidRosterInfo(i)
                     if name and subgroup == groupIndex then
-                        local classColor = C_ClassColor_GetClassColor and C_ClassColor_GetClassColor(classFilename)
+                        local classColor = NRSKNUI:GetClassColor(classFilename)
                         if classColor then
                             name = classColor:WrapTextInColorCode(name)
                         end

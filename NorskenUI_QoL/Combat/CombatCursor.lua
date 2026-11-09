@@ -246,7 +246,7 @@ function CursorCircle:UpdateGCDCooldown()
     end
 
     -- Get the GCD cooldown info and update the appropriate ring based on the mode.
-    local info = NRSKNUI:GetSpellCooldownInfo(GCD_ID)
+    local info = C_Spell.GetSpellCooldown(GCD_ID)
     ---@diagnostic disable-next-line: secret-comparison
     if info and info.duration and info.duration > 0 then
         if self.db.GCD.Mode == 'integrated' then

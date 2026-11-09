@@ -86,16 +86,9 @@ L['Show'] = "Anzeigen"
 L['Update'] = "Aktualisieren"
 
 -- Commands
-L['%s is missing, reinstall NorskenUI.'] = "%s fehlt, installiere NorskenUI neu."
-L['%s is version %s but NorskenUI is %s, update both.'] = "%s hat Version %s, NorskenUI aber %s. Aktualisiere beide."
-L['GUI position and size reset to defaults.'] = "Position und Größe des Optionsfensters auf Standard zurückgesetzt."
-L['Options will open after combat ends.'] = "Die Optionen werden nach dem Kampf geöffnet."
 
 -- Core / Main
 L['%s to open the configuration window.'] = "Gib %s ein, um das Konfigurationsfenster zu öffnen."
-L['Left-Click to open options'] = "Linksklick: Optionen öffnen"
-L['Middle-Click to reset the options window position'] = "Mittelklick: Position des Optionsfensters zurücksetzen"
-L['Right-Click to toggle anchors'] = "Rechtsklick: Anker umschalten"
 
 -- Dialog
 L["Reset %s settings to defaults?"] = "Einstellungen von %s auf Standard zurücksetzen?"
@@ -128,7 +121,5 @@ L['Combat'] = "Kampf"
 L['Out of Combat'] = "Außerhalb des Kampfes"
 
 -- Core / Init
-L['Space'] = "Leertaste"
 
 -- Shared with the options pages
-L['Development Version'] = "Entwicklungsversion"

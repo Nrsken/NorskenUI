@@ -24,9 +24,6 @@ local pcall = pcall
 local type = type
 local next = next
 
-local DecodeBase64 = C_EncodingUtil and C_EncodingUtil.DecodeBase64
-local DecompressString = C_EncodingUtil and C_EncodingUtil.DecompressString
-local DeserializeCBOR = C_EncodingUtil and C_EncodingUtil.DeserializeCBOR
 local GetClassInfo = C_CreatureInfo and C_CreatureInfo.GetClassInfo
 local LoadAddOn = C_AddOns and C_AddOns.LoadAddOn
 
@@ -148,16 +145,7 @@ local function DecodeString(str)
     local body = Clean(str):match('^%d+|+(.+)$')
     if not body then return nil end
 
-    local ok, decoded = pcall(DecodeBase64, body)
-    if not ok or not decoded then return nil end
-
-    ok, decoded = pcall(DecompressString, decoded, Enum.CompressionMethod.Deflate)
-    if not ok or not decoded then return nil end
-
-    local payload
-    ok, payload = pcall(DeserializeCBOR, decoded)
-    if not ok or type(payload) ~= 'table' then return nil end
-    return payload
+    return NRSKNUI:DecodeTable(body)
 end
 
 ---Name and spec of a profile string, so a pasted one needs no describing by hand.

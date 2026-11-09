@@ -130,8 +130,7 @@ local function CapturePrompt()
     for index, group in ipairs(groups) do
         if index > 1 then entries[#entries + 1] = { divider = true } end
         entries[#entries + 1] = {
-            -- Uncoloured without a class, since ColorTextByClass falls back to the player's own.
-            text = group.classFile and NRSKNUI:ColorTextByClass(group.name, group.classFile) or group.name,
+            text = NRSKNUI:ColorTextByClass(group.name, group.classFile),
             disabled = true,
         }
 

@@ -3,9 +3,8 @@
 
     <Script file='Defaults.lua' />
     <Script file='Main.lua' />
-    <Script file='PixelPerfect.lua' />
-    <Script file='GlobalAPI.lua' />
-    <Script file='Auras/AuraIndicators.lua' />
+    <Script file='UIScale.lua' />
+    <Script file='Conflicts.lua' />
     <Script file='Commands.lua' />
     <Script file='ProfileManager.lua' />
 </Ui>

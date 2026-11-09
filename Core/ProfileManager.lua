@@ -22,16 +22,7 @@ local rawget = rawget
 
 local GetNumSpecializationsForClassID = C_SpecializationInfo and C_SpecializationInfo.GetNumSpecializationsForClassID
 local GetSpecialization = C_SpecializationInfo and C_SpecializationInfo.GetSpecialization
-local DecompressString = C_EncodingUtil and C_EncodingUtil.DecompressString
-local DeserializeCBOR = C_EncodingUtil and C_EncodingUtil.DeserializeCBOR
-local CompressString = C_EncodingUtil and C_EncodingUtil.CompressString
-local SerializeCBOR = C_EncodingUtil and C_EncodingUtil.SerializeCBOR
-local EncodeBase64 = C_EncodingUtil and C_EncodingUtil.EncodeBase64
-local DecodeBase64 = C_EncodingUtil and C_EncodingUtil.DecodeBase64
 local after = C_Timer and C_Timer.After
-
-local optimizeForSizeEnum = Enum and Enum.CompressionLevel and Enum.CompressionLevel.OptimizeForSize
-local deflateEnum = Enum and Enum.CompressionMethod and Enum.CompressionMethod.Deflate
 
 local EXPORT_PREFIX = '!NRSKNUI2!' -- C_EncodingUtil: CBOR + Deflate + Base64
 local LEGACY_PREFIX = '!NRSKNUI1!' -- AceSerializer + LibDeflate, still decoded so old strings import
@@ -1177,13 +1168,8 @@ function ProfileManager:ExportProfile(profileName, includeShared)
         d = profileData   -- Profile data
     }
 
-    local ok, encoded = pcall(function()
-        local serialized = SerializeCBOR(exportData)
-        local compressed = CompressString(serialized, deflateEnum, optimizeForSizeEnum)
-        return EncodeBase64(compressed)
-    end)
-
-    if not ok or not encoded then
+    local encoded = NRSKNUI:EncodeTable(exportData)
+    if not encoded then
         return nil, L['Export failed']
     end
 
@@ -1218,29 +1204,6 @@ local function DecodeLegacy(encoded)
     return exportData
 end
 
----Decode an export string produced by C_EncodingUtil (prefix !NRSKNUI2!).
----@param encoded string payload with the prefix already stripped
----@return table|nil exportData
----@return string|nil error
-local function DecodeCurrent(encoded)
-    -- The whole chain runs on untrusted pasted text, and these natives raise rather than return nil.
-    local ok, exportData = pcall(function()
-        local compressed = DecodeBase64(encoded)
-        if not compressed then return nil end
-
-        local serialized = DecompressString(compressed, deflateEnum)
-        if not serialized then return nil end
-
-        return DeserializeCBOR(serialized)
-    end)
-
-    -- A crafted string can deserialize cleanly into a scalar, so reject anything that is not a table here rather than downstream.
-    if not ok or type(exportData) ~= 'table' then
-        return nil, L['Decoding failed']
-    end
-    return exportData
-end
-
 ---@param importString string
 ---@return table|nil exportData
 ---@return string|nil error
@@ -1248,7 +1211,7 @@ local function DecodeImport(importString)
     -- Route on the prefix so strings from either format still import.
     local exportData, decodeError
     if importString:sub(1, #EXPORT_PREFIX) == EXPORT_PREFIX then
-        exportData, decodeError = DecodeCurrent(importString:sub(#EXPORT_PREFIX + 1))
+        exportData = NRSKNUI:DecodeTable(importString:sub(#EXPORT_PREFIX + 1))
     elseif importString:sub(1, #LEGACY_PREFIX) == LEGACY_PREFIX then
         exportData, decodeError = DecodeLegacy(importString:sub(#LEGACY_PREFIX + 1))
     else
@@ -1411,11 +1374,7 @@ function NorskenUIAPI:ExportProfile(profileKey)
         return ''
     end
 
-    local serialized = SerializeCBOR(profileData)
-    local compressed = CompressString(serialized, Enum.CompressionMethod.Deflate,
-        Enum.CompressionLevel.OptimizeForSize)
-    local encoded = EncodeBase64(compressed)
-    return encoded or ''
+    return NRSKNUI:EncodeTable(profileData) or ''
 end
 
 ---Import a profile from string.
@@ -1476,18 +1435,7 @@ end
 function NorskenUIAPI:DecodeProfileString(profileString)
     if not profileString or profileString == '' then return {} end
 
-    local decoded = DecodeBase64(profileString)
-    if not decoded then return {} end
-
-    local decompressed = DecompressString(decoded, Enum.CompressionMethod.Deflate)
-    if not decompressed then return {} end
-
-    local profileData = DeserializeCBOR(decompressed)
-    if profileData and type(profileData) == 'table' then
-        return profileData
-    end
-
-    return {}
+    return NRSKNUI:DecodeTable(profileString) or {}
 end
 
 ---Set the active profile

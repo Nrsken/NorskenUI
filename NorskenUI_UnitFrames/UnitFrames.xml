@@ -5,6 +5,7 @@
     <Script file='Defaults.lua' />
     <Script file='Migrations.lua' />
     <Script file='UnitDB.lua' />
+    <Script file='AuraIndicatorDB.lua' />
     <Script file='RangeData.lua' />
     <Script file='Handlers.lua' />
     <Script file='TagTypes.lua' />

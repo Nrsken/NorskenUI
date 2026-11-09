@@ -520,7 +520,7 @@ local function StylePushedTexture(button)
     if not pushed then return end
 
     pushed:NUISetPixelSnap()
-    pushed:SetTexture("Interface\\Buttons\\WHITE8x8")
+    pushed:SetTexture(NRSKNUI.WhiteTexture)
     pushed:SetTexCoord(0, 1, 0, 1)
     pushed:ClearAllPoints()
     pushed:SetPoint("TOPLEFT", button, "TOPLEFT", 1, -1)
@@ -563,7 +563,7 @@ function ACB:StyleButtonTextures(button)
     -- Style highlight texture
     if button.HighlightTexture then
         button.HighlightTexture:NUISetPixelSnap()
-        button.HighlightTexture:SetTexture("Interface\\Buttons\\WHITE8x8")
+        button.HighlightTexture:SetTexture(NRSKNUI.WhiteTexture)
         button.HighlightTexture:SetTexCoord(0, 1, 0, 1)
         button.HighlightTexture:ClearAllPoints()
         button.HighlightTexture:SetPoint("TOPLEFT", button, "TOPLEFT", 1, -1)
@@ -610,7 +610,7 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
 
     -- Apply backdrop with per-bar color
     backdrop:SetBackdrop({
-        bgFile = "Interface\\Buttons\\WHITE8x8",
+        bgFile = NRSKNUI.WhiteTexture,
         tile = false,
         tileSize = 0,
         insets = { left = 0, right = 0, top = 0, bottom = 0 }

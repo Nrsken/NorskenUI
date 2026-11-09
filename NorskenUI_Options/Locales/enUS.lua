@@ -26,7 +26,6 @@ L['Backdrop Settings'] = true
 L['Hello, '] = true
 L['Version: '] = true
 L['Active Profile: '] = true
-L['Hide Minimap Icon'] = true
 L['Hide Login Message'] = true
 L['Toggle Anchors'] = true
 L['ElvUI Integration'] = true

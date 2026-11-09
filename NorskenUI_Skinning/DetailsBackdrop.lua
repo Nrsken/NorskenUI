@@ -106,17 +106,6 @@ function DBG:OnEnable()
 end
 
 ---@param index number
----@return Frame
-function DBG:CreateBackdrop(index)
-    local backdrop = CreateFrame('Frame', 'NRSKNUI_DetailsBg' .. index, UIParent)
-    backdrop:NUICreateBackdrop(nil, 0)
-    backdrop:SetFrameLevel(1)
-
-    self.backdrops[index] = backdrop
-    return backdrop
-end
-
----@param index number
 function DBG:RegisterAnchor(index)
     NRSKNUI.Anchors:Register(self, ANCHOR_PREFIX .. index, self.backdrops[index], 'detailsBackdrop', {
         db = function(aceModule) return aceModule.db.backdrops[index] end, -- read live, UpdateDB re-points self.db
@@ -137,7 +126,13 @@ function DBG:ApplyBackdrop(index)
         return
     end
 
-    local backdrop = self.backdrops[index] or self:CreateBackdrop(index)
+    local backdrop = self.backdrops[index]
+    if not backdrop then
+        backdrop = CreateFrame('Frame', 'NRSKNUI_DetailsBg' .. index, UIParent)
+        backdrop:NUICreateBackdrop(nil, 0)
+        backdrop:SetFrameLevel(1)
+        self.backdrops[index] = backdrop
+    end
     local detailsBase = _G['DetailsBaseFrame' .. index]
     local detailsWindow = _G['Details_WindowFrame' .. index]
 

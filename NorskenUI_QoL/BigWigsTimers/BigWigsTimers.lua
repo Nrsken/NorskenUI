@@ -54,17 +54,6 @@ end
 
 -- Text Formatting --
 
----@param remaining number
----@param trigger table
----@return string
-local function FormatTime(remaining, trigger)
-    if remaining < 1 or (trigger.ShowDecimals and remaining <= trigger.DecimalThreshold) then
-        return format('%.1f', remaining)
-    end
-
-    return tostring(floor(remaining + 0.5))
-end
-
 ---@param formatStr string
 ---@param trigger table
 ---@param bar BigWigsTimers.Bar
@@ -75,7 +64,12 @@ local function FormatText(formatStr, trigger, bar, remaining)
 
     return (gsub(formatStr, '%%(%a)', function(token)
         if token == 'n' then return bar.text end
-        if token == 't' then return FormatTime(remaining, trigger) end
+        if token == 't' then
+            if remaining < 1 or (trigger.ShowDecimals and remaining <= trigger.DecimalThreshold) then
+                return format('%.1f', remaining)
+            end
+            return tostring(floor(remaining + 0.5))
+        end
         if token == 'c' then return tostring(bar.count) end
         if token == 's' then return bar.spellId end
         if token == 'i' then return bar.icon and format(ICON_MARKUP, bar.icon) or '' end

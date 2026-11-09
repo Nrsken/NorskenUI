@@ -40,7 +40,6 @@ local GetSearchResultInfo = C_LFGList and C_LFGList.GetSearchResultInfo
 local GetLanguageSearchFilter = C_LFGList and C_LFGList.GetLanguageSearchFilter
 local Search = C_LFGList and C_LFGList.Search
 
-local RAID_CLASS_COLORS = RAID_CLASS_COLORS
 
 local DUNGEON_CATEGORY = 2
 local SERVER_SEARCH_THROTTLE = 3 -- Lower than 3s may cause search failures.
@@ -372,7 +371,7 @@ local function UpdateRowRoles(row, info)
         if slot < 1 then break end
 
         local icon = icons[slot]
-        local color = RAID_CLASS_COLORS[member.class]
+        local color = NRSKNUI:GetClassColor(member.class)
 
         icon.RoleIconWithBackground:Hide()
         icon.ClassCircle:Hide()

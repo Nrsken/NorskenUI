@@ -1,27 +1,28 @@
 ---@class NRSKNUI
----@field MyGUID string?
 local NRSKNUI = select(2, ...)
-local LDB = NRSKNUI.Libs.LDB
-local LDBIcon = NRSKNUI.Libs.LDBIcon
 local LDS = NRSKNUI.Libs.LDS
 local GUI = NRSKNUI.GUI
 local AceDB = NRSKNUI.Libs.AceDB
 local L = NRSKNUI.Libs.AL
 
-local UnitGUID = UnitGUID
-local xpcall = xpcall
+local InCombatLockdown = InCombatLockdown
 local geterrorhandler = geterrorhandler
+local hooksecurefunc = hooksecurefunc
+local CreateFrame = CreateFrame
 local format = string.format
+local PlaySound = PlaySound
+local CopyTable = CopyTable
+local GetText = GetText
+local xpcall = xpcall
+local ipairs = ipairs
+local pairs = pairs
+
+local MACROS = MACROS
+local GAMEMENU_SUPPORT = GAMEMENU_SUPPORT
+
 local after = C_Timer and C_Timer.After
 
 local profilesDiffered -- said at login, a message this early can go unseen
-
-local LDBIconPath = 'Interface\\AddOns\\NorskenUI\\Media\\Logo\\LogoUI.png'
-
----Print message with class colored addon name prefix
-function NRSKNUI:Print(msg)
-    print(self:ColorTextByTheme('Norsken') .. 'UI:|r ' .. msg)
-end
 
 -- Global to profile scope migration --
 
@@ -67,8 +68,6 @@ end
 
 -- OnInitialize: Called when the addon is initialized
 function NRSKNUI:OnInitialize()
-    self.MyGUID = UnitGUID('player')
-
     self.db = AceDB:New('NorskenUIDB', self:GetDefaultDB(), true)
 
     RunProfileScopeMigration(self.db)
@@ -98,14 +97,16 @@ function NRSKNUI:OnInitialize()
     local function OnProfileRefresh()
         -- one broken module mustn't cost the rest: fonts go after it, since styled strings hold module db blocks
         xpcall(function() self.ProfileManager:RefreshAllModules() end, geterrorhandler())
+        -- a switch before OnEnable needs nothing, OnEnable registers on the profile it finds
+        if self.launcherDB then
+            self:RegisterLauncher(self.db.profile.Minimap)
+        end
         self:DeferUntilUnrestricted(0, function() self:RefreshFontStyles() end)
         self.ProfileManager:PromptReload()
     end
     self.db.RegisterCallback(self, 'OnProfileChanged', OnProfileRefresh)
     self.db.RegisterCallback(self, 'OnProfileCopied', OnProfileRefresh)
     self.db.RegisterCallback(self, 'OnProfileReset', OnProfileRefresh)
-
-    self:UpdateMult()
 end
 
 -- One shared function, so RunWhenSafe collapses repeat calls made during combat.
@@ -142,38 +143,6 @@ function NRSKNUI:ToggleModule(moduleName, enabled)
     if self.PreviewManager then self.PreviewManager:Refresh() end -- A module toggled on while the GUI is open joins the previews the open page calls for.
 end
 
-local function SetupMinimapIcon()
-    local Theme = NRSKNUI.Theme
-    local MyLDB = LDB:NewDataObject('NorskenUI', {
-        type = 'launcher',
-        text = 'NorskenUI',
-        icon = LDBIconPath,
-        iconR = Theme.accent[1],
-        iconG = Theme.accent[2],
-        iconB = Theme.accent[3],
-        OnClick = function(_, button)
-            if button == 'LeftButton' then
-                NRSKNUI:ToggleOptions()
-            elseif button == 'RightButton' then
-                if NRSKNUI.Anchors then
-                    NRSKNUI.Anchors:Toggle()
-                end
-            elseif button == 'MiddleButton' then
-                NRSKNUI:ResetGUIState()
-            end
-        end,
-        OnTooltipShow = function(tt)
-            tt:AddLine(NRSKNUI:ColorTextByTheme('Norsken') .. '|cffb3b3b3UI|r')
-            tt:AddLine(L['Left-Click to open options'], 0.70, 0.70, 0.70)
-            tt:AddLine(L['Right-Click to toggle anchors'], 0.70, 0.70, 0.70)
-            tt:AddLine(L['Middle-Click to reset the options window position'], 0.70, 0.70, 0.70)
-        end,
-    })
-    local minimapDB = NRSKNUI.db.profile.Minimap
-    ---@cast minimapDB LibDBIcon.button.DB
-    LDBIcon:Register('NorskenUI', MyLDB, minimapDB)
-end
-
 function NRSKNUI:PLAYER_ENTERING_WORLD()
     self:UnregisterEvent('PLAYER_ENTERING_WORLD')
     self.enteredWorld = true
@@ -182,15 +151,56 @@ function NRSKNUI:PLAYER_ENTERING_WORLD()
     after(1, function() self:SendMessage('NRSKNUI_WORLD_READY') end)
 end
 
+-- Game menu entry, kept out of Blizzard's button pool so its pooled buttons never carry our taint.
+function NRSKNUI:SetupGameMenuButton()
+    EventUtil.ContinueOnAddOnLoaded('Blizzard_GameMenu', function()
+        local menu = _G.GameMenuFrame
+        local button = CreateFrame('Button', 'NRSKNUI_GameMenuButton', menu, 'MainMenuFrameButtonTemplate')
+        button:SetScript('OnClick', function()
+            PlaySound(SOUNDKIT.IG_MAINMENU_OPTION)
+            menu:CloseMenu()
+            NRSKNUI:OpenOptions()
+        end)
+
+        -- Layout re-anchors every pooled button from scratch, so this slots in below Macros each time.
+        hooksecurefunc(menu, 'Layout', function()
+            local anchor
+            for menuButton in menu.buttonPool:EnumerateActive() do
+                local text = menuButton:GetText()
+                if text == MACROS or (text == GAMEMENU_SUPPORT and not anchor) then anchor = menuButton end
+            end
+            -- A secure frame anchored to the menu protects it, and resizing it is blocked in combat.
+            if not anchor or (InCombatLockdown() and menu:IsProtected()) then
+                button:Hide()
+                return
+            end
+
+            local height = anchor:GetHeight()
+            button:SetText(NRSKNUI:GetTitle()) -- per open, so a theme change shows
+            button:SetSize(anchor:GetWidth(), height)
+            button:ClearAllPoints()
+            button:SetPoint('TOP', anchor, 'BOTTOM')
+            button:Show()
+
+            for menuButton in menu.buttonPool:EnumerateActive() do
+                if menuButton.layoutIndex > anchor.layoutIndex then
+                    menuButton:AdjustPointsOffset(0, -height)
+                end
+            end
+            menu:SetHeight(menu:GetHeight() + height)
+        end)
+    end)
+end
+
 function NRSKNUI:OnEnable()
     GUI:ApplyTheme()
+    self:RegisterLauncher(self.db.profile.Minimap)
     GUI:OnThemeChanged(function() -- None AceModules go into here.
         if self.Anchors:IsActive() then
             self.Anchors:RefreshTheme()
         end
     end)
 
-    self:SetupSlashCommands()
     self:SetupGameMenuButton()
     self:SetUIScale()
 
@@ -214,12 +224,11 @@ function NRSKNUI:OnEnable()
 
     -- Event Registration
     self:RegisterEvent('PLAYER_ENTERING_WORLD')
-    self:RegisterEvent('UI_SCALE_CHANGED', 'ChangedScaleEvent')
+    self:RegisterEvent('UI_SCALE_CHANGED')
     self:RegisterEvent('ACTIVE_PLAYER_SPECIALIZATION_CHANGED', function() self.ProfileManager:OnSpecChanged() end)
     self:RegisterMessage('NRSKNUI_SHARED_SETTINGS_CHANGED', 'QueueApplyToAllModules')
     self:RegisterMessage('NRSKNUI_WORLD_READY', function()
-        SetupMinimapIcon()
-        self:UpdateValues()
+        self:UpdateInverseScale()
 
         -- Only now can a profile change be the user's doing rather than the login sequence's.
         self.ProfileManager:SetPromptsReady()

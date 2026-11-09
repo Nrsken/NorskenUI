@@ -399,7 +399,7 @@ UF.Elements.Indicators = {
             local roleSample = groupRoles and def.key == 'Role' and db.Enabled
 
             if roleSample or def.key == previewed then
-                tex.Override = function() NRSKNUI:NOP() end
+                tex.Override = nop
                 if roleSample then
                     tex:SetAtlas(PreviewRoleAtlas(self, db))
                     tex:SetDesaturated(nil)

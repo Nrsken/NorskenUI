@@ -58,8 +58,7 @@ function NRSKNUI.GUILogoConfig()
                 color = 'textSecondary'
             },
         },
-        -- the raw value stays English, exports and the version check carry it
-        version = NRSKNUI.Version == 'Development Version' and L['Development Version'] or NRSKNUI.Version,
+        version = NRSKNUI:GetVersionText(),
         versionAnchor = { 'LEFT', 2, 'RIGHT', -45, -3 },
         versionColor = 'textSecondary',
     }

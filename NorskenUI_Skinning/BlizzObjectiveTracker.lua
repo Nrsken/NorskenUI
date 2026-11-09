@@ -22,7 +22,7 @@ ObjectiveTracker.coloredProgressBars = {}
 
 -- The tracker only ever colors by RGB, so the alpha is dropped here rather than at every call.
 ---@return number r, number g, number b
-local function GetAccentColor()
+local function TrackerColor()
     local objDb = ObjectiveTracker.db
     local r, g, b = NRSKNUI:GetAccentColor(objDb.ColorMode, objDb.CustomColor)
     return r, g, b
@@ -51,7 +51,7 @@ local function ReskinQuestIcon(button, skipBorder)
 
     local icon = button.icon or button.Icon
     if icon and not skipBorder then
-        icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+        icon:NUISetZoom()
         button:NUIAddBorders()
     end
 
@@ -138,7 +138,7 @@ local function ProgressBarHook(tracker, key)
     local progressBar = tracker.usedProgressBars and tracker.usedProgressBars[key]
     local bar = progressBar and progressBar.Bar
     if bar then
-        ReskinProgressBar(bar, GetAccentColor())
+        ReskinProgressBar(bar, TrackerColor())
 
         local icon = bar.Icon
         if icon and icon:IsShown() and not icon.styled then
@@ -169,7 +169,7 @@ local function TimerBarHook(tracker, key)
     local timerBar = tracker.usedTimerBars and tracker.usedTimerBars[key]
     local bar = timerBar and timerBar.Bar
     if bar then
-        ReskinProgressBar(bar, GetAccentColor())
+        ReskinProgressBar(bar, TrackerColor())
     end
 end
 
@@ -180,7 +180,7 @@ function ObjectiveTracker:SkinObjectiveTracker()
     local objDb = self.db
     if not objDb or not objDb.Enabled then return end
 
-    local r, g, b = GetAccentColor()
+    local r, g, b = TrackerColor()
 
     local mainHeader = ObjectiveTrackerFrame.Header
     if mainHeader then
@@ -239,7 +239,7 @@ end
 function ObjectiveTracker:SkinModuleHeader(header)
     if not self.skinned then return end
 
-    ReskinHeader(header, GetAccentColor())
+    ReskinHeader(header, TrackerColor())
 end
 
 function ObjectiveTracker:SkinScenarioTracker()
@@ -255,7 +255,7 @@ function ObjectiveTracker:SkinScenarioTracker()
                 local bg = CreateFrame("Frame", nil, block, "BackdropTemplate")
                 bg:SetPoint("TOPLEFT", block.GlowTexture, 0, -2)
                 bg:SetPoint("BOTTOMRIGHT", block.GlowTexture, 4, 2)
-                bg:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8" })
+                bg:SetBackdrop({ bgFile = NRSKNUI.WhiteTexture })
                 bg:SetBackdropColor(0, 0, 0, 0.5)
                 bg:SetFrameLevel(block:GetFrameLevel() - 1)
                 bg:NUIAddBorders()
@@ -275,7 +275,7 @@ function ObjectiveTracker:SkinScenarioTracker()
                     if bar and not bar.bg then
                         local bg = CreateFrame("Frame", nil, bar, "BackdropTemplate")
                         bg:SetAllPoints(bar)
-                        bg:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8" })
+                        bg:SetBackdrop({ bgFile = NRSKNUI.WhiteTexture })
                         bg:SetBackdropColor(0, 0, 0, 0.25)
                         bg:SetFrameLevel(bar:GetFrameLevel() - 1)
                         bar.bg = bg
@@ -284,7 +284,7 @@ function ObjectiveTracker:SkinScenarioTracker()
                     if widgetFrame.CurrencyContainer and widgetFrame.currencyPool then
                         for currencyFrame in widgetFrame.currencyPool:EnumerateActive() do
                             if currencyFrame.Icon and not currencyFrame.styled then
-                                currencyFrame.Icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+                                currencyFrame.Icon:NUISetZoom()
                                 currencyFrame:NUIAddBorders()
                                 currencyFrame.styled = true
                             end
@@ -304,7 +304,7 @@ function ObjectiveTracker:SkinScenarioTracker()
                     frame.Border:SetTexture(nil)
                 end
                 if frame.Portrait and not frame.styled then
-                    frame.Portrait:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+                    frame.Portrait:NUISetZoom()
                     frame:NUIAddBorders()
                     frame.styled = true
                 end
@@ -333,7 +333,7 @@ function ObjectiveTracker:SkinScenarioTracker()
                 local timerbg = CreateFrame("Frame", nil, block, "BackdropTemplate")
                 timerbg:SetPoint("TOPLEFT", block.TimerBGBack, 6, -2)
                 timerbg:SetPoint("BOTTOMRIGHT", block.TimerBGBack, -6, -5)
-                timerbg:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8" })
+                timerbg:SetBackdrop({ bgFile = NRSKNUI.WhiteTexture })
                 timerbg:SetBackdropColor(0, 0, 0, 0.3)
                 timerbg:SetFrameLevel(block:GetFrameLevel() - 1)
                 block.timerbg = timerbg
@@ -341,7 +341,7 @@ function ObjectiveTracker:SkinScenarioTracker()
 
             if block.StatusBar then
                 block.StatusBar:SetStatusBarTexture(NRSKNUI.Media.Statusbars.NorskenUI)
-                block.StatusBar:SetStatusBarColor(GetAccentColor())
+                block.StatusBar:SetStatusBarColor(TrackerColor())
                 block.StatusBar:SetHeight(10)
             end
 
@@ -351,7 +351,7 @@ function ObjectiveTracker:SkinScenarioTracker()
             local bg = CreateFrame("Frame", nil, block, "BackdropTemplate")
             bg:SetPoint("TOPLEFT", block, 4, -2)
             bg:SetPoint("BOTTOMRIGHT", block, -4, 0)
-            bg:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8" })
+            bg:SetBackdrop({ bgFile = NRSKNUI.WhiteTexture })
             bg:SetBackdropColor(0, 0, 0, 0.5)
             bg:SetFrameLevel(block:GetFrameLevel() - 1)
             bg:NUIAddBorders()
@@ -367,7 +367,7 @@ function ObjectiveTracker:SkinScenarioTracker()
             local spellButton = spellFrame.SpellButton
             if spellButton and not spellButton.styled then
                 if spellButton.Icon then
-                    spellButton.Icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+                    spellButton.Icon:NUISetZoom()
                     spellButton:NUIAddBorders()
                 end
                 spellButton:SetNormalTexture(0)
@@ -420,7 +420,7 @@ function ObjectiveTracker:UpdateColors()
     local objDb = self.db
     if not objDb then return end
 
-    local r, g, b = GetAccentColor()
+    local r, g, b = TrackerColor()
 
     for header in pairs(self.coloredHeaders) do
         if header.Text then header.Text:SetTextColor(r, g, b) end

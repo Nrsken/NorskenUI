@@ -57,7 +57,9 @@ end
 -- Build the party death string for a unit with %name substitution and raid icons.
 function CombatMessage:FormatPartyDeath(unit)
     local mdb = self.db.PartyDeath
-    local name = NRSKNUI:GetSafeUnitName(unit) or UNKNOWN
+    -- a cross-realm name gets a (*) the message doesn't want
+    local name = NRSKNUI:SafeValue(GetUnitName(unit, false))
+    name = name and name:gsub('%s?%(%*%)', '') or UNKNOWN
 
     if mdb.UseClassColor then
         local classToken = select(2, UnitClass(unit))
@@ -233,11 +235,19 @@ function CombatMessage:UNIT_DIED(_, destGUID)
     if not NRSKNUI:InCombat() then return end
     if not self:IsPartyDeathLoadConditionMet() then return end
 
-    local unit = NRSKNUI:SafeGetUnitFromGUID(destGUID)
-    if not unit then return end
+    -- the player's own death never shows, the message is for the rest of the group
+    if not NRSKNUI:IsSafeValue(destGUID) or destGUID == NRSKNUI.MyGUID then return end
 
-    local isGroupUnit = unit:match('^party%d') or unit:match('^raid%d')
-    if not isGroupUnit then return end
+    -- UnitTokenFromGUID only ever answers target, mouseover or player, never a group token (unitframes rules)
+    local unit
+    for groupUnit in NRSKNUI:IterateGroupUnits() do
+        ---@diagnostic disable-next-line: secret-comparison
+        if UnitGUID(groupUnit) == destGUID then
+            unit = groupUnit
+            break
+        end
+    end
+    if not unit then return end
 
     -- UNIT_DIED fires for feign death xd, but we don't want to show a death message for that, ty M33shoq for info :).
     if UnitIsFeignDeath(unit) then return end

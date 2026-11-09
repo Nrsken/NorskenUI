@@ -19,10 +19,6 @@ move-folders:
 
 # the shared libraries ship with NorskenCore
 externals:
-    Libs/LibDBIcon-1.0: https://repos.wowace.com/wow/libdbicon-1-0/trunk/LibDBIcon-1.0
-    Libs/LibDataBroker-1.1:
-        url: https://github.com/tekkub/libdatabroker-1-1
-        tag: master
     Libs/LibDualSpec-1.0:
         url: https://github.com/AdiAddons/LibDualSpec-1.0.git
         branch: master

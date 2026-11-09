@@ -21,7 +21,6 @@ local AbbreviateLargeNumbers = AbbreviateLargeNumbers
 local format = string.format
 local select = select
 
-local GetClassColor = C_ClassColor and C_ClassColor.GetClassColor
 local WrapString = C_StringUtil and C_StringUtil.WrapString
 local TruncateWhenZero = C_StringUtil.TruncateWhenZero
 
@@ -73,12 +72,8 @@ local function SmartColor(unit, frame)
 	if UnitIsTapDenied(unit) or not UnitIsConnected(unit) then
 		return '|cff999999'
 	elseif UnitIsPlayer(unit) or UnitTreatAsPlayerForDisplay(unit) then
-		local color
-		local classToken = select(2, UnitClass(unit))
-
-		if classToken ~= nil then
-			color = GetClassColor(classToken)
-		end
+		-- a restricted unit's class is secret and so would be its markup, which a tag can't return
+		local color = not NRSKNUI:IsSecretUnit(unit) and NRSKNUI:GetClassColor(select(2, UnitClass(unit)))
 		if color then
 			return color:GenerateHexColorMarkup()
 		end
@@ -335,7 +330,7 @@ UF:RegisterTag('NUF:status', L['Status'], 'misc', HEALTH_EVENTS .. ' PLAYER_FLAG
 	-- Unit offline has highest priority.
 	if not UnitIsConnected(unit) then return L['Offline'] end
 
-	local deathStatus = (UnitIsGhost(unit) and L['Ghost']) or NRSKNUI:IsUnitReallyDead(unit) and DEAD
+	local deathStatus = (UnitIsGhost(unit) and L['Ghost']) or (UnitIsDead(unit) and not UnitIsFeignDeath(unit)) and DEAD -- feign death isn't dead
 	local awayStatus = (NRSKNUI:UnitIsDND(unit) and L['DND']) or (NRSKNUI:UnitIsAFK(unit) and L['AFK'])
 	if deathStatus and awayStatus then return deathStatus .. PLAYER_LIST_DELIMITER .. awayStatus end
 	return deathStatus or awayStatus or ''

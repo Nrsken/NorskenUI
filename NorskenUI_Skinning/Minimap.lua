@@ -70,10 +70,10 @@ function Map:StripBlizzMap()
     MinimapCluster.InstanceDifficulty:SetParent(Minimap)
     missionBtn:SetParent(Minimap)
 
-    Minimap:SetMaskTexture('Interface\\BUTTONS\\WHITE8X8')
+    Minimap:SetMaskTexture(NRSKNUI.WhiteTexture)
     -- Zones drawn by the hybrid map carry their own round mask.
     EventUtil.ContinueOnAddOnLoaded('Blizzard_HybridMinimap', function()
-        HybridMinimap.CircleMask:SetTexture('Interface\\BUTTONS\\WHITE8X8', 'CLAMPTOBLACKADDITIVE', 'CLAMPTOBLACKADDITIVE')
+        HybridMinimap.CircleMask:SetTexture(NRSKNUI.WhiteTexture, 'CLAMPTOBLACKADDITIVE', 'CLAMPTOBLACKADDITIVE')
     end)
     Minimap:SetArchBlobRingScalar(0)
     Minimap:SetQuestBlobRingScalar(0)
@@ -162,7 +162,7 @@ function Map:UpdateMinimapBorder()
     end
 
     Minimap.Border:SetScale(1 / self.db.Scale)
-    Minimap.Border:SetBackdrop({ edgeFile = 'Interface\\Buttons\\WHITE8X8', edgeSize = self.db.Border.Thickness, })
+    Minimap.Border:SetBackdrop({ edgeFile = NRSKNUI.WhiteTexture, edgeSize = self.db.Border.Thickness, })
     Minimap.Border:SetBackdropBorderColor(unpack(self.db.Border.Color))
 end
 

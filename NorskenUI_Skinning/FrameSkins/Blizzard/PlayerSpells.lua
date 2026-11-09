@@ -4,7 +4,6 @@ local NRSKNUI = _G.NorskenUI
 local Skinning = NRSKNUI:GetModule('Skinning')
 
 local ipairs = ipairs
-local unpack = unpack
 local hooksecurefunc = hooksecurefunc
 
 local GetSpellTexture = C_Spell and C_Spell.GetSpellTexture
@@ -44,7 +43,7 @@ local function SetSpellBookTextColoring(spellButton)
         view = _G.PlayerSpellsFrame.SpellBookFrame.PagedSpellsFrame['View' .. i]
         for _, child in ipairs({ view:GetChildren() }) do
             if child.Text and child.Text.SetTextColor then
-                child.Text:SetTextColor(unpack(NRSKNUI:GetPlayerClassColor()))
+                child.Text:SetTextColor(NRSKNUI:GetClassColor(NRSKNUI.MyClass):GetRGB())
 
                 local fontFace, titleSize = nameText:GetFont()
                 child.Text:SetFont(fontFace, titleSize + 10, 'OUTLINE')

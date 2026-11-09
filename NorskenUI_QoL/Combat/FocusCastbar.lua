@@ -4,7 +4,6 @@ local NRSKNUI = _G.NorskenUI
 local FocusCastbar = NRSKNUI:GetModule('FocusCastbar')
 local L = NRSKNUI.Libs.AL
 local Anchors = NRSKNUI.Anchors
-local LCG = NRSKNUI.Libs.LCG
 
 local CreateFrame = CreateFrame
 local UnitExists = UnitExists
@@ -17,13 +16,11 @@ local UnitNameFromGUID, UnitClassFromGUID = UnitNameFromGUID, UnitClassFromGUID
 local GetRaidTargetIndex, SetRaidTargetIconTexture = GetRaidTargetIndex, SetRaidTargetIconTexture
 local GetTime, random = GetTime, math.random
 local pairs, ipairs, select = pairs, ipairs, select
-local unpack = unpack
 
 local CreateDuration = C_DurationUtil and C_DurationUtil.CreateDuration
 local GetSpellCooldownDuration = C_Spell and C_Spell.GetSpellCooldownDuration
 local IsSpellImportant = C_Spell and C_Spell.IsSpellImportant
 local IsSpellKnownOrInSpellBook = C_SpellBook and C_SpellBook.IsSpellKnownOrInSpellBook
-local GetClassColor = C_ClassColor and C_ClassColor.GetClassColor
 local EvaluateColorValueFromBoolean = C_CurveUtil and C_CurveUtil.EvaluateColorValueFromBoolean
 local EvaluateColorFromBoolean = C_CurveUtil and C_CurveUtil.EvaluateColorFromBoolean
 
@@ -119,7 +116,7 @@ function FocusCastbar:CreateFrame()
 
     -- Clamps the tick to the bar, so a kick that comes up after the cast ends is not drawn.
     local tickMask = castBar:CreateMaskTexture()
-    tickMask:SetTexture('Interface\\BUTTONS\\WHITE8X8', 'CLAMPTOBLACKADDITIVE', 'CLAMPTOBLACKADDITIVE')
+    tickMask:SetTexture(NRSKNUI.WhiteTexture, 'CLAMPTOBLACKADDITIVE', 'CLAMPTOBLACKADDITIVE')
     self.tickMask = tickMask
 
     -- Create the tick that indicates when the interrupt is ready and mask it to the cast bar.
@@ -442,8 +439,7 @@ function FocusCastbar:UpdateTargetText()
 
     self.targetText:SetText(name)
 
-    local class = UnitSpellTargetClass('focus')
-    local color = class ~= nil and GetClassColor(class)
+    local color = NRSKNUI:GetClassColor(UnitSpellTargetClass('focus'))
     if color then
         self.targetText:SetTextColor(color:GetRGB())
     else
@@ -478,25 +474,19 @@ end
 
 -- Important Spell Glow --
 
+-- where LibCustomGlow keeps each glow type's frame when started without a key
+local GLOW_FRAMES = { autocast = '_AutoCastGlow', button = '_ButtonGlow', proc = '_ProcGlow' }
+
 ---@return Frame?
 function FocusCastbar:GetGlowFrame()
-    if self.db.ImportantGlow.GlowType == 'autocast' then
-        return self.coreFrame._AutoCastGlow
-    end
-    return self.coreFrame._PixelGlow
+    return self.coreFrame[GLOW_FRAMES[self.db.ImportantGlow.GlowType] or '_PixelGlow']
 end
 
 ---The glow is started once and then driven by alpha, restarting it per cast would restart the animation and leak a second glow frame of the other type.
 function FocusCastbar:InitGlow()
     if self.glowInitialized then return end
 
-    local glow = self.db.ImportantGlow
-    if glow.GlowType == 'autocast' then
-        LCG.AutoCastGlow_Start(self.coreFrame, glow.GlowColor, glow.GlowLines, glow.GlowFrequency, glow.GlowScale, 1, 1)
-    else
-        LCG.PixelGlow_Start(self.coreFrame, glow.GlowColor, glow.GlowLines, glow.GlowFrequency, glow.GlowLength,
-            glow.GlowThickness, 0, 0, glow.GlowBorder)
-    end
+    NRSKNUI:StartGlow(self.coreFrame, self.db.ImportantGlow)
 
     local glowFrame = self:GetGlowFrame()
     if glowFrame then glowFrame:SetAlpha(0) end
@@ -523,8 +513,7 @@ end
 function FocusCastbar:ResetGlow()
     if not self.coreFrame then return end
 
-    LCG.PixelGlow_Stop(self.coreFrame)
-    LCG.AutoCastGlow_Stop(self.coreFrame)
+    NRSKNUI:StopGlow(self.coreFrame)
     self.glowInitialized = false
 end
 
@@ -703,7 +692,7 @@ function FocusCastbar:SetInterruptText(interruptedBy)
     if interruptedBy ~= nil then
         local name = UnitNameFromGUID(interruptedBy)
         local class = select(2, UnitClassFromGUID(interruptedBy))
-        local color = (class and GetClassColor(class)) or NRSKNUI.Colors.white
+        local color = NRSKNUI:GetClassColor(class) or NRSKNUI.Colors.white
         name = color:WrapTextInColorCode(name)
 
         self.castText:SetFormattedText(INTERRUPTED_BY, name)
@@ -841,7 +830,7 @@ end
 ---The player stands in for a spell target. Kept separate so a settings change mid preview re-applies it without waiting for the next cycle.
 function FocusCastbar:ShowPreviewTarget()
     self.targetText:SetText(NRSKNUI.MyName)
-    self.targetText:SetTextColor(unpack(NRSKNUI:GetPlayerClassColor()))
+    self.targetText:SetTextColor(NRSKNUI:GetClassColor(NRSKNUI.MyClass):GetRGB())
     self.targetText:Show()
 
     if self.db.TargetMarker.Enabled then

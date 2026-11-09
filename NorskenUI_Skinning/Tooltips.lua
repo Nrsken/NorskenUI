@@ -42,7 +42,6 @@ local FACTION_ALLIANCE = FACTION_ALLIANCE
 local FACTION_HORDE = FACTION_HORDE
 local MOUNT = MOUNT
 
-local GetClassColor = C_ClassColor and C_ClassColor.GetClassColor
 local GetAuraDataByIndex = C_UnitAuras and C_UnitAuras.GetAuraDataByIndex
 local GetMountFromSpell = C_MountJournal and C_MountJournal.GetMountFromSpell
 local GetMountInfoByID = C_MountJournal and C_MountJournal.GetMountInfoByID
@@ -229,24 +228,24 @@ local function ResolveUnit(unitGUID)
 end
 
 ---@param tooltip Tooltip
----@return table colorRGBA
+---@return ColorMixin
 local function GetUnitColor(tooltip)
     local tooltipData = tooltip.processingInfo and tooltip.processingInfo.tooltipData
     local unitGUID = tooltipData and tooltipData.guid
     if unitGUID then
         -- Unit is a player, no unit token needed
-        local classToken = select(2, GetPlayerInfoByGUID(unitGUID))
-        if classToken ~= nil then
-            return GetClassColor(classToken)
+        local classColor = NRSKNUI:GetClassColor(select(2, GetPlayerInfoByGUID(unitGUID)))
+        if classColor then
+            return classColor
         end
 
         local unit = ResolveUnit(unitGUID)
         if not issecretvalue(unit) and unit ~= nil then
             -- Unit is displayed as a player, e.g. a follower dungeon companion
             if UnitIsPlayer(unit) or UnitTreatAsPlayerForDisplay(unit) then
-                classToken = select(2, UnitClass(unit))
-                if classToken ~= nil then
-                    return GetClassColor(classToken)
+                classColor = NRSKNUI:GetClassColor(select(2, UnitClass(unit)))
+                if classColor then
+                    return classColor
                 end
             elseif UnitIsMinion(unit) then
                 -- Unit is a pet/minion
@@ -648,8 +647,8 @@ function Tooltips:OnEnable()
     if self.db.SkinAuraContainer then
         AuraContainerInbound.SetTooltipBackdrop({
             backdropInfo = {
-                bgFile   = [[Interface\Buttons\WHITE8X8]],
-                edgeFile = [[Interface\Buttons\WHITE8X8]],
+                bgFile   = NRSKNUI.WhiteTexture,
+                edgeFile = NRSKNUI.WhiteTexture,
                 edgeSize = 1,
                 insets   = { left = 1, right = 1, top = 1, bottom = 1 },
             },
