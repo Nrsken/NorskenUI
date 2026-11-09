@@ -91,7 +91,6 @@ local window = GUI:CreateGUIWindow({
         end,
     },
     onShow = function()
-        -- one settings window at a time, the previews follow a single page
         NRSKNUI.GUIOpen = true
         if NRSKNUI.PreviewManager then
             NRSKNUI.PreviewManager:SetGUIOpen(true)
@@ -280,5 +279,4 @@ window:AddFooterSocial({
 
 -- The window already provides Show/Hide/Toggle/IsShown/ShowPage, so it is the public handle.
 NRSKNUI.GUIFrame = window
-NRSKNUI.OptionWindows = { window } -- every window the anchors step around
 NRSKNUI.PageWindows = {}           -- pages living in another window than the main one

@@ -25,6 +25,8 @@ end
 -- Options --
 
 local OPTIONS = 'NorskenUI_Options'
+local SHARED_OPTIONS = 'NorskenCore_Options'
+local LOAD_ORDER = { SHARED_OPTIONS, OPTIONS }
 
 ---The settings window lives in a LoadOnDemand addon, loaded the first time it's opened.
 ---@return boolean loaded
@@ -38,12 +40,16 @@ local function LoadOptions()
     end
 
     -- a disabled options folder would leave /nui doing nothing, so turn it back on for this character
-    C_AddOns.EnableAddOn('NorskenCore_Options', NRSKNUI.MyGUID)
+    C_AddOns.EnableAddOn(SHARED_OPTIONS, NRSKNUI.MyGUID)
     C_AddOns.EnableAddOn(OPTIONS, NRSKNUI.MyGUID)
-    local loaded, failure = C_AddOns.LoadAddOn(OPTIONS)
-    if not loaded then
-        NRSKNUI:Print(OPTIONS .. ': ' .. (_G['ADDON_' .. tostring(failure)] or tostring(failure)))
-        return false
+
+    -- the TOC only lists it as optional (see Bootstrap.lua), which doesn't load a LoadOnDemand addon, so it's loaded first
+    for _, name in ipairs(LOAD_ORDER) do
+        local loaded, failure = C_AddOns.LoadAddOn(name)
+        if not loaded then
+            NRSKNUI:Print(name .. ': ' .. (_G['ADDON_' .. tostring(failure)] or tostring(failure)))
+            return false
+        end
     end
 
     -- folders from different releases mixed together break in odd ways, so say so up front

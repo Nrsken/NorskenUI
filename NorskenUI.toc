@@ -1,12 +1,15 @@
 ## Interface: 120105, 120107
-## Title: |cffe51039Norsken|r|cffb3b3b3UI|r
+## Title: |cffd9ff63Norsken|r|cffb3b3b3UI|r
+## Group: NorskenUI
+## Notes: Settings window, profiles and the base the NorskenUI modules build on
 ## Category: |cffe51039Norsken|r |cffb3b3b3Addons|r
 ## Version: @project-version@
 ## Author: Norsken
 ## SavedVariables: NorskenUIDB
 ## Dependencies: NorskenCore
+## X-NorskenCore-Minimum: 1
 ## OptionalDeps: RaiderIO
-## IconTexture: Interface\AddOns\NorskenUI\Media\Logo\LogoRed.png
+## IconTexture: Interface\AddOns\NorskenUI\Media\Logo\LogoUI.png
 ## X-Curse-Project-ID: 1460316
 ## X-Wago-ID: 96ELgPNg
 

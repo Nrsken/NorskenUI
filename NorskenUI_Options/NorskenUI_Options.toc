@@ -1,14 +1,16 @@
 ## Interface: 120105, 120107
-## Title: |cffe51039Norsken|r|cffb3b3b3UI|r Options
+## Title: |cffd9ff63Norsken|r|cffb3b3b3UI Options|r
 ## Notes: Settings pages for every NorskenUI module. Stores no data.
 ## Category: |cffe51039Norsken|r |cffb3b3b3Addons|r
 ## Group: NorskenUI
 ## Version: @project-version@
 ## Author: Norsken
-## IconTexture: Interface\AddOns\NorskenUI\Media\Logo\LogoRed.png
+## IconTexture: Interface\AddOns\NorskenUI\Media\Logo\LogoUI.png
 ## LoadOnDemand: 1
-## Dependencies: NorskenUI, NorskenCore_Options
-## OptionalDeps: NorskenUI_UnitFrames, NorskenUI_Skinning, NorskenUI_QoL
+## OptionalDeps: NorskenCore, NorskenCore_Options, NorskenUI, NorskenUI_UnitFrames, NorskenUI_Skinning, NorskenUI_QoL
+
+# says why when NorskenCore is missing or off, see the file
+Bootstrap.lua [Bootstrap]
 
 Locales\Locales.xml
 

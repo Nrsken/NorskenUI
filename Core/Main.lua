@@ -16,7 +16,7 @@ local after = C_Timer and C_Timer.After
 
 local profilesDiffered -- said at login, a message this early can go unseen
 
-local LDBIconPath = 'Interface\\AddOns\\NorskenUI\\Media\\Logo\\logocookingsPT1128x128OTBRED.png'
+local LDBIconPath = 'Interface\\AddOns\\NorskenUI\\Media\\Logo\\LogoUI.png'
 
 ---Print message with class colored addon name prefix
 function NRSKNUI:Print(msg)
