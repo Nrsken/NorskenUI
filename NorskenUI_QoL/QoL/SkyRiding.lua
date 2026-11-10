@@ -7,7 +7,7 @@ function SkyRiding:UpdateDB() self.db = self.namespace.profile end
 local Anchors = NRSKNUI.Anchors
 local L = NRSKNUI.Libs.AL
 local kajiGUI = NRSKNUI.GUI
-local Pixel = NRSKNUI.Libs.KAJI.Pixel
+local Pixel = NRSKNUI.Pixel
 
 local UnregisterStateDriver = UnregisterStateDriver
 local RegisterStateDriver = RegisterStateDriver

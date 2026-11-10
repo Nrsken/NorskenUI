@@ -72,8 +72,8 @@ local function SmartColor(unit, frame)
 	if UnitIsTapDenied(unit) or not UnitIsConnected(unit) then
 		return '|cff999999'
 	elseif UnitIsPlayer(unit) or UnitTreatAsPlayerForDisplay(unit) then
-		-- a restricted unit's class is secret and so would be its markup, which a tag can't return
-		local color = not NRSKNUI:IsSecretUnit(unit) and NRSKNUI:GetClassColor(select(2, UnitClass(unit)))
+		-- a secret class passes through: GetClassColor hands it to Blizzard and the markup stays secret
+		local color = NRSKNUI:GetClassColor(select(2, UnitClass(unit)))
 		if color then
 			return color:GenerateHexColorMarkup()
 		end

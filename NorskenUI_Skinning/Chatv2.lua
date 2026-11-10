@@ -344,7 +344,7 @@ function CHAT:BuildCopyChatFrame()
 
     local closeTex = closeBtn:CreateTexture(nil, "ARTWORK")
     closeTex:SetAllPoints()
-    closeTex:SetTexture("Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\NorskenCustomCrossv3.png")
+    closeTex:SetTexture(NRSKNUI.Media.GUITextures .. 'NorskenCustomCrossv3.png')
     closeTex:SetVertexColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 0.7)
     closeTex:SetRotation(math.rad(45))
     closeTex:SetTexelSnappingBias(0)
@@ -2079,7 +2079,7 @@ function CHAT:SetupDockManager()
     self:OnFCFDock_ScrollToSelectedTab(docker)
 end
 
-local ARROW_TEX = "Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\collapse.tga"
+local ARROW_TEX = NRSKNUI.Media.GUITextures .. 'collapse.tga'
 function CHAT:StyleOverflowButton()
     local btn = _G.GeneralDockManagerOverflowButton
     if not btn then return end

@@ -7,7 +7,7 @@ local math_rad = math.rad
 
 local STEPPER_ARROW_SIZE = 20
 local ARROW_ATLAS = 'CovenantSanctum-Renown-Arrow-Depressed'
-local ARROW_TEXTURE = 'Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\collapse.tga'
+local ARROW_TEXTURE = NRSKNUI.Media.GUITextures .. 'collapse.tga'
 
 local ARROW_ROTATION = { left = 0, up = math_rad(-90), down = math_rad(90), right = math_rad(180), }
 

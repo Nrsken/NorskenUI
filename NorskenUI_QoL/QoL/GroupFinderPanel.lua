@@ -40,7 +40,7 @@ local ICON_BUTTON_WIDTH = 24
 
 -- Search row.
 local BUTTON_HEIGHT = 24
-local CROSS_TEXTURE = 'Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\NorskenCustomCrossv3.png'
+local CROSS_TEXTURE = NRSKNUI.Media.GUITextures .. 'NorskenCustomCrossv3.png'
 local CROSS_ICON = 12
 
 -- Dungeon grid.
@@ -105,7 +105,7 @@ local SORT_MODES = {
 }
 local DROPDOWN_LABEL_HEIGHT = 14
 local DROPDOWN_BUTTON_HEIGHT = 24
-local ARROW_TEXTURE = 'Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\collapse.tga'
+local ARROW_TEXTURE = NRSKNUI.Media.GUITextures .. 'collapse.tga'
 local ARROW_ICON = 16
 
 -- Vault footer.

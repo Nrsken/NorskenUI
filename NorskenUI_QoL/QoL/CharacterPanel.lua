@@ -6,7 +6,7 @@ local L = NRSKNUI.Libs.AL
 function CharacterPanel:UpdateDB() self.db = self.namespace.profile end
 
 local Theme = NRSKNUI.Theme
-local Pixel = NRSKNUI.Libs.KAJI.Pixel
+local Pixel = NRSKNUI.Pixel
 
 local string_match, string_gsub, string_find = string.match, string.gsub, string.find
 local math_abs, math_max, math_min = math.abs, math.max, math.min

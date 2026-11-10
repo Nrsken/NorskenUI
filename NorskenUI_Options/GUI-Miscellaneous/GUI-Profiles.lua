@@ -22,7 +22,7 @@ local SPEC_ICON_SIZE = 22
 local RADIO_ROW_HEIGHT = 32
 local RADIO_INDENT = 22 -- the dot plus its gap, so nested rows line up under the option title
 local GROUP_GAP = 12
-local TEX = 'Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\'
+local TEX = NRSKNUI.Media.GUITextures
 local DELETE_COLOR = { 1, 0, 0 }
 
 local MODES = {

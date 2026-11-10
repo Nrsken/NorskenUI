@@ -2,7 +2,7 @@
 local NRSKNUI = _G.NorskenUI
 ---@class SkinningModule
 local Skinning = NRSKNUI:GetModule('Skinning')
-local Pixel = NRSKNUI.Libs.KAJI.Pixel
+local Pixel = NRSKNUI.Pixel
 
 local Mixin = Mixin
 local select = select

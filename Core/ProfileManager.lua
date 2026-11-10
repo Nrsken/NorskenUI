@@ -1,5 +1,5 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
+local NRSKNUI = _G.NorskenUI
 local ProfileManager = {}
 NRSKNUI.ProfileManager = ProfileManager
 local AceSerializer = NRSKNUI.Libs.AS
@@ -996,14 +996,6 @@ local function SharedBlock(data)
     return { globalMedia = block.globalMedia, Colors = block.Colors }
 end
 
----Goes after everything else in an import that can fail: an error here would leave the account half changed.
----Modules and colors refresh with the profile switch, registered fonts only hear about real ones.
----@param block table
-local function ApplyShared(block)
-    NRSKNUI:ApplySharedSettings(block)
-    NRSKNUI:DeferUntilUnrestricted(0, function() NRSKNUI:RefreshFontStyles() end)
-end
-
 ---An imported profile carries every module's settings inside it at their old path, so hand them over.
 ---The import replaces the whole profile, so a namespace it carries nothing for starts over.
 ---@param profileName string
@@ -1292,8 +1284,9 @@ function ProfileManager:ImportProfile(importString, targetName, activate, applyS
 
     NRSKNUI.db.profiles[finalName] = exportData.d -- new name, so no profile hop or refresh to write it
     ImportIntoNamespaces(finalName)
+    -- last, after everything that can fail: an error here would leave the account half changed
     if block then
-        ApplyShared(block)
+        NRSKNUI:ApplySharedSettings(block)
     end
     if activate then
         self:UseProfile(finalName)
@@ -1319,11 +1312,6 @@ function ProfileManager:RefreshAllModules()
 
     -- a profile switch drags every namespace onto the profile's own settings
     PointNamespaces(CurrentRole())
-
-    -- Shared state the modules read during ApplySettings.
-    SafeCall(NRSKNUI, 'LoadCustomColors')
-    SafeCall(NRSKNUI, 'RefreshCurves')
-    SafeCall(NRSKNUI, 'RefreshAuraDurationFormatter')
 
     -- Every module points at the new profile before anything is allowed to read a module db.
     -- AceDB strips default-valued keys out of the old profile table in place during SetProfile, so a
@@ -1420,7 +1408,7 @@ function NorskenUIAPI.ImportProfile(profileString, profileKey, methodKey)
         end
         ImportIntoNamespaces(profileKey)
         if block then
-            ApplyShared(block)
+            NRSKNUI:ApplySharedSettings(block)
         end
         if isActive then
             ProfileManager:RefreshAllModules()

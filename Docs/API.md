@@ -214,7 +214,7 @@ These wrap the native `SetSize`/`SetWidth`/`SetHeight`/`SetPoint` and snap numer
 values to the physical pixel grid so edges stay crisp at any resolution. They are
 injected onto every frame, texture, and font string.
 
-Snapping is driven by Kaji's `Pixel.GetMult()` (`NorskenCore/Libs/LibKaji-1.0/Core/Pixel.lua`),
+Snapping is driven by Core's `Pixel.GetMult()` (`NorskenCore/Core/Pixel.lua`),
 the size of one device pixel in UI units: the perfect-pixel scale divided by UIParent's effective
 scale, snapped to exactly 1 when it lands within 0.0005 of it.
 

@@ -54,5 +54,4 @@ NRSKNUI.Libs = {
     LD = _G.LibStub('LibDeflate'),
     LDB = _G.LibStub('LibDataBroker-1.1'),
     LDS = _G.LibStub('LibDualSpec-1.0'),
-    KAJI = _G.LibStub('LibKaji-1.0'),
 }

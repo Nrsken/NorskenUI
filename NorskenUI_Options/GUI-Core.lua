@@ -13,10 +13,10 @@ NRSKNUI.GrowthOptions = {
     { value = 'RIGHT', text = L['Right'] },
 }
 
-local LOGO = 'Interface\\AddOns\\NorskenUI\\Media\\Logo\\'
-local TEX = 'Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\'
-local SOCIAL = 'Interface\\AddOns\\NorskenUI\\Media\\SupportLogos\\'
-local LUCIDE = 'Interface\\AddOns\\NorskenCore\\Media\\Lucide\\'
+local LOGO = 'Interface\\AddOns\\NorskenCore\\Media\\Logo\\'
+local UI_MEDIA = 'Interface\\AddOns\\NorskenUI\\Media\\Logo\\'
+local TEX = NRSKNUI.Media.GUITextures
+local SOCIAL = 'Interface\\AddOns\\NorskenCore\\Media\\SupportLogos\\'
 
 NRSKNUI.GUIFrame.ReloadText = L['Disabling/Enabling this requires a reload to take full effect.']
 
@@ -52,7 +52,7 @@ function NRSKNUI.GUILogoConfig()
                 alpha = 0.7
             },
             {
-                texture = LOGO .. 'logocookingsPT3128x128OT.png',
+                texture = UI_MEDIA .. 'logocookingsPT3128x128OT.png',
                 size = 128,
                 anchor = { 'LEFT', 1, 'RIGHT', -62, -4 },
                 color = 'textSecondary'
@@ -111,59 +111,6 @@ local window = GUI:CreateGUIWindow({
 NRSKNUI.GUIOpen = false
 
 window:AddHeaderButton({
-    icon = LUCIDE .. 'x.png',
-    --glow = TEX .. 'NorskenCustomCrossv3_glow.png',
-    size = 32,
-    --rotation = 45,
-    onClick = function()
-        window:Hide()
-    end,
-    tooltip = L['Close Settings'],
-})
-window:AddHeaderButton({
-    icon = LUCIDE .. 'house.png',
-    --glow = TEX .. 'HomeButtonv2_glow.png',
-    size = 32,
-    onClick = function()
-        window:ShowPage('homePage')
-    end,
-    tooltip = L['Open Home Page'],
-})
-window:AddHeaderButton({
-    icon = LUCIDE .. 'anchor.png',
-    --glow = TEX .. 'anchor_glow.png',
-    size = 32,
-    onClick = function()
-        if NRSKNUI.Anchors then
-            NRSKNUI.Anchors:Toggle()
-        end
-    end,
-    tooltip = L['Open Anchors'],
-})
-window:AddHeaderButton({
-    icon = LUCIDE .. 'paint-bucket.png',
-    --glow = TEX .. 'fill_glow.png',
-    size = 32,
-    onClick = function()
-        window:ShowPage('themePage')
-    end,
-    tooltip = L['Open Theme Settings'],
-})
-window:AddHeaderButton({
-    icon = LUCIDE .. 'eye.png',
-    --glow = TEX .. 'eye_glow.png',
-    size = 32,
-    onClick = function(btn)
-        local manager = NRSKNUI.PreviewManager
-        if not manager then return end
-
-        manager:SetForceAll(not manager:IsForceAll())
-        btn:SetActive(manager:IsForceAll())
-    end,
-    tooltip = L['Preview Every Display'],
-})
-
---[[ window:AddHeaderButton({
     icon = TEX .. 'NorskenCustomCrossv3.png',
     glow = TEX .. 'NorskenCustomCrossv3_glow.png',
     size = 22,
@@ -214,7 +161,7 @@ window:AddHeaderButton({
         btn:SetActive(manager:IsForceAll())
     end,
     tooltip = L['Preview Every Display'],
-}) ]]
+})
 
 -- Previews follow the open page, so the manager needs to hear about every page change. The host is
 -- hooked rather than window:ShowPage, since the sidebar shows pages through the host directly.

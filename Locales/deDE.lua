@@ -116,7 +116,7 @@ L['Fonts, textures and colors now apply to every profile. Yours differed, so che
 L['Source profile name cannot be empty'] = "Der Name des Quellprofils darf nicht leer sein"
 L['Source profile: %s, does not exist'] = "Quellprofil %s existiert nicht"
 
--- LibKaji (its strings resolve from Core: the library runs outside the options window too)
+-- KajiGUI (its strings resolve from Core: it runs outside the options window too)
 L['Combat'] = "Kampf"
 L['Out of Combat'] = "Außerhalb des Kampfes"
 

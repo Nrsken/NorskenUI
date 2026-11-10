@@ -5,7 +5,7 @@ local UF = NRSKNUI:GetModule('UnitFrames')
 ---@class NorskenUF
 local oUF = NRSKNUI.oUF
 local Anchors = NRSKNUI.Anchors
-local Pixel = NRSKNUI.Libs.KAJI.Pixel
+local Pixel = NRSKNUI.Pixel
 
 local UnregisterStateDriver = UnregisterStateDriver
 local format, upper = string.format, string.upper

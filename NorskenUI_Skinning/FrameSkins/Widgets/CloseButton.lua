@@ -7,7 +7,7 @@ local Mixin = Mixin
 local math_max = math.max
 local math_rad = math.rad
 
-local CROSS_TEXTURE = 'Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\NorskenCustomCrossv3.png'
+local CROSS_TEXTURE = NRSKNUI.Media.GUITextures .. 'NorskenCustomCrossv3.png'
 
 local SkinnedCloseButtonMixin = {}
 

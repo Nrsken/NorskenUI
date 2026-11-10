@@ -12,8 +12,8 @@ local EXPAND_ATLAS = 'UI-QuestTrackerButton-Secondary-Expand'
 local COLLAPSE_ATLAS = 'UI-QuestTrackerButton-Secondary-Collapse'
 local HIGHTLIGHT_ATLAS = 'UI-QuestTrackerButton-Yellow-Highlight'
 
-local PLUS_TEXTURE = 'Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\plus-sign.png'
-local MINUS_TEXTURE = 'Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\minus-sign.png'
+local PLUS_TEXTURE = NRSKNUI.Media.GUITextures .. 'plus-sign.png'
+local MINUS_TEXTURE = NRSKNUI.Media.GUITextures .. 'minus-sign.png'
 local PLUS_MINUS_SIZE = 14
 local PLUS_MINUS_REST_ALPHA = 0.85
 local PLUS_MINUS_HOVER_MULT = 1.25

@@ -8,7 +8,7 @@ local Mixin = Mixin
 local math_max = math.max
 local math_rad = math.rad
 
-local ARROW_TEXTURE = 'Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\up-right-arrow.png'
+local ARROW_TEXTURE = NRSKNUI.Media.GUITextures .. 'up-right-arrow.png'
 
 local SkinnedMinMaxButtonMixin = {}
 

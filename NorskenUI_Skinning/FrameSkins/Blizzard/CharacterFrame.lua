@@ -33,7 +33,7 @@ local FLYOUT_POS = {
 local NEW_SET_ICON = 514607
 
 local AMOUNT_BUTTON_GAP = 2
-local LONG_ARROW_TEXTURE = 'Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\right-arrow.png'
+local LONG_ARROW_TEXTURE = NRSKNUI.Media.GUITextures .. 'right-arrow.png'
 local LONG_ARROW_SIZE = 32
 
 local OLD_ARROW_ATLASES = { ['Options_ListExpand_Right'] = true, ['Options_ListExpand_Right_Expanded'] = true, }

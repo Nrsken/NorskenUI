@@ -16,7 +16,6 @@
 ---@field LD LibDeflate
 ---@field LDB LibDataBroker-1.1
 ---@field LDS LibDualSpec-1.0
----@field KAJI LibKaji-1.0
 
 ---@class LibDualSpec-1.0
 ---@field currentSpec number 0 until the character has a specialization

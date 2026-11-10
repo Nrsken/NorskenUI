@@ -1,6 +1,6 @@
 ---@class NRSKNUI
-local NRSKNUI = select(2, ...)
-local Pixel = NRSKNUI.Libs.KAJI.Pixel
+local NRSKNUI = _G.NorskenUI
+local Pixel = NRSKNUI.Pixel
 
 local UIParent = UIParent
 

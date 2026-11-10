@@ -10,7 +10,7 @@ local GameTooltip = GameTooltip
 local ipairs = ipairs
 local format = string.format
 
-local MEDIA = 'Interface\\AddOns\\NorskenCore\\Media\\GUITextures\\'
+local MEDIA = NRSKNUI.Media.GUITextures
 local WINDOW_NAME = 'NRSKNUI_QuestTrackerWindow'
 local WIDTH = 240
 local PADDING = 6
