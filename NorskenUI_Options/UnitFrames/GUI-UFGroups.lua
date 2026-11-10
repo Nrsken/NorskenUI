@@ -187,7 +187,7 @@ local function BuildGroupSection(page, uDB, unit)
     local column = sorted and 1 / 3 or 0.5
 
     local sortCard = page:Card(L['Grouping & Sorting'], 'unitOn')
-    local sortRow = sortCard:Row(byRole and rowH or rowHL, byRole and nil or 0)
+    local sortRow = sortCard:Row(byRole and rowH or rowHL, not byRole and 0 or nil)
     sortRow:Dropdown(L['Group By'], {
         width = column,
         options = SortByOptions,

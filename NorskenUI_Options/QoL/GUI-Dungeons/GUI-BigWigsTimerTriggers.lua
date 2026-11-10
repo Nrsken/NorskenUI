@@ -611,7 +611,7 @@ local function BuildTriggerTab(page, instanceId, trigger, kind)
             return
         end
 
-        local remainingRow = c:Row(trigger.UseRemaining and rowH or rowHL, trigger.UseRemaining and nil or 0)
+        local remainingRow = c:Row(trigger.UseRemaining and rowH or rowHL, not trigger.UseRemaining and 0 or nil)
 
         remainingRow:Checkbox(L['Remaining Time'], {
             width = 0.5,
