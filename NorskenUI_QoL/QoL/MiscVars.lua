@@ -54,6 +54,13 @@ MiscVars.DEFS = {
         type = 'boolean',
         default = true,
     },
+    {
+        key = 'tooltipShowAuraCasterNames',
+        label = L['Show Aura Caster Names'],
+        description = L['Display the names of aura casters in tooltips.'],
+        type = 'boolean',
+        default = false,
+    },
     -- Dev CVars
     {
         key = 'addonPvPMatchRestrictionsForced',
