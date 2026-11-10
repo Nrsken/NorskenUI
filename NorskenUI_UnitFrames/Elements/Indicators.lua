@@ -70,7 +70,7 @@ end
 ---@param element oUF.PvPIndicator
 ---@param status string? deprecated by oUF
 local function PvPPostUpdate(element, _, status)
-    element:NUISetPixelSize(element.nuiSize, element.nuiSize)
+    element:NCSetSize(element.nuiSize, element.nuiSize)
     if not UnitFrameUtil then return end
 
     element:Show()
@@ -329,8 +329,8 @@ UF.Elements.Indicators = {
 
         -- Own overlay above the text container so icons never sit behind the name.
         local container = CreateFrame('Frame', nil, self)
-        container:NUISetPixelPoint('TOPLEFT', self, 'TOPLEFT', 0, 0)
-        container:NUISetPixelPoint('BOTTOMRIGHT', self, 'BOTTOMRIGHT', 0, 0)
+        container:NCSetPoint('TOPLEFT', self, 'TOPLEFT', 0, 0)
+        container:NCSetPoint('BOTTOMRIGHT', self, 'BOTTOMRIGHT', 0, 0)
         container:SetFrameStrata('MEDIUM')
         self.IndicatorContainer = container
         self.nuiIndicatorHosts = {}
@@ -370,9 +370,9 @@ UF.Elements.Indicators = {
             local db = uDB.Indicators[def.key]
             local tex = self[def.element]
 
-            tex:NUISetPixelSize(db.Size, db.Size)
+            tex:NCSetSize(db.Size, db.Size)
             tex:ClearAllPoints()
-            tex:NUISetPixelPoint(db.Position.AnchorFrom, container, db.Position.AnchorTo, db.Position.XOffset, db.Position.YOffset)
+            tex:NCSetPoint(db.Position.AnchorFrom, container, db.Position.AnchorTo, db.Position.XOffset, db.Position.YOffset)
             ApplyArt(tex, def, db)
 
             if def.configure then def.configure(tex, db, self) end
@@ -408,7 +408,7 @@ UF.Elements.Indicators = {
                 end
 
                 -- 12.1.5 shrinks a hidden role icon to 1px wide and hides PvP through alpha.
-                tex:NUISetPixelSize(db.Size, db.Size)
+                tex:NCSetSize(db.Size, db.Size)
                 tex:SetAlpha(1)
                 tex:Show()
             elseif tex.Override then

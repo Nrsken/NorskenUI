@@ -28,7 +28,7 @@ end
 ---@param S SkinningModule
 ---@param popup Frame
 local function SkinStaticPopup(S, popup)
-    popup:NUIStripTextures('Keyed')
+    popup:NCStripTextures('Keyed')
     S:CreatePanelBackdrop(popup)
 
     -- The button count varies per dialog, so walk until one is missing rather than assume four.
@@ -58,7 +58,7 @@ local function SkinStaticPopup(S, popup)
     local itemFrame = GetElement(popup, 'ItemFrame')
     if itemFrame then
         local nameFrame = itemFrame.NameFrame or GetElement(popup, 'ItemFrameNameFrame')
-        if nameFrame then nameFrame:NUIStripTextures() end
+        if nameFrame then nameFrame:NCStripTextures() end
 
         S:HandleItemButton(itemFrame.Item or itemFrame)
     end

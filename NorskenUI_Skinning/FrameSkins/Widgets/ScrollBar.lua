@@ -105,9 +105,9 @@ function Skinning:HandleTrimScrollBar(scrollBar)
     if not scrollBar or scrollBar.NUISkinned then return end
     scrollBar.NUISkinned = true
 
-    scrollBar:NUIStripTextures()
-    if scrollBar.Background then scrollBar.Background:NUIStripTextures() end
-    if scrollBar.Track then scrollBar.Track:NUIStripTextures() end
+    scrollBar:NCStripTextures()
+    if scrollBar.Background then scrollBar.Background:NCStripTextures() end
+    if scrollBar.Track then scrollBar.Track:NCStripTextures() end
 
     local back, forward = 'right', 'left'
     if scrollBar.isHorizontal then
@@ -124,7 +124,7 @@ function Skinning:HandleTrimScrollBar(scrollBar)
 
     if thumb then
         -- Alpha only: the thumb re-reads its own atlases on state changes, so they must stay valid.
-        thumb:NUIStripTextures('Alpha')
+        thumb:NCStripTextures('Alpha')
         self:HandleScrollThumb(thumb)
     end
 end
@@ -161,7 +161,7 @@ local function SkinLegacyStepper(S, button, direction)
     button:SetPushedTexture(NRSKNUI.ClearTexture)
     button:SetDisabledTexture(NRSKNUI.ClearTexture)
     button:SetHighlightTexture(NRSKNUI.ClearTexture)
-    button:NUIStripTextures()
+    button:NCStripTextures()
 
     S:CreateArrowTexture(button, direction, STEPPER_ARROW_SIZE, STEPPER_ARROW_SIZE, nil, nil, nil, nil, nil, true)
 

@@ -129,7 +129,7 @@ function DBG:ApplyBackdrop(index)
     local backdrop = self.backdrops[index]
     if not backdrop then
         backdrop = CreateFrame('Frame', 'NRSKNUI_DetailsBg' .. index, UIParent)
-        backdrop:NUICreateBackdrop(nil, 0)
+        backdrop:NCCreateBackdrop(nil, 0)
         backdrop:SetFrameLevel(1)
         self.backdrops[index] = backdrop
     end
@@ -143,23 +143,23 @@ function DBG:ApplyBackdrop(index)
         local backdropHeight = titlebarHeight + (barHeight * bars) + (spacing * bars) + 2
         local innerWidth, innerHeight = backdropWidth - 2, backdropHeight - titlebarHeight
 
-        backdrop:NUISetPixelSize(backdropWidth, backdropHeight)
-        backdrop:NUIApplyPosition(bgDB)
+        backdrop:NCSetSize(backdropWidth, backdropHeight)
+        backdrop:NCApplyPosition(bgDB)
 
         -- Only the anchor moves, so Details keeps its parents and it is its saved position we override.
         detailsBase:ClearAllPoints()
-        detailsBase:NUISetPixelSize(innerWidth, innerHeight)
-        detailsBase:NUISetPixelPoint('BOTTOMRIGHT', backdrop, 'BOTTOMRIGHT', -1, -1)
+        detailsBase:NCSetSize(innerWidth, innerHeight)
+        detailsBase:NCSetPoint('BOTTOMRIGHT', backdrop, 'BOTTOMRIGHT', -1, -1)
 
         detailsWindow:ClearAllPoints()
-        detailsWindow:NUISetPixelSize(innerWidth, innerHeight)
-        detailsWindow:NUISetPixelPoint('BOTTOMRIGHT', backdrop, 'BOTTOMRIGHT', -1, -1)
+        detailsWindow:NCSetSize(innerWidth, innerHeight)
+        detailsWindow:NCSetPoint('BOTTOMRIGHT', backdrop, 'BOTTOMRIGHT', -1, -1)
 
         local instance = _G.Details:GetInstance(index)
         backdrop:SetShown(not instance or instance:IsShown()) -- a frame for a window is only a frame while it is open
     else
-        backdrop:NUISetPixelSize(bgDB.width, bgDB.height)
-        backdrop:NUIApplyPosition(bgDB)
+        backdrop:NCSetSize(bgDB.width, bgDB.height)
+        backdrop:NCApplyPosition(bgDB)
         backdrop:Show()
     end
 

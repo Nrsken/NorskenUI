@@ -41,14 +41,14 @@ Skinning:RegisterSkin('Blizzard_GameMenu', 'GameMenu', function(S)
     local menu = _G.GameMenuFrame
     if not menu then return end
 
-    menu:NUIStripTextures('Keyed')
+    menu:NCStripTextures('Keyed')
     S:CreatePanelBackdrop(menu)
 
     local header = menu.Header
     if header then
-        header:NUIStripTextures()
+        header:NCStripTextures()
         header:ClearAllPoints()
-        header:NUISetPixelPoint('TOP', menu, 'TOP', 0, HEADER_OFFSET)
+        header:NCSetPoint('TOP', menu, 'TOP', 0, HEADER_OFFSET)
         S:HandleAccentFont(header.Text)
     end
 

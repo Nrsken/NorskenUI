@@ -39,8 +39,8 @@ local function AnchorProxy(frame, handle, placement)
 
     if AuraIndicators.Sized[placement.Style] then
         local pos = placement.Position
-        proxy:NUISetPixelSize(placement.Size.Width, placement.Size.Height)
-        proxy:NUISetPixelPoint(pos.AnchorFrom, target, pos.AnchorTo, pos.XOffset, pos.YOffset)
+        proxy:NCSetSize(placement.Size.Width, placement.Size.Height)
+        proxy:NCSetPoint(pos.AnchorFrom, target, pos.AnchorTo, pos.XOffset, pos.YOffset)
     else
         -- Everything else covers the target.
         proxy:SetAllPoints(target)

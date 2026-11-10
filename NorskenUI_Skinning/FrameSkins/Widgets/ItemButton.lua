@@ -61,14 +61,14 @@ function Skinning:HandleItemButton(button)
 
     local icon = button.icon or button.Icon
     if icon then
-        icon:NUISetPixelInside()
-        icon:NUISetZoom()
+        icon:NCSetInside()
+        icon:NCSetZoom()
     end
 
     local normal = button.GetNormalTexture and button:GetNormalTexture()
     if normal then normal:SetAlpha(0) end
 
-    button:NUIStyleButton()
+    button:NCStyleButton()
 
     local highlight = button.GetHighlightTexture and button:GetHighlightTexture()
     local pushed = button.GetPushedTexture and button:GetPushedTexture()
@@ -106,7 +106,7 @@ function Skinning:HandleItemButton(button)
         hooksecurefunc(button, 'DisplayAsAzeriteEmpoweredItem', UpdateAzeriteEmpoweredItem)
     end
 
-    button:NUIAddBorders()
+    button:NCAddBorders()
 
     ---@cast button Button & SkinnedItemButtonMixin
     Mixin(button, SkinnedItemButtonMixin)

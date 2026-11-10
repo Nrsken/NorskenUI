@@ -55,7 +55,7 @@ local function SkinSlotButton(S, button, keepArt)
     local highlight = button.GetHighlightTexture and button:GetHighlightTexture()
     if highlight then highlight:SetAlpha(0) end
 
-    button:NUIStyleButton(true) -- AddHighlight owns the hover, so only pushed and checked are ours
+    button:NCStyleButton(true) -- AddHighlight owns the hover, so only pushed and checked are ours
     if button.pushed then button.pushed:SetDrawLayer('OVERLAY') end -- an opaque icon shares ARTWORK
 
     if button.InputOverlay then
@@ -126,7 +126,7 @@ local function SkinQualityDialog(S, dialog)
     if not dialog or dialog.NUISkinned then return end
     dialog.NUISkinned = true
 
-    dialog:NUIStripTextures('Keyed')
+    dialog:NCStripTextures('Keyed')
     S:CreatePanelBackdrop(dialog)
 
     S:HandleAccentFont(dialog.TitleContainer and dialog.TitleContainer.TitleText)
@@ -293,7 +293,7 @@ local function SkinSchematicForm(S, form, noParchment)
     if not form or form.NUISkinned then return end
     form.NUISkinned = true
 
-    form:NUIStripTextures('Keyed')
+    form:NCStripTextures('Keyed')
     S:CreatePanelBackdrop(form)
 
     -- Blizzard re-drives both atlases on every Refresh, so only the alpha sticks.
@@ -340,7 +340,7 @@ local function SkinItemFlyout(_anchorTo, _owner, behavior)
     if not flyout.NUISkinned then
         flyout.NUISkinned = true
 
-        flyout:NUIStripTextures('Keyed')
+        flyout:NCStripTextures('Keyed')
         S:CreatePanelBackdrop(flyout)
 
         S:HandleTrimScrollBar(flyout.ScrollBar)
@@ -420,8 +420,8 @@ local function SkinRecipeList(S, list)
     if not list or list.NUISkinned then return end
     list.NUISkinned = true
 
-    list:NUIStripTextures('Keyed')
-    if list.BackgroundNineSlice then list.BackgroundNineSlice:NUIBanish() end
+    list:NCStripTextures('Keyed')
+    if list.BackgroundNineSlice then list.BackgroundNineSlice:NCBanish() end
 
     S:HandleEditBox(list.SearchBox)
     S:HandleTrimScrollBar(list.ScrollBar)
@@ -441,8 +441,8 @@ local function SkinRecipeList(S, list)
         if not box.NUIArtTop then return end
 
         filter:ClearAllPoints()
-        filter:NUISetPixelPoint('TOPRIGHT', list, 'TOPRIGHT', -SEARCH_ROW_INSET, -SEARCH_ROW_INSET + box.NUIArtTop)
-        filter:NUISetPixelHeight(box:GetHeight() + box.NUIArtTop - box.NUIArtBottom)
+        filter:NCSetPoint('TOPRIGHT', list, 'TOPRIGHT', -SEARCH_ROW_INSET, -SEARCH_ROW_INSET + box.NUIArtTop)
+        filter:NCSetHeight(box:GetHeight() + box.NUIArtTop - box.NUIArtBottom)
     end
 
     SquareSearchRow()
@@ -467,8 +467,8 @@ local function SkinRankBar(S, bar)
     local backdrop = S:CreatePanelBackdrop(bar, nil, nil, true)
     if backdrop and bar.Fill then
         backdrop:ClearAllPoints()
-        backdrop:NUISetPixelPoint('TOPLEFT', bar.Fill, 'TOPLEFT', -1, 1)
-        backdrop:NUISetPixelPoint('BOTTOMRIGHT', bar.Fill, 'BOTTOMRIGHT', 1, -1)
+        backdrop:NCSetPoint('TOPLEFT', bar.Fill, 'TOPLEFT', -1, 1)
+        backdrop:NCSetPoint('BOTTOMRIGHT', bar.Fill, 'BOTTOMRIGHT', 1, -1)
     end
 
     S:HandleOutlineFont(bar.Rank and bar.Rank.Text)
@@ -482,9 +482,9 @@ local function SkinRankBar(S, bar)
     S:CreateArrowTexture(expansion, 'down', RANK_ARROW_SIZE, RANK_ARROW_SIZE, nil, nil, nil, nil, nil, true)
 
     -- Blizzard parks it over the fill's right end, which reads as a box inside the bar.
-    expansion:NUISetPixelSize(RANK_BUTTON_SIZE, RANK_BUTTON_SIZE)
+    expansion:NCSetSize(RANK_BUTTON_SIZE, RANK_BUTTON_SIZE)
     expansion:ClearAllPoints()
-    expansion:NUISetPixelPoint('LEFT', bar.Fill, 'RIGHT', RANK_BUTTON_GAP, 0)
+    expansion:NCSetPoint('LEFT', bar.Fill, 'RIGHT', RANK_BUTTON_GAP, 0)
 end
 
 -- Crafting output log --
@@ -498,7 +498,7 @@ local function SkinOutputRow(child)
         for _, key in ipairs({ 'NameFrame', 'BorderFrame', 'HighlightNameFrame', 'PushedNameFrame' }) do
             local texture = container[key]
             -- Cleared rather than dimmed, so a state change restoring the alpha has nothing to draw.
-            if texture then texture:NUIStripTextures('ClearHide') end
+            if texture then texture:NCStripTextures('ClearHide') end
         end
 
         S:HandleItemButton(container.Item)
@@ -524,7 +524,7 @@ local function SkinOutputLog(S, log)
     if not log or log.NUISkinned then return end
     log.NUISkinned = true
 
-    log:NUIStripTextures('Keyed')
+    log:NCStripTextures('Keyed')
     S:CreatePanelBackdrop(log)
 
     S:HandleAccentFont(log.TitleContainer and log.TitleContainer.TitleText)
@@ -564,7 +564,7 @@ local function SkinCraftingPage(S, page)
 
     if page.TutorialButton then
         -- Hide help tip button
-        page.TutorialButton:NUIBanish()
+        page.TutorialButton:NCBanish()
     end
 
     -- It hangs off the rank bar's right edge, where the expansion dropdown has just moved to.
@@ -576,23 +576,23 @@ local function SkinCraftingPage(S, page)
 
         for _, texture in ipairs({ link:GetNormalTexture(), link:GetPushedTexture() }) do
             texture:SetTexCoord(unpack(LINK_ICON_CROP))
-            texture:NUISetPixelInside()
+            texture:NCSetInside()
         end
 
-        link:NUISetPixelSize(RANK_BUTTON_SIZE, RANK_BUTTON_SIZE)
+        link:NCSetSize(RANK_BUTTON_SIZE, RANK_BUTTON_SIZE)
         link:ClearAllPoints()
-        link:NUISetPixelPoint('LEFT', expansion, 'RIGHT', RANK_BUTTON_GAP, 0)
+        link:NCSetPoint('LEFT', expansion, 'RIGHT', RANK_BUTTON_GAP, 0)
     end
 
     local guild = page.GuildFrame
     if guild then
-        guild:NUIStripTextures('Keyed')
+        guild:NCStripTextures('Keyed')
         S:CreatePanelBackdrop(guild)
         S:HandleAccentFont(guild.Title)
 
         local container = guild.Container
         if container then
-            container:NUIStripTextures('Keyed')
+            container:NCStripTextures('Keyed')
             S:CreatePanelBackdrop(container)
             S:HandleTrimScrollBar(container.ScrollBar)
         end
@@ -602,7 +602,7 @@ local function SkinCraftingPage(S, page)
         S:HandleItemButton(page[key])
     end
 
-    if page.GearSlotDivider then page.GearSlotDivider:NUIStripTextures() end
+    if page.GearSlotDivider then page.GearSlotDivider:NCStripTextures() end
 
     SkinRecipeList(S, page.RecipeList)
     SkinSchematicForm(S, page.SchematicForm)
@@ -637,7 +637,7 @@ local function SkinSpecPage(S, page)
 
     S:HandleButton(page.UndoButton, nil, nil, true)
 
-    if page.PanelFooter then page.PanelFooter:NUIStripTextures('Keyed') end
+    if page.PanelFooter then page.PanelFooter:NCStripTextures('Keyed') end
 
     local tree = page.TreeView
     if tree then
@@ -716,7 +716,7 @@ local function SkinOrderView(S, view)
 
     local info = view.OrderInfo
     if info then
-        info:NUIStripTextures('Keyed')
+        info:NCStripTextures('Keyed')
         --S:CreatePanelBackdrop(info)
 
         S:HandleButton(info.BackButton)
@@ -745,7 +745,7 @@ local function SkinOrderView(S, view)
     local details = view.OrderDetails
     if details then
         if details.MinimumQualityIcon then details.MinimumQualityIcon.NUINoStrip = true end
-        details:NUIStripTextures('Keyed')
+        details:NCStripTextures('Keyed')
         S:CreatePanelBackdrop(details)
         if details.Background then details.Background:SetAlpha(PARCHMENT_ALPHA) end
 
@@ -767,7 +767,7 @@ local function SkinOrderView(S, view)
 
     local decline = view.DeclineOrderDialog
     if decline then
-        decline:NUIStripTextures('Keyed')
+        decline:NCStripTextures('Keyed')
         S:CreatePanelBackdrop(decline)
 
         S:HandleAccentFont(decline.TitleContainer and decline.TitleContainer.TitleText)
@@ -789,7 +789,7 @@ local function SkinListHeaders(S, container)
             ---@cast header Button
             header.NUISkinned = true
 
-            header:NUIStripTextures('Layer', 'BACKGROUND')
+            header:NCStripTextures('Layer', 'BACKGROUND')
             S:CreatePanelBackdrop(header, nil, nil, true)
             S:AddHighlight(header)
             S:HandleOutlineFont(header:GetFontString())
@@ -822,7 +822,7 @@ local function SkinOrdersPage(S, page)
 
         local orders = browse.OrderList
         if orders then
-            orders:NUIStripTextures('Keyed')
+            orders:NCStripTextures('Keyed')
             --S:CreatePanelBackdrop(orders)
             S:HandleTrimScrollBar(orders.ScrollBar)
 
@@ -944,7 +944,7 @@ local function NudgeSpellButtons(panel)
 
     local base = upper.NUIBaseAnchor
     NRSKNUI:RunWhenSafe(function()
-        upper:NUISetPixelPoint(base.point, base.relativeTo, base.relativePoint, base.x, base.y + COLUMN_Y_NUDGE)
+        upper:NCSetPoint(base.point, base.relativeTo, base.relativePoint, base.x, base.y + COLUMN_Y_NUDGE)
     end)
 end
 
@@ -971,7 +971,7 @@ local function CentreBookColumn(panel)
     if panel.rank then
         local hasSpec = spec and spec:GetText() and spec:GetText() ~= ''
         panel.rank:ClearAllPoints()
-        panel.rank:NUISetPixelPoint('TOPLEFT', hasSpec and spec or name, 'BOTTOMLEFT', 0, -COLUMN_GAP_TEXT)
+        panel.rank:NCSetPoint('TOPLEFT', hasSpec and spec or name, 'BOTTOMLEFT', 0, -COLUMN_GAP_TEXT)
     end
 
     NudgeSpellButtons(panel)
@@ -989,7 +989,7 @@ local function CentreBookColumn(panel)
     local blockTop = buttonBottom and (buttonBottom + blockHeight)
         or (((iconTop + iconBottom) / 2 + blockHeight / 2) + COLUMN_Y_NUDGE)
 
-    name:NUISetPixelPoint('TOPLEFT', panel, 'TOPLEFT', x, blockTop - panelTop)
+    name:NCSetPoint('TOPLEFT', panel, 'TOPLEFT', x, blockTop - panelTop)
 end
 
 ---@param S SkinningModule
@@ -1013,11 +1013,11 @@ local function SkinBookPanel(S, panel)
 
     if ProfessionsBookFrameTutorialButton then
         -- Hide help tip button
-        ProfessionsBookFrameTutorialButton:NUIBanish()
+        ProfessionsBookFrameTutorialButton:NCBanish()
     end
 
     if not panel.icon and panel.missingText and panel.missingHeader then
-        panel.missingText:NUISetPixelPoint('LEFT', panel.missingHeader, 'RIGHT', 24, 0)
+        panel.missingText:NCSetPoint('LEFT', panel.missingHeader, 'RIGHT', 24, 0)
     end
 
     SkinBookSpellButton(S, panel.SpellButton1)
@@ -1030,14 +1030,14 @@ local function SkinBookPanel(S, panel)
         S:HandleOutlineFont(bar.rankText)
 
         if panel.icon then
-            bar:NUISetPixelPoint('TOPLEFT', panel.rank, 'BOTTOMLEFT', 0, -COLUMN_GAP_BAR)
+            bar:NCSetPoint('TOPLEFT', panel.rank, 'BOTTOMLEFT', 0, -COLUMN_GAP_BAR)
         elseif panel.rank then
-            panel.rank:NUISetPixelPoint('BOTTOMLEFT', bar, 'TOPLEFT', 0, COLUMN_GAP_BAR)
+            panel.rank:NCSetPoint('BOTTOMLEFT', bar, 'TOPLEFT', 0, COLUMN_GAP_BAR)
         end
 
         if panel.UnlearnButton then
             panel.UnlearnButton:ClearAllPoints()
-            panel.UnlearnButton:NUISetPixelPoint('LEFT', bar, 'RIGHT', 6, 1)
+            panel.UnlearnButton:NCSetPoint('LEFT', bar, 'RIGHT', 6, 1)
         end
     end
 end

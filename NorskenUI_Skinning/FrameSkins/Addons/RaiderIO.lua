@@ -30,20 +30,20 @@ local function SkinExportButton()
     skinned = true
 
     Skinning:HandleButton(button)
-    button:NUISetPixelSize(BUTTON_SIZE, BUTTON_SIZE)
+    button:NCSetSize(BUTTON_SIZE, BUTTON_SIZE)
 
     local logo = button:CreateTexture(nil, 'ARTWORK')
-    logo:NUISetPixelPoint('TOPLEFT', button, 'TOPLEFT', ICON_INSET, -ICON_INSET)
-    logo:NUISetPixelPoint('BOTTOMRIGHT', button, 'BOTTOMRIGHT', -ICON_INSET, ICON_INSET)
+    logo:NCSetPoint('TOPLEFT', button, 'TOPLEFT', ICON_INSET, -ICON_INSET)
+    logo:NCSetPoint('BOTTOMRIGHT', button, 'BOTTOMRIGHT', -ICON_INSET, ICON_INSET)
     logo:SetTexture(LOGO_TEXTURE)
     logo:SetTexCoord(ICON_TEXCOORD, 1 - ICON_TEXCOORD, ICON_TEXCOORD, 1 - ICON_TEXCOORD)
-    logo:NUISetPixelSnap()
+    logo:NCDisablePixelSnap()
 
     local close = _G.PVEFrame and _G.PVEFrame.CloseButton
     if not close then return end
 
     button:ClearAllPoints()
-    button:NUISetPixelPoint('RIGHT', close, 'LEFT', X_GAP, Y_GAP)
+    button:NCSetPoint('RIGHT', close, 'LEFT', X_GAP, Y_GAP)
 end
 
 Skinning:RegisterSkin('RaiderIO', 'RaiderIO', function()
@@ -107,7 +107,7 @@ local function ApplyGuildWeeklyHeight(self)
     end
 
     local header = PANEL_INSET + self.Title:GetHeight() + SUBTITLE_GAP + self.SubTitle:GetHeight()
-    self:NUISetPixelHeight(header + ROW_TOP_GAP + body + bottom)
+    self:NCSetHeight(header + ROW_TOP_GAP + body + bottom)
 end
 
 local guildWeeklySkinned = false
@@ -118,62 +118,62 @@ local function SkinGuildWeekly()
 
     -- Handle main RaiderIOFrame. Height is left to ApplyGuildWeeklyHeight, it tracks the run count.
     RaiderIOFrame:SetScale(1)
-    RaiderIOFrame:NUIStripTextures('Keyed')
+    RaiderIOFrame:NCStripTextures('Keyed')
     --Skinning:CreatePanelBackdrop(RaiderIOFrame, 'Transparent')
-    RaiderIOFrame:NUISetPixelWidth(PANEL_WIDTH)
+    RaiderIOFrame:NCSetWidth(PANEL_WIDTH)
     RaiderIOFrame:ClearAllPoints()
     local ChallengesFrame = _G.ChallengesFrame
-    RaiderIOFrame:NUISetPixelPoint(PANEL_POINT, ChallengesFrame, PANEL_RELATIVE_POINT, PANEL_X, PANEL_Y)
+    RaiderIOFrame:NCSetPoint(PANEL_POINT, ChallengesFrame, PANEL_RELATIVE_POINT, PANEL_X, PANEL_Y)
     RaiderIOFrame:SetFrameStrata('TOOLTIP')
 
     -- Handle the title text. SetFontObject clears the string's own color, so size comes first.
     RaiderIOFrame.Title:SetFontStyle(Skinning.db, TITLE_SIZE)
     Skinning:HandleAccentText(RaiderIOFrame.Title)
     RaiderIOFrame.Title:ClearAllPoints()
-    RaiderIOFrame.Title:NUISetPixelPoint('TOPLEFT', RaiderIOFrame, 'TOPLEFT', PANEL_INSET, -PANEL_INSET)
+    RaiderIOFrame.Title:NCSetPoint('TOPLEFT', RaiderIOFrame, 'TOPLEFT', PANEL_INSET, -PANEL_INSET)
 
     -- Handle the subtitle text.
     RaiderIOFrame.SubTitle:SetFontStyle(Skinning.db, SUBTITLE_SIZE)
     RaiderIOFrame.SubTitle:SetTextColor(1, 1, 1)
     RaiderIOFrame.SubTitle:ClearAllPoints()
-    RaiderIOFrame.SubTitle:NUISetPixelPoint('TOPLEFT', RaiderIOFrame.Title, 'BOTTOMLEFT', 0, -SUBTITLE_GAP)
+    RaiderIOFrame.SubTitle:NCSetPoint('TOPLEFT', RaiderIOFrame.Title, 'BOTTOMLEFT', 0, -SUBTITLE_GAP)
 
     -- Handle the run rows.
     local rowWidth = PANEL_WIDTH - PANEL_INSET * 2
     RaiderIOFrame.maxVisible = min(ROW_MAX_VISIBLE, #RaiderIOFrame.GuildBests)
 
     for index, row in ipairs(RaiderIOFrame.GuildBests) do
-        row:NUISetPixelSize(rowWidth, ROW_HEIGHT)
+        row:NCSetSize(rowWidth, ROW_HEIGHT)
         row:ClearAllPoints()
         if index == 1 then
-            row:NUISetPixelPoint('TOPLEFT', RaiderIOFrame.SubTitle, 'BOTTOMLEFT', 0, -ROW_TOP_GAP)
+            row:NCSetPoint('TOPLEFT', RaiderIOFrame.SubTitle, 'BOTTOMLEFT', 0, -ROW_TOP_GAP)
         else
-            row:NUISetPixelPoint('TOPLEFT', RaiderIOFrame.GuildBests[index - 1], 'BOTTOMLEFT', 0, -ROW_GAP)
+            row:NCSetPoint('TOPLEFT', RaiderIOFrame.GuildBests[index - 1], 'BOTTOMLEFT', 0, -ROW_GAP)
         end
 
         row.CharacterName:SetFontStyle(Skinning.db, ROW_FONT_SIZE)
-        row.CharacterName:NUISetPixelSize(rowWidth - ROW_LEVEL_WIDTH - ROW_LEVEL_GAP, ROW_HEIGHT)
+        row.CharacterName:NCSetSize(rowWidth - ROW_LEVEL_WIDTH - ROW_LEVEL_GAP, ROW_HEIGHT)
         row.Level:SetFontStyle(Skinning.db, ROW_FONT_SIZE)
-        row.Level:NUISetPixelSize(ROW_LEVEL_WIDTH, ROW_HEIGHT)
+        row.Level:NCSetSize(ROW_LEVEL_WIDTH, ROW_HEIGHT)
     end
 
     -- Handle the empty state, anchored to the title by RaiderIO like the first row was.
-    RaiderIOFrame.GuildBestNoRun:NUISetPixelSize(rowWidth, ROW_HEIGHT)
+    RaiderIOFrame.GuildBestNoRun:NCSetSize(rowWidth, ROW_HEIGHT)
     RaiderIOFrame.GuildBestNoRun:ClearAllPoints()
-    RaiderIOFrame.GuildBestNoRun:NUISetPixelPoint('TOPLEFT', RaiderIOFrame.SubTitle, 'BOTTOMLEFT', 0, -ROW_TOP_GAP)
+    RaiderIOFrame.GuildBestNoRun:NCSetPoint('TOPLEFT', RaiderIOFrame.SubTitle, 'BOTTOMLEFT', 0, -ROW_TOP_GAP)
     RaiderIOFrame.GuildBestNoRun.Text:SetFontStyle(Skinning.db, ROW_FONT_SIZE)
     RaiderIOFrame.GuildBestNoRun.Text:SetTextColor(1, 1, 1)
-    RaiderIOFrame.GuildBestNoRun.Text:NUISetPixelSize(rowWidth, ROW_HEIGHT)
+    RaiderIOFrame.GuildBestNoRun.Text:NCSetSize(rowWidth, ROW_HEIGHT)
 
     -- Handle the "Display Weekly" checkbox, only shown with desktop client data for this guild.
-    RaiderIOFrame.SwitchGuildBest:NUISetPixelSize(CHECK_SIZE, CHECK_SIZE)
+    RaiderIOFrame.SwitchGuildBest:NCSetSize(CHECK_SIZE, CHECK_SIZE)
     Skinning:HandleCheckBox(RaiderIOFrame.SwitchGuildBest)
     RaiderIOFrame.SwitchGuildBest:ClearAllPoints()
-    RaiderIOFrame.SwitchGuildBest:NUISetPixelPoint('BOTTOMLEFT', RaiderIOFrame, 'BOTTOMLEFT', PANEL_INSET, PANEL_INSET)
+    RaiderIOFrame.SwitchGuildBest:NCSetPoint('BOTTOMLEFT', RaiderIOFrame, 'BOTTOMLEFT', PANEL_INSET, PANEL_INSET)
     RaiderIOFrame.SwitchGuildBest.text:SetFontStyle(Skinning.db, SUBTITLE_SIZE)
     RaiderIOFrame.SwitchGuildBest.text:SetTextColor(1, 1, 1)
     RaiderIOFrame.SwitchGuildBest.text:ClearAllPoints()
-    RaiderIOFrame.SwitchGuildBest.text:NUISetPixelPoint('LEFT', RaiderIOFrame.SwitchGuildBest, 'RIGHT', CHECK_TEXT_GAP, 0)
+    RaiderIOFrame.SwitchGuildBest.text:NCSetPoint('LEFT', RaiderIOFrame.SwitchGuildBest, 'RIGHT', CHECK_TEXT_GAP, 0)
 
     hooksecurefunc(RaiderIOFrame, 'SetUp', ApplyGuildWeeklyHeight)
     ApplyGuildWeeklyHeight(RaiderIOFrame)
@@ -204,11 +204,11 @@ local function SkinTalentShortcut()
 
     -- RaiderIO shrinks the button to fit Blizzard's plate, which leaves our borders off the pixel grid.
     button:SetScale(1)
-    button:NUISetPixelSize(button:GetTextWidth() + SHORTCUT_TEXT_PAD, SHORTCUT_HEIGHT)
+    button:NCSetSize(button:GetTextWidth() + SHORTCUT_TEXT_PAD, SHORTCUT_HEIGHT)
 
     local dropdown = button:GetParent()
     button:ClearAllPoints()
-    button:NUISetPixelPoint('BOTTOMLEFT', dropdown, 'TOPLEFT', 0, SHORTCUT_GAP)
+    button:NCSetPoint('BOTTOMLEFT', dropdown, 'TOPLEFT', 0, SHORTCUT_GAP)
 end
 
 ---@class BuildRowMixin
@@ -260,7 +260,7 @@ local function SkinBuildRow(button)
     local toggle = button.ActionMenuToggle
     if toggle then
         -- useIconAsHighlight keeps re-atlasing the icon, so it has to be held at alpha 0.
-        if toggle.Icon then toggle.Icon:NUIStripTextures('ClearHide') end
+        if toggle.Icon then toggle.Icon:NCStripTextures('ClearHide') end
         Skinning:CreateArrowTexture(toggle, 'right', ROW_ARROW_SIZE, ROW_ARROW_SIZE)
     end
 
@@ -314,14 +314,14 @@ local function SkinBuildsFrame(frame)
     local empty = frame.EmptyContainer
     if empty then
         if empty.Image then empty.Image.NUINoStrip = true end
-        empty:NUIStripTextures('Alpha')
+        empty:NCStripTextures('Alpha')
         Skinning:CreatePanelBackdrop(empty, 'Transparent')
         Skinning:HandleAccentFont(empty.Text)
     end
 
     local feedback = FindFeedbackFrame(frame)
     if feedback then
-        feedback:NUIStripTextures('Keyed', nil, true)
+        feedback:NCStripTextures('Keyed', nil, true)
         Skinning:CreatePanelBackdrop(feedback)
     end
 end

@@ -106,7 +106,7 @@ function MissingBuffs:GetButton(key)
     button = CreateFrame('Button', nil, UIParent, 'SecureActionButtonTemplate') --[[@as MissingBuffs.Button]]
     button:RegisterForClicks('AnyUp', 'AnyDown')
     button:SetAttribute('type', 'macro')
-    button:NUIStyleButton()
+    button:NCStyleButton()
     button:SetScript('PostClick', OnMainPostClick)
     button:SetScript('OnEnter', OnMainEnter)
     button:SetScript('OnLeave', GameTooltip_Hide)

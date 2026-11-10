@@ -623,7 +623,7 @@ local function ApplyPanelPosition(panel)
         if not CooldownViewerSettings then return end
 
         panel:ClearAllPoints()
-        panel:NUISetPixelPoint('TOPLEFT', CooldownViewerSettings, 'BOTTOMLEFT', 0, -2)
+        panel:NCSetPoint('TOPLEFT', CooldownViewerSettings, 'BOTTOMLEFT', 0, -2)
     end)
 end
 
@@ -633,38 +633,38 @@ function CooldownStrings:CreatePanel()
     local panel = CreateFrame('Frame', 'NRSKNUI_CooldownStringsPanel', UIParent)
     panel:SetFrameStrata('DIALOG')
     panel:SetClampedToScreen(true)
-    panel:NUISetPixelSize(PANEL_WIDTH, PANEL_HEIGHT)
+    panel:NCSetSize(PANEL_WIDTH, PANEL_HEIGHT)
     NRSKNUI:CreateBackdrop(panel)
     panel:SetBackgroundColor(Theme.bgLight[1], Theme.bgLight[2], Theme.bgLight[3], 0.95)
     panel:SetBorderColor(Theme.border[1], Theme.border[2], Theme.border[3], Theme.border[4])
-    panel:NUISetScheduledUpdate(ApplyPanelPosition)
+    panel:NCSetScheduledUpdate(ApplyPanelPosition)
 
     local header = CreateFrame('Frame', nil, panel)
-    header:NUISetPixelHeight(Theme.headerHeight)
-    header:NUISetPixelPoint('TOPLEFT', panel, 'TOPLEFT', 0, 0)
-    header:NUISetPixelPoint('TOPRIGHT', panel, 'TOPRIGHT', 0, 0)
+    header:NCSetHeight(Theme.headerHeight)
+    header:NCSetPoint('TOPLEFT', panel, 'TOPLEFT', 0, 0)
+    header:NCSetPoint('TOPRIGHT', panel, 'TOPRIGHT', 0, 0)
 
     local divider = header:CreateTexture(nil, 'OVERLAY')
-    divider:NUISetPixelHeight(Theme.borderSize)
-    divider:NUISetPixelPoint('BOTTOMLEFT', header, 'BOTTOMLEFT', 0, 0)
-    divider:NUISetPixelPoint('BOTTOMRIGHT', header, 'BOTTOMRIGHT', 0, 0)
+    divider:NCSetHeight(Theme.borderSize)
+    divider:NCSetPoint('BOTTOMLEFT', header, 'BOTTOMLEFT', 0, 0)
+    divider:NCSetPoint('BOTTOMRIGHT', header, 'BOTTOMRIGHT', 0, 0)
     divider:SetColorTexture(Theme.border[1], Theme.border[2], Theme.border[3], Theme.border[4])
 
     local title = header:CreateFontString(nil, 'OVERLAY')
-    title:NUISetPixelPoint('LEFT', header, 'LEFT', Theme.paddingMedium, 0)
+    title:NCSetPoint('LEFT', header, 'LEFT', Theme.paddingMedium, 0)
     title:SetTextColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
     NRSKNUI.GUI:ApplyFont(title, 'large')
     panel.title = title
 
     local open = CreateFrame('Button', nil, header)
-    open:NUISetPixelSize(14, 14)
-    open:NUISetPixelPoint('RIGHT', header, 'RIGHT', -Theme.paddingMedium, 0)
+    open:NCSetSize(14, 14)
+    open:NCSetPoint('RIGHT', header, 'RIGHT', -Theme.paddingMedium, 0)
 
     local openIcon = open:CreateTexture(nil, 'ARTWORK')
     openIcon:SetAllPoints()
     openIcon:SetTexture(NRSKNUI.Media.GUITextures .. 'NorskenCustomCrossv3.png')
     openIcon:SetVertexColor(Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3], 1)
-    openIcon:NUISetPixelSnap()
+    openIcon:NCDisablePixelSnap()
     open:SetNormalTexture(openIcon)
 
     open:SetScript('OnEnter', function(button)
@@ -682,8 +682,8 @@ function CooldownStrings:CreatePanel()
     end)
 
     local content = CreateFrame('Frame', nil, panel)
-    content:NUISetPixelPoint('TOPLEFT', panel, 'TOPLEFT', Theme.paddingMedium, -Theme.headerHeight - Theme.paddingMedium)
-    content:NUISetPixelPoint('BOTTOMRIGHT', panel, 'BOTTOMRIGHT', -Theme.paddingMedium, Theme.paddingMedium)
+    content:NCSetPoint('TOPLEFT', panel, 'TOPLEFT', Theme.paddingMedium, -Theme.headerHeight - Theme.paddingMedium)
+    content:NCSetPoint('BOTTOMRIGHT', panel, 'BOTTOMRIGHT', -Theme.paddingMedium, Theme.paddingMedium)
     panel.content = content
 
     panel:Hide()
@@ -724,22 +724,22 @@ function CooldownStrings:BuildPanel()
         height = BUTTON_HEIGHT,
         callback = function() self:PromptRestore(self.selected) end,
     })
-    restore:NUISetPixelPoint('TOPLEFT', panel.content, 'TOPLEFT', 0, 0)
-    restore:NUISetPixelPoint('TOPRIGHT', panel.content, 'TOPRIGHT', 0, 0)
+    restore:NCSetPoint('TOPLEFT', panel.content, 'TOPLEFT', 0, 0)
+    restore:NCSetPoint('TOPRIGHT', panel.content, 'TOPRIGHT', 0, 0)
 
     local dropdown = GUI:CreateDropdown(panel.content, L['Profile'], {
         options = options,
         value = self.selected,
         callback = function(key) self.selected = key end,
     })
-    dropdown:NUISetPixelPoint('TOPLEFT', restore, 'BOTTOMLEFT', 0, -Theme.paddingSmall)
-    dropdown:NUISetPixelPoint('TOPRIGHT', restore, 'BOTTOMRIGHT', 0, -Theme.paddingSmall)
+    dropdown:NCSetPoint('TOPLEFT', restore, 'BOTTOMLEFT', 0, -Theme.paddingSmall)
+    dropdown:NCSetPoint('TOPRIGHT', restore, 'BOTTOMRIGHT', 0, -Theme.paddingSmall)
 end
 
 function CooldownStrings:ShowPanel()
     self:CreatePanel()
     self:BuildPanel()
-    self.panel:NUIScheduleUpdate()
+    self.panel:NCScheduleUpdate()
     self.panel:Show()
 end
 

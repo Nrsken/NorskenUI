@@ -55,8 +55,8 @@ function UF.LayoutBars(frame)
         local lift = docked and pDB.Height + 1 or 0
         for _, bar in ipairs({ health, health.healthBackground, frame.healthBorderFrame, health.nuiTempLoss }) do
             bar:ClearAllPoints()
-            bar:NUISetPixelPoint('TOPLEFT', frame, 'TOPLEFT', 0, 0)
-            bar:NUISetPixelPoint('BOTTOMRIGHT', frame, 'BOTTOMRIGHT', 0, lift)
+            bar:NCSetPoint('TOPLEFT', frame, 'TOPLEFT', 0, 0)
+            bar:NCSetPoint('BOTTOMRIGHT', frame, 'BOTTOMRIGHT', 0, lift)
         end
 
         -- Health ends where the temporarily lost max health begins.
@@ -64,9 +64,9 @@ function UF.LayoutBars(frame)
             local edge = health.TempLoss:GetStatusBarTexture()
             for _, bar in ipairs({ health, health.healthBackground }) do
                 if health.nuiInverse then
-                    bar:NUISetPixelPoint('TOPLEFT', edge, 'TOPRIGHT', 0, 0)
+                    bar:NCSetPoint('TOPLEFT', edge, 'TOPRIGHT', 0, 0)
                 else
-                    bar:NUISetPixelPoint('BOTTOMRIGHT', edge, 'BOTTOMLEFT', 0, 0)
+                    bar:NCSetPoint('BOTTOMRIGHT', edge, 'BOTTOMLEFT', 0, 0)
                 end
             end
         end
@@ -75,9 +75,9 @@ function UF.LayoutBars(frame)
     if pDB then
         local y = pDB.Docked and 0 or -pDB.Height - 1
         power:ClearAllPoints()
-        power:NUISetPixelPoint('BOTTOMLEFT', frame, 'BOTTOMLEFT', 0, y)
-        power:NUISetPixelPoint('BOTTOMRIGHT', frame, 'BOTTOMRIGHT', 0, y)
-        power:NUISetPixelHeight(pDB.Height)
+        power:NCSetPoint('BOTTOMLEFT', frame, 'BOTTOMLEFT', 0, y)
+        power:NCSetPoint('BOTTOMRIGHT', frame, 'BOTTOMRIGHT', 0, y)
+        power:NCSetHeight(pDB.Height)
     end
 end
 
@@ -112,26 +112,26 @@ end
 local function BuildPower(self)
     -- Power bar background frame
     local powerBackground = CreateFrame('Frame', nil, self)
-    powerBackground:NUICreateBackdrop(true)
+    powerBackground:NCCreateBackdrop(true)
     self.powerBackground = powerBackground
 
     -- Power bar border frame
     local powerBorderFrame = CreateFrame('Frame', nil, self)
-    powerBorderFrame:NUIAddBorders()
+    powerBorderFrame:NCAddBorders()
     self.powerBorderFrame = powerBorderFrame
 
     -- Power bar
     local powerBar = CreateFrame('StatusBar', nil, self) --[[@as oUF.Power]]
-    powerBar:NUISetPixelSnap()
+    powerBar:NCDisablePixelSnap()
     powerBar.PostUpdate = UF.PostUpdatePower
     powerBar.PostUpdateColor = UF.PostUpdatePowerColor
 
     local costPrediction = CreateFrame('StatusBar', nil, powerBar)
-    costPrediction:NUISetPixelSnap()
+    costPrediction:NCDisablePixelSnap()
     costPrediction:SetReverseFill(true)
-    costPrediction:NUISetPixelPoint('TOP')
-    costPrediction:NUISetPixelPoint('BOTTOM')
-    costPrediction:NUISetPixelPoint('RIGHT', powerBar:GetStatusBarTexture())
+    costPrediction:NCSetPoint('TOP')
+    costPrediction:NCSetPoint('BOTTOM')
+    costPrediction:NCSetPoint('RIGHT', powerBar:GetStatusBarTexture())
     powerBar.nuiCostPrediction = costPrediction
 
     self.Power = powerBar

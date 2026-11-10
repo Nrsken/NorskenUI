@@ -51,9 +51,9 @@ local function StyleControlButtons(frame)
                 button:ClearAllPoints()
 
                 if lastButton then
-                    button:NUISetPixelPoint('LEFT', lastButton, 'RIGHT', 1, 0)
+                    button:NCSetPoint('LEFT', lastButton, 'RIGHT', 1, 0)
                 else
-                    button:NUISetPixelPoint('LEFT', 6, 0)
+                    button:NCSetPoint('LEFT', 6, 0)
                 end
 
                 lastButton = button

@@ -29,7 +29,7 @@ function Skinning:HandleDropdownButton(dropdown, template)
     if not dropdown or dropdown.NUISkinned then return end
     dropdown.NUISkinned = true
 
-    dropdown.Arrow:NUIStripTextures('Alpha')
+    dropdown.Arrow:NCStripTextures('Alpha')
 
     local sizeX, sizeY = 22, 22
     self:CreateArrowTexture(dropdown, 'left', sizeX, sizeY, 'RIGHT', dropdown, 'RIGHT', -2, 0)

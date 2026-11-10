@@ -158,11 +158,11 @@ local function FitBackdropToArt(editBox)
     -- SearchBoxTemplate hangs both off the frame rect, which is wider than the art.
     if editBox.searchIcon then
         editBox.searchIcon:ClearAllPoints()
-        editBox.searchIcon:NUISetPixelPoint('LEFT', backdrop, 'LEFT', SEARCH_ART_INSET, 0)
+        editBox.searchIcon:NCSetPoint('LEFT', backdrop, 'LEFT', SEARCH_ART_INSET, 0)
     end
     if editBox.clearButton then
         editBox.clearButton:ClearAllPoints()
-        editBox.clearButton:NUISetPixelPoint('RIGHT', backdrop, 'RIGHT', -SEARCH_ART_INSET, 0)
+        editBox.clearButton:NCSetPoint('RIGHT', backdrop, 'RIGHT', -SEARCH_ART_INSET, 0)
     end
 
     return true
@@ -177,8 +177,8 @@ function Skinning:HandleEditBox(editBox)
     -- Placeholder text wraps by default, which spills out of a single-line box.
     if editBox.Instructions then editBox.Instructions:SetWordWrap(false) end
 
-    editBox:NUIStripTextures('Layer', EDITBOX_ART_LAYERS)
-    if editBox.NineSlice then editBox.NineSlice:NUIStripTextures() end
+    editBox:NCStripTextures('Layer', EDITBOX_ART_LAYERS)
+    if editBox.NineSlice then editBox.NineSlice:NCStripTextures() end
 
     local backdrop = self:CreatePanelBackdrop(editBox, nil, true, true)
     if not backdrop then return end

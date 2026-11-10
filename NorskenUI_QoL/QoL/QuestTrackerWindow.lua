@@ -53,11 +53,11 @@ end
 ---@return Button
 local function CreateTitleButton(parent, texture, size, tooltip, onClick)
     local button = CreateFrame('Button', nil, parent)
-    button:NUISetPixelSize(size, size)
+    button:NCSetSize(size, size)
 
     local icon = button:CreateTexture(nil, 'ARTWORK')
-    icon:NUISetPixelInside(button, 0, 0)
-    icon:NUISetPixelSnap()
+    icon:NCSetInside(button, 0, 0)
+    icon:NCDisablePixelSnap()
     icon:SetTexture(texture)
     icon:SetVertexColor(Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3], 1)
     button:SetNormalTexture(icon)
@@ -159,9 +159,9 @@ local function AcquireBar(window, index)
 
     local y = -BARS_Y - (index - 1) * (BAR_HEIGHT + BAR_GAP)
     bar = CreateFrame('Button', nil, window)
-    bar:NUISetPixelHeight(BAR_HEIGHT)
-    bar:NUISetPixelPoint('TOPLEFT', window, 'TOPLEFT', PADDING, y)
-    bar:NUISetPixelPoint('TOPRIGHT', window, 'TOPRIGHT', -PADDING, y)
+    bar:NCSetHeight(BAR_HEIGHT)
+    bar:NCSetPoint('TOPLEFT', window, 'TOPLEFT', PADDING, y)
+    bar:NCSetPoint('TOPRIGHT', window, 'TOPRIGHT', -PADDING, y)
     bar:RegisterForClicks('RightButtonUp')
     bar:SetScript('OnEnter', ShowQuestTooltip)
     bar:SetScript('OnLeave', GameTooltip_Hide)
@@ -171,24 +171,24 @@ local function AcquireBar(window, index)
     bar:SetBorderColor(Theme.border[1], Theme.border[2], Theme.border[3], Theme.border[4])
 
     local fill = bar:CreateTexture(nil, 'ARTWORK')
-    fill:NUISetPixelInside(bar, 1, 1)
+    fill:NCSetInside(bar, 1, 1)
     fill:SetTexture(NRSKNUI:GetStatusbar(nil, 'NorskenUI'))
     fill:SetVertexColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], FILL_ALPHA)
     bar.fill = fill
 
     local highlight = bar:CreateTexture(nil, 'HIGHLIGHT')
-    highlight:NUISetPixelInside(bar, 1, 1)
+    highlight:NCSetInside(bar, 1, 1)
     highlight:SetColorTexture(1, 1, 1, 0.08)
 
     local count = bar:CreateFontString(nil, 'OVERLAY')
-    count:NUISetPixelPoint('RIGHT', bar, 'RIGHT', -TEXT_INSET, 0)
+    count:NCSetPoint('RIGHT', bar, 'RIGHT', -TEXT_INSET, 0)
     count:SetJustifyH('RIGHT')
     StyleText(count, 'small')
     bar.count = count
 
     local label = bar:CreateFontString(nil, 'OVERLAY')
-    label:NUISetPixelPoint('LEFT', bar, 'LEFT', TEXT_INSET, 0)
-    label:NUISetPixelPoint('RIGHT', count, 'LEFT', -TEXT_INSET, 0)
+    label:NCSetPoint('LEFT', bar, 'LEFT', TEXT_INSET, 0)
+    label:NCSetPoint('RIGHT', count, 'LEFT', -TEXT_INSET, 0)
     label:SetJustifyH('LEFT')
     StyleText(label, 'small')
     bar.label = label
@@ -216,21 +216,21 @@ function QuestTracker:CreateWindow()
     -- a child of the Character Frame, so it opens and closes with it without any Show/Hide from us
     local window = CreateFrame('Frame', WINDOW_NAME, GetParentFrame())
     window:EnableMouse(true)
-    window:NUISetPixelSnap()
+    window:NCDisablePixelSnap()
     NRSKNUI:CreateBackdrop(window)
     window:SetBackgroundColor(Theme.bgMedium[1], Theme.bgMedium[2], Theme.bgMedium[3], 0.95)
     window:SetBorderColor(Theme.border[1], Theme.border[2], Theme.border[3], Theme.border[4])
 
     -- anchored into the Character Frame's protected family, its OnShow can run inside ShowUIPanel's secure stack
-    window:NUISetScheduledUpdate(function() NRSKNUI:RunWhenSafe(LayoutWindow) end)
+    window:NCSetScheduledUpdate(function() NRSKNUI:RunWhenSafe(LayoutWindow) end)
     -- hidden flag quests complete without a quest event, so re-read them whenever the panel opens
     window:SetScript('OnShow', function() QuestTracker:Snapshot() end)
 
     local title = window:CreateFontString(nil, 'OVERLAY')
     -- a fixed row on whole pixels, the font's own line height would centre it on a half pixel
-    title:NUISetPixelPoint('TOPLEFT', window, 'TOPLEFT', PADDING, -PADDING)
-    title:NUISetPixelPoint('TOPRIGHT', window, 'TOPRIGHT', -PADDING, -PADDING)
-    title:NUISetPixelHeight(TITLE_HEIGHT)
+    title:NCSetPoint('TOPLEFT', window, 'TOPLEFT', PADDING, -PADDING)
+    title:NCSetPoint('TOPRIGHT', window, 'TOPRIGHT', -PADDING, -PADDING)
+    title:NCSetHeight(TITLE_HEIGHT)
     title:SetJustifyH('LEFT')
     title:SetJustifyV('MIDDLE')
     title:SetTextColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
@@ -238,13 +238,13 @@ function QuestTracker:CreateWindow()
     title:SetText(L['Quest Tracker'])
 
     local characters = CreateTitleButton(window, MEDIA .. 'eye.png', EYE_SIZE, L['Characters'], OpenCharactersMenu)
-    characters:NUISetPixelPoint('RIGHT', window, 'TOPRIGHT', -PADDING + 1, -PADDING - TITLE_HEIGHT / 2)
+    characters:NCSetPoint('RIGHT', window, 'TOPRIGHT', -PADDING + 1, -PADDING - TITLE_HEIGHT / 2)
 
     local settings = CreateTitleButton(window, MEDIA .. 'cogwheel.png', COG_SIZE, L['Settings'], OpenSettings)
-    settings:NUISetPixelPoint('RIGHT', characters, 'LEFT', -PADDING + 1, 0)
+    settings:NCSetPoint('RIGHT', characters, 'LEFT', -PADDING + 1, 0)
 
     local empty = window:CreateFontString(nil, 'OVERLAY')
-    empty:NUISetPixelPoint('LEFT', window, 'TOPLEFT', PADDING + TEXT_INSET, -BARS_Y - BAR_HEIGHT / 2)
+    empty:NCSetPoint('LEFT', window, 'TOPLEFT', PADDING + TEXT_INSET, -BARS_Y - BAR_HEIGHT / 2)
     empty:SetTextColor(Theme.textSecondary[1], Theme.textSecondary[2], Theme.textSecondary[3], 1)
     StyleText(empty, 'small')
     empty:SetText(L['No quests tracked yet, add them in the settings.'])
@@ -286,16 +286,16 @@ function QuestTracker:LayoutWindow()
 
     -- sized before it is anchored, the grid snap measures the window's own height
     local rows = quests[1] and #quests or 1
-    window:NUISetPixelSize(WIDTH, BARS_Y + rows * BAR_HEIGHT + (rows - 1) * BAR_GAP + PADDING)
+    window:NCSetSize(WIDTH, BARS_Y + rows * BAR_HEIGHT + (rows - 1) * BAR_GAP + PADDING)
 
     -- the Character Frame can sit on a half pixel, so snap the result instead of the offset
     window:ClearAllPoints()
-    window:NUISetGridPoint('TOPLEFT', CharacterFrame, 'BOTTOMLEFT', 0, ANCHOR_OFFSET_Y)
+    window:NCSetGridPoint('TOPLEFT', CharacterFrame, 'BOTTOMLEFT', 0, ANCHOR_OFFSET_Y)
 end
 
 function QuestTracker:Refresh()
     if not self.window then return end
-    self.window:NUIScheduleUpdate()
+    self.window:NCScheduleUpdate()
 end
 
 local function ShowWindow()
@@ -313,7 +313,7 @@ local function ApplyParent()
     if not window then return end
 
     window:SetParent(GetParentFrame())
-    window:NUIScheduleUpdate()
+    window:NCScheduleUpdate()
 end
 
 function QuestTracker:ShowWindow()

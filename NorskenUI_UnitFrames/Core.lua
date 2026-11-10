@@ -187,7 +187,7 @@ function UF:ApplyUnitPosition(frame, unit, uDB)
     local index = UF.BossIndex(unit)
     local previous = index and index > 1 and UF.frames['boss' .. (index - 1)]
     if not previous then
-        frame:NUIApplyPosition(uDB)
+        frame:NCApplyPosition(uDB)
         return
     end
 
@@ -195,7 +195,7 @@ function UF:ApplyUnitPosition(frame, unit, uDB)
     local spacing = uDB.Spacing or 0
 
     frame:ClearAllPoints()
-    frame:NUISetPixelPoint(growth.from, previous, growth.to, growth.x * spacing, growth.y * spacing)
+    frame:NCSetPoint(growth.from, previous, growth.to, growth.x * spacing, growth.y * spacing)
     frame:SetFrameStrata(uDB.Strata or 'MEDIUM')
 end
 
@@ -207,10 +207,10 @@ function UF:ConfigureFrame(frame, unit)
     local general = self.db.General
 
     if not frame.nuiGroupChild then
-        frame:NUISetPixelSize(uDB.Width, uDB.Height)
+        frame:NCSetSize(uDB.Width, uDB.Height)
         self:ApplyUnitPosition(frame, unit, uDB)
     elseif frame.nuiBuilt and not NRSKNUI:InCombat() then
-        frame:NUISetPixelSize(uDB.Width, uDB.Height)
+        frame:NCSetSize(uDB.Width, uDB.Height)
     end
 
     for _, def in pairs(UF.Elements) do

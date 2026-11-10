@@ -110,7 +110,7 @@ function DungeonCasts:CreateFrames()
     -- The group owns its own OnUpdate for layout scheduling, so the timer text rides a separate frame.
     local updater = CreateFrame('Frame')
     updater:Hide()
-    updater:NUIApplyOnUpdate(UPDATE_THROTTLE, function() self:OnUpdate() end)
+    updater:NCApplyOnUpdate(UPDATE_THROTTLE, function() self:OnUpdate() end)
     self.updater = updater
 
     Anchors:Register(self, 'DungeonCasts', self.group, 'dungeonCasts', { displayName = L['Dungeon Casts'] })
@@ -121,20 +121,20 @@ end
 function DungeonCasts:CreateBar(index)
     local bar = CreateFrame('Frame', nil, self.group)
     bar:EnableMouse(false)
-    bar:NUICreateBackdrop(true)
-    bar:NUISetPixelSnap()
+    bar:NCCreateBackdrop(true)
+    bar:NCDisablePixelSnap()
     bar.key = 'bar' .. index
 
     -- Rendered above the fill and the icon so the frame reads as one unit.
     local borderFrame = CreateFrame('Frame', nil, bar)
     borderFrame:SetFrameLevel(bar:GetFrameLevel() + 5)
-    borderFrame:NUIAddBorders()
-    borderFrame:NUISetPixelSnap()
+    borderFrame:NCAddBorders()
+    borderFrame:NCDisablePixelSnap()
     bar.borderFrame = borderFrame
 
     local iconFrame = CreateFrame('Frame', nil, bar)
-    iconFrame:NUIAddBorders()
-    iconFrame:NUISetPixelSnap()
+    iconFrame:NCAddBorders()
+    iconFrame:NCDisablePixelSnap()
     iconFrame.texture = iconFrame:CreateTexture(nil, 'ARTWORK')
     bar.iconFrame = iconFrame
 
@@ -144,7 +144,7 @@ function DungeonCasts:CreateBar(index)
     bar.castBar = castBar
 
     local spark = castBar:CreateTexture(nil, 'OVERLAY')
-    spark:NUISetPixelSnap()
+    spark:NCDisablePixelSnap()
     spark:SetBlendMode('ADD')
     bar.spark = spark
 
@@ -157,7 +157,7 @@ function DungeonCasts:CreateBar(index)
     bar.targetText:Hide()
 
     local marker = borderFrame:CreateTexture(nil, 'OVERLAY', nil, 7)
-    marker:NUISetPixelSnap()
+    marker:NCDisablePixelSnap()
     marker:SetTexture('Interface/TargetingFrame/UI-RaidTargetingIcons')
     marker:Hide()
     bar.marker = marker
@@ -180,7 +180,7 @@ function DungeonCasts:ConfigureBar(bar)
     local barTexture = NRSKNUI:GetStatusbar(db)
     local iconShown = db.Icon.Enabled
 
-    bar:NUISetPixelSize(w, h)
+    bar:NCSetSize(w, h)
     bar:SetBackgroundTexture(NRSKNUI:GetBarBackground(db))
     bar:SetBackgroundColor(bg[1], bg[2], bg[3], bg[4])
 
@@ -190,16 +190,16 @@ function DungeonCasts:ConfigureBar(bar)
 
     -- Icon.
     bar.iconFrame:SetShown(iconShown)
-    bar.iconFrame:NUISetPixelSize(h, h)
-    bar.iconFrame:NUISetPixelPoint('LEFT', bar, 'LEFT', 0, 0)
+    bar.iconFrame:NCSetSize(h, h)
+    bar.iconFrame:NCSetPoint('LEFT', bar, 'LEFT', 0, 0)
     bar.iconFrame:SetBorderColor(border[1], border[2], border[3], border[4])
-    bar.iconFrame.texture:NUISetPixelInside(bar.iconFrame, 1, 1)
-    bar.iconFrame.texture:NUISetZoom()
+    bar.iconFrame.texture:NCSetInside(bar.iconFrame, 1, 1)
+    bar.iconFrame.texture:NCSetZoom()
 
     -- Main castbar.
     bar.castBar:ClearAllPoints()
-    bar.castBar:NUISetPixelPoint('TOPLEFT', bar, 'TOPLEFT', iconShown and (h - 1) or 1, -1)
-    bar.castBar:NUISetPixelPoint('BOTTOMRIGHT', bar, 'BOTTOMRIGHT', -1, 1)
+    bar.castBar:NCSetPoint('TOPLEFT', bar, 'TOPLEFT', iconShown and (h - 1) or 1, -1)
+    bar.castBar:NCSetPoint('BOTTOMRIGHT', bar, 'BOTTOMRIGHT', -1, 1)
     bar.castBar:SetStatusBarTexture(barTexture)
 
     -- Spark.
@@ -231,9 +231,9 @@ function DungeonCasts:ConfigureBar(bar)
     if not db.Target.Enabled then bar.targetText:Hide() end
 
     -- Raidmarker icon.
-    bar.marker:NUISetPixelSize(db.RaidIcon.Size, db.RaidIcon.Size)
+    bar.marker:NCSetSize(db.RaidIcon.Size, db.RaidIcon.Size)
     bar.marker:ClearAllPoints()
-    bar.marker:NUISetPixelPoint(db.RaidIcon.Anchor, bar, db.RaidIcon.Anchor, db.RaidIcon.XOffset, db.RaidIcon.YOffset)
+    bar.marker:NCSetPoint(db.RaidIcon.Anchor, bar, db.RaidIcon.Anchor, db.RaidIcon.XOffset, db.RaidIcon.YOffset)
 
     -- Notify the group that the bar has been resized so it can re-layout if needed.
     self.group:NotifyChildResized(bar.key, w, h)

@@ -70,7 +70,7 @@ function Skinning:HandleSlider(slider, isScrollBar)
 
     -- The track art is a real Backdrop, not a region, so stripping regions misses it.
     if slider.SetBackdrop then slider:SetBackdrop(nil) end
-    slider:NUIStripTextures()
+    slider:NCStripTextures()
 
     local vertical = slider:GetOrientation() == 'VERTICAL'
     local thumb = slider.GetThumbTexture and slider:GetThumbTexture()
@@ -91,7 +91,7 @@ function Skinning:HandleSlider(slider, isScrollBar)
         return
     end
 
-    slider:NUICreateBackdrop(false)
+    slider:NCCreateBackdrop(false)
 
     if thumb then
         thumb:SetSize(vertical and THUMB_THICKNESS or THUMB_LENGTH, vertical and THUMB_LENGTH or THUMB_THICKNESS)
@@ -103,7 +103,7 @@ function Skinning:HandleSlider(slider, isScrollBar)
         local grip = slider:CreateTexture(nil, 'OVERLAY', nil, 1)
         grip:SetPoint('TOPLEFT', thumb, 'TOPLEFT', insetX, -insetY)
         grip:SetPoint('BOTTOMRIGHT', thumb, 'BOTTOMRIGHT', -insetX, insetY)
-        grip:NUISetPixelSnap()
+        grip:NCDisablePixelSnap()
         slider.NUIThumb = grip
     end
 

@@ -53,19 +53,19 @@ function RerollKeystone:CreateFrame()
 
     local frame = CreateFrame('Frame', 'NRSKNUI_RerollKeystone', UIParent)
     frame:SetRolesets('encounterUI')
-    frame:NUISetPixelSize(self.db.Size, self.db.Size)
-    frame:NUIAddBorders()
+    frame:NCSetSize(self.db.Size, self.db.Size)
+    frame:NCAddBorders()
 
     frame.icon = frame:CreateTexture(nil, 'ARTWORK')
-    frame.icon:NUISetPixelInside(frame)
-    frame.icon:NUISetZoom()
+    frame.icon:NCSetInside(frame)
+    frame.icon:NCSetZoom()
     frame.icon:SetTexture(525134)
 
     frame.text = frame:CreateFontString(nil, 'OVERLAY')
-    frame.text:NUISetPixelPoint('BOTTOM', frame, 'TOP', 0, 8)
+    frame.text:NCSetPoint('BOTTOM', frame, 'TOP', 0, 8)
 
     frame.keyText = frame:CreateFontString(nil, 'OVERLAY')
-    frame.keyText:NUISetPixelPoint('TOP', frame, 'BOTTOM', 0, -8)
+    frame.keyText:NCSetPoint('TOP', frame, 'BOTTOM', 0, -8)
 
     frame:Hide()
     self.frame = frame
@@ -78,8 +78,8 @@ function RerollKeystone:ApplySettings()
     local tC = self.db.FontColor
     local kC = self.db.FontColorKey
 
-    self.frame:NUISetPixelSize(self.db.Size, self.db.Size)
-    self.frame:NUIApplyPosition(self.db)
+    self.frame:NCSetSize(self.db.Size, self.db.Size)
+    self.frame:NCApplyPosition(self.db)
 
     self.frame.text:SetFontStyle(self.db)
     self.frame.text:SetTextColor(tC[1], tC[2], tC[3], tC[4])

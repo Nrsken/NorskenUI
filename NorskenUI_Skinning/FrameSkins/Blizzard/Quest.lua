@@ -148,10 +148,10 @@ local function SkinModelScene(S)
     local scene = _G.QuestModelScene
     if not scene then return end
 
-    scene:NUIStripTextures('Keyed')
+    scene:NCStripTextures('Keyed')
     S:CreatePanelBackdrop(scene)
     if scene.ModelTextFrame then
-        scene.ModelTextFrame:NUIStripTextures('Keyed')
+        scene.ModelTextFrame:NCStripTextures('Keyed')
         S:CreatePanelBackdrop(scene.ModelTextFrame)
     end
 end
@@ -165,11 +165,11 @@ Skinning:RegisterSkin('Blizzard_UIPanels_Game', 'QuestFrame', function(S)
 
     -- every panel re-atlases its parchment on show, ClearHide keeps it at alpha 0 through that
     for _, name in ipairs(PANELS) do
-        _G[name]:NUIStripTextures('ClearHide')
+        _G[name]:NCStripTextures('ClearHide')
     end
     for _, name in ipairs(SCROLL_FRAMES) do
         local scroll = _G[name]
-        scroll:NUIStripTextures('ClearHide')
+        scroll:NCStripTextures('ClearHide')
         S:HandleTrimScrollBar(scroll.ScrollBar)
     end
     for _, name in ipairs(BUTTONS) do

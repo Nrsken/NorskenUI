@@ -52,21 +52,21 @@ local function ApplyCDMAnchorSize()
     local x, y = essential:GetCenter()
     if minWidth and not x then return end
 
-    anchor:NUISetPixelWidth(max(width, minWidth or 0))
-    anchor:NUISetPixelHeight(height)
+    anchor:NCSetWidth(max(width, minWidth or 0))
+    anchor:NCSetHeight(height)
     anchor:ClearAllPoints()
     if minWidth then
         -- Our groups get a copied rect: anchoring them under the secure unit frames would protect their Show/Hide.
         local scale = essential:GetEffectiveScale() / UIParent:GetEffectiveScale()
-        anchor:NUISetGridPoint('CENTER', UIParent, 'BOTTOMLEFT', x * scale, y * scale)
+        anchor:NCSetGridPoint('CENTER', UIParent, 'BOTTOMLEFT', x * scale, y * scale)
     else
-        anchor:NUISetGridPoint('CENTER', essential, 'CENTER', 0, 0) -- Without this we would need to use .1 offsets to avoid scuffed pixels.
+        anchor:NCSetGridPoint('CENTER', essential, 'CENTER', 0, 0) -- Without this we would need to use .1 offsets to avoid scuffed pixels.
     end
 end
 
 function UF:ScheduleCDMAnchorUpdate()
     if UF.CDMAnchor then
-        UF.CDMAnchor:NUIScheduleUpdate()
+        UF.CDMAnchor:NCScheduleUpdate()
     end
 end
 
@@ -92,11 +92,11 @@ function UF:CreateCDMAnchor()
     local anchor = _G['NRSKNUF_CDMAnchor']
     if not anchor then
         anchor = CreateFrame('Frame', 'NRSKNUF_CDMAnchor', UIParent)
-        anchor:NUISetPixelSize(1, 1)
+        anchor:NCSetSize(1, 1)
         anchor:SetPoint('CENTER')
     end
     UF.CDMAnchor = anchor
-    anchor:NUISetScheduledUpdate(function()
+    anchor:NCSetScheduledUpdate(function()
         NRSKNUI:RunWhenSafe(ApplyCDMAnchorSize)
     end)
 

@@ -38,10 +38,10 @@ function Skinning:HandleMinMaxButton(frame)
                 btn:SetDisabledTexture(NRSKNUI.ClearTexture)
                 btn:SetHighlightTexture(NRSKNUI.ClearTexture)
             end
-            btn:NUIStripTextures()
+            btn:NCStripTextures()
 
             local point, relativeTo, relativePoint, x, y = btn:GetPoint()
-            btn:NUISetPixelPoint(point, relativeTo or btn:GetParent(), relativePoint or point, x or 0, y or 0)
+            btn:NCSetPoint(point, relativeTo or btn:GetParent(), relativePoint or point, x or 0, y or 0)
 
             -- The buttons are setAllPoints with no size of their own, so they measure 0 until
             -- the frame is first laid out. The template-sized parent is the stable source.
@@ -52,7 +52,7 @@ function Skinning:HandleMinMaxButton(frame)
             minMax:SetPoint('CENTER')
             minMax:SetSize(size, size)
             minMax:SetTexture(ARROW_TEXTURE)
-            minMax:NUISetPixelSnap()
+            minMax:NCDisablePixelSnap()
             minMax:SetVertexColor(0.9, 0.9, 0.9)
 
             if buttonDirection == 'expand' then

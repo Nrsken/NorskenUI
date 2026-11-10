@@ -95,7 +95,7 @@ function BigWigsTimers:CreateFrames()
     -- Each group drives its own OnUpdate as the layout scheduler, so the countdown rides its own frame.
     local updater = CreateFrame('Frame')
     updater:Hide()
-    updater:NUIApplyOnUpdate(UPDATE_THROTTLE, function() self:OnUpdate() end)
+    updater:NCApplyOnUpdate(UPDATE_THROTTLE, function() self:OnUpdate() end)
     self.updater = updater
 
     Anchors:Register(self, 'BigWigsTimerBars', self.groups[BARS], 'bwTimersDisplay', { db = self.db[BARS], displayName = L['BigWigs Timer Bars'], guiContext = { tabId = 'bars' } })
@@ -107,20 +107,20 @@ end
 function BigWigsTimers:CreateBarDisplay(index)
     local display = CreateFrame('Frame', nil, self.groups[BARS])
     display:EnableMouse(false)
-    display:NUICreateBackdrop(true)
-    display:NUISetPixelSnap()
+    display:NCCreateBackdrop(true)
+    display:NCDisablePixelSnap()
     display.key = 'bar' .. index
     display.kind = BARS
 
     local borderFrame = CreateFrame('Frame', nil, display)
     borderFrame:SetFrameLevel(display:GetFrameLevel() + 5)
-    borderFrame:NUIAddBorders()
-    borderFrame:NUISetPixelSnap()
+    borderFrame:NCAddBorders()
+    borderFrame:NCDisablePixelSnap()
     display.borderFrame = borderFrame
 
     local iconFrame = CreateFrame('Frame', nil, display)
-    iconFrame:NUIAddBorders()
-    iconFrame:NUISetPixelSnap()
+    iconFrame:NCAddBorders()
+    iconFrame:NCDisablePixelSnap()
     iconFrame.texture = iconFrame:CreateTexture(nil, 'ARTWORK')
     display.iconFrame = iconFrame
 
@@ -167,7 +167,7 @@ function BigWigsTimers:ConfigureDisplay(display)
         local db = self.db[TEXTS]
         local height = db.FontSize + 4
 
-        display:NUISetPixelSize(TEXT_WIDTH, height)
+        display:NCSetSize(TEXT_WIDTH, height)
         display.text:SetFontStyle(db)
         display.text:SetFontJustify(ALIGN_JUSTIFY[db.Config.Align] or 'CENTER', display, 0, 0)
         self.groups[TEXTS]:NotifyChildResized(display.key, TEXT_WIDTH, height)
@@ -180,7 +180,7 @@ function BigWigsTimers:ConfigureDisplay(display)
     local bg, border = NRSKNUI:GetBackdropColor(db), NRSKNUI:GetBorderColor(db)
     local iconShown = db.Icon.Enabled
 
-    display:NUISetPixelSize(w, h)
+    display:NCSetSize(w, h)
     display:SetBackgroundTexture(NRSKNUI:GetBarBackground(db))
     display:SetBackgroundColor(bg[1], bg[2], bg[3], bg[4])
 
@@ -188,15 +188,15 @@ function BigWigsTimers:ConfigureDisplay(display)
     display.borderFrame:SetBorderColor(border[1], border[2], border[3], border[4])
 
     display.iconFrame:SetShown(iconShown)
-    display.iconFrame:NUISetPixelSize(h, h)
-    display.iconFrame:NUISetPixelPoint('LEFT', display, 'LEFT', 0, 0)
+    display.iconFrame:NCSetSize(h, h)
+    display.iconFrame:NCSetPoint('LEFT', display, 'LEFT', 0, 0)
     display.iconFrame:SetBorderColor(border[1], border[2], border[3], border[4])
-    display.iconFrame.texture:NUISetPixelInside(display.iconFrame, 1, 1)
-    display.iconFrame.texture:NUISetZoom()
+    display.iconFrame.texture:NCSetInside(display.iconFrame, 1, 1)
+    display.iconFrame.texture:NCSetZoom()
 
     display.statusBar:ClearAllPoints()
-    display.statusBar:NUISetPixelPoint('TOPLEFT', display, 'TOPLEFT', iconShown and (h - 1) or 1, -1)
-    display.statusBar:NUISetPixelPoint('BOTTOMRIGHT', display, 'BOTTOMRIGHT', -1, 1)
+    display.statusBar:NCSetPoint('TOPLEFT', display, 'TOPLEFT', iconShown and (h - 1) or 1, -1)
+    display.statusBar:NCSetPoint('BOTTOMRIGHT', display, 'BOTTOMRIGHT', -1, 1)
     display.statusBar:SetStatusBarTexture(NRSKNUI:GetStatusbar(db))
 
     display.leftText:SetFontStyle(db)

@@ -45,14 +45,14 @@ end
 function Skinning:HandleIcon(icon, createBackdrop, skipZoom, isWidget)
     if not icon then return end
 
-    if not skipZoom then icon:NUISetZoom() end
+    if not skipZoom then icon:NCSetZoom() end
 
     if createBackdrop and not icon.NUIBackdrop then
         local parent = icon:GetParent()
         local backdrop = CreateFrame('Frame', nil, parent)
         backdrop:SetPoint('TOPLEFT', icon, -1, 1)
         backdrop:SetPoint('BOTTOMRIGHT', icon, 1, -1)
-        backdrop:NUIAddBorders()
+        backdrop:NCAddBorders()
         backdrop:SetFrameLevel(parent:GetFrameLevel())
         backdrop:SetBorderLayer('ARTWORK', 7)
 
@@ -60,7 +60,7 @@ function Skinning:HandleIcon(icon, createBackdrop, skipZoom, isWidget)
         if isWidget then
             local fill = backdrop:CreateTexture(nil, 'BACKGROUND')
             fill:SetAllPoints(backdrop)
-            fill:NUISetPixelSnap() -- AddBorders owns the pixel math, an unsnapped fill rounds off it
+            fill:NCDisablePixelSnap() -- AddBorders owns the pixel math, an unsnapped fill rounds off it
             backdrop.NUIFill = fill
 
             local glow = backdrop:CreateTexture(nil, 'BACKGROUND', nil, 2)

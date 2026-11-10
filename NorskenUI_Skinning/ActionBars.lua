@@ -78,8 +78,8 @@ local function MirrorIcon(button)
     local layer, sublevel = original:GetDrawLayer()
     local icon = button:CreateTexture(nil, layer, nil, sublevel)
     icon:SetAllPoints(original)
-    icon:NUISetPixelSnap()
-    icon:NUISetZoom()
+    icon:NCDisablePixelSnap()
+    icon:NCSetZoom()
     icon:SetTexture(original:GetTexture())
     icon:SetVertexColor(original:GetVertexColor())
     icon:SetShown(original:IsShown())
@@ -519,7 +519,7 @@ local function StylePushedTexture(button)
     local pushed = button:GetPushedTexture()
     if not pushed then return end
 
-    pushed:NUISetPixelSnap()
+    pushed:NCDisablePixelSnap()
     pushed:SetTexture(NRSKNUI.WhiteTexture)
     pushed:SetTexCoord(0, 1, 0, 1)
     pushed:ClearAllPoints()
@@ -536,13 +536,13 @@ function ACB:StyleButtonTextures(button)
     if not button then return end
 
     -- Hide blizzard textures we don't need
-    button:NUIBanish('Border')           -- equipped border
-    button:NUIBanish('Flash')            -- red flash when out of mana or unusable
-    button:NUIBanish('NewActionTexture') -- glow texture for new actions
-    button:NUIBanish('SpellHighlightTexture')
-    button:NUIBanish('SlotBackground')   -- Hides the default slot background on action buttons
+    button:NCBanish('Border')           -- equipped border
+    button:NCBanish('Flash')            -- red flash when out of mana or unusable
+    button:NCBanish('NewActionTexture') -- glow texture for new actions
+    button:NCBanish('SpellHighlightTexture')
+    button:NCBanish('SlotBackground')   -- Hides the default slot background on action buttons
     -- Banished rather than hidden: UpdateButtonArt re-shows Bar 1's slot art on every Edit Mode layout apply.
-    button:NUIBanish('SlotArt')
+    button:NCBanish('SlotArt')
 
     -- The same UpdateButtonArt swaps Blizzard's pushed atlas back in.
     if button.UpdateButtonArt and not artHooked[button] then
@@ -562,7 +562,7 @@ function ACB:StyleButtonTextures(button)
 
     -- Style highlight texture
     if button.HighlightTexture then
-        button.HighlightTexture:NUISetPixelSnap()
+        button.HighlightTexture:NCDisablePixelSnap()
         button.HighlightTexture:SetTexture(NRSKNUI.WhiteTexture)
         button.HighlightTexture:SetTexCoord(0, 1, 0, 1)
         button.HighlightTexture:ClearAllPoints()
@@ -603,7 +603,7 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
     -- Create backdrop frame with raw integer size (pixel-perfect approach)
     local backdrop = CreateFrame("Frame", "NRSKNUI_" .. barName .. "Backdrop" .. index, UIParent, "BackdropTemplate")
     backdrop:SetRolesets("actionBars")
-    backdrop:NUISetPixelSnap()
+    backdrop:NCDisablePixelSnap()
     backdrop:SetSize(buttonSize, buttonSize)
     backdrop:SetFrameStrata("BACKGROUND")
     backdrop:SetFrameLevel(1)
@@ -624,7 +624,7 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
     backdrop._borderFrame = borderFrame
 
     -- Add borders using helper with textures on borderFrame, stored on backdrop
-    backdrop:NUIAddBorders()
+    backdrop:NCAddBorders()
     backdrop:SetBorderColor(unpack(borderColor))
     backdrop:SetBorderParent(borderFrame)
     backdrop._barName = barName
@@ -632,7 +632,7 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
     -- Resize and re-anchor the Blizzard button with raw integer size
     button:SetParent(backdrop)
     button:ClearAllPoints()
-    button:NUISetPixelSnap()
+    button:NCDisablePixelSnap()
     button:SetSize(buttonSize, buttonSize)
     button:SetPoint("CENTER", backdrop, "CENTER", 0, 0)
 
@@ -708,15 +708,15 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
     if button.IconMask then button.IconMask:Hide() end                          -- Hides the default circular mask on icons
     button.enableSpellFX = nil -- Blizzard skips the cast shine, interrupt slash and target reticle; a nil write doesn't taint
     if button.icon then
-        button.icon:NUISetPixelSnap()
+        button.icon:NCDisablePixelSnap()
         button.icon:SetAllPoints(button)
     end
     if button.cooldown then
-        button.cooldown:NUISetPixelSnap()
+        button.cooldown:NCDisablePixelSnap()
         button.cooldown:SetAllPoints(button)
     end
     if button.SpellHighlightTexture then
-        button.SpellHighlightTexture:NUISetPixelSnap()
+        button.SpellHighlightTexture:NCDisablePixelSnap()
         button.SpellHighlightTexture:SetAllPoints(button)
     end
     if button.AutoCastable then button.AutoCastable:SetDrawLayer("OVERLAY", 7) end -- Ensure glow is above the button
@@ -743,14 +743,14 @@ function ACB:CreateButtonBackdrop(button, barName, index, buttonSize)
     end
 
     -- Icon zoom stuff bcs blizz border uggy
-    button.icon:NUISetZoom()
+    button.icon:NCSetZoom()
     if self.db.DesaturateOnCooldown and button.UpdateAction and not button._nrsknIcon then
         MirrorIcon(button)
     end
 
     -- Create range overlay, red tint when out of range
     local rangeOverlay = button:CreateTexture(nil, "OVERLAY", nil, 1)
-    rangeOverlay:NUISetPixelSnap()
+    rangeOverlay:NCDisablePixelSnap()
     rangeOverlay:SetAllPoints(button)
     local rangeColor = self.db.RangeOverlayColor
     rangeOverlay:SetColorTexture(rangeColor[1], rangeColor[2], rangeColor[3], rangeColor[4])
@@ -934,7 +934,7 @@ local function SkinBar(cfg)
     local containerName = "NRSKNUI_" .. cfg.name .. "_Container"
     local container = _G[containerName] or CreateFrame("Frame", containerName, UIParent)
     container:SetRolesets("actionBars")
-    container:NUISetPixelSnap()
+    container:NCDisablePixelSnap()
     container:SetFrameStrata("LOW")
     container:SetSize(containerWidth, containerHeight)
     cfg.nrsknui_container = container
@@ -1636,15 +1636,15 @@ function ACB:UpdateBarLayout(barKey)
 
                 -- Update icon and cooldown to match new size
                 if button.icon then
-                    button.icon:NUISetPixelSnap()
+                    button.icon:NCDisablePixelSnap()
                     button.icon:SetAllPoints(button)
                 end
                 if button.cooldown then
-                    button.cooldown:NUISetPixelSnap()
+                    button.cooldown:NCDisablePixelSnap()
                     button.cooldown:SetAllPoints(button)
                 end
                 if button.SpellHighlightTexture then
-                    button.SpellHighlightTexture:NUISetPixelSnap()
+                    button.SpellHighlightTexture:NCDisablePixelSnap()
                     button.SpellHighlightTexture:SetAllPoints(button)
                 end
 
@@ -1843,9 +1843,9 @@ function ACB:HideMainBarArt()
     if self._mainBarArtHidden or not bar then return end
     self._mainBarArtHidden = true
 
-    bar:NUIBanish('BorderArt')
-    bar:NUIBanish('EndCaps')
-    bar:NUIBanish('ActionBarPageNumber')
+    bar:NCBanish('BorderArt')
+    bar:NCBanish('EndCaps')
+    bar:NCBanish('ActionBarPageNumber')
 
     local function HideDividers(selfBar)
         for _, pool in ipairs({ selfBar.HorizontalDividersPool, selfBar.VerticalDividersPool }) do

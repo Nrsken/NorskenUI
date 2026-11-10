@@ -33,7 +33,7 @@ local function UpdateMenuArrow(frame)
     arrow:SetTexture(ARROW_TEXTURE)
     arrow:SetRotation(math_rad(90))
     arrow:SetVertexColor(Skinning:GetAccentColor())
-    arrow:NUISetPixelSize(12, 12)
+    arrow:NCSetSize(12, 12)
 end
 
 ---@param frame MenuElement
@@ -50,7 +50,7 @@ end
 local function SkinMenuFrame(menu)
     if not menu then return end
 
-    menu:NUIStripTextures()
+    menu:NCStripTextures()
 
     local backdrop = menuBackdrops[menu]
     if backdrop then
@@ -69,7 +69,7 @@ local function SkinMenuFrame(menu)
     local inset = menu:GetInset()
     backdrop:ClearAllPoints()
     backdrop:SetPoint('TOPLEFT', menu)
-    backdrop:NUISetPixelPoint('BOTTOMRIGHT', menu, 'BOTTOMRIGHT', 0, inset.bottom - inset.top)
+    backdrop:NCSetPoint('BOTTOMRIGHT', menu, 'BOTTOMRIGHT', 0, inset.bottom - inset.top)
 end
 
 ---@param manager table Menu manager proxy

@@ -12,8 +12,8 @@ function UF:HideBlizzardRaidFrames()
         local container = _G.CompactRaidFrameContainer
         local manager = _G.CompactRaidFrameManager
 
-        if container then container:NUIBanish() end
-        if manager then manager:NUIBanish() end
+        if container then container:NCBanish() end
+        if manager then manager:NCBanish() end
 
         -- The setting the raid utility itself reads, so it comes up off on the next login too.
         local SetSetting = _G.CompactRaidFrameManager_SetSetting

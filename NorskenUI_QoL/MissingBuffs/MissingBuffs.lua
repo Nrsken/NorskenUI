@@ -91,19 +91,19 @@ function MissingBuffs:SetTooltipIcon(texture)
     if not frame then
         frame = CreateFrame('Frame', nil, GameTooltip)
         ---@cast frame MissingBuffsTooltipIcon
-        frame:NUIAddBorders()
+        frame:NCAddBorders()
         frame:SetBorderColor(0, 0, 0, 1)
         frame.texture = frame:CreateTexture(nil, 'ARTWORK')
-        frame.texture:NUISetPixelInside(frame, 1, 1)
-        frame.texture:NUISetZoom()
+        frame.texture:NCSetInside(frame, 1, 1)
+        frame.texture:NCSetZoom()
         GameTooltip:HookScript('OnTooltipCleared', function() frame:Hide() end)
         self.tooltipIcon = frame
     end
 
     local height = 36
-    frame:NUISetPixelSize(height, height)
+    frame:NCSetSize(height, height)
     frame:ClearAllPoints()
-    frame:NUISetPixelPoint('TOPRIGHT', GameTooltip, 'TOPLEFT', 0, -1)
+    frame:NCSetPoint('TOPRIGHT', GameTooltip, 'TOPLEFT', 0, -1)
     frame.texture:SetTexture(texture)
     frame:Show()
 end
@@ -141,10 +141,10 @@ local function ConfigureIcon(icon, db)
     local resized = icon.size ~= size
     icon.size = size
 
-    icon:NUISetPixelSize(size, size)
+    icon:NCSetSize(size, size)
     icon:SetBorderColor(border[1], border[2], border[3], border[4])
-    icon.texture:NUISetPixelInside(icon, 1, 1)
-    icon.texture:NUISetZoom()
+    icon.texture:NCSetInside(icon, 1, 1)
+    icon.texture:NCSetZoom()
 
     icon.count:SetFontStyle(db)
     icon.count:SetFontJustify(db.CountText, icon, db.CountText.Position.XOffset, db.CountText.Position.YOffset)
@@ -168,8 +168,8 @@ function MissingBuffs:GetIcon(key, groupName)
     icon:SetScript('OnEnter', OnIconEnter)
     icon:SetScript('OnLeave', GameTooltip_Hide)
     icon.key = key
-    icon:NUIAddBorders()
-    icon:NUISetPixelSnap()
+    icon:NCAddBorders()
+    icon:NCDisablePixelSnap()
     icon.texture = icon:CreateTexture(nil, 'ARTWORK')
     icon.count = icon:CreateFontString(nil, 'OVERLAY')
     icon.count:SetWordWrap(false)

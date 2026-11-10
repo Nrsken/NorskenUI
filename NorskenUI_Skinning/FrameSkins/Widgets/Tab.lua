@@ -77,7 +77,7 @@ function Skinning:HandleTab(tab, isWidget)
 
     local wasActive = tab.LeftActive ~= nil and tab.LeftActive:IsShown()
 
-    tab:NUIStripTextures()
+    tab:NCStripTextures()
     local backdrop = self:CreatePanelBackdrop(tab, nil, nil, isWidget)
     if backdrop then
         backdrop:ClearAllPoints()
@@ -117,9 +117,9 @@ function Skinning:HandleTabRow(source, anchor, isWidget)
             if anchor then
                 tab:ClearAllPoints()
                 if prev then
-                    tab:NUISetPixelPoint('TOPLEFT', prev, 'TOPRIGHT', -1, 0)
+                    tab:NCSetPoint('TOPLEFT', prev, 'TOPRIGHT', -1, 0)
                 else
-                    tab:NUISetPixelPoint('TOPLEFT', anchor, 'BOTTOMLEFT', 0, 1)
+                    tab:NCSetPoint('TOPLEFT', anchor, 'BOTTOMLEFT', 0, 1)
                 end
                 prev = tab
             end
@@ -139,7 +139,7 @@ function Skinning:HandleTabRow(source, anchor, isWidget)
     source.spacing = -1
     if anchor then
         source:ClearAllPoints()
-        source:NUISetPixelPoint('TOPLEFT', anchor, 'BOTTOMLEFT', 0, 1)
+        source:NCSetPoint('TOPLEFT', anchor, 'BOTTOMLEFT', 0, 1)
     end
     source:MarkDirty()
 end

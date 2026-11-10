@@ -47,22 +47,22 @@ local function SkinNavButtons(S, window)
     S:HandleButton(prevButton)
     S:HandleButton(nextButton)
 
-    prevButton:NUISetPixelHeight(BUTTON_HEIGHT)
+    prevButton:NCSetHeight(BUTTON_HEIGHT)
     prevButton:ClearAllPoints()
-    prevButton:NUISetPixelPoint('BOTTOMLEFT', window, 'BOTTOMLEFT', PANEL_PADDING, PANEL_PADDING)
+    prevButton:NCSetPoint('BOTTOMLEFT', window, 'BOTTOMLEFT', PANEL_PADDING, PANEL_PADDING)
 
-    nextButton:NUISetPixelHeight(BUTTON_HEIGHT)
+    nextButton:NCSetHeight(BUTTON_HEIGHT)
     nextButton:ClearAllPoints()
-    nextButton:NUISetPixelPoint('BOTTOMRIGHT', window, 'BOTTOMRIGHT', -PANEL_PADDING, PANEL_PADDING)
+    nextButton:NCSetPoint('BOTTOMRIGHT', window, 'BOTTOMRIGHT', -PANEL_PADDING, PANEL_PADDING)
 
     -- Shown on the Options tab in place of the nav buttons, between their spots.
     local wipeButton = _G.BugSackWipeButton
     if wipeButton then
         S:HandleButton(wipeButton)
-        wipeButton:NUISetPixelHeight(BUTTON_HEIGHT)
+        wipeButton:NCSetHeight(BUTTON_HEIGHT)
         wipeButton:ClearAllPoints()
-        wipeButton:NUISetPixelPoint('LEFT', prevButton, 'RIGHT', BUTTON_GAP, 0)
-        wipeButton:NUISetPixelPoint('RIGHT', nextButton, 'LEFT', -BUTTON_GAP, 0)
+        wipeButton:NCSetPoint('LEFT', prevButton, 'RIGHT', BUTTON_GAP, 0)
+        wipeButton:NCSetPoint('RIGHT', nextButton, 'LEFT', -BUTTON_GAP, 0)
     end
 
     -- Only built when AceSerializer is embedded.
@@ -70,10 +70,10 @@ local function SkinNavButtons(S, window)
     if not sendButton then return end
 
     S:HandleButton(sendButton)
-    sendButton:NUISetPixelHeight(BUTTON_HEIGHT)
+    sendButton:NCSetHeight(BUTTON_HEIGHT)
     sendButton:ClearAllPoints()
-    sendButton:NUISetPixelPoint('LEFT', prevButton, 'RIGHT', BUTTON_GAP, 0)
-    sendButton:NUISetPixelPoint('RIGHT', nextButton, 'LEFT', -BUTTON_GAP, 0)
+    sendButton:NCSetPoint('LEFT', prevButton, 'RIGHT', BUTTON_GAP, 0)
+    sendButton:NCSetPoint('RIGHT', nextButton, 'LEFT', -BUTTON_GAP, 0)
 end
 
 ---@param S SkinningModule
@@ -140,9 +140,9 @@ local function SkinTabs(S, window)
 
             tab:ClearAllPoints()
             if previous then
-                tab:NUISetPixelPoint('TOPLEFT', previous, 'TOPRIGHT', TAB_OVERLAP, 0)
+                tab:NCSetPoint('TOPLEFT', previous, 'TOPRIGHT', TAB_OVERLAP, 0)
             else
-                tab:NUISetPixelPoint('TOPLEFT', window, 'BOTTOMLEFT', 0, 1)
+                tab:NCSetPoint('TOPLEFT', window, 'BOTTOMLEFT', 0, 1)
             end
             previous = tab
         end

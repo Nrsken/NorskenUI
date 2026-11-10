@@ -92,7 +92,7 @@ function Skinning:HandleButton(button, template, skipRegister, keepIcon, ignoreD
         button:SetHighlightTexture(NRSKNUI.ClearTexture)
     end
 
-    button:NUIStripTextures('ClearHide')
+    button:NCStripTextures('ClearHide')
 
     local backdrop = self:CreatePanelBackdrop(button, template, skipRegister, true)
 

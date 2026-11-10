@@ -62,8 +62,8 @@ function FocusCastbar:CreateFrame()
     local coreFrame = CreateFrame('Frame', 'NRSKNUI_FocusCastbar', UIParent)
     coreFrame:SetRolesets('unitFrames')
     coreFrame:EnableMouse(false)
-    coreFrame:NUICreateBackdrop(true)
-    coreFrame:NUISetPixelSnap()
+    coreFrame:NCCreateBackdrop(true)
+    coreFrame:NCDisablePixelSnap()
     coreFrame:Hide()
     coreFrame:SetScript('OnEvent', function(_, event, ...) self[CAST_EVENTS[event]](self, event, ...) end)
     self.coreFrame = coreFrame
@@ -71,14 +71,14 @@ function FocusCastbar:CreateFrame()
     -- Main border, rendered above the cast bar and icon, but below the glow.
     local borderFrame = CreateFrame('Frame', nil, coreFrame)
     borderFrame:SetFrameLevel(coreFrame:GetFrameLevel() + 5)
-    borderFrame:NUIAddBorders()
-    borderFrame:NUISetPixelSnap()
+    borderFrame:NCAddBorders()
+    borderFrame:NCDisablePixelSnap()
     self.borderFrame = borderFrame
 
     -- Icon frame with it's own border.
     local iconFrame = CreateFrame('Frame', nil, coreFrame)
-    iconFrame:NUIAddBorders()
-    iconFrame:NUISetPixelSnap()
+    iconFrame:NCAddBorders()
+    iconFrame:NCDisablePixelSnap()
     iconFrame.texture = iconFrame:CreateTexture(nil, 'ARTWORK')
     self.iconFrame = iconFrame
 
@@ -90,14 +90,14 @@ function FocusCastbar:CreateFrame()
 
     -- Create spark
     local spark = castBar:CreateTexture(nil, 'OVERLAY')
-    spark:NUISetPixelSnap()
+    spark:NCDisablePixelSnap()
     spark:SetBlendMode('ADD')
     spark:Hide()
     self.spark = spark
 
     -- Transparent mirror of the cast, its fill edge is what the kick bar anchors to.
     local positioner = CreateFrame('StatusBar', nil, castBar)
-    positioner:NUISetPixelSnap()
+    positioner:NCDisablePixelSnap()
     positioner:SetStatusBarColor(0, 0, 0, 0)
     positioner:SetMinMaxValues(0, 1)
     positioner:SetValue(0)
@@ -106,7 +106,7 @@ function FocusCastbar:CreateFrame()
 
     -- Grows from the cast's current position by the interrupt's remaining cooldown.
     local kickCooldownBar = CreateFrame('StatusBar', nil, castBar)
-    kickCooldownBar:NUISetPixelSnap()
+    kickCooldownBar:NCDisablePixelSnap()
     kickCooldownBar:SetStatusBarColor(0, 0, 0, 0)
     kickCooldownBar:SetClipsChildren(true)
     kickCooldownBar:SetMinMaxValues(0, 1)
@@ -121,7 +121,7 @@ function FocusCastbar:CreateFrame()
 
     -- Create the tick that indicates when the interrupt is ready and mask it to the cast bar.
     local kickTick = kickCooldownBar:CreateTexture(nil, 'OVERLAY', nil, 7)
-    kickTick:NUISetPixelSnap()
+    kickTick:NCDisablePixelSnap()
     kickTick:SetColorTexture(1, 1, 1, 1)
     kickTick:AddMaskTexture(tickMask)
     kickTick:SetAlpha(0)
@@ -143,7 +143,7 @@ function FocusCastbar:CreateFrame()
 
     -- Raid marker.
     local targetMarker = castBar:CreateTexture(nil, 'OVERLAY')
-    targetMarker:NUISetPixelSnap()
+    targetMarker:NCDisablePixelSnap()
     targetMarker:SetTexture('Interface/TargetingFrame/UI-RaidTargetingIcons')
     targetMarker:Hide()
     self.targetMarker = targetMarker
@@ -172,24 +172,24 @@ function FocusCastbar:ApplySettings()
     self.colUninterruptible = NRSKNUI:CreateColor(unintColor[1], unintColor[2], unintColor[3], unintColor[4]) --[[@as colorRGBA]]
     self.colNotReady = NRSKNUI:CreateColor(notReadyColor[1], notReadyColor[2], notReadyColor[3], notReadyColor[4]) --[[@as colorRGBA]]
 
-    self.coreFrame:NUISetPixelSize(w, h)
+    self.coreFrame:NCSetSize(w, h)
     self.coreFrame:SetBackgroundTexture(NRSKNUI:GetBarBackground(self.db))
     self.coreFrame:SetBackgroundColor(bgColor[1], bgColor[2], bgColor[3], bgColor[4])
     -- coreFrame's backdrop has no edges of its own, the visible border is borderFrame's.
     self.borderFrame:SetBorderColor(borderColor[1], borderColor[2], borderColor[3], borderColor[4])
-    self.coreFrame:NUIApplyPosition(self.db)
+    self.coreFrame:NCApplyPosition(self.db)
 
     self.borderFrame:SetAllPoints(self.coreFrame)
 
-    self.iconFrame:NUISetPixelSize(h, h)
-    self.iconFrame:NUISetPixelPoint('LEFT', self.coreFrame, 'LEFT', 0, 0)
+    self.iconFrame:NCSetSize(h, h)
+    self.iconFrame:NCSetPoint('LEFT', self.coreFrame, 'LEFT', 0, 0)
 
-    self.iconFrame.texture:NUISetPixelInside(self.iconFrame, 1, 1)
-    self.iconFrame.texture:NUISetZoom()
+    self.iconFrame.texture:NCSetInside(self.iconFrame, 1, 1)
+    self.iconFrame.texture:NCSetZoom()
 
     self.castBar:ClearAllPoints()
-    self.castBar:NUISetPixelPoint('TOPLEFT', self.coreFrame, 'TOPLEFT', h - 1, -1)
-    self.castBar:NUISetPixelPoint('BOTTOMRIGHT', self.coreFrame, 'BOTTOMRIGHT', -1, 1)
+    self.castBar:NCSetPoint('TOPLEFT', self.coreFrame, 'TOPLEFT', h - 1, -1)
+    self.castBar:NCSetPoint('BOTTOMRIGHT', self.coreFrame, 'BOTTOMRIGHT', -1, 1)
     self.castBar:SetStatusBarTexture(barTexture)
 
     NRSKNUI:SetSpark(self.spark, self.db, h)
@@ -208,9 +208,9 @@ function FocusCastbar:ApplySettings()
     local tickWidth = self.db.KickIndicator.TickWidth
     self.kickTick:SetShown(tickWidth > 0)
     if tickWidth > 0 then
-        self.kickTick:NUISetPixelSize(tickWidth, h - 2)
+        self.kickTick:NCSetSize(tickWidth, h - 2)
     end
-    self.kickTick:NUISetPixelPoint('CENTER', self.kickCooldownBar:GetStatusBarTexture(), 'RIGHT', 0, 0)
+    self.kickTick:NCSetPoint('CENTER', self.kickCooldownBar:GetStatusBarTexture(), 'RIGHT', 0, 0)
     self.kickTick:SetColorTexture(kickTickColor[1], kickTickColor[2], kickTickColor[3], kickTickColor[4])
 
     self.castTimeText:SetFontStyle(self.db)
@@ -231,9 +231,9 @@ function FocusCastbar:ApplySettings()
     self.targetText:SetFontStyle(self.db, self.db.TargetNames.FontSize)
     self.targetText:SetFontJustify(self.db.TargetNames.Anchor, self.coreFrame, self.db.TargetNames.XOffset, self.db.TargetNames.YOffset)
 
-    self.targetMarker:NUISetPixelSize(self.db.TargetMarker.Size, self.db.TargetMarker.Size)
+    self.targetMarker:NCSetSize(self.db.TargetMarker.Size, self.db.TargetMarker.Size)
     self.targetMarker:ClearAllPoints()
-    self.targetMarker:NUISetPixelPoint(self.db.TargetMarker.Anchor, self.coreFrame, self.db.TargetMarker.Anchor, self.db.TargetMarker.XOffset, self.db.TargetMarker.YOffset)
+    self.targetMarker:NCSetPoint(self.db.TargetMarker.Anchor, self.coreFrame, self.db.TargetMarker.Anchor, self.db.TargetMarker.XOffset, self.db.TargetMarker.YOffset)
 
     self:UpdateVisibility()
     self:UpdateBarColor()
@@ -393,7 +393,7 @@ function FocusCastbar:GetPip(index)
     if not pip then
         pip = self.castBar:CreateTexture(nil, 'OVERLAY', nil, 2)
         pip:SetColorTexture(0, 0, 0, 1)
-        pip:NUISetPixelSnap()
+        pip:NCDisablePixelSnap()
         self.pips[index] = pip
     end
     return pip
@@ -411,10 +411,10 @@ function FocusCastbar:UpdatePips()
         offset = offset + width * stages[index]
 
         local pip = self:GetPip(index)
-        pip:NUISetPixelWidth(2)
+        pip:NCSetWidth(2)
         pip:ClearAllPoints()
-        pip:NUISetPixelPoint('TOP', self.castBar, 'TOPLEFT', offset, 0)
-        pip:NUISetPixelPoint('BOTTOM', self.castBar, 'BOTTOMLEFT', offset, 0)
+        pip:NCSetPoint('TOP', self.castBar, 'TOPLEFT', offset, 0)
+        pip:NCSetPoint('BOTTOM', self.castBar, 'BOTTOMLEFT', offset, 0)
         pip:Show()
     end
 end

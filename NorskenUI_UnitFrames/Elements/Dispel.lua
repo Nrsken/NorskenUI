@@ -115,14 +115,14 @@ local function BuildHighlight(button, cfg, level)
         for _, edge in ipairs(BORDER_EDGES) do
             local border = holder:CreateTexture(nil, 'OVERLAY')
             border:SetTexture(NRSKNUI.WhiteTexture)
-            border:NUISetPixelPoint(edge.from, holder, edge.from, 0, 0)
-            border:NUISetPixelPoint(edge.to, holder, edge.to, 0, 0)
+            border:NCSetPoint(edge.from, holder, edge.from, 0, 0)
+            border:NCSetPoint(edge.to, holder, edge.to, 0, 0)
             if edge.height then
-                border:NUISetPixelHeight(borderSize)
+                border:NCSetHeight(borderSize)
             else
-                border:NUISetPixelWidth(borderSize)
+                border:NCSetWidth(borderSize)
             end
-            border:NUISetPixelSnap()
+            border:NCDisablePixelSnap()
             BindDispelColor(button, border, cfg)
         end
     end

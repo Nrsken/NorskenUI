@@ -83,7 +83,7 @@ local function SkinSpellBook(S)
     end
 
     -- Hide help tip button
-    SpellBookFrame.HelpPlateButton:NUIBanish()
+    SpellBookFrame.HelpPlateButton:NCBanish()
 
     -- Adjust spell book art transparency
     for _, textures in ipairs(SPELL_BOOK_ART) do
@@ -146,7 +146,7 @@ local function SkinHeroTalents(S)
     local heroTalents = _G.HeroTalentsSelectionDialog
     if not heroTalents then return end
 
-    heroTalents:NUIStripTextures('Keyed')
+    heroTalents:NCStripTextures('Keyed')
     S:CreatePanelBackdrop(heroTalents)
 
     local dialogText = _G.HeroTalentsSelectionDialogText

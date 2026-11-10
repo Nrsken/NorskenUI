@@ -28,7 +28,7 @@ local function CentreBarText(bar)
         if region:IsObjectType('FontString') then
             local point, relativeTo, relativePoint, x = region:GetPoint()
             if point and CENTRED_POINTS[point] then
-                region:NUISetPixelPoint(point, relativeTo or bar, relativePoint or point, x or 0, 0)
+                region:NCSetPoint(point, relativeTo or bar, relativePoint or point, x or 0, 0)
             end
         end
     end
@@ -46,7 +46,7 @@ local function AlignBarParity(bar)
 
     barHeight = floor(barHeight + 0.5)
     if (floor(anchorHeight + 0.5) - barHeight) % 2 ~= 0 then
-        bar:NUISetPixelHeight(barHeight + 1)
+        bar:NCSetHeight(barHeight + 1)
     end
 end
 
@@ -57,13 +57,13 @@ function Skinning:HandleStatusBar(bar, keepColor)
     if not bar or bar.NUISkinned then return end
     bar.NUISkinned = true
 
-    bar:NUIStripTextures()
+    bar:NCStripTextures()
     bar:SetStatusBarTexture(NRSKNUI.Media.Statusbars.NorskenUI)
     self:CreateStatusBarBackdrop(bar)
 
     AlignBarParity(bar)
     -- Blizzard positions these bars (ScrollBox rows land on half pixels), so leave grid snapping on.
-    bar:NUIAddBorders(true)
+    bar:NCAddBorders(true)
     CentreBarText(bar)
 
     ---@cast bar StatusBar & SkinnedStatusBarMixin

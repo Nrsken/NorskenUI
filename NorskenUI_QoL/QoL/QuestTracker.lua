@@ -318,8 +318,8 @@ end
 -- between Accept/Complete and Decline/Goodbye, which every quest panel keeps in its bottom corners
 function QuestTracker:CreateQuestButton()
     local button = CreateFrame('Button', nil, QuestFrame, 'UIPanelButtonTemplate')
-    button:NUISetPixelSize(QUEST_BUTTON_WIDTH, 22)
-    button:NUISetPixelPoint('BOTTOM', QuestFrame, 'BOTTOM', 0, 4)
+    button:NCSetSize(QUEST_BUTTON_WIDTH, 22)
+    button:NCSetPoint('BOTTOM', QuestFrame, 'BOTTOM', 0, 4)
     button:SetScript('OnClick', ToggleDialogQuest)
     button:SetScript('OnEnter', ShowQuestButtonTooltip)
     button:SetScript('OnLeave', GameTooltip_Hide)

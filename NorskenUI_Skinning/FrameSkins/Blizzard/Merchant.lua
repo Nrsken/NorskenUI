@@ -54,12 +54,12 @@ local function SkinItem(S, item)
     if backdrop then
         local outset = CELL_PADDING + 1
         backdrop:ClearAllPoints()
-        backdrop:NUISetPixelPoint('TOPLEFT', button, 'TOPLEFT', -outset, outset)
-        backdrop:NUISetPixelPoint('TOPRIGHT', item, 'TOPRIGHT', 1, outset)
-        backdrop:NUISetPixelPoint('BOTTOM', button, 'BOTTOM', 0, -outset)
+        backdrop:NCSetPoint('TOPLEFT', button, 'TOPLEFT', -outset, outset)
+        backdrop:NCSetPoint('TOPRIGHT', item, 'TOPRIGHT', 1, outset)
+        backdrop:NCSetPoint('BOTTOM', button, 'BOTTOM', 0, -outset)
 
         local tint = backdrop:CreateTexture(nil, 'BACKGROUND', nil, 1)
-        tint:NUISetPixelInside(backdrop, 1, 1) -- the backdrop's own fill area, under its border
+        tint:NCSetInside(backdrop, 1, 1) -- the backdrop's own fill area, under its border
         tint:Hide()
         hooksecurefunc(nameFrame, 'SetVertexColor', function(_, r, g, b) SetCellTint(tint, r, g, b) end)
     end
@@ -68,7 +68,7 @@ local function SkinItem(S, item)
     local quest = button.IconQuestTexture
     if quest then
         quest:SetAlpha(1)
-        quest:NUISetPixelInside(button, 1, 1)
+        quest:NCSetInside(button, 1, 1)
     end
 end
 
@@ -98,7 +98,7 @@ local function PlaceAltCurrency()
         if button.extendedCost and not button.price then
             local currency = _G['MerchantItem' .. index .. 'AltCurrencyFrame']
             currency:ClearAllPoints()
-            currency:NUISetPixelPoint('BOTTOMLEFT', button, 'BOTTOMRIGHT', TEXT_GAP, 0)
+            currency:NCSetPoint('BOTTOMLEFT', button, 'BOTTOMRIGHT', TEXT_GAP, 0)
         end
     end
 end
@@ -130,9 +130,9 @@ local function SkinPageButton(S, button, isPrev)
         if region:IsObjectType('FontString') then
             region:ClearAllPoints()
             if isPrev then
-                region:NUISetPixelPoint('LEFT', button, 'RIGHT', 3, 0)
+                region:NCSetPoint('LEFT', button, 'RIGHT', 3, 0)
             else
-                region:NUISetPixelPoint('RIGHT', button, 'LEFT', -3, 0)
+                region:NCSetPoint('RIGHT', button, 'LEFT', -3, 0)
             end
             S:HandleAccentFont(region)
         end
@@ -161,12 +161,12 @@ Skinning:RegisterSkin('Blizzard_UIPanels_Game', 'MerchantFrame', function(S)
         -- the price moves up beside the icon's bottom, so the name hangs from its top instead of centring
         -- into it; neither is re-anchored by Blizzard after load
         item.Name:ClearAllPoints()
-        item.Name:NUISetPixelPoint('TOPLEFT', button, 'TOPRIGHT', TEXT_GAP, 0)
+        item.Name:NCSetPoint('TOPLEFT', button, 'TOPRIGHT', TEXT_GAP, 0)
         item.Name:SetJustifyV('TOP')
 
         local money = _G['MerchantItem' .. index .. 'MoneyFrame']
         money:ClearAllPoints()
-        money:NUISetPixelPoint('BOTTOMLEFT', button, 'BOTTOMRIGHT', TEXT_GAP, 0)
+        money:NCSetPoint('BOTTOMLEFT', button, 'BOTTOMRIGHT', TEXT_GAP, 0)
     end
     hooksecurefunc('MerchantFrame_UpdateMerchantInfo', PlaceAltCurrency)
     SkinItem(S, _G.MerchantBuyBackItem)
@@ -180,7 +180,7 @@ Skinning:RegisterSkin('Blizzard_UIPanels_Game', 'MerchantFrame', function(S)
     end
 
     for _, name in ipairs(MONEY_FRAMES) do
-        _G[name]:NUIStripTextures('Keyed')
+        _G[name]:NCStripTextures('Keyed')
     end
     S:CreatePanelBackdrop(_G.MerchantMoneyBg, 'Transparent')
     S:CreatePanelBackdrop(_G.MerchantExtraCurrencyBg, 'Transparent')

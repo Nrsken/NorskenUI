@@ -107,7 +107,7 @@ end
 function Gateway:ApplySettings()
     if not self.alertFrame then return end
 
-    self.alertFrame:NUIApplyPosition(self.db)
+    self.alertFrame:NCApplyPosition(self.db)
     self.alertFrame.text:SetFontStyle(self.db)
     self.alertFrame.text:SetText(self.db.Text)
     self.alertFrame.text:SetTextColor(unpack(self.db.Color))

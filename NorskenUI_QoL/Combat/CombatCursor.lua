@@ -85,14 +85,14 @@ function CursorCircle:CreateFrames()
 
     -- Create the main follower frame that will follow the cursor.
     local follower = CreateFrame('Frame', 'NRSKNUI_CursorCircleFrame', UIParent)
-    follower:NUISetPixelSize(1)
-    follower:NUISetPixelPoint('CENTER')
+    follower:NCSetSize(1)
+    follower:NCSetPoint('CENTER')
     follower:EnableMouse(false)
     follower:Hide()
 
     -- Main ring
     local ring = CreateFrame('Frame', nil, follower)
-    ring:NUISetPixelPoint('CENTER')
+    ring:NCSetPoint('CENTER')
     ring:SetFrameStrata('TOOLTIP')
     ring:SetFrameLevel(999)
     ring:EnableMouse(false)
@@ -100,7 +100,7 @@ function CursorCircle:CreateFrames()
     -- Main ring texture
     ring.texture = ring:CreateTexture(nil, 'BACKGROUND')
     ring.texture:SetAllPoints()
-    ring.texture:NUISetPixelSnap()
+    ring.texture:NCDisablePixelSnap()
 
     -- Main ring cooldown swipe
     ring.cooldown = CreateFrame('Cooldown', nil, ring, 'CooldownFrameTemplate')
@@ -109,14 +109,14 @@ function CursorCircle:CreateFrames()
 
     -- GCD ring
     local gcdRing = CreateFrame('Frame', nil, follower)
-    gcdRing:NUISetPixelPoint('CENTER')
+    gcdRing:NCSetPoint('CENTER')
     gcdRing:SetFrameStrata('TOOLTIP')
     gcdRing:EnableMouse(false)
 
     -- GCD ring texture
     gcdRing.texture = gcdRing:CreateTexture(nil, 'BACKGROUND')
     gcdRing.texture:SetAllPoints()
-    gcdRing.texture:NUISetPixelSnap()
+    gcdRing.texture:NCDisablePixelSnap()
 
     -- GCD ring cooldown swipe
     gcdRing.cooldown = CreateFrame('Cooldown', nil, gcdRing, 'CooldownFrameTemplate')
@@ -196,12 +196,12 @@ function CursorCircle:ApplySettings()
     local sr, sg, sb, sa = NRSKNUI:GetAccentColor(self.db.GCD.SwipeColorMode, self.db.GCD.SwipeColor)
 
     -- Main ring
-    self.ring:NUISetPixelSize(self.db.Size, self.db.Size)
+    self.ring:NCSetSize(self.db.Size, self.db.Size)
     self.ring.texture:SetTexture(ringPath)
     self.ring.texture:SetVertexColor(r, g, b, a)
 
     -- Separate GCD ring
-    self.gcdRing:NUISetPixelSize(self.db.GCD.Size, self.db.GCD.Size)
+    self.gcdRing:NCSetSize(self.db.GCD.Size, self.db.GCD.Size)
     self.gcdRing.texture:SetTexture(gcdPath)
     self.gcdRing.texture:SetVertexColor(rr, rg, rb, ra)
 

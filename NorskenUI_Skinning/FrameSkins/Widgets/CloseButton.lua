@@ -36,10 +36,10 @@ function Skinning:HandleCloseButton(button, relativeTo, xOffset, yOffset, size)
         button:SetDisabledTexture(NRSKNUI.ClearTexture)
         button:SetHighlightTexture(NRSKNUI.ClearTexture)
     end
-    button:NUIStripTextures()
+    button:NCStripTextures()
 
     if relativeTo then
-        button:NUISetPixelPoint('TOPRIGHT', relativeTo, 'TOPRIGHT', xOffset or -2, yOffset or -2)
+        button:NCSetPoint('TOPRIGHT', relativeTo, 'TOPRIGHT', xOffset or -2, yOffset or -2)
     end
 
     if not size then
@@ -52,7 +52,7 @@ function Skinning:HandleCloseButton(button, relativeTo, xOffset, yOffset, size)
     cross:SetSize(size, size)
     cross:SetTexture(CROSS_TEXTURE)
     cross:SetRotation(math_rad(45))
-    cross:NUISetPixelSnap()
+    cross:NCDisablePixelSnap()
     cross:SetVertexColor(1, 0, 0)
 
     ---@cast button Button & SkinnedCloseButtonMixin

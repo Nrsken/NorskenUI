@@ -43,23 +43,23 @@ function SkinnedCheckMixin:NUIApplyCheckTextures()
     local checked = self:GetCheckedTexture()
     if checked then
         checked:ClearAllPoints()
-        checked:NUISetPixelPoint('TOPLEFT', inner, 'TOPLEFT', BORDER_WIDTH, -BORDER_WIDTH)
-        checked:NUISetPixelPoint('BOTTOMRIGHT', inner, 'BOTTOMRIGHT', -BORDER_WIDTH, BORDER_WIDTH)
+        checked:NCSetPoint('TOPLEFT', inner, 'TOPLEFT', BORDER_WIDTH, -BORDER_WIDTH)
+        checked:NCSetPoint('BOTTOMRIGHT', inner, 'BOTTOMRIGHT', -BORDER_WIDTH, BORDER_WIDTH)
     end
 
     local disabledChecked = self.GetDisabledCheckedTexture and self:GetDisabledCheckedTexture()
     if disabledChecked then
         disabledChecked:SetColorTexture(DISABLED_R, DISABLED_G, DISABLED_B, DISABLED_A)
         disabledChecked:ClearAllPoints()
-        disabledChecked:NUISetPixelPoint('TOPLEFT', inner, 'TOPLEFT', BORDER_WIDTH, -BORDER_WIDTH)
-        disabledChecked:NUISetPixelPoint('BOTTOMRIGHT', inner, 'BOTTOMRIGHT', -BORDER_WIDTH, BORDER_WIDTH)
+        disabledChecked:NCSetPoint('TOPLEFT', inner, 'TOPLEFT', BORDER_WIDTH, -BORDER_WIDTH)
+        disabledChecked:NCSetPoint('BOTTOMRIGHT', inner, 'BOTTOMRIGHT', -BORDER_WIDTH, BORDER_WIDTH)
     end
 
     local glyph = self.NUICheckGlyph
     glyph:SetTexture(NRSKNUI.Theme.checkTexture)
     glyph:ClearAllPoints()
-    glyph:NUISetPixelPoint('TOPLEFT', inner, 'TOPLEFT', BORDER_WIDTH, -BORDER_WIDTH)
-    glyph:NUISetPixelPoint('BOTTOMRIGHT', inner, 'BOTTOMRIGHT', -BORDER_WIDTH, BORDER_WIDTH)
+    glyph:NCSetPoint('TOPLEFT', inner, 'TOPLEFT', BORDER_WIDTH, -BORDER_WIDTH)
+    glyph:NCSetPoint('BOTTOMRIGHT', inner, 'BOTTOMRIGHT', -BORDER_WIDTH, BORDER_WIDTH)
     self:NUIUpdateCheckGlyph()
 
     self:NUIUpdateSkinColors()
@@ -88,8 +88,8 @@ function Skinning:HandleCheckBox(check, inset)
     local backdrop = self:CreatePanelBackdrop(check, nil, nil, true)
     if inset and backdrop then
         backdrop:ClearAllPoints()
-        backdrop:NUISetPixelPoint('TOPLEFT', check, 'TOPLEFT', inset, -inset)
-        backdrop:NUISetPixelPoint('BOTTOMRIGHT', check, 'BOTTOMRIGHT', -inset, inset)
+        backdrop:NCSetPoint('TOPLEFT', check, 'TOPLEFT', inset, -inset)
+        backdrop:NCSetPoint('BOTTOMRIGHT', check, 'BOTTOMRIGHT', -inset, inset)
     end
 
     ---@cast check CheckButton & SkinnedCheckMixin

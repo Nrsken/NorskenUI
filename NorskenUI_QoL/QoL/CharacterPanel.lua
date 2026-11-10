@@ -334,19 +334,19 @@ function CharacterPanel:CreateTrackOverlay(slotInfo)
 
     local isRight = slotInfo.rightColumn
     local overlay = CreateFrame('Frame', nil, slotFrame)
-    overlay:NUISetPixelSize(14, 14)
+    overlay:NCSetSize(14, 14)
     overlay:SetFrameLevel(slotFrame:GetFrameLevel() + 10)
 
     overlay.text = overlay:CreateFontString(nil, 'OVERLAY')
     overlay.text:SetFontStyle(nil, 12, 'OUTLINE')
 
     if isRight then
-        overlay:NUISetPixelPoint('BOTTOMRIGHT', slotFrame, 'BOTTOMRIGHT', 1, 1)
-        overlay.text:NUISetPixelPoint('BOTTOMRIGHT', overlay, 'BOTTOMRIGHT', 0, 0)
+        overlay:NCSetPoint('BOTTOMRIGHT', slotFrame, 'BOTTOMRIGHT', 1, 1)
+        overlay.text:NCSetPoint('BOTTOMRIGHT', overlay, 'BOTTOMRIGHT', 0, 0)
         overlay.text:SetJustifyH('RIGHT')
     else
-        overlay:NUISetPixelPoint('BOTTOMLEFT', slotFrame, 'BOTTOMLEFT', 0, 1)
-        overlay.text:NUISetPixelPoint('BOTTOMLEFT', overlay, 'BOTTOMLEFT', 0, 0)
+        overlay:NCSetPoint('BOTTOMLEFT', slotFrame, 'BOTTOMLEFT', 0, 1)
+        overlay.text:NCSetPoint('BOTTOMLEFT', overlay, 'BOTTOMLEFT', 0, 0)
         overlay.text:SetJustifyH('LEFT')
     end
 
@@ -660,9 +660,9 @@ function CharacterPanel:CreateSlotHighlight()
     frame.texture:SetAllPoints()
     frame.texture:SetColorTexture(Theme.accent[1], Theme.accent[2], Theme.accent[3], 0.4)
     frame.texture:SetBlendMode('ADD')
-    frame.texture:NUISetPixelSnap()
+    frame.texture:NCDisablePixelSnap()
 
-    frame:NUIAddBorders()
+    frame:NCAddBorders()
     frame:SetBorderColor(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
     frame:Hide()
 
@@ -734,11 +734,11 @@ end
 local function CreateQualityOverlay(parent, anchor)
     local frame = CreateFrame('Frame', nil, parent)
     frame:SetFrameLevel(parent:GetFrameLevel() + 10)
-    frame:NUISetPixelSize(16, 16)
-    frame:NUISetPixelPoint('TOPLEFT', anchor or parent, 'TOPLEFT', -5, 5)
+    frame:NCSetSize(16, 16)
+    frame:NCSetPoint('TOPLEFT', anchor or parent, 'TOPLEFT', -5, 5)
 
     local texture = frame:CreateTexture(nil, 'OVERLAY')
-    texture:NUISetPixelSnap()
+    texture:NCDisablePixelSnap()
     texture:SetAllPoints()
     texture:Hide()
 
@@ -747,32 +747,32 @@ end
 
 local function CreateListPopup(globalName, titleText, onClick, rowTemplate)
     local popup = CreateFrame('Frame', globalName, UIParent)
-    popup:NUISetPixelSize(POPUP_WIDTH, 50)
+    popup:NCSetSize(POPUP_WIDTH, 50)
     popup:SetFrameStrata('TOOLTIP')
     popup:SetClipsChildren(true)
     popup:EnableMouse(true)
     popup:Hide()
 
-    popup:NUICreateBackdrop()
+    popup:NCCreateBackdrop()
     popup:SetBackgroundColor(Theme.bgDark[1], Theme.bgDark[2], Theme.bgDark[3], 0.8)
     popup:SetBorderColor(Theme.border[1], Theme.border[2], Theme.border[3], 1)
 
     popup.title = popup:CreateFontString(nil, 'OVERLAY')
     popup.title:SetFontStyle(nil, 14, 'OUTLINE')
-    popup.title:NUISetPixelPoint('TOPLEFT', popup, 'TOPLEFT', 6, -6)
+    popup.title:NCSetPoint('TOPLEFT', popup, 'TOPLEFT', 6, -6)
     popup.title:SetTextColor(Theme.accent[1], Theme.accent[2], Theme.accent[3])
     popup.title:SetText(titleText)
 
     popup.separator = popup:CreateTexture(nil, 'ARTWORK')
-    popup.separator:NUISetPixelHeight(1)
-    popup.separator:NUISetPixelPoint('TOPLEFT', popup, 'TOPLEFT', 1, -TITLE_HEIGHT)
-    popup.separator:NUISetPixelPoint('TOPRIGHT', popup, 'TOPRIGHT', -1, -TITLE_HEIGHT)
+    popup.separator:NCSetHeight(1)
+    popup.separator:NCSetPoint('TOPLEFT', popup, 'TOPLEFT', 1, -TITLE_HEIGHT)
+    popup.separator:NCSetPoint('TOPRIGHT', popup, 'TOPRIGHT', -1, -TITLE_HEIGHT)
     popup.separator:SetColorTexture(Theme.border[1], Theme.border[2], Theme.border[3], 1)
 
     popup.empty = popup:CreateFontString(nil, 'OVERLAY')
     popup.empty:SetFontStyle(nil, 12, 'OUTLINE')
     popup.empty:SetTextColor(Theme.textMuted[1], Theme.textMuted[2], Theme.textMuted[3])
-    popup.empty:NUISetPixelPoint('CENTER', popup, 'CENTER', 0, -8)
+    popup.empty:NCSetPoint('CENTER', popup, 'CENTER', 0, -8)
     popup.empty:Hide()
 
     popup:SetScript('OnLeave', CloseAfterLeave)
@@ -788,38 +788,38 @@ local function CreateListRow(popup, index)
     if popup.rows[index] then return popup.rows[index] end
 
     local row = CreateFrame('Button', nil, popup, popup.rowTemplate)
-    row:NUISetPixelHeight(POPUP_ICON_SIZE + ROW_PADDING)
+    row:NCSetHeight(POPUP_ICON_SIZE + ROW_PADDING)
 
     row.iconFrame = CreateFrame('Frame', nil, row)
-    row.iconFrame:NUISetPixelSize(POPUP_ICON_SIZE, POPUP_ICON_SIZE)
-    row.iconFrame:NUIAddBorders()
+    row.iconFrame:NCSetSize(POPUP_ICON_SIZE, POPUP_ICON_SIZE)
+    row.iconFrame:NCAddBorders()
     row.iconFrame:SetBorderColor(unpack(Theme.border))
 
     row.icon = row.iconFrame:CreateTexture(nil, 'ARTWORK')
     row.icon:SetAllPoints()
-    row.icon:NUISetZoom()
+    row.icon:NCSetZoom()
 
     row.qualityFrame, row.quality = CreateQualityOverlay(row, row.iconFrame)
 
     row.label = row:CreateFontString(nil, 'OVERLAY')
     row.label:SetFontStyle(nil, 11, 'OUTLINE')
     row.label:SetTextColor(Theme.textMuted[1], Theme.textMuted[2], Theme.textMuted[3])
-    row.label:NUISetPixelPoint('TOPLEFT', row, 'TOPLEFT', POPUP_ICON_SIZE + 5, -ROW_PADDING)
+    row.label:NCSetPoint('TOPLEFT', row, 'TOPLEFT', POPUP_ICON_SIZE + 5, -ROW_PADDING)
     row.label:SetJustifyH('LEFT')
     row.label:SetWordWrap(false)
 
     row.text = row:CreateFontString(nil, 'OVERLAY')
     row.text:SetFontStyle(nil, 12, 'OUTLINE')
     row.text:SetTextColor(Theme.textPrimary[1], Theme.textPrimary[2], Theme.textPrimary[3])
-    row.text:NUISetPixelWidth(POPUP_WIDTH - POPUP_ICON_SIZE - 60)
-    row.label:NUISetPixelWidth(POPUP_WIDTH - POPUP_ICON_SIZE - 60)
+    row.text:NCSetWidth(POPUP_WIDTH - POPUP_ICON_SIZE - 60)
+    row.label:NCSetWidth(POPUP_WIDTH - POPUP_ICON_SIZE - 60)
     row.text:SetJustifyH('LEFT')
     row.text:SetWordWrap(true)
 
     row.count = row:CreateFontString(nil, 'OVERLAY')
     row.count:SetFontStyle(nil, 12, 'OUTLINE')
     row.count:SetTextColor(Theme.textPrimary[1], Theme.textPrimary[2], Theme.textPrimary[3])
-    row.count:NUISetPixelPoint('RIGHT', row, 'RIGHT', -4, 0)
+    row.count:NCSetPoint('RIGHT', row, 'RIGHT', -4, 0)
 
     row.hoverBg = row:CreateTexture(nil, 'BACKGROUND')
     row.hoverBg:SetAllPoints()
@@ -876,7 +876,7 @@ local function LayoutRows(popup, entries, fill)
         popup.empty:Show()
         popup.separator:Hide()
         for _, row in pairs(popup.rows) do row:Hide() end
-        popup:NUISetPixelSize(math_max(200, popup.title:GetStringWidth() + 26), 50)
+        popup:NCSetSize(math_max(200, popup.title:GetStringWidth() + 26), 50)
         return
     end
 
@@ -901,20 +901,20 @@ local function LayoutRows(popup, entries, fill)
         row.text:ClearAllPoints()
         local textHeight = row.text:GetStringHeight()
         if hasLabel then
-            row.text:NUISetPixelPoint('TOPLEFT', row.label, 'BOTTOMLEFT', 0, -2)
+            row.text:NCSetPoint('TOPLEFT', row.label, 'BOTTOMLEFT', 0, -2)
             textHeight = row.label:GetStringHeight() + 2 + textHeight + ROW_PADDING
         else
-            row.text:NUISetPixelPoint('LEFT', row.iconFrame, 'RIGHT', 6, 0)
+            row.text:NCSetPoint('LEFT', row.iconFrame, 'RIGHT', 6, 0)
         end
 
         local rowHeight = Pixel.ToPixelGrid(math_max(minRowHeight, textHeight + ROW_PADDING))
-        row:NUISetPixelHeight(rowHeight)
+        row:NCSetHeight(rowHeight)
         -- Centring leaves the icon on a half pixel when the leftover height is odd.
         row.iconFrame:ClearAllPoints()
-        row.iconFrame:NUISetPixelPoint('TOPLEFT', row, 'TOPLEFT', -1, -(rowHeight - POPUP_ICON_SIZE) / 2)
+        row.iconFrame:NCSetPoint('TOPLEFT', row, 'TOPLEFT', -1, -(rowHeight - POPUP_ICON_SIZE) / 2)
         row:ClearAllPoints()
-        row:NUISetPixelPoint('TOPLEFT', popup, 'TOPLEFT', POPUP_PADDING, -yOffset)
-        row:NUISetPixelPoint('TOPRIGHT', popup, 'TOPRIGHT', -POPUP_PADDING, -yOffset)
+        row:NCSetPoint('TOPLEFT', popup, 'TOPLEFT', POPUP_PADDING, -yOffset)
+        row:NCSetPoint('TOPRIGHT', popup, 'TOPRIGHT', -POPUP_PADDING, -yOffset)
 
         SetQualityAtlas(row.quality, GetQualityAtlas(entry.link))
         row:Show()
@@ -924,12 +924,12 @@ local function LayoutRows(popup, entries, fill)
 
     for i = #entries + 1, #popup.rows do popup.rows[i]:Hide() end
 
-    popup:NUISetPixelSize(POPUP_WIDTH, yOffset)
+    popup:NCSetSize(POPUP_WIDTH, yOffset)
 end
 
 local function AnchorPopup(popup, anchor)
     popup:ClearAllPoints()
-    popup:NUISetPixelPoint('TOPLEFT', anchor, 'BOTTOMLEFT', 0, -1)
+    popup:NCSetPoint('TOPLEFT', anchor, 'BOTTOMLEFT', 0, -1)
     popup:Show()
 end
 
@@ -1081,13 +1081,13 @@ function CharacterPanel:CreateSocketBar()
     if self.socketBar then return self.socketBar end
 
     local bar = CreateFrame('Frame', 'NRSKNUI_SocketBar', PaperDollFrame)
-    bar:NUISetPixelPoint('TOPLEFT', CharacterFrameTab3 or CharacterFrameTab2, 'TOPRIGHT', 4, -6)
-    bar:NUISetPixelSize(200, self.db.Sockets.ButtonSize)
+    bar:NCSetPoint('TOPLEFT', CharacterFrameTab3 or CharacterFrameTab2, 'TOPRIGHT', 4, -6)
+    bar:NCSetSize(200, self.db.Sockets.ButtonSize)
     bar:Hide()
 
     bar.buttons = {}
     -- Anchored into the Character Frame's protected family: its hooks can run inside ShowUIPanel's secure stack.
-    bar:NUISetScheduledUpdate(function() NRSKNUI:RunWhenSafe(LayoutSocketBar) end)
+    bar:NCSetScheduledUpdate(function() NRSKNUI:RunWhenSafe(LayoutSocketBar) end)
     self.socketBar = bar
     return bar
 end
@@ -1098,17 +1098,17 @@ function CharacterPanel:CreateSocketButton(index)
 
     local size = self.db.Sockets.ButtonSize
     local button = CreateFrame('Button', nil, bar)
-    button:NUISetPixelSize(size, size)
+    button:NCSetSize(size, size)
 
     button.icon = button:CreateTexture(nil, 'ARTWORK')
     button.icon:SetAllPoints()
-    button.icon:NUISetZoom()
+    button.icon:NCSetZoom()
 
-    button:NUIAddBorders()
+    button:NCAddBorders()
     button:SetBorderColor(unpack(Theme.border))
 
     button.highlight = button:CreateTexture(nil, 'HIGHLIGHT')
-    button.highlight:NUISetPixelInside(button, 1, 1)
+    button.highlight:NCSetInside(button, 1, 1)
     button.highlight:SetColorTexture(1, 1, 1, 0.2)
     button.highlight:SetBlendMode('ADD')
 
@@ -1148,18 +1148,18 @@ end
 function CharacterPanel:CreateEnchantButton(icon, battleArts)
     local size = self.db.Sockets.ButtonSize
     local button = CreateFrame('Button', nil, self.socketBar)
-    button:NUISetPixelSize(size, size)
+    button:NCSetSize(size, size)
 
     button.icon = button:CreateTexture(nil, 'ARTWORK')
     button.icon:SetAllPoints()
     button.icon:SetTexture(icon)
-    button.icon:NUISetZoom()
+    button.icon:NCSetZoom()
 
-    button:NUIAddBorders()
+    button:NCAddBorders()
     button:SetBorderColor(unpack(Theme.border))
 
     button.highlight = button:CreateTexture(nil, 'HIGHLIGHT')
-    button.highlight:NUISetPixelInside(button, 1, 1)
+    button.highlight:NCSetInside(button, 1, 1)
     button.highlight:SetColorTexture(1, 1, 1, 0.2)
     button.highlight:SetBlendMode('ADD')
 
@@ -1194,13 +1194,13 @@ function CharacterPanel:RefreshEnchantButton()
         end
     end
 
-    button:NUISetPixelSize(db.ButtonSize, db.ButtonSize)
+    button:NCSetSize(db.ButtonSize, db.ButtonSize)
     button:ClearAllPoints()
 
     if last then
-        button:NUISetPixelPoint('LEFT', last, 'RIGHT', db.ButtonSpacing, 0)
+        button:NCSetPoint('LEFT', last, 'RIGHT', db.ButtonSpacing, 0)
     else
-        button:NUISetPixelPoint('LEFT', self.socketBar, 'LEFT', 0, 0)
+        button:NCSetPoint('LEFT', self.socketBar, 'LEFT', 0, 0)
     end
 
     button:Show()
@@ -1221,9 +1221,9 @@ function CharacterPanel:RefreshBattleArtButton()
     local button = self.battleArtButton
     local db = self.db.Sockets
 
-    button:NUISetPixelSize(db.ButtonSize, db.ButtonSize)
+    button:NCSetSize(db.ButtonSize, db.ButtonSize)
     button:ClearAllPoints()
-    button:NUISetPixelPoint('LEFT', self.enchantButton, 'RIGHT', db.ButtonSpacing, 0)
+    button:NCSetPoint('LEFT', self.enchantButton, 'RIGHT', db.ButtonSpacing, 0)
 
     local activeIcon = GetActiveBattleArtIcon()
     button.icon:SetTexture(activeIcon or BATTLE_ART_BUTTON_ICON)
@@ -1235,7 +1235,7 @@ end
 
 ---The bar hosts both features, so it stays alive while either one is on.
 function CharacterPanel:RefreshSocketBar()
-    if self.socketBar then self.socketBar:NUIScheduleUpdate() end
+    if self.socketBar then self.socketBar:NCScheduleUpdate() end
 end
 
 function CharacterPanel:LayoutSocketBar()
@@ -1244,7 +1244,7 @@ function CharacterPanel:LayoutSocketBar()
     local db = self.db.Sockets
     local index = 1
 
-    self.socketBar:NUISetPixelHeight(db.ButtonSize)
+    self.socketBar:NCSetHeight(db.ButtonSize)
 
     if db.Enabled then
         for _, itemSocketInfo in ipairs(self:ScanAllEquippedSockets()) do
@@ -1254,12 +1254,12 @@ function CharacterPanel:LayoutSocketBar()
                     button.socketInfo = itemSocketInfo
                     button.socket = socket
 
-                    button:NUISetPixelSize(db.ButtonSize, db.ButtonSize)
+                    button:NCSetSize(db.ButtonSize, db.ButtonSize)
                     button:ClearAllPoints()
                     if index == 1 then
-                        button:NUISetPixelPoint('LEFT', self.socketBar, 'LEFT', 0, 0)
+                        button:NCSetPoint('LEFT', self.socketBar, 'LEFT', 0, 0)
                     else
-                        button:NUISetPixelPoint('LEFT', self.socketBar.buttons[index - 1], 'RIGHT', db.ButtonSpacing, 0)
+                        button:NCSetPoint('LEFT', self.socketBar.buttons[index - 1], 'RIGHT', db.ButtonSpacing, 0)
                     end
 
                     if socket.filled then
@@ -1291,7 +1291,7 @@ function CharacterPanel:LayoutSocketBar()
         return
     end
 
-    self.socketBar:NUISetPixelWidth(total * (db.ButtonSize + db.ButtonSpacing))
+    self.socketBar:NCSetWidth(total * (db.ButtonSize + db.ButtonSpacing))
     self.socketBar:Show()
 end
 

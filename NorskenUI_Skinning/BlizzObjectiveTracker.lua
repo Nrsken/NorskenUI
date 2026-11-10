@@ -51,8 +51,8 @@ local function ReskinQuestIcon(button, skipBorder)
 
     local icon = button.icon or button.Icon
     if icon and not skipBorder then
-        icon:NUISetZoom()
-        button:NUIAddBorders()
+        icon:NCSetZoom()
+        button:NCAddBorders()
     end
 
     button.styled = true
@@ -258,7 +258,7 @@ function ObjectiveTracker:SkinScenarioTracker()
                 bg:SetBackdrop({ bgFile = NRSKNUI.WhiteTexture })
                 bg:SetBackdropColor(0, 0, 0, 0.5)
                 bg:SetFrameLevel(block:GetFrameLevel() - 1)
-                bg:NUIAddBorders()
+                bg:NCAddBorders()
                 block.bg = bg
             end
         end)
@@ -284,8 +284,8 @@ function ObjectiveTracker:SkinScenarioTracker()
                     if widgetFrame.CurrencyContainer and widgetFrame.currencyPool then
                         for currencyFrame in widgetFrame.currencyPool:EnumerateActive() do
                             if currencyFrame.Icon and not currencyFrame.styled then
-                                currencyFrame.Icon:NUISetZoom()
-                                currencyFrame:NUIAddBorders()
+                                currencyFrame.Icon:NCSetZoom()
+                                currencyFrame:NCAddBorders()
                                 currencyFrame.styled = true
                             end
                         end
@@ -304,8 +304,8 @@ function ObjectiveTracker:SkinScenarioTracker()
                     frame.Border:SetTexture(nil)
                 end
                 if frame.Portrait and not frame.styled then
-                    frame.Portrait:NUISetZoom()
-                    frame:NUIAddBorders()
+                    frame.Portrait:NCSetZoom()
+                    frame:NCAddBorders()
                     frame.styled = true
                 end
 
@@ -354,7 +354,7 @@ function ObjectiveTracker:SkinScenarioTracker()
             bg:SetBackdrop({ bgFile = NRSKNUI.WhiteTexture })
             bg:SetBackdropColor(0, 0, 0, 0.5)
             bg:SetFrameLevel(block:GetFrameLevel() - 1)
-            bg:NUIAddBorders()
+            bg:NCAddBorders()
             block.bg = bg
 
             block.styled = true
@@ -367,8 +367,8 @@ function ObjectiveTracker:SkinScenarioTracker()
             local spellButton = spellFrame.SpellButton
             if spellButton and not spellButton.styled then
                 if spellButton.Icon then
-                    spellButton.Icon:NUISetZoom()
-                    spellButton:NUIAddBorders()
+                    spellButton.Icon:NCSetZoom()
+                    spellButton:NCAddBorders()
                 end
                 spellButton:SetNormalTexture(0)
                 spellButton:SetPushedTexture(0)

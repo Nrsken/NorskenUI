@@ -68,9 +68,9 @@ end
 local function SetRowCount(row, count)
     for i = #row.pills + 1, count do
         local pill = CreateFrame('StatusBar', nil, row)
-        pill:NUICreateBackdrop(true, 0)
-        pill:NUIAddBorders()
-        pill:NUISetPixelSnap()
+        pill:NCCreateBackdrop(true, 0)
+        pill:NCAddBorders()
+        pill:NCDisablePixelSnap()
         row.pills[i] = pill
     end
 
@@ -242,16 +242,16 @@ function SkyRiding:ApplySettings()
 
     for _, def in ipairs(ROWS) do
         local row = self.rows[def.key]
-        row:NUISetPixelSize(self.db.Width, self.db.BarHeight)
+        row:NCSetSize(self.db.Width, self.db.BarHeight)
         self:ApplyRowLook(row, def.key)
         self.group:NotifyChildResized(row)
     end
 
     local speedDB = self.db.SpeedText
     self.speedFrame:SetShown(speedDB.Enabled)
-    self.speedFrame:NUISetPixelSize(self.db.Width, speedDB.FontSize + 4)
+    self.speedFrame:NCSetSize(self.db.Width, speedDB.FontSize + 4)
     self.speedFrame:ClearAllPoints()
-    self.speedFrame:NUISetPixelPoint('BOTTOM', self.group, 'TOP', speedDB.XOffset, speedDB.YOffset)
+    self.speedFrame:NCSetPoint('BOTTOM', self.group, 'TOP', speedDB.XOffset, speedDB.YOffset)
 
     self.speedText:SetFontStyle(speedDB)
     self.speedText:SetFontJustify('CENTER', self.speedFrame, 0, 0)
@@ -268,7 +268,7 @@ function SkyRiding:OnBarShow()
     self:RegisterEvent('UNIT_AURA')
 
     if self.db.SpeedText.Enabled then
-        self.speedFrame:NUIApplyOnUpdate(0.1, function() self:UpdateSpeed() end)
+        self.speedFrame:NCApplyOnUpdate(0.1, function() self:UpdateSpeed() end)
     end
 
     self:Update()
@@ -279,7 +279,7 @@ function SkyRiding:OnBarHide()
     self:UnregisterEvent('SPELL_UPDATE_COOLDOWN')
     self:UnregisterEvent('UNIT_AURA')
 
-    self.speedFrame:NUIApplyOnUpdate()
+    self.speedFrame:NCApplyOnUpdate()
     self.speedText:SetText('')
 end
 

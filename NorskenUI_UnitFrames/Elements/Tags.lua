@@ -87,8 +87,8 @@ UF.Elements.Tags = {
         if self.TagContainer then return end
 
         local container = CreateFrame('Frame', nil, self)
-        container:NUISetPixelPoint('TOPLEFT', self, 'TOPLEFT', 0, 0)
-        container:NUISetPixelPoint('BOTTOMRIGHT', self, 'BOTTOMRIGHT', 0, 0)
+        container:NCSetPoint('TOPLEFT', self, 'TOPLEFT', 0, 0)
+        container:NCSetPoint('BOTTOMRIGHT', self, 'BOTTOMRIGHT', 0, 0)
         container:SetFrameStrata('MEDIUM')
 
         self.TagContainer = container

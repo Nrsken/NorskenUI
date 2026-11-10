@@ -1,16 +1,16 @@
 # NorskenUI Injected Widget API
 
 Methods NorskenUI injects onto Blizzard widget metatables (see `Core/InjectAPI.lua`).
-They are available on every frame/texture, e.g. `myFrame:NUIStripTextures('Keyed')`.
+They are available on every frame/texture, e.g. `myFrame:NCStripTextures('Keyed')`.
 
 The hover tooltips in the editor link here via the `[Documentation]` line on each method.
 
 ---
 
-## NUIStripTextures
+## NCStripTextures
 
 ```lua
-frame:NUIStripTextures(stripType?, a?, b?)
+frame:NCStripTextures(stripType?, a?, b?)
 ```
 
 Strip textures/atlases from a frame **or** a texture in a controlled way. Passing a
@@ -40,19 +40,19 @@ single texture directly.
 
 ```lua
 -- Full recurse + clear own regions
-frame:NUIStripTextures('Keyed')
+frame:NCStripTextures('Keyed')
 
 -- Kill, recursively
-frame:NUIStripTextures('Keyed', true)
+frame:NCStripTextures('Keyed', true)
 
 -- Alpha 0, recursively
-frame:NUIStripTextures('Keyed', nil, true)
+frame:NCStripTextures('Keyed', nil, true)
 
 -- Surgical: hide only ARTWORK/HIGHLIGHT layer textures on this frame
-AddonComp:NUIStripTextures('Layer', { 'ARTWORK', 'HIGHLIGHT' })
+AddonComp:NCStripTextures('Layer', { 'ARTWORK', 'HIGHLIGHT' })
 
 -- Surgical: hide the one atlas
-tooltip.CompareHeader:NUIStripTextures('Atlas', 'tooltip-compare-label')
+tooltip.CompareHeader:NCStripTextures('Atlas', 'tooltip-compare-label')
 ```
 
 ### Notes
@@ -62,10 +62,10 @@ tooltip.CompareHeader:NUIStripTextures('Atlas', 'tooltip-compare-label')
 
 ---
 
-## NUICreateBackdrop
+## NCCreateBackdrop
 
 ```lua
-frame:NUICreateBackdrop(noBorders?, inset?)
+frame:NCCreateBackdrop(noBorders?, inset?)
 ```
 
 Mixes `PublicBackdropMixin` onto `frame` and builds a pixel-perfect backdrop:
@@ -79,10 +79,10 @@ Installs `SetBackgroundColor`, `SetBorderColor`, `UpdateBackdropFromDB`, `Toggle
 
 ---
 
-## NUIHasBackdrop
+## NCHasBackdrop
 
 ```lua
-local has = frame:NUIHasBackdrop()
+local has = frame:NCHasBackdrop()
 ```
 
 Returns `true` if a NorskenUI backdrop was already added to `frame`. Use before
@@ -90,10 +90,10 @@ Returns `true` if a NorskenUI backdrop was already added to `frame`. Use before
 
 ---
 
-## NUIBanish
+## NCBanish
 
 ```lua
-frame:NUIBanish(...)
+frame:NCBanish(...)
 ```
 
 Hide an object safely and reparent it to the shared hidden frame. Optional string
@@ -104,10 +104,10 @@ Disables mouse, unregisters events, sets `statehidden`, and respects user placem
 
 ---
 
-## NUIApplyPosition
+## NCApplyPosition
 
 ```lua
-frame:NUIApplyPosition(Config, setParent?, extraX?, extraY?)
+frame:NCApplyPosition(Config, setParent?, extraX?, extraY?)
 ```
 
 Position `frame` from a config table. Pass `setParent = true` to also reparent.
@@ -115,10 +115,10 @@ Position `frame` from a config table. Pass `setParent = true` to also reparent.
 
 ---
 
-## NUIStyleChildFontStrings
+## NCStyleChildFontStrings
 
 ```lua
-frame:NUIStyleChildFontStrings(source, getSize, outline?, shadow?, skip?, setOwner?)
+frame:NCStyleChildFontStrings(source, getSize, outline?, shadow?, skip?, setOwner?)
 ```
 
 Walk `frame`'s child `FontString`s and apply a font style. `getSize(fontString, parent)`
@@ -198,10 +198,10 @@ targetText:SetFontJustify(db.Target.Position, castBar, 0, 0, nil, {
 
 ---
 
-## NUISetZoom (Texture)
+## NCSetZoom (Texture)
 
 ```lua
-texture:NUISetZoom(zoom?)
+texture:NCSetZoom(zoom?)
 ```
 
 Apply a zoom crop via `SetTexCoord`, using `NRSKNUI.GlobalZoom` when `zoom` is omitted.
@@ -212,27 +212,27 @@ Apply a zoom crop via `SetTexCoord`, using `NRSKNUI.GlobalZoom` when `zoom` is o
 
 These wrap the native `SetSize`/`SetWidth`/`SetHeight`/`SetPoint` and snap numeric
 values to the physical pixel grid so edges stay crisp at any resolution. They are
-injected onto every frame, texture, and font string.
+injected onto every frame, texture, mask texture, line and font string.
 
 Snapping is driven by Core's `Pixel.GetMult()` (`NorskenCore/Core/Pixel.lua`),
 the size of one device pixel in UI units: the perfect-pixel scale divided by UIParent's effective
 scale, snapped to exactly 1 when it lands within 0.0005 of it.
 
-### SetPixelSize / SetPixelWidth / SetPixelHeight
+### NCSetSize / NCSetWidth / NCSetHeight
 
 ```lua
-frame:NUISetPixelSize(width, height?, ...)
-frame:NUISetPixelWidth(width, ...)
-frame:NUISetPixelHeight(height, ...)
+frame:NCSetSize(width, height?, ...)
+frame:NCSetWidth(width, ...)
+frame:NCSetHeight(height, ...)
 ```
 
-Pixel-snapped equivalents of `SetSize`/`SetWidth`/`SetHeight`. `SetPixelSize` falls
+Pixel-snapped equivalents of `SetSize`/`SetWidth`/`SetHeight`. `NCSetSize` falls
 back to `width` when `height` is omitted (square). Extra varargs pass through.
 
-### SetPixelPoint
+### NCSetPoint
 
 ```lua
-frame:NUISetPixelPoint(point, arg2?, arg3?, arg4?, arg5?, ...)
+frame:NCSetPoint(point, arg2?, arg3?, arg4?, arg5?, ...)
 ```
 
 `SetPoint` mirror: only the **numeric** offset arguments are snapped, the `relativeTo`
@@ -240,57 +240,55 @@ frame and anchor-point strings pass through untouched. When `arg2` is omitted it
 defaults to the frame's parent. Handles both the long form
 (`point, relativeTo, relativePoint, x, y`) and the short form (`point, x, y`).
 
-### SetGridPoint
+### NCSetGridPoint
 
 ```lua
-frame:NUISetGridPoint(point, relativeTo?, relativePoint?, offsetX?, offsetY?)
+frame:NCSetGridPoint(point, relativeTo?, relativePoint?, offsetX?, offsetY?)
 ```
 
 Like `SetPoint`, but snaps the **resulting position** onto the pixel grid instead of the
-offset. `SetPixelPoint` rounds the offset you pass, which does nothing when the frame you
+offset. `NCSetPoint` rounds the offset you pass, which does nothing when the frame you
 anchor to is itself off-grid (e.g. a Blizzard frame whose centre lands on a half-pixel) —
-the fractional origin is inherited and thin fills bleed 1px sideways. `SetGridPoint`
+the fractional origin is inherited and thin fills bleed 1px sideways. `NCSetGridPoint`
 derives where the frame's bottom-left will land from `relativeTo`'s geometry and applies a
 sub-pixel correction so the edges sit on whole device pixels. `relativeTo` accepts a frame
 or global name (defaults to the parent), `relativePoint` defaults to `point`, offsets
 default to `0`. Assumes `frame` and `relativeTo` share an effective scale (both under
 `UIParent`); if the anchor's geometry is secret/not yet laid out it falls back to
-`SetPixelPoint`. Does **not** clear existing points — call `ClearAllPoints` first if needed.
+`NCSetPoint`. Does **not** clear existing points — call `ClearAllPoints` first if needed.
 
-### SetPixelInside / SetPixelOutside
+### NCSetInside
 
 ```lua
-region:NUISetPixelInside(anchor?, xOffset?, yOffset?, anchor2?)
-region:NUISetPixelOutside(anchor?, xOffset?, yOffset?, anchor2?)
+region:NCSetInside(anchor?, xOffset?, yOffset?, anchor2?)
 ```
 
 Anchor a region a fixed pixel inset relative to `anchor` via `TOPLEFT`/`BOTTOMRIGHT`.
-`SetPixelInside` sits the region **inside** the anchor; `SetPixelOutside` flips the
-inset so it **frames** the anchor. `anchor` defaults to the parent, offsets default to
+`NCSetInside` sits the region **inside** the anchor. `anchor` defaults to the parent, offsets default to
 `1`, and `anchor2` (defaults to `anchor`) lets the bottom-right corner track a
-different frame. Also calls `SetPixelSnap` on the region.
+different frame. Also calls `NCDisablePixelSnap` on the region.
 
-### SetPixelSnap
+### NCDisablePixelSnap
 
 ```lua
-object:NUISetPixelSnap()
+object:NCDisablePixelSnap()
 ```
 
 Turn off Blizzard's own grid snapping (`SetSnapToPixelGrid(false)` +
 `SetTexelSnappingBias(0)`) so our pixel math is authoritative. Works on textures
 directly and on status bars via their fill texture. Runs once per object (guarded by
-`NUIPixelSnapDisabled`), and skips secret/forbidden objects.
+`NCPixelSnapDisabled`), and skips secret/forbidden objects.
 
 ---
 
-## NUIStyleButton
+## NCStyleButton
 
 ```lua
-button:NUIStyleButton(noHover?, noPushed?, noChecked?)
+button:NCStyleButton(noHover?, noPushed?, noChecked?)
 ```
 
 Replace a button's Blizzard highlight/pushed/checked art with flat additive color
-overlays clamped inside the button (`SetPixelInside`). Pass `noHover`/`noPushed`/
+overlays clamped inside the button (`NCSetInside`). Pass `noHover`/`noPushed`/
 `noChecked` to skip a given state. Each applied texture is cached on the button
 (`.hover`/`.pushed`/`.checked`) so repeated calls are no-ops. No-ops entirely on
 objects without `CreateTexture`.

@@ -88,14 +88,14 @@ function HeaderMixin:NUISetIconShown(shown)
     local size = self.NUITabSize
     local line = self.NUIBarLine
     line:ClearAllPoints()
-    line:NUISetPixelPoint('BOTTOMRIGHT', self, 'BOTTOMRIGHT', 0, 0)
-    line:NUISetPixelPoint('BOTTOMLEFT', self, 'BOTTOMLEFT', (shown and size > HEADER_HEIGHT) and size * 2 - HEADER_HEIGHT or 0, 0)
+    line:NCSetPoint('BOTTOMRIGHT', self, 'BOTTOMRIGHT', 0, 0)
+    line:NCSetPoint('BOTTOMLEFT', self, 'BOTTOMLEFT', (shown and size > HEADER_HEIGHT) and size * 2 - HEADER_HEIGHT or 0, 0)
 end
 
 ---@param texture string|number?
 function HeaderMixin:NUISetIconTexture(texture)
     self.NUIIconTexture:SetTexture(texture)
-    self.NUIIconTexture:NUISetZoom()
+    self.NUIIconTexture:NCSetZoom()
     self:NUISetIconShown(texture ~= nil)
 end
 
@@ -118,7 +118,7 @@ hooksecurefunc('SetPortraitTexture', function(texture, unit)
     end
 
     SetPortraitTexture(header.NUIIconTexture, unit, true)
-    header.NUIIconTexture:NUISetZoom()
+    header.NUIIconTexture:NCSetZoom()
     header:NUISetIconShown(true)
 end)
 
@@ -144,7 +144,7 @@ end
 ---@return Texture
 local function CreateFill(header, parent)
     local fill = parent:CreateTexture(nil, 'BACKGROUND')
-    fill:NUISetPixelSnap()
+    fill:NCDisablePixelSnap()
     fill:SetColorTexture(1, 1, 1, 1)
     tinsert(header.NUIFills, fill)
     return fill
@@ -155,7 +155,7 @@ end
 ---@return Texture
 local function CreateEdge(header, parent)
     local edge = parent:CreateTexture(nil, 'BORDER')
-    edge:NUISetPixelSnap()
+    edge:NCDisablePixelSnap()
     tinsert(header.NUILines, edge)
     return edge
 end
@@ -166,20 +166,20 @@ end
 ---@param cut number How far the tab reaches below the bar
 local function BuildCut(header, tab, size, cut)
     local tabFill = CreateFill(header, tab)
-    tabFill:NUISetPixelPoint('TOPLEFT', header, 'BOTTOMLEFT', 0, 0)
-    tabFill:NUISetPixelSize(size, cut)
+    tabFill:NCSetPoint('TOPLEFT', header, 'BOTTOMLEFT', 0, 0)
+    tabFill:NCSetSize(size, cut)
 
     -- A square with its lower-right corner pulled onto its lower-left: the triangle under the cut.
     local wedgeSize = Pixel.ToPixelGrid(cut)
     local wedge = CreateFill(header, tab)
-    wedge:NUISetPixelPoint('TOPLEFT', header, 'BOTTOMLEFT', size, 0)
+    wedge:NCSetPoint('TOPLEFT', header, 'BOTTOMLEFT', size, 0)
     wedge:SetSize(wedgeSize, wedgeSize)
     wedge:SetVertexOffset(LOWER_RIGHT_VERTEX, -wedgeSize, 0)
 
     local tabLine = CreateEdge(header, tab)
-    tabLine:NUISetPixelHeight(1)
-    tabLine:NUISetPixelWidth(size)
-    tabLine:NUISetPixelPoint('BOTTOMLEFT', header, 'TOPLEFT', 0, -size)
+    tabLine:NCSetHeight(1)
+    tabLine:NCSetWidth(size)
+    tabLine:NCSetPoint('BOTTOMLEFT', header, 'TOPLEFT', 0, -size)
 
     -- Runs through the centre of both 1px edges it joins, so the corners meet without a notch.
     local half = Pixel.ToPixelGrid(1) / 2
@@ -201,14 +201,14 @@ local function BuildTab(header, tab, size)
 
     local pad = floor(size * ICON_PAD_RATIO + 0.5)
     local icon = CreateFrame('Frame', nil, tab)
-    icon:NUISetPixelPoint('TOPLEFT', header, 'TOPLEFT', pad, -pad)
-    icon:NUISetPixelSize(size - pad * 2)
-    icon:NUIAddBorders()
+    icon:NCSetPoint('TOPLEFT', header, 'TOPLEFT', pad, -pad)
+    icon:NCSetSize(size - pad * 2)
+    icon:NCAddBorders()
     header.NUIIcon = icon --[[@as Frame & PublicBorderMixin]]
 
     local iconTexture = icon:CreateTexture(nil, 'ARTWORK')
-    iconTexture:NUISetPixelPoint('TOPLEFT', icon, 'TOPLEFT', 1, -1)
-    iconTexture:NUISetPixelPoint('BOTTOMRIGHT', icon, 'BOTTOMRIGHT', -1, 1)
+    iconTexture:NCSetPoint('TOPLEFT', icon, 'TOPLEFT', 1, -1)
+    iconTexture:NCSetPoint('BOTTOMRIGHT', icon, 'BOTTOMRIGHT', -1, 1)
     header.NUIIconTexture = iconTexture
 end
 
@@ -223,20 +223,20 @@ local function CreateHeader(frame, backdrop, size)
     header.NUIFills, header.NUILines = {}, {}
     header.NUITabSize = size
     header.NUIOwner = frame
-    header:NUISetPixelPoint('TOPLEFT', backdrop, 'TOPLEFT', PLATE_INSET, -PLATE_INSET)
-    header:NUISetPixelPoint('TOPRIGHT', backdrop, 'TOPRIGHT', -PLATE_INSET, -PLATE_INSET)
-    header:NUISetPixelHeight(HEADER_HEIGHT)
+    header:NCSetPoint('TOPLEFT', backdrop, 'TOPLEFT', PLATE_INSET, -PLATE_INSET)
+    header:NCSetPoint('TOPRIGHT', backdrop, 'TOPRIGHT', -PLATE_INSET, -PLATE_INSET)
+    header:NCSetHeight(HEADER_HEIGHT)
     header:SetFrameLevel(frame:GetFrameLevel() + TAB_LEVEL_OFFSET)
 
     CreateFill(header, header):SetAllPoints(header)
 
     local barLine = CreateEdge(header, header)
-    barLine:NUISetPixelHeight(1)
+    barLine:NCSetHeight(1)
     header.NUIBarLine = barLine
 
     local tab = CreateFrame('Frame', nil, header)
-    tab:NUISetPixelPoint('TOPLEFT', header, 'TOPLEFT', 0, 0)
-    tab:NUISetPixelSize(size * 2 - HEADER_HEIGHT, size)
+    tab:NCSetPoint('TOPLEFT', header, 'TOPLEFT', 0, 0)
+    tab:NCSetSize(size * 2 - HEADER_HEIGHT, size)
     header.NUITab = tab
     header:NUIRaiseTab()
     -- Content can be built or re-levelled between shows, so measure again each time.
@@ -246,7 +246,7 @@ local function CreateHeader(frame, backdrop, size)
 
     local close = frame.CloseButton
     if close then
-        close:NUISetPixelSize(HEADER_HEIGHT, HEADER_HEIGHT)
+        close:NCSetSize(HEADER_HEIGHT, HEADER_HEIGHT)
         Skinning:HandleCloseButton(close, header, 0, 0)
     end
 
@@ -254,11 +254,11 @@ local function CreateHeader(frame, backdrop, size)
     local minMax = FindMinMaxFrame(frame)
     if minMax then
         minMax:ClearAllPoints()
-        minMax:NUISetPixelSize(HEADER_HEIGHT, HEADER_HEIGHT)
+        minMax:NCSetSize(HEADER_HEIGHT, HEADER_HEIGHT)
         if close then
-            minMax:NUISetPixelPoint('TOPRIGHT', close, 'TOPLEFT', 0, 0)
+            minMax:NCSetPoint('TOPRIGHT', close, 'TOPLEFT', 0, 0)
         else
-            minMax:NUISetPixelPoint('TOPRIGHT', header, 'TOPRIGHT', 0, 0)
+            minMax:NCSetPoint('TOPRIGHT', header, 'TOPRIGHT', 0, 0)
         end
         Skinning:HandleMinMaxButton(minMax)
     end
@@ -332,7 +332,7 @@ function Skinning:HandlePortraitFrame(frame, tabSize, icon)
     if portrait and tabSize ~= false then atlas, texture = portrait:GetAtlas(), portrait:GetTexture() end
     if not atlas and not texture then texture = icon end
 
-    frame:NUIStripTextures('Keyed')
+    frame:NCStripTextures('Keyed')
 
     local backdrop = self:CreatePanelBackdrop(frame)
 

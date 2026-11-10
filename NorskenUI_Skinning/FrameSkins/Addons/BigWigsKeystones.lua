@@ -96,10 +96,10 @@ end
 ---The teleport hint hangs a GlowBoxArrowTemplate under the box, which the keyed strip cannot reach.
 ---@param tip Frame
 local function SkinTip(tip)
-    tip:NUIStripTextures('Keyed')
+    tip:NCStripTextures('Keyed')
 
     for _, child in ipairs({ tip:GetChildren() }) do
-        child:NUIStripTextures('Keyed')
+        child:NCStripTextures('Keyed')
     end
 
     Skinning:CreatePanelBackdrop(tip)

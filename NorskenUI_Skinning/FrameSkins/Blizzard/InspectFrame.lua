@@ -22,10 +22,10 @@ local function SkinModelScene(S)
     local scene = CharacterModelScene
     if not scene then return end
 
-    scene:NUIStripTextures()
+    scene:NCStripTextures()
     local model = InspectModelFrame
     if model then
-        model:NUIStripTextures()
+        model:NCStripTextures()
 
         for _, corner in ipairs({ 'TopLeft', 'TopRight', 'BotLeft', 'BotRight' }) do
             local bg = _G['InspectModelFrameBackground' .. corner]
@@ -82,9 +82,9 @@ Skinning:RegisterSkin('Blizzard_InspectUI', 'InspectFrame', function(S)
     end
 
     if InspectPaperDollFrame then
-        InspectPaperDollFrame:NUIStripTextures()
+        InspectPaperDollFrame:NCStripTextures()
     end
 
-    if InspectPVPFrame then InspectPVPFrame:NUIStripTextures() end
-    if InspectTalentFrame then InspectTalentFrame:NUIStripTextures() end
+    if InspectPVPFrame then InspectPVPFrame:NCStripTextures() end
+    if InspectTalentFrame then InspectTalentFrame:NCStripTextures() end
 end)

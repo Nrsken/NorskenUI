@@ -44,7 +44,7 @@ local function SkinIconButton(S, button, size)
     S:HandleButton(button, nil, nil, true)
 
     if size then
-        button:NUISetPixelSize(size, size)
+        button:NCSetSize(size, size)
     end
 end
 
@@ -53,13 +53,13 @@ end
 local function SkinRoleButton(S, button)
     if not button then return end
 
-    if button.shortageBorder then button.shortageBorder:NUIStripTextures() end
+    if button.shortageBorder then button.shortageBorder:NCStripTextures() end
 
     local incentive = button.incentiveIcon
     if incentive and not incentive.NUISkinned then
         incentive.NUISkinned = true
 
-        if incentive.border then incentive.border:NUIStripTextures() end
+        if incentive.border then incentive.border:NCStripTextures() end
         if incentive.CircleMask then incentive.CircleMask:Hide() end
         S:HandleIcon(incentive.texture, true)
     end
@@ -69,9 +69,9 @@ local function SkinRoleButton(S, button)
     if not check or check.NUISkinned then return end
 
     check:SetScale(1)
-    check:NUISetPixelSize(ROLE_CHECK_SIZE, ROLE_CHECK_SIZE)
+    check:NCSetSize(ROLE_CHECK_SIZE, ROLE_CHECK_SIZE)
     check:ClearAllPoints()
-    check:NUISetPixelPoint('BOTTOMLEFT', button, 'BOTTOMLEFT', 0, 0)
+    check:NCSetPoint('BOTTOMLEFT', button, 'BOTTOMLEFT', 0, 0)
     check:SetFrameLevel(button:GetFrameLevel() + 2)
     S:HandleCheckBox(check)
 end
@@ -96,8 +96,8 @@ local function SkinRewardItem(S, button)
     if not button or button.NUISkinned then return end
     button.NUISkinned = true
 
-    if button.NameFrame then button.NameFrame:NUIStripTextures() end
-    if button.shortageBorder then button.shortageBorder:NUIStripTextures() end
+    if button.NameFrame then button.NameFrame:NCStripTextures() end
+    if button.shortageBorder then button.shortageBorder:NCStripTextures() end
     if button.IconBorder then button.IconBorder:SetAlpha(0) end
 
     S:HandleIcon(button.Icon, true)
@@ -142,7 +142,7 @@ end
 local function SkinAutoComplete(S, frame)
     if not frame then return end
 
-    frame:NUIStripTextures('ClearHide')
+    frame:NCStripTextures('ClearHide')
     S:CreatePanelBackdrop(frame)
 
     for _, button in ipairs(frame.Results or {}) do
@@ -170,7 +170,7 @@ local function NudgeRowRight(texture)
     local relativeTo, relativePoint, x, y = GetAnchor(texture, 'BOTTOMRIGHT')
     if not relativePoint then return end
 
-    texture:NUISetPixelPoint('BOTTOMRIGHT', relativeTo or texture:GetParent(), relativePoint, x + ROW_RIGHT_NUDGE, y)
+    texture:NCSetPoint('BOTTOMRIGHT', relativeTo or texture:GetParent(), relativePoint, x + ROW_RIGHT_NUDGE, y)
 end
 
 -- Blizzard leaves both insets two pixels right of the button sitting under them.
@@ -179,7 +179,7 @@ local function NudgeInsetLeft(inset)
     local relativeTo, relativePoint, x, y = GetAnchor(inset, 'TOPLEFT')
     if not relativePoint then return end
 
-    inset:NUISetPixelPoint('TOPLEFT', relativeTo or inset:GetParent(), relativePoint, x - INSET_LEFT_NUDGE, y)
+    inset:NCSetPoint('TOPLEFT', relativeTo or inset:GetParent(), relativePoint, x - INSET_LEFT_NUDGE, y)
 end
 
 -- The category atlas sizes InfoBackground, so its right edge stops wherever the art happens to end.
@@ -194,8 +194,8 @@ local function MatchInfoToInset(info, inset)
     local gap = infoY - insetY
 
     info:ClearAllPoints()
-    info:NUISetPixelPoint('TOPLEFT', inset, 'TOPLEFT', 0, gap)
-    info:NUISetPixelPoint('TOPRIGHT', inset, 'TOPRIGHT', 0, gap)
+    info:NCSetPoint('TOPLEFT', inset, 'TOPLEFT', 0, gap)
+    info:NCSetPoint('TOPRIGHT', inset, 'TOPRIGHT', 0, gap)
 end
 
 ---@param row NUISearchEntry
@@ -275,7 +275,7 @@ local function SkinSearchPanel(S, panel)
 
     local inset = panel.ResultsInset
     if inset then
-        inset:NUIStripTextures('Keyed')
+        inset:NCStripTextures('Keyed')
         S:CreatePanelBackdrop(inset, 'Transparent')
 
         NudgeInsetLeft(inset)
@@ -285,18 +285,18 @@ local function SkinSearchPanel(S, panel)
         if panel.SearchBox then
             local overhang = panel.SearchBox.NUIArtLeft or 0
 
-            panel.SearchBox:NUISetPixelHeight(SEARCH_ROW_HEIGHT)
-            panel.SearchBox:NUISetPixelPoint('TOPLEFT', inset, 'TOPLEFT', SEARCH_ROW_EDGE_GAP - overhang, rowTop)
+            panel.SearchBox:NCSetHeight(SEARCH_ROW_HEIGHT)
+            panel.SearchBox:NCSetPoint('TOPLEFT', inset, 'TOPLEFT', SEARCH_ROW_EDGE_GAP - overhang, rowTop)
 
             if panel.CategoryName then
                 panel.CategoryName:ClearAllPoints()
-                panel.CategoryName:NUISetPixelPoint('BOTTOMLEFT', panel.SearchBox, 'TOPLEFT', overhang + 2, CATEGORY_NAME_GAP)
+                panel.CategoryName:NCSetPoint('BOTTOMLEFT', panel.SearchBox, 'TOPLEFT', overhang + 2, CATEGORY_NAME_GAP)
             end
         end
 
         if panel.FilterButton then
-            panel.FilterButton:NUISetPixelHeight(REFRESH_BUTTON_SIZE)
-            panel.FilterButton:NUISetPixelPoint('TOPRIGHT', inset, 'TOPRIGHT', 0, rowTop + 1)
+            panel.FilterButton:NCSetHeight(REFRESH_BUTTON_SIZE)
+            panel.FilterButton:NCSetPoint('TOPRIGHT', inset, 'TOPRIGHT', 0, rowTop + 1)
         end
     end
 
@@ -318,8 +318,8 @@ local function FillCategoryRow(texture, button)
     if not texture then return end
 
     texture:ClearAllPoints()
-    texture:NUISetPixelPoint('TOPLEFT', button, 'TOPLEFT', CATEGORY_ART_INSET, -CATEGORY_ART_INSET)
-    texture:NUISetPixelPoint('BOTTOMRIGHT', button, 'BOTTOMRIGHT', -CATEGORY_ART_INSET, CATEGORY_ART_INSET)
+    texture:NCSetPoint('TOPLEFT', button, 'TOPLEFT', CATEGORY_ART_INSET, -CATEGORY_ART_INSET)
+    texture:NCSetPoint('BOTTOMRIGHT', button, 'BOTTOMRIGHT', -CATEGORY_ART_INSET, CATEGORY_ART_INSET)
 end
 
 -- Blizzard drives SelectedTexture's visibility, so recoloring it is all the selected state needs.
@@ -347,7 +347,7 @@ local function UpdateCategoryButton(selection, btnIndex)
     end
 
     -- AddButton re-sets the atlas on every pass, which takes the crop with it.
-    if button.Icon then button.Icon:NUISetZoom() end
+    if button.Icon then button.Icon:NCSetZoom() end
 
     local label = button.Label
     if label then
@@ -371,7 +371,7 @@ local function SkinCategorySelection(S, selection)
     S:HandleAccentText(selection.Label)
 
     if selection.Inset then
-        selection.Inset:NUIStripTextures('Keyed')
+        selection.Inset:NCStripTextures('Keyed')
     end
 
     S:HandleButton(selection.FindGroupButton)
@@ -394,14 +394,14 @@ local function SkinInputScroll(S, scrollFrame)
     if not scrollFrame or scrollFrame.NUISkinned then return end
     scrollFrame.NUISkinned = true
 
-    scrollFrame:NUIStripTextures('Layer', 'BACKGROUND')
+    scrollFrame:NCStripTextures('Layer', 'BACKGROUND')
 
     -- Matches HandleEditBox, these are inputs rather than panels.
     local backdrop = S:CreatePanelBackdrop(scrollFrame, nil, nil, true)
     if backdrop then
         backdrop:ClearAllPoints()
-        backdrop:NUISetPixelPoint('TOPLEFT', scrollFrame, 'TOPLEFT', -5, 5)
-        backdrop:NUISetPixelPoint('BOTTOMRIGHT', scrollFrame, 'BOTTOMRIGHT', 5, -5)
+        backdrop:NCSetPoint('TOPLEFT', scrollFrame, 'TOPLEFT', -5, 5)
+        backdrop:NCSetPoint('BOTTOMRIGHT', scrollFrame, 'BOTTOMRIGHT', 5, -5)
     end
 
     S:HandleTrimScrollBar(scrollFrame.ScrollBar)
@@ -415,7 +415,7 @@ local function SkinEntryCreation(S, creation)
     S:HandleAccentFont(creation.DescriptionLabel)
 
     if creation.Inset then
-        creation.Inset:NUIStripTextures('Keyed')
+        creation.Inset:NCStripTextures('Keyed')
     end
 
     S:HandleEditBox(creation.Name)
@@ -444,7 +444,7 @@ local function SkinEntryCreation(S, creation)
     local finder = creation.ActivityFinder
     local dialog = finder and finder.Dialog
     if dialog then
-        dialog:NUIStripTextures('Keyed')
+        dialog:NCStripTextures('Keyed')
         S:CreatePanelBackdrop(dialog)
 
         S:HandleEditBox(dialog.EntryBox)
@@ -489,7 +489,7 @@ local function SkinApplicationViewer(S, viewer)
 
     local inset = viewer.Inset
     if inset then
-        inset:NUIStripTextures('Keyed')
+        inset:NCStripTextures('Keyed')
         S:CreatePanelBackdrop(inset, 'Transparent')
         NudgeInsetLeft(inset)
     end
@@ -497,7 +497,7 @@ local function SkinApplicationViewer(S, viewer)
     -- UpdateInfo re-picks a category atlas on every pass.
     local info = viewer.InfoBackground
     if info then
-        info:NUIStripTextures('ClearHide')
+        info:NCStripTextures('ClearHide')
 
         if inset then MatchInfoToInset(info, inset) end
 
@@ -505,8 +505,8 @@ local function SkinApplicationViewer(S, viewer)
         local backdrop = S:CreatePanelBackdrop(viewer, 'Transparent')
         if backdrop then
             backdrop:ClearAllPoints()
-            backdrop:NUISetPixelPoint('TOPLEFT', info, 'TOPLEFT', 0, 0)
-            backdrop:NUISetPixelPoint('BOTTOMRIGHT', info, 'BOTTOMRIGHT', 0, 0)
+            backdrop:NCSetPoint('TOPLEFT', info, 'TOPLEFT', 0, 0)
+            backdrop:NCSetPoint('BOTTOMRIGHT', info, 'BOTTOMRIGHT', 0, 0)
         end
     end
 
@@ -539,7 +539,7 @@ local function SkinApplicationViewer(S, viewer)
         -- Blizzard hangs it 21px past the inset, clear of art the strip has already taken off.
         if inset then
             refresh:ClearAllPoints()
-            refresh:NUISetPixelPoint('BOTTOMRIGHT', inset, 'TOPRIGHT', 0, 0)
+            refresh:NCSetPoint('BOTTOMRIGHT', inset, 'TOPRIGHT', 0, 0)
         end
     end
 
@@ -567,9 +567,9 @@ local function SkinDungeonFinder(S)
     local queue = _G.LFDQueueFrame
     if not parent or not queue then return end
 
-    parent:NUIStripTextures('Keyed')
+    parent:NCStripTextures('Keyed')
     -- Each LFDQueueFrame_SetType* re-textures the background.
-    queue:NUIStripTextures('ClearHide')
+    queue:NCStripTextures('ClearHide')
 
     SkinRoleButtons(S,
         _G.LFDQueueFrameRoleButtonTank,
@@ -609,8 +609,8 @@ local function SkinRaidFinder(S)
     local queue = _G.RaidFinderQueueFrame
     if not frame or not queue then return end
 
-    frame:NUIStripTextures('Keyed')
-    queue:NUIStripTextures()
+    frame:NCStripTextures('Keyed')
+    queue:NCStripTextures()
 
     SkinRoleButtons(S,
         _G.RaidFinderQueueFrameRoleButtonTank,
@@ -637,9 +637,9 @@ local function SkinScenarioFinder(S)
     local queue = _G.ScenarioQueueFrame
     if not frame or not queue then return end
 
-    frame:NUIStripTextures('Keyed')
+    frame:NCStripTextures('Keyed')
     -- ScenarioQueueFrame_SetType re-textures Bg the same way.
-    queue:NUIStripTextures('ClearHide')
+    queue:NCStripTextures('ClearHide')
 
     S:HandleDropdownButton(queue.Dropdown)
     S:HandleAccentFont(_G.ScenarioQueueFrameTypeDropdownName)
@@ -651,7 +651,7 @@ local function SkinScenarioFinder(S)
         SkinRewardsPanel(S, random)
     end
     if queue.Specific and queue.Specific.ScrollFrame then
-        queue.Specific.ScrollFrame:NUIStripTextures()
+        queue.Specific.ScrollFrame:NCStripTextures()
         S:HandleTrimScrollBar(queue.Specific.ScrollBar)
         S:HookScrollBoxChildren(queue.Specific.ScrollFrame, SkinDungeonListRow)
     end
@@ -663,7 +663,7 @@ end
 local function SkinDialog(S, frame)
     if not frame then return end
 
-    frame:NUIStripTextures('Keyed')
+    frame:NCStripTextures('Keyed')
     S:CreatePanelBackdrop(frame)
 end
 
@@ -716,7 +716,7 @@ local function SkinDialogs(S)
     if ready then
         SkinDialog(S, ready)
         -- Every proposal swaps in that dungeon's art.
-        if ready.background then ready.background:NUIStripTextures('ClearHide') end
+        if ready.background then ready.background:NCStripTextures('ClearHide') end
         S:HandleButton(ready.enterButton)
         S:HandleButton(ready.leaveButton)
         S:HandleCloseButton(_G.LFGDungeonReadyDialogCloseButton, ready)
@@ -776,7 +776,7 @@ local function SkinShell(S)
 
     -- The shadows come back whenever the Mythic+ tab is toggled, so clearing is not enough.
     if frame.shadows then
-        frame.shadows:NUIStripTextures('Kill')
+        frame.shadows:NCStripTextures('Kill')
     end
 
     S:HandleTabRow('PVEFrameTab', frame, true)
@@ -797,15 +797,15 @@ local function SkinShell(S)
         if icon then
             icon:SetTexture(texture)
             icon:SetAlpha(1)
-            icon:NUISetPixelSize(GROUP_BUTTON_ICON_SIZE, GROUP_BUTTON_ICON_SIZE)
+            icon:NCSetSize(GROUP_BUTTON_ICON_SIZE, GROUP_BUTTON_ICON_SIZE)
             icon:ClearAllPoints()
-            icon:NUISetPixelPoint('LEFT', button, 'LEFT', GROUP_BUTTON_ICON_GAP, 0)
+            icon:NCSetPoint('LEFT', button, 'LEFT', GROUP_BUTTON_ICON_GAP, 0)
             S:HandleIcon(icon, true)
 
             -- The label hung off the ring HandleButton strips, so it rides the icon instead.
             if button.name then
                 button.name:ClearAllPoints()
-                button.name:NUISetPixelPoint('LEFT', icon, 'RIGHT', GROUP_BUTTON_TEXT_GAP, 0)
+                button.name:NCSetPoint('LEFT', icon, 'RIGHT', GROUP_BUTTON_TEXT_GAP, 0)
             end
         end
         index = index + 1
@@ -839,7 +839,7 @@ Skinning:RegisterSkin(nil, 'GroupFinder', function(S)
 
         local nothing = frame.NothingAvailable and frame.NothingAvailable.Inset
         if nothing then
-            nothing:NUIStripTextures('Keyed')
+            nothing:NCStripTextures('Keyed')
             S:CreatePanelBackdrop(nothing, 'Transparent')
         end
 
@@ -868,16 +868,16 @@ local function SkinAffixes(S, frame, iconSize)
         if not affix.NUISkinned then
             affix.NUISkinned = true
 
-            if affix.Border then affix.Border:NUIStripTextures() end
+            if affix.Border then affix.Border:NCStripTextures() end
             if affix.CircleMask then affix.CircleMask:Hide() end
 
             S:HandleIcon(affix.Portrait, true)
         end
 
         if iconSize then
-            affix:NUISetPixelSize(iconSize, iconSize)
+            affix:NCSetSize(iconSize, iconSize)
             -- The template insets the portrait by a pixel a side, which is where our border lands.
-            if affix.Portrait then affix.Portrait:NUISetPixelSize(iconSize - 2, iconSize - 2) end
+            if affix.Portrait then affix.Portrait:NCSetSize(iconSize - 2, iconSize - 2) end
         end
 
         if affix.Percent then
@@ -903,14 +903,14 @@ local function LineUpDungeonIcons(frame)
     for i = 1, num do
         local icon = icons[i]
 
-        icon:NUISetPixelSize(size, size)
-        if icon.Icon then icon.Icon:NUISetPixelSize(size, size) end
+        icon:NCSetSize(size, size)
+        if icon.Icon then icon.Icon:NCSetSize(size, size) end
 
         icon:ClearAllPoints()
         if i == 1 then
-            icon:NUISetPixelPoint('BOTTOMLEFT', frame, 'BOTTOM', -rowWidth / 2, 5)
+            icon:NCSetPoint('BOTTOMLEFT', frame, 'BOTTOM', -rowWidth / 2, 5)
         else
-            icon:NUISetPixelPoint('LEFT', icons[i - 1], 'RIGHT', DUNGEON_ICON_GAP, 0)
+            icon:NCSetPoint('LEFT', icons[i - 1], 'RIGHT', DUNGEON_ICON_GAP, 0)
         end
     end
 end
@@ -979,7 +979,7 @@ local function UpdateDungeonIcons(frame)
         if not icon.NUISkinned then
             icon.NUISkinned = true
 
-            icon:NUIStripTextures('Atlas', 'ChallengeMode-DungeonIconFrame')
+            icon:NCStripTextures('Atlas', 'ChallengeMode-DungeonIconFrame')
             S:HandleIcon(icon.Icon, true)
             TakeOverScoreText(icon.HighestLevel, true)
         end
@@ -1014,7 +1014,7 @@ Skinning:RegisterSkin('Blizzard_ChallengesUI', 'GroupFinder', function(S)
     -- Hide background inset textures.
     local inset = _G.ChallengesFrameInset
     if inset then
-        inset:NUIStripTextures('Keyed')
+        inset:NCStripTextures('Keyed')
     end
 
     local weeklyFrame = frame and frame.WeeklyInfo
@@ -1032,7 +1032,7 @@ Skinning:RegisterSkin('Blizzard_ChallengesUI', 'GroupFinder', function(S)
 
     local notice = frame.SeasonChangeNoticeFrame
     if notice then
-        notice:NUIStripTextures('Keyed')
+        notice:NCStripTextures('Keyed')
         S:CreatePanelBackdrop(notice, nil, nil, true)
         S:HandleButton(notice.Leave)
 

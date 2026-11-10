@@ -54,14 +54,14 @@ function Skinning:CreateArrowTexture(button, direction, sizeX, sizeY, point, rel
     if button.NUIArrow then return end
 
     local arrow = button:CreateTexture(nil, 'ARTWORK')
-    arrow:NUISetPixelPoint(point or 'CENTER', relativeTo or button, relativePoint or 'CENTER', xOffset or 0, yOffset or 0)
-    arrow:NUISetPixelSize(sizeX, sizeY)
+    arrow:NCSetPoint(point or 'CENTER', relativeTo or button, relativePoint or 'CENTER', xOffset or 0, yOffset or 0)
+    arrow:NCSetSize(sizeX, sizeY)
     if texture then
         arrow:SetTexture(ARROW_TEXTURE)
     else
         arrow:SetAtlas(ARROW_ATLAS)
     end
-    arrow:NUISetPixelSnap()
+    arrow:NCDisablePixelSnap()
     arrow:SetDesaturated(true)
 
     button.NUIArrow = arrow
@@ -91,7 +91,7 @@ function Skinning:HandleArrowButton(button, direction)
     button.NUISkinned = true
 
     local sizeX, sizeY = 14, 38
-    button:NUIStripTextures()
+    button:NCStripTextures()
     self:CreateArrowTexture(button, direction, sizeX, sizeY)
 end
 

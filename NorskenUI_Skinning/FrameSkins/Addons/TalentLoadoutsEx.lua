@@ -99,7 +99,7 @@ local function SkinListButton(button)
 
         local check = button.Check
         check:SetTexture(CHECK_TEXTURE)
-        check:NUISetPixelSnap()
+        check:NCDisablePixelSnap()
         ---@cast check Texture & TLEAccentTintMixin
         Mixin(check, AccentTintMixin)
         check:NUIUpdateSkinColors()
@@ -128,7 +128,7 @@ end
 local function SkinDialog(S, frame)
     if not frame then return end
 
-    frame:NUIStripTextures('Keyed')
+    frame:NCStripTextures('Keyed')
     S:CreatePanelBackdrop(frame)
 end
 
@@ -137,13 +137,13 @@ end
 local function SkinEditPopup(S, popup)
     if not popup then return end
 
-    popup:NUIStripTextures('Keyed')
+    popup:NCStripTextures('Keyed')
     S:CreatePanelBackdrop(popup)
     S:HandleCloseButton(popup.CloseButton, popup)
 
     local borderBox = popup.BorderBox
     if borderBox then
-        borderBox:NUIStripTextures('Keyed')
+        borderBox:NCStripTextures('Keyed')
         S:HandleEditBox(borderBox.IconSelectorEditBox)
         S:HandleButton(borderBox.OkayButton, 'Transparent')
         S:HandleButton(borderBox.CancelButton, 'Transparent')
@@ -156,7 +156,7 @@ local function SkinEditPopup(S, popup)
             if selectedButton then
                 -- Filled in long after this pass, so the icon has to survive the strip untouched.
                 selectedButton.Icon.NUINoStrip = true
-                selectedButton:NUIStripTextures()
+                selectedButton:NCStripTextures()
                 S:HandleIcon(selectedButton.Icon, true)
             end
 
@@ -185,15 +185,15 @@ local function SkinEditPopup(S, popup)
     if talentText then
         SkinDialog(S, talentText)
         talentText:ClearAllPoints()
-        talentText:NUISetPixelHeight(TALENT_TEXT_HEIGHT)
-        talentText:NUISetPixelPoint('BOTTOMLEFT', popup, 'TOPLEFT', 0, POPUP_GAP)
-        talentText:NUISetPixelPoint('BOTTOMRIGHT', popup, 'TOPRIGHT', 0, POPUP_GAP)
+        talentText:NCSetHeight(TALENT_TEXT_HEIGHT)
+        talentText:NCSetPoint('BOTTOMLEFT', popup, 'TOPLEFT', 0, POPUP_GAP)
+        talentText:NCSetPoint('BOTTOMRIGHT', popup, 'TOPRIGHT', 0, POPUP_GAP)
 
         local main = talentText.Main
-        main:NUIStripTextures('Keyed')
+        main:NCStripTextures('Keyed')
         main:ClearAllPoints()
-        main:NUISetPixelPoint('TOPLEFT', talentText, 'TOPLEFT', POPUP_PADDING, -POPUP_PADDING)
-        main:NUISetPixelPoint('BOTTOMRIGHT', talentText, 'BOTTOMRIGHT', -POPUP_PADDING, POPUP_PADDING)
+        main:NCSetPoint('TOPLEFT', talentText, 'TOPLEFT', POPUP_PADDING, -POPUP_PADDING)
+        main:NCSetPoint('BOTTOMRIGHT', talentText, 'BOTTOMRIGHT', -POPUP_PADDING, POPUP_PADDING)
 
         local editBox = main.EditBox
         editBox:ClearAllPoints()
@@ -206,8 +206,8 @@ local function SkinEditPopup(S, popup)
 
     SkinDialog(S, iconList)
     iconList:ClearAllPoints()
-    iconList:NUISetPixelPoint('TOPLEFT', popup, 'BOTTOMLEFT', 0, -POPUP_GAP)
-    iconList:NUISetPixelPoint('TOPRIGHT', popup, 'BOTTOMRIGHT', 0, -POPUP_GAP)
+    iconList:NCSetPoint('TOPLEFT', popup, 'BOTTOMLEFT', 0, -POPUP_GAP)
+    iconList:NCSetPoint('TOPRIGHT', popup, 'BOTTOMRIGHT', 0, -POPUP_GAP)
 
     for _, child in ipairs({ iconList:GetChildren() }) do
         ---@cast child TLEIconButton
@@ -227,16 +227,16 @@ local function SkinTextPopup(S, popup)
     if not popup then return end
 
     SkinDialog(S, popup)
-    popup.Header:NUIStripTextures()
+    popup.Header:NCStripTextures()
     S:HandleAccentText(popup.Header.Text)
 
     local main = popup.Main
-    main:NUIStripTextures('Keyed')
+    main:NCStripTextures('Keyed')
     S:CreatePanelBackdrop(main, 'Transparent')
 
     local scrollFrame = main.ScrollFrame
     -- The Common-Input-Border slices sit on the scroll frame's own BACKGROUND layer.
-    scrollFrame:NUIStripTextures()
+    scrollFrame:NCStripTextures()
 
     -- Widget palette rather than panel, so the export box reads as an input like the other fields.
     S:CreatePanelBackdrop(scrollFrame, nil, nil, true)
@@ -262,11 +262,11 @@ local function SkinPresetPopup(S, popup)
     if not popup then return end
 
     SkinDialog(S, popup)
-    popup.Header:NUIStripTextures()
+    popup.Header:NCStripTextures()
     S:HandleAccentText(popup.Header.Text)
 
     local main = popup.Main
-    main:NUIStripTextures('Keyed')
+    main:NCStripTextures('Keyed')
     S:CreatePanelBackdrop(main, 'Transparent')
     S:HandleCheckBox(main.CombineCheckButton)
 
@@ -304,7 +304,7 @@ local function SkinTalentLoadoutsEx()
 
     local S = Skinning
 
-    frame:NUIStripTextures('Keyed')
+    frame:NCStripTextures('Keyed')
     S:CreatePanelBackdrop(frame)
     S:HandleAccentText(frame.Title)
 
@@ -313,7 +313,7 @@ local function SkinTalentLoadoutsEx()
     end
 
     local pvpFrame = frame.PvpFrame
-    pvpFrame:NUIStripTextures('Keyed')
+    pvpFrame:NCStripTextures('Keyed')
     S:CreatePanelBackdrop(pvpFrame, 'Transparent')
     S:HandleCheckBox(pvpFrame.CheckButton)
     pvpFrame.CheckButton:SetSize(28, 28)
@@ -330,8 +330,8 @@ local function SkinTalentLoadoutsEx()
     NRSKNUI:RunWhenSafe(function()
         local parent = frame:GetParent()
         frame:ClearAllPoints()
-        frame:NUISetPixelPoint('TOPLEFT', parent, 'TOPRIGHT', PANEL_INSET_X, PANEL_OVERHANG_Y)
-        frame:NUISetPixelPoint('BOTTOMLEFT', parent, 'BOTTOMRIGHT', PANEL_INSET_X, -PANEL_OVERHANG_Y)
+        frame:NCSetPoint('TOPLEFT', parent, 'TOPRIGHT', PANEL_INSET_X, PANEL_OVERHANG_Y)
+        frame:NCSetPoint('BOTTOMLEFT', parent, 'BOTTOMRIGHT', PANEL_INSET_X, -PANEL_OVERHANG_Y)
     end)
 end
 

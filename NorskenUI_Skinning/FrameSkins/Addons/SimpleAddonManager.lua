@@ -81,7 +81,7 @@ local function SkinLockIcon(check)
 
     lockIcon:SetSize(LOCK_ICON_SIZE, LOCK_ICON_SIZE)
     lockIcon:ClearAllPoints()
-    lockIcon:NUISetPixelPoint('CENTER', backdrop, 'BOTTOMRIGHT', LOCK_ICON_OFFSET, LOCK_ICON_OFFSET)
+    lockIcon:NCSetPoint('CENTER', backdrop, 'BOTTOMRIGHT', LOCK_ICON_OFFSET, LOCK_ICON_OFFSET)
 end
 
 ---A locked addon refuses the toggle but keeps its button enabled, so the fill carries the dead look.
@@ -197,7 +197,7 @@ local function SkinSimpleAddonManager(frame)
     -- Header
     Skinning:HandleDropdownButton(frame.CharacterDropDown)
     -- The whole top row chains off this one anchor, so moving it clears the tab's cut for all of it.
-    frame.CharacterDropDown:NUISetPixelPoint('TOPLEFT', frame, 'TOPLEFT', HEADER_ROW_LEFT, HEADER_ROW_TOP)
+    frame.CharacterDropDown:NCSetPoint('TOPLEFT', frame, 'TOPLEFT', HEADER_ROW_LEFT, HEADER_ROW_TOP)
     Skinning:HandleButton(frame.SetsButton)
     Skinning:HandleEditBox(frame.SearchBox)
 

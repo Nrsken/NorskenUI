@@ -51,15 +51,15 @@ function Skinning:HandleSearchPreview(container, searchBox)
     if not container or container.NUISkinned then return end
     container.NUISkinned = true
 
-    container:NUIStripTextures('Keyed')
+    container:NCStripTextures('Keyed')
     self:CreatePanelBackdrop(container)
     self:HandleOutlineFont(container.OverflowCount and container.OverflowCount.Text)
 
     if searchBox then
         local top = (searchBox.NUIArtBottom or 0) - LIST_GAP
         container:ClearAllPoints()
-        container:NUISetPixelPoint('TOPLEFT', searchBox, 'BOTTOMLEFT', searchBox.NUIArtLeft or 0, top)
-        container:NUISetPixelPoint('TOPRIGHT', searchBox, 'BOTTOMRIGHT', searchBox.NUIArtRight or 0, top)
+        container:NCSetPoint('TOPLEFT', searchBox, 'BOTTOMLEFT', searchBox.NUIArtLeft or 0, top)
+        container:NCSetPoint('TOPRIGHT', searchBox, 'BOTTOMRIGHT', searchBox.NUIArtRight or 0, top)
     end
 
     SkinSuggestedRows(container)

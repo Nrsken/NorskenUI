@@ -194,7 +194,7 @@ local function LayoutPerGroup(group, uDB, gDB, dir, spacing, subgroups)
     local corner = GridCorner(dir, gdir, wrap)
 
     local container = group.container
-    container:NUISetPixelSize((gdir.x ~= 0) and along or across, (gdir.x ~= 0) and across or along)
+    container:NCSetSize((gdir.x ~= 0) and along or across, (gdir.x ~= 0) and across or along)
 
     for index, header in ipairs(group.headers) do
         header:SetShown(index <= count)
@@ -241,7 +241,7 @@ function UF:LayoutGroup(key)
     local spacing = Pixel.ToPixelGrid((dir.x ~= 0) and gDB.HorizontalSpacing or gDB.VerticalSpacing)
     local subgroups = UF.ActiveSubgroups(key, gDB)
 
-    group.container:NUIApplyPosition(uDB)
+    group.container:NCApplyPosition(uDB)
     group.shownGroups = concat(subgroups, ',')
 
     local suspended = UF.Preview:SuspendGroup(key)

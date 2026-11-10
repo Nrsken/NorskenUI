@@ -102,19 +102,19 @@ function CombatMessage:ApplySettings()
         local text = self.parentGroup[msgType.key]
         local child = text:GetParent()
 
-        text:NUISetPixelPoint(self.db.Config.Align)
+        text:NCSetPoint(self.db.Config.Align)
         text:SetFontStyle(self.db, mdb.FontSize)
 
         if msgType.key == 'partyDeath' then
             local sample, color = self:FormatPartyDeath('player')
             text:SetText(sample)
             text:SetTextColor(unpack(color))
-            child:NUISetPixelSize(text:GetStringWidth(), text:GetStringHeight())
+            child:NCSetSize(text:GetStringWidth(), text:GetStringHeight())
             self.parentGroup:NotifyChildResized(child)
         else
             text:SetText(mdb.Text)
             text:SetTextColor(unpack(mdb.Color))
-            child:NUISetPixelSize(text:GetStringWidth(), text:GetStringHeight())
+            child:NCSetSize(text:GetStringWidth(), text:GetStringHeight())
             self.parentGroup:NotifyChildResized(child)
         end
 
@@ -154,7 +154,7 @@ function CombatMessage:ShowPartyDeathText(text, color)
 
     fontString:SetText(text)
     fontString:SetTextColor(unpack(color))
-    child:NUISetPixelSize(fontString:GetStringWidth(), fontString:GetStringHeight())
+    child:NCSetSize(fontString:GetStringWidth(), fontString:GetStringHeight())
     self.parentGroup:NotifyChildResized(child)
     self:FlashMessage('partyDeath')
 end

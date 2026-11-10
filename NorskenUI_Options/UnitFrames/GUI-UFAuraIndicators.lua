@@ -311,7 +311,7 @@ local function DrawClassIcon(classFile)
         local texture = canvas.NUIClassIcon
         if not texture then
             texture = canvas:CreateTexture(nil, 'ARTWORK')
-            texture:NUISetPixelInside(canvas, 0, 0)
+            texture:NCSetInside(canvas, 0, 0)
             canvas.NUIClassIcon = texture
         end
         texture:SetAtlas(GetClassAtlas(classFile:lower()))

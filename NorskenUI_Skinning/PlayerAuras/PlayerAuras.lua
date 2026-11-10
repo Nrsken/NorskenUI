@@ -181,7 +181,7 @@ function PlayerAuras:ApplySettings()
         if self.db.Enabled then
             self:ResizeHost(kind)
             host:Show()
-            host:NUIApplyPosition(cfg)
+            host:NCApplyPosition(cfg)
             -- db is resolved live rather than captured: self.db is reassigned by
             -- UpdateDB() on a profile switch and cfg would still point at the old one.
             Anchors:Register(self, info.moverKey, host, 'buffsDebuffs', {
@@ -222,7 +222,7 @@ function PlayerAuras:OnEnable()
         for kind, info in pairs(KINDS) do
             if self.db.Enabled then
                 local frame = _G[info.blizzardFrame]
-                frame:NUIBanish()
+                frame:NCBanish()
                 for _, cvar in ipairs(info.cvarCallbacks or {}) do
                     CVarCallbackRegistry:UnregisterCallback(cvar, frame)
                 end

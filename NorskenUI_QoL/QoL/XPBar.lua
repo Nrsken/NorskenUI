@@ -61,44 +61,44 @@ function XPBar:CreateBar()
     -- Create the main frame for the Experience Bar
     local coreFrame = CreateFrame('Frame', 'NRSKNUI_XPBar', UIParent)
     coreFrame:SetRolesets('statusBars')
-    coreFrame:NUISetPixelSize(width, height)
-    coreFrame:NUIApplyPosition(self.db)
-    coreFrame:NUICreateBackdrop(true)
+    coreFrame:NCSetSize(width, height)
+    coreFrame:NCApplyPosition(self.db)
+    coreFrame:NCCreateBackdrop(true)
     coreFrame:EnableMouse(true) -- Enable mouse for tooltip.
 
     -- Rested Experience Bar
     coreFrame.RestedBar = CreateFrame('StatusBar', nil, coreFrame)
-    coreFrame.RestedBar:NUISetPixelSize(width, height)
-    coreFrame.RestedBar:NUISetPixelPoint('CENTER')
+    coreFrame.RestedBar:NCSetSize(width, height)
+    coreFrame.RestedBar:NCSetPoint('CENTER')
     coreFrame.RestedBar:SetFrameLevel(10)
     coreFrame.RestedBar:SetValue(0)
     coreFrame.RestedBar:SetStatusBarTexture(sTex)
-    coreFrame.RestedBar:NUISetPixelSnap()
+    coreFrame.RestedBar:NCDisablePixelSnap()
 
     -- Quest Experience Bar
     coreFrame.questBar = CreateFrame('StatusBar', nil, coreFrame)
-    coreFrame.questBar:NUISetPixelSize(width, height)
-    coreFrame.questBar:NUISetPixelPoint('CENTER')
+    coreFrame.questBar:NCSetSize(width, height)
+    coreFrame.questBar:NCSetPoint('CENTER')
     coreFrame.questBar:SetFrameLevel(20)
     coreFrame.questBar:SetValue(0)
     coreFrame.questBar:SetStatusBarTexture(sTex)
-    coreFrame.questBar:NUISetPixelSnap()
+    coreFrame.questBar:NCDisablePixelSnap()
 
     -- Main Experience Bar
     coreFrame.progressBar = CreateFrame('StatusBar', nil, coreFrame)
-    coreFrame.progressBar:NUISetPixelSize(width, height)
-    coreFrame.progressBar:NUISetPixelPoint('CENTER')
+    coreFrame.progressBar:NCSetSize(width, height)
+    coreFrame.progressBar:NCSetPoint('CENTER')
     coreFrame.progressBar:SetFrameLevel(30)
     coreFrame.progressBar:SetValue(0)
     coreFrame.progressBar:SetStatusBarTexture(sTex)
-    coreFrame.progressBar:NUISetPixelSnap()
+    coreFrame.progressBar:NCDisablePixelSnap()
 
     -- Border frame
     coreFrame.borderFrame = CreateFrame('Frame', nil, coreFrame)
-    coreFrame.borderFrame:NUISetPixelSize(width, height)
-    coreFrame.borderFrame:NUISetPixelPoint('CENTER')
+    coreFrame.borderFrame:NCSetSize(width, height)
+    coreFrame.borderFrame:NCSetPoint('CENTER')
     coreFrame.borderFrame:SetFrameLevel(40)
-    coreFrame.borderFrame:NUIAddBorders()
+    coreFrame.borderFrame:NCAddBorders()
 
     -- Level
     coreFrame.leftText = coreFrame.borderFrame:CreateFontString(nil, 'OVERLAY')
@@ -154,29 +154,29 @@ function XPBar:ApplySettings()
     self.rC = { rR, rG, rB }
 
     -- Core frame settings
-    self.coreFrame:NUISetPixelSize(width, height)
-    self.coreFrame:NUIApplyPosition(self.db)
+    self.coreFrame:NCSetSize(width, height)
+    self.coreFrame:NCApplyPosition(self.db)
     self.coreFrame:SetBackgroundTexture(NRSKNUI:GetBarBackground(self.db))
     self.coreFrame:SetBackgroundColor(bgR, bgG, bgB, bgA)
     self.coreFrame.borderFrame:SetBorderColor(bR, bG, bB, bA)
 
     -- Main XP bar
-    self.coreFrame.progressBar:NUISetPixelSize(width, height)
+    self.coreFrame.progressBar:NCSetSize(width, height)
     self.coreFrame.progressBar:SetStatusBarTexture(pTex)
     self.coreFrame.progressBar:SetStatusBarColor(pR, pG, pB, pA)
 
     -- Rested bar
-    self.coreFrame.RestedBar:NUISetPixelSize(width, height)
+    self.coreFrame.RestedBar:NCSetSize(width, height)
     self.coreFrame.RestedBar:SetStatusBarTexture(rTex)
     self.coreFrame.RestedBar:SetStatusBarColor(rR, rG, rB, rA)
 
     -- Quest bar
-    self.coreFrame.questBar:NUISetPixelSize(width, height)
+    self.coreFrame.questBar:NCSetSize(width, height)
     self.coreFrame.questBar:SetStatusBarTexture(qTex)
     self.coreFrame.questBar:SetStatusBarColor(qR, qG, qB, qA)
 
     -- Border frame
-    self.coreFrame.borderFrame:NUISetPixelSize(width, height)
+    self.coreFrame.borderFrame:NCSetSize(width, height)
 
     -- Info text
     for _, fs in ipairs({ self.coreFrame.leftText, self.coreFrame.centerText, self.coreFrame.rightText }) do
@@ -492,7 +492,7 @@ end
 
 function XPBar:OnEnable()
     if self.db.HideBlizzardBar and MainStatusTrackingBarContainer then
-        MainStatusTrackingBarContainer:NUIBanish()
+        MainStatusTrackingBarContainer:NCBanish()
         MainStatusTrackingBarContainer:UnregisterAllEvents()
         MainStatusTrackingBarContainer:Hide()
         MainStatusTrackingBarContainer:SetAlpha(0)

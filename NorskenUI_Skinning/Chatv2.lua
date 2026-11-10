@@ -1622,7 +1622,7 @@ function CHAT:ApplyFrameStyle(frame, template, glossTex, ignoreUpdates, forcePix
     end
 
     ReplaceSetupTextureCoordinates(frame)
-    frame:NUISetPixelSnap()
+    frame:NCDisablePixelSnap()
 
     if template == "NoBackdrop" then
         frame:SetBackdrop(nil)

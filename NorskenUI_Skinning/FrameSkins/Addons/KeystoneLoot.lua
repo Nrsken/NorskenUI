@@ -78,7 +78,7 @@ local function SkinCarouselButton(button, direction)
     if button.NUISkinned then return end
     button.NUISkinned = true
 
-    button:NUIStripTextures('Alpha')
+    button:NCStripTextures('Alpha')
     Skinning:CreateArrowTexture(button, direction, CAROUSEL_ARROW_SIZE, CAROUSEL_ARROW_SIZE, nil, nil, nil, nil, nil, true)
 end
 
@@ -106,8 +106,8 @@ end
 ---The tiled inset and the border frame pinned over it are two frames drawing one panel.
 ---@param frame KSLInsetOwner
 local function SkinInset(frame)
-    frame.Inset:NUIStripTextures('Keyed')
-    frame.BorderFrame:NUIStripTextures('Keyed')
+    frame.Inset:NCStripTextures('Keyed')
+    frame.BorderFrame:NCStripTextures('Keyed')
 end
 
 ---@param block KSLRaidBlock
@@ -159,7 +159,7 @@ end
 ---A DialogBorderTemplate column hanging off the side of the main window.
 ---@param panel KSLSidePanel
 local function SkinSidePanel(panel)
-    panel:NUIStripTextures('Keyed')
+    panel:NCStripTextures('Keyed')
     Skinning:CreatePanelBackdrop(panel)
 
     local point, relativeTo, relativePoint = panel:GetPoint()
@@ -170,7 +170,7 @@ end
 
 ---@param frame KSLPopupFrame
 local function SkinPopupShell(frame)
-    frame:NUIStripTextures('Keyed')
+    frame:NCStripTextures('Keyed')
     Skinning:CreatePanelBackdrop(frame)
     Skinning:HandleCloseButton(frame.CloseButton, frame)
     Skinning:HandleAccentText(frame.Title)
@@ -179,7 +179,7 @@ end
 ---The looting item card art, shared by the drop rows and the mythic plus card.
 ---@param card KSLItemCard
 local function SkinItemCard(card)
-    card:NUIStripTextures('Layer', CARD_ART_LAYERS)
+    card:NCStripTextures('Layer', CARD_ART_LAYERS)
     Skinning:CreatePanelBackdrop(card)
 
     -- Both mixins call Show() on the stroke from OnEnter, so the alpha has to carry the suppression.
@@ -214,7 +214,7 @@ local function SkinSpecCard(card)
     card.NUISkinned = true
 
     -- Init re-atlases Bg to the spec thumbnail after every acquire, so only the border is lost.
-    card:NUIStripTextures('Keyed')
+    card:NCStripTextures('Keyed')
     Skinning:CreatePanelBackdrop(card)
 
     Skinning:HandleAccentText(card.Title)

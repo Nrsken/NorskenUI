@@ -49,11 +49,11 @@ function CombatRes:CreateFrame()
 
     local coreFrame = CreateFrame("Frame", "NRSKNUI_CombatResFrame", UIParent)
     coreFrame:SetRolesets("unitFrames")
-    coreFrame:NUISetPixelSize(100, 25)
+    coreFrame:NCSetSize(100, 25)
     coreFrame:SetFrameLevel(100)
     coreFrame:EnableMouse(false)
     coreFrame:SetMouseClickEnabled(false)
-    coreFrame:NUICreateBackdrop()
+    coreFrame:NCCreateBackdrop()
 
     coreFrame.text = coreFrame:CreateFontString(nil, 'OVERLAY')
 
@@ -130,7 +130,7 @@ function CombatRes:Render()
     local text = self:ResolveText(chargeCount, timeText, hasCharges)
 
     -- Re-fit the backdrop only when the string's shape changes, never per tick.
-    if frame:NUIFitBackdropToText(frame.text, text, self.db.BackdropWidth, self.db.BackdropHeight) then
+    if frame:NCFitBackdropToText(frame.text, text, self.db.BackdropWidth, self.db.BackdropHeight) then
         self.lastText = nil -- the helper clobbers the fontstring, so force the re-apply below
     end
 
@@ -171,7 +171,7 @@ function CombatRes:ApplySettings()
     self.colChargeUnavail = RefreshColor(self.colChargeUnavail, db.ColorChargeUnavailable)
 
     -- Update position
-    self.coreFrame:NUIApplyPosition(db)
+    self.coreFrame:NCApplyPosition(db)
 
     -- Update backdrop settings
     if db.BackdropEnabled then
@@ -187,7 +187,7 @@ function CombatRes:ApplySettings()
 
     -- Mark for a resize on the next update, since the backdrop may have changed.
     self.coreFrame.NUIBackdropShape = nil
-    self.coreFrame:NUIFitBackdropToText(self.coreFrame.text,
+    self.coreFrame:NCFitBackdropToText(self.coreFrame.text,
         self:ResolveText(PREVIEW_CHARGES, NRSKNUI:FormatTime(PREVIEW_REMAINING, db.TimeFormat), true),
         db.BackdropWidth, db.BackdropHeight)
     self.lastText = nil
@@ -201,7 +201,7 @@ function CombatRes:OnEnable()
     self:CreateFrame()
     self:ApplySettings()
 
-    self.coreFrame:NUIApplyOnUpdate(UPDATE_INTERVAL, function() self:Render() end)
+    self.coreFrame:NCApplyOnUpdate(UPDATE_INTERVAL, function() self:Render() end)
     self:RegisterEvent("SPELL_UPDATE_CHARGES", "ScheduleChargeUpdate")
     self:RegisterEvent("CHALLENGE_MODE_START", "ScheduleChargeUpdate")
     self:RegisterEvent("PLAYER_ENTERING_WORLD", "ScheduleChargeUpdate")
@@ -211,7 +211,7 @@ end
 
 function CombatRes:OnDisable()
     if self.coreFrame then
-        self.coreFrame:NUIApplyOnUpdate()
+        self.coreFrame:NCApplyOnUpdate()
         self.coreFrame:Hide()
     end
     self.isPreview = false

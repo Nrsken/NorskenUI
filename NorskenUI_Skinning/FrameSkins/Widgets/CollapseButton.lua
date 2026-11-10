@@ -204,7 +204,7 @@ function Skinning:SetPlusMinusGlyph(texture, collapsed, size)
     texture:SetTexture(collapsed and PLUS_TEXTURE or MINUS_TEXTURE)
     -- SetTexture keeps whatever crop a previous SetAtlas left, which shows as a sliver of the glyph.
     texture:SetTexCoord(0, 1, 0, 1)
-    texture:NUISetPixelSize(size or PLUS_MINUS_SIZE, size or PLUS_MINUS_SIZE)
+    texture:NCSetSize(size or PLUS_MINUS_SIZE, size or PLUS_MINUS_SIZE)
 
     if not texture.NUISkinned then
         texture.NUISkinned = true
@@ -233,9 +233,9 @@ function Skinning:ReskinPlusMinus(button, size)
     ClearPlusMinusArt(button)
 
     local glyph = button:CreateTexture(nil, 'ARTWORK')
-    glyph:NUISetPixelPoint('CENTER', button, 'CENTER', 0, 0)
-    glyph:NUISetPixelSize(size or PLUS_MINUS_SIZE, size or PLUS_MINUS_SIZE)
-    glyph:NUISetPixelSnap()
+    glyph:NCSetPoint('CENTER', button, 'CENTER', 0, 0)
+    glyph:NCSetSize(size or PLUS_MINUS_SIZE, size or PLUS_MINUS_SIZE)
+    glyph:NCDisablePixelSnap()
     button.NUIPlusMinusIcon = glyph
 
     -- Templates that re-apply their own art on every show would otherwise draw over this.

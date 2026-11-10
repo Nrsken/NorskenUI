@@ -231,7 +231,7 @@ function Skinning:CreatePanelBackdrop(frame, template, skipRegister, isWidget)
     local backdrop = CreateFrame('Frame', nil, frame)
     backdrop:SetAllPoints(frame)
     backdrop:SetFrameLevel(LowerLevel(frame))
-    backdrop:NUICreateBackdrop()
+    backdrop:NCCreateBackdrop()
 
     ---@cast backdrop Frame & PublicBackdropMixin & SkinnedBackdropMixin
     Mixin(backdrop, SkinnedBackdropMixin)
@@ -272,7 +272,7 @@ function Skinning:CreateStatusBarBackdrop(bar, template)
     local backdrop = CreateFrame('Frame', nil, bar)
     backdrop:SetAllPoints(bar)
     backdrop:SetFrameLevel(LowerLevel(bar))
-    backdrop:NUICreateBackdrop(true, 0)
+    backdrop:NCCreateBackdrop(true, 0)
 
     ---@cast backdrop Frame & PublicBackdropMixin & SkinnedBackdropMixin
     Mixin(backdrop, SkinnedBackdropMixin)

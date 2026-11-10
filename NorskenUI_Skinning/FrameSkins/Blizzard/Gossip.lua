@@ -45,7 +45,7 @@ Skinning:RegisterSkin('Blizzard_UIPanels_Game', 'GossipFrame', function(S)
     frame.Background:SetAlpha(0)
 
     local panel = frame.GreetingPanel
-    panel:NUIStripTextures('ClearHide')
+    panel:NCStripTextures('ClearHide')
     S:HandleTrimScrollBar(panel.ScrollBar)
     S:HandleButton(panel.GoodbyeButton)
 

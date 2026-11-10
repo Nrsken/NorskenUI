@@ -367,7 +367,7 @@ end
 Skins.Dropdown = function(widget)
     local dropdown, button, text, label = widget.dropdown, widget.button, widget.text, widget.label
 
-    dropdown:NUIStripTextures()
+    dropdown:NCStripTextures()
 
     local backdrop = Skinning:CreatePanelBackdrop(dropdown, nil, nil, true)
     backdrop:ClearAllPoints()
@@ -426,7 +426,7 @@ Skins['Dropdown-Pullout'] = function(widget)
     frame:SetBackdrop(nil)
 
     -- Open() re-stratas frame:GetChildren(), so the backdrop goes on the frame itself to stay out of that walk.
-    frame:NUICreateBackdrop()
+    frame:NCCreateBackdrop()
 
     ---@cast frame Frame & PublicBackdropMixin & SurfaceMixin
     Mixin(frame, SurfaceMixin)
@@ -505,7 +505,7 @@ local function SkinSharedMedia(widget)
     local button = frame.dropButton
 
     if widget.bar then widget.bar.NUINoStrip = true end
-    frame:NUIStripTextures()
+    frame:NCStripTextures()
 
     local backdrop = Skinning:CreatePanelBackdrop(frame, nil, nil, true)
     backdrop:ClearAllPoints()
@@ -573,7 +573,7 @@ local function StripPaneArt(frame)
     if frame.SetBackdrop then
         frame:SetBackdrop(nil)
     end
-    frame:NUIStripTextures()
+    frame:NCStripTextures()
 end
 
 ---Nested panes run several deep and every fill compounds toward opaque, so only the window carries one.
@@ -641,7 +641,7 @@ end
 ---@param top number
 local function SetContentTop(widget, top)
     widget.NUIContentShift = top - CONTENT_TOP
-    widget.content:NUISetPixelPoint('TOPLEFT', widget.frame, 'TOPLEFT', CONTENT_LEFT, -top)
+    widget.content:NCSetPoint('TOPLEFT', widget.frame, 'TOPLEFT', CONTENT_LEFT, -top)
     widget:OnHeightSet(widget.frame:GetHeight())
 end
 
@@ -740,7 +740,7 @@ local function SkinTab(tab)
     if tab.NUISkinned then return end
     tab.NUISkinned = true
 
-    tab:NUIStripTextures()
+    tab:NCStripTextures()
     tab:SetNormalFontObject(AccentSmall)
 
     -- AceGUI drops the label to sit on the old tab art, both at creation and on every selection
@@ -834,7 +834,7 @@ local function SkinTreeButton(button)
     button.NUISkinned = true
 
     button.icon.NUINoStrip = true
-    button:NUIStripTextures()
+    button:NCStripTextures()
     button:SetHeight(TREE_ROW_HEIGHT)
 
     -- Rows butt up against each other, so only the sides inset, clear of the treeframe border.
@@ -854,7 +854,7 @@ local function SkinTreeButton(button)
     local bar = button:CreateTexture(nil, 'BACKGROUND', nil, 1)
     bar:SetPoint('TOPLEFT', fill)
     bar:SetPoint('BOTTOMLEFT', fill)
-    bar:NUISetPixelWidth(2)
+    bar:NCSetWidth(2)
     button.NUISelectedBar = bar
 
     -- UpdateButton has already drawn this pass, so read the state off the art before it is cleared.
@@ -950,7 +950,7 @@ local function SkinPopup(popup)
     popup.NUISkinned = true
 
     for _, child in ipairs({ popup:GetChildren() }) do
-        child:NUIStripTextures()
+        child:NCStripTextures()
     end
 
     Skinning:CreatePanelBackdrop(popup)

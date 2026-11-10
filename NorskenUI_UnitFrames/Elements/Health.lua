@@ -32,12 +32,12 @@ UF.Elements.Health = {
         local healthBackground = CreateFrame('StatusBar', nil, self)
         healthBackground:SetFrameLevel(self:GetFrameLevel() + UF.BaseLevels.Background)
         healthBackground:SetReverseFill(true)
-        healthBackground:NUISetPixelSnap()
+        healthBackground:NCDisablePixelSnap()
 
         -- Health bar
         local healthBar = CreateFrame('StatusBar', nil, self) --[[@as oUF.Health]]
         healthBar:SetFrameLevel(self:GetFrameLevel() + UF.BaseLevels.Bar)
-        healthBar:NUISetPixelSnap()
+        healthBar:NCDisablePixelSnap()
         healthBar:SetClipsChildren(true) -- Keep over-absorb overflow inside the bar.
         healthBar.healthBackground = healthBackground
         healthBar.PostUpdate = UF.PostUpdateHealth
@@ -46,28 +46,28 @@ UF.Elements.Health = {
         -- Temporary max health loss, LayoutBars ends the health bar at its fill.
         local TempLoss = CreateFrame('StatusBar', nil, self)
         TempLoss:SetFrameLevel(self:GetFrameLevel() + UF.BaseLevels.Bar)
-        TempLoss:NUISetPixelSnap()
+        TempLoss:NCDisablePixelSnap()
         healthBar.nuiTempLoss = TempLoss
 
         -- Incoming heal bar
         local HealingAll = CreateFrame('StatusBar', nil, healthBar)
-        HealingAll:NUISetPixelSnap()
-        HealingAll:NUISetPixelWidth(self:GetWidth())
+        HealingAll:NCDisablePixelSnap()
+        HealingAll:NCSetWidth(self:GetWidth())
 
         -- Heal absorb bar
         local HealAbsorb = CreateFrame('StatusBar', nil, healthBar)
-        HealAbsorb:NUISetPixelSnap()
-        HealAbsorb:NUISetPixelWidth(self:GetWidth())
+        HealAbsorb:NCDisablePixelSnap()
+        HealAbsorb:NCSetWidth(self:GetWidth())
         healthBar.HealAbsorb = HealAbsorb
 
         local OverHealAbsorb = HealAbsorb:CreateTexture(nil, 'OVERLAY')
-        OverHealAbsorb:NUISetPixelSnap()
+        OverHealAbsorb:NCDisablePixelSnap()
         healthBar.nuiOverHealAbsorb = OverHealAbsorb
 
         -- Damage absorb bar
         local DamageAbsorb = CreateFrame('StatusBar', nil, healthBar)
-        DamageAbsorb:NUISetPixelSnap()
-        DamageAbsorb:NUISetPixelWidth(self:GetWidth())
+        DamageAbsorb:NCDisablePixelSnap()
+        DamageAbsorb:NCSetWidth(self:GetWidth())
         healthBar.DamageAbsorb = DamageAbsorb
 
         -- Over-absorb bar clip frame.
@@ -77,8 +77,8 @@ UF.Elements.Health = {
 
         -- Over-absorb bar.
         local OverDamageAbsorb = CreateFrame('StatusBar', nil, OverDamageAbsorbClip)
-        OverDamageAbsorb:NUISetPixelSnap()
-        OverDamageAbsorb:NUISetPixelWidth(self:GetWidth())
+        OverDamageAbsorb:NCDisablePixelSnap()
+        OverDamageAbsorb:NCSetWidth(self:GetWidth())
 
         healthBar.OverDamageAbsorb = OverDamageAbsorb
         healthBar.damageAbsorbClampMode = 2
@@ -101,7 +101,7 @@ UF.Elements.Health = {
 
         -- Border frame
         local healthBorderFrame = CreateFrame('Frame', nil, self)
-        healthBorderFrame:NUIAddBorders()
+        healthBorderFrame:NCAddBorders()
         self.healthBorderFrame = healthBorderFrame
 
         self.Health = healthBar
@@ -175,7 +175,7 @@ UF.Elements.Health = {
         local highlight = self.nuiHighlight
         local hlDB = general.Highlight
         highlight.nuiEnabled = hlDB.Enabled
-        highlight:NUISetPixelInside(self, 1, 1)
+        highlight:NCSetInside(self, 1, 1)
         highlight:SetTexture(NRSKNUI:GetStatusbar(hlDB))
         highlight:SetVertexColor(hlDB.Color[1], hlDB.Color[2], hlDB.Color[3], hlDB.Color[4])
         if not hlDB.Enabled then highlight:Hide() end
@@ -199,8 +199,8 @@ UF.Elements.Health = {
         HealingAll:SetStatusBarTexture(NRSKNUI:GetStatusbar(hpDB))
         HealingAll:SetStatusBarColor(hpDB.Color[1], hpDB.Color[2], hpDB.Color[3], hpDB.Color[4])
         HealingAll:ClearAllPoints()
-        HealingAll:NUISetPixelPoint('TOP')
-        HealingAll:NUISetPixelPoint('BOTTOM')
+        HealingAll:NCSetPoint('TOP')
+        HealingAll:NCSetPoint('BOTTOM')
         HealingAll:SetReverseFill(inverse)
 
         -- The damage absorb continues past incoming heals.
@@ -228,57 +228,57 @@ UF.Elements.Health = {
         HealAbsorb:SetStatusBarTexture(NRSKNUI:GetStatusbar(haDB))
         HealAbsorb:SetStatusBarColor(healColor[1], healColor[2], healColor[3], healColor[4])
         HealAbsorb:ClearAllPoints()
-        HealAbsorb:NUISetPixelPoint('TOP')
-        HealAbsorb:NUISetPixelPoint('BOTTOM')
+        HealAbsorb:NCSetPoint('TOP')
+        HealAbsorb:NCSetPoint('BOTTOM')
 
         -- Marks a heal absorb larger than current health, at the bar's empty end.
         local OverHealAbsorb = healthBar.nuiOverHealAbsorb
         healthBar.OverHealAbsorbIndicator = haDB.Enabled and OverHealAbsorb or nil
         OverHealAbsorb:SetColorTexture(healColor[1], healColor[2], healColor[3], 1)
         OverHealAbsorb:ClearAllPoints()
-        OverHealAbsorb:NUISetPixelPoint('TOP' .. (inverse and 'RIGHT' or 'LEFT'), healthBar)
-        OverHealAbsorb:NUISetPixelPoint('BOTTOM' .. (inverse and 'RIGHT' or 'LEFT'), healthBar)
-        OverHealAbsorb:NUISetPixelWidth(2)
+        OverHealAbsorb:NCSetPoint('TOP' .. (inverse and 'RIGHT' or 'LEFT'), healthBar)
+        OverHealAbsorb:NCSetPoint('BOTTOM' .. (inverse and 'RIGHT' or 'LEFT'), healthBar)
+        OverHealAbsorb:NCSetWidth(2)
 
         -- Damage absorb bar config
         DamageAbsorb:SetStatusBarTexture(shield)
         DamageAbsorb:SetStatusBarColor(dmgColor[1], dmgColor[2], dmgColor[3], dmgColor[4])
         DamageAbsorb:ClearAllPoints()
-        DamageAbsorb:NUISetPixelPoint('TOP')
-        DamageAbsorb:NUISetPixelPoint('BOTTOM')
+        DamageAbsorb:NCSetPoint('TOP')
+        DamageAbsorb:NCSetPoint('BOTTOM')
 
         -- Over-absorb bar config
         OverDamageAbsorb:SetStatusBarTexture(shield)
         OverDamageAbsorb:SetStatusBarColor(dmgColor[1], dmgColor[2], dmgColor[3], dmgColor[4])
-        OverDamageAbsorb:NUISetPixelWidth(self:GetWidth())
+        OverDamageAbsorb:NCSetWidth(self:GetWidth())
         OverClip:ClearAllPoints()
         OverDamageAbsorb:ClearAllPoints()
 
         if inverse then
             -- Foreground fills right to left, so the current-health edge is on the left.
-            HealAbsorb:NUISetPixelPoint('LEFT', fill)
+            HealAbsorb:NCSetPoint('LEFT', fill)
             HealAbsorb:SetReverseFill(false)
-            HealingAll:NUISetPixelPoint('RIGHT', fill, 'LEFT')
-            DamageAbsorb:NUISetPixelPoint('RIGHT', absorbEdge, 'LEFT')
+            HealingAll:NCSetPoint('RIGHT', fill, 'LEFT')
+            DamageAbsorb:NCSetPoint('RIGHT', absorbEdge, 'LEFT')
             DamageAbsorb:SetReverseFill(true)
 
-            OverClip:NUISetPixelPoint('TOPRIGHT', healthBar, 'TOPRIGHT')
-            OverClip:NUISetPixelPoint('BOTTOMLEFT', fill, 'BOTTOMLEFT')
-            OverDamageAbsorb:NUISetPixelPoint('TOPLEFT', healthBar, 'TOPLEFT')
-            OverDamageAbsorb:NUISetPixelPoint('BOTTOMLEFT', healthBar, 'BOTTOMLEFT')
+            OverClip:NCSetPoint('TOPRIGHT', healthBar, 'TOPRIGHT')
+            OverClip:NCSetPoint('BOTTOMLEFT', fill, 'BOTTOMLEFT')
+            OverDamageAbsorb:NCSetPoint('TOPLEFT', healthBar, 'TOPLEFT')
+            OverDamageAbsorb:NCSetPoint('BOTTOMLEFT', healthBar, 'BOTTOMLEFT')
             OverDamageAbsorb:SetReverseFill(false)
         else
             -- Foreground fills left to right, so the current-health edge is on the right.
-            HealAbsorb:NUISetPixelPoint('RIGHT', fill)
+            HealAbsorb:NCSetPoint('RIGHT', fill)
             HealAbsorb:SetReverseFill(true)
-            HealingAll:NUISetPixelPoint('LEFT', fill, 'RIGHT')
-            DamageAbsorb:NUISetPixelPoint('LEFT', absorbEdge, 'RIGHT')
+            HealingAll:NCSetPoint('LEFT', fill, 'RIGHT')
+            DamageAbsorb:NCSetPoint('LEFT', absorbEdge, 'RIGHT')
             DamageAbsorb:SetReverseFill(false)
 
-            OverClip:NUISetPixelPoint('TOPLEFT', healthBar, 'TOPLEFT')
-            OverClip:NUISetPixelPoint('BOTTOMRIGHT', fill, 'BOTTOMRIGHT')
-            OverDamageAbsorb:NUISetPixelPoint('TOPRIGHT', healthBar, 'TOPRIGHT')
-            OverDamageAbsorb:NUISetPixelPoint('BOTTOMRIGHT', healthBar, 'BOTTOMRIGHT')
+            OverClip:NCSetPoint('TOPLEFT', healthBar, 'TOPLEFT')
+            OverClip:NCSetPoint('BOTTOMRIGHT', fill, 'BOTTOMRIGHT')
+            OverDamageAbsorb:NCSetPoint('TOPRIGHT', healthBar, 'TOPRIGHT')
+            OverDamageAbsorb:NCSetPoint('BOTTOMRIGHT', healthBar, 'BOTTOMRIGHT')
             OverDamageAbsorb:SetReverseFill(true)
         end
     end,
