@@ -233,6 +233,7 @@ function nameplates:SetNumAuraContainers(numContainers) end
 ---@field PowerPrediction? oUF.PowerPrediction Deprecated; use Power sub-widgets
 ---@field AssistantIndicator? oUF.AssistantIndicator
 ---@field CombatIndicator? oUF.CombatIndicator
+---@field FocusIndicator? oUF.FocusIndicator
 ---@field GroupRoleIndicator? oUF.GroupRoleIndicator
 ---@field LeaderIndicator? oUF.LeaderIndicator
 ---@field PhaseIndicator? oUF.PhaseIndicator
@@ -656,6 +657,10 @@ function auras:AddSlot(filter, options) end
 ---@class oUF.CombatIndicator : Texture, oUF.Element
 ---@field PreUpdate? fun(self: oUF.CombatIndicator)
 ---@field PostUpdate? fun(self: oUF.CombatIndicator, inCombat: boolean)
+
+---@class oUF.FocusIndicator : Texture, oUF.Element
+---@field PreUpdate? fun(self: oUF.FocusIndicator)
+---@field PostUpdate? fun(self: oUF.FocusIndicator, isFocused: boolean)
 
 ---@class oUF.GroupRoleIndicator : Texture, oUF.Element
 ---@field useAtlasSize? boolean Deprecated

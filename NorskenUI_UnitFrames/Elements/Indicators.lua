@@ -11,6 +11,7 @@ local unpack = unpack
 local C_Timer, GetTime = C_Timer, GetTime
 local UnitExists, UnitIsDeadOrGhost = UnitExists, UnitIsDeadOrGhost
 local UnitInRaid, UnitIsGroupAssistant = UnitInRaid, UnitIsGroupAssistant
+local UnitIsUnit, CanCompareUnitTokens = UnitIsUnit, C_Secrets.CanCompareUnitTokens
 
 -- Blizzard's mainline frames have no assist atlas; this is the texture oUF's own assist element uses.
 local ASSIST_TEXTURE = [[Interface\GroupFrame\UI-Group-AssistantIcon]]
@@ -77,6 +78,14 @@ local function PvPPostUpdate(element, _, status)
     if not status then element:SetAlpha(0) end
 end
 
+---oUF's element hands UnitIsUnit straight to SetShown, which errors on the secret it returns on a restricted map
+---when the game won't compare the two units; oUF's own unitIsUnit asks first, the same as this.
+---@param frame oUF.UnitFrame
+local function FocusOverride(frame)
+    local unit = frame.__unit
+    frame.FocusIndicator:SetShown(CanCompareUnitTokens(unit, 'focus') and UnitIsUnit(unit, 'focus'))
+end
+
 ---UnitHasIncomingResurrection covers the cast only, so true -> false on a still-dead unit is the
 ---closest thing to a signal that the offer is now waiting to be accepted.
 ---@param element oUF.ResurrectIndicator
@@ -125,6 +134,7 @@ end
 ---@field art UnitFramesIndicatorArt[] the first entry is what an unrecognized Texture falls back to
 ---@field configure? fun(tex: Texture, db: table, frame: oUF.UnitFrame) settings beyond size and position
 ---@field postUpdate? fun(element: Texture, ...) oUF PostUpdate, for filtering what the element shows
+---@field override? fun(frame: oUF.UnitFrame, event: string) oUF Override, replacing the element's own update
 
 UF.IndicatorDefs = {
     {
@@ -244,6 +254,16 @@ UF.IndicatorDefs = {
         postUpdate = LeaderPostUpdate,
     },
     {
+        key = 'Focus',
+        label = L['Focus'],
+        element = 'FocusIndicator',
+        units = { target = true, boss = true },
+        art = {
+            { key = 'Blizzard', label = L['Blizzard'], atlas = 'Adventures-Target-Indicator' },
+        },
+        override = FocusOverride,
+    },
+    {
         key = 'RaidIcon',
         label = L['Raid Icon'],
         element = 'RaidTargetIndicator',
@@ -354,6 +374,7 @@ UF.Elements.Indicators = {
                 tex = parent:CreateTexture(nil, 'OVERLAY')
             end
             tex.PostUpdate = def.postUpdate
+            tex.Override = def.override
             tex:SetIgnoreParentAlpha(def.ignoreRange or false)
             self[def.element] = tex
         end
@@ -411,8 +432,8 @@ UF.Elements.Indicators = {
                 tex:NCSetSize(db.Size, db.Size)
                 tex:SetAlpha(1)
                 tex:Show()
-            elseif tex.Override then
-                tex.Override = nil
+            elseif tex.Override ~= def.override then
+                tex.Override = def.override
                 tex:Hide() -- a disabled element has no update of its own to take it back down
                 restore = true
             end

@@ -16,6 +16,7 @@ local GetSpecializationRole = GetSpecializationRole
 local pcall, xpcall = pcall, xpcall
 local pairs, ipairs = pairs, ipairs
 local format = string.format
+local strtrim, strlenutf8 = strtrim, strlenutf8
 local tostring = tostring
 local sort = table.sort
 local rawget = rawget
@@ -72,6 +73,21 @@ local function RoleKey(profileName, role)
     return profileName .. ROLE_SEP .. role
 end
 
+-- AceDB errors on a profile name over 50 characters and a role set's key adds the separator and role
+local MAX_NAME_LENGTH = 50 - strlenutf8(RoleKey('', 'DAMAGER'))
+
+---Why AceDB would refuse this profile name, nil when it's fine.
+---@param name string|nil
+---@return string|nil error
+local function NameError(name)
+    if not name or strtrim(name) == '' then
+        return L['Profile name cannot be empty']
+    end
+    if strlenutf8(name) > MAX_NAME_LENGTH then
+        return format(L['Profile names can be at most %d characters'], MAX_NAME_LENGTH)
+    end
+end
+
 ---The role the player's spec plays. The spec can't be trusted before login, so the last role seen stands in.
 ---@return string|nil
 local function CurrentRole()
@@ -108,7 +124,8 @@ local function PointNamespaces(role)
             end
         end
         local key = profileName
-        if nsRole and rawget(ns.profiles, RoleKey(profileName, nsRole)) then
+        -- a set saved before AceDB capped names can sit under a key it now refuses, so it's left unused
+        if nsRole and not NameError(profileName) and rawget(ns.profiles, RoleKey(profileName, nsRole)) then
             key = RoleKey(profileName, nsRole)
         end
         if ns.keys.profile ~= key then
@@ -330,8 +347,9 @@ end
 ---@return boolean success
 ---@return string|nil error
 function ProfileManager:CreateProfile(profileName, sourceProfile)
-    if not profileName or profileName == '' then
-        return false, L['Profile name cannot be empty']
+    local nameError = NameError(profileName)
+    if nameError then
+        return false, nameError
     end
     if not NRSKNUI.db then
         return false, L['Database not initialized']
@@ -473,8 +491,9 @@ function ProfileManager:RenameProfile(oldName, newName)
     if not oldName or oldName == '' then
         return false, L['Current name cannot be empty']
     end
-    if not newName or newName == '' then
-        return false, L['New name cannot be empty']
+    local nameError = NameError(newName)
+    if nameError then
+        return false, nameError
     end
     if oldName == newName then
         return false, L['Names are identical']
@@ -768,6 +787,7 @@ function ProfileManager:AddRoleSet(name, role, fromRole)
     if count >= 2 then return false end
 
     local profileName = db.keys.profile
+    if NameError(profileName) then return false end
     local key = RoleKey(profileName, role)
     local fromKey = fromRole and sets[fromRole] and RoleKey(profileName, fromRole) or profileName
     ns.profiles[key] = DeepCopy(ns.profiles[fromKey] or {})
@@ -1279,6 +1299,11 @@ function ProfileManager:ImportProfile(importString, targetName, activate, applyS
         end
     end
 
+    local nameError = NameError(finalName)
+    if nameError then
+        return false, nameError
+    end
+
     local block = applyShared and SharedBlock(exportData.d)
     DropSharedSettings(exportData.d)
 
@@ -1392,6 +1417,7 @@ function NorskenUIAPI.ImportProfile(profileString, profileKey, methodKey)
 
     -- WagoUI re-imports into the same key on every pack update, so the key is used as given.
     profileKey = (type(profileKey) == 'string' and profileKey ~= '') and profileKey or 'Imported'
+    if NameError(profileKey) then return end
 
     WithoutPrompt(function()
         local db = NRSKNUI.db
@@ -1429,7 +1455,7 @@ end
 ---Set the active profile
 ---@param profileKey string The profile to activate
 function NorskenUIAPI:SetProfile(profileKey)
-    if not profileKey or profileKey == '' then return end
+    if NameError(profileKey) then return end
     if not NRSKNUI.db then return end
 
     -- AceDB no-ops (and fires nothing) when asked for the profile already active, so refresh that

@@ -384,6 +384,16 @@ UF.Defaults = {
                         YOffset = -2
                     },
                 },
+                Focus = {
+                    Enabled = false,
+                    Size = 16,
+                    Position = {
+                        AnchorFrom = "RIGHT",
+                        AnchorTo = "LEFT",
+                        XOffset = -2,
+                        YOffset = 0
+                    },
+                },
                 RaidIcon = {
                     Enabled = true,
                     Size = 24,
