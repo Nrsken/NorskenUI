@@ -2,6 +2,12 @@ name: Release
 
 on:
   workflow_dispatch:
+    inputs:
+      type:
+        description: Release type
+        type: choice
+        options: [release, beta, alpha]
+        default: release
 
 permissions:
   contents: write
@@ -16,6 +22,8 @@ jobs:
 
       - name: Determine next tag
         id: new_tag
+        env:
+          RELEASE_TYPE: ${{ inputs.type }}
         run: |
           set -euo pipefail
           git fetch --tags --force
@@ -32,16 +40,21 @@ jobs:
           fi
           echo "Base version: $base"
 
-          escaped=$(echo "$base" | sed 's/\./\./g')
+          # alpha and beta tags share the build counter, so every upload outranks the one before it
+          escaped=$(echo "$base" | sed 's/\./\\./g')
           build=$(git tag --list "v$base.*" \
-            | { grep -E "^v$escaped\.[0-9]+$" || true; } \
-            | sed "s/^v$base\.//" \
+            | { grep -E "^v$escaped\.[0-9]+(-alpha|-beta)?$" || true; } \
+            | sed -E "s/^v$escaped\.//; s/-(alpha|beta)$//" \
             | sort -n \
             | tail -n 1)
           echo "Highest existing build: ${build:-none}"
           build=$(( ${build:-0} + 1 ))
 
+          # the packager reads alpha/beta from the tag name for CurseForge, Wago and GitHub
           new_tag="v$base.$build"
+          if [ "$RELEASE_TYPE" != "release" ]; then
+            new_tag="$new_tag-$RELEASE_TYPE"
+          fi
           echo "Tagging $new_tag"
           git config user.name "github-actions"
           git config user.email "actions@github.com"
