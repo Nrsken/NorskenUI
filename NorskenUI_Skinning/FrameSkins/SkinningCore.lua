@@ -13,7 +13,7 @@ local setmetatable = setmetatable
 local xpcall = xpcall
 local geterrorhandler = geterrorhandler
 
-local IsAddOnLoaded = C_AddOns and C_AddOns.IsAddOnLoaded
+local IsAddOnLoaded = C_AddOns.IsAddOnLoaded
 
 ---@type SkinEntry[]
 Skinning.skins = {}

@@ -24,8 +24,8 @@ local missionBtn = ExpansionLandingPageMinimapButton
 local AddonComp = AddonCompartmentFrame
 local _G = _G
 
-local IsAddOnLoaded = C_AddOns and C_AddOns.IsAddOnLoaded
-local LoadAddOn = C_AddOns and C_AddOns.LoadAddOn
+local IsAddOnLoaded = C_AddOns.IsAddOnLoaded
+local LoadAddOn = C_AddOns.LoadAddOn
 
 local hooked = {
     border = false,

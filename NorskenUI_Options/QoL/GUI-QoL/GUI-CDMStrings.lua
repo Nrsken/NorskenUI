@@ -16,8 +16,8 @@ local format = string.format
 local GetNumClasses = GetNumClasses
 local GetSpecializationInfoForClassID = GetSpecializationInfoForClassID
 
-local GetClassInfo = C_CreatureInfo and C_CreatureInfo.GetClassInfo
-local GetNumSpecializationsForClassID = C_SpecializationInfo and C_SpecializationInfo.GetNumSpecializationsForClassID
+local GetClassInfo = C_CreatureInfo.GetClassInfo
+local GetNumSpecializationsForClassID = C_SpecializationInfo.GetNumSpecializationsForClassID
 
 local PAGE = 'cdmStrings'
 local EDITBOX_HEIGHT = 130

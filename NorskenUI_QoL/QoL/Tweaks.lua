@@ -9,14 +9,14 @@ local select = select
 local ipairs = ipairs
 local _G = _G
 
-local GetNumQuestWatches = C_QuestLog and C_QuestLog.GetNumQuestWatches
-local GetQuestIDForQuestWatchIndex = C_QuestLog and C_QuestLog.GetQuestIDForQuestWatchIndex
-local GetLogIndexForQuestID = C_QuestLog and C_QuestLog.GetLogIndexForQuestID
-local GetInfo = C_QuestLog and C_QuestLog.GetInfo
-local RemoveQuestWatch = C_QuestLog and C_QuestLog.RemoveQuestWatch
+local GetNumQuestWatches = C_QuestLog.GetNumQuestWatches
+local GetQuestIDForQuestWatchIndex = C_QuestLog.GetQuestIDForQuestWatchIndex
+local GetLogIndexForQuestID = C_QuestLog.GetLogIndexForQuestID
+local GetInfo = C_QuestLog.GetInfo
+local RemoveQuestWatch = C_QuestLog.RemoveQuestWatch
 
-local GetTrackedIDs = C_ContentTracking and C_ContentTracking.GetTrackedIDs
-local StopTracking = C_ContentTracking and C_ContentTracking.StopTracking
+local GetTrackedIDs = C_ContentTracking.GetTrackedIDs
+local StopTracking = C_ContentTracking.StopTracking
 
 local enterclicks = {
     'ABANDON_QUEST',

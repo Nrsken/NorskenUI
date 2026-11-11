@@ -23,7 +23,7 @@ local GetTime = GetTime
 local select = select
 local type = type
 
-local GetSpellTexture = C_Spell and C_Spell.GetSpellTexture
+local GetSpellTexture = C_Spell.GetSpellTexture
 
 local UPDATE_THROTTLE = 0.03
 local TEXT_WIDTH = 400

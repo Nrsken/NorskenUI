@@ -17,14 +17,14 @@ local math_floor = math.floor
 local ipairs = ipairs
 local unpack = unpack
 
-local GetSpellCharges = C_Spell and C_Spell.GetSpellCharges
-local GetGlidingInfo = C_PlayerInfo and C_PlayerInfo.GetGlidingInfo
-local GetSpellChargeDuration = C_Spell and C_Spell.GetSpellChargeDuration
-local GetSpellCooldownDuration = C_Spell and C_Spell.GetSpellCooldownDuration
-local GetPlayerAuraBySpellID = C_UnitAuras and C_UnitAuras.GetPlayerAuraBySpellID
+local GetSpellCharges = C_Spell.GetSpellCharges
+local GetGlidingInfo = C_PlayerInfo.GetGlidingInfo
+local GetSpellChargeDuration = C_Spell.GetSpellChargeDuration
+local GetSpellCooldownDuration = C_Spell.GetSpellCooldownDuration
+local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
 
-local Immediate = Enum and Enum.StatusBarInterpolation.Immediate
-local ElapsedTime = Enum and Enum.StatusBarTimerDirection.ElapsedTime
+local Immediate = Enum.StatusBarInterpolation.Immediate
+local ElapsedTime = Enum.StatusBarTimerDirection.ElapsedTime
 
 local UIParent = UIParent
 local BASE_MOVEMENT_SPEED = BASE_MOVEMENT_SPEED

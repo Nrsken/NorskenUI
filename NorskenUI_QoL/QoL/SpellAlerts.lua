@@ -11,10 +11,10 @@ local next = next
 local ipairs = ipairs
 local tonumber = tonumber
 
-local GetCVar = C_CVar and C_CVar.GetCVar
-local SetCVar = C_CVar and C_CVar.SetCVar
-local GetSpecialization = C_SpecializationInfo and C_SpecializationInfo.GetSpecialization
-local GetSpecializationInfo = C_SpecializationInfo and C_SpecializationInfo.GetSpecializationInfo
+local GetCVar = C_CVar.GetCVar
+local SetCVar = C_CVar.SetCVar
+local GetSpecialization = C_SpecializationInfo.GetSpecialization
+local GetSpecializationInfo = C_SpecializationInfo.GetSpecializationInfo
 
 local OVERRIDDEN_CVARS = {
     'displaySpellActivationOverlays',

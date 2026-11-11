@@ -12,8 +12,8 @@ local GetTime = GetTime
 local GetInstanceInfo = GetInstanceInfo
 local CreateFrame = CreateFrame
 
-local GetItemCooldown = C_Item and C_Item.GetItemCooldown
-local NewTimer = C_Timer and C_Timer.NewTimer
+local GetItemCooldown = C_Item.GetItemCooldown
+local NewTimer = C_Timer.NewTimer
 
 -- R2 Light's Potential but can be any dmg pot, since they all share cd
 local POTION_ID = 241308

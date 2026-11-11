@@ -10,7 +10,7 @@ local GetTime = GetTime
 local unpack = unpack
 local format = string.format
 
-local IsEncounterInProgress = C_InstanceEncounter and C_InstanceEncounter.IsEncounterInProgress
+local IsEncounterInProgress = C_InstanceEncounter.IsEncounterInProgress
 
 CombatTimer.lastCombatDuration = 0
 
@@ -34,7 +34,7 @@ function CombatTimer:CreateFrame()
     -- Install the ticker once, SetTicking flips its run mode instead of re-attaching a closure.
     self.onUpdate = function(_, elapsed) self:OnUpdate(elapsed) end
     if frame.SetOnUpdateMode then
-        local disabledEnum = Enum and Enum.OnUpdateMode.Disabled
+        local disabledEnum = Enum.OnUpdateMode.Disabled
         frame:SetScript('OnUpdate', self.onUpdate)
         frame:SetOnUpdateMode(disabledEnum)
     end
@@ -118,8 +118,8 @@ function CombatTimer:SetTicking(enabled)
     if not frame then return end
 
     if frame.SetOnUpdateMode then
-        local disabledEnum = Enum and Enum.OnUpdateMode.Disabled
-        local runWhenVisibleEnum = Enum and Enum.OnUpdateMode.RunWhenVisible
+        local disabledEnum = Enum.OnUpdateMode.Disabled
+        local runWhenVisibleEnum = Enum.OnUpdateMode.RunWhenVisible
         frame:SetOnUpdateMode((enabled and runWhenVisibleEnum) or disabledEnum)
     else
         frame:SetScript('OnUpdate', (enabled and self.onUpdate) or nil)

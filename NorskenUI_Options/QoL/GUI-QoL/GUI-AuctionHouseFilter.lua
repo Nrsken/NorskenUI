@@ -7,7 +7,7 @@ local Theme = NRSKNUI.Theme
 local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
 
-local IsAddOnLoaded = C_AddOns and C_AddOns.IsAddOnLoaded
+local IsAddOnLoaded = C_AddOns.IsAddOnLoaded
 
 local function BuildTab(page, db)
     local auctionatorLoaded = IsAddOnLoaded("Auctionator")

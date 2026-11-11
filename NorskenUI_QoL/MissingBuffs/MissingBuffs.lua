@@ -20,9 +20,9 @@ local UnitHasVehicleUI = UnitHasVehicleUI
 local UnitIsDeadOrGhost = UnitIsDeadOrGhost
 local ipairs, pairs, type, wipe = ipairs, pairs, type, wipe
 
-local IsInBattle = C_PetBattles and C_PetBattles.IsInBattle
-local GetSpellTexture = C_Spell and C_Spell.GetSpellTexture
-local GetSpellName = C_Spell and C_Spell.GetSpellName
+local IsInBattle = C_PetBattles.IsInBattle
+local GetSpellTexture = C_Spell.GetSpellTexture
+local GetSpellName = C_Spell.GetSpellName
 
 local GameTooltip = GameTooltip
 

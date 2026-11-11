@@ -10,8 +10,8 @@ local tonumber = tonumber
 local tostring = tostring
 local C_Timer = C_Timer
 
-local SetCVar = C_CVar and C_CVar.SetCVar
-local GetCVar = C_CVar and C_CVar.GetCVar
+local SetCVar = C_CVar.SetCVar
+local GetCVar = C_CVar.GetCVar
 
 ---@type table
 MiscVars.DEFS = {

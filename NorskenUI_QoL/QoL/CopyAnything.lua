@@ -16,11 +16,11 @@ local GetTime = GetTime
 local GetMouseFoci = GetMouseFoci
 local format = string.format
 
-local GetActionText = C_ActionBar and C_ActionBar.GetActionText
-local IsAddOnLoaded = C_AddOns and C_AddOns.IsAddOnLoaded
-local GetSpellInfo = C_Spell and C_Spell.GetSpellInfo
-local GetItemIDForItemInfo = C_Item and C_Item.GetItemIDForItemInfo
-local GetItemInfo = C_Item and C_Item.GetItemInfo
+local GetActionText = C_ActionBar.GetActionText
+local IsAddOnLoaded = C_AddOns.IsAddOnLoaded
+local GetSpellInfo = C_Spell.GetSpellInfo
+local GetItemIDForItemInfo = C_Item.GetItemIDForItemInfo
+local GetItemInfo = C_Item.GetItemInfo
 
 local lastCopyTime = 0
 

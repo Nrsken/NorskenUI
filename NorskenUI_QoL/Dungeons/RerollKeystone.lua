@@ -14,9 +14,9 @@ local GetRealZoneText = GetRealZoneText
 local CreateFrame = CreateFrame
 local select = select
 
-local GetChallengeCompletionInfo = C_ChallengeMode and C_ChallengeMode.GetChallengeCompletionInfo
-local GetOwnedKeystoneLevel = C_MythicPlus and C_MythicPlus.GetOwnedKeystoneLevel
-local GetOwnedKeystoneMapID = C_MythicPlus and C_MythicPlus.GetOwnedKeystoneMapID
+local GetChallengeCompletionInfo = C_ChallengeMode.GetChallengeCompletionInfo
+local GetOwnedKeystoneLevel = C_MythicPlus.GetOwnedKeystoneLevel
+local GetOwnedKeystoneMapID = C_MythicPlus.GetOwnedKeystoneMapID
 
 local DISPLAY_DURATION = 300 -- How long the reroll prompt stays up after a completed run.
 local KEYSTONE_SETTLE = 1    -- How long to wait after a keystone is rerolled before checking if it changed.

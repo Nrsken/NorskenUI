@@ -14,7 +14,7 @@ local ipairs = ipairs
 local tostring = tostring
 local _G = _G
 
-local IsAddOnLoaded = C_AddOns and C_AddOns.IsAddOnLoaded
+local IsAddOnLoaded = C_AddOns.IsAddOnLoaded
 
 local MAX_BACKDROPS = 5
 local ANCHOR_PREFIX = 'DetailsBackdrop'

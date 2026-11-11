@@ -9,7 +9,7 @@ local ipairs = ipairs
 local Mixin = Mixin
 local hooksecurefunc = hooksecurefunc
 
-local IsAddOnLoaded = C_AddOns and C_AddOns.IsAddOnLoaded
+local IsAddOnLoaded = C_AddOns.IsAddOnLoaded
 
 -- Skin and repositions the RaiderIO button that exports info about the group members --
 

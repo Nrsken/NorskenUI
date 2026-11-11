@@ -104,7 +104,7 @@ end
 ---full footprint.
 ---@param kind string
 function PlayerAuras:ResizeHost(kind)
-    self.hosts[kind]:SetSize(NRSKNUI:GetAuraGridSize(self.db[kind], self:GetPreviewCount(kind)))
+    self.hosts[kind]:SetSize(NRSKNUI:GetAuraGridSize(self:GetContainerConfig(kind), self:GetPreviewCount(kind)))
 end
 
 ---The preview's enchant group: the same buttons with the enchant border on them.

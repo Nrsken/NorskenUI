@@ -7,7 +7,9 @@ local Shared = NRSKNUI.GUISharedPages
 local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
 
-local function BuildUIScalePage(page, db)
+---@param page table
+local function BuildUIScalePage(page)
+    local db = NRSKNUI.db.profile.UIScale
     page:SetCondition('uiScaleOn', function() return db.Enabled end)
 
     local uiScaleCard = page:Card(L['UI Scale'])
@@ -81,49 +83,10 @@ local function BuildUIScalePage(page, db)
     })
 end
 
-GUI:RegisterPage('globalUIScale', {
-    mode = 'clean',
-    search = {},
-    build = function(page) BuildUIScalePage(page, NRSKNUI.db.profile.UIScale) end,
-})
-
--- The shared pages, built in NorskenCore_Options --
-
-GUI:RegisterPage('globalColors', {
-    mode = 'clean',
-    search = {},
-    sidebar = { items = Shared.ColorCategories },
-    build = function(page, _, _, item) Shared:BuildColors(page, item) end,
-})
-
-GUI:RegisterPage('globalTextures', {
-    mode = 'clean',
-    search = {},
-    build = function(page) Shared:BuildTextures(page) end,
-})
-
-GUI:RegisterPage('globalDurationText', {
-    mode = 'clean',
-    search = {},
-    build = function(page) Shared:BuildDurationText(page) end,
-})
-
-GUI:RegisterPage('globalFonts', {
-    mode = 'clean',
-    search = { L['Use Global Font'] },
-    build = function(page) Shared:BuildFonts(page) end,
-})
-
-GUI:RegisterPage('globalLanguage', {
-    mode = 'clean',
-    search = { L['Language'] },
-    build = function(page) Shared:BuildLanguage(page, NRSKNUI) end,
-})
-
-GUI:RegisterPage('themePage', {
-    mode = 'clean',
-    search = { L['Theme Mode'], L['Theme'], L['Copy From'], L['Reset Custom'] },
-    build = function(page)
-        Shared:BuildTheme(page, function() NRSKNUI.GUIFrame:ShowPage('themePage') end)
-    end,
+Shared:RegisterGlobalPage(GUI, NRSKNUI, function(itemKey) NRSKNUI.GUIFrame:ShowGlobalSettings(itemKey) end, {
+    {
+        key = 'globalUIScale',
+        text = L['UI Scale'],
+        build = BuildUIScalePage,
+    },
 })

@@ -2,7 +2,6 @@
 local NRSKNUI = _G.NorskenUI
 ---@class GUIFrame
 NRSKNUI.GUIFrame = NRSKNUI.GUIFrame or {}
-local Theme = NRSKNUI.Theme
 local L = NRSKNUI.Libs.AL
 
 -- Dropdown option lists every tab shares. Dropdown.lua reads value or key, so value serves both.
@@ -15,8 +14,6 @@ NRSKNUI.GrowthOptions = {
 
 local LOGO = 'Interface\\AddOns\\NorskenCore\\Media\\Logo\\'
 local UI_MEDIA = 'Interface\\AddOns\\NorskenUI\\Media\\Logo\\'
-local TEX = NRSKNUI.Media.GUITextures
-local SOCIAL = 'Interface\\AddOns\\NorskenCore\\Media\\SupportLogos\\'
 
 NRSKNUI.GUIFrame.ReloadText = L['Disabling/Enabling this requires a reload to take full effect.']
 
@@ -58,9 +55,6 @@ function NRSKNUI.GUILogoConfig()
                 color = 'textSecondary'
             },
         },
-        version = NRSKNUI:GetVersionText(),
-        versionAnchor = { 'LEFT', 2, 'RIGHT', -45, -3 },
-        versionColor = 'textSecondary',
     }
 end
 
@@ -110,58 +104,28 @@ local window = GUI:CreateGUIWindow({
 
 NRSKNUI.GUIOpen = false
 
-window:AddHeaderButton({
-    icon = TEX .. 'NorskenCustomCrossv3.png',
-    glow = TEX .. 'NorskenCustomCrossv3_glow.png',
-    size = 22,
-    rotation = 45,
-    onClick = function()
-        window:Hide()
-    end,
-    tooltip = L['Close Settings'],
-})
-window:AddHeaderButton({
-    icon = TEX .. 'HomeButtonv2.png',
-    glow = TEX .. 'HomeButtonv2_glow.png',
-    size = 18,
-    onClick = function()
-        window:ShowPage('homePage')
-    end,
-    tooltip = L['Open Home Page'],
-})
-window:AddHeaderButton({
-    icon = TEX .. 'anchor.png',
-    glow = TEX .. 'anchor_glow.png',
-    size = 22,
-    onClick = function()
-        if NRSKNUI.Anchors then
-            NRSKNUI.Anchors:Toggle()
-        end
-    end,
-    tooltip = L['Open Anchors'],
-})
-window:AddHeaderButton({
-    icon = TEX .. 'fill.png',
-    glow = TEX .. 'fill_glow.png',
-    size = 18,
-    onClick = function()
-        window:ShowPage('themePage')
-    end,
-    tooltip = L['Open Theme Settings'],
-})
-window:AddHeaderButton({
-    icon = TEX .. 'eye.png',
-    glow = TEX .. 'eye_glow.png',
-    size = 24,
-    onClick = function(btn)
-        local manager = NRSKNUI.PreviewManager
-        if not manager then return end
+---@param itemKey string? the item to open on
+function window:ShowGlobalSettings(itemKey)
+    self:ShowPage(NRSKNUI.GUISharedPages.GLOBAL_PAGE, itemKey and { itemKey = itemKey } or nil)
+end
 
-        manager:SetForceAll(not manager:IsForceAll())
-        btn:SetActive(manager:IsForceAll())
-    end,
-    tooltip = L['Preview Every Display'],
-})
+local SharedPages = NRSKNUI.GUISharedPages
+window:AddHeaderButton(SharedPages:HeaderButton('close', function() window:Hide() end))
+window:AddHeaderButton(SharedPages:HeaderButton('home', function() window:ShowPage('homePage') end))
+window:AddHeaderButton(SharedPages:HeaderButton('global', function() window:ShowGlobalSettings() end))
+window:AddHeaderButton(SharedPages:HeaderButton('theme', function() window:ShowGlobalSettings(SharedPages.THEME_ITEM) end))
+window:AddHeaderButton(SharedPages:HeaderButton('anchors', function()
+    if NRSKNUI.Anchors then
+        NRSKNUI.Anchors:Toggle()
+    end
+end))
+window:AddHeaderButton(SharedPages:HeaderButton('preview', function(btn)
+    local manager = NRSKNUI.PreviewManager
+    if not manager then return end
+
+    manager:SetForceAll(not manager:IsForceAll())
+    btn:SetActive(manager:IsForceAll())
+end))
 
 -- Previews follow the open page, so the manager needs to hear about every page change. The host is
 -- hooked rather than window:ShowPage, since the sidebar shows pages through the host directly.
@@ -175,53 +139,7 @@ if window.content then
     end
 end
 
--- Footer socials: auto-packed left -> right. The copy prompt stays addon-side.
-local function CopyPrompt(title, link, icon, glow)
-    NRSKNUI:CreatePrompt({
-        title = title,
-        text = link,
-        editBox = true,
-        editBoxLabel = L['CTRL-C to copy'],
-        texture = {
-            path = icon,
-            glow = glow,
-            width = 21,
-            height = 21,
-            color = {
-                r = Theme.accent[1],
-                g = Theme.accent[2],
-                b = Theme.accent[3]
-            },
-        },
-    })
-end
-window:AddFooterSocial({
-    icon = SOCIAL .. 'twitchv2W.png',
-    glow = SOCIAL .. 'twitchv2W_glow.png',
-    text = 'Twitch',
-    width = 62,
-    onClick = function()
-        CopyPrompt(format(L['Support My %s'], '|cff9146FFTwitch|r'), 'www.twitch.tv/norskenwow', SOCIAL .. 'twitchv2W.png', SOCIAL .. 'twitchv2W_glow.png')
-    end,
-})
-window:AddFooterSocial({
-    icon = SOCIAL .. 'discordv2W.png',
-    glow = SOCIAL .. 'discordv2W_glow.png',
-    text = 'Discord',
-    width = 68,
-    onClick = function()
-        CopyPrompt(format(L['Join My %s'], '|cff5865F2Discord|r'), 'https://discord.com/invite/23bS8pHfuX', SOCIAL .. 'discordv2W.png', SOCIAL .. 'discordv2W_glow.png')
-    end,
-})
-window:AddFooterSocial({
-    icon = SOCIAL .. 'github2W.png',
-    glow = SOCIAL .. 'github2W_glow.png',
-    text = 'GitHub',
-    width = 68,
-    onClick = function()
-        CopyPrompt(format(L['Support My %s'], '|cffffffffGitHub|r'), 'https://github.com/Nrsken/NorskenUI', SOCIAL .. 'github2W.png', SOCIAL .. 'github2W_glow.png')
-    end,
-})
+SharedPages:AddSupportFooter(window, NRSKNUI)
 
 -- The window already provides Show/Hide/Toggle/IsShown/ShowPage, so it is the public handle.
 NRSKNUI.GUIFrame = window

@@ -8,9 +8,9 @@ local GetSpecialization = GetSpecialization
 local CreateFrame = CreateFrame
 local unpack = unpack
 
-local EnableSpellRangeCheck = C_Spell and C_Spell.EnableSpellRangeCheck
-local IsSpellInRange = C_Spell and C_Spell.IsSpellInRange
-local SpellHasRange = C_Spell and C_Spell.SpellHasRange
+local EnableSpellRangeCheck = C_Spell.EnableSpellRangeCheck
+local IsSpellInRange = C_Spell.IsSpellInRange
+local SpellHasRange = C_Spell.SpellHasRange
 
 local DOT_TEXTURE = NRSKNUI.Media.GUITextures .. 'whiteCircle.png'
 local DIAMON_ATLAS = 'progress-bar-diamond-pip-mask'

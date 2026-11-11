@@ -42,18 +42,18 @@ local FACTION_ALLIANCE = FACTION_ALLIANCE
 local FACTION_HORDE = FACTION_HORDE
 local MOUNT = MOUNT
 
-local GetAuraDataByIndex = C_UnitAuras and C_UnitAuras.GetAuraDataByIndex
-local GetMountFromSpell = C_MountJournal and C_MountJournal.GetMountFromSpell
-local GetMountInfoByID = C_MountJournal and C_MountJournal.GetMountInfoByID
+local GetAuraDataByIndex = C_UnitAuras.GetAuraDataByIndex
+local GetMountFromSpell = C_MountJournal.GetMountFromSpell
+local GetMountInfoByID = C_MountJournal.GetMountInfoByID
 local GetDisplayedItem = TooltipUtil and TooltipUtil.GetDisplayedItem
-local GetItemQualityByID = C_Item and C_Item.GetItemQualityByID
+local GetItemQualityByID = C_Item.GetItemQualityByID
 local GetColorDataForItemQuality = ColorManager and ColorManager.GetColorDataForItemQuality
-local GetCoinTextureString = C_CurrencyInfo and C_CurrencyInfo.GetCoinTextureString
+local GetCoinTextureString = C_CurrencyInfo.GetCoinTextureString
 
 local preCall = TooltipDataProcessor and TooltipDataProcessor.AddLinePreCall
 local postCall = TooltipDataProcessor and TooltipDataProcessor.AddTooltipPostCall
 
-local SetCVar = C_CVar and C_CVar.SetCVar
+local SetCVar = C_CVar.SetCVar
 
 local itemEnum = Enum.TooltipDataType.Item
 local unitEnum = Enum.TooltipDataType.Unit

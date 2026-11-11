@@ -16,7 +16,7 @@ local pairs = pairs
 local next = next
 local pcall = pcall
 local GetCVar = GetCVar
-local GetCVarBool = C_CVar and C_CVar.GetCVarBool or GetCVarBool
+local GetCVarBool = C_CVar.GetCVarBool
 local Ambiguate = Ambiguate
 local GetPlayerInfoByGUID = GetPlayerInfoByGUID
 local GetNumGroupMembers = GetNumGroupMembers
@@ -32,7 +32,7 @@ local GetChatCategory = Chat_GetChatCategory or GetChatCategory
 local RemoveExtraSpaces = RemoveExtraSpaces
 local RemoveNewlines = RemoveNewlines
 local GMChatFrame_IsGM = GMChatFrame_IsGM
-local IsChatLineCensored = C_ChatInfo and C_ChatInfo.IsChatLineCensored
+local IsChatLineCensored = C_ChatInfo.IsChatLineCensored
 local SafePack = SafePack
 
 local ChatEditSetLastTellTarget = (ChatFrameUtil and ChatFrameUtil.SetLastTellTarget) or ChatEdit_SetLastTellTarget

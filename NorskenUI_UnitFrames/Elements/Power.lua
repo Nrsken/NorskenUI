@@ -9,7 +9,7 @@ local pairs, ipairs = pairs, ipairs
 
 local NO_POWER = UF.NoPower
 
-local Interpolation = Enum and Enum.StatusBarInterpolation
+local Interpolation = Enum.StatusBarInterpolation
 
 ---Whether a frame should carry a power bar at all.
 ---@param self oUF.UnitFrame

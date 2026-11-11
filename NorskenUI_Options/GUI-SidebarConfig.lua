@@ -32,21 +32,6 @@ GUIFrame.SidebarConfig = {
             type = 'item',
             text = L['Profile Settings'],
         },
-        {
-            id = 'global_section',
-            order = 30,
-            type = 'header',
-            text = L['Global Settings'],
-            defaultExpanded = false,
-            items = {
-                { id = 'globalColors',       text = L['Colors'] },
-                { id = 'globalFonts',        text = L['Fonts'] },
-                { id = 'globalUIScale',      text = L['UI Scale'] },
-                { id = 'globalTextures',     text = L['Textures'] },
-                { id = 'globalDurationText', text = L['Duration Text'] },
-                { id = 'globalLanguage',     text = L['Language'] },
-            }
-        },
     },
 }
 
@@ -64,6 +49,10 @@ GUIFrame:SetSidebar(GUIFrame.SidebarConfig.systems, {
     isDisabled = function(entry)
         return entry.elvUIDisabled and NRSKNUI.ShouldNotLoadModule and NRSKNUI:ShouldNotLoadModule() or false
     end,
+    -- the header's cogwheel opens it, its settings still come up in the search
+    search = {
+        { type = 'item', id = NRSKNUI.GUISharedPages.GLOBAL_PAGE, text = L['Global Settings'] },
+    },
 })
 
 ---Add a top-level entry, a section with its items or a single item, placed by its order.

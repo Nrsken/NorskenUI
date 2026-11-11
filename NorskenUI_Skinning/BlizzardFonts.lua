@@ -9,8 +9,8 @@ local pairs = pairs
 local tostring = tostring
 local max = math.max
 
-local vertexEnum = Enum and Enum.FontStringScaleAnimationMode and Enum.FontStringScaleAnimationMode.Vertex
-local fontSizeEnum = Enum and Enum.FontStringScaleAnimationMode and Enum.FontStringScaleAnimationMode.FontSize
+local vertexEnum = Enum.FontStringScaleAnimationMode.Vertex
+local fontSizeEnum = Enum.FontStringScaleAnimationMode.FontSize
 
 local originalData = {}
 

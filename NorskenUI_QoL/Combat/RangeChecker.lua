@@ -149,7 +149,7 @@ function RangeChecker:ShowPreview()
 
     -- Utilize 12.1.0 utility to run OnUpdate only once when previewing.
     if self.frame.SetOnUpdateMode then
-        local disabledEnum = Enum and Enum.OnUpdateMode.Disabled
+        local disabledEnum = Enum.OnUpdateMode.Disabled
         self.frame:SetOnUpdateMode(disabledEnum)
     end
 end
@@ -161,7 +161,7 @@ function RangeChecker:HidePreview()
 
     -- Utilize 12.1.0 utility to run OnUpdate only when visible.
     if self.frame.SetOnUpdateMode then
-        local runWhenVisibleEnum = Enum and Enum.OnUpdateMode.RunWhenVisible
+        local runWhenVisibleEnum = Enum.OnUpdateMode.RunWhenVisible
         self.frame:SetOnUpdateMode(runWhenVisibleEnum)
     end
 end

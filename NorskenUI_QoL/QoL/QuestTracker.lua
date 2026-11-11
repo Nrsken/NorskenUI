@@ -16,15 +16,15 @@ local UnitLevel = UnitLevel
 local UnitGUID = UnitGUID
 local next = next
 
-local GetSecondsUntilWeeklyReset = C_DateAndTime and C_DateAndTime.GetSecondsUntilWeeklyReset
-local GetSecondsUntilDailyReset = C_DateAndTime and C_DateAndTime.GetSecondsUntilDailyReset
-local IsQuestFlaggedCompletedOnAccount = C_QuestLog and C_QuestLog.IsQuestFlaggedCompletedOnAccount
-local IsQuestFlaggedCompleted = C_QuestLog and C_QuestLog.IsQuestFlaggedCompleted
-local RequestLoadQuestByID = C_QuestLog and C_QuestLog.RequestLoadQuestByID
-local GetTitleForQuestID = C_QuestLog and C_QuestLog.GetTitleForQuestID
-local ReadyForTurnIn = C_QuestLog and C_QuestLog.ReadyForTurnIn
-local IsOnQuest = C_QuestLog and C_QuestLog.IsOnQuest
-local After = C_Timer and C_Timer.After
+local GetSecondsUntilWeeklyReset = C_DateAndTime.GetSecondsUntilWeeklyReset
+local GetSecondsUntilDailyReset = C_DateAndTime.GetSecondsUntilDailyReset
+local IsQuestFlaggedCompletedOnAccount = C_QuestLog.IsQuestFlaggedCompletedOnAccount
+local IsQuestFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted
+local RequestLoadQuestByID = C_QuestLog.RequestLoadQuestByID
+local GetTitleForQuestID = C_QuestLog.GetTitleForQuestID
+local ReadyForTurnIn = C_QuestLog.ReadyForTurnIn
+local IsOnQuest = C_QuestLog.IsOnQuest
+local After = C_Timer.After
 
 -- quest log updates come in bursts, one snapshot after they settle covers the lot
 local SNAPSHOT_DELAY = 1

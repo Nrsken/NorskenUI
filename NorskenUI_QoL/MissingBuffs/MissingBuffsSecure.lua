@@ -13,8 +13,8 @@ local RegisterStateDriver = RegisterStateDriver
 local UnregisterStateDriver = UnregisterStateDriver
 local IsShiftKeyDown, IsAltKeyDown, IsControlKeyDown = IsShiftKeyDown, IsAltKeyDown, IsControlKeyDown
 
-local GetSpellName = C_Spell and C_Spell.GetSpellName
-local GetItemNameByID = C_Item and C_Item.GetItemNameByID
+local GetSpellName = C_Spell.GetSpellName
+local GetItemNameByID = C_Item.GetItemNameByID
 
 local GameTooltip = GameTooltip
 

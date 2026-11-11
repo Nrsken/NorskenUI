@@ -11,7 +11,7 @@ local CreateFrame = CreateFrame
 local RegisterStateDriver = RegisterStateDriver
 local UnregisterStateDriver = UnregisterStateDriver
 
-local GetSpellInfo = C_Spell and C_Spell.GetSpellInfo
+local GetSpellInfo = C_Spell.GetSpellInfo
 
 local RECUPERATE_SPELL_ID = 1231411
 

@@ -8,7 +8,7 @@ local CreateFrame = CreateFrame
 
 local C_Timer = C_Timer
 
-local IsAddOnLoaded = C_AddOns and C_AddOns.IsAddOnLoaded
+local IsAddOnLoaded = C_AddOns.IsAddOnLoaded
 
 -- Resolve CDM addon used and return their anchor frames.
 local function GetCDMFrames()

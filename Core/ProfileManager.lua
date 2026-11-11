@@ -20,9 +20,9 @@ local tostring = tostring
 local sort = table.sort
 local rawget = rawget
 
-local GetNumSpecializationsForClassID = C_SpecializationInfo and C_SpecializationInfo.GetNumSpecializationsForClassID
-local GetSpecialization = C_SpecializationInfo and C_SpecializationInfo.GetSpecialization
-local after = C_Timer and C_Timer.After
+local GetNumSpecializationsForClassID = C_SpecializationInfo.GetNumSpecializationsForClassID
+local GetSpecialization = C_SpecializationInfo.GetSpecialization
+local after = C_Timer.After
 
 local EXPORT_PREFIX = '!NRSKNUI2!' -- C_EncodingUtil: CBOR + Deflate + Base64
 local LEGACY_PREFIX = '!NRSKNUI1!' -- AceSerializer + LibDeflate, still decoded so old strings import

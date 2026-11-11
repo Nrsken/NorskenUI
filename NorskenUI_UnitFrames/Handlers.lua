@@ -21,8 +21,8 @@ local ipairs = ipairs
 local pairs = pairs
 local next = next
 
-local IsSpellInRange = C_Spell and C_Spell.IsSpellInRange
-local IsSpellInSpellBook = C_SpellBook and C_SpellBook.IsSpellInSpellBook
+local IsSpellInRange = C_Spell.IsSpellInRange
+local IsSpellInSpellBook = C_SpellBook.IsSpellInSpellBook
 
 ---Prime the smoothing function for a health or power element.
 ---@param element table Health element

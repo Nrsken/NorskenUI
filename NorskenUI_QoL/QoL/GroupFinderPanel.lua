@@ -15,14 +15,14 @@ local ipairs, next, type = ipairs, next, type
 local ceil, floor, rad = math.ceil, math.floor, math.rad
 local ShowUIPanel, HideUIPanel = ShowUIPanel, HideUIPanel
 
-local GetRewardLevelForDifficultyLevel = C_MythicPlus and C_MythicPlus.GetRewardLevelForDifficultyLevel
-local GetSeasonBestForMap = C_MythicPlus and C_MythicPlus.GetSeasonBestForMap
+local GetRewardLevelForDifficultyLevel = C_MythicPlus.GetRewardLevelForDifficultyLevel
+local GetSeasonBestForMap = C_MythicPlus.GetSeasonBestForMap
 
-local GetKeystoneLevelRarityColor = C_ChallengeMode and C_ChallengeMode.GetKeystoneLevelRarityColor
-local GetScoreRarityColor = C_ChallengeMode and C_ChallengeMode.GetSpecificDungeonOverallScoreRarityColor
+local GetKeystoneLevelRarityColor = C_ChallengeMode.GetKeystoneLevelRarityColor
+local GetScoreRarityColor = C_ChallengeMode.GetSpecificDungeonOverallScoreRarityColor
 
-local IsAddOnLoaded = C_AddOns and C_AddOns.IsAddOnLoaded
-local LoadAddOn = C_AddOns and C_AddOns.LoadAddOn
+local IsAddOnLoaded = C_AddOns.IsAddOnLoaded
+local LoadAddOn = C_AddOns.LoadAddOn
 
 local HIGHLIGHT_FONT_COLOR = HIGHLIGHT_FONT_COLOR
 local GameTooltip = GameTooltip

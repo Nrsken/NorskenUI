@@ -5,8 +5,8 @@ local AuctionHouseFilter = NRSKNUI:GetModule('AuctionHouseFilter')
 function AuctionHouseFilter:UpdateDB() self.db = self.namespace.profile end
 
 local C_Timer = C_Timer
-local IsAddOnLoaded = C_AddOns and C_AddOns.IsAddOnLoaded
-local auctioneerEnum = Enum and Enum.PlayerInteractionType.Auctioneer
+local IsAddOnLoaded = C_AddOns.IsAddOnLoaded
+local auctioneerEnum = Enum.PlayerInteractionType.Auctioneer
 
 local displayModeHooked = false
 function AuctionHouseFilter:ApplyAuctionHouseFilter()

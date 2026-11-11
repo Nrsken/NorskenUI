@@ -19,8 +19,8 @@ local PetHasActionBar = PetHasActionBar
 local UnitIsDeadOrGhost = UnitIsDeadOrGhost
 local RunNextFrame = RunNextFrame
 
-local IsSpellKnown = C_SpellBook and C_SpellBook.IsSpellKnown
-local IsSpellInSpellBook = C_SpellBook and C_SpellBook.IsSpellInSpellBook
+local IsSpellKnown = C_SpellBook.IsSpellKnown
+local IsSpellInSpellBook = C_SpellBook.IsSpellInSpellBook
 
 local petStates = {
     { key = 'petMissing', order = 1, textKey = 'PetMissing', colorKey = 'MissingColor' },

@@ -5,7 +5,7 @@ local UF = NRSKNUI:GetModule('UnitFrames')
 
 local CreateFrame = CreateFrame
 
-local Interpolation = Enum and Enum.StatusBarInterpolation
+local Interpolation = Enum.StatusBarInterpolation
 
 ---@class UnitFramesElements
 ---@field Health UnitFramesHealthElement

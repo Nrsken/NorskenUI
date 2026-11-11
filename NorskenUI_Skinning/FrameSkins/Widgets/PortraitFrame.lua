@@ -16,8 +16,8 @@ local SetPortraitTexture = SetPortraitTexture
 
 local LOWER_RIGHT_VERTEX = LOWER_RIGHT_VERTEX
 
-local DoesAddOnExist = C_AddOns and C_AddOns.DoesAddOnExist
-local GetAddOnMetadata = C_AddOns and C_AddOns.GetAddOnMetadata
+local DoesAddOnExist = C_AddOns.DoesAddOnExist
+local GetAddOnMetadata = C_AddOns.GetAddOnMetadata
 
 local HEADER_HEIGHT = 21
 local PLATE_INSET = 2

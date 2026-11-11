@@ -25,8 +25,8 @@ local CanGuildBankRepair = CanGuildBankRepair
 local GetRepairAllCost = GetRepairAllCost
 local CanMerchantRepair = CanMerchantRepair
 local GetGuildBankWithdrawMoney = GetGuildBankWithdrawMoney
-local SellAllJunkItems = C_MerchantFrame and C_MerchantFrame.SellAllJunkItems
-local GetNumJunkItems = C_MerchantFrame and C_MerchantFrame.GetNumJunkItems
+local SellAllJunkItems = C_MerchantFrame.SellAllJunkItems
+local GetNumJunkItems = C_MerchantFrame.GetNumJunkItems
 
 -- Quest APIs
 local IsQuestCompletable = IsQuestCompletable
@@ -45,18 +45,18 @@ local ShowQuestComplete = ShowQuestComplete
 local GetQuestMoneyToGet = GetQuestMoneyToGet
 local GetQuestItemInfo = GetQuestItemInfo
 
-local IsQuestFlaggedCompleted = C_QuestLog and C_QuestLog.IsQuestFlaggedCompleted
-local GetLogIndexForQuestID = C_QuestLog and C_QuestLog.GetLogIndexForQuestID
-local GetQuestLogInfo = C_QuestLog and C_QuestLog.GetInfo
-local GetQuestIDForLogIndex = C_QuestLog and C_QuestLog.GetQuestIDForLogIndex
-local SetSelectedQuest = C_QuestLog and C_QuestLog.SetSelectedQuest
-local GetSelectedQuest = C_QuestLog and C_QuestLog.GetSelectedQuest
+local IsQuestFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted
+local GetLogIndexForQuestID = C_QuestLog.GetLogIndexForQuestID
+local GetQuestLogInfo = C_QuestLog.GetInfo
+local GetQuestIDForLogIndex = C_QuestLog.GetQuestIDForLogIndex
+local SetSelectedQuest = C_QuestLog.SetSelectedQuest
+local GetSelectedQuest = C_QuestLog.GetSelectedQuest
 
 -- Gossip APIs for quest selection.
-local GetActiveQuests = C_GossipInfo and C_GossipInfo.GetActiveQuests
-local GetAvailableQuests = C_GossipInfo and C_GossipInfo.GetAvailableQuests
-local GossipSelectAvailableQuest = C_GossipInfo and C_GossipInfo.SelectAvailableQuest
-local GossipSelectActiveQuest = C_GossipInfo and C_GossipInfo.SelectActiveQuest
+local GetActiveQuests = C_GossipInfo.GetActiveQuests
+local GetAvailableQuests = C_GossipInfo.GetAvailableQuests
+local GossipSelectAvailableQuest = C_GossipInfo.SelectAvailableQuest
+local GossipSelectActiveQuest = C_GossipInfo.SelectActiveQuest
 
 -- Index-based greeting APIs for quest selection.
 local GetNumActiveQuests = GetNumActiveQuests
@@ -67,8 +67,8 @@ local GetAvailableTitle = GetAvailableTitle
 local SelectAvailableQuest = SelectAvailableQuest
 local GetAvailableQuestInfo = GetAvailableQuestInfo
 
-local GetItemInfo = C_Item and C_Item.GetItemInfo
-local GetItemByID = C_TooltipInfo and C_TooltipInfo.GetItemByID
+local GetItemInfo = C_Item.GetItemInfo
+local GetItemByID = C_TooltipInfo.GetItemByID
 
 -- Enums
 local FREQ_REGULAR = Enum.QuestFrequency.Default
@@ -84,10 +84,10 @@ local ITEM_BIND_TO_ACCOUNT = ITEM_BIND_TO_ACCOUNT
 local DELETE_GOOD_ITEM = DELETE_GOOD_ITEM
 
 -- CVar APIs
-local GetCVarBool = C_CVar and C_CVar.GetCVarBool
-local SetCVar = C_CVar and C_CVar.SetCVar
-local SetCVarBitfield = C_CVar and C_CVar.SetCVarBitfield
-local RegisterCVar = C_CVar and C_CVar.RegisterCVar
+local GetCVarBool = C_CVar.GetCVarBool
+local SetCVar = C_CVar.SetCVar
+local SetCVarBitfield = C_CVar.SetCVarBitfield
+local RegisterCVar = C_CVar.RegisterCVar
 
 --TODO: See if still needed in 12.1.0+ /yep was needed
 local BONUSROLL_GOLD_QUEST_ID = 98016

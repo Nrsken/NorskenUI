@@ -26,10 +26,10 @@ local NUM_CHAT_WINDOWS = NUM_CHAT_WINDOWS
 local MainStatusTrackingBarContainer = MainStatusTrackingBarContainer
 local _G = _G
 
-local GetNumQuestLogEntries = C_QuestLog and C_QuestLog.GetNumQuestLogEntries
-local GetQuestInfo = C_QuestLog and C_QuestLog.GetInfo
-local ReadyForTurnIn = C_QuestLog and C_QuestLog.ReadyForTurnIn
-local IsComplete = C_QuestLog and C_QuestLog.IsComplete
+local GetNumQuestLogEntries = C_QuestLog.GetNumQuestLogEntries
+local GetQuestInfo = C_QuestLog.GetInfo
+local ReadyForTurnIn = C_QuestLog.ReadyForTurnIn
+local IsComplete = C_QuestLog.IsComplete
 
 local STALE_SESSION = 259200 -- 3 days, a session older than this is treated as a fresh one.
 

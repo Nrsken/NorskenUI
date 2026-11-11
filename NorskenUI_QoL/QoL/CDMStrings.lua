@@ -24,8 +24,8 @@ local pcall = pcall
 local type = type
 local next = next
 
-local GetClassInfo = C_CreatureInfo and C_CreatureInfo.GetClassInfo
-local LoadAddOn = C_AddOns and C_AddOns.LoadAddOn
+local GetClassInfo = C_CreatureInfo.GetClassInfo
+local LoadAddOn = C_AddOns.LoadAddOn
 
 CooldownStrings.panel = nil
 CooldownStrings.selected = nil

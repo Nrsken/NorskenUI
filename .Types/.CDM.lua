@@ -32,6 +32,7 @@
 ---One trigger's visuals; the icon stacks one per trigger, trigger 1 on top.
 ---@class CDMLayer : Frame
 ---@field owner CDMIcon
+---@field isGroupButton boolean? an aura group's button styled as a layer of its own (CDM:InitAuraGroupButton)
 ---@field Icon Texture
 ---@field Cooldown Cooldown
 ---@field textHost Frame

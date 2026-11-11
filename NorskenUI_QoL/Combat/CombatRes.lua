@@ -9,11 +9,10 @@ local CreateFrame = CreateFrame
 local GetTime = GetTime
 local CreateColor = CreateColor
 local tostring = tostring
-local WrapTextInColorCode = WrapTextInColorCode
 
 local UIParent = UIParent
 
-local GetSpellCharges = C_Spell and C_Spell.GetSpellCharges
+local GetSpellCharges = C_Spell.GetSpellCharges
 
 local BATTLE_RES_SPELL = 20484
 local UPDATE_INTERVAL = 0.25

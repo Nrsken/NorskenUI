@@ -9,9 +9,6 @@ L['Any Group'] = true
 L['In Party'] = true
 L['In Raid'] = true
 L['Information'] = true
-L['Discord'] = true
-L['GitHub'] = true
-L['Support'] = true
 L['Timer'] = true
 L['Format Text'] = true
 L['Widget Glow'] = true
@@ -23,17 +20,11 @@ L['Color Settings'] = true
 L['Backdrop Settings'] = true
 
 -- Home Page
-L['Hello, '] = true
-L['Version: '] = true
 L['Active Profile: '] = true
 L['Hide Login Message'] = true
-L['Toggle Anchors'] = true
 L['ElvUI Integration'] = true
 L['Use ElvUI Skinning'] = true
 L['Disables all skinning modules when ElvUI is loaded.\n  This way you can still use the non skinning features of the addon without conflict.'] = true
-L['Found a bug or have a suggestion?'] = true
-L['Join the '] = true
-L[' or open an issue on '] = true
 
 -- Combat Cross
 L['Cross'] = true
@@ -1177,14 +1168,7 @@ L['Spell Queue Window Guide'] = true
 L["The spell queue window determines how early you can\nqueue your next ability before your current cast finishes.\nVisit |cff8788EEXerwo|r's maxroll guide for more information."] = true
 
 -- NorskenUI_Options / Core
-L['Close Settings'] = true
 L['Disabling/Enabling this requires a reload to take full effect.'] = true
-L['Join My %s'] = true
-L['Open Anchors'] = true
-L['Open Home Page'] = true
-L['Open Theme Settings'] = true
-L['Preview Every Display'] = true
-L['Support My %s'] = true
 
 -- ObjectiveTracker
 L['Restoring the default Objective Tracker requires a reload to take full effect.'] = true

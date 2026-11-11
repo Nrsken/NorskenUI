@@ -17,8 +17,8 @@ local format = string.format
 local concat = table.concat
 local GetSpecializationInfoByID = GetSpecializationInfoByID
 
-local GetSpellName = C_Spell and C_Spell.GetSpellName
-local GetSpellTexture = C_Spell and C_Spell.GetSpellTexture
+local GetSpellName = C_Spell.GetSpellName
+local GetSpellTexture = C_Spell.GetSpellTexture
 
 local GENERAL = 'general'
 local GENERAL_ICON = 'Interface\\Icons\\Trade_Engineering'

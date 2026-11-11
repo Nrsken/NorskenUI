@@ -11,9 +11,9 @@ local CreateFrame = CreateFrame
 
 local UIParent = UIParent
 
-local IsUsableItem = C_Item and C_Item.IsUsableItem
-local GetItemCount = C_Item and C_Item.GetItemCount
-local GetItemInfo = C_Item and C_Item.GetItemInfo
+local IsUsableItem = C_Item.IsUsableItem
+local GetItemCount = C_Item.GetItemCount
+local GetItemInfo = C_Item.GetItemInfo
 
 local GATEWAY_ITEM_ID = 188152
 

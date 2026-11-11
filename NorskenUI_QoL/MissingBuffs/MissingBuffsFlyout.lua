@@ -12,8 +12,8 @@ local InCombatLockdown = InCombatLockdown
 local RegisterStateDriver = RegisterStateDriver
 local UnregisterStateDriver = UnregisterStateDriver
 
-local GetItemCount = C_Item and C_Item.GetItemCount
-local GetItemIconByID = C_Item and C_Item.GetItemIconByID
+local GetItemCount = C_Item.GetItemCount
+local GetItemIconByID = C_Item.GetItemIconByID
 
 local GameTooltip = GameTooltip
 

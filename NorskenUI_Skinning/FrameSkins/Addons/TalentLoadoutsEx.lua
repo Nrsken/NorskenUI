@@ -8,7 +8,7 @@ local ipairs = ipairs
 local select = select
 local _G = _G
 
-local IsAddOnLoaded = C_AddOns and C_AddOns.IsAddOnLoaded
+local IsAddOnLoaded = C_AddOns.IsAddOnLoaded
 
 local ADDON_NAME = 'TalentLoadoutsEx'
 

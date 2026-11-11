@@ -23,11 +23,11 @@ local GetTime = GetTime
 local unpack = unpack
 local min = math.min
 
-local CreateDuration = C_DurationUtil and C_DurationUtil.CreateDuration
+local CreateDuration = C_DurationUtil.CreateDuration
 
-local Immediate = Enum and Enum.StatusBarInterpolation.Immediate
-local ElapsedTime = Enum and Enum.StatusBarTimerDirection.ElapsedTime
-local RemainingTime = Enum and Enum.StatusBarTimerDirection.RemainingTime
+local Immediate = Enum.StatusBarInterpolation.Immediate
+local ElapsedTime = Enum.StatusBarTimerDirection.ElapsedTime
+local RemainingTime = Enum.StatusBarTimerDirection.RemainingTime
 
 local FALLBACK_ICON = 136243
 local MAX_NAMEPLATES = 40

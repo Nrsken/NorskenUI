@@ -17,12 +17,12 @@ local GetRaidTargetIndex, SetRaidTargetIconTexture = GetRaidTargetIndex, SetRaid
 local GetTime, random = GetTime, math.random
 local pairs, ipairs, select = pairs, ipairs, select
 
-local CreateDuration = C_DurationUtil and C_DurationUtil.CreateDuration
-local GetSpellCooldownDuration = C_Spell and C_Spell.GetSpellCooldownDuration
-local IsSpellImportant = C_Spell and C_Spell.IsSpellImportant
-local IsSpellKnownOrInSpellBook = C_SpellBook and C_SpellBook.IsSpellKnownOrInSpellBook
-local EvaluateColorValueFromBoolean = C_CurveUtil and C_CurveUtil.EvaluateColorValueFromBoolean
-local EvaluateColorFromBoolean = C_CurveUtil and C_CurveUtil.EvaluateColorFromBoolean
+local CreateDuration = C_DurationUtil.CreateDuration
+local GetSpellCooldownDuration = C_Spell.GetSpellCooldownDuration
+local IsSpellImportant = C_Spell.IsSpellImportant
+local IsSpellKnownOrInSpellBook = C_SpellBook.IsSpellKnownOrInSpellBook
+local EvaluateColorValueFromBoolean = C_CurveUtil.EvaluateColorValueFromBoolean
+local EvaluateColorFromBoolean = C_CurveUtil.EvaluateColorFromBoolean
 
 local Immediate = Enum.StatusBarInterpolation.Immediate
 local ElapsedTime = Enum.StatusBarTimerDirection.ElapsedTime

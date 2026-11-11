@@ -21,7 +21,7 @@ local AbbreviateLargeNumbers = AbbreviateLargeNumbers
 local format = string.format
 local select = select
 
-local WrapString = C_StringUtil and C_StringUtil.WrapString
+local WrapString = C_StringUtil.WrapString
 local TruncateWhenZero = C_StringUtil.TruncateWhenZero
 
 local DEAD = DEAD

@@ -18,9 +18,9 @@ local UnitNameFromGUID, UnitClassFromGUID = UnitNameFromGUID, UnitClassFromGUID
 local IsSpellImportant = C_Spell.IsSpellImportant
 local INTERRUPTED = INTERRUPTED
 
-local EvaluateColorFromBoolean = C_CurveUtil and C_CurveUtil.EvaluateColorFromBoolean
-local CreateDuration = C_DurationUtil and C_DurationUtil.CreateDuration
-local ElapsedTime = Enum and Enum.StatusBarTimerDirection.ElapsedTime
+local EvaluateColorFromBoolean = C_CurveUtil.EvaluateColorFromBoolean
+local CreateDuration = C_DurationUtil.CreateDuration
+local ElapsedTime = Enum.StatusBarTimerDirection.ElapsedTime
 
 local FALLBACK_ICON = 136243
 local PREVIEW_DURATION = 10

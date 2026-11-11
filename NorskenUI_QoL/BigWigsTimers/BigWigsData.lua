@@ -12,8 +12,8 @@ local GetTime = GetTime
 local ipairs = ipairs
 local type = type
 
-local GetSpellInfo = C_Spell and C_Spell.GetSpellInfo
-local LoadAddOn = C_AddOns and C_AddOns.LoadAddOn
+local GetSpellInfo = C_Spell.GetSpellInfo
+local LoadAddOn = C_AddOns.LoadAddOn
 
 ---Retrieves the bar, text and background colors for a given BigWigs module and spell ID from BigWigs.
 ---@param bwModule BigWigs.Module?

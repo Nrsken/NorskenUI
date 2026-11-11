@@ -6,7 +6,7 @@ local Skinning = NRSKNUI:GetModule('Skinning')
 local ipairs = ipairs
 local hooksecurefunc = hooksecurefunc
 
-local GetSpellTexture = C_Spell and C_Spell.GetSpellTexture
+local GetSpellTexture = C_Spell.GetSpellTexture
 
 local SPELL_BOOK_ART = {
     'BookBGLeft',

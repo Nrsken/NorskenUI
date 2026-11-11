@@ -9,9 +9,6 @@ L['Any Group'] = "Beliebige Gruppe"
 L['In Party'] = "In Gruppe"
 L['In Raid'] = "Im Schlachtzug"
 L['Information'] = "Informationen"
-L['Discord'] = "Discord"
-L['GitHub'] = "GitHub"
-L['Support'] = "Support"
 L['Timer'] = "Timer"
 L['Format Text'] = "Formattext"
 L['Widget Glow'] = "Widget-Leuchten"
@@ -23,17 +20,11 @@ L['Color Settings'] = "Farbeinstellungen"
 L['Backdrop Settings'] = "Hintergrundeinstellungen"
 
 -- Home Page
-L['Hello, '] = "Hallo, "
-L['Version: '] = "Version: "
 L['Active Profile: '] = "Aktives Profil: "
 L['Hide Login Message'] = "Anmeldenachricht verbergen"
-L['Toggle Anchors'] = "Anker umschalten"
 L['ElvUI Integration'] = "ElvUI-Integration"
 L['Use ElvUI Skinning'] = "ElvUI-Skins verwenden"
 L['Disables all skinning modules when ElvUI is loaded.\n  This way you can still use the non skinning features of the addon without conflict.'] = "Deaktiviert alle Skin-Module, wenn ElvUI geladen ist.\n  So kannst du die übrigen Funktionen des Addons weiterhin ohne Konflikte nutzen."
-L['Found a bug or have a suggestion?'] = "Fehler gefunden oder einen Vorschlag?"
-L['Join the '] = "Tritt dem "
-L[' or open an issue on '] = " bei oder eröffne ein Issue auf "
 
 -- Combat Cross
 L['Cross'] = "Kreuz"
@@ -1177,14 +1168,7 @@ L['Spell Queue Window Guide'] = "Leitfaden zur Zauberwarteschlange"
 L["The spell queue window determines how early you can\nqueue your next ability before your current cast finishes.\nVisit |cff8788EEXerwo|r's maxroll guide for more information."] = "Die Zauberwarteschlange bestimmt, wie früh du deine nächste\nFähigkeit einreihen kannst, bevor dein aktueller Zauber endet.\nMehr dazu im maxroll-Guide von |cff8788EEXerwo|r."
 
 -- NorskenUI_Options / Core
-L['Close Settings'] = "Einstellungen schließen"
 L['Disabling/Enabling this requires a reload to take full effect.'] = "Das Deaktivieren/Aktivieren wird erst nach einem Neuladen vollständig wirksam."
-L['Join My %s'] = "Meinem %s beitreten"
-L['Open Anchors'] = "Anker öffnen"
-L['Open Home Page'] = "Startseite öffnen"
-L['Open Theme Settings'] = "Designeinstellungen öffnen"
-L['Preview Every Display'] = "Vorschau aller Anzeigen"
-L['Support My %s'] = "Mich auf %s unterstützen"
 
 -- ObjectiveTracker
 L['Restoring the default Objective Tracker requires a reload to take full effect.'] = "Das Wiederherstellen der Standard-Questzielverfolgung wird erst nach einem Neuladen vollständig wirksam."
