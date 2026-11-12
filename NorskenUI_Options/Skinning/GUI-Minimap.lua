@@ -26,8 +26,8 @@ local function BuildGeneralSettingsTab(page, db)
         height = infoRowSize,
         autoHeight = true,
         bgMode = 'hide',
-        text = NRSKNUI:ColorTextByTheme('• ') .. L['Mouse Middle-click: Opens calendar.'] .. '\n' ..
-            NRSKNUI:ColorTextByTheme('• ') .. L['Mouse Right-click: Opens tracking menu.'],
+        text = GUI:ColorText('• ') .. L['Mouse Middle-click: Opens calendar.'] .. '\n' ..
+            GUI:ColorText('• ') .. L['Mouse Right-click: Opens tracking menu.'],
     })
 
     -- Card 2: Minimap Settings

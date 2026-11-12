@@ -97,7 +97,7 @@ local function SidebarItems()
 end
 
 local function PastePrompt()
-    NRSKNUI:CreatePrompt({
+    GUI:Prompt({
         title = L['Paste Profile String'],
         text = '',
         editBox = true,
@@ -157,7 +157,7 @@ end
 
 ---@param name string
 local function DeletePrompt(name)
-    NRSKNUI:CreatePrompt({
+    GUI:Prompt({
         title = L['Delete Profile'],
         text = format(L["Delete the saved profile '%s'? This cannot be undone."], CooldownStrings:LayoutName(name)),
         onAccept = function()
@@ -275,7 +275,7 @@ local function BuildActionsCard(page, name, detailsCard)
         lastRow:Button(L['Copy String'], {
             width = 0.5,
             callback = function()
-                NRSKNUI:CreateCopyDialog(L['Profile String'], CooldownStrings.db.Profiles[name].String, name)
+                GUI:CopyDialog(L['Profile String'], CooldownStrings.db.Profiles[name].String, name)
             end,
         })
         lastRow:Button(L['Delete'], {

@@ -754,6 +754,7 @@ local function CreateListPopup(globalName, titleText, onClick, rowTemplate)
     popup:Hide()
 
     popup:NCCreateBackdrop()
+    popup:NCAddBorders(1)
     popup:SetBackgroundColor(Theme.bgDark[1], Theme.bgDark[2], Theme.bgDark[3], 0.8)
     popup:SetBorderColor(Theme.border[1], Theme.border[2], Theme.border[3], 1)
 

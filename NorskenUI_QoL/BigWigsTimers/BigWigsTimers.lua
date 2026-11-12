@@ -107,7 +107,7 @@ end
 function BigWigsTimers:CreateBarDisplay(index)
     local display = CreateFrame('Frame', nil, self.groups[BARS])
     display:EnableMouse(false)
-    display:NCCreateBackdrop(true)
+    display:NCCreateBackdrop()
     display:NCDisablePixelSnap()
     display.key = 'bar' .. index
     display.kind = BARS

@@ -29,7 +29,7 @@ local function BuildGeneralSettingsTab(page, db)
 
     local tokenHeight = 70
     local tokenLegendRow = textFormatCard:Row(tokenHeight)
-    tokenLegendRow:Text(NRSKNUI:ColorTextByTheme(L['Available Tokens']), {
+    tokenLegendRow:Text(GUI:ColorText(L['Available Tokens']), {
         width = 1,
         text = {
             db.TextCharge .. '  —  ' .. L['Battle res charges'],

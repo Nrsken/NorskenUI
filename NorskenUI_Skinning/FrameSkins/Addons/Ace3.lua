@@ -427,6 +427,7 @@ Skins['Dropdown-Pullout'] = function(widget)
 
     -- Open() re-stratas frame:GetChildren(), so the backdrop goes on the frame itself to stay out of that walk.
     frame:NCCreateBackdrop()
+    frame:NCAddBorders(1)
 
     ---@cast frame Frame & PublicBackdropMixin & SurfaceMixin
     Mixin(frame, SurfaceMixin)

@@ -65,7 +65,7 @@ local function ProfileActions(PM, rebuildAll)
                 icon = TEX .. 'profile-reset.png',
                 tooltip = L['Reset Profile'],
                 onClick = function()
-                    NRSKNUI:CreatePrompt({
+                    GUI:Prompt({
                         title = L['Reset Profile'],
                         text = format(L["Reset all settings in '%s' to defaults?\nThis cannot be undone."], name),
                         onAccept = function() PM:ResetProfile(name) end,
@@ -78,7 +78,7 @@ local function ProfileActions(PM, rebuildAll)
                 icon = TEX .. 'profile-rename.png',
                 tooltip = L['Rename Profile'],
                 onClick = function()
-                    NRSKNUI:CreatePrompt({
+                    GUI:Prompt({
                         title = L['Rename Profile'],
                         text = name,
                         editBox = true,
@@ -106,7 +106,7 @@ local function ProfileActions(PM, rebuildAll)
                 tooltipText = usedBy,
                 disabled = users ~= nil,
                 onClick = function()
-                    NRSKNUI:CreatePrompt({
+                    GUI:Prompt({
                         title = L['Delete Profile'],
                         text = format(L["Are you sure you want to delete '%s'?\nThis cannot be undone."], name),
                         onAccept = function()
@@ -151,7 +151,7 @@ local function BuildActiveCard(card, PM, rebuildAll)
                 end
                 if info.id ~= 'global' and mode ~= 'global' then return Apply() end
 
-                NRSKNUI:CreatePrompt({
+                GUI:Prompt({
                     title = L['Global Profile'],
                     text = info.id == 'global'
                         and format(L['Use %s on every character?\nOther characters switch the next time they log in.'], PM:GetGlobalProfile())
@@ -195,7 +195,7 @@ local function BuildActiveCard(card, PM, rebuildAll)
                 for spec = 1, numSpecs do
                     local _, name, _, icon = GetSpecializationInfo(spec)
                     if spec == currentSpec then
-                        name = NRSKNUI:ColorTextByTheme(name) .. ' ' .. NRSKNUI:ColorText(L['(Active)'], Theme.textMuted)
+                        name = GUI:ColorText(name) .. ' ' .. NRSKNUI:ColorText(L['(Active)'], Theme.textMuted)
                     end
                     local row = card:Row(SPEC_ROW_HEIGHT, spec == numSpecs and gap or nil, RADIO_INDENT)
                     row:Dropdown(nil, {
@@ -292,7 +292,7 @@ local function BuildCopyCard(card, PM)
         width = 1,
         height = BUTTON_ROW_HEIGHT - 4,
         callback = function()
-            NRSKNUI:CreatePrompt({
+            GUI:Prompt({
                 title = L['Copy Profile'],
                 text = format(L["Copy all settings from '%s' into '%s'?\nThis overwrites every setting in '%s'."], from, to, to),
                 onAccept = function()
@@ -350,7 +350,7 @@ local function BuildSharingTab(page, PM)
         callback = function()
             local exportString, err = PM:ExportProfile(nil, includeShared)
             if exportString then
-                NRSKNUI:CreateCopyDialog(L['Export Profile'], exportString, L['Copy the string above (Ctrl+C)'])
+                GUI:CopyDialog(L['Export Profile'], exportString, L['Copy the string above (Ctrl+C)'])
                 NRSKNUI:Print(L['Export Success'])
             else
                 NRSKNUI:Print(format(L['Export failed: %s'], err or L['Unknown error']))
@@ -365,14 +365,14 @@ local function BuildSharingTab(page, PM)
         height = 30,
         yOffset = -2,
         callback = function()
-            NRSKNUI:CreatePrompt({
+            GUI:Prompt({
                 title = L['Import Profile'],
                 text = "",
                 editBox = true,
                 editBoxLabel = L['Paste import string'],
                 onAccept = function(importString)
                     if not importString or importString == "" then return end
-                    NRSKNUI:CreatePrompt({
+                    GUI:Prompt({
                         title = L['Profile Name'],
                         text = "",
                         editBox = true,
@@ -385,7 +385,7 @@ local function BuildSharingTab(page, PM)
                             end
 
                             -- closing this one keeps them: the import was already confirmed, the settings weren't
-                            NRSKNUI:CreatePrompt({
+                            GUI:Prompt({
                                 title = L['Shared Settings'],
                                 text = L['This string also holds fonts, textures and colors. Use them for every Norsken addon?'],
                                 onAccept = function() ImportString(PM, importString, targetName, true) end,

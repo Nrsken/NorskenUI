@@ -20,6 +20,7 @@ local INTERRUPTED = INTERRUPTED
 
 local EvaluateColorFromBoolean = C_CurveUtil.EvaluateColorFromBoolean
 local CreateDuration = C_DurationUtil.CreateDuration
+local ShouldUnitIdentityBeSecret = C_Secrets.ShouldUnitIdentityBeSecret
 local ElapsedTime = Enum.StatusBarTimerDirection.ElapsedTime
 
 local FALLBACK_ICON = 136243
@@ -41,7 +42,7 @@ end
 ---@return ColorRGBAData | colorRGBA
 local function CastNormalColor(element, unit)
     local color = element.nuiColor
-    if element.nuiColorByClass and not NRSKNUI:IsSecretUnit(unit) then
+    if element.nuiColorByClass and not ShouldUnitIdentityBeSecret(unit) then
         local classColor = NRSKNUI:GetClassColor(select(2, UnitClass(unit)))
         if classColor then
             color = NRSKNUI:CreateColor(classColor) --[[@as colorRGBA]]
@@ -182,7 +183,7 @@ UF.Elements.Castbar = {
 
         -- Container frame for the castbar and icon.
         local container = CreateFrame('Frame', nil, self)
-        container:NCCreateBackdrop(true)
+        container:NCCreateBackdrop()
         container:NCAddBorders()
         container:Hide()
         self.CastbarContainer = container

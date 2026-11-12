@@ -257,7 +257,7 @@ local function BuildStackCard(page)
         height = 30,
         yOffset = -2,
         callback = function()
-            NRSKNUI:CreatePrompt({
+            NRSKNUI.GUI:Prompt({
                 title = L['Reset to Default'],
                 text = L['Put every layer back where it shipped?'],
                 onAccept = function()

@@ -30,6 +30,8 @@ local function CreateLines(pointFrom, frame, width, height)
     lineFrame:NCSetPoint(pointFrom, frame, 'CENTER')
     lineFrame:SetFrameLevel(frame:GetFrameLevel() + 1)
     lineFrame:NCAddBorders()
+    -- a level below every line, so the fills cover the edges where the lines overlap
+    lineFrame:SetBorderParent(frame)
 
     lineFrame.texture = lineFrame:CreateTexture(nil, 'OVERLAY')
     lineFrame.texture:SetTexture(NRSKNUI.WhiteTexture)
@@ -135,24 +137,25 @@ function CombatCross:ApplySettings()
     self.coreFrame.textureRight:NCSetSize(self.db.CrossLength, self.db.CrossThickness)
     self.coreFrame.textureCrossDot:NCSetSize(self.db.CrossThickness, self.db.CrossThickness)
 
-    -- Outline
-    self.coreFrame.textureUp:SetBorderShown(self.db.Outline)
-    self.coreFrame.textureDown:SetBorderShown(self.db.Outline)
-    self.coreFrame.textureLeft:SetBorderShown(self.db.Outline)
-    self.coreFrame.textureRight:SetBorderShown(self.db.Outline)
-    self.coreFrame.textureCrossDot:SetBorderShown(self.db.Outline)
-
     -- Modes
     local dotMode = self.db.Mode == 'dot'
     local diamondMode = self.db.Mode == 'diamond'
     local crossMode = self.db.Mode == 'cross'
 
     -- Cross
+    local crossDot = crossMode and self.db.CrossCenterDotEnabled
     self.coreFrame.textureUp:SetShown(crossMode)
     self.coreFrame.textureDown:SetShown(crossMode)
     self.coreFrame.textureLeft:SetShown(crossMode)
     self.coreFrame.textureRight:SetShown(crossMode)
-    self.coreFrame.textureCrossDot:SetShown(crossMode and self.db.CrossCenterDotEnabled)
+    self.coreFrame.textureCrossDot:SetShown(crossDot)
+
+    local outline = self.db.Outline
+    self.coreFrame.textureUp:SetBorderShown(crossMode and outline)
+    self.coreFrame.textureDown:SetBorderShown(crossMode and outline)
+    self.coreFrame.textureLeft:SetBorderShown(crossMode and outline)
+    self.coreFrame.textureRight:SetBorderShown(crossMode and outline)
+    self.coreFrame.textureCrossDot:SetBorderShown(crossDot and outline)
 
     -- Dot
     self.coreFrame.dotBG:NCSetSize(self.db.CenterDotSize + 2)

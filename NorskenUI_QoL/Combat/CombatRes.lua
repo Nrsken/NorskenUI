@@ -53,6 +53,7 @@ function CombatRes:CreateFrame()
     coreFrame:EnableMouse(false)
     coreFrame:SetMouseClickEnabled(false)
     coreFrame:NCCreateBackdrop()
+    coreFrame:NCAddBorders(1)
 
     coreFrame.text = coreFrame:CreateFontString(nil, 'OVERLAY')
 
@@ -175,9 +176,9 @@ function CombatRes:ApplySettings()
     -- Update backdrop settings
     if db.BackdropEnabled then
         self.coreFrame:UpdateBackdropFromDB(db)
-        self.coreFrame:ToggleBackdrop(true)
+        self.coreFrame:SetBackdropShown(true)
     else
-        self.coreFrame:ToggleBackdrop(false)
+        self.coreFrame:SetBackdropShown(false)
     end
 
     -- Update font settings

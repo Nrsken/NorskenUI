@@ -51,12 +51,12 @@ local function BuildGeneralSettingsTab(page, db)
 
     local textRowSize = 32
     local infoRow = overrideCard:Row(textRowSize)
-    infoRow:Text(NRSKNUI:ColorTextByTheme(L['Override Info']), {
+    infoRow:Text(GUI:ColorText(L['Override Info']), {
         width = 1,
         height = textRowSize,
         autoHeight = true,
         bgMode = 'hide',
-        text = NRSKNUI:ColorTextByTheme('• ') ..
+        text = GUI:ColorText('• ') ..
             L['Automation features that has override support are marked with'] .. ' ' .. overrideTag,
     })
 end

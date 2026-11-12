@@ -15,6 +15,8 @@ local UnitGroupRolesAssigned = UnitGroupRolesAssigned
 local next = next
 local type = type
 local wipe = wipe
+local issecretvalue = issecretvalue
+local issecrettable = issecrettable
 
 local bit_bor = bit.bor
 local bit_band = bit.band
@@ -106,7 +108,7 @@ local TEXT_WIDTH_WITH_SCORE = ROW_WIDTH - NAME_INSET - SCORE_WIDTH + SCORE_RIGHT
 ---@param key any
 ---@return any|nil
 local function SafeIndex(container, key)
-    if NRSKNUI:IsSecretValue(container) or NRSKNUI:IsSecretTable(container) then return nil end
+    if issecretvalue(container) or issecrettable(container) then return nil end
     if type(container) ~= 'table' then return nil end
     return NRSKNUI:SafeValue(container[key])
 end

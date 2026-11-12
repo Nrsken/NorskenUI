@@ -4,6 +4,7 @@ local NRSKNUI = _G.NorskenUI
 local Skinning = NRSKNUI:GetModule('Skinning')
 
 local next = next
+local issecretvalue = issecretvalue
 local Mixin = Mixin
 local math_max = math.max
 local math_rad = math.rad
@@ -46,7 +47,7 @@ function Skinning:HandleMinMaxButton(frame)
             -- The buttons are setAllPoints with no size of their own, so they measure 0 until
             -- the frame is first laid out. The template-sized parent is the stable source.
             local width = frame:GetWidth()
-            local size = NRSKNUI:NotSecretValue(width) and math_max(8, width * 0.6) or 8
+            local size = not issecretvalue(width) and math_max(8, width * 0.6) or 8
 
             local minMax = btn:CreateTexture(nil, 'OVERLAY')
             minMax:SetPoint('CENTER')

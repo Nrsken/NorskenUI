@@ -20,6 +20,7 @@ local UnitIsUnit = UnitIsUnit
 local AbbreviateLargeNumbers = AbbreviateLargeNumbers
 local format = string.format
 local select = select
+local issecretvalue = issecretvalue
 
 local WrapString = C_StringUtil.WrapString
 local TruncateWhenZero = C_StringUtil.TruncateWhenZero
@@ -85,7 +86,7 @@ local function SmartColor(unit, frame)
 		end
 	elseif UnitFactionGroup(unit) and UnitIsEnemy(unit, 'player') then
 		local isPvP = UnitIsPVP(unit)
-		if NRSKNUI:NotSecretValue(isPvP) and isPvP then
+		if not issecretvalue(isPvP) and isPvP then
 			return '|cffff0000'
 		end
 	end
@@ -120,7 +121,7 @@ end
 ---@return boolean
 local function CanReadMana(unit)
 	local isPlayer = UnitIsUnit(unit, 'player')
-	if NRSKNUI:NotSecretValue(isPlayer) and isPlayer then return true end
+	if not issecretvalue(isPlayer) and isPlayer then return true end
 	return UnitPowerType(unit) == Enum.PowerType.Mana
 end
 
@@ -168,7 +169,7 @@ end)
 ---@return boolean
 local function IsDeathKnight(unit)
 	local _, class = UnitClass(unit)
-	return NRSKNUI:NotSecretValue(class) and class == 'DEATHKNIGHT'
+	return not issecretvalue(class) and class == 'DEATHKNIGHT'
 end
 
 --* Death Knight runic power as a raw value.

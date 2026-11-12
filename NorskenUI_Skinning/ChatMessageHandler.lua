@@ -26,6 +26,7 @@ local BNGetNumFriendInvites = BNGetNumFriendInvites
 local wipe = wipe
 local gmatch = gmatch
 local tonumber = tonumber
+local issecretvalue = issecretvalue
 local GetChannelShortcutForChannelID = GetChannelShortcutForChannelID
 local IsChannelRegionalForChannelID = IsChannelRegionalForChannelID
 local GetChatCategory = Chat_GetChatCategory or GetChatCategory
@@ -57,7 +58,7 @@ end
 function CMH:GetAccessID(chatType, chatTarget, chanSender)
     local token = GetToken(chatType, chatTarget, chanSender)
 
-    if NRSKNUI:IsSecretValue(token) then return end
+    if issecretvalue(token) then return end
 
     if not accessInfo[token] then
         accessInfo[token] = accessIndex
@@ -95,7 +96,7 @@ end
 function CMH:GetPlayerLink(characterName, displayText, lineID, chatType, chatTarget)
     if lineID or chatType or chatTarget then
         return GetLink('player', displayText, characterName, lineID or 0, chatType or 0,
-            NRSKNUI:NotSecretValue(chatTarget) and chatTarget or '')
+            not issecretvalue(chatTarget) and chatTarget or '')
     else
         return GetLink('player', displayText, characterName)
     end
@@ -111,7 +112,7 @@ function CMH:FCFManager_GetChatTarget(chatGroup, playerTarget, channelTarget)
     if chatGroup == 'CHANNEL' then
         chatTarget = tostring(channelTarget)
     elseif chatGroup == 'WHISPER' or chatGroup == 'BN_WHISPER' then
-        chatTarget = NRSKNUI:NotSecretValue(playerTarget) and strsub(playerTarget, 1, 2) ~= '|K' and
+        chatTarget = not issecretvalue(playerTarget) and strsub(playerTarget, 1, 2) ~= '|K' and
             strupper(playerTarget) or playerTarget
     end
     return chatTarget
@@ -123,17 +124,17 @@ local function FlashTabIfNotShown(frame, info, chatType, chatGroup, chatTarget)
 
     local allowAlerts = ((frame ~= _G.DEFAULT_CHAT_FRAME and info.flashTab) or (frame == _G.DEFAULT_CHAT_FRAME and info.flashTabOnGeneral)) and
         ((chatType == 'WHISPER' or chatType == 'BN_WHISPER') or (_G.CHAT_OPTIONS and not _G.CHAT_OPTIONS.HIDE_FRAME_ALERTS))
-    if allowAlerts and NRSKNUI:NotSecretValue(chatTarget) and not _G.FCFManager_ShouldSuppressMessageFlash(frame, chatGroup, chatTarget) then
+    if allowAlerts and not issecretvalue(chatTarget) and not _G.FCFManager_ShouldSuppressMessageFlash(frame, chatGroup, chatTarget) then
         _G.FCF_StartAlertFlash(frame)
     end
 end
 
 -- Get class-colored name
 function CMH:GetColoredName(event, _, arg2, _, _, _, _, _, arg8, _, _, _, arg12)
-    if NRSKNUI:IsSecretValue(arg12) then
+    if issecretvalue(arg12) then
         local _, englishClass = GetPlayerInfoByGUID(arg12)
         return NRSKNUI:ColorTextByClass(arg2, englishClass)
-    elseif NRSKNUI:IsSecretValue(arg2) then
+    elseif issecretvalue(arg2) then
         return arg2
     end
 
@@ -181,7 +182,7 @@ end
 -- Check if channel should be added
 local function ChatFrame_CheckAddChannel(frame, eventType, channelID)
     if frame ~= _G.DEFAULT_CHAT_FRAME then return false end
-    if NRSKNUI:IsSecretValue(eventType) then return false end
+    if issecretvalue(eventType) then return false end
     if eventType ~= "YOU_CHANGED" then return false end
     if not IsChannelRegionalForChannelID or not IsChannelRegionalForChannelID(channelID) then return false end
 
@@ -252,7 +253,7 @@ function CMH:MessageFormatter(frame, info, chatType, chatGroup, chatTarget, chan
     if chatType == 'WHISPER_INFORM' and GMChatFrame_IsGM and GMChatFrame_IsGM(arg2) then return end
 
     -- Check if message content is protected
-    local isProtected = NRSKNUI:IsSecretValue(arg1)
+    local isProtected = issecretvalue(arg1)
     local bossMonster = strsub(chatType, 1, 9) == 'RAID_BOSS' or strsub(chatType, 1, 7) == 'MONSTER'
 
     -- Protected boss messages can't be safely formatted, skip custom formatting
@@ -325,7 +326,7 @@ function CMH:ChatFrame_MessageEventHandler(frame, event, arg1, arg2, arg3, arg4,
                                            arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18)
     if not event then return true end
 
-    local isProtected = NRSKNUI:IsSecretValue(arg2)
+    local isProtected = issecretvalue(arg2)
 
     -- Text to speech
     if _G.TextToSpeechFrame_MessageEventHandler then
@@ -381,8 +382,8 @@ function CMH:ChatFrame_MessageEventHandler(frame, event, arg1, arg2, arg3, arg4,
         if chatType == 'VOICE_TEXT' and not GetCVarBool('speechToText') then return true end
 
         -- Channel handling
-        if chatType == 'COMMUNITIES_CHANNEL' or ((strsub(chatType, 1, 7) == 'CHANNEL') and (chatType ~= 'CHANNEL_LIST') and ((NRSKNUI:NotSecretValue(arg1) and arg1 ~= 'INVITE') or (chatType ~= 'CHANNEL_NOTICE_USER'))) then
-            if NRSKNUI:NotSecretValue(arg1) and arg1 == 'WRONG_PASSWORD' then
+        if chatType == 'COMMUNITIES_CHANNEL' or ((strsub(chatType, 1, 7) == 'CHANNEL') and (chatType ~= 'CHANNEL_LIST') and ((not issecretvalue(arg1) and arg1 ~= 'INVITE') or (chatType ~= 'CHANNEL_NOTICE_USER'))) then
+            if not issecretvalue(arg1) and arg1 == 'WRONG_PASSWORD' then
                 local _, popup = _G.StaticPopup_Visible('CHAT_CHANNEL_PASSWORD')
                 if popup and strupper(popup.data) == strupper(arg9) then
                     return true
@@ -390,7 +391,7 @@ function CMH:ChatFrame_MessageEventHandler(frame, event, arg1, arg2, arg3, arg4,
             end
 
             local found = false
-            if frame.channelList and NRSKNUI:NotSecretValue(arg9) then
+            if frame.channelList and not issecretvalue(arg9) then
                 for index, value in pairs(frame.channelList) do
                     if channelLength > strlen(value) then
                         local match = strupper(value) == strupper(arg9)
@@ -404,7 +405,7 @@ function CMH:ChatFrame_MessageEventHandler(frame, event, arg1, arg2, arg3, arg4,
                             infoType = 'CHANNEL' .. arg8
                             info = _G.ChatTypeInfo[infoType]
 
-                            if chatType == 'CHANNEL_NOTICE' and NRSKNUI:NotSecretValue(arg1) and arg1 == 'YOU_LEFT' then
+                            if chatType == 'CHANNEL_NOTICE' and not issecretvalue(arg1) and arg1 == 'YOU_LEFT' then
                                 frame.channelList[index] = nil
                                 if frame.zoneChannelList then frame.zoneChannelList[index] = nil end
                             end
@@ -424,7 +425,7 @@ function CMH:ChatFrame_MessageEventHandler(frame, event, arg1, arg2, arg3, arg4,
         local chatGroup = GetChatCategory and GetChatCategory(chatType) or chatType
         local chatTarget = self:FCFManager_GetChatTarget(chatGroup, arg2, arg8)
 
-        if chatTarget and NRSKNUI:NotSecretValue(chatTarget) and _G.FCFManager_ShouldSuppressMessage then
+        if chatTarget and not issecretvalue(chatTarget) and _G.FCFManager_ShouldSuppressMessage then
             local success, shouldSuppress = pcall(_G.FCFManager_ShouldSuppressMessage, frame, chatGroup, chatTarget)
             if success and shouldSuppress then
                 return true
@@ -432,7 +433,7 @@ function CMH:ChatFrame_MessageEventHandler(frame, event, arg1, arg2, arg3, arg4,
         end
 
         -- Whisper filtering
-        if not isProtected and (chatGroup == 'WHISPER' or chatGroup == 'BN_WHISPER') and NRSKNUI:NotSecretValue(arg2) then
+        if not isProtected and (chatGroup == 'WHISPER' or chatGroup == 'BN_WHISPER') and not issecretvalue(arg2) then
             local nameLower = strlower(arg2)
             if frame.privateMessageList and not frame.privateMessageList[nameLower] then
                 return true
@@ -444,7 +445,7 @@ function CMH:ChatFrame_MessageEventHandler(frame, event, arg1, arg2, arg3, arg4,
         -- System messages for dedicated whisper windows
         if frame.privateMessageList then
             if chatGroup == 'SYSTEM' then
-                local msg = NRSKNUI:NotSecretValue(arg1) and strlower(arg1)
+                local msg = not issecretvalue(arg1) and strlower(arg1)
                 local found = false
                 if msg then
                     for playerName in pairs(frame.privateMessageList) do
@@ -459,7 +460,7 @@ function CMH:ChatFrame_MessageEventHandler(frame, event, arg1, arg2, arg3, arg4,
                 end
 
                 if not found then return true end
-            elseif not isProtected and (chatGroup == 'BN_INLINE_TOAST_ALERT' or chatGroup == 'BN_WHISPER_PLAYER_OFFLINE') and NRSKNUI:NotSecretValue(arg2) then
+            elseif not isProtected and (chatGroup == 'BN_INLINE_TOAST_ALERT' or chatGroup == 'BN_WHISPER_PLAYER_OFFLINE') and not issecretvalue(arg2) then
                 local nameLower = strlower(arg2)
                 if not frame.privateMessageList[nameLower] then return true end
             end
@@ -478,12 +479,12 @@ function CMH:ChatFrame_MessageEventHandler(frame, event, arg1, arg2, arg3, arg4,
         elseif strsub(chatType, 1, 10) == 'BG_SYSTEM_' then
             frame:AddMessage(arg1, info.r, info.g, info.b, info.id)
         elseif strsub(chatType, 1, 11) == 'ACHIEVEMENT' then
-            if NRSKNUI:NotSecretValue(arg1) and NRSKNUI:NotSecretValue(arg2) then
+            if not issecretvalue(arg1) and not issecretvalue(arg2) then
                 frame:AddMessage(format(arg1, self:GetPlayerLink(arg2, format('[%s]', coloredName or arg2))), info.r,
                     info.g, info.b, info.id)
             end
         elseif strsub(chatType, 1, 18) == 'GUILD_ACHIEVEMENT' then
-            if NRSKNUI:NotSecretValue(arg1) and NRSKNUI:NotSecretValue(arg2) then
+            if not issecretvalue(arg1) and not issecretvalue(arg2) then
                 frame:AddMessage(format(arg1, self:GetPlayerLink(arg2, format('[%s]', coloredName or arg2))), info.r,
                     info.g, info.b, info.id)
             end
@@ -492,11 +493,11 @@ function CMH:ChatFrame_MessageEventHandler(frame, event, arg1, arg2, arg3, arg4,
             local message = pingFormat and (format(pingFormat, arg2 or UNKNOWN) .. (arg1 or '')) or arg1
             frame:AddMessage(message, info.r, info.g, info.b, info.id)
         elseif chatType == 'IGNORED' then
-            if NRSKNUI:NotSecretValue(arg2) then
+            if not issecretvalue(arg2) then
                 frame:AddMessage(format(_G.CHAT_IGNORED, arg2), info.r, info.g, info.b, info.id)
             end
         elseif chatType == 'FILTERED' then
-            if NRSKNUI:NotSecretValue(arg2) then
+            if not issecretvalue(arg2) then
                 frame:AddMessage(format(_G.CHAT_FILTERED, arg2), info.r, info.g, info.b, info.id)
             end
         elseif chatType == 'RESTRICTED' then
@@ -509,7 +510,7 @@ function CMH:ChatFrame_MessageEventHandler(frame, event, arg1, arg2, arg3, arg4,
                 frame:AddMessage(arg1, info.r, info.g, info.b, info.id)
             end
         elseif chatType == 'CHANNEL_NOTICE_USER' then
-            local globalstring = NRSKNUI:NotSecretValue(arg1) and
+            local globalstring = not issecretvalue(arg1) and
                 (_G['CHAT_' .. arg1 .. '_NOTICE_BN'] or _G['CHAT_' .. arg1 .. '_NOTICE'])
             if not globalstring then return true end
 
@@ -525,7 +526,7 @@ function CMH:ChatFrame_MessageEventHandler(frame, event, arg1, arg2, arg3, arg4,
                 frame:AddMessage(_G.CHAT_MSG_BLOCK_CHAT_CHANNEL_INVITE, info.r, info.g, info.b, info.id)
             end
         elseif chatType == 'CHANNEL_NOTICE' then
-            if NRSKNUI:IsSecretValue(arg1) then
+            if issecretvalue(arg1) then
                 return true
             else
                 local globalstring = _G['CHAT_' .. arg1 .. '_NOTICE_TRIAL'] or _G['CHAT_' .. arg1 .. '_NOTICE_BN'] or
@@ -538,11 +539,11 @@ function CMH:ChatFrame_MessageEventHandler(frame, event, arg1, arg2, arg3, arg4,
                     info.id, accessID, typeID)
             end
         elseif chatType == 'BN_INLINE_TOAST_ALERT' then
-            local globalstring = NRSKNUI:NotSecretValue(arg1) and _G['BN_INLINE_TOAST_' .. arg1]
+            local globalstring = not issecretvalue(arg1) and _G['BN_INLINE_TOAST_' .. arg1]
             if not globalstring then return true end
 
             local message
-            local arg2Safe = NRSKNUI:NotSecretValue(arg2) and arg2 or UNKNOWN
+            local arg2Safe = not issecretvalue(arg2) and arg2 or UNKNOWN
             if arg1 == 'FRIEND_REQUEST' then
                 message = globalstring
             elseif arg1 == 'FRIEND_PENDING' then
@@ -561,16 +562,16 @@ function CMH:ChatFrame_MessageEventHandler(frame, event, arg1, arg2, arg3, arg4,
 
             frame:AddMessage(message, info.r, info.g, info.b, info.id)
         elseif chatType == 'BN_INLINE_TOAST_BROADCAST' then
-            if NRSKNUI:NotSecretValue(arg1) and arg1 ~= '' then
+            if not issecretvalue(arg1) and arg1 ~= '' then
                 if RemoveNewlines then arg1 = RemoveNewlines(RemoveExtraSpaces(arg1)) end
 
-                local arg2Safe = NRSKNUI:NotSecretValue(arg2) and arg2 or UNKNOWN
+                local arg2Safe = not issecretvalue(arg2) and arg2 or UNKNOWN
                 local linkDisplayText = format('[%s]', arg2Safe)
                 local playerLink = self:GetBNPlayerLink(arg2Safe, linkDisplayText, arg13, arg11, chatGroup, 0)
                 frame:AddMessage(format(_G.BN_INLINE_TOAST_BROADCAST, playerLink, arg1), info.r, info.g, info.b, info.id)
             end
         elseif chatType == 'BN_INLINE_TOAST_BROADCAST_INFORM' then
-            if NRSKNUI:NotSecretValue(arg1) and arg1 ~= '' then
+            if not issecretvalue(arg1) and arg1 ~= '' then
                 frame:AddMessage(_G.BN_INLINE_TOAST_BROADCAST_INFORM,
                     info.r, info.g, info.b, info.id)
             end

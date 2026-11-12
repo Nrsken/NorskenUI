@@ -18,7 +18,7 @@ local GROUP_KINDS = { 'Buffs', 'Debuffs', 'Defensives' }
 ---@param cfg table
 ---@return number
 local function PreviewCount(cfg)
-    return min(cfg.maxFrameCount * NRSKNUI:GetTriggerBranchCount(cfg.Trigger), cfg.previewLimit)
+    return min(cfg.maxFrameCount * #NRSKNUI:GetTriggerBranches(cfg.Trigger), cfg.previewLimit)
 end
 
 ---Get the configuration table for a container, derived from the unit's aura config and the general unit frame config.

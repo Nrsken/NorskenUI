@@ -28,9 +28,9 @@ local function BuildGeneralSettingsTab(page, db)
     local overrideKeyRow = overrideCard:Row(inforRowHeight, 0)
     overrideKeyRow:Text(nil, {
         text = L['This key is used to temporarily show: '] .. '\n' ..
-            NRSKNUI:ColorTextByTheme('  • ') .. L['Tooltips in combat'] .. '\n' ..
-            NRSKNUI:ColorTextByTheme('  • ') .. L['Mount tooltips on mounted players'] .. '\n' ..
-            NRSKNUI:ColorTextByTheme('  • ') .. L['Aura container spell IDs while holding the key.'],
+            GUI:ColorText('  • ') .. L['Tooltips in combat'] .. '\n' ..
+            GUI:ColorText('  • ') .. L['Mount tooltips on mounted players'] .. '\n' ..
+            GUI:ColorText('  • ') .. L['Aura container spell IDs while holding the key.'],
         width = 0.5,
         tooltip = L['The key that must be held down to temporarily show tooltips while in combat.'],
         height = inforRowHeight,

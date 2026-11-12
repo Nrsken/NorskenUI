@@ -19,9 +19,9 @@ local function BuildTab(page, db)
         height = textRowSize,
         autoHeight = true,
         bgMode = 'hide',
-        text = NRSKNUI:ColorTextByTheme('• ') ..
+        text = GUI:ColorText('• ') ..
             L['Copies SpellID, ItemID, AuraID, MacroID and Unitnames on mouseover'] .. '\n' ..
-            NRSKNUI:ColorTextByTheme('• ') .. L['Limited functionality in certain environments because of secret values.'],
+            GUI:ColorText('• ') .. L['Limited functionality in certain environments because of secret values.'],
         conditions = { 'all' },
 
     })

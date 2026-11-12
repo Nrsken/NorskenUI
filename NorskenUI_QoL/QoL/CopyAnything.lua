@@ -193,7 +193,7 @@ function CopyAnything:TryCopy(key)
 
     if copyId then
         lastCopyTime = GetTime()
-        NRSKNUI:CreateCopyDialog(copyName, tostring(copyId))
+        NRSKNUI.GUI:CopyDialog(copyName, tostring(copyId))
         return true
     end
     return false

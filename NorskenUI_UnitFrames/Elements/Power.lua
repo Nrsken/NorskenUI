@@ -6,6 +6,7 @@ local UF = NRSKNUI:GetModule('UnitFrames')
 local CreateFrame = CreateFrame
 local UnitClass = UnitClass
 local pairs, ipairs = pairs, ipairs
+local issecretvalue = issecretvalue
 
 local NO_POWER = UF.NoPower
 
@@ -40,7 +41,7 @@ local function PassesFilter(unit, pDB)
     if not anyClass then return true end
 
     local _, class = UnitClass(unit)
-    return NRSKNUI:NotSecretValue(class) and pDB.Classes[class] == true
+    return not issecretvalue(class) and pDB.Classes[class] == true
 end
 
 ---Called from both elements, as their Configure order is not fixed.
@@ -112,7 +113,7 @@ end
 local function BuildPower(self)
     -- Power bar background frame
     local powerBackground = CreateFrame('Frame', nil, self)
-    powerBackground:NCCreateBackdrop(true)
+    powerBackground:NCCreateBackdrop()
     self.powerBackground = powerBackground
 
     -- Power bar border frame

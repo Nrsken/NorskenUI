@@ -58,7 +58,7 @@ function NRSKNUI:OnEnable()
     self:SetUIScale()
 
     if self.db.profile.Minimap.hideMessage ~= true then
-        self:Print(format(L['%s to open the configuration window.'], self:ColorTextByTheme('/nui')))
+        self:Print(format(L['%s to open the configuration window.'], GUI:ColorText('/nui')))
     end
     if profilesDiffered then
         self:Print(L['Fonts, textures and colors now apply to every profile. Yours differed, so check them in Global Settings.'])

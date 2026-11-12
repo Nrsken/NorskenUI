@@ -48,7 +48,7 @@ function MissingBuffs:GetFlyoutBackdrop()
 
     -- Only a backdrop behind the buttons, never their parent or anchor, so it stays unprotected.
     local backdrop = CreateFrame('Frame', BACKDROP_NAME, UIParent)
-    backdrop:NCCreateBackdrop(true)
+    backdrop:NCCreateBackdrop()
     backdrop:SetBackgroundColor(0, 0, 0, 0)
     backdrop:SetScript('OnHide', function() self:CloseFlyout() end)
     backdrop:Hide()

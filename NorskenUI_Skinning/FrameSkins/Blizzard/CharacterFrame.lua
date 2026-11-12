@@ -286,6 +286,7 @@ local function TitleSearch(S)
     frame:NCSetSize(scrollBox:GetWidth(), 24)
     frame:NCSetPoint('TOPLEFT', scrollParent, 'TOPLEFT', 4, 0)
     frame:NCCreateBackdrop()
+    frame:NCAddBorders(1)
     frame:SetBackgroundColor(color[1], color[2], color[3], color[4])
 
     local db = Skinning.db

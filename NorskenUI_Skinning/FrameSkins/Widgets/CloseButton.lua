@@ -6,6 +6,7 @@ local Skinning = NRSKNUI:GetModule('Skinning')
 local Mixin = Mixin
 local math_max = math.max
 local math_rad = math.rad
+local issecretvalue = issecretvalue
 
 local CROSS_TEXTURE = NRSKNUI.Media.GUITextures .. 'NorskenCustomCrossv3.png'
 
@@ -44,7 +45,7 @@ function Skinning:HandleCloseButton(button, relativeTo, xOffset, yOffset, size)
 
     if not size then
         local width = button:GetWidth()
-        size = NRSKNUI:NotSecretValue(width) and math_max(8, width * 0.8) or 8
+        size = not issecretvalue(width) and math_max(8, width * 0.8) or 8
     end
 
     local cross = button:CreateTexture(nil, 'OVERLAY')

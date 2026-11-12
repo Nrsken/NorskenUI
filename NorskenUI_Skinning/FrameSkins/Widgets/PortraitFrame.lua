@@ -12,6 +12,7 @@ local tonumber = tonumber
 local tinsert = table.insert
 local CreateFrame = CreateFrame
 local hooksecurefunc = hooksecurefunc
+local issecretvalue = issecretvalue
 local SetPortraitTexture = SetPortraitTexture
 
 local LOWER_RIGHT_VERTEX = LOWER_RIGHT_VERTEX
@@ -34,7 +35,7 @@ Skinning.PortraitTabSize = {
 ---@field NUITab Frame Everything that only exists while there is a portrait
 ---@field NUITabSize number
 ---@field NUIOwner Frame The skinned window, whose content the tab has to clear
----@field NUIIcon Frame & PublicBorderMixin
+---@field NUIIcon Frame & PublicBackdropMixin
 ---@field NUIIconTexture Texture
 ---@field NUIFills Texture[]
 ---@field NUILines (Texture|Line)[]
@@ -64,7 +65,7 @@ local function GetTopLevel(top, strata, skip, ...)
         local child = select(i, ...)
         if child ~= skip and not child:IsForbidden() then
             local childStrata, level = child:GetFrameStrata(), child:GetFrameLevel()
-            if NRSKNUI:NotSecretValue(childStrata) and childStrata == strata and NRSKNUI:NotSecretValue(level) then
+            if not issecretvalue(childStrata) and childStrata == strata and not issecretvalue(level) then
                 if level > top then top = level end
                 top = GetTopLevel(top, strata, skip, child:GetChildren())
             end
@@ -76,7 +77,7 @@ end
 function HeaderMixin:NUIRaiseTab()
     local owner = self.NUIOwner
     local strata = owner:GetFrameStrata()
-    if not NRSKNUI:NotSecretValue(strata) then return end
+    if issecretvalue(strata) then return end
 
     self.NUITab:SetFrameLevel(GetTopLevel(self:GetFrameLevel(), strata, self:GetParent(), owner:GetChildren()) + 1)
 end
@@ -112,7 +113,7 @@ hooksecurefunc('SetPortraitTexture', function(texture, unit)
     if not header then return end
 
     -- Secret tokens only work from untainted code; hide rather than keep the last unit's face.
-    if NRSKNUI:IsSecretValue(unit) then
+    if issecretvalue(unit) then
         header:NUISetIconShown(false)
         return
     end
@@ -204,7 +205,7 @@ local function BuildTab(header, tab, size)
     icon:NCSetPoint('TOPLEFT', header, 'TOPLEFT', pad, -pad)
     icon:NCSetSize(size - pad * 2)
     icon:NCAddBorders()
-    header.NUIIcon = icon --[[@as Frame & PublicBorderMixin]]
+    header.NUIIcon = icon --[[@as Frame & PublicBackdropMixin]]
 
     local iconTexture = icon:CreateTexture(nil, 'ARTWORK')
     iconTexture:NCSetPoint('TOPLEFT', icon, 'TOPLEFT', 1, -1)

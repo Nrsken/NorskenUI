@@ -3,7 +3,7 @@ local NRSKNUI = _G.NorskenUI
 local L = NRSKNUI.Libs.AL
 local GUI = NRSKNUI.GUI
 local Theme = NRSKNUI.Theme
-local Shared = NRSKNUI.GUISharedPages
+local SharedPages = NRSKNUI.GUISharedPages
 local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
 
@@ -83,7 +83,7 @@ local function BuildUIScalePage(page)
     })
 end
 
-Shared:RegisterGlobalPage(GUI, NRSKNUI, function(itemKey) NRSKNUI.GUIFrame:ShowGlobalSettings(itemKey) end, {
+SharedPages:RegisterGlobalPage(GUI, NRSKNUI, function(itemKey) NRSKNUI.GUIFrame:ShowGlobalSettings(itemKey) end, {
     {
         key = 'globalUIScale',
         text = L['UI Scale'],

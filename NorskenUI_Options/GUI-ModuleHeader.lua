@@ -141,7 +141,7 @@ end
 local function Remove(role)
     local sets = PM:GetRoleSets(module)
     sets[role] = nil
-    NRSKNUI:CreatePrompt({
+    GUI:Prompt({
         title = format(L['Remove the %s settings?'], ROLE_NAMES[role]),
         text = format(L['%s specs go back to the %s settings.'], ROLE_NAMES[role], TabName(sets, false)),
         onAccept = function()
@@ -219,7 +219,7 @@ local function Reset()
     end
 
     if not next(sets) then
-        NRSKNUI:CreatePrompt({
+        GUI:Prompt({
             title = L['Reset Module'],
             text = format(L['Reset %s settings to defaults?'], moduleName),
             onAccept = function() Accept(false) end,
@@ -231,7 +231,7 @@ local function Reset()
 
     -- with role sets the reset can stop at the set on screen or take the whole module back to one set
     local shown = TabName(sets, PM:GetShownRole(module) or false)
-    NRSKNUI:CreatePrompt({
+    GUI:Prompt({
         title = L['Reset Module'],
         text = format(L['Reset only the %s settings for %s, or everything including the role settings?'], shown, moduleName),
         width = 360,

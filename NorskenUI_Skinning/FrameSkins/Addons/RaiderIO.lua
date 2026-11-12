@@ -321,7 +321,7 @@ local function SkinBuildsFrame(frame)
 
     local feedback = FindFeedbackFrame(frame)
     if feedback then
-        feedback:NCStripTextures('Keyed', nil, true)
+        feedback:NCStripTextures('Keyed', 'Alpha')
         Skinning:CreatePanelBackdrop(feedback)
     end
 end

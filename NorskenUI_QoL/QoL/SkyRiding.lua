@@ -68,7 +68,7 @@ end
 local function SetRowCount(row, count)
     for i = #row.pills + 1, count do
         local pill = CreateFrame('StatusBar', nil, row)
-        pill:NCCreateBackdrop(true, 0)
+        pill:NCCreateBackdrop(0)
         pill:NCAddBorders()
         pill:NCDisablePixelSnap()
         row.pills[i] = pill

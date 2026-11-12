@@ -93,7 +93,7 @@ local function BuildSQWCVarSettingsTab(page, db)
 
     local infoHeight = 70
     local infoRow = card:Row(infoHeight, 0)
-    infoRow:Text(NRSKNUI:ColorTextByTheme(L['Learn More']), {
+    infoRow:Text(GUI:ColorText(L['Learn More']), {
         width = 0.65,
         text =
         L["The spell queue window determines how early you can\nqueue your next ability before your current cast finishes.\nVisit |cff8788EEXerwo|r's maxroll guide for more information."],
@@ -105,7 +105,7 @@ local function BuildSQWCVarSettingsTab(page, db)
         width = 0.35,
         height = 36,
         callback = function()
-            NRSKNUI:CreateCopyDialog(
+            GUI:CopyDialog(
                 L['Spell Queue Window Guide'],
                 'https://maxroll.gg/wow/resources/spell-queue-window',
                 L['Copy to clipboard by pressing CTRL + C']

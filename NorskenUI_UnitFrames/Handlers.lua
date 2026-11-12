@@ -20,9 +20,11 @@ local wipe = wipe
 local ipairs = ipairs
 local pairs = pairs
 local next = next
+local issecretvalue = issecretvalue
 
 local IsSpellInRange = C_Spell.IsSpellInRange
 local IsSpellInSpellBook = C_SpellBook.IsSpellInSpellBook
+local ShouldUnitIdentityBeSecret = C_Secrets.ShouldUnitIdentityBeSecret
 
 ---Prime the smoothing function for a health or power element.
 ---@param element table Health element
@@ -113,7 +115,7 @@ local function UnitSpellRange(unit, spells)
 
     for spellID in pairs(spells) do
         local inRange = IsSpellInRange(spellID, unit)
-        if NRSKNUI:IsSecretValue(inRange) then
+        if issecretvalue(inRange) then
             return inRange      -- secret result, pass through
         elseif inRange then
             return true         -- at least one spell is in range
@@ -130,7 +132,7 @@ end
 local function UnitInSpellsRange(unit, category)
     local spells = activeSpells[category]
     local inRange = not next(spells) and 1 or UnitSpellRange(unit, spells) -- No known spells for this category: 1 means "assume in range unless interact says otherwise".
-    if NRSKNUI:IsSecretValue(inRange) then
+    if issecretvalue(inRange) then
         return inRange
     end
 
@@ -144,14 +146,14 @@ end
 ---Friendly units: UnitInRange first, then friendly spells.
 local function FriendlyRangeCheck(unit, frame)
     -- UnitPhaseReason and UnitInRaid return secrets once the unit's identity is restricted.
-    local secret = NRSKNUI:IsSecretUnit(unit)
+    local secret = ShouldUnitIdentityBeSecret(unit)
 
     if not secret and UnitIsPlayer(unit) and UnitPhaseReason(unit) then
         return false
     end
 
     local inRange, wasChecked = UnitInRange(unit)
-    if NRSKNUI:IsSecretValue(wasChecked) or NRSKNUI:IsSecretValue(inRange) then
+    if issecretvalue(wasChecked) or issecretvalue(inRange) then
         -- Group members hand the secret result to SetAlphaFromBoolean via the stash.
         if UnitInParty(unit) or (not secret and UnitInRaid(unit)) then
             frame.RangeIsInRange = inRange
@@ -186,7 +188,7 @@ function UF.UpdateRangeAlpha(frame, unit)
     -- Dead or ghost units, check for a resurrect spell in range.
     if UnitIsDeadOrGhost(unit) then
         inRange = UnitInSpellsRange(unit, 'resurrect')
-        if not NRSKNUI:IsSecretValue(inRange) then
+        if not issecretvalue(inRange) then
             inRange = inRange == true
         end
         -- Enemy units, check for an enemy spell in range.
@@ -195,7 +197,7 @@ function UF.UpdateRangeAlpha(frame, unit)
     else
         -- Friendly units, check for a friendly spell in range, then fall back to CheckInteractDistance if out of combat.
         local isPet = UnitIsUnit(unit, 'pet')
-        if not NRSKNUI:IsSecretValue(isPet) and isPet then
+        if not issecretvalue(isPet) and isPet then
             inRange = UnitInSpellsRange(unit, 'pet')
         elseif UnitIsConnected(unit) then
             inRange = FriendlyRangeCheck(unit, frame)
@@ -205,10 +207,10 @@ function UF.UpdateRangeAlpha(frame, unit)
     end
 
     -- Route any secret result through the secret-safe setter.
-    if NRSKNUI:IsSecretValue(frame.RangeIsInRange) then
+    if issecretvalue(frame.RangeIsInRange) then
         frame:SetAlphaFromBoolean(frame.RangeIsInRange, inAlpha, outAlpha)
         return
-    elseif NRSKNUI:IsSecretValue(inRange) then
+    elseif issecretvalue(inRange) then
         frame:SetAlphaFromBoolean(inRange, inAlpha, outAlpha)
         return
     end

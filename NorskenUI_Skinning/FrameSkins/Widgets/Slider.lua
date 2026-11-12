@@ -91,7 +91,8 @@ function Skinning:HandleSlider(slider, isScrollBar)
         return
     end
 
-    slider:NCCreateBackdrop(false)
+    slider:NCCreateBackdrop()
+    slider:NCAddBorders(1)
 
     if thumb then
         thumb:SetSize(vertical and THUMB_THICKNESS or THUMB_LENGTH, vertical and THUMB_LENGTH or THUMB_THICKNESS)

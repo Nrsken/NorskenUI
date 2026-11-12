@@ -814,40 +814,6 @@ local function SetButtonFlyoutDirection(button, direction)
     button:SetAttribute("flyoutDirection", direction)
 end
 
--- Calculate edge-relative anchor point and offsets from frame position
--- This ensures bars stay in the same relative screen position across resolutions
-local function CalculateEdgePosition(frame)
-    local centerX, centerY = UIParent:GetCenter()
-    local screenWidth = UIParent:GetRight()
-    local frameX, frameY = frame:GetCenter()
-
-    if not frameX or not frameY then
-        return "BOTTOM", 0, 0
-    end
-
-    local point = "BOTTOM"
-    local x, y
-
-    if frameY >= centerY then
-        point = "TOP"
-        y = -(UIParent:GetTop() - frame:GetTop())
-    else
-        y = frame:GetBottom()
-    end
-
-    if frameX >= (screenWidth * 2 / 3) then
-        point = point .. "RIGHT"
-        x = frame:GetRight() - screenWidth
-    elseif frameX <= (screenWidth / 3) then
-        point = point .. "LEFT"
-        x = frame:GetLeft()
-    else
-        x = frameX - centerX
-    end
-
-    return point, math.floor(x + 0.5), math.floor(y + 0.5)
-end
-
 -- Apply edge-relative position to a frame
 -- Uses BOTTOMLEFT anchoring internally for pixel-perfect positioning
 local function ApplyEdgePosition(frame, anchorPoint, xOffset, yOffset)

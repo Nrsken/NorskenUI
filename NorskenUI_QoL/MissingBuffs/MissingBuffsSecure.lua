@@ -67,7 +67,7 @@ local function OnMainEnter(button)
 
     GameTooltip:SetOwner(button, 'ANCHOR_NONE')
     GameTooltip:SetPoint('BOTTOMRIGHT', _G.NRSKNUI_TooltipAnchorFrame or GameTooltipDefaultContainer)
-    GameTooltip:AddLine(NRSKNUI:ColorTextByTheme(title))
+    GameTooltip:AddLine(NRSKNUI.GUI:ColorText(title))
     GameTooltip:AddLine(action, 0.70, 0.70, 0.70)
     if entry.itemList then
         GameTooltip:AddLine(format(L['%s-Click to pick another'], MODIFIER_TEXT[MissingBuffs.db.FlyoutModifier]), 0.70, 0.70, 0.70)

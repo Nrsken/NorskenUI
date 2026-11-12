@@ -117,7 +117,7 @@ local function OnIconEnter(icon)
 
     GameTooltip:SetOwner(icon, 'ANCHOR_NONE')
     GameTooltip:SetPoint('BOTTOMRIGHT', _G.NRSKNUI_TooltipAnchorFrame or GameTooltipDefaultContainer)
-    GameTooltip:AddLine(NRSKNUI:ColorTextByTheme(MissingBuffs.GetEntryName(result.entry)))
+    GameTooltip:AddLine(NRSKNUI.GUI:ColorText(MissingBuffs.GetEntryName(result.entry)))
     GameTooltip:AddLine(L['None in your bags'], 0.70, 0.70, 0.70)
     GameTooltip:Show()
     MissingBuffs:SetTooltipIcon(result.icon)

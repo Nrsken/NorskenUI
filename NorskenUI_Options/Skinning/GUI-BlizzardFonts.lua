@@ -97,7 +97,7 @@ local function BuildBlizzardView(page)
 
     blizzCard:Separator()
 
-    blizzCard:Row(22, 0):Text(NRSKNUI:ColorTextByTheme(L['Blizzard Font Info']), {
+    blizzCard:Row(22, 0):Text(GUI:ColorText(L['Blizzard Font Info']), {
         width = 1,
         height = 22,
         autoHeight = true,

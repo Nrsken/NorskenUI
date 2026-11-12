@@ -3,6 +3,7 @@ local NRSKNUI = _G.NorskenUI
 ---@class GUIFrame
 NRSKNUI.GUIFrame = NRSKNUI.GUIFrame or {}
 local L = NRSKNUI.Libs.AL
+local SharedPages = NRSKNUI.GUISharedPages
 
 -- Dropdown option lists every tab shares. Dropdown.lua reads value or key, so value serves both.
 NRSKNUI.GrowthOptions = {
@@ -106,10 +107,9 @@ NRSKNUI.GUIOpen = false
 
 ---@param itemKey string? the item to open on
 function window:ShowGlobalSettings(itemKey)
-    self:ShowPage(NRSKNUI.GUISharedPages.GLOBAL_PAGE, itemKey and { itemKey = itemKey } or nil)
+    self:ShowPage(SharedPages.GLOBAL_PAGE, itemKey and { itemKey = itemKey } or nil)
 end
 
-local SharedPages = NRSKNUI.GUISharedPages
 window:AddHeaderButton(SharedPages:HeaderButton('close', function() window:Hide() end))
 window:AddHeaderButton(SharedPages:HeaderButton('home', function() window:ShowPage('homePage') end))
 window:AddHeaderButton(SharedPages:HeaderButton('global', function() window:ShowGlobalSettings() end))

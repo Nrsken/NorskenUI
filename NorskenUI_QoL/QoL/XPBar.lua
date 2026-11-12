@@ -63,7 +63,7 @@ function XPBar:CreateBar()
     coreFrame:SetRolesets('statusBars')
     coreFrame:NCSetSize(width, height)
     coreFrame:NCApplyPosition(self.db)
-    coreFrame:NCCreateBackdrop(true)
+    coreFrame:NCCreateBackdrop()
     coreFrame:EnableMouse(true) -- Enable mouse for tooltip.
 
     -- Rested Experience Bar

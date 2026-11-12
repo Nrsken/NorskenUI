@@ -219,7 +219,7 @@ end
 ---@param onRemoved? fun()
 function QuestTracker:PromptRemoveCharacter(character, onRemoved)
     local name = NRSKNUI:ColorTextByClass(character.name, character.classFile)
-    NRSKNUI:CreatePrompt({
+    NRSKNUI.GUI:Prompt({
         title = L['Remove Character'],
         text = format(L['Remove %s - %s from the Quest Tracker? Logging in on them adds them back.'], name, character.realm),
         acceptText = L['Remove'],

@@ -25,8 +25,8 @@ local function BuildGearView(page, db)
         width = 1,
         height = infoRowSize,
         bgMode = 'hide',
-        text = NRSKNUI:ColorTextByTheme('• ') .. L['Adds upgrade track letters to the character panel gear slots.'] .. '\n' ..
-            NRSKNUI:ColorTextByTheme('• ') .. L['Adds a bar next to the character tabs for socketing gems and applying enchants from your bags.'],
+        text = GUI:ColorText('• ') .. L['Adds upgrade track letters to the character panel gear slots.'] .. '\n' ..
+            GUI:ColorText('• ') .. L['Adds a bar next to the character tabs for socketing gems and applying enchants from your bags.'],
         conditions = { 'all' },
     })
 

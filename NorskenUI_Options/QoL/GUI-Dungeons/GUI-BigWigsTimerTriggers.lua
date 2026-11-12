@@ -270,7 +270,7 @@ local function NewTimerPrompt(pageId, groupKey)
     bossId = tonumber(bossId) or 0
     if not instanceId then return end
 
-    NRSKNUI:CreatePrompt({
+    GUI:Prompt({
         title = L['New Timer'],
         text = '',
         editBox = true,
@@ -312,7 +312,7 @@ local function ContextMenu(pageId)
             {
                 text = L['Rename'],
                 onClick = function()
-                    NRSKNUI:CreatePrompt({
+                    GUI:Prompt({
                         title = L['Rename Timer'],
                         text = trigger.Name,
                         editBox = true,
@@ -341,7 +341,7 @@ local function ContextMenu(pageId)
             {
                 text = L['Delete'],
                 onClick = function()
-                    NRSKNUI:CreatePrompt({
+                    GUI:Prompt({
                         title = L['Delete Timer'],
                         text = format(L["Delete the timer '%s'? This cannot be undone."], trigger.Name),
                         onAccept = function()
@@ -427,7 +427,7 @@ local function BuildSpellBrowser(page, instanceId, bossId, action)
 
                     local bossLabel = spell.bossNum and format(L['B%d %s'], spell.bossNum, spell.bossName) or spell.bossName
 
-                    c:Row(BOSS_HEADER_HEIGHT, 0):Text(NRSKNUI:ColorTextByTheme(bossLabel), {
+                    c:Row(BOSS_HEADER_HEIGHT, 0):Text(GUI:ColorText(bossLabel), {
                         width = 1,
                         height = BOSS_HEADER_HEIGHT,
                         bgMode = 'hide',
@@ -955,7 +955,7 @@ local function RegisterTriggerPage(pageId, kind, title)
         search = { title, L['BigWigs Timers'] },
         sidebar = {
             width = 260,
-            create = NRSKNUI.KajiGUI.CreateItemTree,
+            create = NRSKNUI.Kaji.CreateItemTree,
             locked = function() return not NRSKNUI.BigWigsTimers.db.Enabled end,
             items = TreeContent(kind),
             -- bands start open and remember closing, groups start folded and remember opening

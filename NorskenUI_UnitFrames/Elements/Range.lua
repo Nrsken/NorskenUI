@@ -6,6 +6,7 @@ local UF = NRSKNUI:GetModule('UnitFrames')
 local UnitIsConnected = UnitIsConnected
 local UnitInRange = UnitInRange
 local UnitExists = UnitExists
+local issecretvalue = issecretvalue
 
 ---Fade one group frame on the game's own range answer.
 ---@param frame oUF.UnitFrame
@@ -20,7 +21,7 @@ local function GroupRange(frame)
 
     local inRange, wasChecked = UnitInRange(unit)
 
-    if NRSKNUI:IsSecretValue(wasChecked) or NRSKNUI:IsSecretValue(inRange) then
+    if issecretvalue(wasChecked) or issecretvalue(inRange) then
         frame:SetAlphaFromBoolean(inRange, element.insideAlpha, element.outsideAlpha)
     elseif wasChecked then
         frame:SetAlpha(inRange and element.insideAlpha or element.outsideAlpha)

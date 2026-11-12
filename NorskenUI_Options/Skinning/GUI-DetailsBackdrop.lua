@@ -76,7 +76,7 @@ local function BuildSizeTab(page, index, bgDB)
                 return
             end
 
-            NRSKNUI:CreatePrompt({
+            GUI:Prompt({
                 title = L['Details Override'],
                 text = L['This will override your current Details sizing. Are you sure?'],
                 acceptText = L['Yes'],

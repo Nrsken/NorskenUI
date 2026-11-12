@@ -33,6 +33,7 @@ local strmatch = strmatch
 local time = time
 local GetRealmName = GetRealmName
 local wipe = wipe
+local issecretvalue = issecretvalue
 local UNKNOWN = UNKNOWN
 local BetterDate = (TimeUtil and TimeUtil.BetterDate) or BetterDate
 local AFK = AFK
@@ -173,7 +174,7 @@ local canChangeMessage = function(arg1, id)
 end
 
 function CHAT:MessageIsProtected(message)
-    if NRSKNUI:IsSecretValue(message) then return true end
+    if issecretvalue(message) then return true end
     return message and (message ~= gsub(message, "(:?|?)|K(.-)|k", canChangeMessage))
 end
 
@@ -1008,7 +1009,7 @@ function CHAT:OnFCFTab_UpdateColors(tab, selected)
         if selected then tab.Text:SetTextColor(1, 1, 1) end
 
         local name = GetChatWindowInfo(tab:GetID())
-        if name and NRSKNUI:NotSecretValue(name) then tab.Text:SetText(name) end
+        if name and not issecretvalue(name) then tab.Text:SetText(name) end
 
         tab:SetAlpha(1)
     else
@@ -1022,13 +1023,13 @@ function CHAT:OnFCFTab_UpdateColors(tab, selected)
         local chatTarget = chat.chatTarget
         local whisper = tab.conversationIcon and chatTarget
 
-        if whisper and not tab.whisperName and NRSKNUI:NotSecretValue(name) then
+        if whisper and not tab.whisperName and not issecretvalue(name) then
             local strippedName = self:StripMyRealm(name)
             tab.whisperName = gsub(strippedName, "([%S]-)%-[%S]+", "%1|cFF999999*|r")
         end
 
         local nameText = tab.whisperName or name
-        local nameTextNotSecret = NRSKNUI:NotSecretValue(nameText)
+        local nameTextNotSecret = not issecretvalue(nameText)
 
         if selected then
             if nameTextNotSecret then
@@ -1058,7 +1059,7 @@ function CHAT:OnFCFTab_UpdateColors(tab, selected)
         if whisper then
             if nameTextNotSecret and not selected then tab:SetText(nameText) end
 
-            local nameLower = not tab.classColor and NRSKNUI:NotSecretValue(name) and strlower(name)
+            local nameLower = not tab.classColor and not issecretvalue(name) and strlower(name)
             local classMatch = nameLower and self.ClassNames[nameLower]
             if classMatch then tab.classColor = NRSKNUI:GetClassColor(classMatch) end
 
@@ -1200,7 +1201,7 @@ local GUID_CACHE_MAX = 500
 
 function CHAT:StripMyRealm(name)
     if not name then return name end
-    if NRSKNUI:IsSecretValue(name) then return name end
+    if issecretvalue(name) then return name end
     local myRealm = GetRealmName and GetRealmName()
     if myRealm then
         myRealm = gsub(myRealm, " ", "")
@@ -1278,7 +1279,7 @@ local function EditStoredMessage(_, entry)
 end
 
 function CHAT:OnGetPlayerInfoByGUID(guid)
-    if NRSKNUI:IsSecretValue(guid) then return end
+    if issecretvalue(guid) then return end
 
     local data = self.GuidCache[guid]
     if data then
@@ -1304,10 +1305,10 @@ function CHAT:OnGetPlayerInfoByGUID(guid)
         nameWithRealm = nameWithRealm,
     }
 
-    if name and not NRSKNUI:IsSecretValue(name) then
+    if name and not issecretvalue(name) then
         self.ClassNames[strlower(name)] = englishClass
     end
-    if nameWithRealm and not NRSKNUI:IsSecretValue(nameWithRealm) then
+    if nameWithRealm and not issecretvalue(nameWithRealm) then
         self.ClassNames[strlower(nameWithRealm)] = englishClass
     end
 

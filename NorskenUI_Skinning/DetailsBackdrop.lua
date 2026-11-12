@@ -129,7 +129,8 @@ function DBG:ApplyBackdrop(index)
     local backdrop = self.backdrops[index]
     if not backdrop then
         backdrop = CreateFrame('Frame', 'NRSKNUI_DetailsBg' .. index, UIParent)
-        backdrop:NCCreateBackdrop(nil, 0)
+        backdrop:NCCreateBackdrop(0)
+        backdrop:NCAddBorders()
         backdrop:SetFrameLevel(1)
         self.backdrops[index] = backdrop
     end

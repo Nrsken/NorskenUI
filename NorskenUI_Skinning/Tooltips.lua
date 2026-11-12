@@ -310,6 +310,7 @@ local function SkinQueueStatus()
     -- Hide original border & background and create our own
     queueFrame:NCBanish('NineSlice')
     queueFrame:NCCreateBackdrop()
+    queueFrame:NCAddBorders(1)
 
     skinnedFrames[#skinnedFrames + 1] = queueFrame
 
@@ -326,6 +327,7 @@ local function SetupSkinning(tooltip)
     -- Hide original border & background and create our own
     tooltip:NCBanish('NineSlice')
     tooltip:NCCreateBackdrop()
+    tooltip:NCAddBorders(1)
 
     skinnedFrames[#skinnedFrames + 1] = tooltip
 
@@ -335,6 +337,7 @@ local function SetupSkinning(tooltip)
     if tooltip.CompareHeader and not tooltip.CompareHeader:NCHasBackdrop() then
         tooltip.CompareHeader:NCStripTextures('Atlas', 'tooltip-compare-label')
         tooltip.CompareHeader:NCCreateBackdrop()
+        tooltip.CompareHeader:NCAddBorders(1)
         tooltip.CompareHeader:SetPoint('BOTTOMLEFT', tooltip, 'TOPLEFT', 0, -1)
     end
 

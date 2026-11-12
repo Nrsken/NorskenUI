@@ -7,6 +7,7 @@ local L = NRSKNUI.Libs.AL
 local _G = _G
 local pairs = pairs
 local tostring = tostring
+local canaccessvalue = canaccessvalue
 local max = math.max
 
 local vertexEnum = Enum.FontStringScaleAnimationMode.Vertex
@@ -135,7 +136,7 @@ local function StoreOriginalFontData(obj)
 
     local path, size, flags = obj:GetFont()
     if not path or not size then return end             -- Font object not yet realized
-    if not NRSKNUI:CanAccessValue(size) then return end -- Tainted by another addon, comparing it in FamilyOf would error
+    if not canaccessvalue(size) then return end -- Tainted by another addon, comparing it in FamilyOf would error
 
     -- Capture the native shadow too so hiding it stays fully reversible
     local sr, sg, sb, sa = obj:GetShadowColor()

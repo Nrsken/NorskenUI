@@ -100,9 +100,9 @@ local function BuildPage(page, db)
         height = infoRowSize,
         autoHeight = true,
         bgMode = 'hide',
-        text = NRSKNUI:ColorTextByTheme('• ') .. L['Status saves as you play, on every character.'] .. '\n' ..
-            NRSKNUI:ColorTextByTheme('• ') .. L['Right-click a quest in your log to track it.'] .. '\n' ..
-            NRSKNUI:ColorTextByTheme('• ') .. L['Only max level characters are listed.'],
+        text = GUI:ColorText('• ') .. L['Status saves as you play, on every character.'] .. '\n' ..
+            GUI:ColorText('• ') .. L['Right-click a quest in your log to track it.'] .. '\n' ..
+            GUI:ColorText('• ') .. L['Only max level characters are listed.'],
         conditions = { 'all' },
     })
 

@@ -317,14 +317,14 @@ local function BuildRuneforgeCard(page)
     header:Text('', {
         width = RUNE_NAME_WIDTH,
         height = RUNE_HEADER_HEIGHT,
-        text = NRSKNUI:ColorTextByTheme(L['Specialization']) .. '\n' .. L['Weapon'],
+        text = GUI:ColorText(L['Specialization']) .. '\n' .. L['Weapon'],
     })
     for _, column in ipairs(RUNEFORGE_COLUMNS) do
         header:Text('', {
             width = RUNE_COLUMN_WIDTH,
             height = RUNE_HEADER_HEIGHT,
             justify = 'CENTER',
-            text = NRSKNUI:ColorTextByTheme(column.specName) .. '\n' .. column.slotText,
+            text = GUI:ColorText(column.specName) .. '\n' .. column.slotText,
         })
     end
     card:Separator()
@@ -378,9 +378,9 @@ local function BuildBuffSettingsTab(page, entry, category, settings)
         autoHeight = true,
         bgMode = 'hide',
         text = concat({
-            NRSKNUI:ColorTextByTheme(L['Checks: ']) .. tracked,
-            NRSKNUI:ColorTextByTheme(L['Combat: ']) .. DescribeCombat(entry),
-            NRSKNUI:ColorTextByTheme(L['Click: ']) .. DescribeClick(entry),
+            GUI:ColorText(L['Checks: ']) .. tracked,
+            GUI:ColorText(L['Combat: ']) .. DescribeCombat(entry),
+            GUI:ColorText(L['Click: ']) .. DescribeClick(entry),
         }, '\n'),
     })
 
@@ -447,7 +447,7 @@ for _, groupPage in ipairs(GROUP_PAGES) do
         search = { L['Missing Buffs'], groupPage.text },
         sidebar = {
             width = 260,
-            create = NRSKNUI.KajiGUI.CreateItemTree,
+            create = NRSKNUI.Kaji.CreateItemTree,
             locked = function() return not NRSKNUI.MissingBuffs.db.Enabled end,
             items = TreeContent(groupPage),
             default = GENERAL,

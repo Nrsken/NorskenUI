@@ -342,7 +342,7 @@ GUI:RegisterPage('chat', {
 NRSKNUI.ModuleHeader:OnToggle('Chatv2', function(enabled)
     if enabled then return end
 
-    NRSKNUI:CreatePrompt({
+    GUI:Prompt({
         title = L['Chat Module Disabled'],
         text = L['The chat module has been disabled.'] .. '\n\n' ..
             L['A UI reload is recommended to fully restore the default chat.'],

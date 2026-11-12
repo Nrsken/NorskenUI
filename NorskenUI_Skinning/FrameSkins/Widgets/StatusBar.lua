@@ -63,7 +63,7 @@ function Skinning:HandleStatusBar(bar, keepColor)
 
     AlignBarParity(bar)
     -- Blizzard positions these bars (ScrollBox rows land on half pixels), so leave grid snapping on.
-    bar:NCAddBorders(true)
+    bar:NCAddBorders(nil, true)
     CentreBarText(bar)
 
     ---@cast bar StatusBar & SkinnedStatusBarMixin

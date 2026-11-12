@@ -8,6 +8,7 @@ local ipairs, pairs, next = ipairs, pairs, next
 local CreateFrame = CreateFrame
 local format = string.format
 local unpack = unpack
+local issecretvalue = issecretvalue
 local C_Timer, GetTime = C_Timer, GetTime
 local UnitExists, UnitIsDeadOrGhost = UnitExists, UnitIsDeadOrGhost
 local UnitInRaid, UnitIsGroupAssistant = UnitInRaid, UnitIsGroupAssistant
@@ -61,7 +62,7 @@ local function LeaderPostUpdate(element, isLeader)
     if not (unit and UnitInRaid(unit)) then return end
 
     local isAssist = UnitIsGroupAssistant(unit)
-    if NRSKNUI:NotSecretValue(isAssist) and isAssist then
+    if not issecretvalue(isAssist) and isAssist then
         element:SetTexture(ASSIST_TEXTURE)
         element:Show()
     end

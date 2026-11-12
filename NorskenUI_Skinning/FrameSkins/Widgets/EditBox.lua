@@ -5,6 +5,7 @@ local Skinning = NRSKNUI:GetModule('Skinning')
 
 local hooksecurefunc = hooksecurefunc
 local ipairs = ipairs
+local issecretvalue = issecretvalue
 local Mixin = Mixin
 local math_abs = math.abs
 local math_max = math.max
@@ -26,8 +27,8 @@ local SEARCH_ART_INSET = 4
 ---@return number? left, number? right, number? top, number? bottom
 local function SafeEdges(object)
     local l, r, t, b = object:GetLeft(), object:GetRight(), object:GetTop(), object:GetBottom()
-    if NRSKNUI:IsSecretValue(l) or NRSKNUI:IsSecretValue(r)
-        or NRSKNUI:IsSecretValue(t) or NRSKNUI:IsSecretValue(b) then
+    if issecretvalue(l) or issecretvalue(r)
+        or issecretvalue(t) or issecretvalue(b) then
         return
     end
     return l, r, t, b

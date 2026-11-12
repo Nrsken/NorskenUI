@@ -76,7 +76,7 @@ end
 
 ---@param groupKey string? the group it goes into
 local function CreateIndicatorPrompt(groupKey)
-    NRSKNUI:CreatePrompt({
+    GUI:Prompt({
         title = L['Create Indicator'],
         text = '',
         editBox = true,
@@ -106,7 +106,7 @@ end
 
 ---Make a group and move this indicator into it.
 local function CreateGroupPrompt(key)
-    NRSKNUI:CreatePrompt({
+    GUI:Prompt({
         title = L['Create New Group'],
         text = '',
         editBox = true,
@@ -132,7 +132,7 @@ local function DeleteIndicatorPrompt(key)
     local spec = AuraIndicators:GetSpec(key)
     if not spec then return end
 
-    NRSKNUI:CreatePrompt({
+    GUI:Prompt({
         title = L['Delete Indicator'],
         text = format(L["Delete the indicator '%s'? This cannot be undone."], spec.name or key),
         onAccept = function()
@@ -157,7 +157,7 @@ end
 ---@param title string
 ---@param text string
 local function ResetPrompt(keys, title, text)
-    NRSKNUI:CreatePrompt({
+    GUI:Prompt({
         title = title,
         text = text,
         onAccept = function()
@@ -433,7 +433,7 @@ GUI:RegisterPage(PAGE, {
     search = {},
     sidebar = {
         width = 260,
-        create = NRSKNUI.KajiGUI.CreateItemTree,
+        create = NRSKNUI.Kaji.CreateItemTree,
         items = TreeContent,
         -- the two bands start open and remember closing, every group starts folded and remembers opening
         onToggleExpanded = function(key, expanded)
@@ -803,7 +803,7 @@ function UF.GUIAuraIndicatorContext(unit)
                     return
                 end
 
-                NRSKNUI:CreatePrompt({
+                GUI:Prompt({
                     title = L['Paste Aura Indicators'],
                     text = format(L['Replace the %d aura indicators on %s with the %d copied from %s?'],
                         #placements, UnitLabel(unit), #clipboard.placements, from),

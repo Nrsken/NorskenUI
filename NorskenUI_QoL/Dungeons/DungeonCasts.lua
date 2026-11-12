@@ -121,7 +121,7 @@ end
 function DungeonCasts:CreateBar(index)
     local bar = CreateFrame('Frame', nil, self.group)
     bar:EnableMouse(false)
-    bar:NCCreateBackdrop(true)
+    bar:NCCreateBackdrop()
     bar:NCDisablePixelSnap()
     bar.key = 'bar' .. index
 

@@ -9,6 +9,7 @@ local pairs = pairs
 local ipairs = ipairs
 local select = select
 local tonumber = tonumber
+local issecretvalue = issecretvalue
 local mmax = math.max
 local GetTime = GetTime
 local UnitRace = UnitRace
@@ -161,7 +162,7 @@ end
 ---@return number?
 local function GetRemaining(aura)
     local expirationTime = aura.expirationTime
-    if NRSKNUI:IsSecretValue(expirationTime) or not expirationTime or expirationTime <= 0 then return nil end
+    if issecretvalue(expirationTime) or not expirationTime or expirationTime <= 0 then return nil end
     -- An aura lingers briefly past its expiration until the client removes it.
     return mmax(expirationTime - now, 0)
 end
@@ -196,7 +197,7 @@ end
 ---@return boolean? nil when the source cannot be read
 local function IsFromPlayer(aura)
     local fromPlayer = aura.isFromPlayerOrPlayerPet
-    if NRSKNUI:IsSecretValue(fromPlayer) then return nil end
+    if issecretvalue(fromPlayer) then return nil end
     return fromPlayer
 end
 
@@ -228,7 +229,7 @@ end
 local function IsPhased(unit)
     if not UnitIsVisible(unit) then return true end
     local reason = UnitPhaseReason(unit)
-    return NRSKNUI:NotSecretValue(reason) and reason ~= nil
+    return not issecretvalue(reason) and reason ~= nil
 end
 
 ---@param unit string
@@ -984,22 +985,22 @@ end
 ---@param updateInfo UnitAuraUpdateInfo?
 ---@return boolean
 function MissingBuffs:IsTrackedAuraUpdate(updateInfo)
-    if not updateInfo or NRSKNUI:IsSecretValue(updateInfo) then return false end
+    if not updateInfo or issecretvalue(updateInfo) then return false end
 
     local isFullUpdate = updateInfo.isFullUpdate
-    if NRSKNUI:NotSecretValue(isFullUpdate) and isFullUpdate then return true end
+    if not issecretvalue(isFullUpdate) and isFullUpdate then return true end
 
     local added = updateInfo.addedAuras
-    if added and NRSKNUI:NotSecretValue(added) then
+    if added and not issecretvalue(added) then
         for _, aura in ipairs(added) do
-            local spellID = NRSKNUI:NotSecretValue(aura) and aura.spellId
+            local spellID = not issecretvalue(aura) and aura.spellId
             if NRSKNUI:IsSafeValue(spellID) and self.trackedSpells[spellID] then return true end
         end
     end
 
     local instances = self.trackedInstances
     for _, list in ipairs({ updateInfo.removedAuraInstanceIDs, updateInfo.updatedAuraInstanceIDs }) do
-        if NRSKNUI:NotSecretValue(list) then
+        if not issecretvalue(list) then
             for _, instanceID in ipairs(list) do
                 if NRSKNUI:IsSafeValue(instanceID) and instances[instanceID] then return true end
             end

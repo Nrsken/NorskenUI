@@ -455,7 +455,7 @@ function CooldownStrings:PromptSync(name, onDone)
         return
     end
 
-    NRSKNUI:CreatePrompt({
+    NRSKNUI.GUI:Prompt({
         title = L['Sync from CDM'],
         text = format(L['Overwrite this backup with the "%s" layout as it is now? The saved string is replaced.'],
             self:LayoutName(name)),
@@ -576,7 +576,7 @@ function CooldownStrings:PromptRestore(name)
         return
     end
 
-    NRSKNUI:CreatePrompt({
+    NRSKNUI.GUI:Prompt({
         title = L['Restore to CDM'],
         text = existing
             and format(L['Replace the Cooldown Manager layout "%s" with this backup? Your UI reloads straight after.'], self:LayoutName(name))
@@ -634,7 +634,8 @@ function CooldownStrings:CreatePanel()
     panel:SetFrameStrata('DIALOG')
     panel:SetClampedToScreen(true)
     panel:NCSetSize(PANEL_WIDTH, PANEL_HEIGHT)
-    NRSKNUI:CreateBackdrop(panel)
+    panel:NCCreateBackdrop()
+    panel:NCAddBorders(1)
     panel:SetBackgroundColor(Theme.bgLight[1], Theme.bgLight[2], Theme.bgLight[3], 0.95)
     panel:SetBorderColor(Theme.border[1], Theme.border[2], Theme.border[3], Theme.border[4])
     panel:NCSetScheduledUpdate(ApplyPanelPosition)

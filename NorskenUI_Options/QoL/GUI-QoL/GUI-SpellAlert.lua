@@ -74,7 +74,7 @@ local function BuildTab(page, db)
 
         local bannerSize = 26
         local bannerRow = card:Row(bannerSize)
-        bannerRow:Text(NRSKNUI:ColorTextByTheme(L['Settings Scope']), {
+        bannerRow:Text(GUI:ColorText(L['Settings Scope']), {
             autoHeight = true,
             width = 0.5,
             height = bannerSize,

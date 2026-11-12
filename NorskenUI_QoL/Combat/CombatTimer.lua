@@ -28,6 +28,7 @@ function CombatTimer:CreateFrame()
     frame:EnableMouse(false)
     frame:SetMouseClickEnabled(false)
     frame:NCCreateBackdrop()
+    frame:NCAddBorders(1)
 
     frame.text = frame:CreateFontString(nil, 'OVERLAY')
 
@@ -68,9 +69,9 @@ function CombatTimer:ApplySettings()
 
     if self.db.BackdropEnabled then
         self.frame:UpdateBackdropFromDB(self.db)
-        self.frame:ToggleBackdrop(true)
+        self.frame:SetBackdropShown(true)
     else
-        self.frame:ToggleBackdrop(false)
+        self.frame:SetBackdropShown(false)
     end
 
     -- Mark for a resize on the next update, since the backdrop may have changed.

@@ -19,12 +19,12 @@ local function BuildGeneralSettingsTab(page, db)
     local generalCard = page:Card(L['General Settings'], 'all')
     local infoRowSize = 50
     local infoRow = generalCard:Row(infoRowSize)
-    infoRow:Text(NRSKNUI:ColorTextByTheme(L['Functionality Info']), {
+    infoRow:Text(GUI:ColorText(L['Functionality Info']), {
         width = 1,
         height = infoRowSize,
         autoHeight = true,
         bgMode = 'hide',
-        text = NRSKNUI:ColorTextByTheme('• ') ..
+        text = GUI:ColorText('• ') ..
             L['Because of restrictions i cannot fully hide the button when loaded and at '] ..
             L['|cffFFFFFFfull health|r'] .. ' ' .. L['and'] .. ' ' .. L['|cffFFFFFFnot in combat.|r'] ..
             '\n  ' .. L['This means that the button is invisible but is still clickable.'],

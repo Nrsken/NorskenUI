@@ -20,7 +20,7 @@ local addonName = select(1, ...)
 
 local _G = _G
 
-local NorskenCore = _G.NorskenCore --[[@as NorskenCoreAPI]]
+local NorskenCore = _G.NorskenCore --[[@as NRSKNUI]]
 NorskenCore:NewAddon(NRSKNUI, addonName, function() return NRSKNUI.db and NRSKNUI.db.profile.Theme end, 'AceEvent-3.0', 'AceTimer-3.0', 'AceHook-3.0')
 _G.NorskenUI = NRSKNUI
 _G.NorskenUIAPI = _G.NorskenUIAPI or {} -- Global API table for things we want to expose to other addons, like WagoUI Packs and profile installers.
