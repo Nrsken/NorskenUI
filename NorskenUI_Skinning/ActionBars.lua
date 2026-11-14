@@ -844,8 +844,9 @@ local function ApplyEdgePosition(frame, anchorPoint, xOffset, yOffset)
         bottom = math.floor(screenHeight / 2) + yOffset - math.floor(frameHeight / 2)
     end
 
+    -- whole units aren't whole pixels below scale 1
     frame:ClearAllPoints()
-    frame:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", left, bottom)
+    frame:NCSetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", left, bottom)
 end
 
 -- Position backdrop using raw SetPoint with integer pixel values

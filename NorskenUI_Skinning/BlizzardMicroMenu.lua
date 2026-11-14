@@ -119,6 +119,7 @@ function MM:UpdateMicroBar()
         local numButtons = #visibleButtons
         if numButtons == 0 then
             microBar:SetSize(100, 40)
+            microBar:NCRefreshGridPoint()
             return
         end
 
@@ -127,6 +128,7 @@ function MM:UpdateMicroBar()
         local width = (self.db.ButtonWidth * cols) + (self.db.ButtonSpacing * math.max(0, cols - 1)) + (self.db.BackdropSpacing * 2)
         local height = (self.db.ButtonHeight * rows) + (self.db.ButtonSpacing * math.max(0, rows - 1)) + (self.db.BackdropSpacing * 2)
         microBar:SetSize(width, height)
+        microBar:NCRefreshGridPoint()
 
         for i, button in ipairs(visibleButtons) do
             button:ClearAllPoints()
@@ -193,7 +195,7 @@ function MM:ApplySettings()
 
     local pos = self.db.Position
     microBar:ClearAllPoints()
-    microBar:SetPoint(pos.AnchorFrom, self:GetParentFrame(), pos.AnchorTo, pos.XOffset, pos.YOffset)
+    microBar:NCSetGridPoint(pos.AnchorFrom, self:GetParentFrame(), pos.AnchorTo, pos.XOffset, pos.YOffset)
     microBar:SetFrameStrata(self.db.Strata)
 
     if microBar.backdrop then

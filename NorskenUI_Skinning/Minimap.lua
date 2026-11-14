@@ -7,6 +7,7 @@ function Map:UpdateDB() self.db = NRSKNUI.Skinning.namespace.profile.Minimap end
 
 local Theme = NRSKNUI.Theme
 local Anchors = NRSKNUI.Anchors
+local Pixel = NRSKNUI.Pixel
 
 local hooksecurefunc = hooksecurefunc
 local ipairs = ipairs
@@ -290,20 +291,21 @@ function Map:ApplyLayout(opts)
         local newScale = self.db.Scale
         if oldScale ~= newScale then
             local ratio = oldScale / newScale
-            self.db.Position.X = self.db.Position.X * ratio
-            self.db.Position.Y = self.db.Position.Y * ratio
+            self.db.Position.X = Pixel.ToTenths(self.db.Position.X * ratio)
+            self.db.Position.Y = Pixel.ToTenths(self.db.Position.Y * ratio)
         end
     end
 
+    -- sized before it's placed, in whole pixels at its own scale
     Minimap:SetScale(self.db.Scale)
+    local newSize = self.db.Size
+    local drawnSize = Pixel.ToPixelGrid(newSize, Pixel.GetStep(Minimap))
+    Minimap:SetSize(drawnSize, drawnSize)
     Minimap:ClearAllPoints()
-    Minimap:SetPoint(
+    Minimap:NCSetGridPoint(
         self.db.Position.AnchorFrom, UIParent, self.db.Position.AnchorTo,
         self.db.Position.X, self.db.Position.Y
     )
-
-    local newSize = self.db.Size
-    Minimap:SetSize(newSize, newSize)
 
     if lastAppliedSize ~= newSize then
         if opts.deferZoom then
