@@ -6,6 +6,8 @@ local ACB = NRSKNUI:GetModule('ActionBars', true)
 local L = NRSKNUI.Libs.AL
 local GUI = NRSKNUI.GUI
 local Theme = NRSKNUI.Theme
+local ToTenths = NRSKNUI.Pixel.ToTenths
+local PixelStepper = NRSKNUI.Pixel.PixelStepper
 local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
 
@@ -449,25 +451,30 @@ local function BuildBarLayoutTab(page, db, barKey, barDB)
 
     positionCard:Separator()
 
+    local stepper = PixelStepper()
     local offsetRow = positionCard:Row(rowHL, 0)
     local xSlider = offsetRow:Slider(L['X Offset'], {
         width = 0.5,
         min = -2000,
         max = 2000,
-        step = 1,
+        step = 0.1,
+        stepper = stepper,
         value = barDB.Position.XOffset,
         callback = function(val)
-            barDB.Position.XOffset = val; ApplyBar(barKey)
+            barDB.Position.XOffset = ToTenths(val)
+            ApplyBar(barKey)
         end,
     })
     local ySlider = offsetRow:Slider(L['Y Offset'], {
         width = 0.5,
         min = -2000,
         max = 2000,
-        step = 1,
+        step = 0.1,
+        stepper = stepper,
         value = barDB.Position.YOffset,
         callback = function(val)
-            barDB.Position.YOffset = val; ApplyBar(barKey)
+            barDB.Position.YOffset = ToTenths(val)
+            ApplyBar(barKey)
         end,
     })
 

@@ -474,6 +474,7 @@ local function BuildPositionSettingsTab(page, db)
     page:PositionCard({
         db = db,
         dbKeys = { xOffset = 'X', yOffset = 'Y' },
+        frame = Minimap,
         showAnchorFrameType = false,
         showStrata = false,
         onChangeCallback = ApplySettings,
