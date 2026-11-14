@@ -88,7 +88,7 @@ function CombatMessage:CreateGroup()
         parentGroup[msgType.key] = text
     end
 
-    Anchors:Register(self, 'CombatMessages', parentGroup, 'combatMessage', { displayName = L['Combat Messages'] })
+    Anchors:Register(self, 'CombatMessages', parentGroup, 'combatMessage', { groups = 'alerts', displayName = L['Combat Messages'] })
 end
 
 function CombatMessage:ApplySettings()

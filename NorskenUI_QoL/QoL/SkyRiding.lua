@@ -113,7 +113,7 @@ function SkyRiding:CreateFrames()
     host:HookScript('OnShow', function() self:OnBarShow() end)
     host:HookScript('OnHide', function() self:OnBarHide() end)
 
-    Anchors:Register(self, 'SkyridingUI', group, 'skyRiding', { displayName = L['Skyriding UI'] })
+    Anchors:Register(self, 'SkyridingUI', group, 'skyRiding', { groups = 'alerts', displayName = L['Skyriding UI'] })
 end
 
 ---What a row draws, nil when it has nothing to show.

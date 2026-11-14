@@ -521,7 +521,7 @@ function XPBar:OnEnable()
     self:RegisterEvent('QUEST_LOG_UPDATE')
     self:RegisterEvent('TIME_PLAYED_MSG')
 
-    Anchors:Register(self, 'ExperienceBar', self.coreFrame, 'XPBar', { displayName = L['Experience Bar'] })
+    Anchors:Register(self, 'ExperienceBar', self.coreFrame, 'XPBar', { groups = 'interface', displayName = L['Experience Bar'] })
 end
 
 function XPBar:OnDisable()
@@ -542,7 +542,7 @@ function XPBar:ShowPreview()
     if not self.coreFrame then
         self:CreateBar()
         self:ApplySettings()
-        Anchors:Register(self, 'ExperienceBar', self.coreFrame, 'XPBar', { displayName = L['Experience Bar'] })
+        Anchors:Register(self, 'ExperienceBar', self.coreFrame, 'XPBar', { groups = 'interface', displayName = L['Experience Bar'] })
     end
 
     self:Render(self:GetPreviewData())

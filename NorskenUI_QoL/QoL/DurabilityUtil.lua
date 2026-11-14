@@ -98,7 +98,7 @@ function Durability:OnEnable()
     self:RegisterEvent('MERCHANT_SHOW', 'OnEvent')
     self:RegisterEvent('PLAYER_ENTERING_WORLD', 'OnEvent')
 
-    Anchors:Register(self, 'DurabilityLow', self.coreFrame, 'durabilityUtil', { displayName = L['Durability Low'] })
+    Anchors:Register(self, 'DurabilityLow', self.coreFrame, 'durabilityUtil', { groups = 'alerts', displayName = L['Durability Low'] })
 
     -- If the module is enabled and the preview is active, show the frame.
     -- Without this a showpreview re trigger is needed, e.g reopen GUI.

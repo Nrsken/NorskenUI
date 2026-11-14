@@ -55,7 +55,7 @@ function Map:OnEnable()
     _G.MinimapCluster:NCBanish()
 
     self:RegisterEvent('PLAYER_ENTERING_WORLD')
-    Anchors:Register(self, 'Minimap', _G.Minimap, 'minimap', { xKey = 'X', yKey = 'Y', displayName = L['Minimap'] })
+    Anchors:Register(self, 'Minimap', _G.Minimap, 'minimap', { groups = 'interface', xKey = 'X', yKey = 'Y', displayName = L['Minimap'] })
 end
 
 function Map:PLAYER_ENTERING_WORLD()

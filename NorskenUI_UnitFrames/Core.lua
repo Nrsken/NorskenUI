@@ -290,6 +290,8 @@ function UF:SpawnUnit(unit, opts)
             Anchors:Register(self, 'UnitFrame_' .. unit, frame, 'unitFrames_' .. UF.NormalizeUnit(unit), {
                 displayName = opts.displayName or UF.UnitLabels[unit] or UnitLabel(unit),
                 db = function() return UF.GetUnitDB(unit) end,
+                apply = function() UF:ApplySettings(UF.ConfigKey(unit)) end,
+                groups = UF.ShowGroup(unit),
                 guiContext = 'frame',
                 overlayFrame = opts.overlayFrame,
             })

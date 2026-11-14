@@ -329,6 +329,8 @@ function UF:SpawnGroup(key)
     Anchors:Register(self, 'UnitFrame_' .. key, container, 'unitFrames_' .. key, {
         displayName = displayName,
         db = function() return UF.GetUnitDB(key) end,
+        apply = function() UF:ApplySettings(key) end,
+        groups = UF.ShowGroup(key),
         guiContext = 'frame',
     })
 

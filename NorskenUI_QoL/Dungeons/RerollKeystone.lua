@@ -69,7 +69,7 @@ function RerollKeystone:CreateFrame()
 
     frame:Hide()
     self.frame = frame
-    Anchors:Register(self, 'RerollKeystone', self.frame, 'rerollKeystone', { displayName = L['Reroll Keystone'] })
+    Anchors:Register(self, 'RerollKeystone', self.frame, 'rerollKeystone', { groups = 'alerts', displayName = L['Reroll Keystone'] })
 end
 
 function RerollKeystone:ApplySettings()

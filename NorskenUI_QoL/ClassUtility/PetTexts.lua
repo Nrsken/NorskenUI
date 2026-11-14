@@ -97,7 +97,7 @@ function PetTexts:CreateGroup()
         parentGroup[petType.key] = text
     end
 
-    Anchors:Register(self, 'PetTexts', parentGroup, 'petTexts', { displayName = L['Pet Texts'] })
+    Anchors:Register(self, 'PetTexts', parentGroup, 'petTexts', { groups = 'alerts', displayName = L['Pet Texts'] })
 end
 
 function PetTexts:ApplySettings()

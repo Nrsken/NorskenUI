@@ -36,7 +36,7 @@ function PotionReady:CreateAlertFrame()
 
     -- Finalize the frame and register it with Anchors.
     self.alertFrame = frame
-    Anchors:Register(self, 'PotionReadyAlert', self.alertFrame, 'potionReady', { displayName = L['Potion Ready Alert'] })
+    Anchors:Register(self, 'PotionReadyAlert', self.alertFrame, 'potionReady', { groups = 'alerts', displayName = L['Potion Ready Alert'] })
     frame:Hide()
 end
 

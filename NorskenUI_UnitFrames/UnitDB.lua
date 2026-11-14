@@ -197,6 +197,19 @@ function UF.ConfigKey(unit)
     return UF.NormalizeUnit(unit)
 end
 
+---The anchors Show group a unit or group config is listed under.
+---@param unit string
+---@return string
+function UF.ShowGroup(unit)
+    local key = UF.ConfigKey(unit)
+    if key == 'boss' then
+        return 'bossArena'
+    elseif key == 'party' then
+        return 'party'
+    end
+    return UF.GroupConfigs[key] and 'raid' or 'solo'
+end
+
 ---Get the unit DB for a unit token or a group config key.
 ---@param unit string
 ---@return table

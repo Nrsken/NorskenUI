@@ -100,7 +100,7 @@ function Gateway:CreateAlertFrame()
 
     -- Finalize the frame and register it with Anchors.
     self.alertFrame = frame
-    Anchors:Register(self, 'GatewayAlert', self.alertFrame, 'gateway', { displayName = L['Gateway Alert'] })
+    Anchors:Register(self, 'GatewayAlert', self.alertFrame, 'gateway', { groups = 'alerts', displayName = L['Gateway Alert'] })
     frame:Hide()
 end
 

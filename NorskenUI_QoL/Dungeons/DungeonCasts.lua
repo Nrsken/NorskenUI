@@ -113,7 +113,7 @@ function DungeonCasts:CreateFrames()
     updater:NCApplyOnUpdate(UPDATE_THROTTLE, function() self:OnUpdate() end)
     self.updater = updater
 
-    Anchors:Register(self, 'DungeonCasts', self.group, 'dungeonCasts', { displayName = L['Dungeon Casts'] })
+    Anchors:Register(self, 'DungeonCasts', self.group, 'dungeonCasts', { groups = 'alerts', displayName = L['Dungeon Casts'] })
 end
 
 ---@param index number

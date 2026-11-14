@@ -458,6 +458,7 @@ function MissingBuffs:CreateFrames()
         local group = NRSKNUI:CreateDynamicGroup('NRSKNUI_' .. info.anchor, UIParent)
         self.groups[name] = group
         Anchors:Register(self, info.anchor, group, info.guiPath, {
+            groups = 'alerts',
             db = function(aceModule) return aceModule.db.Groups[name] end,
             displayName = info.displayName,
             guiContext = 'general',

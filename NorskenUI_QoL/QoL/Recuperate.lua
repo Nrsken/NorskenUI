@@ -41,7 +41,7 @@ function Recuperate:CreateButton()
     button.icon:SetTexture(iconID)
 
     self.button = button
-    Anchors:Register(self, 'RecuperateButton', self.button, 'recuperate', { displayName = L['Recuperate Button'] })
+    Anchors:Register(self, 'RecuperateButton', self.button, 'recuperate', { groups = 'alerts', displayName = L['Recuperate Button'] })
     button:Hide()
 end
 

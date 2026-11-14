@@ -98,8 +98,8 @@ function BigWigsTimers:CreateFrames()
     updater:NCApplyOnUpdate(UPDATE_THROTTLE, function() self:OnUpdate() end)
     self.updater = updater
 
-    Anchors:Register(self, 'BigWigsTimerBars', self.groups[BARS], 'bwTimersDisplay', { db = self.db[BARS], displayName = L['BigWigs Timer Bars'], guiContext = { tabId = 'bars' } })
-    Anchors:Register(self, 'BigWigsTimerTexts', self.groups[TEXTS], 'bwTimersDisplay', { db = self.db[TEXTS], displayName = L['BigWigs Timer Texts'], guiContext = { tabId = 'texts' } })
+    Anchors:Register(self, 'BigWigsTimerBars', self.groups[BARS], 'bwTimersDisplay', { groups = 'alerts', db = self.db[BARS], displayName = L['BigWigs Timer Bars'], guiContext = { tabId = 'bars' } })
+    Anchors:Register(self, 'BigWigsTimerTexts', self.groups[TEXTS], 'bwTimersDisplay', { groups = 'alerts', db = self.db[TEXTS], displayName = L['BigWigs Timer Texts'], guiContext = { tabId = 'texts' } })
 end
 
 ---@param index number

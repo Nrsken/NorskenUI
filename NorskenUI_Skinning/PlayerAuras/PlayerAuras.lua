@@ -185,6 +185,7 @@ function PlayerAuras:ApplySettings()
             -- db is resolved live rather than captured: self.db is reassigned by
             -- UpdateDB() on a profile switch and cfg would still point at the old one.
             Anchors:Register(self, info.moverKey, host, 'buffsDebuffs', {
+                groups = 'interface',
                 displayName = info.displayName,
                 guiContext = info.guiItem,
                 db = function(module) return module.db[kind] end,

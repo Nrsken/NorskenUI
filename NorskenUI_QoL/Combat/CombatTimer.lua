@@ -42,7 +42,7 @@ function CombatTimer:CreateFrame()
 
     -- Finalize the frame and register it with Anchors.
     self.frame = frame
-    Anchors:Register(self, 'CombatTimer', self.frame, 'combatTimer', { displayName = L['Combat Timer'] })
+    Anchors:Register(self, 'CombatTimer', self.frame, 'combatTimer', { groups = 'alerts', displayName = L['Combat Timer'] })
     frame:Hide()
 end
 

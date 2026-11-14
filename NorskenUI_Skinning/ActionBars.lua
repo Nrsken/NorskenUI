@@ -1260,6 +1260,7 @@ end
 -- Everything resolves live, a profile switch guts the captured bar table and drags write into it.
 local function RegisterBarAnchor(barKey)
     NRSKNUI.Anchors:Register(ACB, "ActionBars_" .. barKey, nil, "actionBars", {
+        groups = 'actionBars',
         displayName = BAR_FRAME_MAP[barKey].name,
         frameName = "NRSKNUI_" .. barKey .. "_Container",
         guiContext = barKey,

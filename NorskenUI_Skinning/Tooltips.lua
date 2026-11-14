@@ -138,7 +138,7 @@ local function CustomAnchorHandler()
         customAnchor:SetSize(170, 60)
         customAnchor:SetClampedToScreen(true)
         Tooltips.TTAnchor = customAnchor
-        Anchors:Register(Tooltips, 'TooltipAnchor', Tooltips.TTAnchor, 'tooltip', { displayName = L['Tooltip Anchor'] })
+        Anchors:Register(Tooltips, 'TooltipAnchor', Tooltips.TTAnchor, 'tooltip', { groups = 'interface', displayName = L['Tooltip Anchor'] })
     end
 
     local pos = Tooltips.db.Position

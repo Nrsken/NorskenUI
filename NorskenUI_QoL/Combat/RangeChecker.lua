@@ -53,7 +53,7 @@ function RangeChecker:CreateFrame()
 
     -- Finalize the frame and register it with Anchors.
     self.frame = frame
-    Anchors:Register(self, 'RangeCheckerAlert', self.frame, 'rangeChecker', { displayName = L['Range Checker Alert'] })
+    Anchors:Register(self, 'RangeCheckerAlert', self.frame, 'rangeChecker', { groups = 'alerts', displayName = L['Range Checker Alert'] })
     frame:Hide()
 end
 

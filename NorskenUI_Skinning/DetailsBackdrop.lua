@@ -108,6 +108,7 @@ end
 ---@param index number
 function DBG:RegisterAnchor(index)
     NRSKNUI.Anchors:Register(self, ANCHOR_PREFIX .. index, self.backdrops[index], 'detailsBackdrop', {
+        groups = 'interface',
         db = function(aceModule) return aceModule.db.backdrops[index] end, -- read live, UpdateDB re-points self.db
         displayName = anchorNames[index],
         guiContext = tostring(index),

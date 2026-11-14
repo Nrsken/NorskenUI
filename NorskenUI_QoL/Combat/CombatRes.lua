@@ -60,7 +60,7 @@ function CombatRes:CreateFrame()
     -- Finalize the frame and register it with Anchors.
     ---@type Frame
     self.coreFrame = coreFrame
-    Anchors:Register(self, 'CombatRes', self.coreFrame, 'combatRes', { displayName = L['Combat Res'] })
+    Anchors:Register(self, 'CombatRes', self.coreFrame, 'combatRes', { groups = 'alerts', displayName = L['Combat Res'] })
     self.coreFrame:Hide()
 end
 

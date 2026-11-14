@@ -683,6 +683,7 @@ end
 
 function CHAT:RegisterAnchor()
     NRSKNUI.Anchors:Register(self, "Chatv2", self.panel, "chat", {
+        groups = 'interface',
         displayName = L["Chat Panel"],
         apply = "UpdatePanel",
     })

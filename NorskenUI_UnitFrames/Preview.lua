@@ -560,13 +560,18 @@ UF.previewScoped = true
 ---Raid tiers sit out the everything view and only preview from their own page.
 ---@param pageId string? the page asking, e.g. 'unitFrames_target'
 ---@param showAll boolean? whether everything is being previewed
-function UF:ShowPreview(pageId, showAll)
+---@param group string? the anchors Show group, only what it lists previews
+function UF:ShowPreview(pageId, showAll, group)
     SetAnchorLayout(NRSKNUI.Anchors:IsActive())
 
     if showAll then
-        Preview:Request('boss')
+        if not group or group == UF.ShowGroup('boss') then
+            Preview:Request('boss')
+        end
         for key in pairs(UF.GroupConfigs) do
-            if UF.GroupCounts[key] == 1 then Preview:RequestGroup(key) end
+            if UF.GroupCounts[key] == 1 and (not group or group == UF.ShowGroup(key)) then
+                Preview:RequestGroup(key)
+            end
         end
     end
 

@@ -150,7 +150,7 @@ function FocusCastbar:CreateFrame()
 
     -- Built once so the script can be attached and detached per cast without a closure each time.
     self.onUpdate = function(_, elapsed) self:OnUpdate(elapsed) end
-    Anchors:Register(self, 'FocusCastbar', coreFrame, 'focusCastbar', { displayName = L['Focus Castbar'] })
+    Anchors:Register(self, 'FocusCastbar', coreFrame, 'focusCastbar', { groups = 'solo', displayName = L['Focus Castbar'] })
 end
 
 function FocusCastbar:ApplySettings()
