@@ -3,5 +3,6 @@
 
     <Script file="Init.lua" />
     <Script file="Defaults.lua" />
+    <Script file="Migrations.lua" />
     <Script file="PlayerAuras.lua" />
 </Ui>
