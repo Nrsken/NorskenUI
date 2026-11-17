@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 ---@class RecuperateModule
 local Recuperate = NRSKNUI:GetModule('Recuperate')

@@ -96,7 +96,7 @@
 ---@field BugSack BugSack
 ---@field BugGrabber BugGrabber
 ---@field Details DetailsAddon
----@field NorskenUI NRSKNUI
+---@field NorskenUI NorskenUI
 ---@field NorskenUF NorskenUF
 ---@field RaiderIO_GuildWeeklyFrame RaiderIOGuildWeeklyFrame
 ---@field RaiderIO_TalentBuildsFrame RaiderIOTalentBuildsFrame

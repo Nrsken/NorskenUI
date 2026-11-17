@@ -1,15 +1,6 @@
----@class NRSKNUI : AceAddon-3.0, AceEvent-3.0, AceTimer-3.0, AceHook-3.0
+---@class NorskenUI : NorskenCore, AceAddon-3.0, AceEvent-3.0, AceTimer-3.0, AceHook-3.0
 ---@field db NRSKNUI.DBObject
----@field L table<string, string> the registry, Core/Localization.lua
----@field MyClass string
----@field MyClassID number
----@field MyName string
----@field MyRealm string
----@field MyGUID string
 ---@field MySpec NRSKNUI.MySpecData
----@field ClearTexture number
----@field WhiteTexture string
----@field GlobalZoom number
 ---@field UFBlocked boolean resolved at login, true when another UI addon owns the unit frames
 ---@field Libs NRSKNUI.Libraries
 ---@field GUI KajiGUIInstance
@@ -20,7 +11,7 @@ local addonName = select(1, ...)
 
 local _G = _G
 
-local NorskenCore = _G.NorskenCore --[[@as NRSKNUI]]
+local NorskenCore = _G.NorskenCore --[[@as NorskenCore]]
 NorskenCore:NewAddon(NRSKNUI, addonName, function() return NRSKNUI.db and NRSKNUI.db.profile.Theme end, 'AceEvent-3.0', 'AceTimer-3.0', 'AceHook-3.0')
 _G.NorskenUI = NRSKNUI
 _G.NorskenUIAPI = _G.NorskenUIAPI or {} -- Global API table for things we want to expose to other addons, like WagoUI Packs and profile installers.

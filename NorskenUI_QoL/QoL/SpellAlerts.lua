@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 ---@class SpellAlertModule
 local SpellAlert = NRSKNUI:GetModule('SpellAlert')

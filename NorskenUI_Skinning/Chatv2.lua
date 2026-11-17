@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 ---@class Chatv2Module
 local CHAT = NRSKNUI:GetModule('Chatv2')

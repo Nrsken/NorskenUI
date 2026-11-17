@@ -6,7 +6,7 @@
 -- value is a number, string or string-keyed literal, and any file whose own ---@class block carries a
 -- ---@field stops seeing inferred fields entirely, so the shared data is declared here instead.
 
----@class UnitFramesModule : NRSKNUI.ModuleBase, AceEvent-3.0, AceTimer-3.0, AceHook-3.0
+---@class UnitFramesModule : NorskenCore.ModuleBase, AceEvent-3.0, AceTimer-3.0, AceHook-3.0
 ---@field namespace AceDBObject-3.0 the unit frames' own namespace inside NorskenUIDB
 ---@field Defaults NRSKNUI.DBProfile.UnitFrames
 ---@field db NRSKNUI.DBProfile.UnitFrames
@@ -32,16 +32,15 @@
 ---@field GUIAttachOptions table[] the shared Attach To dropdown options, set in GUI-UFAuraIndicators.lua
 ---@field GUIGroupSearch string[] search terms for the group section, set in GUI-UFGroups.lua
 
----@class RestrictedModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class AuctionHouseFilterModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class AutomationModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class TweaksModule : NRSKNUI.ModuleBase, AceEvent-3.0, AceHook-3.0
----@class XPBarModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class CopyAnythingModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class RecuperateModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class MiscVarsModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class DurabilityModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class GroupFinderModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class AuctionHouseFilterModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class AutomationModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class TweaksModule : NorskenCore.ModuleBase, AceEvent-3.0, AceHook-3.0
+---@class XPBarModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class CopyAnythingModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class RecuperateModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class MiscVarsModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class DurabilityModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class GroupFinderModule : NorskenCore.ModuleBase, AceEvent-3.0
 ---@field resortPending boolean?
 ---@field ServerSearchThrottle number
 ---@field lastServerSearch number?
@@ -65,7 +64,7 @@
 ---@class QuestTrackerData
 ---@field quests QuestTrackerQuest[]
 ---@field characters table<string, QuestTrackerCharacter>
----@class QuestTrackerModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class QuestTrackerModule : NorskenCore.ModuleBase, AceEvent-3.0
 ---@field data QuestTrackerData
 ---@field window? Frame
 ---@field snapshotQueued? boolean
@@ -73,60 +72,41 @@
 ---@field questButton? Button the track toggle on the quest dialog
 ---@field dialogQuestID? number the quest the dialog shows, nil on the greeting list
 ---@field RunQueuedSnapshot fun()
----@class TooltipsModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class MinimapModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class SkinningModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class TooltipsModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class MinimapModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class SkinningModule : NorskenCore.ModuleBase, AceEvent-3.0
 ---@field namespace AceDBObject-3.0 the namespace every skinning module reads its part of
 ---@field Defaults NRSKNUI.DBProfile.Skinning
 ---@field ButtonMixin SkinnedButtonMixin the shared button mixin, set in Widgets/Button.lua
----@class GatewayModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class PetTextsModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class PlayerAurasModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class AdvancedDebuffsModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class DefensivesModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class CombatTimerModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class PotionReadyModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class RangeCheckerModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class CombatCrossModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class CombatMessageModule : NRSKNUI.ModuleBase, AceEvent-3.0, AceTimer-3.0
----@class CombatResModule : NRSKNUI.ModuleBase, AceEvent-3.0, AceTimer-3.0
+---@class GatewayModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class PetTextsModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class PlayerAurasModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@field Looks table<string, table> each frame's starting texts and border
+---@field displays table<string, AuraDisplay> by kind
+---@field moduleName string
+---@class AdvancedDebuffsModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class DefensivesModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class CombatTimerModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class PotionReadyModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class RangeCheckerModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class CombatCrossModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class CombatMessageModule : NorskenCore.ModuleBase, AceEvent-3.0, AceTimer-3.0
+---@class CombatResModule : NorskenCore.ModuleBase, AceEvent-3.0, AceTimer-3.0
 ---@field chargeInfo CombatResChargeInfo? the battle res spell's charges are never secret
----@class CombatCursorModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class FocusCastbarModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class SpeedModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class CharacterPanelModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class CDMModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@field namespace AceDBObject-3.0 the CDM's own namespace inside NorskenUIDB
----@field Defaults NRSKNUI.DBProfile.CDM
----@field icons table<string, CDMIcon>
----@field containers table<string, Frame|NRSKNUI.DynamicGroup> static group frames and dynamic groups
----@field spareStatic Frame[]
----@field spareDynamic NRSKNUI.DynamicGroup[]
----@field spareChain CDMChainGroup[]
----@field STYLE_TEMPLATE table
----@field BAR_STYLE_TEMPLATE table
----@field TEXT_STYLE_TEMPLATE table
----@field BAR_ELAPSED number Enum.StatusBarTimerDirection.ElapsedTime
----@field BAR_REMAINING number Enum.StatusBarTimerDirection.RemainingTime
----@field POWER_TYPES table[] power trigger choices, { value, text }
----@field IsPreviewingLayer fun(layer: CDMLayer): boolean
----@field PreviewDuration fun(layer: CDMLayer, length: number): LuaDurationObject
----@field Catalogue CDMCatalogue
----@field TriggerTypes table<string, { IsKnown: fun(trigger: table): boolean, Resolve: fun(frame: CDMIcon, trigger: table), Update: fun(frame: CDMIcon, style: table) }>
----@field preview table<string, number> icon id -> preview level (1 selected, 2 pinned)
----@field selectionPreview string[] icons the current selection raised to level 1
----@field previewing boolean? the options page is open
----@field onStateChanged fun()? set by the options page while it is open
----@class BlizzardMessagesModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class ActionBarsModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class Chatv2Module : NRSKNUI.ModuleBase, AceEvent-3.0, AceHook-3.0
----@class MicroMenuModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class DetailsBackdropModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class SkyRidingModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class CooldownStringsModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class SpellAlertModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class DungeonCastsModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class RerollKeystoneModule : NRSKNUI.ModuleBase, AceEvent-3.0, AceTimer-3.0
+---@class CombatCursorModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class FocusCastbarModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class SpeedModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class CharacterPanelModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class BlizzardMessagesModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class ActionBarsModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class Chatv2Module : NorskenCore.ModuleBase, AceEvent-3.0, AceHook-3.0
+---@class MicroMenuModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class DetailsBackdropModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class SkyRidingModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class CooldownStringsModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class SpellAlertModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class DungeonCastsModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class RerollKeystoneModule : NorskenCore.ModuleBase, AceEvent-3.0, AceTimer-3.0
 ---@field frame Frame?
 ---@field timer AceTimerObj? nil while no prompt is pending or up
 ---@field rerollTimer AceTimerObj? nil while no keystone re-read is pending
@@ -134,11 +114,11 @@
 ---@field displayActive boolean?
 ---@field hasRerolled boolean?
 ---@field isPreview boolean?
----@class BlizzObjectiveTrackerModule : NRSKNUI.ModuleBase, AceEvent-3.0
+---@class BlizzObjectiveTrackerModule : NorskenCore.ModuleBase, AceEvent-3.0
 ---@field db NRSKNUI.DBProfile.Skinning.BlizzardElements.ObjectiveTracker
 ---@field skinDB NRSKNUI.DBProfile.Skinning.BlizzardElements the FrameSkins table it sits under, for the shared font face and shadow
----@class BlizzardMouseoverModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class BigWigsTimersModule : NRSKNUI.ModuleBase, AceEvent-3.0, AceTimer-3.0, AceHook-3.0
+---@class BlizzardMouseoverModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class BigWigsTimersModule : NorskenCore.ModuleBase, AceEvent-3.0, AceTimer-3.0, AceHook-3.0
 ---@field db NRSKNUI.DBProfile.BigWigsTimers
 ---@field bars table<string, BigWigsTimers.Bar>
 ---@field announces BigWigsTimers.Bar[] in arrival order, so the oldest is always the first
@@ -147,7 +127,7 @@
 ---@field eventIdByText table<string, number>
 ---@field spellCache table<number, BigWigsTimers.SpellEntry[]>
 ---@field bossCache table<number, BigWigsTimers.BossEntry[]>
----@field groups table<string, NRSKNUI.DynamicGroup>?
+---@field groups table<string, NorskenCore.DynamicGroup>?
 ---@field displays table<string, Frame[]>
 ---@field displayByTrigger table<table, Frame>
 ---@field activeTriggers table[]
@@ -161,10 +141,10 @@
 ---@field active boolean?
 ---@field isPreview boolean?
 ---@field matchDirty boolean?
----@class AuraMatrixModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class DelveInfoModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@class MissingBuffsModule : NRSKNUI.ModuleBase, AceEvent-3.0
----@field groups table<string, NRSKNUI.DynamicGroup>?
+---@class AuraMatrixModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class DelveInfoModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class MissingBuffsModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@field groups table<string, NorskenCore.DynamicGroup>?
 ---@field flyoutKey string? the buff whose item picker is open
 ---@field tooltipIcon MissingBuffsTooltipIcon? icon hung off GameTooltip, built on first hover
 ---@class MissingBuffsTooltipIcon : Frame
@@ -173,7 +153,7 @@
 -- The handles Core/Init.lua hangs off the addon table. Declared here so the field and the accessor
 -- that fills it agree on a type: without these the field takes whatever the assignment inferred.
 
----@class NRSKNUI
+---@class NorskenUI : NorskenCore
 ---@field Restricted RestrictedModule
 ---@field UnitFrames UnitFramesModule
 ---@field oUF NorskenUF set by NorskenUI_UnitFrames/Init.lua
@@ -195,7 +175,6 @@
 ---@field Gateway GatewayModule
 ---@field PetTexts PetTextsModule
 ---@field PlayerAuras PlayerAurasModule
----@field CDM CDMModule
 ---@field CombatTimer CombatTimerModule
 ---@field PotionReady PotionReadyModule
 ---@field RangeChecker RangeCheckerModule
@@ -223,105 +202,105 @@
 
 -- Typed accessors. Overloads dispatch on the literal module name.
 
----@type NRSKNUI
+---@type NorskenUI
 local NRSKNUI
 
 --- Fetch a registered module by name.
----@overload fun(self: NRSKNUI, name: "CombatTimer", silent?: boolean): CombatTimerModule
----@overload fun(self: NRSKNUI, name: "Gateway", silent?: boolean): GatewayModule
----@overload fun(self: NRSKNUI, name: "PotionReady", silent?: boolean): PotionReadyModule
----@overload fun(self: NRSKNUI, name: "RangeChecker", silent?: boolean): RangeCheckerModule
----@overload fun(self: NRSKNUI, name: "Skinning", silent?: boolean): SkinningModule
----@overload fun(self: NRSKNUI, name: "Tooltips", silent?: boolean): TooltipsModule
----@overload fun(self: NRSKNUI, name: "Minimap", silent?: boolean): MinimapModule
----@overload fun(self: NRSKNUI, name: "AuctionHouseFilter", silent?: boolean): AuctionHouseFilterModule
----@overload fun(self: NRSKNUI, name: "Automation", silent?: boolean): AutomationModule
----@overload fun(self: NRSKNUI, name: "Tweaks", silent?: boolean): TweaksModule
----@overload fun(self: NRSKNUI, name: "XPBar", silent?: boolean): XPBarModule
----@overload fun(self: NRSKNUI, name: "CopyAnything", silent?: boolean): CopyAnythingModule
----@overload fun(self: NRSKNUI, name: "Recuperate", silent?: boolean): RecuperateModule
----@overload fun(self: NRSKNUI, name: "MiscVars", silent?: boolean): MiscVarsModule
----@overload fun(self: NRSKNUI, name: "Durability", silent?: boolean): DurabilityModule
----@overload fun(self: NRSKNUI, name: "GroupFinder", silent?: boolean): GroupFinderModule
----@overload fun(self: NRSKNUI, name: "QuestTracker", silent?: boolean): QuestTrackerModule
----@overload fun(self: NRSKNUI, name: "CombatCross", silent?: boolean): CombatCrossModule
----@overload fun(self: NRSKNUI, name: "CombatMessage", silent?: boolean): CombatMessageModule
----@overload fun(self: NRSKNUI, name: "CombatRes", silent?: boolean): CombatResModule
----@overload fun(self: NRSKNUI, name: "Restricted", silent?: boolean): RestrictedModule
----@overload fun(self: NRSKNUI, name: "CursorCircle", silent?: boolean): CombatCursorModule
----@overload fun(self: NRSKNUI, name: "UnitFrames", silent?: boolean): UnitFramesModule
----@overload fun(self: NRSKNUI, name: "PlayerAuras", silent?: boolean): PlayerAurasModule
----@overload fun(self: NRSKNUI, name: "PetTexts", silent?: boolean): PetTextsModule
----@overload fun(self: NRSKNUI, name: "FocusCastbar", silent?: boolean): FocusCastbarModule
----@overload fun(self: NRSKNUI, name: "CharacterPanel", silent?: boolean): CharacterPanelModule
----@overload fun(self: NRSKNUI, name: "CDM", silent?: boolean): CDMModule
----@overload fun(self: NRSKNUI, name: "BlizzardMessages", silent?: boolean): BlizzardMessagesModule
----@overload fun(self: NRSKNUI, name: "ActionBars", silent?: boolean): ActionBarsModule
----@overload fun(self: NRSKNUI, name: "Chatv2", silent?: boolean): Chatv2Module
----@overload fun(self: NRSKNUI, name: "MicroMenu", silent?: boolean): MicroMenuModule
----@overload fun(self: NRSKNUI, name: "DetailsBackdrop", silent?: boolean): DetailsBackdropModule
----@overload fun(self: NRSKNUI, name: "SkyRiding", silent?: boolean): SkyRidingModule
----@overload fun(self: NRSKNUI, name: "SpellAlert", silent?: boolean): SpellAlertModule
----@overload fun(self: NRSKNUI, name: "DungeonCasts", silent?: boolean): DungeonCastsModule
----@overload fun(self: NRSKNUI, name: "RerollKeystone", silent?: boolean): RerollKeystoneModule
----@overload fun(self: NRSKNUI, name: "BlizzObjectiveTracker", silent?: boolean): BlizzObjectiveTrackerModule
----@overload fun(self: NRSKNUI, name: "BlizzardMouseover", silent?: boolean): BlizzardMouseoverModule
----@overload fun(self: NRSKNUI, name: "BigWigsTimers", silent?: boolean): BigWigsTimersModule
----@overload fun(self: NRSKNUI, name: "CooldownStrings", silent?: boolean): CooldownStringsModule
----@overload fun(self: NRSKNUI, name: "AuraMatrix", silent?: boolean): AuraMatrixModule
----@overload fun(self: NRSKNUI, name: "DelveInfo", silent?: boolean): DelveInfoModule
----@overload fun(self: NRSKNUI, name: "MissingBuffs", silent?: boolean): MissingBuffsModule
+---@overload fun(self: NorskenUI, name: "CombatTimer", silent?: boolean): CombatTimerModule
+---@overload fun(self: NorskenUI, name: "Gateway", silent?: boolean): GatewayModule
+---@overload fun(self: NorskenUI, name: "PotionReady", silent?: boolean): PotionReadyModule
+---@overload fun(self: NorskenUI, name: "RangeChecker", silent?: boolean): RangeCheckerModule
+---@overload fun(self: NorskenUI, name: "Skinning", silent?: boolean): SkinningModule
+---@overload fun(self: NorskenUI, name: "Tooltips", silent?: boolean): TooltipsModule
+---@overload fun(self: NorskenUI, name: "Minimap", silent?: boolean): MinimapModule
+---@overload fun(self: NorskenUI, name: "AuctionHouseFilter", silent?: boolean): AuctionHouseFilterModule
+---@overload fun(self: NorskenUI, name: "Automation", silent?: boolean): AutomationModule
+---@overload fun(self: NorskenUI, name: "Tweaks", silent?: boolean): TweaksModule
+---@overload fun(self: NorskenUI, name: "XPBar", silent?: boolean): XPBarModule
+---@overload fun(self: NorskenUI, name: "CopyAnything", silent?: boolean): CopyAnythingModule
+---@overload fun(self: NorskenUI, name: "Recuperate", silent?: boolean): RecuperateModule
+---@overload fun(self: NorskenUI, name: "MiscVars", silent?: boolean): MiscVarsModule
+---@overload fun(self: NorskenUI, name: "Durability", silent?: boolean): DurabilityModule
+---@overload fun(self: NorskenUI, name: "GroupFinder", silent?: boolean): GroupFinderModule
+---@overload fun(self: NorskenUI, name: "QuestTracker", silent?: boolean): QuestTrackerModule
+---@overload fun(self: NorskenUI, name: "CombatCross", silent?: boolean): CombatCrossModule
+---@overload fun(self: NorskenUI, name: "CombatMessage", silent?: boolean): CombatMessageModule
+---@overload fun(self: NorskenUI, name: "CombatRes", silent?: boolean): CombatResModule
+---@overload fun(self: NorskenUI, name: "Restricted", silent?: boolean): RestrictedModule
+---@overload fun(self: NorskenUI, name: "CursorCircle", silent?: boolean): CombatCursorModule
+---@overload fun(self: NorskenUI, name: "UnitFrames", silent?: boolean): UnitFramesModule
+---@overload fun(self: NorskenUI, name: "PlayerAuras", silent?: boolean): PlayerAurasModule
+---@overload fun(self: NorskenUI, name: "PetTexts", silent?: boolean): PetTextsModule
+---@overload fun(self: NorskenUI, name: "FocusCastbar", silent?: boolean): FocusCastbarModule
+---@overload fun(self: NorskenUI, name: "CharacterPanel", silent?: boolean): CharacterPanelModule
+---@overload fun(self: NorskenUI, name: "CDM", silent?: boolean): CDMModule
+---@overload fun(self: NorskenUI, name: "BlizzardMessages", silent?: boolean): BlizzardMessagesModule
+---@overload fun(self: NorskenUI, name: "ActionBars", silent?: boolean): ActionBarsModule
+---@overload fun(self: NorskenUI, name: "Chatv2", silent?: boolean): Chatv2Module
+---@overload fun(self: NorskenUI, name: "MicroMenu", silent?: boolean): MicroMenuModule
+---@overload fun(self: NorskenUI, name: "DetailsBackdrop", silent?: boolean): DetailsBackdropModule
+---@overload fun(self: NorskenUI, name: "SkyRiding", silent?: boolean): SkyRidingModule
+---@overload fun(self: NorskenUI, name: "SpellAlert", silent?: boolean): SpellAlertModule
+---@overload fun(self: NorskenUI, name: "DungeonCasts", silent?: boolean): DungeonCastsModule
+---@overload fun(self: NorskenUI, name: "RerollKeystone", silent?: boolean): RerollKeystoneModule
+---@overload fun(self: NorskenUI, name: "BlizzObjectiveTracker", silent?: boolean): BlizzObjectiveTrackerModule
+---@overload fun(self: NorskenUI, name: "BlizzardMouseover", silent?: boolean): BlizzardMouseoverModule
+---@overload fun(self: NorskenUI, name: "BigWigsTimers", silent?: boolean): BigWigsTimersModule
+---@overload fun(self: NorskenUI, name: "CooldownStrings", silent?: boolean): CooldownStringsModule
+---@overload fun(self: NorskenUI, name: "AuraMatrix", silent?: boolean): AuraMatrixModule
+---@overload fun(self: NorskenUI, name: "DelveInfo", silent?: boolean): DelveInfoModule
+---@overload fun(self: NorskenUI, name: "MissingBuffs", silent?: boolean): MissingBuffsModule
 ---@param name string
 ---@param silent? boolean
 ---@return AceModule
-function NRSKNUI:GetModule(name, silent) end
+function NorskenUI:GetModule(name, silent) end
 
 --- Register a new module. Trailing args are embedded library names (e.g. "AceEvent-3.0").
----@overload fun(self: NRSKNUI, name: "CombatTimer", ...: string): CombatTimerModule
----@overload fun(self: NRSKNUI, name: "Gateway", ...: string): GatewayModule
----@overload fun(self: NRSKNUI, name: "PotionReady", ...: string): PotionReadyModule
----@overload fun(self: NRSKNUI, name: "RangeChecker", ...: string): RangeCheckerModule
----@overload fun(self: NRSKNUI, name: "Skinning", ...: string): SkinningModule
----@overload fun(self: NRSKNUI, name: "Tooltips", ...: string): TooltipsModule
----@overload fun(self: NRSKNUI, name: "Minimap", ...: string): MinimapModule
----@overload fun(self: NRSKNUI, name: "AuctionHouseFilter", ...: string): AuctionHouseFilterModule
----@overload fun(self: NRSKNUI, name: "Automation", ...: string): AutomationModule
----@overload fun(self: NRSKNUI, name: "Tweaks", ...: string): TweaksModule
----@overload fun(self: NRSKNUI, name: "XPBar", ...: string): XPBarModule
----@overload fun(self: NRSKNUI, name: "CopyAnything", ...: string): CopyAnythingModule
----@overload fun(self: NRSKNUI, name: "Recuperate", ...: string): RecuperateModule
----@overload fun(self: NRSKNUI, name: "MiscVars", ...: string): MiscVarsModule
----@overload fun(self: NRSKNUI, name: "Durability", ...: string): DurabilityModule
----@overload fun(self: NRSKNUI, name: "GroupFinder", ...: string): GroupFinderModule
----@overload fun(self: NRSKNUI, name: "QuestTracker", ...: string): QuestTrackerModule
----@overload fun(self: NRSKNUI, name: "CombatCross", ...: string): CombatCrossModule
----@overload fun(self: NRSKNUI, name: "CombatMessage", ...: string): CombatMessageModule
----@overload fun(self: NRSKNUI, name: "CombatRes", ...: string): CombatResModule
----@overload fun(self: NRSKNUI, name: "Restricted", ...: string): RestrictedModule
----@overload fun(self: NRSKNUI, name: "CursorCircle", ...: string): CombatCursorModule
----@overload fun(self: NRSKNUI, name: "UnitFrames", ...: string): UnitFramesModule
----@overload fun(self: NRSKNUI, name: "PlayerAuras", ...: string): PlayerAurasModule
----@overload fun(self: NRSKNUI, name: "PetTexts", ...: string): PetTextsModule
----@overload fun(self: NRSKNUI, name: "FocusCastbar", ...: string): FocusCastbarModule
----@overload fun(self: NRSKNUI, name: "CharacterPanel", ...: string): CharacterPanelModule
----@overload fun(self: NRSKNUI, name: "CDM", ...: string): CDMModule
----@overload fun(self: NRSKNUI, name: "BlizzardMessages", ...: string): BlizzardMessagesModule
----@overload fun(self: NRSKNUI, name: "ActionBars", ...: string): ActionBarsModule
----@overload fun(self: NRSKNUI, name: "Chatv2", ...: string): Chatv2Module
----@overload fun(self: NRSKNUI, name: "MicroMenu", ...: string): MicroMenuModule
----@overload fun(self: NRSKNUI, name: "DetailsBackdrop", ...: string): DetailsBackdropModule
----@overload fun(self: NRSKNUI, name: "SkyRiding", ...: string): SkyRidingModule
----@overload fun(self: NRSKNUI, name: "SpellAlert", ...: string): SpellAlertModule
----@overload fun(self: NRSKNUI, name: "DungeonCasts", ...: string): DungeonCastsModule
----@overload fun(self: NRSKNUI, name: "RerollKeystone", ...: string): RerollKeystoneModule
----@overload fun(self: NRSKNUI, name: "BlizzObjectiveTracker", ...: string): BlizzObjectiveTrackerModule
----@overload fun(self: NRSKNUI, name: "BlizzardMouseover", ...: string): BlizzardMouseoverModule
----@overload fun(self: NRSKNUI, name: "BigWigsTimers", ...: string): BigWigsTimersModule
----@overload fun(self: NRSKNUI, name: "CooldownStrings", ...: string): CooldownStringsModule
----@overload fun(self: NRSKNUI, name: "AuraMatrix", ...: string): AuraMatrixModule
----@overload fun(self: NRSKNUI, name: "DelveInfo", ...: string): DelveInfoModule
----@overload fun(self: NRSKNUI, name: "MissingBuffs", ...: string): MissingBuffsModule
+---@overload fun(self: NorskenUI, name: "CombatTimer", ...: string): CombatTimerModule
+---@overload fun(self: NorskenUI, name: "Gateway", ...: string): GatewayModule
+---@overload fun(self: NorskenUI, name: "PotionReady", ...: string): PotionReadyModule
+---@overload fun(self: NorskenUI, name: "RangeChecker", ...: string): RangeCheckerModule
+---@overload fun(self: NorskenUI, name: "Skinning", ...: string): SkinningModule
+---@overload fun(self: NorskenUI, name: "Tooltips", ...: string): TooltipsModule
+---@overload fun(self: NorskenUI, name: "Minimap", ...: string): MinimapModule
+---@overload fun(self: NorskenUI, name: "AuctionHouseFilter", ...: string): AuctionHouseFilterModule
+---@overload fun(self: NorskenUI, name: "Automation", ...: string): AutomationModule
+---@overload fun(self: NorskenUI, name: "Tweaks", ...: string): TweaksModule
+---@overload fun(self: NorskenUI, name: "XPBar", ...: string): XPBarModule
+---@overload fun(self: NorskenUI, name: "CopyAnything", ...: string): CopyAnythingModule
+---@overload fun(self: NorskenUI, name: "Recuperate", ...: string): RecuperateModule
+---@overload fun(self: NorskenUI, name: "MiscVars", ...: string): MiscVarsModule
+---@overload fun(self: NorskenUI, name: "Durability", ...: string): DurabilityModule
+---@overload fun(self: NorskenUI, name: "GroupFinder", ...: string): GroupFinderModule
+---@overload fun(self: NorskenUI, name: "QuestTracker", ...: string): QuestTrackerModule
+---@overload fun(self: NorskenUI, name: "CombatCross", ...: string): CombatCrossModule
+---@overload fun(self: NorskenUI, name: "CombatMessage", ...: string): CombatMessageModule
+---@overload fun(self: NorskenUI, name: "CombatRes", ...: string): CombatResModule
+---@overload fun(self: NorskenUI, name: "Restricted", ...: string): RestrictedModule
+---@overload fun(self: NorskenUI, name: "CursorCircle", ...: string): CombatCursorModule
+---@overload fun(self: NorskenUI, name: "UnitFrames", ...: string): UnitFramesModule
+---@overload fun(self: NorskenUI, name: "PlayerAuras", ...: string): PlayerAurasModule
+---@overload fun(self: NorskenUI, name: "PetTexts", ...: string): PetTextsModule
+---@overload fun(self: NorskenUI, name: "FocusCastbar", ...: string): FocusCastbarModule
+---@overload fun(self: NorskenUI, name: "CharacterPanel", ...: string): CharacterPanelModule
+---@overload fun(self: NorskenUI, name: "CDM", ...: string): CDMModule
+---@overload fun(self: NorskenUI, name: "BlizzardMessages", ...: string): BlizzardMessagesModule
+---@overload fun(self: NorskenUI, name: "ActionBars", ...: string): ActionBarsModule
+---@overload fun(self: NorskenUI, name: "Chatv2", ...: string): Chatv2Module
+---@overload fun(self: NorskenUI, name: "MicroMenu", ...: string): MicroMenuModule
+---@overload fun(self: NorskenUI, name: "DetailsBackdrop", ...: string): DetailsBackdropModule
+---@overload fun(self: NorskenUI, name: "SkyRiding", ...: string): SkyRidingModule
+---@overload fun(self: NorskenUI, name: "SpellAlert", ...: string): SpellAlertModule
+---@overload fun(self: NorskenUI, name: "DungeonCasts", ...: string): DungeonCastsModule
+---@overload fun(self: NorskenUI, name: "RerollKeystone", ...: string): RerollKeystoneModule
+---@overload fun(self: NorskenUI, name: "BlizzObjectiveTracker", ...: string): BlizzObjectiveTrackerModule
+---@overload fun(self: NorskenUI, name: "BlizzardMouseover", ...: string): BlizzardMouseoverModule
+---@overload fun(self: NorskenUI, name: "BigWigsTimers", ...: string): BigWigsTimersModule
+---@overload fun(self: NorskenUI, name: "CooldownStrings", ...: string): CooldownStringsModule
+---@overload fun(self: NorskenUI, name: "AuraMatrix", ...: string): AuraMatrixModule
+---@overload fun(self: NorskenUI, name: "DelveInfo", ...: string): DelveInfoModule
+---@overload fun(self: NorskenUI, name: "MissingBuffs", ...: string): MissingBuffsModule
 ---@param name string
 ---@param ... string
 ---@return AceModule
-function NRSKNUI:NewModule(name, ...) end
+function NorskenUI:NewModule(name, ...) end

@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 
 NRSKNUI.Gateway = NRSKNUI:NewModule('Gateway', 'AceEvent-3.0')

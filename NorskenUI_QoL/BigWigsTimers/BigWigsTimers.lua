@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 ---@class BigWigsTimersModule
 local BigWigsTimers = NRSKNUI:GetModule('BigWigsTimers')

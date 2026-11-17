@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 local L = NRSKNUI.Libs.AL
 local GUI = NRSKNUI.GUI

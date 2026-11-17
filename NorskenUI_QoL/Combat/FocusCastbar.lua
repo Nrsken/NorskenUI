@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 ---@class FocusCastbarModule
 local FocusCastbar = NRSKNUI:GetModule('FocusCastbar')

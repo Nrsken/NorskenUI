@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 
 NRSKNUI.Skinning = NRSKNUI:NewModule('Skinning', 'AceEvent-3.0')

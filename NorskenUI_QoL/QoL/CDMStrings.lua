@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 ---@class CooldownStringsModule
 local CooldownStrings = NRSKNUI:GetModule('CooldownStrings')

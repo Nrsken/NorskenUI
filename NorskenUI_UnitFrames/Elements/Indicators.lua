@@ -1,4 +1,4 @@
-﻿---@class NRSKNUI
+﻿---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 ---@class UnitFramesModule
 local UF = NRSKNUI:GetModule('UnitFrames')

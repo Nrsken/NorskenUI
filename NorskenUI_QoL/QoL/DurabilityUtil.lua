@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 ---@class DurabilityModule
 local Durability = NRSKNUI:GetModule('Durability')

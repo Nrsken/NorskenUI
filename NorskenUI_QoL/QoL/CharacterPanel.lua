@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 ---@class CharacterPanelModule
 local CharacterPanel = NRSKNUI:GetModule('CharacterPanel')
@@ -386,7 +386,7 @@ function CharacterPanel:UpdateAllTrackIndicators()
 end
 
 function CharacterPanel:HideAllTrackIndicators()
-    ---@type NRSKNUI.ItemSlotInfo[]
+    ---@type NorskenCore.ItemSlotInfo[]
     local slotT = NRSKNUI.ITEM_SLOTS
     for _, slotInfo in ipairs(slotT) do
         local overlay = slotInfo.frame and slotInfo.frame.NUITrackOverlay

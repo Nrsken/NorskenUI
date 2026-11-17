@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 ---@class UnitFramesModule
 local UF = NRSKNUI:GetModule('UnitFrames')
@@ -18,7 +18,7 @@ local function GetCDMFrames()
         return _G['CoolinatorPrimaryGroupAnchor'], nil
     end
 
-    local Auras = _G.NorskenAuras --[[@as NRSKNUI?]]
+    local Auras = _G.NorskenAuras --[[@as NorskenAuras?]]
     local CDM = Auras and Auras.CDM
     if CDM and CDM:IsEnabled() then
         local primary, secondary = CDM:GetAnchorGroups()

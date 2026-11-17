@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 ---@class CombatResModule
 local CombatRes = NRSKNUI:GetModule("CombatRes")

@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 ---@class AutomationModule
 local Automation = NRSKNUI:GetModule('Automation')

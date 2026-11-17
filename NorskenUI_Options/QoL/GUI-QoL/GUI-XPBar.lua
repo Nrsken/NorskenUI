@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 if not C_AddOns.IsAddOnLoaded('NorskenUI_QoL') then return end
 ---@class XPBarModule

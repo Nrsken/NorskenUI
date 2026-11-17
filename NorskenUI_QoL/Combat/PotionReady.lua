@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 ---@class PotionReadyModule
 local PotionReady = NRSKNUI:GetModule("PotionReady")

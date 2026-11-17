@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 ---@class BlizzardMouseoverModule
 local BMO = NRSKNUI:GetModule('BlizzardMouseover')
