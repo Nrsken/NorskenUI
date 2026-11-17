@@ -1,0 +1,8 @@
+<Bindings>
+    <Binding name="NORSKENUI_TOGGLE" category="BINDING_HEADER_NORSKENUI">
+        NorskenUI:ToggleOptions()
+    </Binding>
+    <Binding name="NORSKENUI_ANCHORS" category="BINDING_HEADER_NORSKENUI">
+        NorskenUI.Anchors:Toggle()
+    </Binding>
+</Bindings>

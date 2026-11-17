@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 
 local ReloadUI = ReloadUI
@@ -7,6 +7,11 @@ local ReloadUI = ReloadUI
 
 NRSKNUI:RegisterCommands({ '/nui', '/norskenui' }, {
     guireset = function(addon) addon:ResetGUIState() end, -- the word before reset, kept for old macros
+})
+
+NRSKNUI:RegisterBindings({
+    NORSKENUI_TOGGLE = 'Toggle Options',
+    NORSKENUI_ANCHORS = 'Toggle Anchors',
 })
 
 -- /rl instead of /reload
