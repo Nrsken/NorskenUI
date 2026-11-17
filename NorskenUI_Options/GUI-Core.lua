@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 ---@class GUIFrame
 NRSKNUI.GUIFrame = NRSKNUI.GUIFrame or {}
@@ -13,7 +13,6 @@ NRSKNUI.GrowthOptions = {
     { value = 'RIGHT', text = L['Right'] },
 }
 
-local LOGO = 'Interface\\AddOns\\NorskenCore\\Media\\Logo\\'
 local UI_MEDIA = 'Interface\\AddOns\\NorskenUI\\Media\\Logo\\'
 
 NRSKNUI.GUIFrame.ReloadText = L['Disabling/Enabling this requires a reload to take full effect.']
@@ -42,8 +41,8 @@ function NRSKNUI.GUILogoConfig()
     return {
         layers = {
             {
-                texture = LOGO .. 'logocookingsPT1128x128OT.png',
-                glow = LOGO .. 'logocookingsPT1128x128OT_glow.png',
+                texture = NRSKNUI.Media.Logo,
+                glow = NRSKNUI.Media.LogoGlow,
                 size = 64,
                 anchor = { 'LEFT', 'LEFT', -10, 1 },
                 color = 'accent',

@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 if not C_AddOns.IsAddOnLoaded('NorskenUI_QoL') then return end
 ---@class MissingBuffsModule
@@ -22,7 +22,7 @@ local GetSpellTexture = C_Spell.GetSpellTexture
 
 local GENERAL = 'general'
 local GENERAL_ICON = 'Interface\\Icons\\Trade_Engineering'
-local QUESTION_MARK = 134400
+local QUESTION_MARK = NRSKNUI.QuestionMarkTexture
 
 local MODIFIER_OPTIONS = {
     { key = 'shift', text = L['Shift'] },

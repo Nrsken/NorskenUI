@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 if not C_AddOns.IsAddOnLoaded('NorskenUI_QoL') then return end
 ---@class BigWigsTimersModule
@@ -552,7 +552,7 @@ local function BuildTriggerTab(page, instanceId, trigger, kind)
             width = 0.5,
             size = 22,
             yOffset = -14,
-            texture = spellInfo and spellInfo.iconID or 134400,
+            texture = spellInfo and spellInfo.iconID or NRSKNUI.QuestionMarkTexture,
             tooltip = spellInfo and function(tooltip) tooltip:SetSpellByID(spellId) end or L['No spell selected'],
             text = {
                 text = spellInfo and spellInfo.name or L['No spell selected'],
