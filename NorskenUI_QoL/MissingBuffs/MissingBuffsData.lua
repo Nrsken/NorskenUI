@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 ---@class MissingBuffsModule
 local MissingBuffs = NRSKNUI:GetModule('MissingBuffs')
@@ -146,6 +146,7 @@ MissingBuffs.ConsumableItems = {
         241325, 241324, -- Blood Knights
         241323, 241322, -- Magisters
         241335, 241334, -- Vicious Thalassian Flask of Honor
+        241316, -- Haranir Phial of Perception
     },
     AugmentRune = {
         274797, -- Tidesworn
@@ -339,6 +340,7 @@ MissingBuffs.Data = {
                 1235108,                            -- Magisters
                 1235057,                            -- Thalassian Resistance
                 1239355,                            -- Vicious Thalassian Flask of Honor
+                1236763,                            -- Haranir Phial of Perception
                 1235113, 1235114, 1235115, 1235116, -- PvP morphs of the above
                 -- The War Within
                 432021, 431971, 431972, 431973, 431974, 432473,
