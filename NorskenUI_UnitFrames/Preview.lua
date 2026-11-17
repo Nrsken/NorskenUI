@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 ---@class UnitFramesModule
 local UF = NRSKNUI:GetModule('UnitFrames')
@@ -8,6 +8,7 @@ local UnregisterStateDriver = UnregisterStateDriver
 local UnregisterUnitWatch = UnregisterUnitWatch
 local RegisterUnitWatch = RegisterUnitWatch
 local ipairs, pairs = ipairs, pairs
+local wipe = wipe
 local CreateFrame = CreateFrame
 local format = string.format
 
@@ -411,48 +412,46 @@ function Preview:ReleaseAllGroups()
     end
 end
 
--- Aura previews --
+-- Element previews --
 
-local auraUnits = {}
+-- element name -> the config keys whose frames show that element's dummies, until released
+local previewUnits = { Auras = {}, Dispel = {} }
 
----Repaint the aura element on every frame a config renders, so 'boss' covers all eight of them.
+---Repaint an element on every frame a config renders, so 'boss' covers all eight of them.
+---@param name string
 ---@param key string config key
-local function RefreshAuraPreviews(key)
+local function RefreshElementPreview(name, key)
     UF:ForEachFrame(function(frame, unit)
-        UF.Elements.Auras.Preview(frame, unit, UF.GetUnitDB(unit))
+        UF.Elements[name].Preview(frame, unit, UF.GetUnitDB(unit))
     end, key)
 end
 
----Show dummy auras on a config's frames and keep showing them until released.
+---Show or stop an element's dummies on a config's frames.
+---@param name string 'Auras' or 'Dispel'
 ---@param unit string
-function Preview:RequestAuras(unit)
-    local key = UF.ConfigKey(unit)
-    if auraUnits[key] then return end
+---@param shown boolean
+function Preview:SetPreviewing(name, unit, shown)
+    local key, units = UF.ConfigKey(unit), previewUnits[name]
+    if (units[key] == true) == shown then return end
 
-    auraUnits[key] = true
-    RefreshAuraPreviews(key)
+    units[key] = shown or nil
+    RefreshElementPreview(name, key)
 end
 
----@param unit string
-function Preview:ReleaseAuras(unit)
-    local key = UF.ConfigKey(unit)
-    if not auraUnits[key] then return end
-
-    auraUnits[key] = nil
-    RefreshAuraPreviews(key)
-end
-
-function Preview:ReleaseAllAuras()
-    for key in pairs(auraUnits) do
-        auraUnits[key] = nil
-        RefreshAuraPreviews(key)
+function Preview:ReleaseAllElements()
+    for name, units in pairs(previewUnits) do
+        for key in pairs(units) do
+            units[key] = nil
+            RefreshElementPreview(name, key)
+        end
     end
 end
 
+---@param name string
 ---@param unit string config key or unit token
 ---@return boolean
-function Preview:IsAuraPreviewActive(unit)
-    return auraUnits[UF.ConfigKey(unit)] == true
+function Preview:IsPreviewing(name, unit)
+    return previewUnits[name][UF.ConfigKey(unit)] == true
 end
 
 -- config key -> the placement tab the GUI has open on its aura indicator section, nil while closed.
@@ -468,7 +467,7 @@ local function RefreshIndicatorPreviews(key)
 
         -- Configure settles every handle, so a placement that stops previewing gets its real slots
         -- back and the preview below only has to take over the ones it wants.
-        element.Configure(frame, unit, uDB)
+        element.Configure(frame, unit, uDB, UF.db.General)
         element.Preview(frame, unit, uDB)
     end, key)
 end
@@ -533,6 +532,7 @@ end
 
 local previewTier
 local anchorsShown = false
+local sharedDispel = {} -- the config keys the General Dispel tab is previewing on
 
 ---Whether a group ignores the live roster and lays out at full size.
 ---@param key string config key
@@ -553,8 +553,31 @@ local function SetAnchorLayout(shown)
     end)
 end
 
+---A group config's frames up for a preview, a raid tier laid out at its preview count.
+---@param key string
+local function ShowGroupPreview(key)
+    if UF.GroupCounts[key] > 1 then
+        previewTier = key
+        UF:LayoutGroup(key)
+    end
+    Preview:RequestGroup(key)
+end
+
+-- Back to the live roster's count, so it relayouts rather than just hiding.
+local function RestoreTier()
+    if not previewTier then return end
+
+    local previous = previewTier
+    previewTier = nil
+    NRSKNUI:RunWhenSafe(function()
+        UF:LayoutGroup(previous)
+    end)
+end
+
 -- The preview differs per unit page and for the everything view, so a scope change restarts it.
 UF.previewScoped = true
+-- the General page has no anchor to find the module through, and its Dispel tab previews
+UF.previewPages = 'unitFramesGeneral'
 
 ---Show a preview for a page. The page is responsible for calling Release when it closes or switches away.
 ---Raid tiers sit out the everything view and only preview from their own page.
@@ -578,14 +601,13 @@ function UF:ShowPreview(pageId, showAll, group)
     local unit = pageId and pageId:match('^unitFrames_(.+)$')
     if not unit then return end
 
-    if unit == 'boss' then Preview:Request('boss') end
+    -- boss and the solo frames each preview as their own group; the player is always there
+    if unit ~= 'player' and not UF.GroupConfigs[unit] then
+        Preview:Request(unit)
+    end
 
     if UF.GroupConfigs[unit] then
-        if UF.GroupCounts[unit] > 1 then
-            previewTier = unit
-            UF:LayoutGroup(unit)
-        end
-        Preview:RequestGroup(unit)
+        ShowGroupPreview(unit)
     end
 end
 
@@ -593,31 +615,65 @@ end
 function UF:HidePreview()
     SetAnchorLayout(NRSKNUI.Anchors:IsActive())
 
-    Preview:ReleaseAllAuras()
+    Preview:ReleaseAllElements()
     Preview:ReleaseAllAuraIndicators()
     Preview:ReleaseAllIndicators()
     Preview:ReleaseAll()
     Preview:ReleaseAllGroups()
+    wipe(sharedDispel)
+    RestoreTier()
+end
 
-    -- Back to the live roster's count, so it relayouts rather than just hiding.
-    if previewTier then
-        local previous = previewTier
-        previewTier = nil
-        NRSKNUI:RunWhenSafe(function()
-            UF:LayoutGroup(previous)
-        end)
+---The General Dispel tab's preview: every config following the shared settings.
+---The first raid tier stands in for the others, which share its frames.
+---@param shown boolean
+function UF:PreviewSharedDispel(shown)
+    local wanted = {}
+    if shown then
+        for key, uDB in pairs(self.db.Units) do
+            if uDB.Enabled and uDB.Dispel and uDB.Dispel.UseGlobal then
+                wanted[key] = true
+            end
+        end
+        local tier
+        for _, raid in ipairs(UF.RaidTiers) do
+            if wanted[raid] and tier then
+                wanted[raid] = nil
+            elseif wanted[raid] then
+                tier = raid
+            end
+        end
+    end
+
+    for key in pairs(sharedDispel) do
+        if not wanted[key] then
+            sharedDispel[key] = nil
+            Preview:SetPreviewing('Dispel', key, false)
+            if UF.GroupConfigs[key] then
+                Preview:ReleaseGroup(key)
+            end
+            if previewTier == key then
+                RestoreTier()
+            end
+        end
+    end
+    for key in pairs(wanted) do
+        if not sharedDispel[key] then
+            sharedDispel[key] = true
+            if UF.GroupConfigs[key] then
+                ShowGroupPreview(key)
+            end
+            Preview:SetPreviewing('Dispel', key, true)
+        end
     end
 end
 
----Show a unit's dummy auras, driven by the aura section the GUI has open.
+---Show a unit's aura or dispel dummies, driven by the section the GUI has open.
+---@param name string 'Auras' or 'Dispel'
 ---@param unit string
 ---@param shown boolean
-function UF:PreviewAuras(unit, shown)
-    if shown then
-        Preview:RequestAuras(unit)
-    else
-        Preview:ReleaseAuras(unit)
-    end
+function UF:PreviewElement(name, unit, shown)
+    Preview:SetPreviewing(name, unit, shown)
 end
 
 ---Preview a unit's aura indicators, driven by the aura indicator section the GUI has open.

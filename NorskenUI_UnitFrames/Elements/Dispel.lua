@@ -1,29 +1,29 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 ---@class UnitFramesModule
 local UF = NRSKNUI:GetModule('UnitFrames')
 ---@class NorskenUF
 local oUF = NRSKNUI.oUF
 local CreateFrame = CreateFrame
-local ipairs, pairs = ipairs, pairs
+local ipairs = ipairs
+local select = select
+local wipe = wipe
 
 local AF = AuraUtil.AuraFilters
-
-local GRADIENT_TEXTURE = 'Interface\\AddOns\\NorskenCore\\Media\\white_gradient.tga'
-
-local BORDER_EDGES = {
-    { from = 'TOPLEFT',    to = 'TOPRIGHT',    height = true },
-    { from = 'BOTTOMLEFT', to = 'BOTTOMRIGHT', height = true },
-    { from = 'TOPLEFT',    to = 'BOTTOMLEFT',  width = true },
-    { from = 'TOPRIGHT',   to = 'BOTTOMRIGHT', width = true },
-}
 
 local SOURCE_TOKENS = {
     raid = AF.RaidPlayerDispellable,
     any = AF.Dispellable,
 }
 
--- RAID_PLAYER_DISPELLABLE counts Arcane Torrent as a Magic dispel; torrent-only Blood Elves drop Magic.
+-- the size a slot's button is made at, before it covers its target
+local SLOT_LAYOUT = { width = 24, height = 24, disableMouse = true }
+
+-- the highlight keeps to units the player can help
+local SLOT_OPTIONS = { assistOnly = true }
+
+-- RAID_PLAYER_DISPELLABLE counts Arcane Torrent as a Magic dispel,
+-- so torrent-only Blood Elves drop Magic
 local FRIENDLY_MAGIC_DISPELS = { 527, 32375, 4987, 88423, 77130, 115450, 360823, 378438, 412113, 132411 }
 local PET_MAGIC_DISPELS = { 89808 } -- Imp's Singe Magic
 
@@ -40,36 +40,6 @@ local function KnowsFriendlyMagicDispel()
     return false
 end
 
-
----The compiled branch one Source resolves to, through the same compiler every trigger runs.
----@param source string
----@return table branch
-local function SourceBranch(source)
-    local token = SOURCE_TOKENS[source] or SOURCE_TOKENS.raid
-
-    return NRSKNUI.AuraFilters:Compile({ { tokens = { [token] = true } } }, AF.Harmful)[1]
-end
-
----Exclusion applies before picking, so an ignored bleed never hides a Magic debuff on the same unit.
----@param branch table
----@param cfg table
----@return table? filters
-local function SlotCandidates(branch, cfg)
-    local ignored = cfg.IgnoreTypes
-    local dropMagic = magicFromTorrentOnly and cfg.Source == 'raid'
-    if not (dropMagic or (ignored and ignored[1])) then return branch.candidateFilters end
-
-    local filters = CopyTable(branch.candidateFilters or {})
-    filters.excludeDispelTypes = {}
-    for _, dispelType in ipairs(ignored) do
-        filters.excludeDispelTypes[dispelType] = true
-    end
-    if dropMagic then
-        filters.excludeDispelTypes.Magic = true
-    end
-    return filters
-end
-
 ---@param uDB table
 ---@param general table?
 ---@return table
@@ -79,166 +49,134 @@ local function ResolveConfig(uDB, general)
     return uDB.Dispel.UseGlobal and general.Dispel or uDB.Dispel
 end
 
----Hand a texture to the game to paint from the aura's dispel type.
----@param button table
----@param texture Texture
+---What the highlight matches: its Source, less the ignored types. Exclusion applies before
+---picking, so an ignored bleed never hides a Magic debuff on the same unit.
+---@param dispel table the frame's
 ---@param cfg table
-local function BindDispelColor(button, texture, cfg)
-    button:AddDispelTypeTexture(texture, {
-        style = Enum.CustomAuraButtonDispelTypeTextureStyle.PreserveAsset,
-        showWhenHarmful = true,
-        showWhenHelpful = true,
-        showWithoutDispelType = cfg.ShowWithoutDispelType == true,
-        customDispelColorMap = NRSKNUI.Colors.dispel,
-    })
-end
-
----Draw the highlight on a slot's button: overlay, optional border, optional dispel type icon.
----@param button table
----@param cfg table
----@param level number
-local function BuildHighlight(button, cfg, level)
-    local holder = CreateFrame('Frame', nil, button)
-    holder:SetAllPoints(button)
-    holder:SetFrameLevel(level)
-    -- Faded through the holder rather than the textures, which the game recolors.
-    holder:SetAlpha(cfg.Alpha or 1)
-
-    local overlay = holder:CreateTexture(nil, 'ARTWORK')
-    overlay:SetAllPoints(holder)
-    overlay:SetTexture(cfg.Style == 'Gradient' and GRADIENT_TEXTURE or NRSKNUI.WhiteTexture)
-    BindDispelColor(button, overlay, cfg)
-
-    -- The border is its own setting rather than a style, so it draws over either of them. Size 0 is off.
-    local borderSize = cfg.BorderSize or 0
-    if borderSize > 0 then
-        for _, edge in ipairs(BORDER_EDGES) do
-            local border = holder:CreateTexture(nil, 'OVERLAY')
-            border:SetTexture(NRSKNUI.WhiteTexture)
-            border:NCSetPoint(edge.from, holder, edge.from, 0, 0)
-            border:NCSetPoint(edge.to, holder, edge.to, 0, 0)
-            if edge.height then
-                border:NCSetHeight(borderSize)
-            else
-                border:NCSetWidth(borderSize)
-            end
-            border:NCDisablePixelSnap()
-            BindDispelColor(button, border, cfg)
-        end
+---@return table trigger
+local function SourceTrigger(dispel, cfg)
+    local excluded = dispel.excluded
+    wipe(excluded)
+    for _, dispelType in ipairs(cfg.IgnoreTypes or {}) do
+        excluded[dispelType] = true
+    end
+    if magicFromTorrentOnly and cfg.Source == 'raid' then
+        excluded.Magic = true
     end
 
-    if cfg.ShowIcon then
-        local pos = cfg.IconPosition
-        local iconHost = CreateFrame('Frame', nil, button)
-        iconHost:SetAllPoints(button)
-        iconHost:SetFrameLevel(level + 1)
+    local branch = dispel.trigger.branches[1]
+    wipe(branch.tokens)
+    branch.tokens[SOURCE_TOKENS[cfg.Source] or SOURCE_TOKENS.raid] = true
+    return dispel.trigger
+end
 
-        local icon = iconHost:CreateTexture(nil, 'OVERLAY')
-        icon:SetSize(cfg.IconSize, cfg.IconSize)
-        icon:SetPoint(pos.AnchorFrom, iconHost, pos.AnchorTo, pos.XOffset, pos.YOffset)
-        button:AddDispelTypeTexture(icon, {
-            style = Enum.CustomAuraButtonDispelTypeTextureStyle.Icon,
-            showWhenHarmful = true,
-            showWhenHelpful = true,
-        })
+-- Look --
+
+-- a tint and a border in the aura's dispel colour, and the type's icon
+local look = {
+    color = { 1, 1, 1, 1 },
+    showIcon = false,
+    swipe = false,
+    timerText = false,
+    spellName = '',
+    subRegions = {},
+}
+
+---@param frame oUF.UnitFrame
+---@param entry AuraDisplayEntry
+local function StyleHighlight(frame, entry)
+    local dispel = frame.nuiDispel
+    local cfg = dispel.config
+    local refs = entry.refs
+    local button = refs.button
+
+    -- before the look, which levels the elements off the button
+    if not entry.preview then
+        button:SetFrameLevel(UF.GetElementLevel(frame, 'Dispel'))
     end
+    button:ClearAllPoints()
+    button:SetAllPoints(entry.host)
+
+    local alpha, untyped = cfg.Alpha or 1, cfg.ShowWithoutDispelType == true
+    local tint, border, style = dispel.tint, dispel.border, dispel.style
+    tint.Texture = cfg.Style == 'Gradient' and NRSKNUI.Media.Gradient or ''
+    tint.Color[4], tint.DispelUntyped = alpha, untyped
+    -- the border is its own setting rather than a style, so it draws over either; size 0 is off
+    border.Enabled = (cfg.BorderSize or 0) > 0
+    border.Size = cfg.BorderSize or 0
+    border.DispelAlpha, border.DispelUntyped = alpha, untyped
+    style.DispelIcon, style.DispelIconSize, style.DispelIconPosition = cfg.ShowIcon == true, cfg.IconSize, cfg.IconPosition
+
+    look.style, look.textParent = dispel.look, refs.inner
+    look.subRegions[1], look.subRegions[2] = tint, border
+    NRSKNUI:ApplyAuraLook(refs, look)
+    refs.inner:SetPoint('BOTTOMRIGHT', button, 'BOTTOMRIGHT')
+    -- never the unit frame's clicks
+    button:EnableMouse(false)
 end
 
----@param dispel table
----@param source string
----@param shown boolean
-local function SetSlotShown(dispel, source, shown)
-    local index = dispel.slotIndex[source]
-    if not index then return end
+-- Element --
 
-    dispel.container:SetSlotShown(index, shown)
-end
-
----Point the proxy at whatever the config attaches to.
----The highlight always covers its target, so it has no size or offset of its own.
+---Point the proxy at what the config attaches to; the highlight always covers it.
 ---@param frame oUF.UnitFrame
 ---@param cfg table
 ---@return boolean anchored
 local function AnchorProxy(frame, cfg)
-    local dispel = frame.nuiDispel
+    local proxy = frame.nuiDispel.proxy
     local target = UF.ResolveAttachTarget(frame, cfg.Attach)
-    if not (target and dispel.proxy) then return false end
+    if not target then return false end
 
-    dispel.proxy:ClearAllPoints()
-    dispel.proxy:SetAllPoints(target)
-
+    proxy:ClearAllPoints()
+    proxy:SetAllPoints(target)
     return true
-end
-
----The client builds a slot's button once, so the level given here holds until a reload.
----@param frame oUF.UnitFrame
----@param cfg table
----@param level number
-local function EnsureSlot(frame, cfg, level)
-    local dispel = frame.nuiDispel
-    if dispel.keys[cfg.Source] then return end
-
-    local container = dispel.container
-    if not container then
-        container = frame:CreateAuraContainer()
-        if not container then return end
-
-        dispel.container = container
-        dispel.proxy = CreateFrame('Frame', nil, frame)
-    end
-
-    local branch = SourceBranch(cfg.Source)
-    local proxy = dispel.proxy
-
-    local _, key, index = container:AddSlot(branch.filterString, {
-        candidateFilters = SlotCandidates(branch, cfg),
-        assistOnly = true,
-        initializeFrame = function(button)
-            button:EnableMouse(false) -- the highlight must never eat the unit frame's clicks
-            button:SetFrameLevel(level)
-            button:SetAllPoints(proxy)
-            BuildHighlight(button, cfg, level)
-        end,
-    })
-
-    dispel.keys[cfg.Source] = key
-    dispel.slotIndex[cfg.Source] = index
 end
 
 ---@param frame oUF.UnitFrame
 local function Update(frame)
     local dispel = frame.nuiDispel
-    local container = dispel and dispel.container
-    if not container then return end
+    local display = dispel and dispel.display
+    if not display or not display.config then return end
 
-    -- A healthFill attach resolves to nothing until Health's Configure has built the fill, so retry
-    -- here until it takes rather than leaving the highlight anchored to nothing.
+    -- a healthFill attach is nothing until Health's Configure builds the fill
     if not dispel.anchored and dispel.config then
         dispel.anchored = AnchorProxy(frame, dispel.config)
     end
 
-    container:SetUnit(frame.__unit) -- early-outs when the token is unchanged
-    container:UpdateUnitGate()
-    container:UpdateAllAuras()
+    -- a roster change can point the same token at someone else
+    display:SetUnit(frame.__unit)
+    display:Refresh()
 end
 
 ---@param frame oUF.UnitFrame
 ---@return boolean
 local function Enable(frame)
+    if frame.nuiDispel then
+        frame.nuiDispel.display.host:Show()
+    end
     return true
 end
 
 ---@param frame oUF.UnitFrame
 local function Disable(frame)
-    local dispel = frame.nuiDispel
-    if dispel and dispel.container then
-        dispel.container:Hide()
+    if frame.nuiDispel then
+        frame.nuiDispel.display.host:Hide()
     end
 end
 
 oUF:AddElement('NRSKNDispel', Update, Enable, Disable)
 
--- Spec, talent and pet swaps all change what the player can dispel, so re-push live slots on a flip.
+-- spec, talent and pet swaps change what the player can dispel
+local function Repoint()
+    for _, frame in ipairs(oUF.objects) do
+        local dispel = frame.nuiDispel
+        local cfg = dispel and dispel.config
+        if cfg and cfg.Enabled and dispel.display.config then
+            dispel.display:SetSlot('highlight', SourceTrigger(dispel, cfg), dispel.proxy, SLOT_OPTIONS)
+            dispel.display:Refresh()
+        end
+    end
+end
+
 local spellWatcher = CreateFrame('Frame')
 spellWatcher:RegisterEvent('SPELLS_CHANGED')
 spellWatcher:RegisterUnitEvent('UNIT_PET', 'player')
@@ -247,17 +185,7 @@ spellWatcher:SetScript('OnEvent', function()
     if torrentOnly == magicFromTorrentOnly then return end
     magicFromTorrentOnly = torrentOnly
 
-    NRSKNUI:RunWhenSafe(function()
-        for _, frame in ipairs(oUF.objects) do
-            local dispel = frame.nuiDispel
-            local cfg = dispel and dispel.config
-            local index = cfg and cfg.Enabled and dispel.slotIndex[cfg.Source]
-            if index then
-                dispel.container:SetSlotCandidates(index, SlotCandidates(SourceBranch(cfg.Source), cfg))
-                dispel.container:UpdateAllAuras()
-            end
-        end
-    end)
+    NRSKNUI:RunWhenSafe(Repoint)
 end)
 
 ---@class UnitFramesElements
@@ -266,46 +194,75 @@ UF.Elements = UF.Elements or {}
 
 ---@class UnitFramesDispelElement
 UF.Elements.Dispel = {
+    ---A slot display whose one slot covers the attach target; it gets a container once enabled.
     ---@param self oUF.UnitFrame
     ---@param unit string
     Construct = function(self, unit)
         if self.nuiDispel then return end
 
-        self.nuiDispel = { keys = {}, slotIndex = {} }
+        local frame = self
+        local style = {}
+        self.nuiDispel = {
+            display = NRSKNUI:NewAuraDisplay(self, {
+                shape = 'slots',
+                style = function(entry) StyleHighlight(frame, entry) end,
+            }),
+            proxy = CreateFrame('Frame', nil, self),
+            excluded = {},
+            trigger = {
+                Type = NRSKNUI.AuraTriggers.Types.AuraFilter,
+                Base = AF.Harmful,
+                branches = { { tokens = {} } },
+            },
+            tint = NRSKNUI:NewSubRegion('tint', { ColorMode = 'dispel', Solid = true, Color = { 1, 1, 1, 1 } }),
+            border = NRSKNUI:NewSubRegion('border', { DispelColor = true, Color = { 1, 1, 1, 1 } }),
+            style = style,
+            look = NRSKNUI:ReadStyle(style, NRSKNUI.ICON_STYLE_TEMPLATE),
+        }
+        self.nuiDispel.trigger.branches[1].candidates = { excludeDispelTypes = self.nuiDispel.excluded }
     end,
 
     ---@param self oUF.UnitFrame
     ---@param unit string
     ---@param uDB table
     ---@param general table?
-    Configure = function(self, unit, uDB, general)
+    ---@param restyle table? set when the buttons redraw (UF:ApplySettings)
+    Configure = function(self, unit, uDB, general, restyle)
         local dispel = self.nuiDispel
         if not dispel then return end
 
         local cfg = ResolveConfig(uDB, general)
         dispel.config = cfg
-
+        local display = dispel.display
         if not cfg.Enabled then
-            for source in pairs(dispel.keys) do
-                SetSlotShown(dispel, source, false)
-            end
+            display:RemoveSlot('highlight')
             return
         end
 
-        NRSKNUI:RunWhenSafe(function()
-            EnsureSlot(self, cfg, UF.GetElementLevel(self, 'Dispel'))
-            if not dispel.container then return end
+        if not display.config then
+            display:SetLayout(SLOT_LAYOUT)
+        end
+        -- re-pointed by value, so an unchanged source and ignore list push nothing
+        display:SetSlot('highlight', SourceTrigger(dispel, cfg), dispel.proxy, SLOT_OPTIONS)
+        dispel.anchored = AnchorProxy(self, cfg)
+        -- the preview dummy sits on the proxy, so it layers where the live highlight does
+        dispel.proxy:SetFrameLevel(UF.GetElementLevel(self, 'Dispel'))
+        -- the live token, which a preview repoints away from the configured unit
+        display:SetUnit(self.__unit or unit)
+        if restyle then
+            display:Restyle()
+        end
+    end,
 
-            -- Ignored types can change without a reload, so the live slot takes them every time.
-            dispel.container:SetSlotCandidates(dispel.slotIndex[cfg.Source], SlotCandidates(SourceBranch(cfg.Source), cfg))
-            for source in pairs(dispel.keys) do
-                SetSlotShown(dispel, source, source == cfg.Source)
-            end
+    ---A dummy highlight on the target while the unit's dispel section is open.
+    ---@param self oUF.UnitFrame
+    ---@param unit string
+    ---@param uDB table
+    Preview = function(self, unit, uDB)
+        local dispel = self.nuiDispel
+        if not dispel then return end
 
-            dispel.anchored = AnchorProxy(self, cfg)
-            dispel.container:SetUnit(self.__unit or unit)
-            dispel.container:UpdateUnitGate()
-            dispel.container:UpdateAllAuras()
-        end)
+        local previewing = UF.Preview:IsPreviewing('Dispel', self.nuiConfig or unit)
+        dispel.display:SetPreview(previewing and ResolveConfig(uDB).Enabled, 'highlight')
     end,
 }

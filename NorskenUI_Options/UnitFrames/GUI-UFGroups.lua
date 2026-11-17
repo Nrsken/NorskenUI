@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 if not C_AddOns.IsAddOnLoaded('NorskenUI_UnitFrames') then return end
 ---@class UnitFramesModule
@@ -11,7 +11,10 @@ local rowHL = Theme.rowHeightLast
 local format = string.format
 local tostring = tostring
 
-local function ApplySettings(unit) UF:ApplySettings(unit) end
+local Apply = NRSKNUI.Enum.Apply
+
+-- only the group layout reads these, so the members themselves aren't configured again
+local function Arrange(unit) UF:ApplySettings(Apply.Position, unit) end
 
 local GrowthOptions = NRSKNUI.GrowthOptions
 
@@ -73,7 +76,7 @@ local function BuildGroupSection(page, uDB, unit)
             if IsHorizontal(gDB.GroupGrowthDirection) == IsHorizontal(key) then
                 gDB.GroupGrowthDirection = IsHorizontal(key) and 'DOWN' or 'RIGHT'
             end
-            ApplySettings(unit)
+            Arrange(unit)
             Reload() -- the spacing axis and the subgroup choices follow it
         end,
     }
@@ -86,7 +89,7 @@ local function BuildGroupSection(page, uDB, unit)
         step = 1,
         value = gDB[spacingKey],
         callback = function(val)
-            gDB[spacingKey] = val; ApplySettings(unit)
+            gDB[spacingKey] = val; Arrange(unit)
         end,
         callbackOnRelease = true,
     }
@@ -105,7 +108,7 @@ local function BuildGroupSection(page, uDB, unit)
             tooltip = L['Include yourself in the party frames.'],
             value = gDB.ShowPlayer,
             callback = function(checked)
-                gDB.ShowPlayer = checked; ApplySettings(unit)
+                gDB.ShowPlayer = checked; Arrange(unit)
             end,
         })
         partyRow:Checkbox(L['Start Near Center'], {
@@ -113,7 +116,7 @@ local function BuildGroupSection(page, uDB, unit)
             tooltip = L['Keep the frames centered on the group, growing out from the middle as members join.'],
             value = gDB.StartFromCenter,
             callback = function(checked)
-                gDB.StartFromCenter = checked; ApplySettings(unit)
+                gDB.StartFromCenter = checked; Arrange(unit)
             end,
         })
     else
@@ -130,7 +133,7 @@ local function BuildGroupSection(page, uDB, unit)
             options = groupOptions,
             value = gDB.GroupGrowthDirection,
             callback = function(key)
-                gDB.GroupGrowthDirection = key; ApplySettings(unit)
+                gDB.GroupGrowthDirection = key; Arrange(unit)
             end,
         })
 
@@ -144,7 +147,7 @@ local function BuildGroupSection(page, uDB, unit)
             step = 1,
             value = gDB.GroupSpacing,
             callback = function(val)
-                gDB.GroupSpacing = val; ApplySettings(unit)
+                gDB.GroupSpacing = val; Arrange(unit)
             end,
             callbackOnRelease = true,
         })
@@ -164,7 +167,7 @@ local function BuildGroupSection(page, uDB, unit)
             step = 1,
             value = gDB.GroupsPerRowColumn,
             callback = function(val)
-                gDB.GroupsPerRowColumn = val; ApplySettings(unit)
+                gDB.GroupsPerRowColumn = val; Arrange(unit)
             end,
             callbackOnRelease = true,
         })
@@ -176,7 +179,7 @@ local function BuildGroupSection(page, uDB, unit)
             callback = function(value)
                 gDB.AutoGroups = value == 'auto'
                 if value ~= 'auto' then gDB.NumGroups = value end
-                ApplySettings(unit)
+                Arrange(unit)
             end,
         })
     end
@@ -194,7 +197,7 @@ local function BuildGroupSection(page, uDB, unit)
         value = gDB.SortBy,
         callback = function(key)
             gDB.SortBy = key
-            ApplySettings(unit)
+            Arrange(unit)
             Reload()
         end,
     })
@@ -205,7 +208,7 @@ local function BuildGroupSection(page, uDB, unit)
             options = SortMethodOptions,
             value = gDB.SortMethod,
             callback = function(key)
-                gDB.SortMethod = key; ApplySettings(unit)
+                gDB.SortMethod = key; Arrange(unit)
             end,
         })
     end
@@ -214,7 +217,7 @@ local function BuildGroupSection(page, uDB, unit)
         options = SortDirectionOptions,
         value = gDB.SortDirection,
         callback = function(key)
-            gDB.SortDirection = key; ApplySettings(unit)
+            gDB.SortDirection = key; Arrange(unit)
         end,
     })
 
@@ -226,7 +229,7 @@ local function BuildGroupSection(page, uDB, unit)
                 options = RoleOptions,
                 value = gDB.RoleOrder[index],
                 callback = function(key)
-                    gDB.RoleOrder[index] = key; ApplySettings(unit)
+                    gDB.RoleOrder[index] = key; Arrange(unit)
                 end,
             })
         end
@@ -240,7 +243,7 @@ local function BuildGroupSection(page, uDB, unit)
         tooltip = L['Macro conditionals deciding when these frames are shown.'],
         value = gDB.Visibility,
         callback = function(val)
-            gDB.Visibility = val; ApplySettings(unit)
+            gDB.Visibility = val; UF:ApplySettings(Apply.Visibility, unit)
         end,
     })
     visRow:Button(L['Restore Default'], {
@@ -249,7 +252,7 @@ local function BuildGroupSection(page, uDB, unit)
         width = 0.25,
         callback = function()
             gDB.Visibility = UF.Defaults.Units[unit].Group.Visibility
-            ApplySettings(unit)
+            UF:ApplySettings(Apply.Visibility, unit)
             Reload()
         end,
     })

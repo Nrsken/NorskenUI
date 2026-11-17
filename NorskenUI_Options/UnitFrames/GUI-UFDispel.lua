@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 if not C_AddOns.IsAddOnLoaded('NorskenUI_UnitFrames') then return end
 ---@class UnitFramesModule
@@ -7,6 +7,7 @@ local L = NRSKNUI.Libs.AL
 local Theme = NRSKNUI.Theme
 local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
+local Apply = NRSKNUI.Enum.Apply
 
 local ipairs = ipairs
 
@@ -30,11 +31,6 @@ local SOURCE_OPTIONS = {
     { value = 'raid', text = L['Dispellable by You'] },
     { value = 'any',  text = L['Dispellable by Anyone'] },
 }
-
--- Style, border, icon, alpha and layer are only read when the highlight is built.
-local function NeedsReload()
-    NRSKNUI:RequestReload(L['Dispel highlight style changes show after a reload.'])
-end
 
 ---@param page KajiGUIPage
 ---@param dDB table the Dispel block being edited
@@ -67,14 +63,7 @@ local function BuildDispelCards(page, dDB, ctx)
 
         -- Following the global block, there is nothing of the unit's own to edit, so none of it is drawn.
         if unitDB.UseGlobal then
-            globalRow:Button(L['Edit Global Dispel Settings'], {
-                width = 0.5,
-                height = 24,
-                yOffset = -14,
-                callback = function()
-                    NRSKNUI.GUIFrame:ShowPage('unitFramesGeneral', { itemKey = 'dispel' })
-                end,
-            })
+            UF.GUIFollowingNote(globalRow, L['Following the dispel highlight in Unit Frames > General.'], 'dispel')
             return
         end
 
@@ -138,7 +127,6 @@ local function BuildDispelCards(page, dDB, ctx)
         callback = function(value)
             dDB.Style = value
             ctx.Apply()
-            NeedsReload()
         end,
     })
     styleRow:Slider(L['Border Size'], {
@@ -152,7 +140,6 @@ local function BuildDispelCards(page, dDB, ctx)
         callback = function(value)
             dDB.BorderSize = value
             ctx.Apply()
-            NeedsReload()
         end,
     })
 
@@ -178,7 +165,6 @@ local function BuildDispelCards(page, dDB, ctx)
         callback = function(value)
             dDB.Alpha = value
             ctx.Apply()
-            NeedsReload()
         end,
     })
 
@@ -197,7 +183,6 @@ local function BuildDispelCards(page, dDB, ctx)
         callback = function(checked)
             dDB.ShowIcon = checked
             ctx.Apply()
-            NeedsReload()
             page:Refresh()
         end,
     })
@@ -214,7 +199,6 @@ local function BuildDispelCards(page, dDB, ctx)
         callback = function(value)
             dDB.IconSize = value
             ctx.Apply()
-            NeedsReload()
         end,
     })
     sizeRow:Dropdown(L['Anchor Point'], {
@@ -227,7 +211,6 @@ local function BuildDispelCards(page, dDB, ctx)
             dDB.IconPosition.AnchorFrom = value
             dDB.IconPosition.AnchorTo = value
             ctx.Apply()
-            NeedsReload()
         end,
     })
 
@@ -243,7 +226,6 @@ local function BuildDispelCards(page, dDB, ctx)
         callback = function(value)
             dDB.IconPosition.XOffset = value
             ctx.Apply()
-            NeedsReload()
         end,
     })
     offsetRow:Slider(L['Y Offset'], {
@@ -257,7 +239,6 @@ local function BuildDispelCards(page, dDB, ctx)
         callback = function(value)
             dDB.IconPosition.YOffset = value
             ctx.Apply()
-            NeedsReload()
         end,
     })
 end
@@ -266,8 +247,11 @@ end
 ---@param page KajiGUIPage
 ---@param db table UF.db
 function UF.GUIDispelTab(page, db)
-    -- The shared block really does reach every unit, so this pass stays unscoped.
-    BuildDispelCards(page, db.General.Dispel, { group = 'all', Apply = function() UF:ApplySettings() end })
+    -- the shared block reaches every unit's highlight; one button a frame, so a restyle is cheap
+    BuildDispelCards(page, db.General.Dispel, {
+        group = 'all',
+        Apply = function() UF:ApplySettings(Apply.Look, nil, 'Dispel') end,
+    })
 end
 
 ---Builds the dispel section for a unit.
@@ -282,8 +266,7 @@ local function BuildUnitSection(page, uDB, unit)
         group = 'unitOn',
         conditions = { 'ownDispel' },
         useGlobal = dDB,
-        -- Scoped to this unit: an unscoped pass reconfigures every other unit's frames as well.
-        Apply = function() UF:ApplySettings(unit) end,
+        Apply = function() UF:ApplySettings(Apply.Look, unit, 'Dispel') end,
         reload = function() NRSKNUI.GUIFrame.content:ShowPage(UF.GUIPageID(unit), { itemKey = 'dispel' }) end,
     })
 end

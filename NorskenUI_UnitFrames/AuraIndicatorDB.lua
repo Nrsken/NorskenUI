@@ -1,9 +1,8 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 ---@class AuraIndicators
 local AuraIndicators = {}
 NRSKNUI.AuraIndicators = AuraIndicators
-NRSKNUI.AuraPreview.indicators = AuraIndicators
 local L = NRSKNUI.Libs.AL
 
 local tsort, tremove = table.sort, table.remove
@@ -25,17 +24,10 @@ AuraIndicators.FullCover = {
     [AuraIndicators.Styles.Overlay] = true,
 }
 
--- Styles with a width and height of their own.
+-- Styles with a width and height of their own; an Icon's is its icon style's.
 AuraIndicators.Sized = {
     [AuraIndicators.Styles.Square] = true,
     [AuraIndicators.Styles.Icon] = true,
-}
-
-AuraIndicators.Previewable = {
-    [AuraIndicators.Styles.Overlay] = true,
-    [AuraIndicators.Styles.Square] = true,
-    [AuraIndicators.Styles.Icon] = true,
-    [AuraIndicators.Styles.Duration] = true,
 }
 
 -- What an indicator's proxy can be anchored to. The element resolves these against its unit frame.
@@ -60,13 +52,6 @@ end
 ---at one through its `group` field. Nothing about what an indicator does depends on being in one.
 local function GetGroupStore()
     return NRSKNUI.db.profile.AuraIndicatorGroups
-end
-
----Compiled branches for an indicator, in the same shape a container binding consumes.
----@param spec table
----@return table[] branches
-function AuraIndicators:GetBranches(spec)
-    return NRSKNUI:GetTriggerBranches(spec.Trigger)
 end
 
 ---@param key string?
@@ -297,7 +282,8 @@ local SpecDefaults = {
     Color = { 0, 0.9, 0.5, 1 },
 }
 
--- What a unit does with an indicator: where it draws it, how big it is, what font it uses and so on.
+-- What a unit does with an indicator: where and how it draws it. Each style has its part:
+-- Overlay and Square the tint, Duration the text, Icon the icon style and its sub elements.
 local PlacementDefaults = {
     Name = '',
     Keys = {},
@@ -306,25 +292,9 @@ local PlacementDefaults = {
     Attach = AuraIndicators.Attach.Health,
     Position = { AnchorFrom = 'CENTER', AnchorTo = 'CENTER', XOffset = 0, YOffset = 0 },
     Size = { Width = 24, Height = 24 },
-    Texture = '',
-    Solid = false,
-    Font = {
-        UseGlobalFont = true,
-        FontFace = 'Expressway',
-        FontOutline = 'OUTLINE',
-        FontSize = 12,
-    },
-    StackFont = { FontSize = 10, Position = { AnchorFrom = 'BOTTOMRIGHT', XOffset = 0, YOffset = 2 } },
-    DurationFont = { FontSize = 12, Position = { AnchorFrom = 'CENTER', XOffset = 0, YOffset = 0 } },
-    Icon = {
-        showCooldown = true,
-        showStacks = true,
-        showDuration = true,
-        showBorder = false,
-        drawSwipe = true,
-        drawEdge = false,
-        reverseSwipe = true,
-    },
+    Tint = NRSKNUI:NewSubRegion('tint', { ColorMode = 'indicator' }),
+    Text = NRSKNUI:NewSubRegion('text', { FontSize = 12 }),
+    IconStyle = { Width = 24, Height = 24, Reverse = true },
 }
 
 ---Add a fully populated indicator to the store.
@@ -354,10 +324,17 @@ end
 
 ---Give a unit another spot to draw indicators in, appended to its list.
 ---@param uDB table
+---@param font table the unit frames' font, which an Icon's texts start with
 ---@return table placement
-function AuraIndicators:AddPlacement(uDB)
+function AuraIndicators:AddPlacement(uDB, font)
     local placement = CopyTable(PlacementDefaults)
     placement.Order = self:TopOrder(uDB.AuraIndicators)
+    -- a list, so it is seeded here rather than kept in the defaults
+    placement.SubRegions = NRSKNUI:DefaultAuraGroupSubRegions({
+        font = font,
+        timer = { FontSize = 12, GlobalTimeColor = true },
+        stacks = { FontSize = 10 },
+    })
 
     tinsert(uDB.AuraIndicators, placement)
     return placement
@@ -429,221 +406,5 @@ end
 function AuraIndicators:Invalidate(key)
     for consumer, callback in pairs(callbacks) do
         callback(consumer, key)
-    end
-end
-
----Build a look table from the indicator's spec and the placement's own settings.
----@param spec table an entry from db.profile.AuraIndicators
----@param placement table that indicator's entry in uDB.AuraIndicators
----@param fontDB table? the host's shared font block, for placements that opted into it
----@return table look
-local function ResolveLook(spec, placement, fontDB)
-    local color = spec.Color
-    local alpha = (color[4] or 1) * (placement.Alpha or 1)
-
-    return {
-        Color = { color[1], color[2], color[3], alpha },
-        Alpha = placement.Alpha or 1,
-        Texture = placement.Texture,
-        Solid = placement.Solid,
-        Icon = placement.Icon,
-        Position = placement.Position,
-        Font = placement.Font,
-        StackFont = placement.StackFont,
-        DurationFont = placement.DurationFont,
-        FontSource = (placement.Font.UseGlobalFont and fontDB) or placement.Font,
-        FontOutline = (placement.Font.UseGlobalFont and fontDB and fontDB.FontOutline) or placement.Font.FontOutline,
-    }
-end
-
----Color a plain texture, used by every style that owns its own artwork.
----@param texture Texture
----@param look table
-local function ApplyTextureLook(texture, look)
-    local color = look.Color
-    local path = look.Texture ~= '' and look.Texture or nil
-
-    if path then
-        texture:SetTexture(NRSKNUI:ResolveMediaPath('statusbar', path))
-        texture:SetVertexColor(color[1], color[2], color[3], color[4])
-    else
-        texture:SetColorTexture(color[1], color[2], color[3], color[4])
-    end
-    -- Additive never occludes, so the bar reads through the tint at any alpha. Solid blends instead,
-    -- which is what makes a full-alpha tint actually opaque.
-    texture:SetBlendMode(look.Solid and 'BLEND' or 'ADD')
-end
-
----Overlay and Square are the same build, they differ only in whether the proxy covers its target.
----Neither binds to a native setter, so both stay entirely ours to restyle at any time.
----@param slot table
----@param look table
----@return table regions
-local function BuildTexture(slot, look)
-    local texture = slot:CreateTexture(nil, 'ARTWORK')
-    texture:SetAllPoints(slot)
-    ApplyTextureLook(texture, look)
-
-    return { texture = texture }
-end
-
----Icon is a whole aura button in one slot, so the existing skin does all of it. Sizing comes from the
----proxy, which the slot is already anchored to, so the skin's own SetSize is a no-op here.
----@param slot table
----@param look table
----@param container table
----@return table regions
-local function BuildIcon(slot, look, container)
-    local icon = look.Icon
-
-    NRSKNUI:SkinAuraButton(container, {
-        disableMouse = true,
-        disableCooldown = not icon.showCooldown,
-        drawSwipe = icon.drawSwipe,
-        drawEdge = icon.drawEdge,
-        reverseSwipe = icon.reverseSwipe,
-        showApplicationCount = icon.showStacks,
-        showDurationText = icon.showDuration,
-        showBuffBorder = icon.showBorder or nil,
-        showDebuffBorder = icon.showBorder or nil,
-        fontDB = look.FontSource,
-        stackFont = look.StackFont,
-        durationFont = look.DurationFont,
-    }, slot)
-
-    return {} -- the skin owns every region, and none can be touched again after build
-end
-
----Restyle a Duration indicator's text.
----@param regions table
----@param look table
-local function ApplyDuration(regions, look)
-    local text, pos = regions.text, look.Position
-
-    text:SetFontStyle(look.FontSource, look.Font.FontSize, look.FontOutline, nil, true)
-    text:SetFontJustify(look, regions.parent, pos.XOffset, pos.YOffset, true)
-
-    local color = look.Color
-    text:SetTextColor(color[1], color[2], color[3], color[4])
-end
-
----A bare duration readout, no icon.
----@param slot table
----@param look table
----@return table regions
-local function BuildDuration(slot, look)
-    local text = slot:CreateFontString(nil, 'OVERLAY')
-
-    text:SetFontStyle(look.FontSource, look.Font.FontSize, look.FontOutline, nil, true)
-    slot:SetDurationText(text, { textFormatter = NRSKNUI:GetAuraDurationFormatter(false, nil), })
-
-    local regions = { text = text, parent = slot }
-    ApplyDuration(regions, look)
-    return regions
-end
-
-local Styles = AuraIndicators.Styles
-
-local StyleBuilders = {
-    [Styles.Overlay] = BuildTexture,
-    [Styles.Square] = BuildTexture,
-    [Styles.Icon] = BuildIcon,
-    [Styles.Duration] = BuildDuration,
-}
-
----Draw an indicator on a preview dummy, through the same builder its real slot runs. The dummy stands
----in for the slot and owner for the container, so nothing here reaches a restricted object.
----@param dummy table
----@param owner table
----@param placement table
----@param spec table
----@param level number
----@param fontDB table?
----@return boolean drawn
-function AuraIndicators:BuildPreview(dummy, owner, placement, spec, level, fontDB)
-    local build = AuraIndicators.Previewable[placement.Style] and StyleBuilders[placement.Style]
-    if not build then return false end
-
-    build(dummy, ResolveLook(spec, placement, fontDB), owner, level)
-    return true
-end
-
----Set up a unit's indicator slot for a spec or update it if it already exists.
----@param container table
----@param handle table?
----@param placement table
----@param proxy Frame
----@param level number
----@param fontDB table?
----@return table? handle
-function NRSKNUI:SyncAuraIndicator(container, handle, placement, proxy, level, fontDB)
-    local build = StyleBuilders[placement.Style]
-    if not build then return nil end
-
-    handle = handle or {
-        proxy = proxy,
-        slots = {},
-        slotIndex = {},
-        regions = {},
-        builtKeys = {},
-    }
-    handle.container = container
-
-    for _, key in ipairs(placement.Keys) do
-        local spec = not handle.builtKeys[key] and AuraIndicators:GetSpec(key)
-
-        if spec then
-            handle.builtKeys[key] = true
-            local look = ResolveLook(spec, placement, fontDB)
-
-            for _, branch in ipairs(AuraIndicators:GetBranches(spec)) do
-                local index = #handle.slots + 1
-
-                local slot, _, slotIndex = container:AddSlot(branch.filterString, {
-                    candidateFilters = branch.candidateFilters,
-                    sortMethod = AuraContainerSortMethod[spec.sortMethod],
-                    sortDirection = AuraContainerSortDirection[spec.sortDirection],
-                    initializeFrame = function(button)
-                        button:EnableMouse(false) -- an indicator must never eat the unit frame's clicks
-                        button:SetFrameLevel(level)
-                        button:SetAllPoints(proxy)
-                        handle.regions[index] = build(button, look, container, level)
-                    end,
-                })
-
-                handle.slots[index], handle.slotIndex[index] = slot, slotIndex
-
-                local regions = handle.regions[index]
-                regions.key, regions.spec = key, spec
-            end
-        end
-    end
-
-    return handle
-end
-
----Hide every slot an indicator owns.
----@param handle table
----@param shown boolean
-function NRSKNUI:SetAuraIndicatorShown(handle, shown)
-    for index in ipairs(handle.slots) do
-        handle.container:SetSlotShown(handle.slotIndex[index], shown)
-    end
-end
-
----Settle which of an indicator's slots are showing. Looks are not re-applied: the regions belong to
----the slot's aura button, which the client closes to us once aura values are secret.
----@param handle table
----@param placement table
-function NRSKNUI:ApplyAuraIndicator(handle, placement)
-    local assigned = {}
-    for _, key in ipairs(placement.Keys) do
-        assigned[key] = true
-    end
-
-    for index, regions in ipairs(handle.regions) do
-        -- The spec behind an assigned key can have been deleted since.
-        local spec = assigned[regions.key] and AuraIndicators:GetSpec(regions.key)
-        handle.container:SetSlotShown(handle.slotIndex[index], spec ~= nil)
     end
 end

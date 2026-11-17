@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 ---@class UnitFramesModule
 local UF = NRSKNUI:GetModule('UnitFrames')
@@ -120,7 +120,7 @@ function UF.GetIndicatorLevel(frame, placements, placement)
     return UF.GetElementLevel(frame, group) + min(below * 2, UF.Layers.Step - 2)
 end
 
----Dispel and aura indicator slots are built once and take their level at build time instead.
+---Dispel's slots take their level when built; an aura indicator's when styled.
 ---@param frame oUF.UnitFrame
 ---@param map table a layer map
 function UF.ApplyFrameLayers(frame, map)
@@ -161,8 +161,10 @@ function UF.ApplyFrameLayers(frame, map)
         end
     end
 
-    for kind, container in pairs(frame.Auras or {}) do
-        container:SetFrameLevel(Level(kind))
+    for kind, holder in pairs(frame.Auras or {}) do
+        local level = Level(kind)
+        holder.display.host:SetFrameLevel(level)
+        holder.display:SetLevel(level)
     end
 end
 

@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 if not C_AddOns.IsAddOnLoaded('NorskenUI_UnitFrames') then return end
 ---@class UnitFramesModule
@@ -144,7 +144,8 @@ do
                 UF:PreviewIndicator(unit, sectionKey == 'indicators' and tabId or nil)
 
                 local auraDef = UF.GUIAuraSections[sectionKey]
-                UF:PreviewAuras(unit, auraDef ~= nil)
+                UF:PreviewElement('Auras', unit, auraDef ~= nil)
+                UF:PreviewElement('Dispel', unit, sectionKey == 'dispel')
 
                 if auraDef then
                     -- The aura sections own their SetEnabled chain, which gates on the display too.

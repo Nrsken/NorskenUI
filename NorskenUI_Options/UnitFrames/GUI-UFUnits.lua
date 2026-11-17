@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 if not C_AddOns.IsAddOnLoaded('NorskenUI_UnitFrames') then return end
 ---@class UnitFramesModule
@@ -12,7 +12,7 @@ local ipairs = ipairs
 local pairs = pairs
 local format = string.format
 
-local function ApplySettings() UF:ApplySettings() end
+local Apply = NRSKNUI.Enum.Apply
 local AnchorOptions = NRSKNUI.AnchorOptions
 local GrowthOptions = NRSKNUI.GrowthOptions
 local OutlineOptions = NRSKNUI:GetOutlineOptions(true)
@@ -26,7 +26,7 @@ local TAG_CATEGORIES = {
 }
 local INDICATOR_MAX_SIZE = { RaidIcon = 64 }
 
-local function AddPositionRows(card, slotDB, conditions, lastSpacing)
+local function AddPositionRows(card, slotDB, conditions, update, lastSpacing)
     local anchorRow = card:Row(rowH)
     anchorRow:Dropdown(L['Anchor From'], {
         width = 0.5,
@@ -34,7 +34,7 @@ local function AddPositionRows(card, slotDB, conditions, lastSpacing)
         options = AnchorOptions,
         value = slotDB.Position.AnchorFrom,
         callback = function(key)
-            slotDB.Position.AnchorFrom = key; ApplySettings()
+            slotDB.Position.AnchorFrom = key; update(Apply.Position)
         end,
     })
     anchorRow:Dropdown(L['Anchor To'], {
@@ -43,7 +43,7 @@ local function AddPositionRows(card, slotDB, conditions, lastSpacing)
         options = AnchorOptions,
         value = slotDB.Position.AnchorTo,
         callback = function(key)
-            slotDB.Position.AnchorTo = key; ApplySettings()
+            slotDB.Position.AnchorTo = key; update(Apply.Position)
         end,
     })
 
@@ -56,7 +56,7 @@ local function AddPositionRows(card, slotDB, conditions, lastSpacing)
         step = 1,
         value = slotDB.Position.XOffset,
         callback = function(val)
-            slotDB.Position.XOffset = val; ApplySettings()
+            slotDB.Position.XOffset = val; update(Apply.Position)
         end,
         callbackOnRelease = true,
     })
@@ -68,7 +68,7 @@ local function AddPositionRows(card, slotDB, conditions, lastSpacing)
         step = 1,
         value = slotDB.Position.YOffset,
         callback = function(val)
-            slotDB.Position.YOffset = val; ApplySettings()
+            slotDB.Position.YOffset = val; update(Apply.Position)
         end,
         callbackOnRelease = true,
     })
@@ -80,12 +80,23 @@ local function Muted(text)
     return NRSKNUI:ColorText(text, Theme.textMuted)
 end
 
----A muted note in the half of a row a global toggle leaves empty, saying what the card follows instead.
+---A muted note beside a global toggle, linking to the settings the card follows.
 ---@param row KajiGUIFluentRow
 ---@param text string
-local function FollowingNote(row, text)
-    row:Text(nil, { width = 0.5, height = rowH, text = Muted(text), bgMode = 'hide' })
+---@param itemKey string where on the General page those settings are
+local function FollowingNote(row, text, itemKey)
+    row:Text(nil, {
+        width = 0.5,
+        height = rowH,
+        text = Muted(text),
+        bgMode = 'hide',
+        link = {
+            tooltip = L['Open General Settings'],
+            onClick = function() NRSKNUI.GUIFrame:ShowPage('unitFramesGeneral', { itemKey = itemKey }) end,
+        },
+    })
 end
+UF.GUIFollowingNote = FollowingNote
 
 local SMOOTHING_OPTIONS = {
     { value = 'global', text = L['Use Global'] },
@@ -96,8 +107,9 @@ local SMOOTHING_OPTIONS = {
 ---Smoothing as one dropdown over the UseGlobalSmooth / Smooth pair.
 ---@param row KajiGUIFluentRow
 ---@param db table
+---@param update fun(part: NorskenCore.Apply)
 ---@param config table? width / conditions / tooltip
-local function SmoothingDropdown(row, db, config)
+local function SmoothingDropdown(row, db, update, config)
     config = config or {}
     row:Dropdown(L['Smoothing'], {
         width = config.width or 0.5,
@@ -108,13 +120,13 @@ local function SmoothingDropdown(row, db, config)
         callback = function(value)
             db.UseGlobalSmooth = value == 'global'
             if value ~= 'global' then db.Smooth = value == 'on' end
-            ApplySettings()
+            update(Apply.Look)
         end,
     })
 end
 
 -- Checkbox + gated dropdown for a nil-able per-element texture override.
-local function AddTextureOverrideRow(page, row, elementDB, condName, conditions)
+local function AddTextureOverrideRow(page, row, elementDB, condName, conditions, update)
     page:SetCondition(condName, function() return elementDB.StatusBarTexture ~= nil end)
 
     row:Checkbox(L['Override Texture'], {
@@ -123,7 +135,7 @@ local function AddTextureOverrideRow(page, row, elementDB, condName, conditions)
         value = elementDB.StatusBarTexture ~= nil,
         callback = function(checked)
             elementDB.StatusBarTexture = checked and UF.db.General.statusBar or nil
-            ApplySettings()
+            update(Apply.Look)
             page:Refresh()
         end,
     })
@@ -141,7 +153,7 @@ local function AddTextureOverrideRow(page, row, elementDB, condName, conditions)
         value = elementDB.StatusBarTexture or UF.db.General.statusBar,
         callback = function(key)
             elementDB.StatusBarTexture = key
-            ApplySettings()
+            update(Apply.Look)
         end,
     })
 end
@@ -155,7 +167,7 @@ local function BuildFrameSection(page, uDB, unit)
         value = uDB.Enabled,
         callback = function(checked)
             uDB.Enabled = checked
-            ApplySettings()
+            UF:ApplySettings(Apply.Visibility, unit)
             page:Refresh()
         end,
     })
@@ -170,7 +182,7 @@ local function BuildFrameSection(page, uDB, unit)
         step = 1,
         value = uDB.Width,
         callback = function(val)
-            uDB.Width = val; ApplySettings()
+            uDB.Width = val; UF:ApplySettings(Apply.Layout, unit)
         end,
         callbackOnRelease = true,
     })
@@ -181,7 +193,7 @@ local function BuildFrameSection(page, uDB, unit)
         step = 1,
         value = uDB.Height,
         callback = function(val)
-            uDB.Height = val; ApplySettings()
+            uDB.Height = val; UF:ApplySettings(Apply.Layout, unit)
         end,
         callbackOnRelease = true,
     })
@@ -191,7 +203,7 @@ local function BuildFrameSection(page, uDB, unit)
         db = uDB,
         showAnchorFrameType = true,
         showStrata = true,
-        onChangeCallback = ApplySettings,
+        onChangeCallback = function() UF:ApplySettings(Apply.Position, unit) end,
     }, 'unitOn')
 
     if unit ~= 'boss' then return end
@@ -207,7 +219,7 @@ local function BuildFrameSection(page, uDB, unit)
         step = 1,
         value = uDB.Spacing,
         callback = function(val)
-            uDB.Spacing = val; ApplySettings()
+            uDB.Spacing = val; UF:ApplySettings(Apply.Position, unit)
         end,
         callbackOnRelease = true,
     })
@@ -217,7 +229,7 @@ local function BuildFrameSection(page, uDB, unit)
         options = GrowthOptions,
         value = uDB.GrowthDirection,
         callback = function(key)
-            uDB.GrowthDirection = key; ApplySettings()
+            uDB.GrowthDirection = key; UF:ApplySettings(Apply.Position, unit)
         end,
     })
 end
@@ -225,20 +237,21 @@ end
 -- Healthbar Settings Page.
 local function BuildHealthSection(page, uDB, unit)
     local hDB = uDB.Health
+    local function Update(part) UF:ApplySettings(part, unit, 'Health') end
     page:SetCondition('ownHealthBg', function() return hDB.BackgroundTexture ~= '' end)
 
     -- Card 1: the bar itself, motion and textures.
     local barCard = page:Card(L['Bar'], 'unitOn')
     local motionRow = barCard:Row(rowH)
-    SmoothingDropdown(motionRow, hDB)
+    SmoothingDropdown(motionRow, hDB, Update)
     motionRow:Checkbox(L['Inverse Fill'], {
         width = 0.5,
         value = hDB.Inverse,
         callback = function(checked)
-            hDB.Inverse = checked; ApplySettings()
+            hDB.Inverse = checked; Update(Apply.Layout)
         end,
     })
-    AddTextureOverrideRow(page, barCard:Row(rowH), hDB, 'ownHealthTexture', nil)
+    AddTextureOverrideRow(page, barCard:Row(rowH), hDB, 'ownHealthTexture', nil, Update)
     local bgTexRow = barCard:Row(rowHL, 0)
     bgTexRow:Checkbox(L['Match Foreground'], {
         width = 0.5,
@@ -246,7 +259,7 @@ local function BuildHealthSection(page, uDB, unit)
         value = hDB.BackgroundTexture == '',
         callback = function(checked)
             hDB.BackgroundTexture = checked and '' or UF.db.General.statusBar
-            ApplySettings()
+            Update(Apply.Look)
             page:Refresh()
         end,
     })
@@ -258,7 +271,7 @@ local function BuildHealthSection(page, uDB, unit)
         value = hDB.BackgroundTexture ~= '' and hDB.BackgroundTexture or UF.db.General.statusBar,
         callback = function(key)
             hDB.BackgroundTexture = key
-            ApplySettings()
+            Update(Apply.Look)
         end,
     })
 
@@ -272,12 +285,12 @@ local function BuildHealthSection(page, uDB, unit)
             value = hDB.UseGlobalColors,
             callback = function(checked)
                 hDB.UseGlobalColors = checked
-                ApplySettings()
+                Update(Apply.Color)
                 card:Rebuild()
             end,
         })
         if not own then
-            FollowingNote(modeRow, L['Following the colors in Unit Frames > General.'])
+            FollowingNote(modeRow, L['Following the colors in Unit Frames > General.'], 'health')
             return
         end
 
@@ -285,7 +298,7 @@ local function BuildHealthSection(page, uDB, unit)
             width = 0.5,
             value = hDB.ColorByClass,
             callback = function(checked)
-                hDB.ColorByClass = checked; ApplySettings()
+                hDB.ColorByClass = checked; Update(Apply.Color)
             end,
         })
         local fgRow = card:Row(rowH)
@@ -294,7 +307,7 @@ local function BuildHealthSection(page, uDB, unit)
             value = hDB.Foreground,
             callback = function(r, g, b, a)
                 hDB.Foreground = { r, g, b, a }
-                ApplySettings()
+                Update(Apply.Color)
             end,
         })
         fgRow:Slider(L['Class Color Alpha'], {
@@ -304,7 +317,7 @@ local function BuildHealthSection(page, uDB, unit)
             step = 0.05,
             value = hDB.ForegroundAlphaWhenColorByClass,
             callback = function(val)
-                hDB.ForegroundAlphaWhenColorByClass = val; ApplySettings()
+                hDB.ForegroundAlphaWhenColorByClass = val; Update(Apply.Color)
             end,
             callbackOnRelease = true,
         })
@@ -314,7 +327,7 @@ local function BuildHealthSection(page, uDB, unit)
             value = hDB.Background,
             callback = function(r, g, b, a)
                 hDB.Background = { r, g, b, a }
-                ApplySettings()
+                Update(Apply.Color)
             end,
         })
         bgRow:ColorPicker(L['Background (Class Colored)'], {
@@ -322,7 +335,7 @@ local function BuildHealthSection(page, uDB, unit)
             value = hDB.BackgroundWhenColorByClass,
             callback = function(r, g, b, a)
                 hDB.BackgroundWhenColorByClass = { r, g, b, a }
-                ApplySettings()
+                Update(Apply.Color)
             end,
         })
     end)
@@ -346,12 +359,12 @@ local function BuildHealthSection(page, uDB, unit)
                 value = slot.db.UseGlobal,
                 callback = function(checked)
                     slot.db.UseGlobal = checked
-                    ApplySettings()
+                    Update(Apply.Look)
                     card:Rebuild()
                 end,
             })
             if not own then
-                FollowingNote(headRow, L['Following the absorb settings in Unit Frames > General.'])
+                FollowingNote(headRow, L['Following the absorb settings in Unit Frames > General.'], 'absorbs')
                 return
             end
 
@@ -360,7 +373,7 @@ local function BuildHealthSection(page, uDB, unit)
                 value = slot.db.Enabled,
                 callback = function(checked)
                     slot.db.Enabled = checked
-                    ApplySettings()
+                    Update(Apply.Visibility)
                     page:Refresh()
                 end,
             })
@@ -374,7 +387,7 @@ local function BuildHealthSection(page, uDB, unit)
                 value = slot.db.StatusBarTexture,
                 callback = function(key)
                     slot.db.StatusBarTexture = key
-                    ApplySettings()
+                    Update(Apply.Look)
                 end,
             })
             overrideRow:ColorPicker(L['Color'], {
@@ -383,7 +396,7 @@ local function BuildHealthSection(page, uDB, unit)
                 value = slot.db.Color,
                 callback = function(r, g, b, a)
                     slot.db.Color = { r, g, b, a }
-                    ApplySettings()
+                    Update(Apply.Color)
                 end,
             })
         end)
@@ -393,6 +406,7 @@ end
 -- Powerbar Settings Page.
 local function BuildPowerSection(page, uDB, unit)
     local pDB = uDB.Power
+    local function Update(part) UF:ApplySettings(part, unit, 'Power') end
     page:SetCondition('powerOn', function() return pDB.Enabled end)
     page:SetCondition('powerFlatColor', function() return not pDB.UseGlobalColors and not pDB.ColorByPower end)
 
@@ -404,7 +418,7 @@ local function BuildPowerSection(page, uDB, unit)
         value = pDB.Enabled,
         callback = function(checked)
             pDB.Enabled = checked
-            ApplySettings()
+            Update(Apply.Visibility)
             page:Refresh()
         end,
     })
@@ -419,7 +433,7 @@ local function BuildPowerSection(page, uDB, unit)
         tooltip = L['Docked sits inside the frame along its bottom, the health bar making room. Undocked hangs below the frame.'],
         callback = function(value)
             pDB.Docked = value == 'docked'
-            ApplySettings()
+            Update(Apply.Layout)
         end,
     })
 
@@ -432,16 +446,16 @@ local function BuildPowerSection(page, uDB, unit)
         step = 1,
         value = pDB.Height,
         callback = function(val)
-            pDB.Height = val; ApplySettings()
+            pDB.Height = val; Update(Apply.Layout)
         end,
         callbackOnRelease = true,
     })
-    SmoothingDropdown(sizeRow, pDB, {
+    SmoothingDropdown(sizeRow, pDB, Update, {
         conditions = { 'powerOn' },
         tooltip = L['Use Global follows the smoothing setting from the general settings. Power smoothing only applies to the player frame.'],
     })
 
-    AddTextureOverrideRow(page, powerCard:Row(rowHL, 0), pDB, 'ownPowerTexture', { 'powerOn' })
+    AddTextureOverrideRow(page, powerCard:Row(rowHL, 0), pDB, 'ownPowerTexture', { 'powerOn' }, Update)
 
     -- Group frames pick whose bar shows, e.g. tanks only, or Tank + Death Knight for Blood's runic power.
     if UF.GroupConfigs[unit] then
@@ -461,7 +475,7 @@ local function BuildPowerSection(page, uDB, unit)
             local chosen = {}
             for _, value in ipairs(values) do chosen[value] = true end
             for _, option in ipairs(options) do map[option.value] = chosen[option.value] == true end
-            ApplySettings()
+            Update(Apply.Visibility)
         end
 
         local roleOptions = {
@@ -506,12 +520,12 @@ local function BuildPowerSection(page, uDB, unit)
             value = pDB.UseGlobalColors,
             callback = function(checked)
                 pDB.UseGlobalColors = checked
-                ApplySettings()
+                Update(Apply.Color)
                 card:Rebuild()
             end,
         })
         if not own then
-            FollowingNote(modeRow, L['Following the colors in Unit Frames > General.'])
+            FollowingNote(modeRow, L['Following the colors in Unit Frames > General.'], 'power')
             return
         end
 
@@ -522,7 +536,7 @@ local function BuildPowerSection(page, uDB, unit)
             value = pDB.ColorByPower,
             callback = function(checked)
                 pDB.ColorByPower = checked
-                ApplySettings()
+                Update(Apply.Color)
                 page:Refresh()
             end,
         })
@@ -532,7 +546,7 @@ local function BuildPowerSection(page, uDB, unit)
             value = pDB.Color,
             callback = function(r, g, b, a)
                 pDB.Color = { r, g, b, a }
-                ApplySettings()
+                Update(Apply.Color)
             end,
         })
     end)
@@ -550,7 +564,7 @@ local function BuildPowerSection(page, uDB, unit)
         value = costDB.Enabled,
         callback = function(checked)
             costDB.Enabled = checked
-            ApplySettings()
+            Update(Apply.Visibility)
             page:Refresh()
         end,
     })
@@ -560,7 +574,7 @@ local function BuildPowerSection(page, uDB, unit)
         value = costDB.Color,
         callback = function(r, g, b, a)
             costDB.Color = { r, g, b, a }
-            ApplySettings()
+            Update(Apply.Color)
         end,
     })
 end
@@ -568,6 +582,7 @@ end
 -- Castbar Settings Page.
 local function BuildCastbarSection(page, uDB, unit)
     local cDB = uDB.Castbar
+    local function Update(part) UF:ApplySettings(part, unit, 'Castbar') end
     page:SetCondition('castbarOn', function() return cDB.Enabled end)
     page:SetCondition('safeZoneOn', function() return cDB.SafeZone.Enabled end)
 
@@ -579,7 +594,7 @@ local function BuildCastbarSection(page, uDB, unit)
         value = cDB.Enabled,
         callback = function(checked)
             cDB.Enabled = checked
-            ApplySettings()
+            Update(Apply.Visibility)
             page:Refresh()
         end,
     })
@@ -591,11 +606,11 @@ local function BuildCastbarSection(page, uDB, unit)
         step = 1,
         value = cDB.Height,
         callback = function(val)
-            cDB.Height = val; ApplySettings()
+            cDB.Height = val; Update(Apply.Layout)
         end,
         callbackOnRelease = true,
     })
-    AddTextureOverrideRow(page, castbarCard:Row(rowHL, 0), cDB, 'ownCastbarTexture', { 'castbarOn' })
+    AddTextureOverrideRow(page, castbarCard:Row(rowHL, 0), cDB, 'ownCastbarTexture', { 'castbarOn' }, Update)
 
     -- Card 2: what it shows.
     local displayCard = page:Card(L['Display'], 'unitOn')
@@ -605,7 +620,7 @@ local function BuildCastbarSection(page, uDB, unit)
         conditions = { 'castbarOn' },
         value = cDB.ShowIcon,
         callback = function(checked)
-            cDB.ShowIcon = checked; ApplySettings()
+            cDB.ShowIcon = checked; Update(Apply.Layout)
         end,
     })
     showRow:Checkbox(L['Show Spell Name'], {
@@ -613,7 +628,7 @@ local function BuildCastbarSection(page, uDB, unit)
         conditions = { 'castbarOn' },
         value = cDB.ShowSpellName,
         callback = function(checked)
-            cDB.ShowSpellName = checked; ApplySettings()
+            cDB.ShowSpellName = checked; Update(Apply.Text)
         end,
     })
     local nameRow = displayCard:Row(rowH)
@@ -623,7 +638,7 @@ local function BuildCastbarSection(page, uDB, unit)
         tooltip = L['Adds who the spell is being cast on after the spell name.'],
         value = cDB.ShowTarget,
         callback = function(checked)
-            cDB.ShowTarget = checked; ApplySettings()
+            cDB.ShowTarget = checked; Update(Apply.Text)
         end,
     })
     nameRow:Checkbox(L['Show Interrupter'], {
@@ -632,7 +647,7 @@ local function BuildCastbarSection(page, uDB, unit)
         tooltip = L['Names who interrupted the cast.'],
         value = cDB.ShowInterrupter,
         callback = function(checked)
-            cDB.ShowInterrupter = checked; ApplySettings()
+            cDB.ShowInterrupter = checked; Update(Apply.Text)
         end,
     })
     local holdRow = displayCard:Row(rowHL, 0)
@@ -641,7 +656,7 @@ local function BuildCastbarSection(page, uDB, unit)
         conditions = { 'castbarOn' },
         value = cDB.ShowTime,
         callback = function(checked)
-            cDB.ShowTime = checked; ApplySettings()
+            cDB.ShowTime = checked; Update(Apply.Text)
         end,
     })
     holdRow:Slider(L['Hold After Interrupt'], {
@@ -653,7 +668,7 @@ local function BuildCastbarSection(page, uDB, unit)
         step = 0.1,
         value = cDB.TimeToHold,
         callback = function(val)
-            cDB.TimeToHold = val; ApplySettings()
+            cDB.TimeToHold = val; Update(Apply.Visibility)
         end,
         callbackOnRelease = true,
     })
@@ -668,12 +683,12 @@ local function BuildCastbarSection(page, uDB, unit)
             value = cDB.UseGlobalColors,
             callback = function(checked)
                 cDB.UseGlobalColors = checked
-                ApplySettings()
+                Update(Apply.Color)
                 card:Rebuild()
             end,
         })
         if not own then
-            FollowingNote(modeRow, L['Following the colors in Unit Frames > General.'])
+            FollowingNote(modeRow, L['Following the colors in Unit Frames > General.'], 'castbar')
             return
         end
 
@@ -682,7 +697,7 @@ local function BuildCastbarSection(page, uDB, unit)
             conditions = { 'castbarOn' },
             value = cDB.ColorByClass,
             callback = function(checked)
-                cDB.ColorByClass = checked; ApplySettings()
+                cDB.ColorByClass = checked; Update(Apply.Color)
             end,
         })
         local castColorRow = card:Row(rowH)
@@ -692,7 +707,7 @@ local function BuildCastbarSection(page, uDB, unit)
             value = cDB.Color,
             callback = function(r, g, b, a)
                 cDB.Color = { r, g, b, a }
-                ApplySettings()
+                Update(Apply.Color)
             end,
         })
         castColorRow:ColorPicker(L['Non-Interruptible'], {
@@ -701,7 +716,7 @@ local function BuildCastbarSection(page, uDB, unit)
             value = cDB.NonInterruptibleColor,
             callback = function(r, g, b, a)
                 cDB.NonInterruptibleColor = { r, g, b, a }
-                ApplySettings()
+                Update(Apply.Color)
             end,
         })
         local importantRow = card:Row(rowH)
@@ -711,7 +726,7 @@ local function BuildCastbarSection(page, uDB, unit)
             tooltip = L['Casts the game flags as important, such as ones that are lethal if not interrupted.'],
             value = cDB.ColorImportant,
             callback = function(checked)
-                cDB.ColorImportant = checked; ApplySettings()
+                cDB.ColorImportant = checked; Update(Apply.Color)
             end,
         })
         importantRow:ColorPicker(L['Important'], {
@@ -720,7 +735,7 @@ local function BuildCastbarSection(page, uDB, unit)
             value = cDB.ImportantColor,
             callback = function(r, g, b, a)
                 cDB.ImportantColor = { r, g, b, a }
-                ApplySettings()
+                Update(Apply.Color)
             end,
         })
         local stateRow = card:Row(rowHL, 0)
@@ -730,7 +745,7 @@ local function BuildCastbarSection(page, uDB, unit)
             value = cDB.FailColor,
             callback = function(r, g, b, a)
                 cDB.FailColor = { r, g, b, a }
-                ApplySettings()
+                Update(Apply.Color)
             end,
         })
         stateRow:ColorPicker(L['Background'], {
@@ -739,7 +754,7 @@ local function BuildCastbarSection(page, uDB, unit)
             value = cDB.Background,
             callback = function(r, g, b, a)
                 cDB.Background = { r, g, b, a }
-                ApplySettings()
+                Update(Apply.Color)
             end,
         })
     end)
@@ -756,12 +771,12 @@ local function BuildCastbarSection(page, uDB, unit)
                 value = cDB.SafeZone.UseGlobal,
                 callback = function(checked)
                     cDB.SafeZone.UseGlobal = checked
-                    ApplySettings()
+                    Update(Apply.Look)
                     card:Rebuild()
                 end,
             })
             if not own then
-                FollowingNote(headRow, L['Following the safe zone in Unit Frames > General.'])
+                FollowingNote(headRow, L['Following the safe zone in Unit Frames > General.'], 'castbar')
                 return
             end
 
@@ -772,7 +787,7 @@ local function BuildCastbarSection(page, uDB, unit)
                 value = cDB.SafeZone.Enabled,
                 callback = function(checked)
                     cDB.SafeZone.Enabled = checked
-                    ApplySettings()
+                    Update(Apply.Visibility)
                     page:Refresh()
                 end,
             })
@@ -782,7 +797,7 @@ local function BuildCastbarSection(page, uDB, unit)
                 value = cDB.SafeZone.Color,
                 callback = function(r, g, b, a)
                     cDB.SafeZone.Color = { r, g, b, a }
-                    ApplySettings()
+                    Update(Apply.Color)
                 end,
             })
         end)
@@ -798,7 +813,7 @@ local function BuildCastbarSection(page, uDB, unit)
         step = 1,
         value = cDB.Position.XOffset,
         callback = function(val)
-            cDB.Position.XOffset = val; ApplySettings()
+            cDB.Position.XOffset = val; Update(Apply.Position)
         end,
         callbackOnRelease = true,
     })
@@ -810,7 +825,7 @@ local function BuildCastbarSection(page, uDB, unit)
         step = 1,
         value = cDB.Position.YOffset,
         callback = function(val)
-            cDB.Position.YOffset = val; ApplySettings()
+            cDB.Position.YOffset = val; Update(Apply.Position)
         end,
         callbackOnRelease = true,
     })
@@ -819,6 +834,7 @@ end
 -- Tag Settings Page.
 local function BuildTagsSection(page, uDB, unit, selected)
     selected = selected or TAG_SLOTS[1]
+    local function Update(part) UF:ApplySettings(part, unit, 'Tags') end
     page:SetCondition('tagOn', function() return uDB.Tags[selected].Enabled end)
     page:SetCondition('tagOwnFont', function() return not uDB.Tags[selected].UseGlobalFont end)
 
@@ -832,7 +848,7 @@ local function BuildTagsSection(page, uDB, unit, selected)
             value = slotDB.Enabled,
             callback = function(checked)
                 slotDB.Enabled = checked
-                ApplySettings()
+                Update(Apply.Visibility)
                 page:Refresh()
             end,
         })
@@ -856,7 +872,7 @@ local function BuildTagsSection(page, uDB, unit, selected)
             value = slotDB.Tag,
             callback = function(val)
                 slotDB.Tag = val
-                ApplySettings()
+                Update(Apply.Text)
             end,
         })
 
@@ -883,7 +899,7 @@ local function BuildTagsSection(page, uDB, unit, selected)
             value = L['-- Select --'],
             callback = function(key)
                 slotDB.Tag = slotDB.Tag == '' and key or slotDB.Tag .. key
-                ApplySettings()
+                Update(Apply.Text)
                 card:Rebuild()
             end,
         })
@@ -897,7 +913,7 @@ local function BuildTagsSection(page, uDB, unit, selected)
             value = slotDB.UseGlobalFont,
             callback = function(checked)
                 slotDB.UseGlobalFont = checked
-                ApplySettings()
+                Update(Apply.Text)
                 page:Refresh()
             end,
         })
@@ -913,7 +929,7 @@ local function BuildTagsSection(page, uDB, unit, selected)
             value = slotDB.FontFace,
             callback = function(key)
                 slotDB.FontFace = key
-                ApplySettings()
+                Update(Apply.Text)
             end,
         })
         globalRow:Dropdown(L['Outline'], {
@@ -923,7 +939,7 @@ local function BuildTagsSection(page, uDB, unit, selected)
             value = slotDB.FontOutline,
             callback = function(key)
                 slotDB.FontOutline = key
-                ApplySettings()
+                Update(Apply.Text)
             end,
         })
 
@@ -936,7 +952,7 @@ local function BuildTagsSection(page, uDB, unit, selected)
             step = 1,
             value = slotDB.FontSize,
             callback = function(val)
-                slotDB.FontSize = val; ApplySettings()
+                slotDB.FontSize = val; Update(Apply.Text)
             end,
             callbackOnRelease = true,
         })
@@ -947,7 +963,7 @@ local function BuildTagsSection(page, uDB, unit, selected)
             tooltip = L['The color of the text, unless a tag overrides it.'],
             callback = function(r, g, b)
                 slotDB.Color = { r, g, b }
-                ApplySettings()
+                Update(Apply.Color)
             end,
         })
 
@@ -961,17 +977,17 @@ local function BuildTagsSection(page, uDB, unit, selected)
             value = slotDB.BoundTo,
             callback = function(key)
                 slotDB.BoundTo = key
-                ApplySettings()
+                Update(Apply.Position)
             end,
         })
 
-        AddPositionRows(card, slotDB, { 'tagOn' })
+        AddPositionRows(card, slotDB, { 'tagOn' }, Update)
     end)
 end
 
 -- Rows only one indicator has, added between its size row and its position rows.
 local INDICATOR_EXTRAS = {
-    Role = function(card, iDB)
+    Role = function(card, iDB, Update)
         card:Row(rowH):Checkbox(L['Tank and Healer Only'], {
             width = 1,
             conditions = { 'indicatorOn' },
@@ -979,7 +995,7 @@ local INDICATOR_EXTRAS = {
             tooltip = L['Hide the role icon on damage dealers.'],
             callback = function(checked)
                 iDB.TankHealerOnly = checked
-                ApplySettings()
+                Update(Apply.Visibility)
             end,
         })
     end,
@@ -988,6 +1004,7 @@ local INDICATOR_EXTRAS = {
 -- Indicator Settings Page.
 local function BuildIndicatorsSection(page, uDB, unit, selected)
     local defs = UF.UnitIndicators(unit)
+    local function Update(part) UF:ApplySettings(part, unit, 'Indicators') end
     local def
     for _, entry in ipairs(defs) do
         if entry.key == selected then
@@ -1011,7 +1028,7 @@ local function BuildIndicatorsSection(page, uDB, unit, selected)
         value = iDB.Enabled,
         callback = function(checked)
             iDB.Enabled = checked
-            ApplySettings()
+            Update(Apply.Visibility)
             page:Refresh()
         end,
     })
@@ -1035,7 +1052,7 @@ local function BuildIndicatorsSection(page, uDB, unit, selected)
             value = iDB.Texture,
             callback = function(key)
                 iDB.Texture = key
-                ApplySettings()
+                Update(Apply.Look)
             end,
         })
     end
@@ -1048,15 +1065,15 @@ local function BuildIndicatorsSection(page, uDB, unit, selected)
         step = 1,
         value = iDB.Size,
         callback = function(val)
-            iDB.Size = val; ApplySettings()
+            iDB.Size = val; Update(Apply.Layout)
         end,
         callbackOnRelease = true,
     })
 
     local extra = INDICATOR_EXTRAS[selected]
-    if extra then extra(card, iDB) end
+    if extra then extra(card, iDB, Update) end
 
-    AddPositionRows(card, iDB, { 'indicatorOn' })
+    AddPositionRows(card, iDB, { 'indicatorOn' }, Update)
 end
 
 -- Exposed for GUI-UFPages.lua, which assembles the per-unit pages.

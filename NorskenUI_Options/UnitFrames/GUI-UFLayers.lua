@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 if not C_AddOns.IsAddOnLoaded('NorskenUI_UnitFrames') then return end
 ---@class UnitFramesModule
@@ -8,6 +8,7 @@ local Theme = NRSKNUI.Theme
 local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
 local AuraIndicators = NRSKNUI.AuraIndicators
+local Apply = NRSKNUI.Enum.Apply
 
 local ipairs, pairs = ipairs, pairs
 local CopyTable = CopyTable
@@ -114,18 +115,10 @@ local function Step(occupants, id, dir)
     end
 end
 
--- Dispel and aura indicator slots are native buttons built once, so renumbering them needs a reload.
-local RELOAD = {
-    Dispel = L['Dispel highlight style changes show after a reload.'],
-    IndicatorTints = L['Aura indicator layer changes show after a reload.'],
-    IndicatorIcons = L['Aura indicator layer changes show after a reload.'],
-}
-
 ---@param layers table<string, number> element key -> layer
 local function Commit(layers)
     local map = LayerMap()
     for key, layer in pairs(layers) do
-        if RELOAD[key] and map[key] ~= layer then NRSKNUI:RequestReload(RELOAD[key]) end
         map[key] = layer
     end
 end
@@ -136,8 +129,6 @@ local SPELLS = { Buff = 774, Debuff = 172, Defensive = 102342, Indicator = 139 }
 local RAID_ICON = [[Interface\TargetingFrame\UI-RaidTargetingIcons]]
 local STATE_ICON = [[Interface\CharacterFrame\UI-StateIcon]]
 local TAGS_ICON = [[Interface\Icons\INV_Misc_Note_01]]
--- The dispel highlight's own art: a top-to-bottom fade the game tints by dispel type.
-local DISPEL_GRADIENT = 'Interface\\AddOns\\NorskenCore\\Media\\white_gradient.tga'
 
 ---@param color table { r, g, b, a } or an oUF color
 ---@return table rgba
@@ -159,7 +150,7 @@ local function IconSpec(key)
         Power = { icon = bar, iconColor = RGBA(NRSKNUI.Colors.power[0]) },
         Castbar = { icon = bar, iconColor = RGBA(general.Colors.Castbar) },
         Dispel = {
-            icon = general.Dispel.Style == 'Gradient' and DISPEL_GRADIENT or NRSKNUI.WhiteTexture,
+            icon = general.Dispel.Style == 'Gradient' and NRSKNUI.Media.Gradient or NRSKNUI.WhiteTexture,
             iconColor = RGBA(NRSKNUI.Colors.dispel.Magic),
         },
         Border = { icon = NRSKNUI.WhiteTexture, iconColor = { 0.17, 0.17, 0.19, 1 } },
@@ -221,10 +212,13 @@ local function Reopen()
 end
 
 ---@param layers table<string, number>? nil when there was nowhere to go
-local function Apply(layers)
+local function Save(layers)
     if not layers then return end
     Commit(layers)
-    UF:ApplySettings()
+    -- only levels change: any element pass sets every layer again (ApplyFrameLayers);
+    -- these two set their buttons' own in style, where an aura kind's follow its host
+    UF:ApplySettings(Apply.Look, nil, 'AuraIndicators')
+    UF:ApplySettings(Apply.Look, nil, 'Dispel')
     Reopen()
 end
 
@@ -248,8 +242,8 @@ local function BuildStackCard(page)
         id = 'unitFramesLayers',
         groups = groups,
         sharedCaption = L['Shared Layer %s'],
-        onMove = function(id, targetId, position) Apply(Plan(occupants, id, targetId, position)) end,
-        onStep = function(id, dir) Apply(Step(occupants, id, dir)) end,
+        onMove = function(id, targetId, position) Save(Plan(occupants, id, targetId, position)) end,
+        onStep = function(id, dir) Save(Step(occupants, id, dir)) end,
     })
     card:Separator()
     card:Row(rowHL - 9, 0):Button(L['Reset to Default'], {
@@ -261,7 +255,7 @@ local function BuildStackCard(page)
                 title = L['Reset to Default'],
                 text = L['Put every layer back where it shipped?'],
                 onAccept = function()
-                    Apply(CopyTable(UF.Defaults.General.Layers))
+                    Save(CopyTable(UF.Defaults.General.Layers))
                 end,
                 acceptText = L['Reset'],
                 cancelText = L['Cancel'],
@@ -288,7 +282,6 @@ function UF.GUIDrawOrderCard(page, uDB, placement, reload)
     local function Reorder(moved, target, position)
         ReorderSpots(spots, moved, target, position)
         AuraIndicators:Invalidate(nil)
-        NRSKNUI:RequestReload(L['Aura indicator layer changes show after a reload.'])
         reload()
     end
 

@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 if not C_AddOns.IsAddOnLoaded('NorskenUI_UnitFrames') then return end
 ---@class UnitFramesModule
@@ -10,8 +10,29 @@ local rowH = Theme.rowHeight
 local rowHL = Theme.rowHeightLast
 
 local format = string.format
+local ipairs = ipairs
+local Apply = NRSKNUI.Enum.Apply
 
-local function ApplySettings() UF:ApplySettings() end
+---Updates these elements on every frame, for settings more than one element reads.
+---@param ... UF.ElementName
+---@return fun(part: NorskenCore.Apply)
+local function Updater(...)
+    local elements = { ... }
+    return function(part)
+        for _, element in ipairs(elements) do
+            UF:ApplySettings(part, nil, element)
+        end
+    end
+end
+local UpdateHealth = Updater('Health')
+local UpdatePower = Updater('Power')
+local UpdateCastbar = Updater('Castbar')
+local UpdateBars = Updater('Health', 'Power')
+local UpdateTags = Updater('Tags')
+-- the castbar writes its own texts and puts the tag separator before a cast's target
+local UpdateTexts = Updater('Castbar', 'Tags')
+-- every bar the shared foreground texture can reach
+local UpdateBarTextures = Updater('Health', 'Power', 'Castbar')
 
 local OutlineOptions = NRSKNUI:GetOutlineOptions(true)
 
@@ -23,19 +44,19 @@ end
 -- Every section sits on one halves grid: a full-row toggle, then its settings two to a row.
 local half = 0.5
 
-local function ColorPicker(row, label, tbl, key, conditions)
+local function ColorPicker(row, label, tbl, key, update, conditions)
     row:ColorPicker(label, {
         width = half,
         conditions = conditions,
         value = tbl[key],
         callback = function(r, g, b, a)
             tbl[key] = { r, g, b, a }
-            ApplySettings()
+            update(Apply.Color)
         end,
     })
 end
 
-local function TextureDropdown(row, label, tbl, key, conditions)
+local function TextureDropdown(row, label, tbl, key, update, conditions)
     row:Dropdown(label, {
         width = half,
         media = 'statusbar',
@@ -44,19 +65,20 @@ local function TextureDropdown(row, label, tbl, key, conditions)
         value = tbl[key],
         callback = function(value)
             tbl[key] = value
-            ApplySettings()
+            update(Apply.Look)
         end,
     })
 end
 
-local function ToggleHeader(page, card, label, tbl, key, tooltip)
+---@param part NorskenCore.Apply what the toggle changes
+local function ToggleHeader(page, card, label, tbl, key, update, part, tooltip)
     card:Row(rowH):Checkbox(label, {
         width = 1,
         tooltip = tooltip,
         value = tbl[key],
         callback = function(checked)
             tbl[key] = checked
-            ApplySettings()
+            update(part)
             page:Refresh()
         end,
     })
@@ -86,7 +108,7 @@ local function BuildGeneralSection(page, db)
         value = db.General.Smooth,
         callback = function(checked)
             db.General.Smooth = checked
-            ApplySettings()
+            UpdateBars(Apply.Look)
         end,
     })
     behaviourRow:Checkbox(L['Hide Blizzard Raid Frames'], {
@@ -104,8 +126,9 @@ local function BuildGeneralSection(page, db)
     })
 
     local range = db.General.Range
+    local function UpdateRange(part) UF:ApplySettings(part, nil, 'Range') end
     local rangeCard = page:Card(L['Range Fade'], 'all')
-    ToggleHeader(page, rangeCard, L['Enable Range Fade'], range, 'Enabled',
+    ToggleHeader(page, rangeCard, L['Enable Range Fade'], range, 'Enabled', UpdateRange, Apply.Visibility,
         L['Fade frames of units that are too far away to heal or attack.'])
     local rangeRow = rangeCard:Row(rowHL, 0)
     rangeRow:Slider(L['In Range Alpha'], {
@@ -116,7 +139,7 @@ local function BuildGeneralSection(page, db)
         step = 0.05,
         value = range.InsideAlpha,
         callback = function(val)
-            range.InsideAlpha = val; ApplySettings()
+            range.InsideAlpha = val; UpdateRange(Apply.Look)
         end,
         callbackOnRelease = true,
     })
@@ -128,7 +151,7 @@ local function BuildGeneralSection(page, db)
         step = 0.05,
         value = range.OutsideAlpha,
         callback = function(val)
-            range.OutsideAlpha = val; ApplySettings()
+            range.OutsideAlpha = val; UpdateRange(Apply.Look)
         end,
         callbackOnRelease = true,
     })
@@ -138,7 +161,7 @@ local function BuildTextSection(page, db)
     local general = db.General
 
     local fontCard = page:Card(L['Font'], 'all')
-    ToggleHeader(page, fontCard, L['Use Global Font'], general, 'UseGlobalFont',
+    ToggleHeader(page, fontCard, L['Use Global Font'], general, 'UseGlobalFont', UpdateTexts, Apply.Text,
         L['Use the shared font from the Global Settings page.'])
     local fontRow = fontCard:Row(rowHL, 0)
     fontRow:Dropdown(L['Font'], {
@@ -149,7 +172,7 @@ local function BuildTextSection(page, db)
         value = general.FontFace,
         callback = function(key)
             general.FontFace = key
-            ApplySettings()
+            UpdateTexts(Apply.Text)
         end,
     })
     fontRow:Dropdown(L['Outline'], {
@@ -158,7 +181,7 @@ local function BuildTextSection(page, db)
         value = general.FontOutline,
         callback = function(key)
             general.FontOutline = key
-            ApplySettings()
+            UpdateTexts(Apply.Text)
         end,
     })
 
@@ -170,7 +193,7 @@ local function BuildTextSection(page, db)
         value = db.TagSettings.Separator,
         callback = function(key)
             db.TagSettings.Separator = key
-            ApplySettings()
+            UpdateTexts(Apply.Text)
         end,
     })
     tagRow:Slider(L['Update Interval'], {
@@ -182,7 +205,7 @@ local function BuildTextSection(page, db)
         value = db.TagSettings.UpdateInterval,
         callback = function(val)
             db.TagSettings.UpdateInterval = val
-            ApplySettings()
+            UpdateTags(Apply.Text)
         end,
         callbackOnRelease = true,
     })
@@ -200,7 +223,7 @@ local function BuildTexturesSection(page, db)
         value = general.UseGlobalBar,
         callback = function(checked)
             general.UseGlobalBar = checked
-            ApplySettings()
+            UpdateBarTextures(Apply.Look)
             page:Refresh()
         end,
     })
@@ -210,14 +233,14 @@ local function BuildTexturesSection(page, db)
         value = general.BackgroundTexture == '',
         callback = function(checked)
             general.BackgroundTexture = checked and '' or general.statusBar
-            ApplySettings()
+            UpdateHealth(Apply.Look)
             page:Refresh()
         end,
     })
     card:Separator()
 
     local dropdownRow = card:Row(rowHL, 0)
-    TextureDropdown(dropdownRow, L['Foreground Texture'], general, 'statusBar', { 'ownBar' })
+    TextureDropdown(dropdownRow, L['Foreground Texture'], general, 'statusBar', UpdateBarTextures, { 'ownBar' })
     dropdownRow:Dropdown(L['Background Texture'], {
         width = half,
         media = 'statusbar',
@@ -226,7 +249,7 @@ local function BuildTexturesSection(page, db)
         value = general.BackgroundTexture ~= '' and general.BackgroundTexture or general.statusBar,
         callback = function(key)
             general.BackgroundTexture = key
-            ApplySettings()
+            UpdateHealth(Apply.Look)
         end,
     })
 end
@@ -237,11 +260,11 @@ local function BuildHealthSection(page, db)
     local colors = general.Colors
     local card = page:Card(L['Health'], 'all')
 
-    ToggleHeader(page, card, L['Class Colored'], general, 'ColorByClass',
+    ToggleHeader(page, card, L['Class Colored'], general, 'ColorByClass', UpdateHealth, Apply.Color,
         L['Color health bars by class for players and by reaction for NPCs.'])
 
     local fgRow = card:Row(rowH)
-    ColorPicker(fgRow, L['Foreground'], colors, 'Foreground')
+    ColorPicker(fgRow, L['Foreground'], colors, 'Foreground', UpdateHealth)
     fgRow:Slider(L['Class Color Alpha'], {
         width = half,
         min = 0,
@@ -249,22 +272,22 @@ local function BuildHealthSection(page, db)
         step = 0.05,
         value = general.ForegroundAlphaWhenColorByClass,
         callback = function(val)
-            general.ForegroundAlphaWhenColorByClass = val; ApplySettings()
+            general.ForegroundAlphaWhenColorByClass = val; UpdateHealth(Apply.Color)
         end,
         callbackOnRelease = true,
     })
 
     local bgRow = card:Row(rowHL, 0)
-    ColorPicker(bgRow, L['Background'], colors, 'Background')
-    ColorPicker(bgRow, L['Background (Class Colored)'], colors, 'BackgroundWhenColorByClass')
+    ColorPicker(bgRow, L['Background'], colors, 'Background', UpdateHealth)
+    ColorPicker(bgRow, L['Background (Class Colored)'], colors, 'BackgroundWhenColorByClass', UpdateHealth)
 end
 
 local function BuildPowerSection(page, db)
     local general = db.General
     local card = page:Card(L['Power'], 'all')
-    ToggleHeader(page, card, L['Color By Power Type'], general, 'ColorByPower',
+    ToggleHeader(page, card, L['Color By Power Type'], general, 'ColorByPower', UpdatePower, Apply.Color,
         L['Color the bar by the power type (mana, rage, energy...). Uncheck to use a flat color.'])
-    ColorPicker(card:Row(rowHL, 0), L['Power Color'], general.Colors, 'Power', { 'powerCustom' })
+    ColorPicker(card:Row(rowHL, 0), L['Power Color'], general.Colors, 'Power', UpdatePower, { 'powerCustom' })
 end
 
 local function BuildCastbarSection(page, db)
@@ -272,11 +295,11 @@ local function BuildCastbarSection(page, db)
     local colors = general.Colors
 
     local card = page:Card(L['Castbar'], 'all')
-    ToggleHeader(page, card, L['Class Colored'], general, 'CastbarColorByClass')
+    ToggleHeader(page, card, L['Class Colored'], general, 'CastbarColorByClass', UpdateCastbar, Apply.Color)
 
     local colorRow = card:Row(rowH)
-    ColorPicker(colorRow, L['Castbar Color'], colors, 'Castbar', { 'castbarCustom' })
-    ColorPicker(colorRow, L['Background'], colors, 'CastbarBackground')
+    ColorPicker(colorRow, L['Castbar Color'], colors, 'Castbar', UpdateCastbar, { 'castbarCustom' })
+    ColorPicker(colorRow, L['Background'], colors, 'CastbarBackground', UpdateCastbar)
 
     local importantRow = card:Row(rowH)
     importantRow:Checkbox(L['Color Important Casts'], {
@@ -285,24 +308,24 @@ local function BuildCastbarSection(page, db)
         value = general.CastbarColorImportant,
         callback = function(checked)
             general.CastbarColorImportant = checked
-            ApplySettings()
+            UpdateCastbar(Apply.Color)
         end,
     })
-    ColorPicker(importantRow, L['Important'], colors, 'CastbarImportant')
+    ColorPicker(importantRow, L['Important'], colors, 'CastbarImportant', UpdateCastbar)
 
     local stateRow = card:Row(rowHL, 0)
-    ColorPicker(stateRow, L['Non-Interruptible'], colors, 'CastbarNonInterruptible')
-    ColorPicker(stateRow, L['Interrupted / Failed'], colors, 'CastbarFail')
+    ColorPicker(stateRow, L['Non-Interruptible'], colors, 'CastbarNonInterruptible', UpdateCastbar)
+    ColorPicker(stateRow, L['Interrupted / Failed'], colors, 'CastbarFail', UpdateCastbar)
 
     local safeZoneCard = page:Card(L['Safe Zone'], 'all')
-    ToggleHeader(page, safeZoneCard, L['Enable Safe Zone'], general.SafeZone, 'Enabled',
+    ToggleHeader(page, safeZoneCard, L['Enable Safe Zone'], general.SafeZone, 'Enabled', UpdateCastbar, Apply.Visibility,
         L['Shows your latency at the end of the cast, on the player frame only.'])
-    ColorPicker(safeZoneCard:Row(rowHL, 0), L['Color'], general.SafeZone, 'Color', { 'safeZoneOn' })
+    ColorPicker(safeZoneCard:Row(rowHL, 0), L['Color'], general.SafeZone, 'Color', UpdateCastbar, { 'safeZoneOn' })
 
     page:SparkSettingsCard({
         title = L['Castbar Spark'],
         db = general,
-        onChangeCallback = ApplySettings,
+        onChangeCallback = function() UpdateCastbar(Apply.Look) end,
         globalOverride = { label = L['Use Global Spark'] },
         labels = { texture = L['Spark Texture'], scale = L['Spark Scale'], width = L['Spark Width'], color = L['Spark Color'] },
         scaleTooltip = L['Scales the spark against the bar height. Art sparks keep their own proportions.'],
@@ -311,10 +334,10 @@ end
 
 local function BuildOverlayCard(page, title, label, tbl, condition)
     local card = page:Card(title, 'all')
-    ToggleHeader(page, card, label, tbl, 'Enabled')
+    ToggleHeader(page, card, label, tbl, 'Enabled', UpdateHealth, Apply.Visibility)
     local row = card:Row(rowHL, 0)
-    ColorPicker(row, L['Color'], tbl, 'Color', { condition })
-    TextureDropdown(row, L['Texture'], tbl, 'StatusBarTexture', { condition })
+    ColorPicker(row, L['Color'], tbl, 'Color', UpdateHealth, { condition })
+    TextureDropdown(row, L['Texture'], tbl, 'StatusBarTexture', UpdateHealth, { condition })
 end
 
 local function BuildAbsorbsSection(page, db)
@@ -365,6 +388,8 @@ GUI:RegisterPage('unitFramesGeneral', {
         local build = db and Sections[itemKey]
         -- Caption rows reach here from the search harvester, they have no section.
         if not build then return end
+
+        UF:PreviewSharedDispel(itemKey == 'dispel')
 
         page:SetEnabled(function() return db.Enabled and not NRSKNUI.UFBlocked end)
         page:SetCondition('rangeOn', function() return db.General.Range.Enabled end)

@@ -1,75 +1,39 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 ---@class UnitFramesModule
 local UF = NRSKNUI:GetModule('UnitFrames')
 ---@class NorskenUF
 local oUF = NRSKNUI.oUF
-local AuraPreview = NRSKNUI.AuraPreview
 
-local pairs = pairs
-local ipairs = ipairs
-local min = math.min
+local pairs, ipairs = pairs, ipairs
+local CopyTable = CopyTable
 
 local KINDS = { 'Buffs', 'Debuffs' }
 -- Party and raid frames also get defensives; no other unit has the group at all.
 local GROUP_KINDS = { 'Buffs', 'Debuffs', 'Defensives' }
 
----Most auras a container can put on screen.
+-- Look --
+
+---A kind's settings ready to draw or edit: elements seeded, style read through its template.
 ---@param cfg table
----@return number
-local function PreviewCount(cfg)
-    return min(cfg.maxFrameCount * #NRSKNUI:GetTriggerBranches(cfg.Trigger), cfg.previewLimit)
+---@param kind string
+---@return table style
+function UF.PrepareAuras(cfg, kind)
+    return NRSKNUI:PrepareAuraGroup(cfg, function()
+        local seed = CopyTable(UF.AuraLooks[kind])
+        seed.font = UF.AuraFont(UF.db.General)
+        return seed
+    end)
 end
 
----Get the configuration table for a container, derived from the unit's aura config and the general unit frame config.
----@param cfg table one of uDB.Auras.Buffs / uDB.Auras.Debuffs
----@param general table UnitFrames General, supplies the button font
----@return table
-local function GetContainerConfig(cfg, general)
-    local pos = cfg.Position
-    local flowCorner, containerPoint, horizontal, vertical =
-        NRSKNUI:ResolveAuraGrowth(cfg.horizontalGrowthDirection, cfg.verticalGrowthDirection, pos.AnchorTo)
-    -- Older saves keep the point they resolved to, written once so nothing moves.
-    if not pos.AnchorFrom then pos.AnchorFrom = containerPoint end
-    containerPoint = pos.AnchorFrom
-    return {
-        maximumLineSize = cfg.perRow * (cfg.size + cfg.elementSpacing),
-        anchorPoint = flowCorner,
-        containerPoint = containerPoint,
-        horizontalGrowthDirection = horizontal,
-        verticalGrowthDirection = vertical,
-        size = cfg.size,
-        elementSpacing = cfg.elementSpacing,
-        lineSpacing = cfg.lineSpacing,
-        maxFrameCount = cfg.maxFrameCount,
-        sortMethod = AuraContainerSortMethod[cfg.sortMethod],
-        sortDirection = AuraContainerSortDirection[cfg.sortDirection],
-        showApplicationCount = cfg.showApplicationCount,
-        showDurationText = cfg.showDurationText,
-        durationTextColorCurve = true,
-        drawSwipe = cfg.drawSwipe,
-        drawEdge = cfg.drawEdge,
-        reverseSwipe = cfg.reverseSwipe,
-        showBuffBorder = cfg.showBorder or nil,
-        showDebuffBorder = cfg.showBorder or nil,
-        showWithoutDispelType = cfg.showBorderWithoutDispelType,
-        showBuffDispelIcon = cfg.showDispelIcon or nil,
-        showDebuffDispelIcon = cfg.showDispelIcon or nil,
-        dispelIconSize = cfg.dispelIconSize,
-        disableMouse = cfg.disableMouse,
-        tooltipHideInCombat = cfg.tooltipHideInCombat,
-        fontDB = general,
-        stackFont = cfg.StackFont,
-        durationFont = cfg.DurationFont,
-    }
-end
+-- Element --
 
 ---@param frame oUF.UnitFrame
 local function Update(frame)
-    for _, container in pairs(frame.Auras) do
-        container:SetUnit(frame.__unit) -- early-outs when the token is unchanged
-        container:UpdateUnitGate()
-        container:UpdateAllAuras()
+    -- a roster change can point the same token at someone else
+    for _, holder in pairs(frame.Auras) do
+        holder.display:SetUnit(frame.__unit)
+        holder.display:Refresh()
     end
 end
 
@@ -83,21 +47,19 @@ end
 local function Disable(frame)
     if not frame.Auras then return end
 
-    for _, container in pairs(frame.Auras) do
-        container:Hide()
+    for _, holder in pairs(frame.Auras) do
+        holder.display.host:Hide()
     end
 end
 
 oUF:AddElement('NRSKNAuras', Update, Enable, Disable)
 
----Reapply every unit frame's aura filters, picking up branches added or removed in the filter builder.
+---Reapply every unit frame's aura filters, picking up triggers added or removed.
 ---Wired to the AuraFilters callback in Core.lua.
 function UF:ReapplyAuraFilters()
     for _, frame in pairs(UF.frames) do
-        if frame.Auras then
-            for _, container in pairs(frame.Auras) do
-                container:ReapplyFilters()
-            end
+        for _, holder in pairs(frame.Auras or {}) do
+            holder.display:SetTrigger(holder.cfg.Trigger)
         end
     end
 end
@@ -108,57 +70,72 @@ UF.Elements = UF.Elements or {}
 
 ---@class UnitFramesAurasElement
 UF.Elements.Auras = {
+    ---Each kind is an aura group display, its host placed off the health bar.
     ---@param self oUF.UnitFrame
     ---@param unit string
     Construct = function(self, unit)
         if self.Auras then return end
 
         local uDB = UF.GetUnitDB(unit)
-        local general = UF.db.General
-        local containers = {}
+        local holders = {}
 
         for _, kind in ipairs(UF.GroupConfigs[self.nuiConfig or unit] and GROUP_KINDS or KINDS) do
             local cfg = uDB.Auras[kind]
-            local container = self:CreateAuraContainer(GetContainerConfig(cfg, general))
-            if container then
-                container:AddFilteredGroup(cfg.Trigger)
-                containers[kind] = container
-            end
+            local holder = { cfg = cfg, style = UF.PrepareAuras(cfg, kind) }
+            holder.display = NRSKNUI:NewAuraDisplay(self, {
+                shape = 'group',
+                style = function(entry) NRSKNUI:ApplyIconLook(entry.refs, holder.style, holder.cfg.SubRegions, entry.branch) end,
+            })
+            holders[kind] = holder
         end
 
-        self.Auras = containers
+        self.Auras = holders
     end,
 
     ---@param self oUF.UnitFrame
     ---@param unit string
     ---@param uDB table
     ---@param general table
-    Configure = function(self, unit, uDB, general)
-        local containers = self.Auras
-        if not containers then return end
+    ---@param restyle table? set when the buttons redraw, holding the pass's look stamps by config
+    ---@param only UF.AuraKind? configure just this kind
+    Configure = function(self, unit, uDB, general, restyle, only)
+        local holders = self.Auras
+        if not holders then return end
 
         -- The health bar, not the frame, so auras never cover a docked power bar.
-        local host = self.Health or self
+        local anchor = self.Health or self
 
-        for kind, container in pairs(containers) do
-            local cfg = uDB.Auras[kind]
-            local pos = cfg.Position
-            local config = GetContainerConfig(cfg, general)
-            -- ApplyFrameLayers levels the container, the preview dummies take it from here.
-            local level = UF.GetElementLevel(self, kind)
+        for kind, holder in pairs(holders) do
+            -- an edit to one kind leaves the others' buttons alone
+            if not only or kind == only then
+                -- set before the display reads them: SetTrigger can hand a button over at once
+                local cfg = uDB.Auras[kind]
+                holder.cfg, holder.style = cfg, UF.PrepareAuras(cfg, kind)
+                local display = holder.display
 
-            -- Layout re-applies live, button appearance does not, see container:ApplyLayout.
-            container:ClearAllPoints()
-            container:SetPoint(config.containerPoint, host, pos.AnchorTo, pos.XOffset, pos.YOffset)
-            container:ApplyLayout(config)
-            container:RebindFilteredGroups(cfg.Trigger)
-            -- self.__unit is the live token, which a preview repoints away from the configured unit.
-            container:SetUnit(self.__unit or unit)
-            if container:UpdateUnitGate() then container:UpdateAllAuras() end
-            container:SetShown(cfg.Enabled)
+                if restyle then
+                    -- a role or profile switch that leaves the look as it was redraws nothing
+                    local stamp = restyle[cfg]
+                    if not stamp then
+                        stamp = NRSKNUI:LookStamp(cfg.Style, cfg.SubRegions)
+                        restyle[cfg] = stamp
+                    end
+                    display:Restyle(stamp)
+                end
+                local config = NRSKNUI:GetAuraGroupConfig(cfg, holder.style)
+                display:SetLayout(config, NRSKNUI:GetAuraPreviewCount(cfg), UF.GetElementLevel(self, kind))
+                display:SetTrigger(cfg.Trigger)
+                -- the live token, which a preview repoints away from the configured unit
+                display:SetUnit(self.__unit or unit)
 
-            AuraPreview:Attach(container, host, pos.AnchorTo, pos.XOffset, pos.YOffset, level)
-            AuraPreview:Update(container, config, PreviewCount(cfg), cfg.Trigger)
+                -- the host is the whole grid, so its point is where the auras grow from
+                local pos = cfg.Position
+                local host = display.host
+                host:ClearAllPoints()
+                host:NCSetPoint(pos.AnchorFrom, anchor, pos.AnchorTo, pos.XOffset, pos.YOffset)
+                host:SetAlpha(holder.style.Alpha)
+                host:SetShown(cfg.Enabled)
+            end
         end
     end,
 
@@ -167,16 +144,14 @@ UF.Elements.Auras = {
     ---@param unit string
     ---@param uDB table
     Preview = function(self, unit, uDB)
-        local containers = self.Auras
-        if not containers then return end
+        local holders = self.Auras
+        if not holders then return end
 
-        -- nuiConfig, not the token, a header child is styled with oUF's guessed archetype, which cannot tell the raid tiers apart.
-        local preview = UF.Preview:IsAuraPreviewActive(self.nuiConfig or unit)
+        -- nuiConfig, not the token: oUF's guessed archetype can't tell the raid tiers apart
+        local preview = UF.Preview:IsPreviewing('Auras', self.nuiConfig or unit)
 
-        for kind, container in pairs(containers) do
-            local enabled = uDB.Auras[kind].Enabled
-            AuraPreview:SetShown(container, preview and enabled)
-            container:SetShown(enabled and not preview)
+        for kind, holder in pairs(holders) do
+            holder.display:SetPreview(preview and uDB.Auras[kind].Enabled)
         end
     end,
 }

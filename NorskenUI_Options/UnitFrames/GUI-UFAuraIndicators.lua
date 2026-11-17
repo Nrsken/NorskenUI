@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 if not C_AddOns.IsAddOnLoaded('NorskenUI_UnitFrames') then return end
 ---@class UnitFramesModule
@@ -13,9 +13,10 @@ local AuraTriggers = NRSKNUI.AuraTriggers
 local Premade = NRSKNUI.AuraFiltersPremade
 local TriggerEditor = NRSKNUI.GUITriggerEditor
 local AuraCards = NRSKNUI.GUIAuraCards
-local OutlineOptions = NRSKNUI:GetOutlineOptions(true)
+local AuraLook = NRSKNUI.GUIAuraLook
 
 local ipairs, pairs = ipairs, pairs
+local setmetatable = setmetatable
 local tonumber = tonumber
 local format = string.format
 local insert = table.insert
@@ -210,7 +211,7 @@ end
 
 local function BuildLibraryPage(page, key, spec)
     spec.Trigger = spec.Trigger or NRSKNUI.AuraTriggers:New()
-    TriggerEditor:Build(page, spec.Trigger, { title = L['Indicator'], onChange = function() Changed(key) end })
+    TriggerEditor:BuildSections(page, spec.Trigger, { title = L['Indicator'], single = true, apply = function() Changed(key) end })
 
     local look = page:Card(L['Appearance'])
     look:Row(rowHL, 0):ColorPicker(L['Color'], {
@@ -582,153 +583,58 @@ function UF.GUIAuraIndicatorTabs(unit)
     return tabs
 end
 
+-- what a spot's tint is coloured by; Custom gives it a colour of its own
+local TINT_MODES = {
+    { value = 'indicator', text = L['Indicator'] },
+    { value = 'dispel',    text = L['Dispel Type'] },
+    { value = 'custom',    text = L['Custom'] },
+}
+
+-- what an Icon spot's Add buttons offer
+local ADDS = {
+    { 'text', L['Add Text'] }, { 'border', L['Add Border'] }, { 'tint', L['Add Tint'] },
+    { 'auratype', L['Add Aura Type Texture'] },
+}
+
+---What the spot's style draws with: a tint, a text or an icon and its sub elements.
 ---@param page KajiGUIPage
----@param card KajiGUIFluentCard
----@param font table placement.Font
----@param sizes table[] one { label, db, key } per string the style draws
-local function AddFontRows(page, card, font, sizes)
-    local ownFont = { 'indicatorOwnFont' }
+---@param placement table
+---@param Apply fun() reaches the unit's frames
+local function BuildStyleOptions(page, placement, Apply)
+    -- edited as an aura group with no triggers of its own; writes reach the spot
+    local view = setmetatable({ Triggers = {}, type = 'auragroup', name = placement.Name }, { __index = placement, __newindex = placement })
+    local displays = { view }
 
-    local function AddSize(row, width, size)
-        row:Slider(size.label, {
-            width = width,
-            min = 6,
-            max = 32,
-            step = 1,
-            value = size.db[size.key],
-            callbackOnRelease = true,
-            callback = function(value)
-                size.db[size.key] = value
-                Changed(nil)
-            end,
-        })
-    end
-
-    local function AddOutline(row, width)
-        row:Dropdown(L['Outline'], {
-            width = width,
-            options = OutlineOptions,
-            conditions = ownFont,
-            value = font.FontOutline,
-            callback = function(value)
-                font.FontOutline = value
-                Changed(nil)
-            end,
-        })
-    end
-
-    local fontRow = card:Row(rowH)
-    fontRow:Checkbox(L['Use Global Font'], {
-        width = 0.5,
-        value = font.UseGlobalFont,
-        tooltip = L["The text is colored by the indicator itself, on the Aura Indicators page."],
-        callback = function(checked)
-            font.UseGlobalFont = checked
-            Changed(nil)
-            page:Refresh()
-        end,
-    })
-    fontRow:Dropdown(L['Font'], {
-        width = 0.5,
-        media = 'font',
-        searchable = true,
-        conditions = ownFont,
-        value = font.FontFace,
-        callback = function(value)
-            font.FontFace = value
-            Changed(nil)
-        end,
-    })
-
-    if #sizes == 1 then
-        local sizeRow = card:Row(rowHL, 0)
-        AddSize(sizeRow, 0.5, sizes[1])
-        AddOutline(sizeRow, 0.5)
-        return
-    end
-
-    local sizeRow = card:Row(rowH)
-    AddSize(sizeRow, 0.5, sizes[1])
-    AddSize(sizeRow, 0.5, sizes[2])
-
-    AddOutline(card:Row(rowHL, 0), 1)
-end
-
-local function BuildStyleOptions(page, card, placement)
     if placement.Style == Styles.Icon then
-        local row1 = card:Row(rowH)
-        row1:Checkbox(L['Cooldown Spiral'], {
-            width = 0.5,
-            value = placement.Icon.showCooldown,
-            callback = function(checked)
-                placement.Icon.showCooldown = checked
-                Changed(nil)
-            end,
-        })
-        row1:Checkbox(L['Stack Count'], {
-            width = 0.5,
-            value = placement.Icon.showStacks,
-            callback = function(checked)
-                placement.Icon.showStacks = checked
-                Changed(nil)
-            end,
-        })
-
-        local row2 = card:Row(rowH)
-        row2:Checkbox(L['Duration Text'], {
-            width = 0.5,
-            value = placement.Icon.showDuration,
-            callback = function(checked)
-                placement.Icon.showDuration = checked
-                Changed(nil)
-            end,
-        })
-        row2:Checkbox(L['Dispel Colored Border'], {
-            width = 0.5,
-            value = placement.Icon.showBorder,
-            callback = function(checked)
-                placement.Icon.showBorder = checked
-                Changed(nil)
-            end,
-        })
-
-        card:Separator()
-
-        AddFontRows(page, card, placement.Font, {
-            { label = L['Stack Font Size'],    db = placement.StackFont,    key = 'FontSize' },
-            { label = L['Duration Font Size'], db = placement.DurationFont, key = 'FontSize' },
-        })
+        local style = NRSKNUI:ReadStyle(placement.IconStyle, NRSKNUI.ICON_STYLE_TEMPLATE)
+        local mixed = AuraLook.Differ(displays, function() return style end)
+        local function set(path, value)
+            AuraLook.Assign(placement.IconStyle, path, value)
+            Apply()
+        end
+        page:Card(L['Style Settings'], 'all'):Rebuild(function(card)
+            AuraLook.AuraGroupRows(card, page, style, set, mixed, true, function()
+                AuraLook.SubElements(card, page, displays, Apply, { adds = ADDS, auraGroup = true, tintModes = TINT_MODES })
+            end)
+        end)
         return
     end
 
-    if placement.Style == Styles.Duration then
-        AddFontRows(page, card, placement.Font, {
-            { label = L['Font Size'], db = placement.Font, key = 'FontSize' },
-        })
-        return
+    local field = placement.Style == Styles.Duration and 'Text' or 'Tint'
+    local element = placement[field]
+    local mixed = AuraLook.Differ(displays, function(display) return display[field] end)
+    local function set(path, value)
+        AuraLook.Assign(element, path, value)
+        Apply()
     end
-
-    local textureRow = card:Row(rowHL, 0)
-    textureRow:Dropdown(L['Texture'], {
-        width = 0.5,
-        media = 'statusbar',
-        searchable = true,
-        value = placement.Texture,
-        tooltip = L['Leave empty for a flat color. The color itself is set on the indicator.'],
-        callback = function(value)
-            placement.Texture = value
-            Changed(nil)
-        end,
-    })
-    textureRow:Checkbox(L['Solid'], {
-        width = 0.5,
-        value = placement.Solid,
-        tooltip = L['Draw the tint over the bar instead of adding to it, so alpha reads as real opacity.'],
-        callback = function(checked)
-            placement.Solid = checked
-            Changed(nil)
-        end,
-    })
+    page:Card(L['Style Settings'], 'all'):Rebuild(function(card)
+        if field == 'Text' then
+            -- the indicator's own colour, as a tint's
+            AuraLook.TextRows(card, page, element, set, mixed, 'indicator:text', { displays = displays, slot = 1, noColor = true })
+        else
+            AuraLook.TintRows(card, page, element, set, mixed, 'indicator:tint', TINT_MODES)
+        end
+    end)
 end
 
 ---Reopen a unit's Aura Indicators section, optionally on a given placement.
@@ -830,15 +736,15 @@ local function BuildUnitSection(page, uDB, unit, tabId)
     local placements = uDB.AuraIndicators
     local index = tonumber(tabId) or 1
     local placement = placements[index]
+    -- a spot edit reaches only this unit's frames
+    local function Apply()
+        UF:ReapplyAuraIndicators(nil, unit)
+    end
 
     if placement and not Styles[placement.Style] then
         placement.Style = Styles.Overlay
-        Changed(nil)
+        Apply()
     end
-
-    page:SetCondition('indicatorOwnFont', function()
-        return placement ~= nil and not placement.Font.UseGlobalFont
-    end)
 
     local function Reload() ReloadUnit(unit) end
 
@@ -871,7 +777,7 @@ local function BuildUnitSection(page, uDB, unit, tabId)
                 options = IndicatorOptions(),
                 value = placement.Keys,
                 tooltip = L['Every indicator that can fill this spot. Assign one per spec and the same spot works on all of them.'],
-                callback = function() Changed(nil) end,
+                callback = function() Apply() end,
             })
             row:Button(L['Remove Spot'], {
                 yOffset = -14,
@@ -879,7 +785,7 @@ local function BuildUnitSection(page, uDB, unit, tabId)
                 height = 24,
                 callback = function()
                     AuraIndicators:RemovePlacement(uDB, index)
-                    Changed(nil)
+                    Apply()
                     Reload()
                 end,
             })
@@ -891,7 +797,7 @@ local function BuildUnitSection(page, uDB, unit, tabId)
             width = 1,
             height = 32,
             callback = function()
-                AuraIndicators:AddPlacement(uDB)
+                AuraIndicators:AddPlacement(uDB, UF.AuraFont(UF.db.General))
                 Reload()
             end,
         })
@@ -905,14 +811,13 @@ local function BuildUnitSection(page, uDB, unit, tabId)
         width = 1,
         options = STYLE_OPTIONS,
         value = placement.Style,
-        tooltip = L['The preview follows straight away. Aura buttons are built once by the game, so the real indicator only picks a new style up after a reload.'],
         callback = function(value)
             -- A new style can mean a new draw group, and it arrives on top of it.
             if UF.IndicatorGroup({ Style = value }) ~= UF.IndicatorGroup(placement) then
                 placement.Order = AuraIndicators:TopOrder(placements)
             end
             placement.Style = value
-            Changed(nil)
+            Apply()
             Reload()
         end,
     })
@@ -924,7 +829,7 @@ local function BuildUnitSection(page, uDB, unit, tabId)
         value = placement.Attach,
         callback = function(value)
             placement.Attach = value
-            Changed(nil)
+            Apply()
         end,
     })
     placeRow:Slider(L['Alpha'], {
@@ -936,21 +841,18 @@ local function BuildUnitSection(page, uDB, unit, tabId)
         tooltip = L["Multiplies the indicator's own color alpha, so 100% is exactly the color it carries."],
         callback = function(value)
             placement.Alpha = value
-            Changed(nil)
+            Apply()
         end,
     })
 
     -- Back on this spot's own tab after a reorder.
     UF.GUIDrawOrderCard(page, uDB, placement, function() ReloadUnit(unit, index) end)
-    BuildStyleOptions(page, page:Card(L['Style Settings']), placement)
+    BuildStyleOptions(page, placement, Apply)
 
-    if AuraIndicators.FullCover[placement.Style] then return end
+    -- a tint or a text covers its target; an Icon's size is in its Size Settings
+    if not AuraIndicators.Sized[placement.Style] then return end
 
-    if placement.Style == Styles.Icon then
-        AuraCards:TextPosition(page, placement, { Apply = function() Changed(nil) end })
-    end
-
-    if AuraIndicators.Sized[placement.Style] then
+    if placement.Style == Styles.Square then
         local sizeCard = page:Card(L['Size'])
         local sizeRow = sizeCard:Row(rowHL, 0)
         sizeRow:Slider(L['Width'], {
@@ -961,7 +863,7 @@ local function BuildUnitSection(page, uDB, unit, tabId)
             value = placement.Size.Width,
             callback = function(value)
                 placement.Size.Width = value
-                Changed(nil)
+                Apply()
             end,
         })
         sizeRow:Slider(L['Height'], {
@@ -972,7 +874,7 @@ local function BuildUnitSection(page, uDB, unit, tabId)
             value = placement.Size.Height,
             callback = function(value)
                 placement.Size.Height = value
-                Changed(nil)
+                Apply()
             end,
         })
     end
@@ -981,7 +883,7 @@ local function BuildUnitSection(page, uDB, unit, tabId)
         db = placement,
         showAnchorFrameType = false,
         showStrata = false,
-        onChangeCallback = function() Changed(nil) end,
+        onChangeCallback = Apply,
     })
 end
 

@@ -1,15 +1,17 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 if not C_AddOns.IsAddOnLoaded('NorskenUI_UnitFrames') then return end
 ---@class UnitFramesModule
 local UF = NRSKNUI:GetModule('UnitFrames')
 local L = NRSKNUI.Libs.AL
 local Theme = NRSKNUI.Theme
-local rowHL = Theme.rowHeightLast
-local AuraCards = NRSKNUI.GUIAuraCards
+local rowH = Theme.rowHeight
+local AuraLook = NRSKNUI.GUIAuraLook
 local TriggerEditor = NRSKNUI.GUITriggerEditor
 
 local ipairs = ipairs
+local setmetatable = setmetatable
+local Apply = NRSKNUI.Enum.Apply
 
 -- sectionKey is the mini sidebar item each kind hangs off on a unit page.
 local KINDS = {
@@ -19,43 +21,67 @@ local KINDS = {
     { kind = 'Defensives', sectionKey = 'auradefensives', title = L['Aura Defensives'], label = L['Defensives'], harmful = false },
 }
 
+-- an aura group's tabs, less what the frame decides itself: unit, load, conditions
 local TABS = {
-    { id = 'layout',     text = L['Layout'] },
-    { id = 'trigger',    text = L['Trigger'] },
-    { id = 'appearance', text = L['Appearance'] },
-    { id = 'text',       text = L['Text'] },
+    { id = 'group',   text = L['Group'] },
+    { id = 'display', text = L['Display'] },
+    { id = 'trigger', text = L['Trigger'] },
 }
 
----@param page KajiGUIPage
----@param cfg table
----@param ctx table
-local function BuildPositionCard(page, cfg, ctx)
-    page:PositionCard({
-        db = cfg,
-        showAnchorFrameType = false,
-        showStrata = false,
-        sliderRange = { -200, 200 },
-        onChangeCallback = ctx.Apply,
-    }, 'all')
+-- Group Tab
+local function BuildGroupTab(page, def, cfg, unit, ctx)
+    page:Card(def.title, 'all'):Rebuild(function(card)
+        card:Row(rowH):Checkbox(L['Enable'], {
+            width = 1,
+            master = true,
+            value = cfg.Enabled,
+            callback = function(checked)
+                cfg.Enabled = checked
+                ctx.Apply(Apply.Visibility)
+                page:Refresh()
+            end,
+        })
+
+        if AuraLook.Section(card, 'groupLayout', L['Dynamic Group Settings']) then
+            card:Premade('DynamicGroupCard', {
+                db = cfg.Layout,
+                showLimit = false,
+                extraRows = function(c) AuraLook.AuraGroupCountRows(c, cfg, ctx.Apply) end,
+                onChangeCallback = ctx.Layout,
+            })
+        end
+        if AuraLook.Section(card, 'groupPosition', L['Position Settings']) then
+            card:Premade('PositionCard', {
+                db = cfg,
+                showAnchorFrameType = false,
+                showStrata = false,
+                sliderRange = { -200, 200 },
+                onChangeCallback = function() ctx.Apply(Apply.Position) end,
+            })
+        end
+    end)
 end
 
--- Layout Tab
-local function BuildLayoutTab(page, def, cfg, unit, ctx)
-    local enableCard = page:Card(def.title)
-    enableCard:Row(rowHL, 0):Checkbox(L['Enable'], {
-        width = 1,
-        master = true,
-        value = cfg.Enabled,
-        callback = function(checked)
-            cfg.Enabled = checked
-            ctx.Apply()
-            page:Refresh()
-        end,
-    })
-    AuraCards:Grid(page, cfg, ctx)
-    AuraCards:Growth(page, cfg, ctx)
-    BuildPositionCard(page, cfg, ctx)
-    AuraCards:Sorting(page, cfg, ctx)
+-- Display Tab
+local function BuildDisplayTab(page, def, cfg, unit, ctx)
+    local style = UF.PrepareAuras(cfg, def.kind)
+    -- edited as an aura group with no triggers of its own; writes reach the kind's settings
+    local displays = { setmetatable({ Triggers = {}, type = 'auragroup', name = def.title }, { __index = cfg, __newindex = cfg }) }
+    local mixed = AuraLook.Differ(displays, function() return style end)
+    -- any part a row names redraws the whole button
+    local function Restyle()
+        ctx.Apply(Apply.Look)
+    end
+    local function set(path, value)
+        AuraLook.Assign(cfg.Style, path, value)
+        Restyle()
+    end
+
+    page:Card(def.title, 'all'):Rebuild(function(card)
+        AuraLook.AuraGroupRows(card, page, style, set, mixed, false, function()
+            AuraLook.SubElements(card, page, displays, Restyle, { adds = AuraLook.AuraGroupAdds, auraGroup = true })
+        end)
+    end)
 end
 
 -- Trigger Tab
@@ -64,42 +90,25 @@ local function BuildTriggerTab(page, def, cfg, unit, ctx)
         Base = def.harmful and AuraUtil.AuraFilters.Harmful or AuraUtil.AuraFilters.Helpful,
     })
 
-    -- No Unit dropdown: the frame this display sits on already decides the unit.
-    TriggerEditor:Build(page, cfg.Trigger, { title = def.title, onChange = ctx.Apply })
-end
-
--- Appearance Tab
-local function BuildAppearanceTab(page, def, cfg, unit, ctx)
-    AuraCards:Cooldown(page, cfg, ctx)
-    AuraCards:Dispel(page, cfg, ctx)
-    AuraCards:Tooltip(page, cfg, ctx)
-    AuraCards:Reload(page)
-end
-
--- Text Tab
-local function BuildTextTab(page, def, cfg, unit, ctx)
-    AuraCards:Text(page, cfg, ctx)
-    AuraCards:Reload(page)
+    -- no Unit row: the frame this display sits on decides the unit
+    -- what the kind matches, not how its buttons look
+    TriggerEditor:BuildSections(page, cfg.Trigger, { title = def.title, apply = ctx.Apply })
 end
 
 local TAB_BUILDERS = {
-    layout = BuildLayoutTab,
+    group = BuildGroupTab,
+    display = BuildDisplayTab,
     trigger = BuildTriggerTab,
-    appearance = BuildAppearanceTab,
-    text = BuildTextTab,
 }
 
 -- Exposed for GUI-UFPages.lua.
 UF.GUIAuras = {
     tabs = TABS,
     search = {
-        L['Grid'], L['Growth'], L['Sorting'], L['Icons'], L['Cooldown'], L['Tooltip'],
-        L['Trigger'], L['Dispel Indicators'], L['Text'], L['Position'],
-        L['Max Auras'], L['Per Row'], L['Element Spacing'], L['Line Spacing'],
-        L['Horizontal Growth'], L['Vertical Growth'], L['Sort Method'], L['Sort Direction'],
-        L['Show Count'], L['Show Duration'], L['Draw Swipe'], L['Reverse Swipe'], L['Draw Edge'],
-        L['Show Border'], L['Show Without Dispel Type'], L['Show Dispel Icon'], L['Dispel Icon Size'],
-        L['Hide Tooltip In Combat'], L['Disable Mouse'], L['Stack Size'], L['Duration Size'],
+        L['Dynamic Group Settings'], L['Sort Method'], L['Sort Direction'], L['Auras Per Trigger'], L['Preview Limit'],
+        L['Position Settings'], L['Icon Settings'], L['Swipe Settings'], L['Timer Text Settings'], L['Size Settings'],
+        L['General'], L['Sub Elements'], L['Trigger'], L['Show Dispel Icon'], L['Aura Type Texture'],
+        L['Hide Tooltip In Combat'], L['Add Text'], L['Add Border'],
     },
 }
 
@@ -127,14 +136,7 @@ function UF.GUIAuras.Build(page, def, tabId, unit)
         return (db.Enabled and uDB.Enabled and cfg.Enabled and not NRSKNUI.UFBlocked) and true or false
     end)
 
-    local ctx = {
-        -- Scoped to this unit: a full pass reconfigures every group child on every other unit too.
-        Apply = function() UF:ApplySettings(unit) end,
-        filtered = true,
-        dispelIconKey = 'showDispelIcon',
-        withoutDispelType = true,
-        disableMouse = true,
-    }
-
-    builder(page, def, cfg, unit, ctx)
+    -- one kind on this unit's frames; only the Display tab redraws its buttons
+    local function Update(part) UF:ApplySettings(part, unit, 'Auras', def.kind) end
+    builder(page, def, cfg, unit, { Apply = Update, Layout = function() Update(Apply.Layout) end })
 end

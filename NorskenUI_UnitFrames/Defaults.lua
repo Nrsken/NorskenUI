@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 ---@class UnitFramesModule
 local UF = NRSKNUI:GetModule('UnitFrames')
@@ -435,48 +435,29 @@ UF.Defaults = {
                     YOffset = -10
                 },
             },
+            -- An aura group each, grown like a dynamic group of icons. Sub elements are a list,
+            -- which AceDB would refill after a delete, so UF.PrepareAuras seeds them on first build.
             Auras = {
                 Buffs = {
                     Enabled = true,
                     Trigger = { Type = 'AuraFilter', Base = 'HELPFUL', branches = { {} } },
-                    size = 32,
-                    perRow = 4,
                     maxFrameCount = 8,
                     previewLimit = 40,
-                    elementSpacing = 1,
-                    lineSpacing = 1,
-                    horizontalGrowthDirection = "LEFT",
-                    verticalGrowthDirection = "UP",
                     sortMethod = "ExpirationOnly",
                     sortDirection = "Normal",
-                    showApplicationCount = true,
-                    showDurationText = true,
-                    drawSwipe = false,
-                    drawEdge = false,
-                    reverseSwipe = true,
-                    showBorder = false,
-                    showBorderWithoutDispelType = false,
-                    showDispelIcon = false,
-                    dispelIconSize = 10,
-                    disableMouse = false,
-                    tooltipHideInCombat = false,
-                    StackFont = {
-                        FontSize = 12,
-                        Position = {
-                            AnchorFrom = "BOTTOMRIGHT",
-                            XOffset = 0,
-                            YOffset = 2,
-                        },
-                    },
-                    DurationFont = {
-                        FontSize = 12,
-                        Position = {
-                            AnchorFrom = "CENTER",
-                            XOffset = 0,
-                            YOffset = 0
-                        },
+                    Layout = { Grow = "GRID", Align = "CENTER", GridType = "LU", GridWidth = 4, Spacing = 1, RowSpacing = 1 },
+                    Style = {
+                        Width = 32,
+                        Height = 32,
+                        DrawSwipe = false,
+                        Reverse = true,
+                        Tooltip = true,
+                        TooltipHideInCombat = false,
+                        DispelIcon = false,
+                        DispelIconSize = 10,
                     },
                     Position = {
+                        AnchorFrom = "BOTTOMRIGHT",
                         AnchorTo = "TOPRIGHT",
                         XOffset = 0,
                         YOffset = 1
@@ -485,44 +466,23 @@ UF.Defaults = {
                 Debuffs = {
                     Enabled = true,
                     Trigger = { Type = 'AuraFilter', Base = 'HARMFUL', branches = { {} } },
-                    size = 32,
-                    perRow = 2,
                     maxFrameCount = 6,
                     previewLimit = 40,
-                    elementSpacing = 1,
-                    lineSpacing = 1,
-                    horizontalGrowthDirection = "RIGHT",
-                    verticalGrowthDirection = "UP",
                     sortMethod = "ExpirationOnly",
                     sortDirection = "Normal",
-                    showApplicationCount = true,
-                    showDurationText = true,
-                    drawSwipe = false,
-                    drawEdge = false,
-                    reverseSwipe = true,
-                    showBorder = true,
-                    showBorderWithoutDispelType = true,
-                    showDispelIcon = false,
-                    dispelIconSize = 10,
-                    disableMouse = false,
-                    tooltipHideInCombat = false,
-                    StackFont = {
-                        FontSize = 12,
-                        Position = {
-                            AnchorFrom = "BOTTOMRIGHT",
-                            XOffset = 0,
-                            YOffset = 2
-                        },
-                    },
-                    DurationFont = {
-                        FontSize = 12,
-                        Position = {
-                            AnchorFrom = "CENTER",
-                            XOffset = 0,
-                            YOffset = 0
-                        },
+                    Layout = { Grow = "GRID", Align = "CENTER", GridType = "RU", GridWidth = 2, Spacing = 1, RowSpacing = 1 },
+                    Style = {
+                        Width = 32,
+                        Height = 32,
+                        DrawSwipe = false,
+                        Reverse = true,
+                        Tooltip = true,
+                        TooltipHideInCombat = false,
+                        DispelIcon = false,
+                        DispelIconSize = 10,
                     },
                     Position = {
+                        AnchorFrom = "BOTTOMLEFT",
                         AnchorTo = "TOPLEFT",
                         XOffset = 0,
                         YOffset = 1
@@ -532,44 +492,23 @@ UF.Defaults = {
                 Defensives = {
                     Enabled = false,
                     Trigger = { Type = 'Preset', Preset = 'preset:defensives' },
-                    size = 22,
-                    perRow = 4,
                     maxFrameCount = 4,
                     previewLimit = 4,
-                    elementSpacing = 1,
-                    lineSpacing = 1,
-                    horizontalGrowthDirection = "CENTER",
-                    verticalGrowthDirection = "CENTER",
                     sortMethod = "ExpirationOnly",
                     sortDirection = "Normal",
-                    showApplicationCount = false,
-                    showDurationText = true,
-                    drawSwipe = false,
-                    drawEdge = false,
-                    reverseSwipe = true,
-                    showBorder = false,
-                    showBorderWithoutDispelType = false,
-                    showDispelIcon = false,
-                    dispelIconSize = 10,
-                    disableMouse = true,
-                    tooltipHideInCombat = false,
-                    StackFont = {
-                        FontSize = 10,
-                        Position = {
-                            AnchorFrom = "BOTTOMRIGHT",
-                            XOffset = 0,
-                            YOffset = 2
-                        },
-                    },
-                    DurationFont = {
-                        FontSize = 10,
-                        Position = {
-                            AnchorFrom = "CENTER",
-                            XOffset = 0,
-                            YOffset = 0
-                        },
+                    Layout = { Grow = "HORIZONTAL", Align = "CENTER", GridType = "RD", GridWidth = 4, Spacing = 1, RowSpacing = 1 },
+                    Style = {
+                        Width = 22,
+                        Height = 22,
+                        DrawSwipe = false,
+                        Reverse = true,
+                        Tooltip = false,
+                        TooltipHideInCombat = false,
+                        DispelIcon = false,
+                        DispelIconSize = 10,
                     },
                     Position = {
+                        AnchorFrom = "CENTER",
                         AnchorTo = "CENTER",
                         XOffset = 0,
                         YOffset = 0
@@ -839,12 +778,12 @@ UF.Defaults = {
             Auras = {
                 Buffs = {
                     Trigger = { Type = 'Preset', Preset = 'preset:bossBuffs' },
-                    size = 42,
                     maxFrameCount = 4,
                     previewLimit = 4,
-                    perRow = 4,
-                    horizontalGrowthDirection = "RIGHT",
+                    Layout = { GridType = "RU", GridWidth = 4 },
+                    Style = { Width = 42, Height = 42 },
                     Position = {
+                        AnchorFrom = "BOTTOMLEFT",
                         AnchorTo = "BOTTOMRIGHT",
                         XOffset = 1,
                         YOffset = 0
@@ -852,12 +791,12 @@ UF.Defaults = {
                 },
                 Debuffs = {
                     Trigger = { Type = 'Preset', Preset = 'preset:bossDebuffs' },
-                    size = 42,
                     maxFrameCount = 4,
                     previewLimit = 4,
-                    perRow = 4,
-                    horizontalGrowthDirection = "LEFT",
+                    Layout = { GridType = "LU", GridWidth = 4 },
+                    Style = { Width = 42, Height = 42 },
                     Position = {
+                        AnchorFrom = "BOTTOMRIGHT",
                         AnchorTo = "BOTTOMLEFT",
                         XOffset = -1,
                         YOffset = 0
@@ -894,10 +833,10 @@ UF.Defaults = {
                 Defensives = { Enabled = true },
                 Buffs = {
                     Trigger = { Type = 'Preset', Preset = 'preset:partyBuffs' },
-                    size = 26,
                     maxFrameCount = 2,
                     previewLimit = 2,
-                    perRow = 2,
+                    Layout = { GridWidth = 2 },
+                    Style = { Width = 26, Height = 26 },
                     Position = {
                         AnchorTo = "BOTTOMRIGHT",
                         XOffset = 0,
@@ -906,10 +845,9 @@ UF.Defaults = {
                 },
                 Debuffs = {
                     Trigger = { Type = 'Preset', Preset = 'preset:partyDebuffs' },
-                    size = 30,
                     maxFrameCount = 2,
                     previewLimit = 2,
-                    perRow = 2,
+                    Style = { Width = 30, Height = 30 },
                     Position = {
                         AnchorTo = "BOTTOMLEFT",
                         XOffset = 0,
@@ -1002,10 +940,10 @@ UF.Defaults = {
                 Defensives = { Enabled = true },
                 Buffs = {
                     Trigger = { Type = 'Preset', Preset = 'preset:partyBuffs' },
-                    size = 26,
                     maxFrameCount = 2,
                     previewLimit = 2,
-                    perRow = 2,
+                    Layout = { GridWidth = 2 },
+                    Style = { Width = 26, Height = 26 },
                     Position = {
                         AnchorTo = "BOTTOMRIGHT",
                         XOffset = 0,
@@ -1014,10 +952,9 @@ UF.Defaults = {
                 },
                 Debuffs = {
                     Trigger = { Type = 'Preset', Preset = 'preset:partyDebuffs' },
-                    size = 30,
                     maxFrameCount = 2,
                     previewLimit = 2,
-                    perRow = 2,
+                    Style = { Width = 30, Height = 30 },
                     Position = {
                         AnchorTo = "BOTTOMLEFT",
                         XOffset = 0,
@@ -1116,10 +1053,10 @@ UF.Defaults = {
                 Defensives = { Enabled = true },
                 Buffs = {
                     Trigger = { Type = 'Preset', Preset = 'preset:partyBuffs' },
-                    size = 26,
                     maxFrameCount = 2,
                     previewLimit = 2,
-                    perRow = 2,
+                    Layout = { GridWidth = 2 },
+                    Style = { Width = 26, Height = 26 },
                     Position = {
                         AnchorTo = "BOTTOMRIGHT",
                         XOffset = 0,
@@ -1128,10 +1065,9 @@ UF.Defaults = {
                 },
                 Debuffs = {
                     Trigger = { Type = 'Preset', Preset = 'preset:partyDebuffs' },
-                    size = 30,
                     maxFrameCount = 2,
                     previewLimit = 2,
-                    perRow = 2,
+                    Style = { Width = 30, Height = 30 },
                     Position = {
                         AnchorTo = "BOTTOMLEFT",
                         XOffset = 0,
@@ -1229,10 +1165,10 @@ UF.Defaults = {
                 Defensives = { Enabled = true },
                 Buffs = {
                     Trigger = { Type = 'Preset', Preset = 'preset:partyBuffs' },
-                    size = 26,
                     maxFrameCount = 2,
                     previewLimit = 2,
-                    perRow = 2,
+                    Layout = { GridWidth = 2 },
+                    Style = { Width = 26, Height = 26 },
                     Position = {
                         AnchorTo = "BOTTOMRIGHT",
                         XOffset = 0,
@@ -1241,10 +1177,9 @@ UF.Defaults = {
                 },
                 Debuffs = {
                     Trigger = { Type = 'Preset', Preset = 'preset:partyDebuffs' },
-                    size = 30,
                     maxFrameCount = 2,
                     previewLimit = 2,
-                    perRow = 2,
+                    Style = { Width = 30, Height = 30 },
                     Position = {
                         AnchorTo = "BOTTOMLEFT",
                         XOffset = 0,
@@ -1336,3 +1271,18 @@ UF.Defaults = {
         },
     },
 }
+
+-- How a kind's texts and border start, for Core:DefaultAuraGroupSubRegions: the way its buttons
+-- looked before they were aura groups.
+UF.AuraLooks = {
+    Buffs = { timer = { FontSize = 12, GlobalTimeColor = true }, stacks = { FontSize = 12 } },
+    Debuffs = { auraType = { DispelUntyped = true }, timer = { FontSize = 12, GlobalTimeColor = true }, stacks = { FontSize = 12 } },
+    Defensives = { timer = { FontSize = 10, GlobalTimeColor = true }, stacks = { FontSize = 10, Enabled = false } },
+}
+
+---The unit frames' own font for aura texts, which they always drew in.
+---@param general table UnitFrames.General, raw or with its defaults
+---@return table overrides for a text sub element
+function UF.AuraFont(general)
+    return { UseGlobalFont = general.UseGlobalFont ~= false, FontFace = general.FontFace, FontOutline = general.FontOutline }
+end

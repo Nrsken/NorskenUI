@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 ---@class UnitFramesModule
 local UF = NRSKNUI:GetModule('UnitFrames')
@@ -16,6 +16,7 @@ end
 local oUF = NRSKNUI.oUF
 local Anchors = NRSKNUI.Anchors
 local L = NRSKNUI.Libs.AL
+local Apply = NRSKNUI.Enum.Apply
 
 local upper = string.upper
 local format = string.format
@@ -72,6 +73,27 @@ function UF:ConstructElement(name, frame, unit)
     end
 end
 
+---Turn an oUF element on or off. oUF registers its unit events for `__unit`, which a preview
+---points at its stand-in, so a previewing frame switches under its own unit.
+---@param frame oUF.UnitFrame
+---@param name string
+---@param enabled boolean
+local function ToggleElement(frame, name, enabled)
+    if frame:IsElementEnabled(name) == enabled then return end
+
+    local previewUnit = frame.__unit
+    if frame.nuiPreviewUnit then
+        -- a forced group child past the roster has none; oUF registers it once it gets one
+        frame.__unit = frame:GetAttribute('unit') or frame.nrsknUnit
+    end
+    if enabled then
+        frame:EnableElement(name)
+    else
+        frame:DisableElement(name)
+    end
+    frame.__unit = previewUnit
+end
+
 ---Set enabled/disabled for a constructed element on a frame.
 ---@param frame oUF.UnitFrame
 ---@param name string
@@ -80,14 +102,7 @@ end
 local function SetElement(frame, name, widget, enabled)
     if not widget then return end
 
-    if not frame.nuiPreviewUnit then
-        if enabled then
-            frame:EnableElement(name)
-        else
-            frame:DisableElement(name)
-        end
-    end
-
+    ToggleElement(frame, name, enabled)
     widget:SetShown(enabled)
 end
 
@@ -110,25 +125,19 @@ function UF:ApplyElementStates(frame, unit, uDB)
         local enabled = uDB.Indicators[def.key].Enabled
 
         if tex then
-            if not frame.nuiPreviewUnit then
-                if enabled then
-                    frame:EnableElement(def.element)
-                else
-                    frame:DisableElement(def.element)
-                end
+            ToggleElement(frame, def.element, enabled)
+            if not enabled then
+                tex:Hide()
             end
-
-            if not enabled then tex:Hide() end
         end
     end
 
     -- oUF's Range element is a plain options table rather than a widget, so it cannot go through
     -- SetElement. Group frames are the only ones that carry it, see Elements/Range.lua.
-    if frame.Range and not frame.nuiPreviewUnit then
-        if self.db.General.Range.Enabled then
-            frame:EnableElement('Range')
-        else
-            frame:DisableElement('Range')
+    if frame.Range then
+        local enabled = self.db.General.Range.Enabled
+        ToggleElement(frame, 'Range', enabled)
+        if not enabled then
             frame:SetAlpha(1) -- oUF's Disable leaves the frame at insideAlpha, which is not always opaque
         end
     end
@@ -199,10 +208,30 @@ function UF:ApplyUnitPosition(frame, unit, uDB)
     frame:SetFrameStrata(uDB.Strata or 'MEDIUM')
 end
 
----Apply the whole DB to one frame: geometry, backdrop, every element and then one ForceUpdate.
+---Which elements run and whether the frame shows at all.
 ---@param frame oUF.UnitFrame
 ---@param unit string
-function UF:ConfigureFrame(frame, unit)
+---@param uDB table
+function UF:ApplyFrameVisibility(frame, unit, uDB)
+    if not frame.nuiBuilt then return end
+
+    self:ApplyElementStates(frame, unit, uDB)
+    if not frame.nuiPreviewUnit and not frame.nuiGroupChild then
+        if uDB.Enabled then
+            RegisterUnitWatch(frame)
+        else
+            UnregisterUnitWatch(frame)
+            frame:Hide()
+        end
+    end
+end
+
+---The whole DB on one frame: geometry, every element, then one ForceUpdate.
+---@param frame oUF.UnitFrame
+---@param unit string
+---@param restyle table? redraw its aura buttons too, which spawning and previews never need: the
+---pass's look stamps by config (UF:ApplySettings)
+function UF:ConfigureFrame(frame, unit, restyle)
     local uDB = UF.GetUnitDB(frame.nuiConfig or unit)
     local general = self.db.General
 
@@ -215,24 +244,12 @@ function UF:ConfigureFrame(frame, unit)
 
     for _, def in pairs(UF.Elements) do
         if def.Configure then
-            def.Configure(frame, unit, uDB, general)
+            def.Configure(frame, unit, uDB, general, restyle)
         end
     end
     -- After the elements, since some build their frames lazily in Configure.
     UF.ApplyFrameLayers(frame, UF.GetLayerMap())
-
-    if frame.nuiBuilt then
-        self:ApplyElementStates(frame, unit, uDB)
-
-        if not frame.nuiPreviewUnit and not frame.nuiGroupChild then
-            if uDB.Enabled then
-                RegisterUnitWatch(frame)
-            else
-                UnregisterUnitWatch(frame)
-                frame:Hide()
-            end
-        end
-    end
+    self:ApplyFrameVisibility(frame, unit, uDB)
 
     frame:UpdateAllElements('ForceUpdate')
 
@@ -290,7 +307,7 @@ function UF:SpawnUnit(unit, opts)
             Anchors:Register(self, 'UnitFrame_' .. unit, frame, 'unitFrames_' .. UF.NormalizeUnit(unit), {
                 displayName = opts.displayName or UF.UnitLabels[unit] or UnitLabel(unit),
                 db = function() return UF.GetUnitDB(unit) end,
-                apply = function() UF:ApplySettings(UF.ConfigKey(unit)) end,
+                apply = function() UF:ApplySettings(Apply.Position, UF.ConfigKey(unit)) end,
                 groups = UF.ShowGroup(unit),
                 guiContext = 'frame',
                 overlayFrame = opts.overlayFrame,
@@ -317,7 +334,11 @@ function UF:SpawnUnits()
     oUF:SetActiveStyle(self.styleName)
 
     for _, unit in ipairs(UF.SoloUnits) do
-        self:SpawnUnit(unit)
+        local frame = self:SpawnUnit(unit)
+        -- shown as the player while its page is open, so its previews have a frame to draw on
+        if unit ~= 'player' then
+            UF.Preview:Register(unit, frame, 'player', UF.UnitLabels[unit])
+        end
     end
 
     -- Boss frames chain off boss1, so only boss1 gets a mover. They spawn in order because every
@@ -403,7 +424,7 @@ function UF:OnEnable()
     end
 
     NRSKNUI.AuraTriggers:RegisterCallback(self, function(aceModule) aceModule:ReapplyAuraFilters() end)
-    NRSKNUI.AuraIndicators:RegisterCallback(self, function(aceModule) aceModule:ReapplyAuraIndicators() end)
+    NRSKNUI.AuraIndicators:RegisterCallback(self, function(aceModule, key) aceModule:ReapplyAuraIndicators(key) end)
 
     self:RegisterEvent('GROUP_ROSTER_UPDATE')
 
@@ -413,23 +434,71 @@ function UF:OnEnable()
     self:HideBlizzardRaidFrames()
 end
 
----Universal re-read-and-apply entry point.
----@param configKey string? restrict the pass to one unit's frames, which is all the GUI ever changes
-function UF:ApplySettings(configKey)
-    self:UpdateDB()
+---@alias UF.ElementName 'Health'|'Power'|'Castbar'|'Tags'|'Indicators'|'Auras'|'AuraIndicators'|'Dispel'|'Range'
+---@alias UF.AuraKind 'Buffs'|'Debuffs'|'Defensives'
 
+-- the parts that redraw an element's aura buttons; the rest only place and re-point them
+local RESTYLES = { [Apply.Look] = true, [Apply.Text] = true, [Apply.Color] = true }
+-- frame-wide, only the shared settings send these: a font, the duration text or a colour,
+-- which the buttons read too (a frame-wide Look is a bar texture, which they don't)
+local FRAME_RESTYLES = { [Apply.Text] = true, [Apply.Color] = true }
+
+---Apply what an edit changed. Each argument left out widens it: no key is the whole element,
+---no element the frame, no configKey every frame.
+---@param part NorskenCore.Apply
+---@param configKey string? one config's frames
+---@param element UF.ElementName? one element of them
+---@param key UF.AuraKind? one aura kind of the Auras element
+function UF:ApplySettings(part, configKey, element, key)
+    local def = element and UF.Elements[element]
+    if element and not def then
+        error('UF:ApplySettings: no element ' .. element)
+    end
+
+    self:UpdateDB()
     self.TagSeparator = self.db.TagSettings.Separator
     NRSKNUI:RunWhenSafe(function()
-        UF:ForEachFrame(function(frame, unit) self:ConfigureFrame(frame, unit) end, configKey)
-
-        if not configKey or configKey == 'boss' then
-            self:UpdateBossSpan() -- boss size, spacing and growth all move the group's footprint
-        end
-
-        for key in pairs(UF.GroupConfigs) do
-            if not configKey or configKey == key then
-                self:LayoutGroup(key)
+        local general = self.db.General
+        -- a redraw stamps each config's look once, as many frames share one
+        local restyle = (part == Apply.All or (def and RESTYLES or FRAME_RESTYLES)[part]) and {} or nil
+        UF:ForEachFrame(function(frame, unit)
+            local uDB = UF.GetUnitDB(frame.nuiConfig or unit)
+            if def then
+                def.Configure(frame, unit, uDB, general, restyle, key)
+                -- turning an element on can build its frames, as in ConfigureFrame
+                UF.ApplyFrameLayers(frame, UF.GetLayerMap())
+                if part == Apply.Visibility then
+                    self:ApplyFrameVisibility(frame, unit, uDB)
+                end
+                frame:UpdateAllElements('ForceUpdate')
+                -- after the repaint, as ApplyElementPreviews runs
+                if def.Preview then
+                    def.Preview(frame, unit, uDB, general, frame.nuiPreviewUnit ~= nil)
+                end
+            elseif part == Apply.Position then
+                if not frame.nuiGroupChild then
+                    self:ApplyUnitPosition(frame, unit, uDB)
+                end
+            elseif part == Apply.Visibility then
+                self:ApplyFrameVisibility(frame, unit, uDB)
+            else
+                self:ConfigureFrame(frame, unit, restyle)
             end
+        end, configKey)
+        if def then return end
+
+        for groupKey in pairs(UF.GroupConfigs) do
+            if not configKey or configKey == groupKey then
+                if part == Apply.Visibility then
+                    self:ApplyGroupVisibility(groupKey)
+                else
+                    self:LayoutGroup(groupKey)
+                end
+            end
+        end
+        -- boss size, spacing and growth all move the chain's footprint
+        if part ~= Apply.Visibility and (not configKey or configKey == 'boss') then
+            self:UpdateBossSpan()
         end
     end)
 end
