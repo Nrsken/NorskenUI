@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 ---@class UnitFramesModule
 local UF = NRSKNUI:GetModule('UnitFrames')
@@ -6,6 +6,7 @@ local UF = NRSKNUI:GetModule('UnitFrames')
 local oUF = NRSKNUI.oUF
 local Anchors = NRSKNUI.Anchors
 local Pixel = NRSKNUI.Pixel
+local Apply = NRSKNUI.Enum.Apply
 
 local UnregisterStateDriver = UnregisterStateDriver
 local format, upper = string.format, string.upper
@@ -329,7 +330,7 @@ function UF:SpawnGroup(key)
     Anchors:Register(self, 'UnitFrame_' .. key, container, 'unitFrames_' .. key, {
         displayName = displayName,
         db = function() return UF.GetUnitDB(key) end,
-        apply = function() UF:ApplySettings(key) end,
+        apply = function() UF:ApplySettings(Apply.Position, key) end,
         groups = UF.ShowGroup(key),
         guiContext = 'frame',
     })

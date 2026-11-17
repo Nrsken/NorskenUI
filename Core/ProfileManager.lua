@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 local ProfileManager = {}
 NRSKNUI.ProfileManager = ProfileManager
@@ -32,6 +32,7 @@ local suppressDepth = 0
 local promptMuteDepth = 0
 local promptsReady = false
 local reloadPrompted = false
+local RefreshModules -- the role paths call it from above where it's defined
 
 ---@param fn fun()
 local function WithoutRefresh(fn)
@@ -107,11 +108,11 @@ end
 ---Point every namespace at its settings for role, falling back to the profile's own where it has none.
 ---A module open in the options window shows the role being edited there instead.
 ---@param role string|nil nil points every namespace at the profile's own settings
----@return boolean moved
+---@return table<string, true>? moved by name, which is also their module's
 local function PointNamespaces(role)
     local db = NRSKNUI.db
     local profileName = db.keys.profile
-    local moved = false
+    local moved
     for name, ns in pairs(db.children or {}) do
         local nsRole = role
         local edited = editRoles[name]
@@ -133,7 +134,8 @@ local function PointNamespaces(role)
             db.SetProfile(ns, key)
             -- logout only strips a profile AceDB has built
             local _ = ns.profile
-            moved = true
+            moved = moved or {}
+            moved[name] = true
         end
     end
     return moved
@@ -735,8 +737,9 @@ end
 ---Modules with settings for the new spec's role switch to them.
 ---Points every module at the current role's settings; a no-op when the role didn't change.
 local function ApplyRole()
-    if not PointNamespaces(CurrentRole()) then return end
-    ProfileManager:RefreshAllModules()
+    local moved = PointNamespaces(CurrentRole())
+    if not moved then return end
+    RefreshModules(moved)
     ProfileManager:PromptReload()
 end
 
@@ -799,8 +802,9 @@ function ProfileManager:AddRoleSet(name, role, fromRole)
     db.SetProfile(ns, current)
     _ = ns.profile
 
-    if PointNamespaces(CurrentRole()) then
-        self:RefreshAllModules()
+    local moved = PointNamespaces(CurrentRole())
+    if moved then
+        RefreshModules(moved)
     end
     return true
 end
@@ -826,7 +830,10 @@ function ProfileManager:RemoveRoleSet(name, role)
     end
 
     if shown then
-        self:RefreshAllModules()
+        -- back on the player's role, which may have a set of its own
+        local moved = PointNamespaces(CurrentRole()) or {}
+        moved[name] = true
+        RefreshModules(moved)
     end
     return true
 end
@@ -898,8 +905,9 @@ end
 ---@param role string|nil
 function ProfileManager:SetEditRole(name, role)
     editRoles[name] = role or OWN
-    if PointNamespaces(CurrentRole()) then
-        self:RefreshAllModules()
+    local moved = PointNamespaces(CurrentRole())
+    if moved then
+        RefreshModules(moved)
     end
 end
 
@@ -908,8 +916,9 @@ function ProfileManager:ClearEditRoles()
     if next(editRoles) == nil then return end
 
     wipe(editRoles)
-    if PointNamespaces(CurrentRole()) then
-        self:RefreshAllModules()
+    local moved = PointNamespaces(CurrentRole())
+    if moved then
+        RefreshModules(moved)
     end
 end
 
@@ -1048,6 +1057,13 @@ local function ImportIntoNamespaces(profileName)
                     end
                 end
             end
+        end
+    end
+
+    -- an older string's settings take today's shape before a loaded module reads them
+    for _, aceModule in NRSKNUI:IterateModules() do
+        if aceModule.UpgradeSavedProfiles then
+            aceModule:UpgradeSavedProfiles(db)
         end
     end
 
@@ -1330,45 +1346,80 @@ local function ShouldRun(aceModule)
     return flag and true or false
 end
 
----Re-point every module at the active profile, sync which ones run and apply the new settings.
----Fired by AceDB's profile callbacks, called directly only for changes AceDB does not announce.
+---Modules onto what their namespaces point at now: db, running, full apply, previews.
+---@param only table<string, true>? what a role switch moved; nil is every module
+function RefreshModules(only)
+    if suppressDepth > 0 then return end
+
+    local previews = NRSKNUI.PreviewManager
+
+    -- Every module points at the new profile before anything is allowed to read a module db.
+    -- AceDB strips default-valued keys out of the old profile in place during SetProfile, so a
+    -- module still holding the old table reads empty sub-tables and nil fields.
+    for name, aceModule in NRSKNUI:IterateModules() do
+        if not only or only[name] then
+            SafeCall(aceModule, 'UpdateDB')
+        end
+    end
+    -- a namespace that isn't one module's whole db (Skinning's) is read by others too
+    local children = NRSKNUI.db.children or {}
+    for name in pairs(only or {}) do
+        local aceModule = NRSKNUI:GetModule(name, true)
+        if aceModule and children[name] and aceModule.db ~= children[name].profile then
+            only = nil
+            for _, each in NRSKNUI:IterateModules() do
+                SafeCall(each, 'UpdateDB')
+            end
+            break
+        end
+    end
+
+    -- Only now, on the new db. HidePreview runs a module's apply path, so stopping previews
+    -- any earlier applies the old profile's stripped table.
+    if previews and not only then
+        SafeCall(previews, 'StopAllPreviews')
+    elseif previews then
+        for name, aceModule in NRSKNUI:IterateModules() do
+            if only[name] then
+                SafeCall(previews, 'StopPreview', aceModule)
+            end
+        end
+    end
+
+    -- The new profile decides which modules run. Enabling one applies its settings in OnEnable,
+    -- so only modules already running need an ApplySettings. A module that was
+    -- disabled here keeps whatever it could not undo, that is accepted, a reload clears it.
+    for name, aceModule in NRSKNUI:IterateModules() do
+        if not only or only[name] then
+            local wasEnabled = aceModule:IsEnabled()
+            local shouldRun = ShouldRun(aceModule)
+
+            if shouldRun and not wasEnabled then
+                xpcall(NRSKNUI.EnableModule, ErrorHandler, NRSKNUI, name)
+            elseif wasEnabled and not shouldRun then
+                xpcall(NRSKNUI.DisableModule, ErrorHandler, NRSKNUI, name)
+            elseif shouldRun then
+                SafeCall(aceModule, 'ApplySettings', NRSKNUI.Enum.Apply.All)
+            end
+        end
+    end
+
+    -- the theme is the profile's own, never a role set's
+    if not only then
+        SafeCall(NRSKNUI.GUI, 'ApplyTheme') -- profile-scoped, so it re-resolves after the UpdateDB pass
+        if NRSKNUI.GUIFrame then SafeCall(NRSKNUI.GUIFrame, 'ApplyThemeColors') end
+    end
+    if previews then SafeCall(previews, 'Refresh') end
+end
+
+---Every module onto the active profile: which ones run and their settings applied.
+---AceDB's profile callbacks fire it; call it only for changes AceDB doesn't announce.
 function ProfileManager:RefreshAllModules()
     if suppressDepth > 0 then return end
 
     -- a profile switch drags every namespace onto the profile's own settings
     PointNamespaces(CurrentRole())
-
-    -- Every module points at the new profile before anything is allowed to read a module db.
-    -- AceDB strips default-valued keys out of the old profile table in place during SetProfile, so a
-    -- module still holding the old table reads empty sub-tables and nil fields.
-    for _, aceModule in NRSKNUI:IterateModules() do
-        SafeCall(aceModule, 'UpdateDB')
-    end
-
-    -- Only now, on the new db. HidePreview runs a module's normal apply path, so stopping previews
-    -- any earlier applies the old profile's stripped table.
-    if NRSKNUI.PreviewManager then SafeCall(NRSKNUI.PreviewManager, 'StopAllPreviews') end
-
-    -- The new profile decides which modules run. Enabling one applies its settings via OnEnable,
-    -- so only modules that were already running need an explicit ApplySettings. A module that was
-    -- disabled here keeps whatever it could not undo, that is accepted, a reload clears it.
-    for name, aceModule in NRSKNUI:IterateModules() do
-        local wasEnabled = aceModule:IsEnabled()
-        local shouldRun = ShouldRun(aceModule)
-
-        if shouldRun and not wasEnabled then
-            xpcall(NRSKNUI.EnableModule, ErrorHandler, NRSKNUI, name)
-        elseif wasEnabled and not shouldRun then
-            xpcall(NRSKNUI.DisableModule, ErrorHandler, NRSKNUI, name)
-        elseif shouldRun then
-            SafeCall(aceModule, 'ApplySettings')
-        end
-    end
-
-    -- Refresh GUI and previews if needed.
-    SafeCall(NRSKNUI.GUI, 'ApplyTheme') -- profile-scoped, so it re-resolves after the UpdateDB pass
-    if NRSKNUI.GUIFrame then SafeCall(NRSKNUI.GUIFrame, 'ApplyThemeColors') end
-    if NRSKNUI.PreviewManager then SafeCall(NRSKNUI.PreviewManager, 'Refresh') end
+    RefreshModules()
 end
 
 -- WagoUI Integration API --

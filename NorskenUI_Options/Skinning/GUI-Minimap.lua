@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 if not C_AddOns.IsAddOnLoaded('NorskenUI_Skinning') then return end
 ---@class MinimapModule
@@ -52,7 +52,7 @@ local function BuildGeneralSettingsTab(page, db)
         value = db.Scale,
         callback = function(val)
             db.Scale = val
-            if MAP then MAP:ApplySettings({ scaleChanged = true }) end
+            if MAP then MAP:ApplySettings(NRSKNUI.Enum.Apply.Layout) end
         end,
     })
 

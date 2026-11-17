@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 ---@class MinimapModule
 local Map = NRSKNUI:GetModule('Minimap')
@@ -445,12 +445,12 @@ function Map:CreateBugSackButton()
     self:UpdateBugSackButton()
 end
 
----@param opts? MinimapLayoutOpts
-function Map:ApplySettings(opts)
+---@param part NorskenCore.Apply? Layout is the Scale slider, which keeps the map in place
+function Map:ApplySettings(part)
     if NRSKNUI:ShouldNotLoadModule() then return end
     if not self.db.Enabled then return end
     NRSKNUI:RunWhenSafe(function()
-        self:ApplyLayout(opts)
+        self:ApplyLayout({ scaleChanged = part == NRSKNUI.Enum.Apply.Layout })
         self:UpdateMinimapBorder()
         self:UpdateMailBtn()
         self:UpdateInstanceBtn()

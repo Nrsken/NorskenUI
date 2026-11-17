@@ -1,4 +1,4 @@
----@class NRSKNUI
+---@class NorskenUI
 local NRSKNUI = _G.NorskenUI
 local LDS = NRSKNUI.Libs.LDS
 local GUI = NRSKNUI.GUI
@@ -76,7 +76,7 @@ function NRSKNUI:OnEnable()
     self:RegisterEvent('PLAYER_ENTERING_WORLD')
     self:RegisterEvent('UI_SCALE_CHANGED')
     self:RegisterEvent('ACTIVE_PLAYER_SPECIALIZATION_CHANGED', function() self.ProfileManager:OnSpecChanged() end)
-    self:RegisterMessage('NRSKNUI_SHARED_SETTINGS_CHANGED', 'ApplyToAllModules')
+    self:RegisterMessage('NRSKNUI_SHARED_SETTINGS_CHANGED', function(_, part) self:ApplyToAllModules(part) end)
     self:RegisterMessage('NRSKNUI_WORLD_READY', function()
         self:UpdateInverseScale()
 
@@ -88,24 +88,25 @@ end
 function NRSKNUI:PLAYER_ENTERING_WORLD()
     self:UnregisterEvent('PLAYER_ENTERING_WORLD')
     self.enteredWorld = true
-    self:ApplyToAllModules()
+    self:ApplyToAllModules(self.Enum.Apply.All)
 
     C_Timer.After(1, function() self:SendMessage('NRSKNUI_WORLD_READY') end)
 end
 
 -- Modules --
 
--- one shared function, so RunWhenSafe collapses repeat calls made during combat
-local function ApplyAllModules()
-    for _, aceModule in NRSKNUI:IterateModules() do
-        if aceModule:IsEnabled() and aceModule.ApplySettings then
-            aceModule:ApplySettings()
+---Every enabled module applies this part; a module not converted to parts yet runs in full.
+---@param part NorskenCore.Apply
+function NRSKNUI:ApplyToAllModules(part)
+    -- the world load and a window, which closes in combat, so it never piles up there
+    self:RunWhenSafe(function()
+        for _, aceModule in self:IterateModules() do
+            if aceModule:IsEnabled() and aceModule.ApplySettings then
+                ---@diagnostic disable-next-line: redundant-parameter
+                aceModule:ApplySettings(part)
+            end
         end
-    end
-end
-
-function NRSKNUI:ApplyToAllModules()
-    self:RunWhenSafe(ApplyAllModules)
+    end)
 end
 
 function NRSKNUI:ToggleModule(moduleName, enabled)
