@@ -9,9 +9,10 @@ local GetCursorPosition = GetCursorPosition
 local IsMouseButtonDown = IsMouseButtonDown
 local ipairs = ipairs
 
+local GetSpellCooldown = C_Spell.GetSpellCooldown
+
 local UIParent = UIParent
 
-local GCD_ID = 61304
 local HOLD_DELAY = 0.15 -- For mouse button held visibility modes, without delay normal clicks shows the ring.
 
 ---@class CursorCircleTexture
@@ -246,7 +247,7 @@ function CursorCircle:UpdateGCDCooldown()
     end
 
     -- Get the GCD cooldown info and update the appropriate ring based on the mode.
-    local info = C_Spell.GetSpellCooldown(GCD_ID)
+    local info = GetSpellCooldown(NRSKNUI.GCD_SPELL)
     ---@diagnostic disable-next-line: secret-comparison
     if info and info.duration and info.duration > 0 then
         if self.db.GCD.Mode == 'integrated' then
