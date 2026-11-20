@@ -15,6 +15,7 @@ GUIFrame:AddSidebarEntry({
         { id = 'XPBar',              text = L['XP Bar'], module = 'XPBar' },
         { id = 'miscVars',           text = L['CVars'] },
         { id = 'auctionHouseFilter', text = L['Auction House Filter'], module = 'AuctionHouseFilter' },
+        { id = 'vendor',             text = L['Vendor'], module = 'Vendor' },
         { id = 'copyAnything',       text = L['Copy Anything'], module = 'CopyAnything' },
         { id = 'automation',         text = L['Automation'], module = 'Automation' },
         { id = 'recuperate',         text = L['Recuperate Button'], module = 'Recuperate' },

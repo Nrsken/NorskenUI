@@ -804,6 +804,7 @@
 ---@field SkyRiding NRSKNUI.DBProfile.Miscellaneous.SkyRiding
 ---@field SpellAlert NRSKNUI.DBProfile.Miscellaneous.SpellAlert
 ---@field Tweaks NRSKNUI.DBProfile.Miscellaneous.Tweaks
+---@field Vendor NRSKNUI.DBProfile.Miscellaneous.Vendor
 ---@field XPBar NRSKNUI.DBProfile.Miscellaneous.XPBar
 
 ---@class NRSKNUI.DBProfile.Miscellaneous.AuctionHouseFilter
@@ -826,6 +827,28 @@
 ---@field [string] any
 ---@field CurrentExpansion boolean
 ---@field FocusSearchBar boolean
+
+---@class NRSKNUI.DBProfile.Miscellaneous.Vendor
+---@field [string] any
+---@field Blocks number
+---@field Enabled boolean
+---@field Expanded boolean
+---@field HideCollected boolean
+---@field Hidden NRSKNUI.DBProfile.Miscellaneous.Vendor.Hidden
+
+---@class NRSKNUI.DBProfile.Miscellaneous.Vendor.Hidden
+---@field [string] boolean
+---@field Consumables boolean
+---@field Gear boolean
+---@field Housing boolean
+---@field Mounts boolean
+---@field Other boolean
+---@field Pets boolean
+---@field Profession boolean
+---@field Recipes boolean
+---@field Tabards boolean
+---@field Toys boolean
+---@field Transmog boolean
 
 ---@class NRSKNUI.DBProfile.Miscellaneous.Automation
 ---@field [string] any

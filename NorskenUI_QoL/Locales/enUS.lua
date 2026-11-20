@@ -267,6 +267,24 @@ L['New Timer'] = true
 -- CDMStrings
 L['%s Profiles'] = true
 
+-- Vendor
+L['Vendor'] = true
+L['Show'] = true
+L['Housing'] = true
+L['Mounts'] = true
+L['Pets'] = true
+L['Toys'] = true
+L['Transmog'] = true
+L['Tabards'] = true
+L['Recipes'] = true
+L['Profession'] = true
+L['Consumables'] = true
+L['Gear'] = true
+L['Other'] = true
+L['Hide Collected'] = true
+L['Window'] = true
+L['Pages When Expanded'] = true
+
 -- QoL / XPBar
 L['%.1fK'] = true
 L['%.2fM'] = true

@@ -5,6 +5,7 @@
     <Script file='GUI-XPBar.lua'/>
     <Script file='GUI-MiscVars.lua'/>
     <Script file='GUI-AuctionHouseFilter.lua'/>
+    <Script file='GUI-Vendor.lua'/>
     <Script file='GUI-CopyAnything.lua'/>
     <Script file='GUI-Automation.lua'/>
     <Script file='GUI-Recuperate.lua'/>

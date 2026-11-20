@@ -33,6 +33,7 @@
 ---@field GUIGroupSearch string[] search terms for the group section, set in GUI-UFGroups.lua
 
 ---@class AuctionHouseFilterModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@class VendorModule : NorskenCore.ModuleBase, AceEvent-3.0
 ---@class AutomationModule : NorskenCore.ModuleBase, AceEvent-3.0
 ---@class TweaksModule : NorskenCore.ModuleBase, AceEvent-3.0, AceHook-3.0
 ---@class XPBarModule : NorskenCore.ModuleBase, AceEvent-3.0
@@ -78,6 +79,8 @@
 ---@field namespace AceDBObject-3.0 the namespace every skinning module reads its part of
 ---@field Defaults NRSKNUI.DBProfile.Skinning
 ---@field ButtonMixin SkinnedButtonMixin the shared button mixin, set in Widgets/Button.lua
+---@field PlaceMerchantAltCurrency fun() for QoL Vendor after it refills the merchant slots
+---@field SkinMerchantSlot fun(self: SkinningModule, item: MerchantItemTemplate) QoL Vendor's extra slots
 ---@class GatewayModule : NorskenCore.ModuleBase, AceEvent-3.0
 ---@class PetTextsModule : NorskenCore.ModuleBase, AceEvent-3.0
 ---@class PlayerAurasModule : NorskenCore.ModuleBase, AceEvent-3.0
@@ -159,6 +162,7 @@
 ---@field oUF NorskenUF set by NorskenUI_UnitFrames/Init.lua
 ---@field oUFPrefix string the X-oUF style prefix from NorskenUI_UnitFrames.toc
 ---@field AuctionHouseFilter AuctionHouseFilterModule
+---@field Vendor VendorModule
 ---@field Automation AutomationModule
 ---@field Tweaks TweaksModule
 ---@field XPBar XPBarModule
@@ -214,6 +218,7 @@ local NRSKNUI
 ---@overload fun(self: NorskenUI, name: "Tooltips", silent?: boolean): TooltipsModule
 ---@overload fun(self: NorskenUI, name: "Minimap", silent?: boolean): MinimapModule
 ---@overload fun(self: NorskenUI, name: "AuctionHouseFilter", silent?: boolean): AuctionHouseFilterModule
+---@overload fun(self: NorskenUI, name: "Vendor", silent?: boolean): VendorModule
 ---@overload fun(self: NorskenUI, name: "Automation", silent?: boolean): AutomationModule
 ---@overload fun(self: NorskenUI, name: "Tweaks", silent?: boolean): TweaksModule
 ---@overload fun(self: NorskenUI, name: "XPBar", silent?: boolean): XPBarModule
@@ -264,6 +269,7 @@ function NorskenUI:GetModule(name, silent) end
 ---@overload fun(self: NorskenUI, name: "Tooltips", ...: string): TooltipsModule
 ---@overload fun(self: NorskenUI, name: "Minimap", ...: string): MinimapModule
 ---@overload fun(self: NorskenUI, name: "AuctionHouseFilter", ...: string): AuctionHouseFilterModule
+---@overload fun(self: NorskenUI, name: "Vendor", ...: string): VendorModule
 ---@overload fun(self: NorskenUI, name: "Automation", ...: string): AutomationModule
 ---@overload fun(self: NorskenUI, name: "Tweaks", ...: string): TweaksModule
 ---@overload fun(self: NorskenUI, name: "XPBar", ...: string): XPBarModule

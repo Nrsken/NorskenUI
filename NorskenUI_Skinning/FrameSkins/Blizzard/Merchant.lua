@@ -90,13 +90,35 @@ local function SkinIconButton(S, button)
     icon:SetTexCoord(left + x, right - x, top + y, bottom - y)
 end
 
--- an item costing only a currency gets it re-anchored under the name plate on every update; next to gold
--- Blizzard's own LEFT-of-money anchor already follows the moved money frame
+-- Blizzard's slots and the extra ones QoL Vendor adds when the window is wider
+local pageSlots = {} ---@type MerchantItemTemplate[]
+
+---@param S SkinningModule
+---@param item MerchantItemTemplate
+local function SkinPageSlot(S, item)
+    local name = item:GetName()
+    local button = item.ItemButton
+    SkinItem(S, item)
+
+    -- The price moves up beside the icon, so the name hangs from its top instead of centring
+    -- Blizzard re-anchors neither after load
+    item.Name:ClearAllPoints()
+    item.Name:NCSetPoint('TOPLEFT', button, 'TOPRIGHT', TEXT_GAP, 0)
+    item.Name:SetJustifyV('TOP')
+
+    local money = _G[name .. 'MoneyFrame']
+    money:ClearAllPoints()
+    money:NCSetPoint('BOTTOMLEFT', button, 'BOTTOMRIGHT', TEXT_GAP, 0)
+    pageSlots[#pageSlots + 1] = item
+end
+
+-- A currency-only price is re-anchored under the name on every update
+-- Next to gold, Blizzard's own anchor already follows the moved money frame
 local function PlaceAltCurrency()
-    for index = 1, MERCHANT_ITEMS_PER_PAGE do
-        local button = _G['MerchantItem' .. index .. 'ItemButton']
+    for _, item in ipairs(pageSlots) do
+        local button = item.ItemButton
         if button.extendedCost and not button.price then
-            local currency = _G['MerchantItem' .. index .. 'AltCurrencyFrame']
+            local currency = _G[item:GetName() .. 'AltCurrencyFrame']
             currency:ClearAllPoints()
             currency:NCSetPoint('BOTTOMLEFT', button, 'BOTTOMRIGHT', TEXT_GAP, 0)
         end
@@ -154,19 +176,7 @@ Skinning:RegisterSkin('Blizzard_UIPanels_Game', 'MerchantFrame', function(S)
     _G.MerchantFrameBottomLeftBorder:SetAlpha(0)
 
     for index = 1, ITEM_SLOTS do
-        local item = _G['MerchantItem' .. index]
-        local button = _G['MerchantItem' .. index .. 'ItemButton']
-        SkinItem(S, item)
-
-        -- the price moves up beside the icon's bottom, so the name hangs from its top instead of centring
-        -- into it; neither is re-anchored by Blizzard after load
-        item.Name:ClearAllPoints()
-        item.Name:NCSetPoint('TOPLEFT', button, 'TOPRIGHT', TEXT_GAP, 0)
-        item.Name:SetJustifyV('TOP')
-
-        local money = _G['MerchantItem' .. index .. 'MoneyFrame']
-        money:ClearAllPoints()
-        money:NCSetPoint('BOTTOMLEFT', button, 'BOTTOMRIGHT', TEXT_GAP, 0)
+        SkinPageSlot(S, _G['MerchantItem' .. index])
     end
     hooksecurefunc('MerchantFrame_UpdateMerchantInfo', PlaceAltCurrency)
     SkinItem(S, _G.MerchantBuyBackItem)
@@ -190,3 +200,8 @@ Skinning:RegisterSkin('Blizzard_UIPanels_Game', 'MerchantFrame', function(S)
     S:HandleDropdownButton(frame.FilterDropdown)
     S:HandleTabRow('MerchantFrameTab', frame, true)
 end)
+
+-- Exports --
+
+Skinning.PlaceMerchantAltCurrency = PlaceAltCurrency
+Skinning.SkinMerchantSlot = SkinPageSlot

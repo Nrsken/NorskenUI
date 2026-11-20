@@ -140,6 +140,17 @@ local function FindMinMaxFrame(frame)
     end
 end
 
+---A max/min button as the same square as the close button, butted against its left edge
+---@param minMax Frame
+---@param relativeTo Frame the close button or the header when there is none
+---@param relativePoint FramePoint
+function Skinning:PlaceMinMaxButton(minMax, relativeTo, relativePoint)
+    minMax:ClearAllPoints()
+    minMax:NCSetSize(HEADER_HEIGHT, HEADER_HEIGHT)
+    minMax:NCSetPoint('TOPRIGHT', relativeTo, relativePoint, 0, 0)
+    self:HandleMinMaxButton(minMax)
+end
+
 ---@param header NUIPortraitHeader
 ---@param parent Frame
 ---@return Texture
@@ -251,17 +262,13 @@ local function CreateHeader(frame, backdrop, size)
         Skinning:HandleCloseButton(close, header, 0, 0)
     end
 
-    -- Same square as the close button, butted against its left edge.
     local minMax = FindMinMaxFrame(frame)
     if minMax then
-        minMax:ClearAllPoints()
-        minMax:NCSetSize(HEADER_HEIGHT, HEADER_HEIGHT)
         if close then
-            minMax:NCSetPoint('TOPRIGHT', close, 'TOPLEFT', 0, 0)
+            Skinning:PlaceMinMaxButton(minMax, close, 'TOPLEFT')
         else
-            minMax:NCSetPoint('TOPRIGHT', header, 'TOPRIGHT', 0, 0)
+            Skinning:PlaceMinMaxButton(minMax, header, 'TOPRIGHT')
         end
-        Skinning:HandleMinMaxButton(minMax)
     end
 
     header:NUIUpdateSkinColors()

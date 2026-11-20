@@ -86,6 +86,28 @@ AuctionHouseFilter.Defaults = {
     },
 }
 
+local Vendor = NRSKNUI:GetModule('Vendor')
+Vendor.dbKey = 'Miscellaneous.Vendor'
+Vendor.Defaults = {
+    Enabled = true,
+    HideCollected = false,
+    Expanded = false,
+    Blocks = 2,
+    Hidden = {
+        Housing = false,
+        Mounts = false,
+        Pets = false,
+        Toys = false,
+        Transmog = false,
+        Tabards = false,
+        Recipes = false,
+        Profession = false,
+        Consumables = false,
+        Gear = false,
+        Other = false,
+    },
+}
+
 local GroupFinder = NRSKNUI:GetModule('GroupFinder')
 GroupFinder.dbKey = 'Miscellaneous.GroupFinder'
 GroupFinder.Defaults = {
