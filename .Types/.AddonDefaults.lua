@@ -839,6 +839,7 @@
 ---@field AutoFillDelete boolean
 ---@field AutoHideHelptips boolean
 ---@field AutoLoot boolean
+---@field AutoQuestGossip boolean
 ---@field AutoRepair boolean
 ---@field AutoRoleCheck boolean
 ---@field AutoSellJunk boolean

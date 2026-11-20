@@ -14,6 +14,9 @@ local strsplit = strsplit
 local gsub = gsub
 local select = select
 local GetCursorInfo = GetCursorInfo
+local IsInInstance = IsInInstance
+local strupper = string.upper
+local strfind = string.find
 
 -- Loot APIs
 local LootSlot = LootSlot
@@ -57,6 +60,8 @@ local GetActiveQuests = C_GossipInfo.GetActiveQuests
 local GetAvailableQuests = C_GossipInfo.GetAvailableQuests
 local GossipSelectAvailableQuest = C_GossipInfo.SelectAvailableQuest
 local GossipSelectActiveQuest = C_GossipInfo.SelectActiveQuest
+local SelectOptionByIndex = C_GossipInfo.SelectOptionByIndex
+local GetGossipOptions = C_GossipInfo.GetOptions
 
 -- Index-based greeting APIs for quest selection.
 local GetNumActiveQuests = GetNumActiveQuests
@@ -70,11 +75,15 @@ local GetAvailableQuestInfo = GetAvailableQuestInfo
 local GetItemInfo = C_Item.GetItemInfo
 local GetItemByID = C_TooltipInfo.GetItemByID
 
+local IsSet = FlagsUtil.IsSet
+
 -- Enums
-local FREQ_REGULAR = Enum.QuestFrequency.Default
-local FREQ_DAILY = Enum.QuestFrequency.Daily
-local FREQ_WEEKLY = Enum.QuestFrequency.Weekly
+local QUEST_LABEL_PREPEND = Enum.GossipOptionRecFlags.QuestLabelPrepend
+local OPTION_AVAILABLE = Enum.GossipOptionStatus.Available
 local FREQ_EVENT = Enum.QuestFrequency.ResetByScheduler
+local FREQ_REGULAR = Enum.QuestFrequency.Default
+local FREQ_WEEKLY = Enum.QuestFrequency.Weekly
+local FREQ_DAILY = Enum.QuestFrequency.Daily
 
 local _G = _G
 local ITEM_ACCOUNTBOUND = ITEM_ACCOUNTBOUND
@@ -349,7 +358,10 @@ function Automation:GOSSIP_SHOW()
     if NRSKNUI:IsFullyRestricted() then return end
     if self:IsOverrideActive() then return end
     local bonusrollID = self:GetBonusrollMode()
-    if not self.db.AutoBonusRollQuest and not self.db.AutoCompleteQuest and not self:IsAnyAcceptEnabled() then return end
+    if not self.db.AutoBonusRollQuest and not self.db.AutoCompleteQuest and not self:IsAnyAcceptEnabled()
+        and not self.db.AutoQuestGossip then
+        return
+    end
 
     -- Bonusroll quest takes priority, accept it if offered and not yet done.
     if self.db.AutoBonusRollQuest and bonusrollID and not IsQuestFlaggedCompleted(bonusrollID) then
@@ -394,6 +406,36 @@ function Automation:GOSSIP_SHOW()
             end
         end
     end
+
+    -- Pick the one (Quest) option, two or more is a choice for the player
+    if self.db.AutoQuestGossip then
+        if select(2, IsInInstance()) == 'raid' then return end
+
+        local questOption
+        for _, option in ipairs(GetGossipOptions()) do
+            -- Red text warns of something you can't undo, like skipping a campaign
+            local name = strupper(option.name)
+            if strfind(name, '|CFFFF0000', 1, true) or strfind(name, '|CNRED_FONT_COLOR', 1, true) then return end
+
+            if IsSet(option.flags, QUEST_LABEL_PREPEND) and option.status == OPTION_AVAILABLE then
+                if questOption then return end
+                questOption = option
+            end
+        end
+        if not questOption then return end
+
+        -- An NPC that offers the same option again would loop us forever
+        if questOption.name == self._pickedQuestOption then return end
+        self._pickedQuestOption = questOption.name
+        self._pickedQuestOptionAt = GetTime()
+        SelectOptionByIndex(questOption.orderIndex)
+    end
+end
+
+-- A close right after our pick is the server reopening the dialog, so the loop guard stays
+function Automation:GOSSIP_CLOSED()
+    if self._pickedQuestOptionAt and GetTime() - self._pickedQuestOptionAt <= 0.5 then return end
+    self._pickedQuestOption = nil
 end
 
 function Automation:QUEST_DETAIL()
@@ -599,7 +641,8 @@ function Automation:SetupEvents()
     self:ToggleEvent('PLAY_MOVIE', self.db.SkipCinematics)
     self:ToggleEvent('MERCHANT_SHOW', self.db.AutoSellJunk or self.db.AutoRepair)
     self:ToggleEvent('LOOT_READY', self.db.AutoLoot and self.db.FastLoot)
-    self:ToggleEvent('GOSSIP_SHOW', self.db.AutoCompleteQuest or anyAccept or self.db.AutoBonusRollQuest)
+    self:ToggleEvent('GOSSIP_SHOW', self.db.AutoCompleteQuest or anyAccept or self.db.AutoBonusRollQuest or self.db.AutoQuestGossip)
+    self:ToggleEvent('GOSSIP_CLOSED', self.db.AutoQuestGossip)
     self:ToggleEvent('QUEST_GREETING', self.db.AutoCompleteQuest or anyAccept)
     self:ToggleEvent('QUEST_DETAIL', anyAccept or self.db.AutoBonusRollQuest)
     self:ToggleEvent('QUEST_ACCEPT_CONFIRM', anyAccept)

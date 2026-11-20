@@ -433,6 +433,8 @@ L['Auto Accept Weekly Quests'] = true
 L['Auto Complete Quests'] = true
 L['Auto Bonus Roll Quest'] = true
 L['Automatically complete and turn in quests when there is no reward choice.'] = true
+L['Auto Select Quest Dialog'] = true
+L['Automatically picks the |cffffffff(Quest)|r dialog option when an NPC offers only one.'] = true
 L['Automatically accept and complete the weekly |cffffffffBonus Roll|r quest from Decimus.'] = true
 L['Auto Bonus Roll Mode'] = true
 

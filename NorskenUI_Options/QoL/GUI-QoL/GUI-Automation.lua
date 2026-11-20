@@ -228,6 +228,17 @@ local function BuildQuestsSettingsTab(page, db)
         end
     })
 
+    local autoQuestGossipRow = questsCard:Row(rowH)
+    autoQuestGossipRow:Checkbox(L['Auto Select Quest Dialog'] .. ' ' .. overrideTag, {
+        width = 1,
+        value = db.AutoQuestGossip,
+        tooltip = L['Automatically picks the |cffffffff(Quest)|r dialog option when an NPC offers only one.'],
+        callback = function(checked)
+            db.AutoQuestGossip = checked
+            ApplySettings()
+        end
+    })
+
     questsCard:Separator()
 
     local autoBonusRollQuestRow = questsCard:Row(rowH)

@@ -224,6 +224,7 @@ Automation.Defaults = {
     FastLoot = true,
     -- Quest Automation
     AutoCompleteQuest = false,
+    AutoQuestGossip = false,
     AutoAcceptRegular = false,
     AutoAcceptDaily = false,
     AutoAcceptWeekly = false,

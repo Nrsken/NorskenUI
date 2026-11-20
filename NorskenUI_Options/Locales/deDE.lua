@@ -433,6 +433,8 @@ L['Auto Accept Weekly Quests'] = "Wöchentliche Quests automatisch annehmen"
 L['Auto Complete Quests'] = "Quests automatisch abschließen"
 L['Auto Bonus Roll Quest'] = "Bonuswurf-Quest automatisieren"
 L['Automatically complete and turn in quests when there is no reward choice.'] = "Schließt Quests automatisch ab und gibt sie ab, wenn keine Belohnung zur Auswahl steht."
+L['Auto Select Quest Dialog'] = "Questdialog automatisch wählen"
+L['Automatically picks the |cffffffff(Quest)|r dialog option when an NPC offers only one.'] = "Wählt automatisch die Dialogoption |cffffffff(Quest)|r, wenn ein NPC nur eine anbietet."
 L['Automatically accept and complete the weekly |cffffffffBonus Roll|r quest from Decimus.'] = "Nimmt die wöchentliche |cffffffffBonuswurf|r-Quest von Decimus automatisch an und schließt sie ab."
 L['Auto Bonus Roll Mode'] = "Bonuswurf-Modus"
 
