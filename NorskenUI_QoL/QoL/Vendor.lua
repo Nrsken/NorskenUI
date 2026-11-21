@@ -30,7 +30,6 @@ local hooksecurefunc = hooksecurefunc
 local MenuResponse = MenuResponse
 local PlayerHasToy = PlayerHasToy
 local CreateFrame = CreateFrame
-local strfind = string.find
 local wipe = table.wipe
 local ceil = math.ceil
 local ipairs = ipairs
@@ -61,6 +60,7 @@ local GetToyInfo = C_ToyBox.GetToyInfo
 local GetCurrencyContainerInfo = CurrencyContainerUtil.GetCurrencyContainerInfo
 
 local USAGE_REQUIREMENT = Enum.TooltipDataLineType.UsageRequirement
+local RequirementType = Enum.TooltipDataUsageRequirementType
 local MiscSubclass = Enum.ItemMiscellaneousSubclass
 local ArmorSubclass = Enum.ItemArmorSubclass
 local ItemClass = Enum.ItemClass
@@ -69,8 +69,6 @@ local MERCHANT_ITEMS_PER_PAGE = MERCHANT_ITEMS_PER_PAGE
 local TEXTURE_ITEM_QUEST_BANG = TEXTURE_ITEM_QUEST_BANG
 local BUYBACK_ITEMS_PER_PAGE = BUYBACK_ITEMS_PER_PAGE
 local MERCHANT_PAGE_NUMBER = MERCHANT_PAGE_NUMBER
-local ITEM_SPELL_KNOWN = ITEM_SPELL_KNOWN
-local ITEM_MIN_SKILL = ITEM_MIN_SKILL
 local MAX_ITEM_COST = MAX_ITEM_COST
 local UNCHECK_ALL = UNCHECK_ALL
 local CHECK_ALL = CHECK_ALL
@@ -96,9 +94,6 @@ end
 
 local TABARD_SLOT = 'INVTYPE_TABARD'
 
--- Requires <skill> (25) in any language, markers let a reordered %1$s survive the escape
-local SKILL_PATTERN = '^' .. ITEM_MIN_SKILL:gsub('%%%d*%$?s', '\001'):gsub('%%%d*%$?d', '\002'):gsub('[%^%$%(%)%%%.%[%]%*%+%-%?]', '%%%0'):gsub('\001', '.+'):gsub('\002', '%%d+') .. '$'
-
 local CLASS_CATEGORY = {
     [ItemClass.Housing] = 'Housing',
     [ItemClass.Battlepet] = 'Pets',
@@ -114,17 +109,16 @@ local MISC_CATEGORY = {
 }
 
 -- Profession books and known recipes only show as a requirement line on the tooltip
+-- The API docs leave requirementType out, Blizzard's Perks Program reads it
 ---@param index number
----@param pattern string
----@param plain boolean?
+---@param requirementType Enum.TooltipDataUsageRequirementType
 ---@return boolean
-local function HasRequirementLine(index, pattern, plain)
+local function HasRequirement(index, requirementType)
     local data = GetMerchantTooltip(index)
     if not data then return false end
 
     for _, line in ipairs(data.lines) do
-        local text = line.leftText
-        if line.type == USAGE_REQUIREMENT and text and strfind(text, pattern, 1, plain) then
+        if line.type == USAGE_REQUIREMENT and line.requirementType == requirementType then
             return true
         end
     end
@@ -174,7 +168,7 @@ local function GetCategory(index, itemID)
         end
     end
     if classID == ItemClass.Miscellaneous then
-        if subclassID == MiscSubclass.Other and HasRequirementLine(index, SKILL_PATTERN) then
+        if subclassID == MiscSubclass.Other and HasRequirement(index, RequirementType.Skill) then
             return 'Profession'
         end
         return MISC_CATEGORY[subclassID] or 'Other'
@@ -202,7 +196,7 @@ end
 ---@return boolean
 local function IsCollected(index, itemID, category)
     if category == 'Recipes' then
-        return IsHeldBack(itemID) or HasRequirementLine(index, ITEM_SPELL_KNOWN, true)
+        return IsHeldBack(itemID) or HasRequirement(index, RequirementType.NotAlreadyKnown)
     end
     if category == 'Transmog' or category == 'Tabards' then
         local setID = GetItemLearnTransmogSet(itemID)
@@ -595,6 +589,7 @@ local function BuildMenu(_, root)
     root:CreateTitle(L['Show'])
     root:CreateButton(CHECK_ALL, SetAllCategories, true)
     root:CreateButton(UNCHECK_ALL, SetAllCategories, false)
+    root:CreateDivider()
     for _, category in ipairs(CATEGORIES) do
         root:CreateCheckbox(L[category], IsCategoryShown, ToggleCategory, category)
     end
