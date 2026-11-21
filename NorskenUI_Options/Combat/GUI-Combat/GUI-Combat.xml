@@ -3,5 +3,4 @@
 
     <Script file='Sidebar.lua' />
     <Script file='GUI-CombatCross.lua'/>
-    <Script file='GUI-CombatMessage.lua'/>
 </Ui>

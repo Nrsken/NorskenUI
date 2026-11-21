@@ -51,9 +51,6 @@ L['Is Exactly'] = "Ist genau"
 L['Matches (Pattern)'] = "Entspricht (Muster)"
 L['Only Show Cast'] = "Nur Zauberbalken anzeigen"
 
--- CombatMessage
-L['Combat Messages'] = "Kampfmeldungen"
-
 -- CombatRes
 L['Combat Res'] = "Kampf-Rez"
 L['Max'] = "Max."

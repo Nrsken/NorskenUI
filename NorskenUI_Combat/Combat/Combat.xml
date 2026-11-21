@@ -2,6 +2,5 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
     <Script file="Init.lua" />
     <Script file="Defaults.lua" />
-    <Script file="CombatMessage.lua" />
     <Script file="CombatCross.lua" />
 </Ui>

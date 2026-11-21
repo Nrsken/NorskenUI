@@ -51,9 +51,6 @@ L['Is Exactly'] = true
 L['Matches (Pattern)'] = true
 L['Only Show Cast'] = true
 
--- CombatMessage
-L['Combat Messages'] = true
-
 -- CombatRes
 L['Combat Res'] = true
 L['Max'] = true

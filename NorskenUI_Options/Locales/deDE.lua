@@ -3,11 +3,7 @@ local L = _G.NorskenUI:NewLocale('deDE')
 
 -- General GUI
 L['General Settings'] = "Allgemeine Einstellungen"
-L['Load Condition'] = "Ladebedingung"
 L['Test'] = "Test"
-L['Any Group'] = "Beliebige Gruppe"
-L['In Party'] = "In Gruppe"
-L['In Raid'] = "Im Schlachtzug"
 L['Information'] = "Informationen"
 L['Timer'] = "Timer"
 L['Format Text'] = "Formattext"
@@ -39,25 +35,6 @@ L['Range Warning'] = "Reichweitenwarnung"
 L['Enable for melee specs'] = "Für Nahkämpfer aktivieren"
 L['Enable for ranged specs'] = "Für Fernkämpfer aktivieren"
 L['Out of Range Color'] = "Farbe außer Reichweite"
-
--- Combat Message
-L['Combat Message'] = "Kampfmeldung"
-L['Message Duration'] = "Meldungsdauer"
-L['Message Types'] = "Meldungsarten"
-L['Enter Combat'] = "Kampfbeginn"
-L['Enter Combat Color'] = "Farbe bei Kampfbeginn"
-L['Enter Combat Message'] = "Meldung bei Kampfbeginn"
-L['Exit Combat'] = "Kampfende"
-L['Exit Combat Color'] = "Farbe bei Kampfende"
-L['Exit Combat Message'] = "Meldung bei Kampfende"
-L['No Target'] = "Kein Ziel"
-L['No Target Color'] = "Farbe ohne Ziel"
-L['No Target Message'] = "Meldung ohne Ziel"
-L['Group Member Died'] = "Gruppenmitglied gestorben"
-L['Group Member Died Color'] = "Farbe bei Tod in der Gruppe"
-L['Group Member Died Message'] = "Meldung bei Tod in der Gruppe"
-L['Class Colored Name'] = "Name in Klassenfarbe"
-L['Use |cffffffff%name|r to insert the name of the player who died and |cffffffff{rt1} - {rt8}|r to insert raid target icons.'] = "Verwende |cffffffff%name|r, um den Namen des gestorbenen Spielers einzufügen, und |cffffffff{rt1} - {rt8}|r für Zielmarkierungssymbole."
 
 -- Combat Res Tracker
 L['Combat Res Tracker'] = "Kampf-Rez-Tracker"
@@ -158,11 +135,8 @@ L['Reset Profile'] = "Profil zurücksetzen"
 -- Home Page
 L['Welcome to NorskenUI'] = "Willkommen bei NorskenUI"
 
--- Combat Message
-L['DPS Sound'] = "DPS-Sound"
-L['Healer Sound'] = "Heiler-Sound"
+-- Missing Buffs
 L['Layout & Position'] = "Layout & Position"
-L['Tank Sound'] = "Tank-Sound"
 
 -- Combat Timer
 L['Background Height'] = "Hintergrundhöhe"

@@ -90,7 +90,6 @@
 ---@class CombatTimerModule : NorskenCore.ModuleBase, AceEvent-3.0
 ---@class RangeCheckerModule : NorskenCore.ModuleBase, AceEvent-3.0
 ---@class CombatCrossModule : NorskenCore.ModuleBase, AceEvent-3.0
----@class CombatMessageModule : NorskenCore.ModuleBase, AceEvent-3.0, AceTimer-3.0
 ---@class CombatResModule : NorskenCore.ModuleBase, AceEvent-3.0, AceTimer-3.0
 ---@field chargeInfo CombatResChargeInfo? the battle res spell's charges are never secret
 ---@class CombatCursorModule : NorskenCore.ModuleBase, AceEvent-3.0
@@ -177,7 +176,6 @@
 ---@field CombatTimer CombatTimerModule
 ---@field RangeChecker RangeCheckerModule
 ---@field CombatCross CombatCrossModule
----@field CombatMessage CombatMessageModule
 ---@field CombatRes CombatResModule
 ---@field CombatCursor CombatCursorModule
 ---@field FocusCastbar FocusCastbarModule
@@ -220,7 +218,6 @@ local NRSKNUI
 ---@overload fun(self: NorskenUI, name: "GroupFinder", silent?: boolean): GroupFinderModule
 ---@overload fun(self: NorskenUI, name: "QuestTracker", silent?: boolean): QuestTrackerModule
 ---@overload fun(self: NorskenUI, name: "CombatCross", silent?: boolean): CombatCrossModule
----@overload fun(self: NorskenUI, name: "CombatMessage", silent?: boolean): CombatMessageModule
 ---@overload fun(self: NorskenUI, name: "CombatRes", silent?: boolean): CombatResModule
 ---@overload fun(self: NorskenUI, name: "Restricted", silent?: boolean): RestrictedModule
 ---@overload fun(self: NorskenUI, name: "CursorCircle", silent?: boolean): CombatCursorModule
@@ -268,7 +265,6 @@ function NorskenUI:GetModule(name, silent) end
 ---@overload fun(self: NorskenUI, name: "GroupFinder", ...: string): GroupFinderModule
 ---@overload fun(self: NorskenUI, name: "QuestTracker", ...: string): QuestTrackerModule
 ---@overload fun(self: NorskenUI, name: "CombatCross", ...: string): CombatCrossModule
----@overload fun(self: NorskenUI, name: "CombatMessage", ...: string): CombatMessageModule
 ---@overload fun(self: NorskenUI, name: "CombatRes", ...: string): CombatResModule
 ---@overload fun(self: NorskenUI, name: "Restricted", ...: string): RestrictedModule
 ---@overload fun(self: NorskenUI, name: "CursorCircle", ...: string): CombatCursorModule

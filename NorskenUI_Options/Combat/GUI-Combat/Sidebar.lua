@@ -13,6 +13,5 @@ GUIFrame:AddSidebarEntry({
     defaultExpanded = false,
     items = {
         { id = 'combatCross',   text = L['Combat Cross'],   module = 'CombatCross' },
-        { id = 'combatMessage', text = L['Combat Message'], module = 'CombatMessage' },
     }
 })

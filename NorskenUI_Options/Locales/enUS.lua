@@ -3,11 +3,7 @@ local L = _G.NorskenUI:NewLocale('enUS')
 
 -- General GUI
 L['General Settings'] = true
-L['Load Condition'] = true
 L['Test'] = true
-L['Any Group'] = true
-L['In Party'] = true
-L['In Raid'] = true
 L['Information'] = true
 L['Timer'] = true
 L['Format Text'] = true
@@ -39,25 +35,6 @@ L['Range Warning'] = true
 L['Enable for melee specs'] = true
 L['Enable for ranged specs'] = true
 L['Out of Range Color'] = true
-
--- Combat Message
-L['Combat Message'] = true
-L['Message Duration'] = true
-L['Message Types'] = true
-L['Enter Combat'] = true
-L['Enter Combat Color'] = true
-L['Enter Combat Message'] = true
-L['Exit Combat'] = true
-L['Exit Combat Color'] = true
-L['Exit Combat Message'] = true
-L['No Target'] = true
-L['No Target Color'] = true
-L['No Target Message'] = true
-L['Group Member Died'] = true
-L['Group Member Died Color'] = true
-L['Group Member Died Message'] = true
-L['Class Colored Name'] = true
-L['Use |cffffffff%name|r to insert the name of the player who died and |cffffffff{rt1} - {rt8}|r to insert raid target icons.'] = true
 
 -- Combat Res Tracker
 L['Combat Res Tracker'] = true
@@ -158,11 +135,8 @@ L['Reset Profile'] = true
 -- Home Page
 L['Welcome to NorskenUI'] = true
 
--- Combat Message
-L['DPS Sound'] = true
-L['Healer Sound'] = true
+-- Missing Buffs
 L['Layout & Position'] = true
-L['Tank Sound'] = true
 
 -- Combat Timer
 L['Background Height'] = true
