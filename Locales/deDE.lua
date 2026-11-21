@@ -24,11 +24,6 @@ L['Glow'] = "Leuchten"
 -- Profile messages & dialogs
 L['Profile changed. A UI reload is recommended to fully apply all settings.'] = "Profil gewechselt. Ein Neuladen der UI wird empfohlen, damit alle Einstellungen vollständig übernommen werden."
 
--- Modifier Keys (shared)
-L['Shift'] = "Umschalt"
-L['Ctrl'] = "STRG"
-L['Alt'] = "ALT"
-
 -- Skinning Sidebar
 L['Skinning'] = "Skins"
 
@@ -49,7 +44,6 @@ L['Blizzard'] = "Blizzard"
 
 -- Aura Filter Builder --
 L['Active'] = "Aktiv"
-L['Back'] = "Zurück"
 L['Item'] = "Gegenstand"
 
 -- CDM bars
@@ -82,7 +76,6 @@ L['%s (Copy %d)'] = "%s (Kopie %d)"
 L['Disable'] = "Deaktivieren"
 
 -- Cooldown Manager
-L['Show'] = "Anzeigen"
 L['Update'] = "Aktualisieren"
 
 -- Commands
@@ -123,3 +116,5 @@ L['Out of Combat'] = "Außerhalb des Kampfes"
 -- Core / Init
 
 -- Shared with the options pages
+L['Consumables'] = "Verbrauchsgüter"
+L['Gear'] = "Ausrüstung"

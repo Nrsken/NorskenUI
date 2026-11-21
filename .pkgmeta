@@ -15,6 +15,8 @@ move-folders:
     NorskenUI/NorskenUI_UnitFrames: NorskenUI_UnitFrames
     NorskenUI/NorskenUI_Skinning: NorskenUI_Skinning
     NorskenUI/NorskenUI_QoL: NorskenUI_QoL
+    NorskenUI/NorskenUI_Interface: NorskenUI_Interface
+    NorskenUI/NorskenUI_Combat: NorskenUI_Combat
     NorskenUI/NorskenUI_Options: NorskenUI_Options
 
 # the shared libraries ship with NorskenCore

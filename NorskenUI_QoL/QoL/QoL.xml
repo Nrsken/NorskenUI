@@ -1,23 +1,9 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
-
     <Script file="Init.lua" />
     <Script file="Defaults.lua" />
     <Script file="Automation.lua" />
     <Script file="Tweaks.lua" />
     <Script file="CopyAnything.lua"/>
-    <Script file="XPBar.lua"/>
-    <Script file="DurabilityUtil.lua"/>
-    <Script file="MiscVars.lua"/>
     <Script file="AuctionHouseFilter.lua"/>
-    <Script file="Vendor.lua"/>
-    <Script file="Recuperate.lua"/>
-    <Script file="CharacterPanel.lua"/>
-    <Script file="SkyRiding.lua"/>
-    <Script file="SpellAlerts.lua"/>
-    <Script file="CDMStrings.lua"/>
-    <Script file="GroupFinder.lua"/>
-    <Script file="GroupFinderPanel.lua"/>
-    <Script file="QuestTracker.lua"/>
-    <Script file="QuestTrackerWindow.lua"/>
 </Ui>

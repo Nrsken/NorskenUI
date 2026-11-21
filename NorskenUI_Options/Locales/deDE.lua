@@ -73,8 +73,11 @@ L['Charges Unavailable'] = "Keine Aufladungen verfügbar"
 -- Sidebar
 L['Profile Settings'] = "Profileinstellungen"
 L['Global Settings'] = "Globale Einstellungen"
-L['Combat Util'] = "Kampfhilfen"
 L['Quality of Life'] = "Komfort"
+L['Tools'] = "Werkzeuge"
+L['Displays'] = "Anzeigen"
+L['Blizzard Enhancements'] = "Blizzard-Verbesserungen"
+L['Alerts'] = "Warnungen"
 L['Class Utility'] = "Klassenhilfen"
 L['CVars'] = "CVars"
 
@@ -209,14 +212,6 @@ L['Tick Width'] = "Tick-Breite"
 L['Uninterruptible'] = "Nicht unterbrechbar"
 L['Use Global Bar'] = "Globalen Balken verwenden"
 
--- Potion Ready
-L['Alert Color'] = "Warnfarbe"
-L['Alert Text'] = "Warntext"
-L['Potion Ready'] = "Trank bereit"
-
--- Gateway Alert
-L['Gateway Usable Alert'] = "Warnung: Tor benutzbar"
-
 -- Missing Buffs
 L['Click to Cast'] = "Klicken zum Wirken"
 L['Raid Buff Mode'] = "Schlachtzugsbuff-Modus"
@@ -242,7 +237,6 @@ L['Whether you have the buff, when someone in the group can cast it.'] = "Ob du 
 L['Group Presence'] = "Gruppenpräsenz"
 L['Targeted Buffs'] = "Gezielte Buffs"
 L['Self Buffs'] = "Selbstbuffs"
-L['Consumables'] = "Verbrauchsgüter"
 L['Whether you have the buff. Pick the zones under Load Conditions, Zone.'] = "Ob du den Buff hast. Die Zonen wählst du unter Ladebedingungen, Zone."
 L['Your own cast, on any group member.'] = "Dein eigener Zauber, auf einem beliebigen Gruppenmitglied."
 L['Tracked everywhere, including combat.'] = "Wird überall verfolgt, auch im Kampf."
@@ -476,7 +470,6 @@ L['Threshold %'] = "Schwellenwert %"
 
 -- QoL: Character Panel
 L['Character Panel'] = "Charakterfenster"
-L['Gear'] = "Ausrüstung"
 L['Panel Texts'] = "Fenstertexte"
 L['Adds upgrade track letters to the character panel gear slots.'] = "Fügt den Ausrüstungsplätzen im Charakterfenster Buchstaben für den Aufwertungspfad hinzu."
 L['Adds a bar next to the character tabs for socketing gems and applying enchants from your bags.'] = "Fügt neben den Charakterreitern eine Leiste hinzu, um Edelsteine zu sockeln und Verzauberungen aus deinen Taschen anzuwenden."

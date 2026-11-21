@@ -9,10 +9,6 @@ L['Minimap'] = true
 L['Units'] = true
 L['Items'] = true
 
--- Aura Displays (Advanced Debuffs / Defensives / Standard Buffs / Standard Debuffs) --
-L['Standard Buffs'] = true
-L['Standard Debuffs'] = true
-
 -- Skinning: Action Bars --
 L['X'] = true
 L['Y'] = true

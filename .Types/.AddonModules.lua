@@ -79,9 +79,8 @@
 ---@field namespace AceDBObject-3.0 the namespace every skinning module reads its part of
 ---@field Defaults NRSKNUI.DBProfile.Skinning
 ---@field ButtonMixin SkinnedButtonMixin the shared button mixin, set in Widgets/Button.lua
----@field PlaceMerchantAltCurrency fun() for QoL Vendor after it refills the merchant slots
----@field SkinMerchantSlot fun(self: SkinningModule, item: MerchantItemTemplate) QoL Vendor's extra slots
----@class GatewayModule : NorskenCore.ModuleBase, AceEvent-3.0
+---@field PlaceMerchantAltCurrency fun() for Vendor after it refills the merchant slots
+---@field SkinMerchantSlot fun(self: SkinningModule, item: MerchantItemTemplate) Vendor's extra slots
 ---@class PetTextsModule : NorskenCore.ModuleBase, AceEvent-3.0
 ---@class PlayerAurasModule : NorskenCore.ModuleBase, AceEvent-3.0
 ---@field Looks table<string, table> each frame's starting texts and border
@@ -90,7 +89,6 @@
 ---@class AdvancedDebuffsModule : NorskenCore.ModuleBase, AceEvent-3.0
 ---@class DefensivesModule : NorskenCore.ModuleBase, AceEvent-3.0
 ---@class CombatTimerModule : NorskenCore.ModuleBase, AceEvent-3.0
----@class PotionReadyModule : NorskenCore.ModuleBase, AceEvent-3.0
 ---@class RangeCheckerModule : NorskenCore.ModuleBase, AceEvent-3.0
 ---@class CombatCrossModule : NorskenCore.ModuleBase, AceEvent-3.0
 ---@class CombatMessageModule : NorskenCore.ModuleBase, AceEvent-3.0, AceTimer-3.0
@@ -176,11 +174,9 @@
 ---@field Tooltips TooltipsModule
 ---@field Minimap MinimapModule
 ---@field Skinning SkinningModule
----@field Gateway GatewayModule
 ---@field PetTexts PetTextsModule
 ---@field PlayerAuras PlayerAurasModule
 ---@field CombatTimer CombatTimerModule
----@field PotionReady PotionReadyModule
 ---@field RangeChecker RangeCheckerModule
 ---@field CombatCross CombatCrossModule
 ---@field CombatMessage CombatMessageModule
@@ -211,8 +207,6 @@ local NRSKNUI
 
 --- Fetch a registered module by name.
 ---@overload fun(self: NorskenUI, name: "CombatTimer", silent?: boolean): CombatTimerModule
----@overload fun(self: NorskenUI, name: "Gateway", silent?: boolean): GatewayModule
----@overload fun(self: NorskenUI, name: "PotionReady", silent?: boolean): PotionReadyModule
 ---@overload fun(self: NorskenUI, name: "RangeChecker", silent?: boolean): RangeCheckerModule
 ---@overload fun(self: NorskenUI, name: "Skinning", silent?: boolean): SkinningModule
 ---@overload fun(self: NorskenUI, name: "Tooltips", silent?: boolean): TooltipsModule
@@ -262,8 +256,6 @@ function NorskenUI:GetModule(name, silent) end
 
 --- Register a new module. Trailing args are embedded library names (e.g. "AceEvent-3.0").
 ---@overload fun(self: NorskenUI, name: "CombatTimer", ...: string): CombatTimerModule
----@overload fun(self: NorskenUI, name: "Gateway", ...: string): GatewayModule
----@overload fun(self: NorskenUI, name: "PotionReady", ...: string): PotionReadyModule
 ---@overload fun(self: NorskenUI, name: "RangeChecker", ...: string): RangeCheckerModule
 ---@overload fun(self: NorskenUI, name: "Skinning", ...: string): SkinningModule
 ---@overload fun(self: NorskenUI, name: "Tooltips", ...: string): TooltipsModule

@@ -24,11 +24,6 @@ L['Glow'] = true
 -- Profile messages & dialogs
 L['Profile changed. A UI reload is recommended to fully apply all settings.'] = true
 
--- Modifier Keys (shared)
-L['Shift'] = true
-L['Ctrl'] = true
-L['Alt'] = true
-
 -- Skinning Sidebar
 L['Skinning'] = true
 
@@ -49,7 +44,6 @@ L['Blizzard'] = true
 
 -- Aura Filter Builder --
 L['Active'] = true
-L['Back'] = true
 L['Item'] = true
 
 -- CDM bars
@@ -82,7 +76,6 @@ L['%s (Copy %d)'] = true
 L['Disable'] = true
 
 -- Cooldown Manager
-L['Show'] = true
 L['Update'] = true
 
 -- Commands
@@ -123,3 +116,5 @@ L['Out of Combat'] = true
 -- Core / Init
 
 -- Shared with the options pages
+L['Consumables'] = true
+L['Gear'] = true

@@ -73,8 +73,11 @@ L['Charges Unavailable'] = true
 -- Sidebar
 L['Profile Settings'] = true
 L['Global Settings'] = true
-L['Combat Util'] = true
 L['Quality of Life'] = true
+L['Tools'] = true
+L['Displays'] = true
+L['Blizzard Enhancements'] = true
+L['Alerts'] = true
 L['Class Utility'] = true
 L['CVars'] = true
 
@@ -209,14 +212,6 @@ L['Tick Width'] = true
 L['Uninterruptible'] = true
 L['Use Global Bar'] = true
 
--- Potion Ready
-L['Alert Color'] = true
-L['Alert Text'] = true
-L['Potion Ready'] = true
-
--- Gateway Alert
-L['Gateway Usable Alert'] = true
-
 -- Missing Buffs
 L['Click to Cast'] = true
 L['Raid Buff Mode'] = true
@@ -242,7 +237,6 @@ L['Whether you have the buff, when someone in the group can cast it.'] = true
 L['Group Presence'] = true
 L['Targeted Buffs'] = true
 L['Self Buffs'] = true
-L['Consumables'] = true
 L['Whether you have the buff. Pick the zones under Load Conditions, Zone.'] = true
 L['Your own cast, on any group member.'] = true
 L['Tracked everywhere, including combat.'] = true
@@ -476,7 +470,6 @@ L['Threshold %'] = true
 
 -- QoL: Character Panel
 L['Character Panel'] = true
-L['Gear'] = true
 L['Panel Texts'] = true
 L['Adds upgrade track letters to the character panel gear slots.'] = true
 L['Adds a bar next to the character tabs for socketing gems and applying enchants from your bags.'] = true

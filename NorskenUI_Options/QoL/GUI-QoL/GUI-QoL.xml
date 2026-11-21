@@ -2,19 +2,8 @@
     xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd'>
 
     <Script file='Sidebar.lua' />
-    <Script file='GUI-XPBar.lua'/>
-    <Script file='GUI-MiscVars.lua'/>
-    <Script file='GUI-AuctionHouseFilter.lua'/>
-    <Script file='GUI-Vendor.lua'/>
     <Script file='GUI-CopyAnything.lua'/>
     <Script file='GUI-Automation.lua'/>
-    <Script file='GUI-Recuperate.lua'/>
     <Script file='GUI-Tweaks.lua'/>
-    <Script file='GUI-DurabilityUtil.lua'/>
-    <Script file='GUI-CharacterPanel.lua'/>
-    <Script file='GUI-SkyRiding.lua'/>
-    <Script file='GUI-SpellAlert.lua'/>
-    <Script file='GUI-CDMStrings.lua'/>
-    <Script file='GUI-GroupFinder.lua'/>
-    <Script file='GUI-QuestTracker.lua'/>
+    <Script file='GUI-AuctionHouseFilter.lua'/>
 </Ui>

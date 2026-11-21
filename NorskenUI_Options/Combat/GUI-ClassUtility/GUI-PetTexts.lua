@@ -1,0 +1,131 @@
+---@class NorskenUI
+local NRSKNUI = _G.NorskenUI
+if not C_AddOns.IsAddOnLoaded('NorskenUI_Combat') then return end
+---@class PetTextsModule
+local PetTexts = NRSKNUI:GetModule('PetTexts', true)
+local L = NRSKNUI.Libs.AL
+local GUI = NRSKNUI.GUI
+local Theme = NRSKNUI.Theme
+local rowH = Theme.rowHeight
+local rowHL = Theme.rowHeightLast
+
+local function ApplySettings()
+    PetTexts:ApplySettings()
+end
+
+-- General Settings Tab.
+local function BuildGeneralSettingsTab(page, db)
+    -- Card 1: State Settings
+    local stateCard = page:Card(L['State Settings'], 'all')
+
+    local missingRow = stateCard:Row(rowH)
+    missingRow:EditBox(L['Pet Missing Text'], {
+        width = 0.5,
+        value = db.PetMissing,
+        callback = function(val)
+            db.PetMissing = val
+            ApplySettings()
+        end,
+    })
+    missingRow:ColorPicker(L['Missing Color'], {
+        width = 0.5,
+        value = db.MissingColor,
+        callback = function(r, g, b, a)
+            db.MissingColor = { r, g, b, a }
+            ApplySettings()
+        end,
+    })
+
+    local deadRow = stateCard:Row(rowH)
+    deadRow:EditBox(L['Pet Dead Text'], {
+        width = 0.5,
+        value = db.PetDead,
+        callback = function(val)
+            db.PetDead = val
+            ApplySettings()
+        end,
+    })
+    deadRow:ColorPicker(L['Dead Color'], {
+        width = 0.5,
+        value = db.DeadColor,
+        callback = function(r, g, b, a)
+            db.DeadColor = { r, g, b, a }
+            ApplySettings()
+        end,
+    })
+
+    local passiveRow = stateCard:Row(rowH)
+    passiveRow:EditBox(L['Pet Passive Text'], {
+        width = 0.5,
+        value = db.PetPassive,
+        callback = function(val)
+            db.PetPassive = val
+            ApplySettings()
+        end,
+    })
+    passiveRow:ColorPicker(L['Passive Color'], {
+        width = 0.5,
+        value = db.PassiveColor,
+        callback = function(r, g, b, a)
+            db.PassiveColor = { r, g, b, a }
+            ApplySettings()
+        end,
+    })
+
+    local wrongRow = stateCard:Row(rowHL, 0)
+    wrongRow:EditBox(L['Demo Warlock Wrong Pet Text'], {
+        width = 0.5,
+        value = db.PetWrong,
+        callback = function(val)
+            db.PetWrong = val
+            ApplySettings()
+        end,
+    })
+    wrongRow:ColorPicker(L['Wrong Color'], {
+        width = 0.5,
+        value = db.WrongColor,
+        callback = function(r, g, b, a)
+            db.WrongColor = { r, g, b, a }
+            ApplySettings()
+        end,
+    })
+end
+
+-- Font Settings Tab.
+local function BuildFontSettingsTab(page, db)
+    page:FontSettingsCard({ db = db, includeSoftOutline = true, onChangeCallback = ApplySettings, globalOverride = {}, })
+end
+
+-- Position Settings Tab.
+local function BuildPositionSettingsTab(page, db)
+    page:PositionCard({ db = db, showAnchorFrameType = false, showStrata = true, onChangeCallback = ApplySettings, })
+end
+
+GUI:RegisterPage('petTexts', {
+    mode = 'tabs',
+    search = {},
+    tabs = {
+        { id = 'general',  text = L['General Settings'] },
+        { id = 'font',     text = L['Font Settings'] },
+        { id = 'position', text = L['Position Settings'] },
+    },
+    build = function(page, tabId)
+        local db = NRSKNUI.PetTexts.db
+        if not db then return end
+        page:SetEnabled(function() return db.Enabled ~= false end)
+
+        if tabId == 'general' then
+            BuildGeneralSettingsTab(page, db)
+        elseif tabId == 'font' then
+            BuildFontSettingsTab(page, db)
+        elseif tabId == 'position' then
+            BuildPositionSettingsTab(page, db)
+        end
+    end,
+})
+
+NRSKNUI.ModuleHeader:OnToggle('PetTexts', function(enabled)
+    if enabled and PetTexts then
+        PetTexts:ShowPreview()
+    end
+end)

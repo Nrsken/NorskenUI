@@ -9,10 +9,6 @@ L['Minimap'] = "Minikarte"
 L['Units'] = "Einheiten"
 L['Items'] = "Gegenstände"
 
--- Aura Displays (Advanced Debuffs / Defensives / Standard Buffs / Standard Debuffs) --
-L['Standard Buffs'] = "Standard-Buffs"
-L['Standard Debuffs'] = "Standard-Debuffs"
-
 -- Skinning: Action Bars --
 L['X'] = "X"
 L['Y'] = "Y"

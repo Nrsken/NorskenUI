@@ -1,6 +1,6 @@
 ## Interface: 120105, 120107
 ## Title: |cffd9ff63Norsken|r|cffb3b3b3UI Skinning|r
-## Notes: Blizzard frame skins, action bars, chat, minimap, tooltips and player buffs
+## Notes: Blizzard frame skins, action bars, chat, minimap and tooltips
 ## Category: |cffe51039Norsken|r |cffb3b3b3Addons|r
 ## Group: NorskenUI
 ## Version: @project-version@
@@ -9,5 +9,4 @@
 ## Dependencies: NorskenUI
 
 Locales\Locales.xml
-PlayerAuras\Auras.xml
 Skinning.xml

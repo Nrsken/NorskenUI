@@ -7,7 +7,7 @@
 ## Author: Norsken
 ## IconTexture: Interface\AddOns\NorskenUI\Media\Logo\LogoUI.png
 ## LoadOnDemand: 1
-## OptionalDeps: NorskenCore, NorskenCore_Options, NorskenUI, NorskenUI_UnitFrames, NorskenUI_Skinning, NorskenUI_QoL
+## OptionalDeps: NorskenCore, NorskenCore_Options, NorskenUI, NorskenUI_UnitFrames, NorskenUI_Skinning, NorskenUI_QoL, NorskenUI_Interface, NorskenUI_Combat
 
 # says why when NorskenCore is missing or off, see the file
 Bootstrap.lua [Bootstrap]
@@ -24,8 +24,13 @@ GUI-Miscellaneous\GUI-Miscellaneous.xml
 # each module's pages return early when that module is disabled
 UnitFrames\GUI-UnitFrames.xml
 Skinning\GUI-Skinning.xml
-QoL\GUI-Combat\GUI-Combat.xml
-QoL\GUI-ClassUtility\GUI-ClassUtility.xml
 QoL\GUI-QoL\GUI-QoL.xml
-QoL\GUI-Dungeons\GUI-Dungeons.xml
-QoL\GUI-MissingBuffs\GUI-MissingBuffs.xml
+QoL\GUI-Tools\GUI-Tools.xml
+Interface\GUI-Displays\GUI-Displays.xml
+Interface\GUI-BlizzardEnhancements\GUI-BlizzardEnhancements.xml
+Combat\GUI-Combat\GUI-Combat.xml
+Combat\GUI-Alerts\GUI-Alerts.xml
+Combat\GUI-ClassUtility\GUI-ClassUtility.xml
+Combat\GUI-Dungeons\GUI-Dungeons.xml
+Combat\GUI-BigWigsTimers\GUI-BigWigsTimers.xml
+Combat\GUI-MissingBuffs\GUI-MissingBuffs.xml

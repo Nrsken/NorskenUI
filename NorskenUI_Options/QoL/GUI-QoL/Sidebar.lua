@@ -7,25 +7,14 @@ local L = NRSKNUI.Libs.AL
 
 GUIFrame:AddSidebarEntry({
     id = 'qol_section',
-    order = 60,
+    order = 80,
     type = 'header',
     text = L['Quality of Life'],
     defaultExpanded = false,
     items = {
-        { id = 'XPBar',              text = L['XP Bar'], module = 'XPBar' },
-        { id = 'miscVars',           text = L['CVars'] },
+        { id = 'copyAnything',       text = L['Copy Anything'],        module = 'CopyAnything' },
+        { id = 'automation',         text = L['Automation'],           module = 'Automation' },
+        { id = 'tweaks',             text = L['Tweaks'],               module = 'Tweaks' },
         { id = 'auctionHouseFilter', text = L['Auction House Filter'], module = 'AuctionHouseFilter' },
-        { id = 'vendor',             text = L['Vendor'], module = 'Vendor' },
-        { id = 'copyAnything',       text = L['Copy Anything'], module = 'CopyAnything' },
-        { id = 'automation',         text = L['Automation'], module = 'Automation' },
-        { id = 'recuperate',         text = L['Recuperate Button'], module = 'Recuperate' },
-        { id = 'tweaks',             text = L['Tweaks'], module = 'Tweaks' },
-        { id = 'durabilityUtil',     text = L['Durability Util'], module = 'Durability' },
-        { id = 'characterPanel',     text = L['Character Panel'], module = 'CharacterPanel' },
-        { id = 'skyRiding',          text = L['Skyriding UI'], module = 'SkyRiding' },
-        { id = 'spellAlert',         text = L['Spell Alerts'], module = 'SpellAlert' },
-        { id = 'cdmStrings',         text = L['CDM Profile Backup'], module = 'CooldownStrings' },
-        { id = 'groupFinder',        text = L['Group Finder'], module = 'GroupFinder' },
-        { id = 'questTracker',       text = L['Quest Tracker'], module = 'QuestTracker' },
     }
 })

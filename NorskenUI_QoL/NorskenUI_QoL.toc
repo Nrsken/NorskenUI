@@ -1,6 +1,6 @@
 ## Interface: 120105, 120107
 ## Title: |cffd9ff63Norsken|r|cffb3b3b3UI QoL|r
-## Notes: Quality of life, combat, dungeon and class utilities
+## Notes: Quality of life tweaks, automation and tools
 ## Category: |cffe51039Norsken|r |cffb3b3b3Addons|r
 ## Group: NorskenUI
 ## Version: @project-version@
@@ -9,9 +9,5 @@
 ## Dependencies: NorskenUI
 
 Locales\Locales.xml
-Combat\Combat.xml
 QoL\QoL.xml
-ClassUtility\ClassUtility.xml
-Dungeons\Dungeons.xml
-BigWigsTimers\BigWigsTimers.xml
-MissingBuffs\MissingBuffs.xml
+Tools\Tools.xml

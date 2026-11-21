@@ -15,7 +15,6 @@ GUIFrame:AddSidebarEntry({
         { id = 'actionBars',        text = L['Action Bars'], module = 'ActionBars' },
         { id = 'blizzardFonts',     text = L['Blizzard UI Font'], module = 'BlizzardMessages' },
         { id = 'blizzardMouseover', text = L['Blizzard Mouseover'], elvUIDisabled = true, module = 'BlizzardMouseover' },
-        { id = 'buffsDebuffs',      text = L['Buffs & Debuffs'], module = 'PlayerAuras' },
         { id = 'chat',              text = L['Chat'], module = 'Chatv2' },
         { id = 'detailsBackdrop',   text = L['Details Backdrop'], module = 'DetailsBackdrop' },
         { id = 'frameSkins',        text = L['Frames'],             elvUIDisabled = true, module = 'Skinning' },
