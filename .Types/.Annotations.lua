@@ -275,11 +275,6 @@
 ---@field NUISettingTexture boolean?
 ---@field NUISkinned boolean?
 
----@class SkinnedMinMaxButtonMixin: Button
----@field NUIBtnMinMax Texture
----@field NUIOnEnter fun(self: SkinnedMinMaxButtonMixin)
----@field NUIOnLeave fun(self: SkinnedMinMaxButtonMixin)
-
 ---Blizzard ItemButton/paperdoll slot fields we touch (all optional per template)
 ---@class NUIItemButton : Button
 ---@field icon Texture?

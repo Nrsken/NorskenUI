@@ -109,9 +109,9 @@ function Skinning:HandleTrimScrollBar(scrollBar)
     if scrollBar.Background then scrollBar.Background:NCStripTextures() end
     if scrollBar.Track then scrollBar.Track:NCStripTextures() end
 
-    local back, forward = 'right', 'left'
+    local back, forward = 'up', 'down'
     if scrollBar.isHorizontal then
-        back, forward = 'up', 'down'
+        back, forward = 'left', 'right'
     end
 
     SkinStepper(self, scrollBar.Back, back)
@@ -183,6 +183,6 @@ function Skinning:HandleScrollBar(scrollBar)
 
     self:HandleSlider(scrollBar, true)
 
-    SkinLegacyStepper(self, up, 'right')
-    SkinLegacyStepper(self, down, 'left')
+    SkinLegacyStepper(self, up, 'up')
+    SkinLegacyStepper(self, down, 'down')
 end

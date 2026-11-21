@@ -479,7 +479,7 @@ local function SkinRankBar(S, bar)
 
     if expansion.Texture then expansion.Texture:SetAlpha(0) end
     S:HandleButton(expansion)
-    S:CreateArrowTexture(expansion, 'down', RANK_ARROW_SIZE, RANK_ARROW_SIZE, nil, nil, nil, nil, nil, true)
+    S:CreateArrowTexture(expansion, 'right', RANK_ARROW_SIZE, RANK_ARROW_SIZE, nil, nil, nil, nil, nil, true)
 
     -- Blizzard parks it over the fill's right end, which reads as a box inside the bar.
     expansion:NCSetSize(RANK_BUTTON_SIZE, RANK_BUTTON_SIZE)

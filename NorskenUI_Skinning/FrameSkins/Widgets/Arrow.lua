@@ -8,8 +8,12 @@ local math_rad = math.rad
 local STEPPER_ARROW_SIZE = 20
 local ARROW_ATLAS = 'CovenantSanctum-Renown-Arrow-Depressed'
 local ARROW_TEXTURE = NRSKNUI.Media.GUITextures .. 'collapse.tga'
+local EDGE_TEXTURE = NRSKNUI.Media.GUITextures .. 'arrow-to-line.png'
 
 local ARROW_ROTATION = { left = 0, up = math_rad(-90), down = math_rad(90), right = math_rad(180), }
+-- The texture points down where the atlas points left
+local TEXTURE_ROTATION = { down = 0, up = math_rad(180), left = math_rad(-90), right = math_rad(90) }
+local EDGE_ROTATION = { right = 0, left = math_rad(180), up = math_rad(90), down = math_rad(-90) }
 
 ---Every arrow color change runs through here, so hover can never light up a disabled button.
 ---@param button Button
@@ -49,17 +53,22 @@ end
 ---@param relativePoint string?
 ---@param xOffset number?
 ---@param yOffset number?
----@param texture boolean? Whether to use texture instead of the atlas
+---@param texture boolean|'edge'? true for the chevron, 'edge' for arrow-to-line, else the atlas
 function Skinning:CreateArrowTexture(button, direction, sizeX, sizeY, point, relativeTo, relativePoint, xOffset, yOffset, texture)
     if button.NUIArrow then return end
 
     local arrow = button:CreateTexture(nil, 'ARTWORK')
     arrow:NCSetPoint(point or 'CENTER', relativeTo or button, relativePoint or 'CENTER', xOffset or 0, yOffset or 0)
     arrow:NCSetSize(sizeX, sizeY)
-    if texture then
+    if texture == 'edge' then
+        arrow:SetTexture(EDGE_TEXTURE)
+        button.NUIArrowRotation = EDGE_ROTATION
+    elseif texture then
         arrow:SetTexture(ARROW_TEXTURE)
+        button.NUIArrowRotation = TEXTURE_ROTATION
     else
         arrow:SetAtlas(ARROW_ATLAS)
+        button.NUIArrowRotation = ARROW_ROTATION
     end
     arrow:NCDisablePixelSnap()
     arrow:SetDesaturated(true)
@@ -68,7 +77,7 @@ function Skinning:CreateArrowTexture(button, direction, sizeX, sizeY, point, rel
     button.NUIUpdateArrowState = UpdateArrowState
 
     function button:NUISetArrowDirection(dir, open)
-        self.NUIArrow:SetRotation(ARROW_ROTATION[dir] or 0)
+        self.NUIArrow:SetRotation(self.NUIArrowRotation[dir] or 0)
         if open then
             self.NUIColorR, self.NUIColorG, self.NUIColorB = Skinning:GetAccentColor()
         else

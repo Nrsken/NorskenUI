@@ -3,34 +3,19 @@ local NRSKNUI = _G.NorskenUI
 ---@class SkinningModule
 local Skinning = NRSKNUI:GetModule('Skinning')
 
-local next = next
 local issecretvalue = issecretvalue
-local Mixin = Mixin
-local math_max = math.max
-local math_rad = math.rad
+local max = math.max
+local next = next
 
-local ARROW_TEXTURE = NRSKNUI.Media.GUITextures .. 'up-right-arrow.png'
-
-local SkinnedMinMaxButtonMixin = {}
-
-function SkinnedMinMaxButtonMixin:NUIOnEnter()
-    local r, g, b = Skinning:GetAccentColor()
-    self.NUIBtnMinMax:SetVertexColor(r, g, b)
-end
-
-function SkinnedMinMaxButtonMixin:NUIOnLeave()
-    self.NUIBtnMinMax:SetVertexColor(0.9, 0.9, 0.9)
-end
+-- Expanding always adds content on the right, collapsing takes it back to the left
+local BUTTON_DIRECTIONS = { MaximizeButton = 'right', MinimizeButton = 'left' }
 
 ---@param frame Frame?
 function Skinning:HandleMinMaxButton(frame)
     if not frame or frame.NUISkinned then return end
     frame.NUISkinned = true
 
-    for buttonName, buttonDirection in next, {
-        MaximizeButton = 'expand',
-        MinimizeButton = 'collapse'
-    } do
+    for buttonName, direction in next, BUTTON_DIRECTIONS do
         local btn = frame[buttonName]
         if btn then
             if btn.SetNormalTexture then
@@ -44,30 +29,10 @@ function Skinning:HandleMinMaxButton(frame)
             local point, relativeTo, relativePoint, x, y = btn:GetPoint()
             btn:NCSetPoint(point, relativeTo or btn:GetParent(), relativePoint or point, x or 0, y or 0)
 
-            -- The buttons are setAllPoints with no size of their own, so they measure 0 until
-            -- the frame is first laid out. The template-sized parent is the stable source.
+            -- The buttons measure 0 until laid out, so size from the template-sized parent
             local width = frame:GetWidth()
-            local size = not issecretvalue(width) and math_max(8, width * 0.6) or 8
-
-            local minMax = btn:CreateTexture(nil, 'OVERLAY')
-            minMax:SetPoint('CENTER')
-            minMax:SetSize(size, size)
-            minMax:SetTexture(ARROW_TEXTURE)
-            minMax:NCDisablePixelSnap()
-            minMax:SetVertexColor(0.9, 0.9, 0.9)
-
-            if buttonDirection == 'expand' then
-                minMax:SetRotation(math_rad(0))
-            elseif buttonDirection == 'collapse' then
-                minMax:SetRotation(math_rad(180))
-            end
-
-            ---@cast btn Button & SkinnedMinMaxButtonMixin
-            Mixin(btn, SkinnedMinMaxButtonMixin)
-
-            btn.NUIBtnMinMax = minMax
-            btn:HookScript('OnEnter', btn.NUIOnEnter)
-            btn:HookScript('OnLeave', btn.NUIOnLeave)
+            local size = not issecretvalue(width) and max(8, width * 0.8) or 8
+            self:CreateArrowTexture(btn, direction, size, size, nil, nil, nil, nil, nil, 'edge')
         end
     end
 end

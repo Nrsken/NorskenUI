@@ -11,7 +11,6 @@ local hooksecurefunc = hooksecurefunc
 local ADDON_NAME = 'KeystoneLoot'
 
 local CARD_ART_LAYERS = { 'BACKGROUND', 'BORDER' }
-local ARROW_LEFT, ARROW_RIGHT = 'up', 'down'
 local CAROUSEL_ARROW_SIZE = 14
 local DROPDOWN_ARROW_SIZE = 14
 
@@ -73,7 +72,7 @@ local function SkinLootIcon(button)
 end
 
 ---@param button Button
----@param direction string ARROW_LEFT or ARROW_RIGHT
+---@param direction string 'left'|'right'
 local function SkinCarouselButton(button, direction)
     if button.NUISkinned then return end
     button.NUISkinned = true
@@ -97,8 +96,8 @@ local function SkinEntryFrame(entry)
     divider:NUIUpdateSkinColors()
     Skinning:RegisterSkinned(divider)
 
-    SkinCarouselButton(entry.BackButton, ARROW_LEFT)
-    SkinCarouselButton(entry.NextButton, ARROW_RIGHT)
+    SkinCarouselButton(entry.BackButton, 'left')
+    SkinCarouselButton(entry.NextButton, 'right')
 
     Skinning:HookScrollBoxChildren(entry.IconScrollBox, SkinLootIcon)
 end

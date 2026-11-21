@@ -145,8 +145,7 @@ end
 ---@param button Button
 ---@param isPrev boolean
 local function SkinPageButton(S, button, isPrev)
-    -- the arrow's texture mode points 90 degrees off its names, 'up' draws left and 'down' draws right
-    S:HandleNextPrevButton(button, isPrev and 'up' or 'down')
+    S:HandleNextPrevButton(button, isPrev and 'left' or 'right')
 
     for _, region in ipairs({ button:GetRegions() }) do
         if region:IsObjectType('FontString') then
