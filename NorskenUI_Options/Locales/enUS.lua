@@ -459,15 +459,6 @@ L['Auto Focus Search Bar'] = true
 L['Crafting Orders'] = true
 L['Auctionator, '] = true
 
--- QoL: Durability Util
-L['Durability Util'] = true
-L['Durability Low Warning'] = true
-L['Low Threshold Text'] = true
-L['Low Threshold Color'] = true
-L['Broken Text'] = true
-L['Broken Color'] = true
-L['Threshold %'] = true
-
 -- QoL: Character Panel
 L['Character Panel'] = true
 L['Panel Texts'] = true

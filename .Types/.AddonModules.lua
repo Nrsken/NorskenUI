@@ -40,7 +40,6 @@
 ---@class CopyAnythingModule : NorskenCore.ModuleBase, AceEvent-3.0
 ---@class RecuperateModule : NorskenCore.ModuleBase, AceEvent-3.0
 ---@class MiscVarsModule : NorskenCore.ModuleBase, AceEvent-3.0
----@class DurabilityModule : NorskenCore.ModuleBase, AceEvent-3.0
 ---@class GroupFinderModule : NorskenCore.ModuleBase, AceEvent-3.0
 ---@field resortPending boolean?
 ---@field ServerSearchThrottle number
@@ -167,7 +166,6 @@
 ---@field CopyAnything CopyAnythingModule
 ---@field Recuperate RecuperateModule
 ---@field MiscVars MiscVarsModule
----@field Durability DurabilityModule
 ---@field GroupFinder GroupFinderModule
 ---@field QuestTracker QuestTrackerModule
 ---@field CharacterPanel CharacterPanelModule
@@ -219,7 +217,6 @@ local NRSKNUI
 ---@overload fun(self: NorskenUI, name: "CopyAnything", silent?: boolean): CopyAnythingModule
 ---@overload fun(self: NorskenUI, name: "Recuperate", silent?: boolean): RecuperateModule
 ---@overload fun(self: NorskenUI, name: "MiscVars", silent?: boolean): MiscVarsModule
----@overload fun(self: NorskenUI, name: "Durability", silent?: boolean): DurabilityModule
 ---@overload fun(self: NorskenUI, name: "GroupFinder", silent?: boolean): GroupFinderModule
 ---@overload fun(self: NorskenUI, name: "QuestTracker", silent?: boolean): QuestTrackerModule
 ---@overload fun(self: NorskenUI, name: "CombatCross", silent?: boolean): CombatCrossModule
@@ -268,7 +265,6 @@ function NorskenUI:GetModule(name, silent) end
 ---@overload fun(self: NorskenUI, name: "CopyAnything", ...: string): CopyAnythingModule
 ---@overload fun(self: NorskenUI, name: "Recuperate", ...: string): RecuperateModule
 ---@overload fun(self: NorskenUI, name: "MiscVars", ...: string): MiscVarsModule
----@overload fun(self: NorskenUI, name: "Durability", ...: string): DurabilityModule
 ---@overload fun(self: NorskenUI, name: "GroupFinder", ...: string): GroupFinderModule
 ---@overload fun(self: NorskenUI, name: "QuestTracker", ...: string): QuestTrackerModule
 ---@overload fun(self: NorskenUI, name: "CombatCross", ...: string): CombatCrossModule

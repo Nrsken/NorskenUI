@@ -459,15 +459,6 @@ L['Auto Focus Search Bar'] = "Suchleiste automatisch fokussieren"
 L['Crafting Orders'] = "Handwerksaufträge"
 L['Auctionator, '] = "Auctionator, "
 
--- QoL: Durability Util
-L['Durability Util'] = "Haltbarkeitshilfe"
-L['Durability Low Warning'] = "Warnung bei niedriger Haltbarkeit"
-L['Low Threshold Text'] = "Text: Unter Schwellenwert"
-L['Low Threshold Color'] = "Farbe: Unter Schwellenwert"
-L['Broken Text'] = "Text: Kaputt"
-L['Broken Color'] = "Farbe: Kaputt"
-L['Threshold %'] = "Schwellenwert %"
-
 -- QoL: Character Panel
 L['Character Panel'] = "Charakterfenster"
 L['Panel Texts'] = "Fenstertexte"

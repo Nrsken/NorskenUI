@@ -3,7 +3,6 @@
     <Script file="Init.lua" />
     <Script file="Defaults.lua" />
     <Script file="XPBar.lua"/>
-    <Script file="DurabilityUtil.lua"/>
     <Script file="Recuperate.lua"/>
     <Script file="SkyRiding.lua"/>
     <Script file="PlayerAurasMigrations.lua"/>

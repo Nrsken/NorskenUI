@@ -4,7 +4,6 @@
     <Script file='Sidebar.lua' />
     <Script file='GUI-XPBar.lua'/>
     <Script file='GUI-Recuperate.lua'/>
-    <Script file='GUI-DurabilityUtil.lua'/>
     <Script file='GUI-SkyRiding.lua'/>
     <Script file='GUI-BuffsDebuffs.lua'/>
     <Script file='GUI-CombatTimer.lua'/>

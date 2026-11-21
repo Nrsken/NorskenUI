@@ -14,7 +14,6 @@ GUIFrame:AddSidebarEntry({
     items = {
         { id = 'XPBar',          text = L['XP Bar'],            module = 'XPBar' },
         { id = 'recuperate',     text = L['Recuperate Button'], module = 'Recuperate' },
-        { id = 'durabilityUtil', text = L['Durability Util'],   module = 'Durability' },
         { id = 'skyRiding',      text = L['Skyriding UI'],      module = 'SkyRiding' },
         { id = 'buffsDebuffs',   text = L['Buffs & Debuffs'],   module = 'PlayerAuras' },
         { id = 'combatTimer',    text = L['Combat Timer'],      module = 'CombatTimer' },

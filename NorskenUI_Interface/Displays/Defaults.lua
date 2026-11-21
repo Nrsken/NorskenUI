@@ -19,34 +19,6 @@ Recuperate.Defaults = {
     },
 }
 
-local Durability = NRSKNUI:GetModule('Durability')
-Durability.dbKey = 'Miscellaneous.Durability'
-Durability.Defaults = {
-    -- General Settings
-    Enabled = true,
-    ShowPercent = 30,
-    CombatShowPercent = 0,
-    -- Font settings
-    UseGlobalFont = true,
-    FontFace = "Expressway",
-    FontOutline = "OUTLINE",
-    FontSize = 18,
-    TextBroken = "GEAR BROKEN",
-    TextColorBroken = { 1, 0, 0, 1 },
-    TextLow = "REPAIR NOW",
-    TextColorLow = { 1, 0.537, 0.2, 1 },
-    -- Frame settings
-    Strata = "HIGH",
-    anchorFrameType = "UIPARENT",
-    ParentFrame = "UIParent",
-    Position = {
-        AnchorFrom = "CENTER",
-        AnchorTo = "CENTER",
-        XOffset = 0,
-        YOffset = 105,
-    },
-}
-
 local XPBar = NRSKNUI:GetModule('XPBar')
 XPBar.dbKey = 'Miscellaneous.XPBar'
 XPBar.Defaults = {

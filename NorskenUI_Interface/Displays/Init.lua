@@ -3,7 +3,6 @@ local NRSKNUI = _G.NorskenUI
 
 NRSKNUI.XPBar = NRSKNUI:NewModule('XPBar', 'AceEvent-3.0')
 NRSKNUI.Recuperate = NRSKNUI:NewModule('Recuperate', 'AceEvent-3.0')
-NRSKNUI.Durability = NRSKNUI:NewModule('Durability', 'AceEvent-3.0')
 NRSKNUI.SkyRiding = NRSKNUI:NewModule('SkyRiding', 'AceEvent-3.0')
 NRSKNUI.PlayerAuras = NRSKNUI:NewModule('PlayerAuras', 'AceEvent-3.0')
 NRSKNUI.CombatTimer = NRSKNUI:NewModule('CombatTimer', 'AceEvent-3.0')

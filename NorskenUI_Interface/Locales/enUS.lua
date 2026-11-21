@@ -42,9 +42,6 @@ L['No replacement gems'] = true
 L['Replace Gem'] = true
 L['Socket Gem'] = true
 
--- DurabilityUtil
-L['Durability Low'] = true
-
 -- XPBar
 L['Experience Bar'] = true
 L['Experience Breakdown'] = true

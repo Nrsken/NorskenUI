@@ -41,9 +41,6 @@ L['No replacement gems'] = "Keine Ersatz-Edelsteine"
 L['Replace Gem'] = "Edelstein ersetzen"
 L['Socket Gem'] = "Edelstein einsetzen"
 
--- DurabilityUtil
-L['Durability Low'] = "Haltbarkeit niedrig"
-
 -- XPBar
 L['Experience Bar'] = "Erfahrungsbalken"
 L['Experience Breakdown'] = "Erfahrungsübersicht"
