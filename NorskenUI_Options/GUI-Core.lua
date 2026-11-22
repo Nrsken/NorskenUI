@@ -55,6 +55,8 @@ function NRSKNUI.GUILogoConfig()
                 color = 'textSecondary'
             },
         },
+        version = NRSKNUI:GetVersionText(),
+        versionAnchor = { 'LEFT', 2, 'RIGHT', -42, -2 },
     }
 end
 
